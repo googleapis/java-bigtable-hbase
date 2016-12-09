@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,11 +35,7 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
 import com.google.api.client.util.Strings;
-import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.ListClustersResponse;
-import com.google.bigtable.v2.ColumnRange;
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.CredentialOptions;
@@ -244,6 +239,12 @@ public class BigtableSession implements Closeable {
       .synchronizedList(new ArrayList<ManagedChannel>());
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
 
+  /**
+   * This cluster name is either configured via BigtableOptions' clusterId, or via a lookup of the
+   * clusterID based on BigtableOptions projectId and instanceId.  See {@link BigtableClusterUtilities}
+   */
+  private BigtableClusterName clusterName;
+
 
   /**
    * Use {@link com.google.cloud.bigtable.grpc.BigtableSession#BigtableSession(BigtableOptions)} instead;
@@ -386,10 +387,12 @@ public class BigtableSession implements Closeable {
 
 
   /**
-   * Return options with legacy input options, if any, resolved into currently supported options.
+   * Snapshot operations need various aspects of a {@link BigtableClusterName}. This method gets a
+   * clusterId from either a lookup (projectId and instanceId translate to a single clusterId when
+   * an instance has only one cluster) or from {@link BigtableOptions#getClusterId()}.
    */
   public synchronized BigtableClusterName getClusterName() throws IOException {
-    if (options.getClusterName() == null) {
+    if (this.clusterName == null) {
       try (BigtableClusterUtilities util =
           BigtableClusterUtilities.forInstance(options.getProjectId(), options.getInstanceId())) {
         ListClustersResponse clusters = util.getClusters();
@@ -397,16 +400,12 @@ public class BigtableSession implements Closeable {
           String.format(
             "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
             options.getProjectId(), options.getInstanceId(), clusters.getClustersCount()));
-        Cluster cluster = clusters.getClusters(0);
-        options = options.toBuilder()
-            .setClusterId(new BigtableClusterName(cluster.getName()).getClusterId())
-            .setZoneId(BigtableClusterUtilities.getZoneId(cluster))
-            .build();
+        clusterName = new BigtableClusterName(clusters.getClusters(0).getName());
       } catch (GeneralSecurityException e) {
         throw new IOException("Could not get cluster Id.", e);
       }
     }
-    return options.getClusterName();
+    return clusterName;
   }
 
   /**
