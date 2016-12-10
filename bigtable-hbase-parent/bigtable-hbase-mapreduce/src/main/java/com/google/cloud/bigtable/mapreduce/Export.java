@@ -18,6 +18,8 @@
 */
 package com.google.cloud.bigtable.mapreduce;
 
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase1_2.BigtableConnection;
 import java.io.IOException;
 
 import org.apache.commons.logging.Log;
@@ -38,6 +40,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.IdentityTableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -70,6 +73,9 @@ public class Export {
    */
   public static Job createSubmittableJob(Configuration conf, String[] args)
   throws IOException {
+    conf.setIfUnset("hbase.client.connection.impl", BigtableConnection.class.getName());
+    conf.setIfUnset(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, "60000");
+
     String tableName = args[0];
     Path outputDir = new Path(args[1]);
     Job job = new Job(conf, NAME + "_" + tableName);
@@ -77,7 +83,7 @@ public class Export {
     job.setJarByClass(Export.class);
     // Set optional scan parameters
     Scan s = getConfiguredScanForJob(conf, args);
-    IdentityTableMapper.initJob(tableName, s, IdentityTableMapper.class, job);
+    TableMapReduceUtil.initTableMapperJob(tableName, s, IdentityTableMapper.class, ImmutableBytesWritable.class, Result.class, job, false);
     // No reducers.  Just write straight to output files.
     job.setNumReduceTasks(0);
     job.setOutputFormatClass(SequenceFileOutputFormat.class);

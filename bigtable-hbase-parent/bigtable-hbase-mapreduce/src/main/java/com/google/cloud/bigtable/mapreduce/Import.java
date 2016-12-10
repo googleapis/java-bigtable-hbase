@@ -15,7 +15,8 @@
  */
 package com.google.cloud.bigtable.mapreduce;
 
-
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase1_2.BigtableConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -405,6 +406,9 @@ public class Import extends Configured implements Tool {
    */
   public static Job createSubmittableJob(Configuration conf, String[] args)
   throws IOException {
+    conf.setIfUnset("hbase.client.connection.impl", BigtableConnection.class.getName());
+    conf.setIfUnset(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, "60000");
+
     TableName tableName = TableName.valueOf(args[0]);
     conf.set(TABLE_NAME, tableName.getNameAsString());
     Path inputDir = new Path(args[1]);
@@ -445,7 +449,8 @@ public class Import extends Configured implements Tool {
       // No reducers.  Just write straight to table.  Call initTableReducerJob
       // because it sets up the TableOutputFormat.
       job.setMapperClass(Importer.class);
-      TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), null, job);
+      //TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), null, job);
+      TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), null, job, null, null, null, null, false);
       job.setNumReduceTasks(0);
     }
     return job;
