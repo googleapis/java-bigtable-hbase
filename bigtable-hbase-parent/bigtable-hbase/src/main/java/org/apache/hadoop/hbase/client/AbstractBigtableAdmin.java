@@ -840,7 +840,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return bigtableTableAdminClient.snapshotTable(SnapshotTableRequest.newBuilder()
         .setCluster(getClusterName().toString())
         .setSnapshotId(snapshotName)
-        .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()).toString())
+        .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()))
         .build());
   }
 

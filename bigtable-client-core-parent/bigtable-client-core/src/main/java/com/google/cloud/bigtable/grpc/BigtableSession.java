@@ -234,7 +234,7 @@ public class BigtableSession implements Closeable {
   private BigtableTableAdminClient tableAdminClient;
   private BigtableInstanceGrpcClient instanceAdminClient;
 
-  private  BigtableOptions options;
+  private final BigtableOptions options;
   private final List<ManagedChannel> managedChannels = Collections
       .synchronizedList(new ArrayList<ManagedChannel>());
   private final ImmutableList<HeaderInterceptor> headerInterceptors;

@@ -51,7 +51,7 @@ public class TestSnapshots extends AbstractTest {
       TableName.valueOf(tableName.getNameAsString().substring(40) + "_clone");
 
   @After
-  public void delete() throws IOException {
+  public void cleanup() throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
       delete(admin, tableName);
       delete(admin, clonedTableName);
