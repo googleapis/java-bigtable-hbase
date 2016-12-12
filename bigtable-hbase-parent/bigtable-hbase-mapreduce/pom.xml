@@ -56,6 +56,9 @@ limitations under the License.
             <artifactId>bigtable-hbase-1.2</artifactId>
             <version>${project.version}</version>
 
+            <!-- Exclude all of hadoop's provided deps. To keep the list up to date, run
+            `mvn dependency:tree` and exclude all of hadoop-client's transitive dependencies that
+            are not in the provided scope -->
             <exclusions>
                 <exclusion>
                     <groupId>io.netty</groupId>
@@ -141,7 +144,6 @@ limitations under the License.
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
             <version>${hbase.version}</version>
-
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
