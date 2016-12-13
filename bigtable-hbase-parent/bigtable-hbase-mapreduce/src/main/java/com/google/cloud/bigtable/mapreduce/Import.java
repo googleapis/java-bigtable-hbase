@@ -464,6 +464,9 @@ public class Import extends Configured implements Tool {
       System.err.println("ERROR: " + errorMsg);
     }
     System.err.println("Usage: Import [options] <tablename> <inputdir>");
+    System.err.println(" Mandatory properties:");
+    System.err.println("  -D " + BigtableOptionsFactory.PROJECT_ID_KEY + "=<bigtable project id>");
+    System.err.println("  -D " + BigtableOptionsFactory.INSTANCE_ID_KEY + "=<bigtable instance id>");
     System.err
         .println(" To apply a generic org.apache.hadoop.hbase.filter.Filter to the input, use");
     System.err.println("  -D" + FILTER_CLASS_CONF_KEY + "=<name of filter class>");
@@ -488,6 +491,14 @@ public class Import extends Configured implements Tool {
     String[] otherArgs = new GenericOptionsParser(getConf(), args).getRemainingArgs();
     if (otherArgs.length < 2) {
       usage("Wrong number of arguments: " + otherArgs.length);
+      return -1;
+    }
+    if (getConf().get(BigtableOptionsFactory.PROJECT_ID_KEY) == null) {
+      usage("Must specify the property " + BigtableOptionsFactory.PROJECT_ID_KEY);
+      return -1;
+    }
+    if (getConf().get(BigtableOptionsFactory.INSTANCE_ID_KEY) == null) {
+      usage("Must specify the property" + BigtableOptionsFactory.INSTANCE_ID_KEY);
       return -1;
     }
     String inputVersionString = System.getProperty(ResultSerialization.IMPORT_FORMAT_VER);
