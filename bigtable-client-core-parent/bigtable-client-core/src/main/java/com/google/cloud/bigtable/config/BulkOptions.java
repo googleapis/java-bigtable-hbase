@@ -260,6 +260,7 @@ public class BulkOptions implements Serializable {
         && (useBulkApi == other.useBulkApi)
         && (bulkMaxRowKeyCount == other.bulkMaxRowKeyCount)
         && (bulkMaxRequestSize == other.bulkMaxRequestSize)
+        && (autoflushMs == other.autoflushMs)
         && (maxInflightRpcs == other.maxInflightRpcs)
         && (maxMemory == other.maxMemory);
   }
@@ -273,6 +274,7 @@ public class BulkOptions implements Serializable {
         .add("useBulkApi", useBulkApi)
         .add("bulkMaxKeyCount", bulkMaxRowKeyCount)
         .add("bulkMaxRequestSize", bulkMaxRequestSize)
+        .add("autoflushMs", autoflushMs)
         .add("maxInflightRpcs", maxInflightRpcs)
         .add("maxMemory", maxMemory)
         .toString();
