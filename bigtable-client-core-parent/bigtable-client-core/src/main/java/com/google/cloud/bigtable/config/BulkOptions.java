@@ -49,6 +49,10 @@ public class BulkOptions implements Serializable {
    */
   public static final int BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT = 25;
 
+  /**
+   * The maximum amount of time a row will be buffered for. By default 0: indefinitely.
+   */
+  public static long BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT = 0;
 
   // Default rpc count per channel.
   /** Constant <code>BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT=50</code> */
@@ -69,6 +73,7 @@ public class BulkOptions implements Serializable {
     private boolean useBulkApi = false;
     private int bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
     private long bulkMaxRequestSize = BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
+    private long autoflushMs = BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
     private int maxInflightRpcs = -1;
     private long maxMemory = BIGTABLE_MAX_MEMORY_DEFAULT;
 
@@ -80,6 +85,7 @@ public class BulkOptions implements Serializable {
       this.useBulkApi = original.useBulkApi;
       this.bulkMaxRowKeyCount = original.bulkMaxRowKeyCount;
       this.bulkMaxRequestSize = original.bulkMaxRequestSize;
+      this.autoflushMs = original.autoflushMs;
       this.maxInflightRpcs = original.maxInflightRpcs;
       this.maxMemory = original.maxMemory;
     }
@@ -110,6 +116,13 @@ public class BulkOptions implements Serializable {
       return this;
     }
 
+    public Builder setAutoflushMs(long autoflushMs) {
+      Preconditions.checkArgument(
+          autoflushMs >= 0, "autoflushMs must be greater or equal to 0.");
+      this.autoflushMs = autoflushMs;
+      return this;
+    }
+
     public Builder setMaxInflightRpcs(int maxInflightRpcs) {
       Preconditions.checkArgument(maxInflightRpcs > 0, "maxInflightRpcs must be greater than 0.");
       this.maxInflightRpcs = maxInflightRpcs;
@@ -128,6 +141,7 @@ public class BulkOptions implements Serializable {
           useBulkApi,
           bulkMaxRowKeyCount,
           bulkMaxRequestSize,
+          autoflushMs,
           maxInflightRpcs,
           maxMemory);
     }
@@ -137,6 +151,7 @@ public class BulkOptions implements Serializable {
   private final boolean useBulkApi;
   private final int bulkMaxRowKeyCount;
   private final long bulkMaxRequestSize;
+  private final long autoflushMs;
 
   private final int maxInflightRpcs;
   private final long maxMemory;
@@ -147,6 +162,7 @@ public class BulkOptions implements Serializable {
       useBulkApi = false;
       bulkMaxRowKeyCount = -1;
       bulkMaxRequestSize = -1;
+      autoflushMs = -1l;
       maxInflightRpcs = -1;
       maxMemory = -1l;
   }
@@ -156,12 +172,14 @@ public class BulkOptions implements Serializable {
       boolean useBulkApi,
       int bulkMaxKeyCount,
       long bulkMaxRequestSize,
+      long autoflushMs,
       int maxInflightRpcs,
       long maxMemory) {
     this.asyncMutatorCount = asyncMutatorCount;
     this.useBulkApi = useBulkApi;
     this.bulkMaxRowKeyCount = bulkMaxKeyCount;
     this.bulkMaxRequestSize = bulkMaxRequestSize;
+    this.autoflushMs = autoflushMs;
     this.maxInflightRpcs = maxInflightRpcs;
     this.maxMemory = maxMemory;
   }
@@ -200,6 +218,14 @@ public class BulkOptions implements Serializable {
    */
   public long getBulkMaxRequestSize() {
     return bulkMaxRequestSize;
+  }
+
+  /**
+   * <p>Getter for the field <code>autoflushMs</code>.</p>
+   * @return
+   */
+  public long getAutoflushMs() {
+    return autoflushMs;
   }
 
   /**

@@ -13,6 +13,8 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,7 +36,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -307,6 +311,56 @@ public class TestBulkMutation {
     Assert.assertFalse(requestManager.isStale());
     currentTime.addAndGet(2);
     Assert.assertTrue(requestManager.isStale());
+  }
+
+  @Test
+  public void testAutoflushDisabled() throws ExecutionException, InterruptedException {
+    // buffer a request, with a mocked success
+    MutateRowRequest mutateRowRequest = createRequest();
+    underTest.add(mutateRowRequest);
+
+    verify(retryExecutorService, never()).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+  }
+
+  @Test
+  public void testAutoflush() throws InterruptedException, ExecutionException {
+    // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the scheduled executor mock
+    underTest = new BulkMutation(TABLE_NAME, asyncExecutor, retryOptions,
+        retryExecutorService, 1000, 1000000L, 1000L);
+
+    ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
+    ScheduledFuture f = Mockito.mock(ScheduledFuture.class);
+    doReturn(f)
+        .when(retryExecutorService).schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class));
+
+    // buffer a request, with a mocked success (for never it gets invoked)
+    MutateRowRequest mutateRowRequest = createRequest();
+    underTest.add(mutateRowRequest);
+
+    when(mockFuture.get()).thenAnswer(new Answer<ImmutableList<MutateRowsResponse>>() {
+      @Override
+      public ImmutableList<MutateRowsResponse> answer(InvocationOnMock invocation) throws Throwable {
+        MutateRowsResponse.Builder responseBuilder = MutateRowsResponse.newBuilder();
+        responseBuilder.addEntriesBuilder()
+            .setIndex(0)
+            .getStatusBuilder()
+            .setCode(io.grpc.Status.OK.getCode().value());
+        return ImmutableList.of(responseBuilder.build());
+      }
+    });
+
+    // Verify that the autoflusher was scheduled
+    verify(retryExecutorService, times(1))
+        .schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class));
+
+    // Verify that the request wasn't sent
+    verify(asyncExecutor, never()).mutateRowsAsync(any(MutateRowsRequest.class));
+
+    // Fake the triggering of the autoflusher
+    autoflusher.getValue().run();
+
+    // Verify that the request was sent
+    verify(asyncExecutor, times(1)).mutateRowsAsync(any(MutateRowsRequest.class));
   }
 
   private void setupScheduler(final AtomicLong waitedNanos) {
