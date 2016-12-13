@@ -486,8 +486,7 @@ public class BulkMutation {
   }
 
   /**
-   * Adds a {@link MutateRowsRequest.Entry} to the {@link MutateRowsRequest.Builder}. NOTE: Users
-   * have to make sure that this gets called in a thread safe way.
+   * Adds a {@link MutateRowsRequest.Entry} to the {@link MutateRowsRequest.Builder}.
    * @param entry The {@link MutateRowsRequest.Entry} to add
    * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when
    *         the {@link MutateRowsResponse} returns from the server. See
