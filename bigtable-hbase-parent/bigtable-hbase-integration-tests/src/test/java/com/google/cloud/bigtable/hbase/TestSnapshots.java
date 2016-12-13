@@ -69,8 +69,10 @@ public class TestSnapshots extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testSnapshot() throws IOException {
+    if (IntegrationTests.isBigtable() && !Boolean.getBoolean("perform.snapshot.test")) {
+      return;
+    }
     try (Admin admin = getConnection().getAdmin()) {
       admin.createTable(
         new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
