@@ -21,6 +21,7 @@ import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOS
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.*;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -183,6 +184,10 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_BULK_MAX_ROW_KEY_COUNT =
       "google.bigtable.bulk.max.row.key.count";
 
+  /** Constant <code>BIGTABLE_BULK_AUTOFLUSH_MS_KEY="google.bigtable.bulk.autoflush.ms"</code>*/
+  public static final String BIGTABLE_BULK_AUTOFLUSH_MS_KEY =
+      "google.bigtable.bulk.autoflush.ms";
+
   /** Constant <code>MAX_INFLIGHT_RPCS_KEY="google.bigtable.buffered.mutator.max.in"{trunked}</code> */
   public static final String MAX_INFLIGHT_RPCS_KEY =
       "google.bigtable.buffered.mutator.max.inflight.rpcs";
@@ -322,6 +327,10 @@ public class BigtableOptionsFactory {
         configuration.getLong(
             BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES,
             BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT));
+    bulkOptionsBuilder.setAutoflushMs(
+        configuration.getLong(
+            BIGTABLE_BULK_AUTOFLUSH_MS_KEY,
+            BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT));
 
     int defaultRpcCount = BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
         * bigtableOptionsBuilder.getDataChannelCount();

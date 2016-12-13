@@ -49,6 +49,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -442,12 +443,15 @@ public class BulkMutation {
   @VisibleForTesting
   Batch currentBatch = null;
 
+  private ScheduledFuture<?> scheduledFlush = null;
+
   private final String tableName;
   private final AsyncExecutor asyncExecutor;
   private final RetryOptions retryOptions;
   private final ScheduledExecutorService retryExecutorService;
   private final int maxRowKeyCount;
   private final long maxRequestSize;
+  private final long autoflushMs;
   private final Meter batchMeter =
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.batch.meter");
 
@@ -473,14 +477,40 @@ public class BulkMutation {
       ScheduledExecutorService retryExecutorService,
       int maxRowKeyCount,
       long maxRequestSize) {
+    this(tableName, asyncExecutor, retryOptions, retryExecutorService, maxRowKeyCount, maxRequestSize, 0);
+  }
+
+  /**
+   * Constructor for BulkMutation.
+   *
+   * @param tableName a {@link BigtableTableName} object for the table to which all {@link
+   *     MutateRowRequest}s will be sent.
+   * @param asyncExecutor a {@link AsyncExecutor} object that asynchronously sends {@link
+   *     MutateRowsRequest}.
+   * @param retryOptions a {@link RetryOptions} object that describes how to perform retries.
+   * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
+   *     retries.
+   * @param maxRowKeyCount describes the maximum number of {@link MutateRowRequest}s to send in a
+   *     single {@link MutateRowsRequest}.
+   * @param maxRequestSize describes the maximum cumulative size of a {@link MutateRowsRequest}.
+   * @param autoflushMs the maximum number of milliseconds that items can linger before being flush. 0 to disable.
+   */
+  public BulkMutation(
+      BigtableTableName tableName,
+      AsyncExecutor asyncExecutor,
+      RetryOptions retryOptions,
+      ScheduledExecutorService retryExecutorService,
+      int maxRowKeyCount,
+      long maxRequestSize,
+      long autoflushMs) {
     this.tableName = tableName.toString();
     this.asyncExecutor = asyncExecutor;
     this.retryOptions = retryOptions;
     this.retryExecutorService = retryExecutorService;
     this.maxRowKeyCount = maxRowKeyCount;
     this.maxRequestSize = maxRequestSize;
+    this.autoflushMs = autoflushMs;
   }
-
   public ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     return add(convert(request));
   }
@@ -505,6 +535,19 @@ public class BulkMutation {
     if (currentBatch.isFull()) {
       flush();
     }
+
+    // If autoflushing is enabled and there is pending data then schedule a flush if one hasn't been scheduled
+    // NOTE: this is optimized for adding minimal overhead to per item adds, at the expense of periodic partial batches
+    if (this.autoflushMs > 0 && currentBatch != null && scheduledFlush == null) {
+      scheduledFlush = retryExecutorService.schedule(new Runnable() {
+        @Override
+        public void run() {
+          scheduledFlush = null;
+          flush();
+        }
+      }, autoflushMs, TimeUnit.MILLISECONDS);
+    }
+
     return future;
   }
 
