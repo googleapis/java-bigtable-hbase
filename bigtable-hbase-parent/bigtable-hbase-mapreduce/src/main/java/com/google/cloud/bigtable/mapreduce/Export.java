@@ -163,6 +163,9 @@ public class Export {
     }
     System.err.println("Usage: Export [-D <property=value>]* <tablename> <outputdir> [<versions> " +
       "[<starttime> [<endtime>]] [^[regex pattern] or [Prefix] to filter]]\n");
+    System.err.println("  Mandatory properties:");
+    System.err.println("   -D " + BigtableOptionsFactory.PROJECT_ID_KEY + "=<bigtable project id>");
+    System.err.println("   -D " + BigtableOptionsFactory.INSTANCE_ID_KEY + "=<bigtable instance id>");
     System.err.println("  Note: -D properties will be applied to the conf used. ");
     System.err.println("  For example: ");
     System.err.println("   -D mapreduce.output.fileoutputformat.compress=true");
@@ -195,6 +198,15 @@ public class Export {
       usage("Wrong number of arguments: " + otherArgs.length);
       System.exit(-1);
     }
+    if (conf.get(BigtableOptionsFactory.PROJECT_ID_KEY) == null) {
+      usage("Must specify the property " + BigtableOptionsFactory.PROJECT_ID_KEY);
+      System.exit(-1);
+    }
+    if (conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY) == null) {
+      usage("Must specify the property" + BigtableOptionsFactory.INSTANCE_ID_KEY);
+      System.exit(-1);
+    }
+
     Job job = createSubmittableJob(conf, otherArgs);
     System.exit(job.waitForCompletion(true)? 0 : 1);
   }
