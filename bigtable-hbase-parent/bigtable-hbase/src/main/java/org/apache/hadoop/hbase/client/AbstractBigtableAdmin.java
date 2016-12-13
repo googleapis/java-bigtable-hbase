@@ -98,8 +98,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private static final Logger LOG = new Logger(AbstractBigtableAdmin.class);
 
   /**
-   * {@inheritDoc}
-   *
    * Bigtable doesn't require disabling tables before deletes or schema changes. Some clients do
    * call disable first, and then check for disable before deletes or schema changes. We're keeping
    * track of that state in memory on so that those clients can proceed with the delete/schema
@@ -835,6 +833,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
     waitForOperation(snapshotTable(snapshotName, tableName));
   }
 
+  /**
+   * Creates a snapshot from an existing table.  NOTE: Cloud Bigtable has a cleanup policy
+   *
+   * @param snapshotName
+   * @param tableName
+   * @return
+   * @throws IOException
+   */
   private Operation snapshotTable(String snapshotName, TableName tableName)
       throws IOException {
     return bigtableTableAdminClient.snapshotTable(SnapshotTableRequest.newBuilder()
@@ -846,14 +852,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /**
    * Waits for an operation like creating a snapshot to complete.
-   * @param operation. The current state of the operation.
-   * @throws InterruptedException if a user interrupts the process, usually with a ^C.
+   * @param operation The current state of the operation.
    * @throws IOException
    */
   private void waitForOperation(Operation operation) throws IOException {
     GetOperationRequest request =
         GetOperationRequest.newBuilder().setName(operation.getName()).build();
     Operation currentOperationState = operation;
+    long startMs = System.currentTimeMillis();
     while (true) {
       if (currentOperationState.getDone()) {
         switch (currentOperationState.getResultCase()) {
@@ -867,8 +873,19 @@ public abstract class AbstractBigtableAdmin implements Admin {
               "System returned invalid response for Operation check: " + currentOperationState);
         }
       }
+      long waitMs = 0;
+      long timePassedS = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startMs);
+      if (timePassedS < 5) {
+        waitMs = 250;
+      } else if (timePassedS < 60){
+        waitMs = 1000;
+      } else if (timePassedS < 300) {
+        waitMs = 10000;
+      } else {
+        waitMs = 60000;
+      }
       try {
-        Thread.sleep(200);
+        Thread.sleep(waitMs);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new IOException("Wating for operation was interrupted.", e);
