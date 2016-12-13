@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
 import com.google.api.client.util.Strings;
+import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.CredentialOptions;
@@ -56,6 +57,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.protobuf.ByteString;
 
 import io.grpc.ManagedChannel;
 import io.grpc.netty.GrpcSslContexts;
@@ -237,6 +239,12 @@ public class BigtableSession implements Closeable {
       .synchronizedList(new ArrayList<ManagedChannel>());
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
 
+  /**
+   * This cluster name is either configured via BigtableOptions' clusterId, or via a lookup of the
+   * clusterID based on BigtableOptions projectId and instanceId.  See {@link BigtableClusterUtilities}
+   */
+  private BigtableClusterName clusterName;
+
 
   /**
    * Use {@link com.google.cloud.bigtable.grpc.BigtableSession#BigtableSession(BigtableOptions)} instead;
@@ -375,6 +383,29 @@ public class BigtableSession implements Closeable {
       return options.toBuilder().setInstanceId(instanceId).build();
     }
     return options;
+  }
+
+
+  /**
+   * Snapshot operations need various aspects of a {@link BigtableClusterName}. This method gets a
+   * clusterId from either a lookup (projectId and instanceId translate to a single clusterId when
+   * an instance has only one cluster) or from {@link BigtableOptions#getClusterId()}.
+   */
+  public synchronized BigtableClusterName getClusterName() throws IOException {
+    if (this.clusterName == null) {
+      try (BigtableClusterUtilities util =
+          BigtableClusterUtilities.forInstance(options.getProjectId(), options.getInstanceId())) {
+        ListClustersResponse clusters = util.getClusters();
+        Preconditions.checkState(clusters.getClustersCount() == 1,
+          String.format(
+            "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
+            options.getProjectId(), options.getInstanceId(), clusters.getClustersCount()));
+        clusterName = new BigtableClusterName(clusters.getClusters(0).getName());
+      } catch (GeneralSecurityException e) {
+        throw new IOException("Could not get cluster Id.", e);
+      }
+    }
+    return clusterName;
   }
 
   /**
