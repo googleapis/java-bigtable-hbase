@@ -35,7 +35,7 @@ which makes it easy for development teams to get started.
   <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.2</artifactId>
-      <version>0.9.3</version>
+      <version>0.9.4</version>
   </dependency>
 
   <dependency>
