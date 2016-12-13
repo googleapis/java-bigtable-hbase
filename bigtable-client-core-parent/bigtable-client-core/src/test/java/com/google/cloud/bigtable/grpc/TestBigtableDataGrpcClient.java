@@ -140,8 +140,7 @@ public class TestBigtableDataGrpcClient {
     RetryOptions retryOptions =
         RetryOptionsUtil.createTestRetryOptions(nanoClock, allowRetriesWithoutTimestamp);
     BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
-    return new BigtableDataGrpcClient(mockChannelPool, executorService, options,
-        mockAsyncUtilities);
+    return new BigtableDataGrpcClient(executorService, options, mockAsyncUtilities);
   }
 
   @Test

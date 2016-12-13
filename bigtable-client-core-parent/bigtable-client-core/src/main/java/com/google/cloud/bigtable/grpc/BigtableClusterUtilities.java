@@ -161,6 +161,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @deprecated Use {@link #getCluster(String, String)} or {@link #getSingleCluster()} and then
    *             call {@link Cluster#getServeNodes()}.
    */
+  @Deprecated
   public int getClusterSize(String clusterId, String zoneId) {
     Cluster cluster = getCluster(clusterId, zoneId);
     String message = String.format("Cluster %s/%s was not found.", clusterId, zoneId);
@@ -326,7 +327,6 @@ public class BigtableClusterUtilities implements AutoCloseable {
 
   /**
    * Shuts down the connection to the admin API.
-   * @throws Exception
    */
   @Override
   public void close() {

@@ -23,9 +23,11 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.google.common.base.Objects;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -303,9 +305,8 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
     /**
      * Checks to see if the current {@link FlatRow.Cell}'s qualifier and timestamp are equal to the
-     * previous {@link FlatRow.Cell}'s. This method assumes that {@link #isSameFamily(String)} was
-     * called, and the {@link #previousCell} is not null and has the same family as the new cell.
-     * @param the new {@link FlatRow.Cell}
+     * previous {@link #previousNoLabelCell}'s. This method assumes that the family is the same
+     * and the {@link #previousNoLabelCell} is not null.
      * @return true if the new cell and old cell have logical equivalency.
      */
     private boolean isSameTimestampAndQualifier() {
@@ -358,11 +359,11 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     }
 
     /**
-     * This method flattens the {@link #familyMap} which has a map of Lists keyed by family name.
-     * The {@link #familyMap} TreeMap is sorted lexicographically, and each List is sorted by
+     * This method flattens the {@link #cells} which has a map of Lists keyed by family name.
+     * The {@link #cells} TreeMap is sorted lexicographically, and each List is sorted by
      * qualifier in lexicographically ascending order, and timestamp in descending order.
      *
-     * @return an array of HBase {@link Cell}s that is sorted by family asc, qualifier asc, timestamp desc.
+     * @return an array of HBase {@link FlatRow.Cell}s that is sorted by family asc, qualifier asc, timestamp desc.
      */
     private ImmutableList<FlatRow.Cell> flattenCells() {
       ImmutableList.Builder<FlatRow.Cell> combined = ImmutableList.builder();

@@ -159,13 +159,14 @@ public class BulkMutation {
     }
 
     /**
-     * Adds a {@link MutateRowsRequest.Entry} to the
-     * {@link com.google.bigtable.v2.MutateRowsRequest.Builder}. NOTE: Users have to make sure that
-     * this gets called in a thread safe way.
-     * @param entry The {@link MutateRowsRequest.Entry} to add
+     * Adds a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to the {@link
+     * com.google.bigtable.v2.MutateRowsRequest.Builder}. NOTE: Users have to make sure that this
+     * gets called in a thread safe way.
+     *
+     * @param entry The {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to add
      * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}
-     *         returns from the server. See {@link #addCallback(ListenableFuture)} for more
-     *         information about how the SettableFuture is set.
+     *     returns from the server. See {@link #addCallback(ListenableFuture)} for more information
+     *     about how the SettableFuture is set.
      */
     private ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
       Preconditions.checkNotNull(entry);

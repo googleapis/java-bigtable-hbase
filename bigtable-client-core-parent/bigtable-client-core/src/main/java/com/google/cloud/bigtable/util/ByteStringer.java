@@ -21,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import com.google.protobuf.ByteString;
 
 /**
- * Wrapper around {@link BigtableZeroCopyByteStringUtil} for cases where it's not available.
+ * Wrapper around {@link ZeroCopyByteStringUtil} for cases where it's not available.
  */
 public class ByteStringer {
   private static final Log LOG = LogFactory.getLog(ByteStringer.class);

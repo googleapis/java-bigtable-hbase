@@ -194,7 +194,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions) {
     this(
-        channelPool,
         retryExecutorService,
         bigtableOptions,
         new BigtableAsyncUtilities.Default(channelPool));
@@ -202,7 +201,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @VisibleForTesting
   BigtableDataGrpcClient(
-      ChannelPool channelPool,
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions,
       BigtableAsyncUtilities asyncUtilities) {
