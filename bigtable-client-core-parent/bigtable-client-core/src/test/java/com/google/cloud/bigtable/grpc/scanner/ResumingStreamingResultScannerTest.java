@@ -79,7 +79,7 @@ public class ResumingStreamingResultScannerTest {
   @Mock
   ResultScanner<FlatRow> mockScannerPostResume;
   @Mock
-  BigtableResultScannerFactory<ReadRowsRequest, FlatRow> mockScannerFactory;
+  BigtableResultScannerFactory<FlatRow> mockScannerFactory;
   @Mock
   Logger logger;
 

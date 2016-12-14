@@ -37,7 +37,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
   // Member variables from the constructor.
   private final ReadRowsRequestRetryHandler retryHandler;
-  private final BigtableResultScannerFactory<ReadRowsRequest, FlatRow> scannerFactory;
+  private final BigtableResultScannerFactory<FlatRow> scannerFactory;
   private final Logger logger;
   private final RpcMetrics rpcMetrics;
 
@@ -58,7 +58,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
    *          object to keep track of retries and failures.
    */
   public ResumingStreamingResultScanner(RetryOptions retryOptions, ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory<ReadRowsRequest, FlatRow> scannerFactory, RpcMetrics rpcMetrics) {
+      BigtableResultScannerFactory<FlatRow> scannerFactory, RpcMetrics rpcMetrics) {
     this(retryOptions, originalRequest, scannerFactory, rpcMetrics, LOG);
   }
 
@@ -66,7 +66,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   ResumingStreamingResultScanner(
       RetryOptions retryOptions,
       ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory<ReadRowsRequest, FlatRow> scannerFactory,
+      BigtableResultScannerFactory<FlatRow> scannerFactory,
       RpcMetrics rpcMetrics,
       Logger logger) {
     this.operationContext = rpcMetrics.timeOperation();
