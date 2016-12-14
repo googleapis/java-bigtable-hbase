@@ -36,7 +36,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 
 public class TestSnapshots extends AbstractTest {
@@ -52,10 +51,15 @@ public class TestSnapshots extends AbstractTest {
 
   @After
   public void cleanup() throws IOException {
+    if (IntegrationTests.isBigtable() && !Boolean.getBoolean("perform.snapshot.test")) {
+      return;
+    }
     try (Admin admin = getConnection().getAdmin()) {
       delete(admin, tableName);
       delete(admin, clonedTableName);
-      admin.deleteSnapshot(snapshotName);
+      if (!admin.listSnapshots(snapshotName).isEmpty()) {
+        admin.deleteSnapshot(snapshotName);
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
