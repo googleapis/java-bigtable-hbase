@@ -164,8 +164,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   // Member variables
   private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
-  private final BigtableResultScannerFactory<ReadRowsRequest, FlatRow> streamingScannerFactory =
-      new BigtableResultScannerFactory<ReadRowsRequest, FlatRow>() {
+  private final BigtableResultScannerFactory<FlatRow> streamingScannerFactory =
+      new BigtableResultScannerFactory<FlatRow>() {
         @Override
         public ResultScanner<FlatRow> createScanner(ReadRowsRequest request) {
           return streamRows(request);
