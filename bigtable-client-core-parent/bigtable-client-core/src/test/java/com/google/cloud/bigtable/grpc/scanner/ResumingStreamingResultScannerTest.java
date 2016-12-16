@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
@@ -199,7 +198,7 @@ public class ResumingStreamingResultScannerTest {
     }
 
     ReadRowsRequest expectedResumeRequest =
-        createRequest(createRowRangeOpenedStart(ByteString.copyFromUtf8("row2"), blank));
+        createRequest(createRowRangeOpenedStart(row2.getRowKey(), blank));
     if (numRowsLimit > 2) {
       expectedResumeRequest =
           expectedResumeRequest.toBuilder().setRowsLimit(numRowsLimit - 2).build();
@@ -219,9 +218,6 @@ public class ResumingStreamingResultScannerTest {
       afterFailureStub = afterFailureStub.thenReturn(mock);
     }
     afterFailureStub.thenReturn(mockScannerPostResume);
-
-    ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        originalRequest, mockScannerFactory, metrics, logger);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -246,6 +242,8 @@ public class ResumingStreamingResultScannerTest {
     when(mockScannerPostResume.next())
         .thenReturn(row3)
         .thenReturn(row4);
+
+    ResumingStreamingResultScanner scanner = createScanner(retryOptions, originalRequest);
 
     assertRowKey("row1", scanner.next());
     assertRowKey("row2", scanner.next());
@@ -301,8 +299,7 @@ public class ResumingStreamingResultScannerTest {
     when(mockScannerFactory.createScanner(any(ReadRowsRequest.class)))
         .thenReturn(mockScanner);
 
-    ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        readRowsRequest, mockScannerFactory, metrics, logger);
+    ResumingStreamingResultScanner scanner = createScanner(retryOptions, readRowsRequest);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -344,19 +341,20 @@ public class ResumingStreamingResultScannerTest {
     ResultScanner<FlatRow> afterTimeoutMock = mock(ResultScanner.class);
     ResultScanner<FlatRow> afterError2Mock = mock(ResultScanner.class);
 
-    ReadRowsRequest expectedResumeRequest =
-        createRequest(createRowRangeOpenedStart(ByteString.copyFromUtf8("row1"), blank));
+    ReadRowsRequest expectedResumeRequestRow1 =
+        createRequest(createRowRangeOpenedStart(row1.getRowKey(), blank));
 
-    when(mockScannerFactory.createScanner(eq(expectedResumeRequest)))
+    when(mockScannerFactory.createScanner(eq(expectedResumeRequestRow1)))
         .thenReturn(afterError1Mock, afterTimeoutMock);
 
-    expectedResumeRequest =
-        createRequest(createRowRangeOpenedStart(ByteString.copyFromUtf8("row2"), blank));
-    when(mockScannerFactory.createScanner(eq(expectedResumeRequest))).thenReturn(afterError2Mock,
-      mockScannerPostResume);
+    ReadRowsRequest expectedResumeRequestRow2 =
+        createRequest(createRowRangeOpenedStart(row2.getRowKey(), blank));
 
-    ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        readRowsRequest, mockScannerFactory, metrics, logger);
+    when(mockScannerFactory.createScanner(eq(expectedResumeRequestRow2)))
+        .thenReturn(afterError2Mock, mockScannerPostResume);
+    final ReadRowsRequest request = readRowsRequest;
+
+    ResumingStreamingResultScanner scanner = createScanner(retryOptions, request);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -385,129 +383,12 @@ public class ResumingStreamingResultScannerTest {
 
     verify(mockScannerFactory, times(1)).createScanner(eq(readRowsRequest));
     verify(mockScanner, times(1)).close();
-    verify(mockScannerFactory, times(2)).createScanner(eq(expectedResumeRequest));
+    verify(mockScannerFactory, times(2)).createScanner(eq(expectedResumeRequestRow1));
     scanner.close();
   }
 
-  /**
-   * Test a single, full table scan scenario for {@Link ResumingStreamingResultScanner#filterRows()}
-   * .
-   * @throws IOException
-   */
-  @Test
-  public void test_filterRows_testAllRange() throws IOException{
-    ByteString key1 = ByteString.copyFrom("row1".getBytes());
-
-    FlatRow row1 = buildRow("row1");
-    FlatRow row2 = buildRow("row2");
-
-    when(mockScannerFactory.createScanner(any(ReadRowsRequest.class))).thenReturn(mockScanner);
-
-    try (ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        readRowsRequest, mockScannerFactory, metrics, logger)) {
-
-      verify(mockScannerFactory, times(1))
-          .createScanner(eq(readRowsRequest));
-
-      when(mockScanner.next())
-          .thenReturn(row1)
-          .thenThrow(new IOExceptionWithStatus("Test", Status.INTERNAL))
-          .thenReturn(row2);
-
-      scanner.next();
-      scanner.next();
-
-      verify(mockScannerFactory, times(1)).createScanner(
-          eq(createRequest(createRowRangeOpenedStart(key1, blank))));
-    }
-  }
-
-
-  /**
-   * Test rowKeys scenario for {@Link ResumingStreamingResultScanner#filterRows()}.
-   * @throws IOException
-   */
-  @Test
-  public void test_filterRows_rowKeys() throws IOException{
-    ByteString key1 = ByteString.copyFrom("row1".getBytes());
-    ByteString key2 = ByteString.copyFrom("row2".getBytes());
-    ByteString key3 = ByteString.copyFrom("row3".getBytes());
-
-    FlatRow row1 = buildRow("row1");
-    FlatRow row2 = buildRow("row2");
-
-    when(mockScannerFactory.createScanner(any(ReadRowsRequest.class))).thenReturn(mockScanner);
-
-    ReadRowsRequest originalRequest = createKeysRequest(Arrays.asList(key1, key2, key3));
-    try (ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        originalRequest, mockScannerFactory, metrics, logger)) {
-
-      when(mockScanner.next())
-          .thenThrow(new IOExceptionWithStatus("Test", Status.INTERNAL))
-          .thenReturn(row1)
-          .thenThrow(new IOExceptionWithStatus("Test", Status.INTERNAL))
-          .thenReturn(row2);
-
-      verify(mockScannerFactory, times(1)).createScanner(eq(originalRequest));
-      scanner.next();
-      verify(mockScannerFactory, times(2)).createScanner(eq(originalRequest));
-
-      scanner.next();
-
-      verify(mockScannerFactory, times(1))
-          .createScanner(eq(createKeysRequest(Arrays.asList(key2, key3))));
-    }
-  }
-
-  /**
-   * Test multiple rowset filter scenarios for {@Link ResumingStreamingResultScanner#filterRows()}.
-   * @throws IOException
-   */
-  @Test
-  public void test_filterRows_multiRowSetFilters() throws IOException{
-    ByteString key1 = ByteString.copyFrom("row1".getBytes());
-    ByteString key2 = ByteString.copyFrom("row2".getBytes());
-    ByteString key3 = ByteString.copyFrom("row3".getBytes());
-
-    FlatRow row1 = buildRow("row1");
-    FlatRow row2 = buildRow("row2");
-
-    when(mockScannerFactory.createScanner(any(ReadRowsRequest.class))).thenReturn(mockScanner);
-
-    RowSet fullRowSet = RowSet.newBuilder()
-        .addAllRowKeys(Arrays.asList(key1, key2, key3)) // row1 should be filtered out
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(blank).setEndKeyClosed(key1)) // should be filtered out
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(blank).setEndKeyOpen(key1)) // should be filtered out
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyOpen(key2)) // should stay
-        .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key1).setEndKeyOpen(key2)) // should be converted (key1 -> key2)
-        .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key1).setEndKeyClosed(key2)) // should be converted (key1 -> key2]
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key2).setEndKeyOpen(key3)) // should stay
-        .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key2).setEndKeyOpen(key3)) // should stay
-        .build();
-
-    RowSet filteredRowSet = RowSet.newBuilder()
-        .addAllRowKeys(Arrays.asList(key2, key3)) // row1 should be filtered out
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyOpen(key2)) // should stay
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyOpen(key2)) // should be converted (key1 -> key2)
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyClosed(key2)) // should be converted (key1 -> key2]
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key2).setEndKeyOpen(key3)) // should stay
-        .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key2).setEndKeyOpen(key3)) // should stay
-        .build();
-
-    ReadRowsRequest originalRequest = ReadRowsRequest.newBuilder().setRows(fullRowSet).build();
-    ReadRowsRequest filteredRequest = ReadRowsRequest.newBuilder().setRows(filteredRowSet).build();
-    try (ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        originalRequest, mockScannerFactory, metrics, logger)) {
-
-      when(mockScanner.next())
-          .thenReturn(row1)
-          .thenThrow(new IOExceptionWithStatus("Test", Status.INTERNAL))
-          .thenReturn(row2);
-
-      scanner.next();
-      verify(mockScannerFactory, times(1)).createScanner(eq(originalRequest));
-      scanner.next();
-      verify(mockScannerFactory, times(1)).createScanner(eq(filteredRequest));
-    }
+  private ResumingStreamingResultScanner createScanner(RetryOptions retryOptions,
+      ReadRowsRequest request) {
+    return new ResumingStreamingResultScanner(retryOptions, request, mockScannerFactory, metrics, logger);
   }
 }
