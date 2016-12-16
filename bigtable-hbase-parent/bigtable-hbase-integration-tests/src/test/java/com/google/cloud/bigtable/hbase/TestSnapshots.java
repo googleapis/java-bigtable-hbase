@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 
 public class TestSnapshots extends AbstractTest {
@@ -51,7 +52,7 @@ public class TestSnapshots extends AbstractTest {
 
   @After
   public void cleanup() throws IOException {
-    if (IntegrationTests.isBigtable() && !Boolean.getBoolean("perform.snapshot.test")) {
+    if (IntegrationTests.isBigtable() && !enableTestForBigtable()) {
       return;
     }
     try (Admin admin = getConnection().getAdmin()) {
@@ -65,6 +66,10 @@ public class TestSnapshots extends AbstractTest {
     }
   }
 
+  protected boolean enableTestForBigtable() {
+    return false;
+  }
+
   private void delete(Admin admin, TableName tableName) throws IOException {
     if (admin.tableExists(tableName)) {
       admin.disableTable(tableName);
@@ -73,8 +78,9 @@ public class TestSnapshots extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void testSnapshot() throws IOException {
-    if (IntegrationTests.isBigtable() && !Boolean.getBoolean("perform.snapshot.test")) {
+    if (IntegrationTests.isBigtable() && !enableTestForBigtable()) {
       return;
     }
     try (Admin admin = getConnection().getAdmin()) {

@@ -9,7 +9,7 @@ public interface ListTablesResponseOrBuilder extends
 
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -18,7 +18,7 @@ public interface ListTablesResponseOrBuilder extends
       getTablesList();
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -26,7 +26,7 @@ public interface ListTablesResponseOrBuilder extends
   com.google.bigtable.admin.v2.Table getTables(int index);
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -34,7 +34,7 @@ public interface ListTablesResponseOrBuilder extends
   int getTablesCount();
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -43,7 +43,7 @@ public interface ListTablesResponseOrBuilder extends
       getTablesOrBuilderList();
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>

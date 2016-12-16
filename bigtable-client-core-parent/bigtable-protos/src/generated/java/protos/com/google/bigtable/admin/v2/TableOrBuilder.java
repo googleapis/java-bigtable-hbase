@@ -9,10 +9,10 @@ public interface TableOrBuilder extends
 
   /**
    * <pre>
-   * (`OutputOnly`)
    * The unique name of the table. Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
-   * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
+   * Views: NAME_ONLY, SCHEMA_VIEW, REPLICATION_VIEW, FULL
+   * &#64;OutputOnly
    * </pre>
    *
    * <code>optional string name = 1;</code>
@@ -20,10 +20,10 @@ public interface TableOrBuilder extends
   java.lang.String getName();
   /**
    * <pre>
-   * (`OutputOnly`)
    * The unique name of the table. Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
-   * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
+   * Views: NAME_ONLY, SCHEMA_VIEW, REPLICATION_VIEW, FULL
+   * &#64;OutputOnly
    * </pre>
    *
    * <code>optional string name = 1;</code>
@@ -33,9 +33,9 @@ public interface TableOrBuilder extends
 
   /**
    * <pre>
-   * (`CreationOnly`)
    * The column families configured for this table, mapped by column family ID.
-   * Views: `SCHEMA_VIEW`, `FULL`
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
    * </pre>
    *
    * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
@@ -43,9 +43,9 @@ public interface TableOrBuilder extends
   int getColumnFamiliesCount();
   /**
    * <pre>
-   * (`CreationOnly`)
    * The column families configured for this table, mapped by column family ID.
-   * Views: `SCHEMA_VIEW`, `FULL`
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
    * </pre>
    *
    * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
@@ -60,9 +60,9 @@ public interface TableOrBuilder extends
   getColumnFamilies();
   /**
    * <pre>
-   * (`CreationOnly`)
    * The column families configured for this table, mapped by column family ID.
-   * Views: `SCHEMA_VIEW`, `FULL`
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
    * </pre>
    *
    * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
@@ -71,9 +71,9 @@ public interface TableOrBuilder extends
   getColumnFamiliesMap();
   /**
    * <pre>
-   * (`CreationOnly`)
    * The column families configured for this table, mapped by column family ID.
-   * Views: `SCHEMA_VIEW`, `FULL`
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
    * </pre>
    *
    * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
@@ -84,9 +84,9 @@ public interface TableOrBuilder extends
       com.google.bigtable.admin.v2.ColumnFamily defaultValue);
   /**
    * <pre>
-   * (`CreationOnly`)
    * The column families configured for this table, mapped by column family ID.
-   * Views: `SCHEMA_VIEW`, `FULL`
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
    * </pre>
    *
    * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
@@ -97,11 +97,11 @@ public interface TableOrBuilder extends
 
   /**
    * <pre>
-   * (`CreationOnly`)
-   * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
+   * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
    * this table. Timestamps not matching the granularity will be rejected.
-   * If unspecified at creation time, the value will be set to `MILLIS`.
-   * Views: `SCHEMA_VIEW`, `FULL`
+   * If unspecified at creation time, the value will be set to MILLIS.
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
    * </pre>
    *
    * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
@@ -109,11 +109,11 @@ public interface TableOrBuilder extends
   int getGranularityValue();
   /**
    * <pre>
-   * (`CreationOnly`)
-   * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
+   * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
    * this table. Timestamps not matching the granularity will be rejected.
-   * If unspecified at creation time, the value will be set to `MILLIS`.
-   * Views: `SCHEMA_VIEW`, `FULL`
+   * If unspecified at creation time, the value will be set to MILLIS.
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
    * </pre>
    *
    * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>

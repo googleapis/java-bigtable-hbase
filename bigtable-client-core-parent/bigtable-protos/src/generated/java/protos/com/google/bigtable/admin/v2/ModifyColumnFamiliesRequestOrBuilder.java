@@ -10,8 +10,7 @@ public interface ModifyColumnFamiliesRequestOrBuilder extends
   /**
    * <pre>
    * The unique name of the table whose families should be modified.
-   * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
    * <code>optional string name = 1;</code>
@@ -20,8 +19,7 @@ public interface ModifyColumnFamiliesRequestOrBuilder extends
   /**
    * <pre>
    * The unique name of the table whose families should be modified.
-   * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
    * <code>optional string name = 1;</code>

@@ -81,8 +81,7 @@ public  final class DeleteTableRequest extends
   /**
    * <pre>
    * The unique name of the table to be deleted.
-   * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
    * <code>optional string name = 1;</code>
@@ -102,8 +101,7 @@ public  final class DeleteTableRequest extends
   /**
    * <pre>
    * The unique name of the table to be deleted.
-   * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
    * <code>optional string name = 1;</code>
@@ -399,8 +397,7 @@ public  final class DeleteTableRequest extends
     /**
      * <pre>
      * The unique name of the table to be deleted.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>
@@ -420,8 +417,7 @@ public  final class DeleteTableRequest extends
     /**
      * <pre>
      * The unique name of the table to be deleted.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>
@@ -442,8 +438,7 @@ public  final class DeleteTableRequest extends
     /**
      * <pre>
      * The unique name of the table to be deleted.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>
@@ -461,8 +456,7 @@ public  final class DeleteTableRequest extends
     /**
      * <pre>
      * The unique name of the table to be deleted.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>
@@ -476,8 +470,7 @@ public  final class DeleteTableRequest extends
     /**
      * <pre>
      * The unique name of the table to be deleted.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>

@@ -129,8 +129,7 @@ public  final class DropRowRangeRequest extends
   /**
    * <pre>
    * The unique name of the table on which to drop a range of rows.
-   * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
    * <code>optional string name = 1;</code>
@@ -150,8 +149,7 @@ public  final class DropRowRangeRequest extends
   /**
    * <pre>
    * The unique name of the table on which to drop a range of rows.
-   * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
    * <code>optional string name = 1;</code>
@@ -561,8 +559,7 @@ public  final class DropRowRangeRequest extends
     /**
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>
@@ -582,8 +579,7 @@ public  final class DropRowRangeRequest extends
     /**
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>
@@ -604,8 +600,7 @@ public  final class DropRowRangeRequest extends
     /**
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>
@@ -623,8 +618,7 @@ public  final class DropRowRangeRequest extends
     /**
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>
@@ -638,8 +632,7 @@ public  final class DropRowRangeRequest extends
     /**
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
      * <code>optional string name = 1;</code>
