@@ -62,6 +62,9 @@ public class Export {
   final static String NAME = "export";
   final static String RAW_SCAN = "hbase.mapreduce.include.deleted.rows";
   final static String EXPORT_BATCHING = "hbase.export.scanner.batch";
+  // In addition to TableInputFormat.SCAN_COLUMN_FAMILY, which allows a user to specify a single column,
+  // add the ability to specify multiple column families via comma separated list
+  final static String SCAN_COLUMN_FAMILIES = "hbase.mapreduce.scan.column.families";
 
   /**
    * Sets up the actual job.
@@ -121,6 +124,10 @@ public class Export {
     if (conf.get(TableInputFormat.SCAN_COLUMN_FAMILY) != null) {
       s.addFamily(Bytes.toBytes(conf.get(TableInputFormat.SCAN_COLUMN_FAMILY)));
     }
+    // Add additional comma-separated families
+    for (String family : conf.getStrings(SCAN_COLUMN_FAMILIES)) {
+      s.addFamily(Bytes.toBytes(family));
+    }
     // Set RowFilter or Prefix Filter if applicable.
     Filter exportFilter = getExportFilter(args);
     if (exportFilter!= null) {
@@ -174,6 +181,7 @@ public class Export {
     System.err.println("  Additionally, the following SCAN properties can be specified");
     System.err.println("  to control/limit what is exported..");
     System.err.println("   -D " + TableInputFormat.SCAN_COLUMN_FAMILY + "=<familyName>");
+    System.err.println("   -D " + SCAN_COLUMN_FAMILIES + "=<familyName>[,<familyName2>...]");
     System.err.println("   -D " + RAW_SCAN + "=true");
     System.err.println("   -D " + TableInputFormat.SCAN_ROW_START + "=<ROWSTART>");
     System.err.println("   -D " + TableInputFormat.SCAN_ROW_STOP + "=<ROWSTOP>");
