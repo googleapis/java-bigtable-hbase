@@ -94,7 +94,7 @@ public  final class ListTablesResponse extends
   private java.util.List<com.google.bigtable.admin.v2.Table> tables_;
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -104,7 +104,7 @@ public  final class ListTablesResponse extends
   }
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -115,7 +115,7 @@ public  final class ListTablesResponse extends
   }
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -125,7 +125,7 @@ public  final class ListTablesResponse extends
   }
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -135,7 +135,7 @@ public  final class ListTablesResponse extends
   }
   /**
    * <pre>
-   * The tables present in the requested instance.
+   * The tables present in the requested cluster.
    * </pre>
    *
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -537,7 +537,7 @@ public  final class ListTablesResponse extends
 
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -551,7 +551,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -565,7 +565,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -579,7 +579,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -600,7 +600,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -618,7 +618,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -638,7 +638,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -659,7 +659,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -677,7 +677,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -695,7 +695,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -714,7 +714,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -731,7 +731,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -748,7 +748,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -759,7 +759,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -773,7 +773,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -788,7 +788,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -799,7 +799,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
@@ -811,7 +811,7 @@ public  final class ListTablesResponse extends
     }
     /**
      * <pre>
-     * The tables present in the requested instance.
+     * The tables present in the requested cluster.
      * </pre>
      *
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>

@@ -44,11 +44,6 @@ public final class TableProto {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_GcRule_Union_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_google_bigtable_admin_v2_Snapshot_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_google_bigtable_admin_v2_Snapshot_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -61,36 +56,29 @@ public final class TableProto {
       "\n$google/bigtable/admin/v2/table.proto\022\030" +
       "google.bigtable.admin.v2\032\034google/api/ann" +
       "otations.proto\032\036google/protobuf/duration" +
-      ".proto\032\037google/protobuf/timestamp.proto\"" +
-      "\240\003\n\005Table\022\014\n\004name\030\001 \001(\t\022L\n\017column_famili" +
-      "es\030\003 \003(\01323.google.bigtable.admin.v2.Tabl" +
-      "e.ColumnFamiliesEntry\022I\n\013granularity\030\004 \001" +
-      "(\01624.google.bigtable.admin.v2.Table.Time" +
-      "stampGranularity\032]\n\023ColumnFamiliesEntry\022" +
-      "\013\n\003key\030\001 \001(\t\0225\n\005value\030\002 \001(\0132&.google.big",
-      "table.admin.v2.ColumnFamily:\0028\001\"I\n\024Times" +
-      "tampGranularity\022%\n!TIMESTAMP_GRANULARITY" +
-      "_UNSPECIFIED\020\000\022\n\n\006MILLIS\020\001\"F\n\004View\022\024\n\020VI" +
-      "EW_UNSPECIFIED\020\000\022\r\n\tNAME_ONLY\020\001\022\017\n\013SCHEM" +
-      "A_VIEW\020\002\022\010\n\004FULL\020\004\"A\n\014ColumnFamily\0221\n\007gc" +
-      "_rule\030\001 \001(\0132 .google.bigtable.admin.v2.G" +
-      "cRule\"\325\002\n\006GcRule\022\032\n\020max_num_versions\030\001 \001" +
-      "(\005H\000\022,\n\007max_age\030\002 \001(\0132\031.google.protobuf." +
-      "DurationH\000\022E\n\014intersection\030\003 \001(\0132-.googl" +
-      "e.bigtable.admin.v2.GcRule.IntersectionH",
-      "\000\0227\n\005union\030\004 \001(\0132&.google.bigtable.admin" +
-      ".v2.GcRule.UnionH\000\032?\n\014Intersection\022/\n\005ru" +
-      "les\030\001 \003(\0132 .google.bigtable.admin.v2.GcR" +
-      "ule\0328\n\005Union\022/\n\005rules\030\001 \003(\0132 .google.big" +
-      "table.admin.v2.GcRuleB\006\n\004rule\"\312\001\n\010Snapsh" +
-      "ot\022\014\n\004name\030\001 \001(\t\0225\n\014source_table\030\002 \001(\0132\037" +
-      ".google.bigtable.admin.v2.Table\022\027\n\017data_" +
-      "size_bytes\030\003 \001(\003\022/\n\013create_time\030\004 \001(\0132\032." +
-      "google.protobuf.Timestamp\022/\n\013delete_time" +
-      "\030\005 \001(\0132\032.google.protobuf.TimestampBq\n\034co",
-      "m.google.bigtable.admin.v2B\nTableProtoP\001" +
-      "ZCgoogle.golang.org/genproto/googleapis/" +
-      "bigtable/admin/v2/table;tableb\006proto3"
+      ".proto\"\240\003\n\005Table\022\014\n\004name\030\001 \001(\t\022L\n\017column" +
+      "_families\030\003 \003(\01323.google.bigtable.admin." +
+      "v2.Table.ColumnFamiliesEntry\022I\n\013granular" +
+      "ity\030\004 \001(\01624.google.bigtable.admin.v2.Tab" +
+      "le.TimestampGranularity\032]\n\023ColumnFamilie" +
+      "sEntry\022\013\n\003key\030\001 \001(\t\0225\n\005value\030\002 \001(\0132&.goo" +
+      "gle.bigtable.admin.v2.ColumnFamily:\0028\001\"I",
+      "\n\024TimestampGranularity\022%\n!TIMESTAMP_GRAN" +
+      "ULARITY_UNSPECIFIED\020\000\022\n\n\006MILLIS\020\001\"F\n\004Vie" +
+      "w\022\024\n\020VIEW_UNSPECIFIED\020\000\022\r\n\tNAME_ONLY\020\001\022\017" +
+      "\n\013SCHEMA_VIEW\020\002\022\010\n\004FULL\020\004\"A\n\014ColumnFamil" +
+      "y\0221\n\007gc_rule\030\001 \001(\0132 .google.bigtable.adm" +
+      "in.v2.GcRule\"\325\002\n\006GcRule\022\032\n\020max_num_versi" +
+      "ons\030\001 \001(\005H\000\022,\n\007max_age\030\002 \001(\0132\031.google.pr" +
+      "otobuf.DurationH\000\022E\n\014intersection\030\003 \001(\0132" +
+      "-.google.bigtable.admin.v2.GcRule.Inters" +
+      "ectionH\000\0227\n\005union\030\004 \001(\0132&.google.bigtabl",
+      "e.admin.v2.GcRule.UnionH\000\032?\n\014Intersectio" +
+      "n\022/\n\005rules\030\001 \003(\0132 .google.bigtable.admin" +
+      ".v2.GcRule\0328\n\005Union\022/\n\005rules\030\001 \003(\0132 .goo" +
+      "gle.bigtable.admin.v2.GcRuleB\006\n\004ruleB,\n\034" +
+      "com.google.bigtable.admin.v2B\nTableProto" +
+      "P\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -105,7 +93,6 @@ public final class TableProto {
         new com.google.protobuf.Descriptors.FileDescriptor[] {
           com.google.api.AnnotationsProto.getDescriptor(),
           com.google.protobuf.DurationProto.getDescriptor(),
-          com.google.protobuf.TimestampProto.getDescriptor(),
         }, assigner);
     internal_static_google_bigtable_admin_v2_Table_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -143,15 +130,8 @@ public final class TableProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_GcRule_Union_descriptor,
         new java.lang.String[] { "Rules", });
-    internal_static_google_bigtable_admin_v2_Snapshot_descriptor =
-      getDescriptor().getMessageTypes().get(3);
-    internal_static_google_bigtable_admin_v2_Snapshot_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_google_bigtable_admin_v2_Snapshot_descriptor,
-        new java.lang.String[] { "Name", "SourceTable", "DataSizeBytes", "CreateTime", "DeleteTime", });
     com.google.api.AnnotationsProto.getDescriptor();
     com.google.protobuf.DurationProto.getDescriptor();
-    com.google.protobuf.TimestampProto.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

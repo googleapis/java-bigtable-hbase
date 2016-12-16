@@ -10,8 +10,7 @@ public interface GetTableRequestOrBuilder extends
   /**
    * <pre>
    * The unique name of the requested table.
-   * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
    * <code>optional string name = 1;</code>
@@ -20,8 +19,7 @@ public interface GetTableRequestOrBuilder extends
   /**
    * <pre>
    * The unique name of the requested table.
-   * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
    * <code>optional string name = 1;</code>

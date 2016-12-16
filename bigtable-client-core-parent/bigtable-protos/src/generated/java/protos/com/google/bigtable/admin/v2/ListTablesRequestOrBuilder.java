@@ -10,7 +10,7 @@ public interface ListTablesRequestOrBuilder extends
   /**
    * <pre>
    * The unique name of the instance for which tables should be listed.
-   * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
    * <code>optional string parent = 1;</code>
@@ -19,7 +19,7 @@ public interface ListTablesRequestOrBuilder extends
   /**
    * <pre>
    * The unique name of the instance for which tables should be listed.
-   * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
    * <code>optional string parent = 1;</code>
