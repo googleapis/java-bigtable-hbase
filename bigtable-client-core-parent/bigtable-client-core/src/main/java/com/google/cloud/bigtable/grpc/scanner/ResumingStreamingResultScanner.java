@@ -124,7 +124,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     }
   }
 
-  private synchronized ReadRowsRequest handleScanTimeout(ScanTimeoutException rte)
+  private ReadRowsRequest handleScanTimeout(ScanTimeoutException rte)
       throws IOException {
     logger.info("The client could not get a response in %d ms. Retrying the scan.",
       retryOptions.getReadPartialRowTimeoutMillis());
@@ -144,7 +144,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     }
   }
 
-  private synchronized ReadRowsRequest handleIOException(IOExceptionWithStatus ioe)
+  private ReadRowsRequest handleIOException(IOExceptionWithStatus ioe)
       throws IOException {
     Status.Code code = ioe.getStatus().getCode();
     if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)) {
