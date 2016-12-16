@@ -28,7 +28,8 @@ import com.google.common.annotations.VisibleForTesting;
 import io.grpc.Status;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A ResultScanner that attempts to resume the readRows call when it encounters gRPC INTERNAL
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author sduskis
  * @version $Id: $Id
  */
+@NotThreadSafe
 public class ResumingStreamingResultScanner extends AbstractBigtableResultScanner {
 
   private static final Logger LOG = new Logger(ResumingStreamingResultScanner.class);
@@ -54,7 +56,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   private RetryOptions retryOptions;
 
   // The number of times we've retried after a timeout
-  private AtomicInteger timeoutRetryCount = null;
+  private int timeoutRetryCount = 0;
 
   private BackOff currentErrorBackoff;
   private Sleeper sleeper = Sleeper.DEFAULT;
@@ -71,10 +73,8 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
    *          object to keep track of retries and failures.
    */
   public ResumingStreamingResultScanner(RetryOptions retryOptions, ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory<FlatRow> scannerFactory,
-      RpcMetrics rpcMetrics) {
-    this(retryOptions, originalRequest, scannerFactory, rpcMetrics,
-        new ReadRowsRequestManager(originalRequest), LOG);
+      BigtableResultScannerFactory<FlatRow> scannerFactory, RpcMetrics rpcMetrics) {
+    this(retryOptions, originalRequest, scannerFactory, rpcMetrics, LOG);
   }
 
   @VisibleForTesting
@@ -83,11 +83,10 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       ReadRowsRequest originalRequest,
       BigtableResultScannerFactory<FlatRow> scannerFactory,
       RpcMetrics rpcMetrics,
-      ReadRowsRequestManager requestManager,
       Logger logger) {
     this.operationContext = rpcMetrics.timeOperation();
     this.retryOptions = retryOptions;
-    this.requestManager = requestManager;
+    this.requestManager =  new ReadRowsRequestManager(originalRequest);
     this.scannerFactory = scannerFactory;
     this.logger = logger;
     this.rpcMetrics = rpcMetrics;
@@ -106,7 +105,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
           requestManager.updateLastFoundKey(result.getRowKey());
           // We've had at least one successful RPC, reset the backoff and retry counter
           currentErrorBackoff = null;
-          timeoutRetryCount = null;
+          timeoutRetryCount = 0;
         }
         return result;
       } catch (ScanTimeoutException rte) {
@@ -125,8 +124,8 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     }
   }
 
-
-  private ReadRowsRequest handleScanTimeout(ScanTimeoutException rte) throws IOException {
+  private synchronized ReadRowsRequest handleScanTimeout(ScanTimeoutException rte)
+      throws IOException {
     logger.info("The client could not get a response in %d ms. Retrying the scan.",
       retryOptions.getReadPartialRowTimeoutMillis());
 
@@ -135,13 +134,9 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     // and won't retry after the next error.
     currentErrorBackoff = null;
 
-    if (timeoutRetryCount == null) {
-      timeoutRetryCount = new AtomicInteger();
-    }
-
     if (retryOptions.enableRetries()
-        && timeoutRetryCount.incrementAndGet() <= retryOptions.getMaxScanTimeoutRetries()) {
-      return requestManager.getUpdatedRequest();
+        && ++timeoutRetryCount <= retryOptions.getMaxScanTimeoutRetries()) {
+      return requestManager.buildUpdatedRequest();
     } else {
       rpcMetrics.markRetriesExhasted();
       throw new BigtableRetriesExhaustedException(
@@ -149,14 +144,14 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     }
   }
 
-  private ReadRowsRequest handleIOException(IOExceptionWithStatus ioe) throws IOException {
+  private synchronized ReadRowsRequest handleIOException(IOExceptionWithStatus ioe)
+      throws IOException {
     Status.Code code = ioe.getStatus().getCode();
     if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)) {
       rpcMetrics.markFailure();
       throw ioe;
     }
 
-    logger.info("Reissuing scan after receiving error with status: %s.", ioe, code.name());
     if (currentErrorBackoff == null) {
       currentErrorBackoff = retryOptions.createBackoff();
     }
@@ -166,8 +161,9 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", ioe);
     }
 
+    logger.info("Reissuing scan after receiving error with status: %s.", ioe, code.name());
     sleep(nextBackOffMillis);
-    return requestManager.getUpdatedRequest();
+    return requestManager.buildUpdatedRequest();
   }
 
 

@@ -81,8 +81,6 @@ public class ResumingStreamingResultScannerTest {
   BigtableResultScannerFactory<FlatRow> mockScannerFactory;
   @Mock
   Logger logger;
-  @Mock
-  ReadRowsRequestManager mockReadRowsRequestManager;
 
   static BigtableAsyncRpc.RpcMetrics metrics =
       BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.METHOD_READ_ROWS);
@@ -200,7 +198,7 @@ public class ResumingStreamingResultScannerTest {
     }
 
     ReadRowsRequest expectedResumeRequest =
-        createRequest(createRowRangeOpenedStart(ByteString.copyFromUtf8("row2"), blank));
+        createRequest(createRowRangeOpenedStart(row2.getRowKey(), blank));
     if (numRowsLimit > 2) {
       expectedResumeRequest =
           expectedResumeRequest.toBuilder().setRowsLimit(numRowsLimit - 2).build();
@@ -245,9 +243,7 @@ public class ResumingStreamingResultScannerTest {
         .thenReturn(row3)
         .thenReturn(row4);
 
-    when(this.mockReadRowsRequestManager.getUpdatedRequest()).thenReturn(expectedResumeRequest);
-    ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        originalRequest, mockScannerFactory, metrics, mockReadRowsRequestManager, logger);
+    ResumingStreamingResultScanner scanner = createScanner(retryOptions, originalRequest);
 
     assertRowKey("row1", scanner.next());
     assertRowKey("row2", scanner.next());
@@ -303,8 +299,7 @@ public class ResumingStreamingResultScannerTest {
     when(mockScannerFactory.createScanner(any(ReadRowsRequest.class)))
         .thenReturn(mockScanner);
 
-    ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        readRowsRequest, mockScannerFactory, metrics, mockReadRowsRequestManager, logger);
+    ResumingStreamingResultScanner scanner = createScanner(retryOptions, readRowsRequest);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -346,18 +341,20 @@ public class ResumingStreamingResultScannerTest {
     ResultScanner<FlatRow> afterTimeoutMock = mock(ResultScanner.class);
     ResultScanner<FlatRow> afterError2Mock = mock(ResultScanner.class);
 
-    ReadRowsRequest expectedResumeRequest =
-        createRequest(createRowRangeOpenedStart(ByteString.copyFromUtf8("row1"), blank));
+    ReadRowsRequest expectedResumeRequestRow1 =
+        createRequest(createRowRangeOpenedStart(row1.getRowKey(), blank));
 
-    when(mockScannerFactory.createScanner(eq(expectedResumeRequest)))
+    when(mockScannerFactory.createScanner(eq(expectedResumeRequestRow1)))
         .thenReturn(afterError1Mock, afterTimeoutMock);
 
-    expectedResumeRequest =
-        createRequest(createRowRangeOpenedStart(ByteString.copyFromUtf8("row2"), blank));
-    when(mockScannerFactory.createScanner(eq(expectedResumeRequest))).thenReturn(afterError2Mock,
-      mockScannerPostResume);
+    ReadRowsRequest expectedResumeRequestRow2 =
+        createRequest(createRowRangeOpenedStart(row2.getRowKey(), blank));
 
-    ResumingStreamingResultScanner scanner = createScanner();
+    when(mockScannerFactory.createScanner(eq(expectedResumeRequestRow2)))
+        .thenReturn(afterError2Mock, mockScannerPostResume);
+    final ReadRowsRequest request = readRowsRequest;
+
+    ResumingStreamingResultScanner scanner = createScanner(retryOptions, request);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -378,9 +375,6 @@ public class ResumingStreamingResultScannerTest {
     when(mockScannerPostResume.next())
         .thenReturn(row3)
         .thenReturn(row4);
-    when(mockReadRowsRequestManager.getUpdatedRequest())
-        .thenReturn(expectedResumeRequest)
-        .thenReturn(expectedResumeRequest);
 
     assertRowKey("row1", scanner.next());
     assertRowKey("row2", scanner.next());
@@ -389,13 +383,12 @@ public class ResumingStreamingResultScannerTest {
 
     verify(mockScannerFactory, times(1)).createScanner(eq(readRowsRequest));
     verify(mockScanner, times(1)).close();
-    verify(mockScannerFactory, times(2)).createScanner(eq(expectedResumeRequest));
+    verify(mockScannerFactory, times(2)).createScanner(eq(expectedResumeRequestRow1));
     scanner.close();
   }
 
-  private ResumingStreamingResultScanner createScanner() {
-    return new ResumingStreamingResultScanner(retryOptions, readRowsRequest, mockScannerFactory,
-        metrics, mockReadRowsRequestManager, logger);
+  private ResumingStreamingResultScanner createScanner(RetryOptions retryOptions,
+      ReadRowsRequest request) {
+    return new ResumingStreamingResultScanner(retryOptions, request, mockScannerFactory, metrics, logger);
   }
-
 }

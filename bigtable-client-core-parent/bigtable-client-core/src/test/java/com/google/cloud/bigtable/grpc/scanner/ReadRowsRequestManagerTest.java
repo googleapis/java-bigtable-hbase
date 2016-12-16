@@ -79,7 +79,7 @@ public class ReadRowsRequestManagerTest {
 
     underTest.updateLastFoundKey(key1);
     Assert.assertEquals(createRequest(createRowRangeOpenedStart(key1, ByteString.EMPTY)),
-      underTest.getUpdatedRequest());
+      underTest.buildUpdatedRequest());
   }
 
   /**
@@ -96,11 +96,11 @@ public class ReadRowsRequestManagerTest {
 
     ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
 
-    Assert.assertEquals(originalRequest, underTest.getUpdatedRequest());
+    Assert.assertEquals(originalRequest, underTest.buildUpdatedRequest());
     underTest.updateLastFoundKey(key1);
 
     Assert.assertEquals(createKeysRequest(Arrays.asList(key2, key3)),
-      underTest.getUpdatedRequest());
+      underTest.buildUpdatedRequest());
   }
 
   /**
@@ -137,8 +137,8 @@ public class ReadRowsRequestManagerTest {
     ReadRowsRequest filteredRequest = ReadRowsRequest.newBuilder().setRows(filteredRowSet).build();
 
     ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
-    Assert.assertEquals(originalRequest, underTest.getUpdatedRequest());
+    Assert.assertEquals(originalRequest, underTest.buildUpdatedRequest());
     underTest.updateLastFoundKey(key1);
-    Assert.assertEquals(filteredRequest, underTest.getUpdatedRequest());
+    Assert.assertEquals(filteredRequest, underTest.buildUpdatedRequest());
   }
 }

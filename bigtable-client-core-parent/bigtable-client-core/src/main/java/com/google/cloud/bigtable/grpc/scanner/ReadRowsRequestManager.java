@@ -33,7 +33,7 @@ import java.nio.ByteBuffer;
  * @author sduskis
  * @version $Id: $Id
  */
-public class ReadRowsRequestManager {
+class ReadRowsRequestManager {
 
   // Member variables from the constructor.
   private final ReadRowsRequest originalRequest;
@@ -49,16 +49,16 @@ public class ReadRowsRequestManager {
    * </p>
    * @param originalRequest a {@link ReadRowsRequest} object.
    */
-  public ReadRowsRequestManager(ReadRowsRequest originalRequest) {
+  ReadRowsRequestManager(ReadRowsRequest originalRequest) {
     this.originalRequest = originalRequest;
   }
 
-  public void updateLastFoundKey(ByteString key) {
+  void updateLastFoundKey(ByteString key) {
     this.lastFoundKey = key;
     rowCount++;
   }
 
-  public ReadRowsRequest getUpdatedRequest() {
+  ReadRowsRequest buildUpdatedRequest() {
     ReadRowsRequest.Builder newRequest = ReadRowsRequest.newBuilder()
         .setRows(filterRows())
         .setTableName(originalRequest.getTableName());
