@@ -141,4 +141,39 @@ public class ReadRowsRequestManagerTest {
     underTest.updateLastFoundKey(key1);
     Assert.assertEquals(filteredRequest, underTest.buildUpdatedRequest());
   }
+
+  /**
+   * Test that resume handles key requests as unsigned bytes
+   * @throws IOException
+   */
+  @Test
+  public void test_filterRows_unsignedRange() throws IOException {
+    ByteString key1 = ByteString.copyFrom(new byte[] {0x7f});
+    ByteString key2 = ByteString.copyFrom(new byte[] { (byte)0x80});
+
+    ReadRowsRequest originalRequest =
+        createRequest(createRowRangeClosedStart(key1, ByteString.EMPTY));
+
+    ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
+    underTest.updateLastFoundKey(key1);
+
+    Assert.assertEquals(createRequest(createRowRangeOpenedStart(key1, ByteString.EMPTY)), underTest.buildUpdatedRequest());
+  }
+
+  /**
+   * Test that resume handles row ranges as unsigned bytes
+   * @throws IOException
+   */
+  @Test
+  public void test_filterRows_unsignedRows() throws IOException {
+    ByteString key1 = ByteString.copyFrom(new byte[] {0x7f});
+    ByteString key2 = ByteString.copyFrom(new byte[] { (byte)0x80});
+
+    ReadRowsRequest originalRequest = createKeysRequest(Arrays.asList(key1, key2));
+
+    ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
+    underTest.updateLastFoundKey(key1);
+
+    Assert.assertEquals(createKeysRequest(Arrays.asList(key2)), underTest.buildUpdatedRequest());
+  }
 }
