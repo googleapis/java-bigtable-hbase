@@ -73,7 +73,8 @@ class ReadRowsRequestManager {
       // Updates the {@code numRowsLimit} by removing the number of rows already read.
       numRowsLimit -= rowCount;
 
-      checkArgument(numRowsLimit > 0, "The remaining number of rows must be greater than 0.");
+      checkArgument(numRowsLimit > 0,
+          "The remaining number of rows must be greater than 0.");
       newRequest.setRowsLimit(numRowsLimit);
     }
 
@@ -86,30 +87,29 @@ class ReadRowsRequestManager {
       return originalRows;
     }
     RowSet.Builder rowSetBuilder = RowSet.newBuilder();
-    ByteBuffer lastFoundKeyByteBuffer = lastFoundKey.asReadOnlyByteBuffer();
+
     for (ByteString key : originalRows.getRowKeysList()) {
-      if (lastFoundKeyByteBuffer.compareTo(key.asReadOnlyByteBuffer()) < 0) {
+      if (!startKeyIsAlreadyRead(key)) {
         rowSetBuilder.addRowKeys(key);
       }
     }
 
     for (RowRange rowRange : originalRows.getRowRangesList()) {
       EndKeyCase endKeyCase = rowRange.getEndKeyCase();
+
       if ((endKeyCase == EndKeyCase.END_KEY_CLOSED
-              && endKeyIsAlreadyRead(lastFoundKeyByteBuffer, rowRange.getEndKeyClosed()))
+          && endKeyIsAlreadyRead(rowRange.getEndKeyClosed()))
           || (endKeyCase == EndKeyCase.END_KEY_OPEN
-              && endKeyIsAlreadyRead(lastFoundKeyByteBuffer, rowRange.getEndKeyOpen()))) {
+          && endKeyIsAlreadyRead(rowRange.getEndKeyOpen()))) {
         continue;
       }
+
       RowRange newRange = rowRange;
       StartKeyCase startKeyCase = rowRange.getStartKeyCase();
       if ((startKeyCase == StartKeyCase.START_KEY_CLOSED
-              && lastFoundKeyByteBuffer.compareTo(
-                      rowRange.getStartKeyClosed().asReadOnlyByteBuffer())
-                  >= 0)
+          && startKeyIsAlreadyRead(rowRange.getStartKeyClosed()))
           || (startKeyCase == StartKeyCase.START_KEY_OPEN
-              && lastFoundKeyByteBuffer.compareTo(rowRange.getStartKeyOpen().asReadOnlyByteBuffer())
-                  > 0)
+          && startKeyIsAlreadyRead(rowRange.getStartKeyOpen()))
           || startKeyCase == StartKeyCase.STARTKEY_NOT_SET) {
         newRange = rowRange.toBuilder().setStartKeyOpen(lastFoundKey).build();
       }
@@ -119,9 +119,33 @@ class ReadRowsRequestManager {
     return rowSetBuilder.build();
   }
 
-  private boolean endKeyIsAlreadyRead(ByteBuffer lastFoundKeyByteBuffer, ByteString endKey) {
-    return !endKey.isEmpty()
-        && lastFoundKeyByteBuffer.compareTo(endKey.asReadOnlyByteBuffer()) >= 0;
+  private boolean startKeyIsAlreadyRead(ByteString startKey) {
+    // empty startKey implies the smallest key
+    return lastFoundKey != null
+        && (startKey.isEmpty() || compareKeys(startKey, lastFoundKey) <= 0);
+  }
+  private boolean endKeyIsAlreadyRead(ByteString endKey) {
+    // empty endKey implies the largest key
+    return lastFoundKey != null && !endKey.isEmpty() && compareKeys(endKey, lastFoundKey) <= 0;
   }
 
+  // TODO(igorbernstein2): move this to a better place
+  /**
+   * Lexicographically compare as a string of unsigned bytes
+   */
+  private static int compareKeys(ByteString key1, ByteString key2) {
+    int size1 = key1.size();
+    int size2 = key2.size();
+
+    for (int i = 0; i < Math.min(size1, size2); i++) {
+      // compare bytes as unsigned
+      int byte1 = key1.byteAt(i) & 0xff;
+      int byte2 = key2.byteAt(i) & 0xff;
+
+      if (byte1 != byte2) {
+        return Integer.compare(byte1, byte2);
+      }
+    }
+    return Integer.compare(size1, size2);
+  }
 }
