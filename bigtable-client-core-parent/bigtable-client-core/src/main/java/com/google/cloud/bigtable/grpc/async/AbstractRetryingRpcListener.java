@@ -68,22 +68,22 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   }
 
   @VisibleForTesting
-  BackOff currentBackoff;
+  protected BackOff currentBackoff;
   @VisibleForTesting
   Sleeper sleeper = Sleeper.DEFAULT;
 
   private final BigtableAsyncRpc<RequestT, ResponseT> rpc;
-  private final RetryOptions retryOptions;
+  protected final RetryOptions retryOptions;
   private final RequestT request;
   private final CallOptions callOptions;
   private final ScheduledExecutorService retryExecutorService;
   private int failedCount;
   private final Metadata originalMetadata;
 
-  protected final GrpcFuture<ResultT> completionFuture = new GrpcFuture<>();
+  protected final GrpcFuture<ResultT> completionFuture;
   protected ClientCall<RequestT, ResponseT> call;
   private Timer.Context operationTimerContext;
-  private Timer.Context rpcTimerContext;
+  protected Timer.Context rpcTimerContext;
 
   /**
    * <p>Constructor for AbstractRetryingRpcListener.</p>
@@ -108,28 +108,42 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     this.callOptions = callOptions;
     this.retryExecutorService = retryExecutorService;
     this.originalMetadata = originalMetadata;
+    this.completionFuture = createCompletionFuture();
+  }
+
+  protected GrpcFuture<ResultT> createCompletionFuture() {
+    return new GrpcFuture<>();
   }
 
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
-    rpcTimerContext.close();
 
     Status.Code code = status.getCode();
 
     // OK
     if (code == Status.Code.OK) {
+      rpcTimerContext.close();
       operationTimerContext.close();
       onOK();
       return;
     }
 
+    // CANCELLED
+    if (code == Status.Code.CANCELLED) {
+      // An explicit user cancellation is not considered a failure.
+      operationTimerContext.close();
+      return;
+    }
+    rpcTimerContext.close();
+
     // Non retry scenario
-    if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)
-        || !rpc.isRetryable(getRetryRequest())) {
+    if (!retryOptions.enableRetries()
+        || !retryOptions.isRetryable(code)
+        || !isRequestRetryable()) {
       this.rpc.getRpcMetrics().markFailure();
       this.operationTimerContext.close();
-      completionFuture.setException(status.asRuntimeException());
+      setException(status.asRuntimeException());
       return;
     }
 
@@ -139,12 +153,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
     // Backoffs timed out.
     if (nextBackOff == BackOff.STOP) {
-      this.rpc.getRpcMetrics().markRetriesExhasted();
-      this.operationTimerContext.close();
-
-      String message = String.format("Exhausted retries after %d failures.", failedCount);
-      StatusRuntimeException cause = status.asRuntimeException();
-      completionFuture.setException(new BigtableRetriesExhaustedException(message, cause));
+      retriesComplete(status);
       return;
     }
 
@@ -155,6 +164,23 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
     rpc.getRpcMetrics().markRetry();
     retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
+  }
+
+  protected boolean isRequestRetryable() {
+    return rpc.isRetryable(getRetryRequest());
+  }
+
+  public void retriesComplete(Status status) {
+    this.rpc.getRpcMetrics().markRetriesExhasted();
+    this.operationTimerContext.close();
+
+    String message = String.format("Exhausted retries after %d failures.", failedCount);
+    StatusRuntimeException cause = status.asRuntimeException();
+    setException(new BigtableRetriesExhaustedException(message, cause));
+  }
+
+  protected void setException(Exception exception) {
+    completionFuture.setException(exception);
   }
 
   /**
@@ -211,9 +237,13 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   /**
    * <p>cancel.</p>
    */
-  public void cancel() {
+  public synchronized void cancel() {
+    cancel("User requested cancelation.");
+  }
+
+  protected void cancel(final String message) {
     if (this.call != null) {
-      call.cancel("User requested cancelation.", null);
+      call.cancel(message, null);
     }
   }
 }

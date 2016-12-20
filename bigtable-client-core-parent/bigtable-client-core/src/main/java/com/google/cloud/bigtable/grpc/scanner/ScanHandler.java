@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2016 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,10 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.bigtable.v2.ReadRowsRequest;
-
 /**
- * A factory for creating ResultScanners that can be used to scan over Rows for a
- * given ReadRowsRequest.
- *
- * @author sduskis
- * @version $Id: $Id
+ * An interface that abstracts exception situations in scan situations.
  */
-public interface BigtableResultScannerFactory<ResponseT> {
-
-  /**
-   * Create a scanner for the given request.
-   *
-   * @param request a ReadRowsRequest object.
-   * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
-   */
-  ResultScanner<ResponseT> createScanner(ReadRowsRequest request);
+public interface ScanHandler {
+  public void handleTimeout(ScanTimeoutException e) throws BigtableRetriesExhaustedException;
+  public void cancel();
 }
