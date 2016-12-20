@@ -385,7 +385,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private final StreamObserver<FlatRow> observer;
 
   private RowMergerState state = RowMergerState.NewRow;
-  private ByteString previousKey = null;
+  private ByteString lastCompletedRowKey = null;
   private RowInProgress rowInProgress;
   private boolean complete;
 
@@ -412,7 +412,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     for (int i = 0; i < readRowsResponse.getChunksCount(); i++) {
       try {
         CellChunk chunk = readRowsResponse.getChunks(i);
-        state.validateChunk(rowInProgress, previousKey, chunk);
+        state.validateChunk(rowInProgress, lastCompletedRowKey, chunk);
         if (isReset(chunk)) {
           rowInProgress = null;
           state = RowMergerState.NewRow;
@@ -438,7 +438,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
         if (isCommit(chunk)) {
           observer.onNext(rowInProgress.buildRow());
-          previousKey = rowInProgress.getRowKey();
+          lastCompletedRowKey = rowInProgress.getRowKey();
           rowInProgress = null;
           state = RowMergerState.NewRow;
         }
@@ -464,5 +464,9 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   @Override
   public void onCompleted() {
     state.handleOnComplete(observer);
+  }
+
+  public ByteString getLastCompletedRowKey() {
+    return lastCompletedRowKey;
   }
 }
