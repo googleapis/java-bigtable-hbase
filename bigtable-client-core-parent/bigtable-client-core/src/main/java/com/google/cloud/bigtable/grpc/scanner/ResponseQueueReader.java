@@ -50,19 +50,15 @@ public class ResponseQueueReader implements StreamObserver<FlatRow> {
 
   protected final BlockingQueue<ResultQueueEntry<FlatRow>> resultQueue;
   protected AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
-  private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
   private Long startTime;
 
   /**
    * <p>Constructor for ResponseQueueReader.</p>
-   *
-   * @param readPartialRowTimeoutMillis a int.
    * @param capacityCap a int.
    */
-  public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap) {
+  public ResponseQueueReader(int capacityCap) {
     this.resultQueue = new LinkedBlockingQueue<>(capacityCap);
-    this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
     if (BigtableClientMetrics.isEnabled(MetricLevel.Info)) {
       startTime = System.nanoTime();
     }
@@ -111,7 +107,7 @@ public class ResponseQueueReader implements StreamObserver<FlatRow> {
   protected ResultQueueEntry<FlatRow> getNext() throws IOException {
     ResultQueueEntry<FlatRow> queueEntry;
     try {
-      queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
+      queueEntry = resultQueue.poll(10, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Interrupted while waiting for next result", e);

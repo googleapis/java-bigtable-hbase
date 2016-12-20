@@ -16,9 +16,11 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.any;
 
 import java.io.IOException;
 
@@ -36,7 +38,6 @@ import org.mockito.stubbing.Answer;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.protobuf.ByteString;
 
@@ -61,11 +62,9 @@ public class ResumingStreamingResultScannerTest {
   public ExpectedException thrown = ExpectedException.none();
 
   @Mock
-  private Logger mockLogger;
-  @Mock
   private ResponseQueueReader mockResponseQueueReader;
   @Mock
-  private ScannerRetryListener mockScannerRetryListener;
+  private ReadRowsRetryListener mockScannerRetryListener;
 
   private static final int MAX_SCAN_TIMEOUT_RETRIES = 3;
   static ReadRowsRequest READ_ROWS_REQUEST_ALL =
@@ -133,8 +132,22 @@ public class ResumingStreamingResultScannerTest {
     };
     when(mockResponseQueueReader.getNextMergedRow()).then(answer);
 
+    doAnswer(new Answer<Void>() {
+      int count = 0;
+
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        if (count++ < MAX_SCAN_TIMEOUT_RETRIES) {
+          return null;
+        } else {
+          throw new BigtableRetriesExhaustedException(
+              "Exhausted streaming retries after too many timeouts",
+              invocation.getArgumentAt(0, Throwable.class));
+        }
+      }
+    }).when(mockScannerRetryListener).handleTimeout(any(ScanTimeoutException.class));
     ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(
-        mockResponseQueueReader, RETRY_OPTIONS, READ_ROWS_REQUEST_ALL, mockScannerRetryListener, mockLogger);
+        mockResponseQueueReader, mockScannerRetryListener);
 
     assertRowKey("row1", scanner.next());
     assertRowKey("row2", scanner.next());
@@ -142,8 +155,7 @@ public class ResumingStreamingResultScannerTest {
     assertRowKey("row4", scanner.next());
 
     scanner.close();
-    verify(mockScannerRetryListener, times(numExceptions)).run();
-    verify(mockScannerRetryListener, times(numExceptions)).resetBackoff();
+    verify(mockScannerRetryListener, times(numExceptions)).handleTimeout(any(ScanTimeoutException.class));
     verify(mockScannerRetryListener, times(1)).cancel();
   }
 }

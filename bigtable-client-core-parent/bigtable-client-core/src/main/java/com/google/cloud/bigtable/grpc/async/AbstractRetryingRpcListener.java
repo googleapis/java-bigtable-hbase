@@ -73,7 +73,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   Sleeper sleeper = Sleeper.DEFAULT;
 
   private final BigtableAsyncRpc<RequestT, ResponseT> rpc;
-  private final RetryOptions retryOptions;
+  protected final RetryOptions retryOptions;
   private final RequestT request;
   private final CallOptions callOptions;
   private final ScheduledExecutorService retryExecutorService;
@@ -83,7 +83,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   protected final GrpcFuture<ResultT> completionFuture;
   protected ClientCall<RequestT, ResponseT> call;
   private Timer.Context operationTimerContext;
-  private Timer.Context rpcTimerContext;
+  protected Timer.Context rpcTimerContext;
 
   /**
    * <p>Constructor for AbstractRetryingRpcListener.</p>
@@ -118,16 +118,24 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
-    rpcTimerContext.close();
 
     Status.Code code = status.getCode();
 
     // OK
     if (code == Status.Code.OK) {
+      rpcTimerContext.close();
       operationTimerContext.close();
       onOK();
       return;
     }
+
+    // CANCELLED
+    if (code == Status.Code.CANCELLED) {
+      // An explicit user cancellation is not considered a failure.
+      operationTimerContext.close();
+      return;
+    }
+    rpcTimerContext.close();
 
     // Non retry scenario
     if (!retryOptions.enableRetries()
@@ -230,8 +238,12 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
    * <p>cancel.</p>
    */
   public synchronized void cancel() {
+    cancel("User requested cancelation.");
+  }
+
+  protected void cancel(final String message) {
     if (this.call != null) {
-      call.cancel("User requested cancelation.", null);
+      call.cancel(message, null);
     }
   }
 }

@@ -20,6 +20,8 @@ import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import io.grpc.stub.StreamObserver;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -54,7 +56,7 @@ import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
-import com.google.cloud.bigtable.grpc.scanner.ScannerRetryListener;
+import com.google.cloud.bigtable.grpc.scanner.ReadRowsRetryListener;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -438,16 +440,22 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request) {
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
-    ResponseQueueReader reader = new ResponseQueueReader(
-        retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
-    RowMerger rowMerger = new RowMerger(reader);
+    ResponseQueueReader reader = new ResponseQueueReader(retryOptions.getStreamingBufferSize());
+    return new ResumingStreamingResultScanner(reader, createReadRowsRetryListener(request, reader));
+  }
 
-    CallOptions callOptions = getCallOptions(readRowsAsync.getMethodDescriptor(), request);
-    Metadata metadata = createMetadata(request.getTableName());
-
-    ScannerRetryListener listener = new ScannerRetryListener(rowMerger, retryOptions, request,
-        readRowsAsync, callOptions, retryExecutorService, metadata);
-
-    return new ResumingStreamingResultScanner(reader, retryOptions, request, listener);
+  protected ReadRowsRetryListener createReadRowsRetryListener(ReadRowsRequest request,
+      StreamObserver<FlatRow> observer) {
+    ReadRowsRetryListener listener =
+      new ReadRowsRetryListener(
+          observer,
+          retryOptions,
+          request,
+          readRowsAsync,
+          getCallOptions(readRowsAsync.getMethodDescriptor(), request),
+          retryExecutorService,
+          createMetadata(request.getTableName()));
+    listener.start();
+    return listener;
   }
 }
