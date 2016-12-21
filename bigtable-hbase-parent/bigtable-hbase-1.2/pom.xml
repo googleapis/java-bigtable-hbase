@@ -32,13 +32,14 @@ limitations under the License.
 
     <properties>
         <hbase.version>1.2.4</hbase.version>
+        <bigtable.version>${project.version}</bigtable.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-shaded</artifactId>
-            <version>${project.version}</version>
+            <version>${bigtable.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>${project.groupId}</groupId>
