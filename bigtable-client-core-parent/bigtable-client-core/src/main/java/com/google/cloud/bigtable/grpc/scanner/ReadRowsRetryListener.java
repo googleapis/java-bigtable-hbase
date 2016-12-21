@@ -93,7 +93,6 @@ public class ReadRowsRetryListener
 
   @Override
   public void run() {
-    System.out.println("run" ); 
     this.rowMerger = new RowMerger(rowObserver);
     super.run();
   }
