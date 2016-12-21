@@ -136,6 +136,7 @@ public class ReadRowsRetryListenerTest {
     when(
       mockRetryExecutorService.schedule(any(Runnable.class), any(Long.class), any(TimeUnit.class)))
           .then(runAutomatically);
+    doAnswer(runAutomatically).when(mockRetryExecutorService).execute(any(Runnable.class));
   }
 
   @Test
@@ -181,7 +182,9 @@ public class ReadRowsRetryListenerTest {
     ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
     underTest.onMessage(buildResponse(key1));
+    RowMerger rw1 = underTest.getRowMerger();
     underTest.onClose(Status.ABORTED, new Metadata());
+    Assert.assertNotSame(rw1, underTest.getRowMerger());
     underTest.onMessage(buildResponse(key2));
     verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
     checkRetryRequest(key2);
@@ -199,7 +202,10 @@ public class ReadRowsRetryListenerTest {
     underTest.onMessage(buildResponse(key1));
 
     // a round of successful retries.
+    RowMerger rw1 = underTest.getRowMerger();
     performSuccessfulScanTimeouts(time);
+    Assert.assertNotSame(rw1, underTest.getRowMerger());
+    underTest.onClose(Status.ABORTED, new Metadata());
     checkRetryRequest(key1);
 
     // a message gets through
@@ -212,8 +218,9 @@ public class ReadRowsRetryListenerTest {
 
     checkRetryRequest(key2);
 
-    // a succsesful finish
-    finishOK(RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2);
+    // a succsesful finish.  There were 2 x RETRY_OPTIONS.getMaxScanTimeoutRetries() timeouts,
+    // and 1 ABORTED status.
+    finishOK(RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 1);
   }
 
   @Test
@@ -247,28 +254,42 @@ public class ReadRowsRetryListenerTest {
     start();
 
     final AtomicLong time = setupClock();
+    int expectedRetryCount = 0;
 
     ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
     underTest.onMessage(buildResponse(key1));
     underTest.onClose(Status.ABORTED, new Metadata());
+    expectedRetryCount++;
     checkRetryRequest(key1);
+
     // N successful scan timeout retries
-    performHalfPartialRowTimeout(time);
-    performHalfPartialRowTimeout(time);
-    performHalfPartialRowTimeout(time);
+    time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() + 1);
+    underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
+    expectedRetryCount++;
+    time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() + 1);
+    underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
+    expectedRetryCount++;
     checkRetryRequest(key1);
     Assert.assertNull(underTest.getCurrentBackoff());
     underTest.onMessage(buildResponse(key2));
 
-    thrown.expect(BigtableRetriesExhaustedException.class);
-
-    for (int i = 0; i <= RETRY_OPTIONS.getMaxScanTimeoutRetries(); i++) {
+    for (int i = 0; i < RETRY_OPTIONS.getMaxScanTimeoutRetries(); i++) {
       underTest.onClose(Status.ABORTED, new Metadata());
+      expectedRetryCount++;
+
       time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() + 1);
       underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
       Assert.assertNull(underTest.getCurrentBackoff());
+      expectedRetryCount++;
     }
+
+    verify(mockRpcMetrics, times(expectedRetryCount)).markRetry();
+    verify(mockRpcTimerContext, times(expectedRetryCount)).close();
+
+    thrown.expect(BigtableRetriesExhaustedException.class);
+    time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() + 1);
+    underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
   }
 
   private AtomicLong setupClock() {
@@ -316,8 +337,8 @@ public class ReadRowsRetryListenerTest {
     underTest.onClose(Status.OK, metaData);
 
     verify(mockOperationTimerContext, times(1)).close();
-    verify(mockRpcTimerContext, times(expectedRetryCount + 1)).close();
     verify(mockRpcMetrics, times(expectedRetryCount)).markRetry();
+    verify(mockRpcTimerContext, times(expectedRetryCount + 1)).close();
   }
 
   private void checkRetryRequest(ByteString key) {

@@ -23,7 +23,6 @@ import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
@@ -46,7 +45,6 @@ import io.grpc.stub.StreamObserver;
 public class ReadRowsRetryListener
     extends AbstractRetryingRpcListener<ReadRowsRequest, ReadRowsResponse, Void> {
 
-  private static final Logger LOG = new Logger(ResumingStreamingResultScanner.class);
   private static final String TIMEOUT_CANCEL_MSG = "Client side timeout induced cancellation";
 
   @VisibleForTesting
@@ -70,14 +68,15 @@ public class ReadRowsRetryListener
     super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata);
     this.rowObserver = observer;
     this.requestManager = new ReadRowsRequestManager(request);
-    this.rowMerger = new RowMerger(observer);
   }
 
   /**
    * The stream observer handles responses. Return null here, since a Future is not needed.
-   * <p>
-   * TODO(sduskis): Move {@link GrpcFuture} functionality into a {@link StreamObserver}, and use
-   * {@link StreamObserver} in {@link AbstractRetryingRpcListener}.
+   *
+   * <p>TODO(sduskis): Move {@link
+   * com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener.GrpcFuture} functionality into
+   * a {@link StreamObserver}, and use {@link StreamObserver} in {@link
+   * AbstractRetryingRpcListener}.
    */
   @Override
   protected GrpcFuture<Void> createCompletionFuture() {
@@ -90,6 +89,13 @@ public class ReadRowsRetryListener
   @Override
   protected ReadRowsRequest getRetryRequest() {
     return requestManager.buildUpdatedRequest();
+  }
+
+  @Override
+  public void run() {
+    System.out.println("run" ); 
+    this.rowMerger = new RowMerger(rowObserver);
+    super.run();
   }
 
   /** {@inheritDoc} */
@@ -166,8 +172,9 @@ public class ReadRowsRetryListener
   }
 
   /**
-   * This gets called by {@link ResumingStreamingResultScanner} when a queue is empty. A
-   * {@link ScanTimeoutException} is thrown from {@link
+   * This gets called by {@link ResumingStreamingResultScanner} when a queue is empty via {@link
+   * ResponseQueueReader#getNext()}.
+   *
    * @param rte a {@link ScanTimeoutException}
    * @throws BigtableRetriesExhaustedException
    */
@@ -215,4 +222,8 @@ public class ReadRowsRetryListener
     return currentBackoff;
   }
 
+  /** @return the rowMerger */
+  public RowMerger getRowMerger() {
+    return rowMerger;
+  }
 }
