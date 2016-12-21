@@ -82,11 +82,10 @@ public class BulkRead {
    * Adds the key in the request to a list of to look up in a batch read.
    *
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} with a single row key.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated with the {@link com.google.bigtable.v2.FlatRow} that
-   *    corresponds to the request
-   * @throws java.lang.InterruptedException if any.
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated
+   *     with the {@link FlatRow} that corresponds to the request
    */
-  public ListenableFuture<List<FlatRow>> add(ReadRowsRequest request) throws InterruptedException {
+  public ListenableFuture<List<FlatRow>> add(ReadRowsRequest request) {
     Preconditions.checkNotNull(request);
     Preconditions.checkArgument(request.getRows().getRowKeysCount() == 1);
     ByteString rowKey = request.getRows().getRowKeysList().get(0);
