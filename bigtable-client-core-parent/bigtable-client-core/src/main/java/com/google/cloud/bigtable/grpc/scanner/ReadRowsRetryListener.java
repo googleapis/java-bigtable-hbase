@@ -19,6 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
+import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
@@ -208,4 +209,10 @@ public class ReadRowsRetryListener
   int getTimeoutRetryCount() {
     return timeoutRetryCount;
   }
+
+  @VisibleForTesting
+  BackOff getCurrentBackoff() {
+    return currentBackoff;
+  }
+
 }

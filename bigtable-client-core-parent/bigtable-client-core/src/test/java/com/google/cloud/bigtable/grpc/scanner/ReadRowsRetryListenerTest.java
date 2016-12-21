@@ -241,7 +241,37 @@ public class ReadRowsRetryListenerTest {
   }
 
 
-  protected AtomicLong setupClock() {
+  @Test
+  public void testMixScanTimeoutAndStatusExceptions()
+      throws UnsupportedEncodingException, BigtableRetriesExhaustedException {
+    start();
+
+    final AtomicLong time = setupClock();
+
+    ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
+    ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
+    underTest.onMessage(buildResponse(key1));
+    underTest.onClose(Status.ABORTED, new Metadata());
+    checkRetryRequest(key1);
+    // N successful scan timeout retries
+    performHalfPartialRowTimeout(time);
+    performHalfPartialRowTimeout(time);
+    performHalfPartialRowTimeout(time);
+    checkRetryRequest(key1);
+    Assert.assertNull(underTest.getCurrentBackoff());
+    underTest.onMessage(buildResponse(key2));
+
+    thrown.expect(BigtableRetriesExhaustedException.class);
+
+    for (int i = 0; i <= RETRY_OPTIONS.getMaxScanTimeoutRetries(); i++) {
+      underTest.onClose(Status.ABORTED, new Metadata());
+      time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() + 1);
+      underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
+      Assert.assertNull(underTest.getCurrentBackoff());
+    }
+  }
+
+  private AtomicLong setupClock() {
     final AtomicLong time = new AtomicLong(0);
     underTest.clock = new Clock() {
       @Override
@@ -252,7 +282,7 @@ public class ReadRowsRetryListenerTest {
     return time;
   }
 
-  protected void performSuccessfulScanTimeouts(final AtomicLong time) {
+  private void performSuccessfulScanTimeouts(final AtomicLong time) {
     for (int i = 0; i < RETRY_OPTIONS.getMaxScanTimeoutRetries(); i++) {
       Assert.assertEquals(i, underTest.getTimeoutRetryCount());
       performHalfPartialRowTimeout(time);
@@ -261,7 +291,7 @@ public class ReadRowsRetryListenerTest {
     }
   }
 
-  protected void performHalfPartialRowTimeout(final AtomicLong time) {
+  private void performHalfPartialRowTimeout(final AtomicLong time) {
     time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() / 2);
     try {
       underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
