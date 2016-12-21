@@ -67,23 +67,24 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
   }
 
-  @VisibleForTesting
-  BackOff currentBackoff;
+  protected BackOff currentBackoff;
   @VisibleForTesting
   Sleeper sleeper = Sleeper.DEFAULT;
 
-  private final BigtableAsyncRpc<RequestT, ResponseT> rpc;
-  private final RetryOptions retryOptions;
+  protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
+  protected final RetryOptions retryOptions;
+  protected final ScheduledExecutorService retryExecutorService;
+
   private final RequestT request;
   private final CallOptions callOptions;
-  private final ScheduledExecutorService retryExecutorService;
-  private int failedCount;
   private final Metadata originalMetadata;
 
-  protected final GrpcFuture<ResultT> completionFuture = new GrpcFuture<>();
+  protected int failedCount = 0;
+
+  protected final GrpcFuture<ResultT> completionFuture;
   protected ClientCall<RequestT, ResponseT> call;
   private Timer.Context operationTimerContext;
-  private Timer.Context rpcTimerContext;
+  protected Timer.Context rpcTimerContext;
 
   /**
    * <p>Constructor for AbstractRetryingRpcListener.</p>
@@ -108,6 +109,11 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     this.callOptions = callOptions;
     this.retryExecutorService = retryExecutorService;
     this.originalMetadata = originalMetadata;
+    this.completionFuture = createCompletionFuture();
+  }
+
+  protected GrpcFuture<ResultT> createCompletionFuture() {
+    return new GrpcFuture<>();
   }
 
   /** {@inheritDoc} */
@@ -124,12 +130,20 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
       return;
     }
 
+    // CANCELLED
+    if (code == Status.Code.CANCELLED) {
+      // An explicit user cancellation is not considered a failure.
+      operationTimerContext.close();
+      return;
+    }
+
     // Non retry scenario
-    if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)
-        || !rpc.isRetryable(getRetryRequest())) {
+    if (!retryOptions.enableRetries()
+        || !retryOptions.isRetryable(code)
+        || !isRequestRetryable()) {
       this.rpc.getRpcMetrics().markFailure();
       this.operationTimerContext.close();
-      completionFuture.setException(status.asRuntimeException());
+      setException(status.asRuntimeException());
       return;
     }
 
@@ -144,7 +158,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
       String message = String.format("Exhausted retries after %d failures.", failedCount);
       StatusRuntimeException cause = status.asRuntimeException();
-      completionFuture.setException(new BigtableRetriesExhaustedException(message, cause));
+      setException(new BigtableRetriesExhaustedException(message, cause));
       return;
     }
 
@@ -155,6 +169,14 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
     rpc.getRpcMetrics().markRetry();
     retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
+  }
+
+  protected boolean isRequestRetryable() {
+    return rpc.isRetryable(getRetryRequest());
+  }
+
+  protected void setException(Exception exception) {
+    completionFuture.setException(exception);
   }
 
   /**
@@ -211,9 +233,13 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   /**
    * <p>cancel.</p>
    */
-  public void cancel() {
+  public synchronized void cancel() {
+    cancel("User requested cancelation.");
+  }
+
+  protected void cancel(final String message) {
     if (this.call != null) {
-      call.cancel("User requested cancelation.", null);
+      call.cancel(message, null);
     }
   }
 }
