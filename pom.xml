@@ -575,6 +575,10 @@ limitations under the License.
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>1.4.1</version>
+                </plugin>
+                <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.5.1</version>
                     <configuration>
@@ -665,6 +669,36 @@ limitations under the License.
                 </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-maven-version</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <!-- Workaround:
+                                        - https://issues.apache.org/jira/browse/MNG-5899
+                                        - https://issues.apache.org/jira/browse/MSHADE-206
+                                    As of maven 3.3, maven-shade-plugin can no longer alter the
+                                    reactor dependencies. Since this project makes extensive use of
+                                    shading to deal with hbase/hadoop's older deps, we have to force
+                                    maven 3.2.x
+                                -->
+                                <requireMavenVersion>
+                                    <version>(,3.3)</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
     <profiles>
         <profile>
