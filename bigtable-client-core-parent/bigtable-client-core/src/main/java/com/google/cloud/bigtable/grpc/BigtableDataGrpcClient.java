@@ -443,17 +443,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     // during operation.
     ResponseQueueReader reader = new ResponseQueueReader(retryOptions.getStreamingBufferSize());
     final ReadRowsRetryListener listener = createReadRowsRetryListener(request, reader);
-    return new ResumingStreamingResultScanner(reader, new ScanHandler() {
-      @Override
-      public void handleTimeout(ScanTimeoutException rte) throws BigtableRetriesExhaustedException {
-        listener.handleTimeout(rte);
-      }
-
-      @Override
-      public void cancel() {
-        listener.cancel();
-      }
-    });
+    return new ResumingStreamingResultScanner(reader, listener);
   }
 
   protected ReadRowsRetryListener createReadRowsRetryListener(ReadRowsRequest request,
