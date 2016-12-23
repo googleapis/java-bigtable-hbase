@@ -42,8 +42,8 @@ import io.grpc.stub.StreamObserver;
  * @author sduskis
  */
 @NotThreadSafe
-public class ReadRowsRetryListener
-    extends AbstractRetryingRpcListener<ReadRowsRequest, ReadRowsResponse, Void> {
+public class ReadRowsRetryListener extends
+    AbstractRetryingRpcListener<ReadRowsRequest, ReadRowsResponse, Void> implements ScanHandler {
 
   private static final String TIMEOUT_CANCEL_MSG = "Client side timeout induced cancellation";
 
@@ -188,26 +188,30 @@ public class ReadRowsRetryListener
       // In other words, the timeout has not occurred.  Proceed as normal, and wait for the RPC to proceed.
       return;
     } else {
-      LOG.info("The client could not get a response in %d ms. Retrying the scan.",
-        retryOptions.getReadPartialRowTimeoutMillis());
+      retryOnTimeout(rte);
+    }
+  }
 
-      // Cancel the existing rpc.
-      cancel(TIMEOUT_CANCEL_MSG);
-      rpcTimerContext.close();
+  private void retryOnTimeout(ScanTimeoutException rte) throws BigtableRetriesExhaustedException {
+    LOG.info("The client could not get a response in %d ms. Retrying the scan.",
+      retryOptions.getReadPartialRowTimeoutMillis());
 
-      // Can this request be retried
-      if (retryOptions.enableRetries()
-          && ++timeoutRetryCount <= retryOptions.getMaxScanTimeoutRetries()) {
-        this.rpc.getRpcMetrics().markRetry();
-        resetStatusBasedBackoff();
-        // run the rpc asynchronously.
-        retryExecutorService.execute(this);
-      } else {
-        // terminate
-        this.rpc.getRpcMetrics().markRetriesExhasted();
-        throw new BigtableRetriesExhaustedException(
-            "Exhausted streaming retries after too many timeouts", rte);
-      }
+    // Cancel the existing rpc.
+    cancel(TIMEOUT_CANCEL_MSG);
+    rpcTimerContext.close();
+
+    // Can this request be retried
+    if (retryOptions.enableRetries()
+        && ++timeoutRetryCount <= retryOptions.getMaxScanTimeoutRetries()) {
+      this.rpc.getRpcMetrics().markRetry();
+      resetStatusBasedBackoff();
+      // run the rpc asynchronously.
+      retryExecutorService.execute(this);
+    } else {
+      // terminate
+      this.rpc.getRpcMetrics().markRetriesExhasted();
+      throw new BigtableRetriesExhaustedException(
+          "Exhausted streaming retries after too many timeouts", rte);
     }
   }
 

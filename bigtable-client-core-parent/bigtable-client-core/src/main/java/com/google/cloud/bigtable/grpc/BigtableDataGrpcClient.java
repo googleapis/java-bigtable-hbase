@@ -17,15 +17,15 @@ package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 import io.grpc.CallOptions;
-import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import io.grpc.stub.StreamObserver;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
@@ -49,18 +49,14 @@ import com.google.cloud.bigtable.grpc.async.RetryingCollectingClientCallListener
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryRpcCallListener;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
-import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
-import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
-import com.google.cloud.bigtable.grpc.scanner.StreamObserverAdapter;
-import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
-import com.google.cloud.bigtable.metrics.Timer;
+import com.google.cloud.bigtable.grpc.scanner.ReadRowsRetryListener;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -69,7 +65,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ServiceException;
 
 /**
@@ -164,13 +159,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   // Member variables
   private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
-  private final BigtableResultScannerFactory<FlatRow> streamingScannerFactory =
-      new BigtableResultScannerFactory<FlatRow>() {
-        @Override
-        public ResultScanner<FlatRow> createScanner(ReadRowsRequest request) {
-          return streamRows(request);
-        }
-      };
 
   private CallOptionsFactory callOptionsFactory = new CallOptionsFactory.Default();
 
@@ -450,42 +438,23 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request) {
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
-    // TODO(sduskis): Figure out a way to perform operation level metrics with the
-    // AbstractBigtableResultScanner implementations.
-    return new ResumingStreamingResultScanner(retryOptions, request, streamingScannerFactory,
-        readRowsAsync.getRpcMetrics());
+    ResponseQueueReader reader = new ResponseQueueReader(retryOptions.getStreamingBufferSize());
+    final ReadRowsRetryListener listener = createReadRowsRetryListener(request, reader);
+    return new ResumingStreamingResultScanner(reader, listener);
   }
 
-  private ResultScanner<FlatRow> streamRows(ReadRowsRequest request) {
-    final Timer.Context timerContext = readRowsAsync.getRpcMetrics().timeRpc();
-    final AtomicBoolean wasCanceled = new AtomicBoolean(false);
-
-    CallOptions callOptions = getCallOptions(readRowsAsync.getMethodDescriptor(), request);
-    final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
-        readRowsAsync.newCall(callOptions);
-
-    ResponseQueueReader reader = new ResponseQueueReader(
-        retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
-
-    final StreamObserverAdapter<ReadRowsResponse> listener =
-        new StreamObserverAdapter<>(readRowsCall, new RowMerger(reader));
-
-    readRowsAsync.start(readRowsCall, request, listener, createMetadata(request.getTableName()));
-    // If the scanner is closed before we're done streaming, we want to cancel the RPC.
-    CancellationToken cancellationToken = new CancellationToken();
-    cancellationToken.addListener(new Runnable() {
-      @Override
-      public synchronized void run() {
-        if (!wasCanceled.get()) {
-          timerContext.close();
-          wasCanceled.set(true);
-        }
-        if (!listener.hasStatusBeenRecieved()) {
-          readRowsCall.cancel("User requested cancelation.", null);
-        }
-      }
-    }, MoreExecutors.directExecutor());
-
-    return new StreamingBigtableResultScanner(reader, cancellationToken);
+  protected ReadRowsRetryListener createReadRowsRetryListener(ReadRowsRequest request,
+      StreamObserver<FlatRow> observer) {
+    ReadRowsRetryListener listener =
+      new ReadRowsRetryListener(
+          observer,
+          retryOptions,
+          request,
+          readRowsAsync,
+          getCallOptions(readRowsAsync.getMethodDescriptor(), request),
+          retryExecutorService,
+          createMetadata(request.getTableName()));
+    listener.start();
+    return listener;
   }
 }
