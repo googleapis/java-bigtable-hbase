@@ -82,37 +82,11 @@ public class PutMicroBenchmark {
   protected static ChannelPool getChannelPool(final boolean useRealConnection)
       throws IOException, GeneralSecurityException {
     if (useRealConnection) {
-      return createNettyChannelPool();
+      return BigtableSession.createChannelPool(options.getDataHost(), options);
     } else {
       return new ChannelPool(
           ImmutableList.<HeaderInterceptor>of(prefixInterceptor()), createFakeChannels());
     }
-  }
-
-  protected static ChannelPool createNettyChannelPool()
-      throws IOException, GeneralSecurityException {
-    return new ChannelPool(
-        getHeaders(),
-        new ChannelPool.ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return BigtableSession.createNettyChannel(options.getDataHost(), options);
-          }
-        });
-  }
-
-  protected static ImmutableList<HeaderInterceptor> getHeaders()
-      throws IOException, GeneralSecurityException {
-    CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
-    HeaderInterceptor headerInterceptor =
-        credentialsCache.getCredentialsInterceptor(
-            options.getCredentialOptions(), options.getRetryOptions());
-    Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
-    if (headerInterceptor != null) {
-      headerInterceptorBuilder.add(headerInterceptor);
-    }
-    headerInterceptorBuilder.add(prefixInterceptor());
-    return headerInterceptorBuilder.build();
   }
 
   private static GoogleCloudResourcePrefixInterceptor prefixInterceptor() {

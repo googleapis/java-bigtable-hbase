@@ -81,7 +81,7 @@ public class ChannelPoolPerf {
         return false;
       }
     };
-    int threads = 10;
+    int threads = 20;
     int concurrent = 400;
     final ChannelPool.ChannelFactory pool = new ChannelPool.ChannelFactory() {
       @Override
@@ -103,7 +103,6 @@ public class ChannelPoolPerf {
         long diff = System.nanoTime() - start;
         double nanosPerRow = diff / TEST_COUNT;
         results.add(nanosPerRow);
-        System.out.println(String.format("took %d ms.  %.0f nanos/row", diff / 1_000_000, nanosPerRow));
         return null;
       }
     };
