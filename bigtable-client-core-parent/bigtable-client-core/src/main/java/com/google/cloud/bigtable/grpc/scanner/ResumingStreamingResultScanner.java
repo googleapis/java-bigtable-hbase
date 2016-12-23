@@ -99,7 +99,7 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
 
   /** {@inheritDoc} */
   @Override
-  public synchronized void close() throws IOException {
+  public void close() throws IOException {
     scanHandler.cancel();
   }
 }

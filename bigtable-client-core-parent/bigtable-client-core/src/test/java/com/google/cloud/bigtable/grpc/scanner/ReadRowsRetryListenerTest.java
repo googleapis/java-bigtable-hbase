@@ -193,7 +193,7 @@ public class ReadRowsRetryListenerTest {
   }
 
   @Test
-  public void testScanTimeoutSucceed() throws UnsupportedEncodingException {
+  public void testScanTimeoutSucceed() throws UnsupportedEncodingException, BigtableRetriesExhaustedException {
     start();
 
     final AtomicLong time = setupClock();
@@ -237,14 +237,9 @@ public class ReadRowsRetryListenerTest {
 
     checkRetryRequest(key);
 
-    performHalfPartialRowTimeout(time);
-
     // one last scan timeout that fails.
     thrown.expect(BigtableRetriesExhaustedException.class);
-    time.addAndGet(1 + RETRY_OPTIONS.getReadPartialRowTimeoutMillis() / 2);
-
-    // This should throw an exception
-    underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
+    performTimeout(time);
   }
 
 
@@ -260,16 +255,15 @@ public class ReadRowsRetryListenerTest {
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
     underTest.onMessage(buildResponse(key1));
     underTest.onClose(Status.ABORTED, new Metadata());
+    Assert.assertNotNull(underTest.getCurrentBackoff());
     expectedRetryCount++;
     checkRetryRequest(key1);
 
     // N successful scan timeout retries
-    time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() + 1);
-    underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
-    expectedRetryCount++;
-    time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() + 1);
-    underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
-    expectedRetryCount++;
+    for (int i = 0; i < 2; i++) {
+      performTimeout(time);
+      expectedRetryCount++;
+    }
     checkRetryRequest(key1);
     Assert.assertNull(underTest.getCurrentBackoff());
     underTest.onMessage(buildResponse(key2));
@@ -278,8 +272,7 @@ public class ReadRowsRetryListenerTest {
       underTest.onClose(Status.ABORTED, new Metadata());
       expectedRetryCount++;
 
-      time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() + 1);
-      underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
+      performTimeout(time);
       Assert.assertNull(underTest.getCurrentBackoff());
       expectedRetryCount++;
     }
@@ -288,6 +281,10 @@ public class ReadRowsRetryListenerTest {
     verify(mockRpcTimerContext, times(expectedRetryCount)).close();
 
     thrown.expect(BigtableRetriesExhaustedException.class);
+    performTimeout(time);
+  }
+
+  protected void performTimeout(AtomicLong time) throws BigtableRetriesExhaustedException {
     time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() + 1);
     underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
   }
@@ -303,21 +300,10 @@ public class ReadRowsRetryListenerTest {
     return time;
   }
 
-  private void performSuccessfulScanTimeouts(final AtomicLong time) {
+  private void performSuccessfulScanTimeouts(final AtomicLong time) throws BigtableRetriesExhaustedException {
     for (int i = 0; i < RETRY_OPTIONS.getMaxScanTimeoutRetries(); i++) {
       Assert.assertEquals(i, underTest.getTimeoutRetryCount());
-      performHalfPartialRowTimeout(time);
-      time.addAndGet(1);
-      performHalfPartialRowTimeout(time);
-    }
-  }
-
-  private void performHalfPartialRowTimeout(final AtomicLong time) {
-    time.addAndGet(RETRY_OPTIONS.getReadPartialRowTimeoutMillis() / 2);
-    try {
-      underTest.handleTimeout(new ScanTimeoutException("scan timeout"));
-    } catch (BigtableRetriesExhaustedException exception) {
-      Assert.fail("This is not supposed to throw an exception.");
+      performTimeout(time);
     }
   }
 
