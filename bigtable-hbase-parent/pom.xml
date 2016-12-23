@@ -32,15 +32,27 @@ limitations under the License.
 
     <modules>
         <module>bigtable-hbase</module>
-        <module>bigtable-hbase-shaded</module>
-        <module>bigtable-hbase-1.0</module>
         <module>bigtable-hbase-integration-tests</module>
-        <module>bigtable-hbase-1.1</module>
-        <module>bigtable-hbase-1.2</module>
         <module>bigtable-hbase-mapreduce</module>
     </modules>
 
     <profiles>
+        <profile>
+            <!-- Shading workaround for IDEs:
+                resolve these modules from the local maven repo -->
+            <id>with-shaded</id>
+            <activation>
+                <property>
+                    <name>!skip-shaded</name>
+                </property>
+            </activation>
+            <modules>
+                <module>bigtable-hbase-shaded</module>
+                <module>bigtable-hbase-1.0</module>
+                <module>bigtable-hbase-1.1</module>
+                <module>bigtable-hbase-1.2</module>
+            </modules>
+        </profile>
         <profile>
             <id>release</id>
             <build>
@@ -63,17 +75,6 @@ limitations under the License.
                     </plugin>
                </plugins>
            </build>
-        </profile>
-        <profile>
-            <id>exclude-shaded</id>
-            <modules>
-                <module>bigtable-hbase</module>
-                <module>bigtable-hbase-1.0</module>
-                <module>bigtable-hbase-integration-tests</module>
-                <module>bigtable-hbase-1.1</module>
-                <module>bigtable-hbase-1.2</module>
-                <module>bigtable-hbase-mapreduce</module>
-            </modules>
         </profile>
     </profiles>
 </project>
