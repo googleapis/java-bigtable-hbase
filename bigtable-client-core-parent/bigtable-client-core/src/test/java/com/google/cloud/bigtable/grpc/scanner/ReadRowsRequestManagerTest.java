@@ -155,9 +155,10 @@ public class ReadRowsRequestManagerTest {
         createRequest(createRowRangeClosedStart(key1, ByteString.EMPTY));
 
     ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
-    underTest.updateLastFoundKey(key1);
+    underTest.updateLastFoundKey(key2);
 
-    Assert.assertEquals(createRequest(createRowRangeOpenedStart(key1, ByteString.EMPTY)), underTest.buildUpdatedRequest());
+    Assert.assertEquals(createRequest(createRowRangeOpenedStart(key2, ByteString.EMPTY)),
+      underTest.buildUpdatedRequest());
   }
 
   /**

@@ -65,7 +65,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ServiceException;
 
 /**
  * A gRPC client to access the v2 Bigtable data service.
@@ -237,7 +236,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   /** {@inheritDoc} */
   @Override
-  public MutateRowResponse mutateRow(MutateRowRequest request) throws ServiceException {
+  public MutateRowResponse mutateRow(MutateRowRequest request) {
     return getBlockingUnaryResult(request, mutateRowRpc, request.getTableName());
   }
 
@@ -249,7 +248,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   /** {@inheritDoc} */
   @Override
-  public List<MutateRowsResponse> mutateRows(MutateRowsRequest request) throws ServiceException {
+  public List<MutateRowsResponse> mutateRows(MutateRowsRequest request) {
     return getBlockingStreamingResult(request, mutateRowsRpc, request.getTableName());
   }
 
@@ -261,8 +260,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   /** {@inheritDoc} */
   @Override
-  public CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
-      throws ServiceException {
+  public CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request) {
     return getBlockingUnaryResult(request, checkAndMutateRpc, request.getTableName());
   }
 

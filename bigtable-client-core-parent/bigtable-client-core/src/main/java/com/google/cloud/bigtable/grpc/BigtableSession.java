@@ -529,11 +529,12 @@ public class BigtableSession implements Closeable {
    */
   public static ChannelPool createChannelPool(final String host, final BigtableOptions options, int count)
       throws IOException, GeneralSecurityException {
-    HeaderInterceptor interceptor =
-        CredentialInterceptorCache.getInstance()
-            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+    HeaderInterceptor credentialsInterceptor = CredentialInterceptorCache.getInstance()
+        .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+    HeaderInterceptor prefixInterceptor =
+        new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString());
     return new ChannelPool(
-        ImmutableList.<HeaderInterceptor>of(interceptor),
+        ImmutableList.<HeaderInterceptor>of(credentialsInterceptor, prefixInterceptor),
         new ChannelPool.ChannelFactory() {
           @Override
           public ManagedChannel create() throws IOException {

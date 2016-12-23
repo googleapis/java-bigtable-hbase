@@ -33,7 +33,6 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ServiceException;
 
 /**
  * Interface to access v2 Bigtable data service methods.
@@ -48,9 +47,8 @@ public interface BigtableDataClient {
    *
    * @param request a {@link com.google.bigtable.v2.MutateRowRequest} object.
    * @return a {@link com.google.bigtable.v2.MutateRowResponse} object.
-   * @throws com.google.protobuf.ServiceException if any.
    */
-  MutateRowResponse mutateRow(MutateRowRequest request) throws ServiceException;
+  MutateRowResponse mutateRow(MutateRowRequest request);
 
   /**
    * Mutate a row atomically.
@@ -67,9 +65,8 @@ public interface BigtableDataClient {
    *
    * @param request a {@link com.google.bigtable.v2.MutateRowsRequest} object.
    * @return a {@link java.util.List} object.
-   * @throws com.google.protobuf.ServiceException if any.
    */
-  List<MutateRowsResponse> mutateRows(MutateRowsRequest request) throws ServiceException;
+  List<MutateRowsResponse> mutateRows(MutateRowsRequest request);
 
   /**
    * Mutates multiple rows in a batch. Each individual row is mutated atomically as in MutateRow,
@@ -85,10 +82,8 @@ public interface BigtableDataClient {
    *
    * @param request a {@link com.google.bigtable.v2.CheckAndMutateRowRequest} object.
    * @return a {@link com.google.bigtable.v2.CheckAndMutateRowResponse} object.
-   * @throws com.google.protobuf.ServiceException if any.
    */
-  CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
-      throws ServiceException;
+  CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request);
 
   /**
    * Mutate a row atomically dependent on a precondition.

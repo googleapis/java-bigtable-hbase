@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -55,14 +56,13 @@ public class TableAdapter {
    * @return a {@link com.google.bigtable.admin.v2.Table} object.
    */
   public Table adapt(HTableDescriptor desc) {
-    Table.Builder tableBuilder = Table.newBuilder();
-    Map<String, ColumnFamily> columnFamilies = tableBuilder.getMutableColumnFamilies();
+    Map<String, ColumnFamily> columnFamilies = new HashMap<>();
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
-      ColumnFamily columnFamily = columnDescriptorAdapter.adapt(column).build();
       String columnName = column.getNameAsString();
+      ColumnFamily columnFamily = columnDescriptorAdapter.adapt(column).build();
       columnFamilies.put(columnName, columnFamily);
     }
-    return tableBuilder.build();
+    return Table.newBuilder().putAllColumnFamilies(columnFamilies).build();
   }
 
   /**
@@ -74,7 +74,7 @@ public class TableAdapter {
   public HTableDescriptor adapt(Table table) {
     String tableId = bigtableInstanceName.toTableId(table.getName());
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableId));
-    for (Entry<String, ColumnFamily> entry : table.getColumnFamilies().entrySet()) {
+    for (Entry<String, ColumnFamily> entry : table.getColumnFamiliesMap().entrySet()) {
       tableDescriptor.addFamily(columnDescriptorAdapter.adapt(entry.getKey(), entry.getValue()));
     }
     return tableDescriptor;
