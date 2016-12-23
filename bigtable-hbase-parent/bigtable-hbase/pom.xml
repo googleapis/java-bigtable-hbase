@@ -31,6 +31,7 @@ limitations under the License.
     </description>
 
     <dependencies>
+        <!-- List implementation deps first -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-client-core</artifactId>
@@ -65,7 +66,7 @@ limitations under the License.
         </dependency>
 
 
-        <!-- Minimal hbase deps: hbase doesn't have an api only artifact,
+        <!-- Then cherry-pick minimal hbase deps: hbase doesn't have an api only artifact,
             so only extract the interface related deps -->
         <dependency>
             <groupId>org.apache.hbase</groupId>

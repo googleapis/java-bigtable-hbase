@@ -62,10 +62,27 @@ limitations under the License.
     </dependencyManagement>
 
     <dependencies>
+        <!-- hadoop-client has to take precedence to the bigtable-hbase client.
+            This is necessary because bigtable-hbase client cherry-picks just the bare minimum,
+            but in an actual hadoop environment we want the full set of provided dependencies
+        -->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Grab the mapreduce apis from hbase-server -->
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            <version>${hbase.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -86,17 +103,6 @@ limitations under the License.
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
     </dependencies>
 
