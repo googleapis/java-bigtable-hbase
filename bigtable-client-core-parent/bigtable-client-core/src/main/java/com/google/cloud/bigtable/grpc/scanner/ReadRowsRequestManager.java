@@ -24,8 +24,6 @@ import com.google.bigtable.v2.RowRange.StartKeyCase;
 import com.google.bigtable.v2.RowSet;
 import com.google.protobuf.ByteString;
 
-import java.nio.ByteBuffer;
-
 /**
  * Keeps track of Rows returned from a readRows RPC for information relevant to resuming the RPC
  * after temporary problems.

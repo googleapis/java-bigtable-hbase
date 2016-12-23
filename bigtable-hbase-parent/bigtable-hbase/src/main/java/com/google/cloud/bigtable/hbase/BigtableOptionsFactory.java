@@ -16,13 +16,18 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.api.client.util.Strings.isNullOrEmpty;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
-import static com.google.cloud.bigtable.config.CallOptionsConfig.*;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT;
+import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
+import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
+import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
@@ -322,17 +327,17 @@ public class BigtableOptionsFactory {
     bulkOptionsBuilder.setBulkMaxRowKeyCount(
         configuration.getInt(
             BIGTABLE_BULK_MAX_ROW_KEY_COUNT,
-            BulkOptions.BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT));
+            BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT));
     bulkOptionsBuilder.setBulkMaxRequestSize(
         configuration.getLong(
             BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES,
-            BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT));
+            BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT));
     bulkOptionsBuilder.setAutoflushMs(
         configuration.getLong(
             BIGTABLE_BULK_AUTOFLUSH_MS_KEY,
-            BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT));
+            BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT));
 
-    int defaultRpcCount = BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
+    int defaultRpcCount = BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
         * bigtableOptionsBuilder.getDataChannelCount();
     int maxInflightRpcs = configuration.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
     bulkOptionsBuilder.setMaxInflightRpcs(maxInflightRpcs);

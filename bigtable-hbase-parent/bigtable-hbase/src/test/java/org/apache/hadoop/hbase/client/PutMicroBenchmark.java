@@ -30,7 +30,6 @@ import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -165,11 +164,7 @@ public class PutMicroBenchmark {
       public void run() {
         long start = System.nanoTime();
         for (int i = 0; i < putCount; i++) {
-          try {
-            client.mutateRow(hbaseAdapter.adapt(put));
-          } catch (ServiceException e) {
-            e.printStackTrace();
-          }
+          client.mutateRow(hbaseAdapter.adapt(put));
         }
         print("constantly adapted", start, putCount);
       }
@@ -181,11 +176,7 @@ public class PutMicroBenchmark {
         long start = System.nanoTime();
         final MutateRowRequest adapted = hbaseAdapter.adapt(put);
         for (int i = 0; i < putCount; i++) {
-          try {
-            client.mutateRow(adapted);
-          } catch (ServiceException e) {
-            e.printStackTrace();
-          }
+          client.mutateRow(adapted);
         }
         print("preadapted", start, putCount);
       }
