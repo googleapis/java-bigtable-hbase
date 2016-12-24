@@ -143,6 +143,7 @@ limitations under the License.
                         <configuration>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                             <artifactSet>
                                 <includes>
                                     <include>${project.groupId}:bigtable-hbase-shaded-for-dataflow</include>

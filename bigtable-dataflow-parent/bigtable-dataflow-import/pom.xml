@@ -28,44 +28,74 @@ limitations under the License.
     </description>
 
     <properties>
-        <gcsconnector.version>1.4.3-hadoop2</gcsconnector.version>
+        <gcsconnector.version>1.4.5-hadoop2</gcsconnector.version>
         <!-- A guava version that is compatible with both gcs-connector and hadoop2. This overrides
             guava version specification in parent project. -->
         <guava.version>15.0</guava.version>
     </properties>
 
     <dependencies>
+        <!-- hadoop-client has to take precedence to the bigtable-hbase client.
+            This is necessary because bigtable-hbase client cherry-picks just the bare minimum,
+            but in the importer, we need a fuller set of dependencies to support gcs-connector writes
+        -->
         <dependency>
-            <groupId>com.google.cloud.bigtable</groupId>
-            <artifactId>bigtable-hbase-dataflow</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
             <exclusions>
                 <exclusion>
-                    <groupId>com.google.cloud.bigtable</groupId>
-                    <artifactId>bigtable-hbase-shaded-for-dataflow</artifactId>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-app</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-annotations</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.zookeeper</groupId>
+                    <artifactId>zookeeper</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-common</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <!-- Keeping guava dependency here so that third party code using this package
-                 does not have to declare it-->
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
-        </dependency>
-        <dependency>
-            <!-- hbase-server jar provides Deserializer for the Result class. It also pulls in
-                 necessary hadoop jars. -->
+            <!-- hbase-server jar provides Deserializer for the Result class. -->
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
             <version>${hbase.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.cloud.bigtable</groupId>
+            <artifactId>bigtable-hbase-dataflow</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <!-- For accessing gs buckets from the hadoop SequenceFile reader. -->
             <groupId>com.google.cloud.bigdataoss</groupId>
             <artifactId>gcs-connector</artifactId>
             <version>${gcsconnector.version}</version>
         </dependency>
+
+        <!-- Test -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -75,14 +105,8 @@ limitations under the License.
             <artifactId>mockito-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <profiles>
