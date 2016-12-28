@@ -32,18 +32,26 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.DropwizardMetricRegistry;
 import com.google.cloud.bigtable.metrics.MetricRegistry;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ManyThreadDriver {
   
   static GraphiteReporter reporter = null;
+  static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
 
   static {
+    setupGraphite();
+  }
+
+  static void setupGraphite() {
     String serverIp = System.getProperty("graphite.server.ip");
     if (serverIp != null) {
       MetricRegistry registry = BigtableClientMetrics.getMetricRegistry(MetricLevel.Info);
@@ -84,53 +92,106 @@ public class ManyThreadDriver {
   private static int valueSize;
   private static int runtimeHours;
   private static int numThreads;
+  private static int numQualifiers;
 
-  private static void runTest(String projectId, String instanceId, final String tableName)
+  private static void runTest(
+      String projectId, String instanceId, final String tableNameStr)
       throws Exception {
-    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    byte[][] qualifiers = generateQualifiers(numQualifiers);
+    final TableName tableName = TableName.valueOf(tableNameStr);
+    final AtomicBoolean finished = new AtomicBoolean(false);
+    ExecutorService executor = Executors.newFixedThreadPool(numThreads,
+      ThreadPoolUtil.createThreadFactory("WORK_EXECUTOR"));
+    ScheduledExecutorService finishExecutor = setupShutdown(finished);
     try (Connection connection = BigtableConfiguration.connect(projectId, instanceId)) {
-      Admin admin = connection.getAdmin();
+      setupTable(tableName, connection);
 
-      HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(tableName));
-      descriptor.addFamily(new HColumnDescriptor("cf"));
+      System.out.println("Starting the executors.");
+      for (int i = 0; i < numThreads; i++) {
+        executor.execute(createWorker(connection, tableName, finished, qualifiers));
+      }
+      System.out.println("This will be running for " + runtimeHours + " hours.");
+      executor.shutdown();
+      executor.awaitTermination(runtimeHours, TimeUnit.HOURS);
+      // Sleep 10 seconds to allow stragglers to finish.
+      Thread.sleep(10000);
+    } finally {
+      executor.shutdownNow();
+      finishExecutor.shutdownNow();
+    }
+  }
+
+  static void setupTable(final TableName tableName, Connection connection) throws IOException {
+    try(Admin admin = connection.getAdmin()) {
+      HTableDescriptor descriptor = new HTableDescriptor(tableName);
+      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
       try {
         admin.createTable(descriptor);
+        System.out.println("Created the table");
       } catch (IOException ignore) {
         // Soldier on, maybe the table already exists.
       }
-
-      final byte[] value = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(valueSize));
-
-      final long endTimeMs = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(runtimeHours);
-      for (int i = 0; i < numThreads; i++) {
-        Runnable r =
-            new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  final Table table = connection.getTable(TableName.valueOf(tableName));
-
-                  while (System.currentTimeMillis() < endTimeMs) {
-                    // Workload: two reads and a write.
-                    table.get(new Get(Bytes.toBytes(key())));
-                    table.get(new Get(Bytes.toBytes(key())));
-                    Put p = new Put(Bytes.toBytes(key()));
-                    p.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("col"), value);
-                    table.put(p);
-                  }
-                } catch (Exception e) {
-                  System.out.println(e.getMessage());
-                }
-              }
-            };
-        executor.execute(r);
+  
+      try {
+        System.out.println("Truncating the table");
+        admin.truncateTable(tableName, false);
+      } catch (IOException ignore) {
+        // Soldier on.
       }
-
-      executor.shutdown();
-      executor.awaitTermination(runtimeHours, TimeUnit.HOURS);
-    } finally {
-      executor.shutdownNow();
     }
+  }
+
+  static ScheduledExecutorService setupShutdown(final AtomicBoolean finished) {
+    ScheduledExecutorService finishExecutor =
+        Executors.newScheduledThreadPool(1, ThreadPoolUtil.createThreadFactory("FINISH_SCHEDULER"));
+    finishExecutor.schedule(new Runnable() {
+      @Override
+      public void run() {
+        finished.set(true);
+      }
+    }, runtimeHours, TimeUnit.HOURS);
+    return finishExecutor;
+  }
+
+  static Runnable createWorker(
+      final Connection connection,
+      TableName tableName,
+      final AtomicBoolean finished,
+      final byte[][] qualifiers)
+      throws IOException {
+    final Table table = connection.getTable(tableName);
+    final byte[][] values = new byte[qualifiers.length][];
+    for (int i = 0; i < qualifiers.length; i++) {
+      values[i] = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(valueSize / values.length));
+    }
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          while (!finished.get()) {
+            // Workload: two reads and a write.
+            final byte[] key = Bytes.toBytes(key());
+            table.get(new Get(key));
+            table.get(new Get(key));
+            Put p = new Put(key);
+            for (int i = 0; i < qualifiers.length; i++) {
+              p.addColumn(COLUMN_FAMILY, qualifiers[i], values[i]);
+            }
+            table.put(p);
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    };
+  }
+
+  private static byte[][] generateQualifiers(int qualifierCount) {
+    final byte[][] qualifiers = new byte[qualifierCount][];
+    for (int i = 0; i < qualifierCount; i++) {
+      qualifiers[i] = Bytes.toBytes("qualifier_" + i);
+    }
+    return qualifiers;
   }
 
   private static String key() {
@@ -148,6 +209,7 @@ public class ManyThreadDriver {
     valueSize = Integer.parseInt(System.getProperty("valueSize", "1024"));
     runtimeHours = Integer.parseInt(System.getProperty("runtimeHours", "1"));
     numThreads = Integer.parseInt(System.getProperty("numThreads", "1000"));
+    numQualifiers = Integer.parseInt(System.getProperty("numQualifiers", "20"));
     runTest(projectId, instanceId, table);
   }
 
