@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.HConnection;
 
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 
@@ -34,7 +35,7 @@ public class BigtableConfiguration {
   };
 
   private static final Class<? extends Connection> CONNECTION_CLASS = chooseConnectionClass();
-  
+
   @SuppressWarnings("unchecked")
   private static Class<? extends Connection> chooseConnectionClass() {
     for (String className : CONNECTION_CLASS_NAMES) {
@@ -51,11 +52,13 @@ public class BigtableConfiguration {
    * @return the default bigtable {@link Connection} implementation class found in the classpath.
    */
   public static Class<? extends Connection> getConnectionClass() {
+    Preconditions.checkState(CONNECTION_CLASS != null
+        "Could not find an appropriate BigtableConnection class");
     return CONNECTION_CLASS;
   }
 
   /**
-   * <p>configure.</p>
+   * <p>Create and configure a new {@link org.apache.hadoop.conf.Configuration}.</p>
    *
    * @param projectId a {@link java.lang.String} object.
    * @param instanceId a {@link java.lang.String} object.
@@ -63,9 +66,22 @@ public class BigtableConfiguration {
    */
   public static Configuration configure(String projectId, String instanceId) {
     Configuration config = new Configuration(false);
-    config.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
-    config.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
-    return config;
+    return configure(config, projectId, instanceId);
+  }
+
+  /**
+   * <p>Configure and return an existing {@link org.apache.hadoop.conf.Configuration}.</p>
+   *
+   * @param conf a {@link org.apache.hadoop.conf.Configuration} object to configure.
+   * @param projectId a {@link java.lang.String} object.
+   * @param instanceId a {@link java.lang.String} object.
+   * @return the modified {@link org.apache.hadoop.conf.Configuration} object.
+   */
+  public static Configuration configure(Configuration conf, String projectId, String instanceId) {
+    conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
+    conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
+    conf.set(HConnection.HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
+    return conf;
   }
 
   /**
@@ -86,10 +102,8 @@ public class BigtableConfiguration {
    * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
    */
   public static Connection connect(Configuration conf) {
-    Preconditions.checkState(CONNECTION_CLASS != null,
-        "Could not find an appropriate BigtableConnection class");
     try {
-      return CONNECTION_CLASS.getConstructor(Configuration.class).newInstance(conf);
+      return getConnectionClass().getConstructor(Configuration.class).newInstance(conf);
     } catch (Exception e) {
       throw new IllegalStateException("Could not find an appropriate constructor for "
           + CONNECTION_CLASS.getCanonicalName(), e);
