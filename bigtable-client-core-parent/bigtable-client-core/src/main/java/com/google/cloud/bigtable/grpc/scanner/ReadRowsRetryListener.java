@@ -93,6 +93,8 @@ public class ReadRowsRetryListener extends
 
   @Override
   public void run() {
+    // restart the clock.
+    lastResponseMs = clock.currentTimeMillis();
     this.rowMerger = new RowMerger(rowObserver);
     super.run();
   }
@@ -177,6 +179,7 @@ public class ReadRowsRetryListener extends
    * @param rte a {@link ScanTimeoutException}
    * @throws BigtableRetriesExhaustedException
    */
+  @Override
   public void handleTimeout(ScanTimeoutException rte) throws BigtableRetriesExhaustedException {
     if ((clock.currentTimeMillis() - lastResponseMs) < retryOptions
         .getReadPartialRowTimeoutMillis()) {
