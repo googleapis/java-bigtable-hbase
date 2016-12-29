@@ -125,7 +125,7 @@ public class Export {
       s.addFamily(Bytes.toBytes(conf.get(TableInputFormat.SCAN_COLUMN_FAMILY)));
     }
     // Add additional comma-separated families
-    for (String family : conf.getStrings(SCAN_COLUMN_FAMILIES)) {
+    for (String family : conf.getStrings(SCAN_COLUMN_FAMILIES, new String[0])) {
       s.addFamily(Bytes.toBytes(family));
     }
     // Set RowFilter or Prefix Filter if applicable.
