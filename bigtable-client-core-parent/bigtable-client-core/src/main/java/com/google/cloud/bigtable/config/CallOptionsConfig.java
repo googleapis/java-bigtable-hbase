@@ -89,7 +89,6 @@ public class CallOptionsConfig implements Serializable {
     */
     public Builder setShortRpcTimeoutMs(int shortRpcTimeoutMs) {
       Preconditions.checkArgument(shortRpcTimeoutMs > 0, "Short Timeout ms has to be greater than 0.");
-      Preconditions.checkArgument(shortRpcTimeoutMs < 300_000, "Short Timeout ms has to be less than 300,000.");
       this.shortRpcTimeoutMs = shortRpcTimeoutMs;
       return this;
     }
