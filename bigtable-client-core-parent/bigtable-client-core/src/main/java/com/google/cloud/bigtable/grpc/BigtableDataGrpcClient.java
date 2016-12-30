@@ -56,6 +56,7 @@ import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
+import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
 import com.google.cloud.bigtable.grpc.scanner.ReadRowsRetryListener;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -305,6 +306,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       ROW_LIST_TRANSFORMER);
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request) {
     return Futures.transform(getStreamingFuture(request, readRowsAsync, request.getTableName()),
@@ -432,6 +434,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     };
   }
 
+  /** {@inheritDoc} */
   @Override
   public ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request) {
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
@@ -441,7 +444,13 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return new ResumingStreamingResultScanner(reader, listener);
   }
 
-  protected ReadRowsRetryListener createReadRowsRetryListener(ReadRowsRequest request,
+  /** {@inheritDoc} */
+  @Override
+  public ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> observer) {
+    return createReadRowsRetryListener(request, observer);
+  }
+
+  private ReadRowsRetryListener createReadRowsRetryListener(ReadRowsRequest request,
       StreamObserver<FlatRow> observer) {
     ReadRowsRetryListener listener =
       new ReadRowsRetryListener(
