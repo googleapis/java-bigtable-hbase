@@ -33,10 +33,10 @@ public class BigtableConfiguration {
     "com.google.cloud.bigtable.hbase1_2.BigtableConnection",
   };
 
-  private static final Class<? extends Connection> CONNECTION_CLASS = getConnectionClass();
+  private static final Class<? extends Connection> CONNECTION_CLASS = chooseConnectionClass();
   
   @SuppressWarnings("unchecked")
-  private static Class<? extends Connection> getConnectionClass() {
+  private static Class<? extends Connection> chooseConnectionClass() {
     for (String className : CONNECTION_CLASS_NAMES) {
       try {
         return (Class<? extends Connection>) Class.forName(className);
@@ -45,6 +45,13 @@ public class BigtableConfiguration {
       }
     }
     return null;
+  }
+
+  /**
+   * @return the default bigtable {@link Connection} implementation class found in the classpath.
+   */
+  public static Class<? extends Connection> getConnectionClass() {
+    return CONNECTION_CLASS;
   }
 
   /**
