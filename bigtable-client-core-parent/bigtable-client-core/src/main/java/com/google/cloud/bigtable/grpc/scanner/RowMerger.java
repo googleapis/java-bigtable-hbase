@@ -127,7 +127,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         Preconditions.checkArgument(newChunk.hasQualifier(), "A column qualifier must be set: %s",
           newChunk);
         if (newChunk.getValueSize() > 0) {
-          Preconditions.checkArgument(!isCommit(newChunk),
+          Preconditions.checkArgument(!newChunk.getCommitRow(),
             "A row cannot be have a value size and be a commit row: %s", newChunk);
         }
       }
@@ -154,7 +154,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
             newChunk);
         }
         ByteString newRowKey = newChunk.getRowKey();
-        if (isReset(newChunk)) {
+        if (newChunk.getResetRow()) {
           Preconditions.checkState(
             newRowKey.isEmpty() && !newChunk.hasFamilyName() && !newChunk.hasQualifier()
                 && newChunk.getValue().isEmpty() && newChunk.getTimestampMicros() == 0,
@@ -163,7 +163,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           Preconditions.checkState(
             newRowKey.isEmpty() || newRowKey.equals(rowInProgess.getRowKey()),
             "A commit is required between row keys: %s", newChunk);
-          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !isCommit(newChunk),
+          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !newChunk.getCommitRow(),
             "A row cannot be have a value size and be a commit row: %s", newChunk);
         }
       }
@@ -186,7 +186,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
       @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
-        if(isReset(newChunk)) {
+        if(newChunk.getResetRow()) {
           Preconditions.checkState(newChunk.getRowKey().isEmpty() &&
             !newChunk.hasFamilyName() &&
             !newChunk.hasQualifier() &&
@@ -194,7 +194,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
             newChunk.getTimestampMicros() == 0,
               "A reset should have no data");
         } else {
-          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !isCommit(newChunk),
+          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !newChunk.getCommitRow(),
             "A row cannot be have a value size and be a commit row: %s", newChunk);
         }
       }
@@ -372,15 +372,6 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       }
       return combined.build();
     }
-
-  }
-
-  private static boolean isCommit(CellChunk chunk) {
-    return chunk.getRowStatusCase() == RowStatusCase.COMMIT_ROW && chunk.getCommitRow();
-  }
-
-  private static boolean isReset(CellChunk chunk) {
-    return chunk.getRowStatusCase() == RowStatusCase.RESET_ROW && chunk.getResetRow();
   }
 
   private final StreamObserver<FlatRow> observer;
@@ -414,7 +405,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       try {
         CellChunk chunk = readRowsResponse.getChunks(i);
         state.validateChunk(rowInProgress, lastCompletedRowKey, chunk);
-        if (isReset(chunk)) {
+        if (chunk.getResetRow()) {
           rowInProgress = null;
           state = RowMergerState.NewRow;
           continue;
@@ -437,7 +428,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           state = RowMergerState.RowInProgress;
         }
 
-        if (isCommit(chunk)) {
+        if (chunk.getCommitRow()) {
           observer.onNext(rowInProgress.buildRow());
           lastCompletedRowKey = rowInProgress.getRowKey();
           rowInProgress = null;
