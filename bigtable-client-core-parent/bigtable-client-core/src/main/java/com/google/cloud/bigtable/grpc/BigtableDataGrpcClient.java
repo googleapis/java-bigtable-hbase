@@ -52,11 +52,13 @@ import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
+import com.google.cloud.bigtable.grpc.scanner.ReadRowsStreamObservableRetryListener;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.grpc.scanner.ReadRowsRetryListener;
+import com.google.cloud.bigtable.grpc.scanner.StreamObservable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -310,7 +312,27 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return Futures.transform(getStreamingFuture(request, readRowsAsync, request.getTableName()),
       FLAT_ROW_LIST_TRANSFORMER);
   }
-  
+
+  @Override
+  public StreamObservable<ReadRowsResponse> readFlatRowsObservable(final ReadRowsRequest request) {
+    return new StreamObservable<ReadRowsResponse>() {
+      @Override
+      public void observe(final StreamObserver<ReadRowsResponse> observer) {
+        final ReadRowsStreamObservableRetryListener listener =
+            new ReadRowsStreamObservableRetryListener(
+                observer,
+                retryOptions,
+                request,
+                readRowsAsync,
+                getCallOptions(readRowsAsync.getMethodDescriptor(), request),
+                retryExecutorService,
+                createMetadata(request.getTableName()));
+
+        listener.start();
+      }
+    };
+  }
+
   // Helper methods
   /**
    * <p>getStreamingFuture.</p>

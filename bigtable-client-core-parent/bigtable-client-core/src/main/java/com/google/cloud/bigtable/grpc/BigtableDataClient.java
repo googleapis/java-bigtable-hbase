@@ -26,11 +26,13 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.StreamObservable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -163,6 +165,14 @@ public interface BigtableDataClient {
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    */
   ListenableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request);
+
+  /**
+   * Read a stream of flat row responses using an observable.
+   *
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   * @return a stream of flat rows that can be observed.
+   */
+  StreamObservable<ReadRowsResponse> readFlatRowsObservable(ReadRowsRequest request);
 
   /**
    * Sets a {@link com.google.cloud.bigtable.grpc.CallOptionsFactory} which creates {@link io.grpc.CallOptions}
