@@ -37,12 +37,6 @@ limitations under the License.
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-shaded-for-dataflow</artifactId>
             <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.cloud.bigtable</groupId>
-                    <artifactId>bigtable-hbase-1.0</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -51,22 +45,6 @@ limitations under the License.
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
         </dependency>
        <dependency>
             <groupId>io.netty</groupId>
@@ -165,6 +143,7 @@ limitations under the License.
                         <configuration>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                             <artifactSet>
                                 <includes>
                                     <include>${project.groupId}:bigtable-hbase-shaded-for-dataflow</include>

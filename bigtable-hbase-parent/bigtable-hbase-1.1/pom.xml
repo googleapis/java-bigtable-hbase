@@ -39,28 +39,6 @@ limitations under the License.
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-shaded</artifactId>
             <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>bigtable-hbase</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
         </dependency>
     </dependencies>
     <build>
@@ -107,6 +85,7 @@ limitations under the License.
                             -->
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                             <artifactSet>
                                 <includes>
                                     <include>com.google.cloud.bigtable:bigtable-hbase-shaded</include>

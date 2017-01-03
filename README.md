@@ -61,7 +61,7 @@ infrequent product and client library announcements.
 ## Developing and testing
 
 1. Running `mvn clean install` will build and install Cloud Bigtable client artifacts to your local repository, and then run the unit tests.
-1. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above).
+2. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above).
 
    Use the following command to run the integration tests:
 
@@ -71,6 +71,10 @@ infrequent product and client library announcements.
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
    ```
+
+NOTE: This project uses extensive shading which IDEs have trouble with. To over come these issues,
+you can disable the `with-shaded` profile in your IDE to force it to resolve the dependencies from your local
+maven repository. When you disable that profile, you have to attach workspace sources to local maven repository jars.
 
 ## Contributing changes
 
