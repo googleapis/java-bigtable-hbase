@@ -108,11 +108,6 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
      */
     NewRow {
       @Override
-      void handleLastScannedRowKey(ByteString lastScannedRowKey) {
-        throw new IllegalStateException("Encountered a lastScannedRowKey while processing a row.");
-      }
-
-      @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
         Preconditions.checkArgument(rowInProgess == null || !rowInProgess.hasRowKey(),
           "A new row cannot have existing state: %s", newChunk);
@@ -142,11 +137,6 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
      * A new {@link CellChunk} represents a new {@link FlatRow.Cell} in a {@link FlatRow}.
      */
     RowInProgress {
-      @Override
-      void handleLastScannedRowKey(ByteString lastScannedRowKey) {
-        throw new IllegalStateException("Encountered a lastScannedRowKey while processing a row.");
-      }
-
       @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
         if (newChunk.hasFamilyName()) {
@@ -180,11 +170,6 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
      */
     CellInProgress {
       @Override
-      void handleLastScannedRowKey(ByteString lastScannedRowKey) {
-        throw new IllegalStateException("Encountered a lastScannedRowKey while processing a cell.");
-      }
-
-      @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
         if(isReset(newChunk)) {
           Preconditions.checkState(newChunk.getRowKey().isEmpty() &&
@@ -204,8 +189,6 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         observer.onError(new IllegalStateException("Got a partial row, but the stream ended"));
       }
     };
-
-    abstract void handleLastScannedRowKey(ByteString lastScannedRowKey);
 
     abstract void validateChunk(RowInProgress rowInProgess, ByteString previousKey,
         CellChunk newChunk) throws Exception;
@@ -405,10 +388,6 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     if (complete) {
       onError(new IllegalStateException("Adding partialRow after completion"));
       return;
-    }
-    ByteString lastScannedRowKey = readRowsResponse.getLastScannedRowKey();
-    if (!lastScannedRowKey.isEmpty()) {
-      state.handleLastScannedRowKey(lastScannedRowKey);
     }
     for (int i = 0; i < readRowsResponse.getChunksCount(); i++) {
       try {
