@@ -31,8 +31,11 @@ import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+
+import io.grpc.stub.StreamObserver;
 
 /**
  * Interface to access v2 Bigtable data service methods.
@@ -146,7 +149,6 @@ public interface BigtableDataClient {
    */
   ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request);
 
-
   /**
    * Perform a scan over {@link FlatRow}s.
    *
@@ -154,6 +156,16 @@ public interface BigtableDataClient {
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
    */
   ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request);
+
+  /**
+   * Perform a streaming read of {@link FlatRow}s. It would be a good idea to turn on client side
+   * timeouts via
+   * {@link com.google.cloud.bigtable.config.CallOptionsConfig.Builder#setUseTimeout(boolean)}.
+   * @param request a {@link ReadRowsRequest} object.
+   * @param observer a {@link StreamObserver} object
+   * @return a {@link ScanHandler} which can be used to either cancel or timeout the request.
+   */
+  ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> observer);
 
   /**
    * Read multiple {@link FlatRow}s into an in-memory list.
