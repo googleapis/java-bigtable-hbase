@@ -69,9 +69,6 @@ public class HBaseExportIO {
             .build()
     );
 
-    BigtableDataClient client = null;
-
-
     SerializableCoder<BoundedSource<Result>> sourceCoder = SerializableCoder.of(new TypeDescriptor<BoundedSource<Result>>() {});
     KvCoder<String, BoundedSource<Result>> kvCoder = KvCoder.of(StringUtf8Coder.of(), sourceCoder);
 
