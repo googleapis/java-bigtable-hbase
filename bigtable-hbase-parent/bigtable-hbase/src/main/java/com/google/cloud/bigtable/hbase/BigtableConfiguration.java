@@ -52,7 +52,7 @@ public class BigtableConfiguration {
    * @return the default bigtable {@link Connection} implementation class found in the classpath.
    */
   public static Class<? extends Connection> getConnectionClass() {
-    Preconditions.checkState(CONNECTION_CLASS != null
+    Preconditions.checkState(CONNECTION_CLASS != null,
         "Could not find an appropriate BigtableConnection class");
     return CONNECTION_CLASS;
   }
