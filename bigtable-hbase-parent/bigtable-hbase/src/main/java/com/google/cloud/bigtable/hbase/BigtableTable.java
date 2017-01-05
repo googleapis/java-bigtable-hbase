@@ -222,14 +222,26 @@ public class BigtableTable implements Table {
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
     Timer.Context timerContext = metrics.getTimer.time();
+    Result response = null;
     try (com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
         client.readFlatRows(hbaseAdapter.adapt(get))) {
-      return Adapters.FLAT_ROW_ADAPTER.adaptResponse(scanner.next());
+      response = Adapters.FLAT_ROW_ADAPTER.adaptResponse(scanner.next());
+      // This scanner.next() serves two purposes:
+      //
+      // 1. The obvious check for multiple responses.
+      // 2. This waits for an OK HTTP status to be sent. Sometimes, the client doesn't process the
+      //    OK fast enough. When the OK is not processed, the user will see many CANCELLED exceptions,
+      //    which shows up on the Web UI error graph, which looks scary, and is an indication of a
+      //    possible problem elsewhere but isn't necessarily one.
+      if (scanner.next() != null) {
+        throw new IllegalStateException("Multiple responses found for Get");
+      }
     } catch (Throwable t) {
       throw logAndCreateIOException("get", get.getRow(), t);
     } finally {
       timerContext.close();
     }
+    return response;
   }
 
   /** {@inheritDoc} */
