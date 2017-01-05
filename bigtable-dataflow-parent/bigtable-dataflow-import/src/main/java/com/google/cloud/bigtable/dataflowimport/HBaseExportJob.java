@@ -56,13 +56,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * <p>
- *  Dataflow job to export a Bigtable table to a set of SequenceFiles.
- *  Afterwards, the files can be either imported into another Bigtable or HBase table.
- *  You can limit the rows and columns exported using the options in {@link HBaseExportOptions}.
- *  Please note that the pipeline processes the rows in chunks rather than rows, so the element counts in
- *  dataflow ui will be misleading.
+ * Dataflow job to export a Bigtable table to a set of SequenceFiles.
+ * Afterwards, the files can be either imported into another Bigtable or HBase table.
+ * You can limit the rows and columns exported using the options in {@link HBaseExportOptions}.
+ * Please note that the pipeline processes the rows in chunks rather than rows, so the element counts in
+ * dataflow ui will be misleading.
  *
- *  Example usage:
+ * Example usage:
  * </p>
  *
  * <pre>
@@ -80,6 +80,7 @@ import org.slf4j.LoggerFactory;
  * </pre>
  */
 public class HBaseExportJob {
+
   private static final Logger LOG = LoggerFactory.getLogger(HBaseExportJob.class);
 
   public static void main(String[] args) throws IOException {
@@ -97,10 +98,10 @@ public class HBaseExportJob {
    * Builds a pipeline using the passed in options.
    */
   public static Pipeline buildPipeline(HBaseExportOptions options) throws IOException {
-    if(options.getDiskSizeGb() == 0) {
+    if (options.getDiskSizeGb() == 0) {
       options.setDiskSizeGb(20);
     }
-    if(options.getBigtableProjectId() == null) {
+    if (options.getBigtableProjectId() == null) {
       options.setBigtableProjectId(options.getProject());
     }
 
@@ -125,12 +126,14 @@ public class HBaseExportJob {
 
     final BoundedSource<Result> source = CloudBigtableIO.read(scanConfig);
 
-
     // Build the pipeline
     final Pipeline pipeline = Pipeline.create(options);
 
     // Coders
-    final SerializableCoder<BoundedSource<Result>> sourceCoder = SerializableCoder.of(new TypeDescriptor<BoundedSource<Result>>() {});
+    final SerializableCoder<BoundedSource<Result>> sourceCoder = SerializableCoder.of(
+        new TypeDescriptor<BoundedSource<Result>>() {
+        }
+    );
     final KvCoder<String, BoundedSource<Result>> kvCoder = KvCoder.of(StringUtf8Coder.of(), sourceCoder);
 
     // Pipeline
@@ -155,6 +158,7 @@ public class HBaseExportJob {
    * to avoid hotspotting later on.
    */
   static class ShardScans<T> extends DoFn<BoundedSource<T>, KV<String, BoundedSource<T>>> {
+
     private static final long DESIRED_SHARD_SIZE = 1024 * 1024 * 1024;
 
     @Override
@@ -181,6 +185,7 @@ public class HBaseExportJob {
    * Reads each shard and writes its elements into a SequenceFile with compressed blocks.
    */
   static class WriteResultsToSeq extends DoFn<KV<String, BoundedSource<Result>>, Void> {
+
     private final String basePath;
     private final Aggregator<Long, Long> itemCounter;
     private final BatchCounter readDuration;
@@ -284,14 +289,16 @@ public class HBaseExportJob {
    * but display the results in secs.
    */
   static class BatchCounter implements Serializable {
+
     private final Aggregator<Long, Long> aggregator;
     private final long batchSize;
     private long buffer = 0;
 
-    BatchCounter(Aggregator<Long,Long> aggregator, long batchSize) {
+    BatchCounter(Aggregator<Long, Long> aggregator, long batchSize) {
       this.aggregator = aggregator;
       this.batchSize = batchSize;
     }
+
     void addValue(long inc) {
       buffer += inc;
       if (buffer >= batchSize) {
