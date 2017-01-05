@@ -210,15 +210,9 @@ public class CloudBigtableIO {
     public Result next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker)
         throws IOException {
       FlatRow row = resultScanner.next();
-      try {
-	      if (row != null
-	          && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getRowKey()))) {
-	        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(row);
-	      }
-      } catch(IllegalStateException e) {
-    	  if (e.getMessage().contains("record which is before the last-returned record")) {
-    		  throw new IllegalStateException("before last-returned record. tracker: " + rangeTracker.toString() + ". key: " + ByteStringUtil.toByteKey(row.getRowKey()));
-    	  } else throw e;
+      if (row != null
+          && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getRowKey()))) {
+        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(row);
       }
       return null;
     }
