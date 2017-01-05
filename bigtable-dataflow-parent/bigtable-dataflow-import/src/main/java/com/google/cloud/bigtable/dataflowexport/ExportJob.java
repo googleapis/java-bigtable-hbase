@@ -27,6 +27,7 @@ import com.google.cloud.dataflow.sdk.util.GcsUtil;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor;
 import com.google.common.base.Joiner;
+import java.io.Serializable;
 import java.nio.charset.CharacterCodingException;
 import java.util.Collections;
 import java.util.List;
@@ -221,23 +222,22 @@ public class ExportJob {
   static class WriteResultsToSeq extends DoFn<KV<String, Iterable<BoundedSource<Result>>>, Void> {
     private final String basePath;
     private final Aggregator<Long, Long> itemCounter;
-    private final Aggregator<Long, Long> readDuration;
-    private final Aggregator<Long, Long> writeDuration;
-    private final Aggregator<Long, Long> totalDuration;
-    private final Aggregator<Long, Long> bytesWritten;
+    private final BatchCounter readDuration;
+    private final BatchCounter writeDuration;
+    private final BatchCounter totalDuration;
+    private final BatchCounter bytesWritten;
 
     private transient GcsUtil gcsUtil;
     private transient Configuration hadoopConfig;
-
 
     public WriteResultsToSeq(String basePath) {
       this.basePath = basePath;
 
       itemCounter = createAggregator("itemsProcessed", new SumLongFn());
-      readDuration = createAggregator("readDuration", new SumLongFn());
-      writeDuration = createAggregator("writeDuration", new SumLongFn());
-      totalDuration = createAggregator("totalDuration", new SumLongFn());
-      bytesWritten = createAggregator("bytesWritten", new SumLongFn());
+      readDuration = new BatchCounter(createAggregator("readDuration(secs)", new SumLongFn()), 1_000_000_000);
+      writeDuration = new BatchCounter(createAggregator("writeDuration(secs)", new SumLongFn()), 1_000_000_000);
+      totalDuration = new BatchCounter(createAggregator("totalDuration(secs)", new SumLongFn()), 1_000_000_000);
+      bytesWritten = new BatchCounter(createAggregator("bytesWritten(MB)", new SumLongFn()), 1024 * 1024);
     }
 
     @Override
@@ -321,6 +321,24 @@ public class ExportJob {
       // finalize
       gcsUtil.copy(Collections.singletonList(tempFilePath), Collections.singletonList(finalFilePath));
       gcsUtil.remove(Collections.singletonList(tempFilePath));
+    }
+  }
+
+  private static class BatchCounter implements Serializable {
+    private final Aggregator<Long, Long> aggregator;
+    private final long batchSize;
+    private long buffer = 0;
+
+    public BatchCounter(Aggregator<Long,Long> aggregator, long batchSize) {
+      this.aggregator = aggregator;
+      this.batchSize = batchSize;
+    }
+    public void addValue(long inc) {
+      buffer += inc;
+      if (buffer >= batchSize) {
+        aggregator.addValue(buffer / batchSize);
+        buffer %= batchSize;
+      }
     }
   }
 }
