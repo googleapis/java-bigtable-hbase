@@ -94,7 +94,7 @@ public class HBaseImportIO {
    * and do no harm if the files are not.
    */
   @VisibleForTesting
-  public static final Map<String, String> CONST_FILE_READER_PROPERTIES = ImmutableMap.of(
+  static final Map<String, String> CONST_FILE_READER_PROPERTIES = ImmutableMap.of(
       IO_SERIALIZATIONS,
           WritableSerialization.class.getName() + "," + ResultSerialization.class.getName(),
       FS_GS_IMPL, GoogleHadoopFileSystem.class.getName(),
