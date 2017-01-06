@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.dataflowimport;
 
+import com.google.api.client.util.Clock;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
 import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration;
 import com.google.cloud.dataflow.sdk.Pipeline;
@@ -50,6 +51,8 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.ResultSerialization;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
+import org.apache.hadoop.io.SequenceFile.Writer;
+import org.apache.hadoop.io.SequenceFile.Writer.Option;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,23 +188,30 @@ public class HBaseExportJob {
    * Reads each shard and writes its elements into a SequenceFile with compressed blocks.
    */
   static class WriteResultsToSeq extends DoFn<KV<String, BoundedSource<Result>>, Void> {
+    private final SequenceFileFactory sequenceFileFactory;
+    private final com.google.api.client.util.Clock clock;
 
     private final String basePath;
-    private final Aggregator<Long, Long> itemCounter;
-    private final BatchCounter readDuration;
-    private final BatchCounter writeDuration;
-    private final BatchCounter totalDuration;
-    private final BatchCounter bytesWritten;
+    final Aggregator<Long, Long> itemCounter;
+    final BatchCounter readDuration;
+    final BatchCounter writeDuration;
+    final BatchCounter totalDuration;
+    final BatchCounter bytesWritten;
 
     private transient Configuration hadoopConfig;
 
     WriteResultsToSeq(String basePath) {
+      this(basePath, new DefaultSequenceFileFactory(), Clock.SYSTEM);
+    }
+    WriteResultsToSeq(String basePath, SequenceFileFactory sequenceFileFactory, Clock clock) {
+      this.sequenceFileFactory = sequenceFileFactory;
       this.basePath = basePath;
+      this.clock = clock;
 
       itemCounter = createAggregator("itemsProcessed", new SumLongFn());
-      readDuration = new BatchCounter(createAggregator("readDuration(secs)", new SumLongFn()), 1_000_000_000);
-      writeDuration = new BatchCounter(createAggregator("writeDuration(secs)", new SumLongFn()), 1_000_000_000);
-      totalDuration = new BatchCounter(createAggregator("totalDuration(secs)", new SumLongFn()), 1_000_000_000);
+      readDuration = new BatchCounter(createAggregator("readDuration(secs)", new SumLongFn()), 1_000);
+      writeDuration = new BatchCounter(createAggregator("writeDuration(secs)", new SumLongFn()), 1_000);
+      totalDuration = new BatchCounter(createAggregator("totalDuration(secs)", new SumLongFn()), 1_000);
       bytesWritten = new BatchCounter(createAggregator("bytesWritten(MB)", new SumLongFn()), 1024 * 1024);
     }
 
@@ -242,34 +252,34 @@ public class HBaseExportJob {
           SequenceFile.Writer.compression(CompressionType.BLOCK)
       };
 
-      final long start = System.nanoTime();
-      long localStart = System.nanoTime();
+      final long start = clock.currentTimeMillis();
+      long localStart = clock.currentTimeMillis();
 
       long reportedTotalDuration = 0;
 
       try (BoundedSource.BoundedReader<Result> reader = source.createReader(c.getPipelineOptions())) {
         boolean hasMore = reader.start();
-        readDuration.addValue(System.nanoTime() - localStart);
+        readDuration.addValue(clock.currentTimeMillis() - localStart);
 
         if (hasMore) {
-          try (SequenceFile.Writer writer = SequenceFile.createWriter(hadoopConfig, writerOptions)) {
+          try (SequenceFile.Writer writer = sequenceFileFactory.createWriter(hadoopConfig, writerOptions)) {
             final ImmutableBytesWritable key = new ImmutableBytesWritable();
             Result value;
 
             while (hasMore) {
-              localStart = System.nanoTime();
+              localStart = clock.currentTimeMillis();
               value = reader.getCurrent();
               key.set(value.getRow());
               writer.append(key, value);
-              writeDuration.addValue(System.nanoTime() - localStart);
+              writeDuration.addValue(clock.currentTimeMillis() - localStart);
 
-              localStart = System.nanoTime();
+              localStart = clock.currentTimeMillis();
               hasMore = reader.advance();
-              readDuration.addValue(System.nanoTime() - localStart);
+              readDuration.addValue(clock.currentTimeMillis() - localStart);
 
               itemCounter.addValue(1L);
               // update totalDuration
-              final long newTotalDuration = System.nanoTime() - start;
+              final long newTotalDuration = clock.currentTimeMillis() - start;
               totalDuration.addValue(newTotalDuration - reportedTotalDuration);
               reportedTotalDuration = newTotalDuration;
             }
@@ -278,8 +288,20 @@ public class HBaseExportJob {
           }
         }
       }
-      final long newTotalDuration = System.nanoTime() - start;
+      final long newTotalDuration = clock.currentTimeMillis() - start;
       totalDuration.addValue(newTotalDuration - reportedTotalDuration);
+    }
+  }
+
+  interface SequenceFileFactory extends Serializable {
+    SequenceFile.Writer createWriter(Configuration configuration, SequenceFile.Writer.Option... options)
+        throws IOException;
+  }
+
+  static class DefaultSequenceFileFactory implements SequenceFileFactory {
+    @Override
+    public Writer createWriter(Configuration configuration, Option... options) throws IOException {
+      return SequenceFile.createWriter(configuration, options);
     }
   }
 
@@ -290,7 +312,7 @@ public class HBaseExportJob {
    */
   static class BatchCounter implements Serializable {
 
-    private final Aggregator<Long, Long> aggregator;
+    final Aggregator<Long, Long> aggregator;
     private final long batchSize;
     private long buffer = 0;
 
