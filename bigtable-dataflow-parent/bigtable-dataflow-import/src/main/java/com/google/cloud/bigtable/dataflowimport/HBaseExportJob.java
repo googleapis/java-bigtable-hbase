@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.dataflowimport;
 
-import com.google.api.client.util.Clock;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
 import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration;
 import com.google.cloud.dataflow.sdk.Pipeline;
@@ -189,7 +188,8 @@ public class HBaseExportJob {
    */
   static class WriteResultsToSeq extends DoFn<KV<String, BoundedSource<Result>>, Void> {
     private final SequenceFileFactory sequenceFileFactory;
-    private final com.google.api.client.util.Clock clock;
+    private final Clock clock;
+
 
     private final String basePath;
     final Aggregator<Long, Long> itemCounter;
@@ -328,5 +328,16 @@ public class HBaseExportJob {
         buffer %= batchSize;
       }
     }
+  }
+
+  interface Clock extends Serializable {
+    long currentTimeMillis();
+
+    Clock SYSTEM = new Clock() {
+      @Override
+      public long currentTimeMillis() {
+        return System.currentTimeMillis();
+      }
+    };
   }
 }

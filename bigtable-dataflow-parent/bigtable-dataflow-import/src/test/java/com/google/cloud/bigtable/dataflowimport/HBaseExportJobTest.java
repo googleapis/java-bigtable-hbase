@@ -20,7 +20,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.api.client.util.Clock;
+import com.google.cloud.bigtable.dataflowimport.HBaseExportJob.Clock;
 import com.google.cloud.bigtable.dataflowimport.HBaseExportJob.SequenceFileFactory;
 import com.google.cloud.bigtable.dataflowimport.HBaseExportJob.WriteResultsToSeq;
 import com.google.cloud.bigtable.dataflowimport.testing.HBaseCellUtils;
