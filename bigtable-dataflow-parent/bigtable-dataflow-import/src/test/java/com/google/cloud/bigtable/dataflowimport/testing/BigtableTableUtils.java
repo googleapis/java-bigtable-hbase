@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.dataflowimport.testing;
 
 import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.dataflowimport.HBaseImportOptions;
+import com.google.cloud.bigtable.dataflow.CloudBigtableOptions;
 import com.google.common.collect.Sets;
 
 import org.apache.hadoop.hbase.Cell;
@@ -79,6 +79,10 @@ public class BigtableTableUtils implements AutoCloseable {
     return admin.tableExists(tableName);
   }
 
+  public Connection getConnection() {
+    return connection;
+  }
+
   /**
    * Drops the table.
    */
@@ -127,7 +131,7 @@ public class BigtableTableUtils implements AutoCloseable {
       this.connection.close();
     }
 
-    public static BigtableTableUtilsFactory from(HBaseImportOptions options) throws IOException {
+    public static BigtableTableUtilsFactory from(CloudBigtableOptions options) throws IOException {
       return new BigtableTableUtilsFactory(BigtableConfiguration.connect(
           options.getBigtableProjectId(),
           options.getBigtableInstanceId()));
