@@ -19,6 +19,13 @@ import com.google.cloud.bigtable.dataflow.CloudBigtableOptions;
 import com.google.cloud.dataflow.sdk.options.Default;
 import com.google.cloud.dataflow.sdk.options.Description;
 
+/**
+ * An extension of {@link com.google.cloud.bigtable.dataflow.CloudBigtableOptions} that contains additional configuration
+ * for exporting Bigtable tables into GCS as sequence files.
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ */
 public interface HBaseExportOptions extends CloudBigtableOptions {
 
   @Description("Directory where to export the sequence files to")
