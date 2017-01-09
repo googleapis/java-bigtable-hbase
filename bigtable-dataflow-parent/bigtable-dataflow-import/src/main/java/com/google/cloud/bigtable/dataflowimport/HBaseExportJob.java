@@ -126,10 +126,16 @@ public class HBaseExportJob {
         .withScan(scan)
         .build();
 
+    return buildPipeline(options, scanConfig, options.getDestination());
+  }
+
+  public static Pipeline buildPipeline(DataflowPipelineOptions pipelineOptions,
+      CloudBigtableScanConfiguration scanConfig, String destination) {
+
     final BoundedSource<Result> source = CloudBigtableIO.read(scanConfig);
 
     // Build the pipeline
-    final Pipeline pipeline = Pipeline.create(options);
+    final Pipeline pipeline = Pipeline.create(pipelineOptions);
 
     // Coders
     final SerializableCoder<BoundedSource<Result>> sourceCoder = SerializableCoder.of(
@@ -149,7 +155,7 @@ public class HBaseExportJob {
         // Make sure that each shard can be handled a different worker
         .apply("Fanout", Reshuffle.<String, BoundedSource<Result>>of())
         // Now, read the actual rows and write out each shard's elements into a file
-        .apply("Write", ParDo.of(new WriteResultsToSeq(options.getDestination())));
+        .apply("Write", ParDo.of(new WriteResultsToSeq(destination)));
 
     return pipeline;
   }
@@ -187,6 +193,7 @@ public class HBaseExportJob {
    * Reads each shard and writes its elements into a SequenceFile with compressed blocks.
    */
   static class WriteResultsToSeq extends DoFn<KV<String, BoundedSource<Result>>, Void> {
+
     private final SequenceFileFactory sequenceFileFactory;
     private final Clock clock;
 
@@ -203,6 +210,7 @@ public class HBaseExportJob {
     WriteResultsToSeq(String basePath) {
       this(basePath, new DefaultSequenceFileFactory(), Clock.SYSTEM);
     }
+
     WriteResultsToSeq(String basePath, SequenceFileFactory sequenceFileFactory, Clock clock) {
       this.sequenceFileFactory = sequenceFileFactory;
       this.basePath = basePath;
@@ -294,11 +302,13 @@ public class HBaseExportJob {
   }
 
   interface SequenceFileFactory extends Serializable {
+
     SequenceFile.Writer createWriter(Configuration configuration, SequenceFile.Writer.Option... options)
         throws IOException;
   }
 
   static class DefaultSequenceFileFactory implements SequenceFileFactory {
+
     @Override
     public Writer createWriter(Configuration configuration, Option... options) throws IOException {
       return SequenceFile.createWriter(configuration, options);
@@ -331,6 +341,7 @@ public class HBaseExportJob {
   }
 
   interface Clock extends Serializable {
+
     long currentTimeMillis();
 
     Clock SYSTEM = new Clock() {
