@@ -219,9 +219,7 @@ public class HBaseExportJob {
       final String finalFilePath = basePath + "/" + shard.filename;
 
       try (BoundedSource.BoundedReader<Result> reader = shard.source.createReader(c.getPipelineOptions())) {
-        boolean hasMore = reader.start();
-
-        if (!hasMore) {
+        if (!reader.start()) {
           // don't bother creating empty SequenceFile for empty shards
           return;
         }
@@ -231,6 +229,7 @@ public class HBaseExportJob {
           Result value;
           long bytesReported = 0;
 
+          boolean hasMore = true;
           while (hasMore) {
             value = reader.getCurrent();
             key.set(value.getRow());
