@@ -18,10 +18,10 @@ package com.google.cloud.bigtable.dataflowimport;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
 import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration;
 import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.coders.KvCoder;
+import com.google.cloud.dataflow.sdk.coders.DefaultCoder;
 import com.google.cloud.dataflow.sdk.coders.SerializableCoder;
-import com.google.cloud.dataflow.sdk.coders.StringUtf8Coder;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
+import com.google.cloud.dataflow.sdk.io.ShardNameTemplate;
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions;
 import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
 import com.google.cloud.dataflow.sdk.transforms.Aggregator;
@@ -29,16 +29,18 @@ import com.google.cloud.dataflow.sdk.transforms.Create;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.transforms.Sum.SumLongFn;
+import com.google.cloud.dataflow.sdk.util.IOChannelUtils;
 import com.google.cloud.dataflow.sdk.util.Reshuffle;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.Result;
@@ -58,7 +60,7 @@ import org.slf4j.LoggerFactory;
  * Afterwards, the files can be either imported into another Bigtable or HBase table.
  * You can limit the rows and columns exported using the options in {@link HBaseExportOptions}.
  * Please note that the pipeline processes the rows in chunks rather than rows, so the element counts in
- * dataflow ui will be misleading.
+ * dataflow ui will be misleading. The resulting files sequence files will contain sorted rows.
  *
  * Example usage:
  * </p>
@@ -138,7 +140,6 @@ public class HBaseExportJob {
         new TypeDescriptor<BoundedSource<Result>>() {
         }
     );
-    final KvCoder<String, BoundedSource<Result>> kvCoder = KvCoder.of(StringUtf8Coder.of(), sourceCoder);
 
     // Pipeline
     pipeline
@@ -147,9 +148,9 @@ public class HBaseExportJob {
         .apply("Initialize", Create.of(source).withCoder(sourceCoder))
         // Split the source into a bunch of shards
         // Note that we aren't reading the source's elements yet
-        .apply("Shard", ParDo.of(new ShardScans<Result>())).setCoder(kvCoder)
+        .apply("Shard", ParDo.of(new ShardScans<Result>()))
         // Make sure that each shard can be handled a different worker
-        .apply("Fanout", Reshuffle.<String, BoundedSource<Result>>of())
+        .apply("Fanout", Reshuffle.<Integer, ExportShard<Result>>of())
         // Now, read the actual rows and write out each shard's elements into a file
         .apply("Write", ParDo.of(new WriteResultsToSeq(destination)));
 
@@ -158,10 +159,9 @@ public class HBaseExportJob {
 
   /**
    * Split Sources into multiple shards. It treats the Sources themselves as elements. It will output
-   * a KV of a random unique key and a sharded Source. It will intentionally randomize the order of shards
-   * to avoid hotspotting later on.
+   * a KV of a random unique key and a sharded Source.
    */
-  static class ShardScans<T> extends DoFn<BoundedSource<T>, KV<String, BoundedSource<T>>> {
+  static class ShardScans<T> extends DoFn<BoundedSource<T>, KV<Integer, ExportShard<T>>> {
 
     private static final long DESIRED_SHARD_SIZE = 1024 * 1024 * 1024;
 
@@ -169,18 +169,27 @@ public class HBaseExportJob {
     public void processElement(ProcessContext c) throws Exception {
       final BoundedSource<T> source = c.element();
 
-      final List<? extends BoundedSource<T>> boundedSources = source
-          .splitIntoBundles(DESIRED_SHARD_SIZE, c.getPipelineOptions());
+      List<? extends BoundedSource<T>> splitSources = source.splitIntoBundles(
+          DESIRED_SHARD_SIZE, c.getPipelineOptions()
+      );
+      LOG.info("Split into {} shards", splitSources.size());
 
-      LOG.info("Split into {} shards", boundedSources.size());
+      // Assign the filenames now so that the output is stable
+      final List<ExportShard<T>> shards = new ArrayList<>(splitSources.size());
+      int i = 0;
+      for (BoundedSource<T> splitSource : splitSources) {
+        final String filename = IOChannelUtils.constructName(
+            "part", ShardNameTemplate.INDEX_OF_MAX, "", i++, splitSources.size()
+        );
+        shards.add(new ExportShard<>(splitSource, filename));
+      }
 
       // randomize order to make sure that scans are distributed across tablets
-      Collections.shuffle(boundedSources);
+      Collections.shuffle(shards);
 
-      // emit each shard with a random uuid, note that uuids are used instead of counters to prevent misleading the
-      // user into thinking that the filenames are ordered in any way
-      for (BoundedSource<T> sourceBundle : boundedSources) {
-        c.output(KV.of(UUID.randomUUID().toString(), sourceBundle));
+      i = 0;
+      for (ExportShard<T> shard : shards) {
+        c.output(KV.of(i++, shard));
       }
     }
   }
@@ -188,7 +197,7 @@ public class HBaseExportJob {
   /**
    * Reads each shard and writes its elements into a SequenceFile with compressed blocks.
    */
-  static class WriteResultsToSeq extends DoFn<KV<String, BoundedSource<Result>>, Void> {
+  static class WriteResultsToSeq extends DoFn<KV<Integer, ExportShard<Result>>, Void> {
     private final String basePath;
     final Aggregator<Long, Long> itemCounter;
     final Aggregator<Long, Long> bytesWritten;
@@ -202,15 +211,14 @@ public class HBaseExportJob {
 
     @Override
     public void processElement(ProcessContext c) throws Exception {
-      final String shardId = c.element().getKey();
-      final BoundedSource<Result> source = c.element().getValue();
+      final ExportShard<Result> shard = c.element().getValue();
 
       LOG.info("Starting new shard");
 
       final String projectId = c.getPipelineOptions().as(DataflowPipelineOptions.class).getProject();
-      final String finalFilePath = basePath + "/" + shardId;
+      final String finalFilePath = basePath + "/" + shard.filename;
 
-      try (BoundedSource.BoundedReader<Result> reader = source.createReader(c.getPipelineOptions())) {
+      try (BoundedSource.BoundedReader<Result> reader = shard.source.createReader(c.getPipelineOptions())) {
         boolean hasMore = reader.start();
 
         if (!hasMore) {
@@ -264,6 +272,17 @@ public class HBaseExportJob {
       };
 
       return SequenceFile.createWriter(hadoopConfig, writerOptions);
+    }
+  }
+
+  @DefaultCoder(SerializableCoder.class)
+  static class ExportShard<T> implements Serializable {
+    final BoundedSource<T> source;
+    final String filename;
+
+    public ExportShard(BoundedSource<T> source, String filename) {
+      this.source = source;
+      this.filename = filename;
     }
   }
 }
