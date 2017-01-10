@@ -78,6 +78,9 @@ import org.slf4j.LoggerFactory;
  *    --maxNumWorkers=200"
  * }
  * </pre>
+ *
+ * @author igorbernstein2
+ * @version $Id: $Id
  */
 public class HBaseExportJob {
 
