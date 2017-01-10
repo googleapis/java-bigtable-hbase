@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.dataflowimport;
 
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
 import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
@@ -154,12 +155,17 @@ public class HBaseImportIO {
   public static void main(String[] args) throws Exception {
     HBaseImportOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(HBaseImportOptions.class);
+
+    CloudBigtableTableConfiguration cbtConfig = CloudBigtableTableConfiguration.fromCBTOptions(options)
+        .toBuilder()
+        .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseImportIO")
+        .build();
+
     Pipeline p = CloudBigtableIO.initializeForWrite(Pipeline.create(options));
     p
         .apply("ReadSequenceFile", Read.from(HBaseImportIO.createSource(options)))
         .apply("ConvertResultToMutations", HBaseImportIO.transformToMutations())
-        .apply("WriteToTable", CloudBigtableIO.writeToTable(
-            CloudBigtableTableConfiguration.fromCBTOptions(options)));
+        .apply("WriteToTable", CloudBigtableIO.writeToTable(cbtConfig));
     p.run();
   }
 }
