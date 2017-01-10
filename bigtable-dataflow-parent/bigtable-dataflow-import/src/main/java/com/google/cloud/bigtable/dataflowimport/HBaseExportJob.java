@@ -29,14 +29,12 @@ import com.google.cloud.dataflow.sdk.transforms.Create;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.transforms.Sum.SumLongFn;
-import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
 import com.google.cloud.dataflow.sdk.util.Reshuffle;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +48,6 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.ResultSerialization;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
-import org.apache.hadoop.io.SequenceFile.Writer;
-import org.apache.hadoop.io.SequenceFile.Writer.Option;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,55 +189,15 @@ public class HBaseExportJob {
    * Reads each shard and writes its elements into a SequenceFile with compressed blocks.
    */
   static class WriteResultsToSeq extends DoFn<KV<String, BoundedSource<Result>>, Void> {
-
-    private final SequenceFileFactory sequenceFileFactory;
-    private final Clock clock;
-
-
     private final String basePath;
     final Aggregator<Long, Long> itemCounter;
-    final BatchCounter readDuration;
-    final BatchCounter writeDuration;
-    final BatchCounter totalDuration;
-    final BatchCounter bytesWritten;
-
-    private transient Configuration hadoopConfig;
+    final Aggregator<Long, Long> bytesWritten;
 
     WriteResultsToSeq(String basePath) {
-      this(basePath, new DefaultSequenceFileFactory(), Clock.SYSTEM);
-    }
-
-    WriteResultsToSeq(String basePath, SequenceFileFactory sequenceFileFactory, Clock clock) {
-      this.sequenceFileFactory = sequenceFileFactory;
       this.basePath = basePath;
-      this.clock = clock;
 
       itemCounter = createAggregator("itemsProcessed", new SumLongFn());
-      readDuration = new BatchCounter(createAggregator("readDuration(secs)", new SumLongFn()), 1_000);
-      writeDuration = new BatchCounter(createAggregator("writeDuration(secs)", new SumLongFn()), 1_000);
-      totalDuration = new BatchCounter(createAggregator("totalDuration(secs)", new SumLongFn()), 1_000);
-      bytesWritten = new BatchCounter(createAggregator("bytesWritten(MB)", new SumLongFn()), 1024 * 1024);
-    }
-
-    @Override
-    public void populateDisplayData(DisplayData.Builder builder) {
-      super.populateDisplayData(builder);
-    }
-
-    @Override
-    public void startBundle(Context c) throws Exception {
-      hadoopConfig = new Configuration(false);
-
-      // Not using setStrings to avoid loading StringUtils which tries to access HADOOP_HOME
-      hadoopConfig.set("io.serializations", Joiner.on(',').join(
-          WritableSerialization.class.getName(), ResultSerialization.class.getName())
-      );
-      hadoopConfig.set("fs.gs.project.id", c.getPipelineOptions().as(DataflowPipelineOptions.class).getProject());
-      for (Map.Entry<String, String> entry : HBaseImportIO.CONST_FILE_READER_PROPERTIES.entrySet()) {
-        hadoopConfig.set(entry.getKey(), entry.getValue());
-      }
-
-      super.startBundle(c);
+      bytesWritten = createAggregator("bytesWritten", new SumLongFn());
     }
 
     @Override
@@ -251,104 +207,63 @@ public class HBaseExportJob {
 
       LOG.info("Starting new shard");
 
+      final String projectId = c.getPipelineOptions().as(DataflowPipelineOptions.class).getProject();
       final String finalFilePath = basePath + "/" + shardId;
 
+      try (BoundedSource.BoundedReader<Result> reader = source.createReader(c.getPipelineOptions())) {
+        boolean hasMore = reader.start();
+
+        if (!hasMore) {
+          // don't bother creating empty SequenceFile for empty shards
+          return;
+        }
+
+        try (SequenceFile.Writer writer = createWriter(projectId, finalFilePath)) {
+          final ImmutableBytesWritable key = new ImmutableBytesWritable();
+          Result value;
+          long bytesReported = 0;
+
+          while (hasMore) {
+            value = reader.getCurrent();
+            key.set(value.getRow());
+            writer.append(key, value);
+
+            hasMore = reader.advance();
+
+            // update metrics
+            itemCounter.addValue(1L);
+            long newBytes = writer.getLength() - bytesReported;
+            bytesWritten.addValue(newBytes);
+            bytesReported += newBytes;
+          }
+
+          long newBytes = writer.getLength() - bytesReported;
+          bytesWritten.addValue(newBytes);
+          bytesReported += newBytes;
+        }
+      }
+    }
+
+    private SequenceFile.Writer createWriter(String project, String path) throws IOException {
+      final Configuration hadoopConfig = new Configuration(false);
+
+      // Not using setStrings to avoid loading StringUtils which tries to access HADOOP_HOME
+      hadoopConfig.set("io.serializations", Joiner.on(',').join(
+          WritableSerialization.class.getName(), ResultSerialization.class.getName())
+      );
+      hadoopConfig.set("fs.gs.project.id", project);
+      for (Map.Entry<String, String> entry : HBaseImportIO.CONST_FILE_READER_PROPERTIES.entrySet()) {
+        hadoopConfig.set(entry.getKey(), entry.getValue());
+      }
+
       final SequenceFile.Writer.Option[] writerOptions = new SequenceFile.Writer.Option[]{
-          SequenceFile.Writer.file(new Path(finalFilePath)),
+          SequenceFile.Writer.file(new Path(path)),
           SequenceFile.Writer.keyClass(ImmutableBytesWritable.class),
           SequenceFile.Writer.valueClass(Result.class),
           SequenceFile.Writer.compression(CompressionType.BLOCK)
       };
 
-      final long start = clock.currentTimeMillis();
-      long localStart = clock.currentTimeMillis();
-
-      long reportedTotalDuration = 0;
-
-      try (BoundedSource.BoundedReader<Result> reader = source.createReader(c.getPipelineOptions())) {
-        boolean hasMore = reader.start();
-        readDuration.addValue(clock.currentTimeMillis() - localStart);
-
-        if (hasMore) {
-          try (SequenceFile.Writer writer = sequenceFileFactory.createWriter(hadoopConfig, writerOptions)) {
-            final ImmutableBytesWritable key = new ImmutableBytesWritable();
-            Result value;
-
-            while (hasMore) {
-              localStart = clock.currentTimeMillis();
-              value = reader.getCurrent();
-              key.set(value.getRow());
-              writer.append(key, value);
-              writeDuration.addValue(clock.currentTimeMillis() - localStart);
-
-              localStart = clock.currentTimeMillis();
-              hasMore = reader.advance();
-              readDuration.addValue(clock.currentTimeMillis() - localStart);
-
-              itemCounter.addValue(1L);
-              // update totalDuration
-              final long newTotalDuration = clock.currentTimeMillis() - start;
-              totalDuration.addValue(newTotalDuration - reportedTotalDuration);
-              reportedTotalDuration = newTotalDuration;
-            }
-
-            bytesWritten.addValue(writer.getLength());
-          }
-        }
-      }
-      final long newTotalDuration = clock.currentTimeMillis() - start;
-      totalDuration.addValue(newTotalDuration - reportedTotalDuration);
+      return SequenceFile.createWriter(hadoopConfig, writerOptions);
     }
-  }
-
-  interface SequenceFileFactory extends Serializable {
-
-    SequenceFile.Writer createWriter(Configuration configuration, SequenceFile.Writer.Option... options)
-        throws IOException;
-  }
-
-  static class DefaultSequenceFileFactory implements SequenceFileFactory {
-
-    @Override
-    public Writer createWriter(Configuration configuration, Option... options) throws IOException {
-      return SequenceFile.createWriter(configuration, options);
-    }
-  }
-
-  /**
-   * Wrapper around dataflow's aggregator (aka counters). It's main purpose is allow us to use
-   * different unit for benchmarking and display.  In other words it allows us to track counters in ns
-   * but display the results in secs.
-   */
-  static class BatchCounter implements Serializable {
-
-    final Aggregator<Long, Long> aggregator;
-    private final long batchSize;
-    private long buffer = 0;
-
-    BatchCounter(Aggregator<Long, Long> aggregator, long batchSize) {
-      this.aggregator = aggregator;
-      this.batchSize = batchSize;
-    }
-
-    void addValue(long inc) {
-      buffer += inc;
-      if (buffer >= batchSize) {
-        aggregator.addValue(buffer / batchSize);
-        buffer %= batchSize;
-      }
-    }
-  }
-
-  interface Clock extends Serializable {
-
-    long currentTimeMillis();
-
-    Clock SYSTEM = new Clock() {
-      @Override
-      public long currentTimeMillis() {
-        return System.currentTimeMillis();
-      }
-    };
   }
 }
