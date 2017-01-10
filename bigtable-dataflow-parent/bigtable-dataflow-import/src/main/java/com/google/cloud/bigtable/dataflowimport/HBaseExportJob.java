@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.dataflowimport;
 
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
 import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration;
 import com.google.cloud.dataflow.sdk.Pipeline;
@@ -118,13 +119,9 @@ public class HBaseExportJob {
       scan.setFilter(new ParseFilter().parseFilterString(options.getFilter()));
     }
 
-    final String bigtableProject = Objects.firstNonNull(options.getBigtableProjectId(), options.getProject());
-
-    final CloudBigtableScanConfiguration scanConfig = new CloudBigtableScanConfiguration.Builder()
-        .withProjectId(bigtableProject)
-        .withInstanceId(options.getBigtableInstanceId())
-        .withTableId(options.getBigtableTableId())
-        .withScan(scan)
+    final CloudBigtableScanConfiguration scanConfig = CloudBigtableScanConfiguration.fromCBTOptions(options, scan)
+        .toBuilder()
+        .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseExportJob")
         .build();
 
     return buildPipeline(options, scanConfig, options.getDestination());
