@@ -30,6 +30,8 @@ import com.google.cloud.dataflow.sdk.transforms.Create;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.transforms.Sum.SumLongFn;
+import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
+import com.google.cloud.dataflow.sdk.transforms.display.DisplayData.Builder;
 import com.google.cloud.dataflow.sdk.util.IOChannelUtils;
 import com.google.cloud.dataflow.sdk.util.Reshuffle;
 import com.google.cloud.dataflow.sdk.values.KV;
@@ -83,6 +85,7 @@ import org.slf4j.LoggerFactory;
  * @author igorbernstein2
  * @version $Id: $Id
  */
+@SuppressWarnings("serial")
 public class HBaseExportJob {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseExportJob.class);
@@ -148,11 +151,11 @@ public class HBaseExportJob {
         .apply("Initialize", Create.of(source).withCoder(sourceCoder))
         // Split the source into a bunch of shards
         // Note that we aren't reading the source's elements yet
-        .apply("Shard", ParDo.of(new ShardScans<Result>()))
+        .apply("Shard", ParDo.of(new ShardScans<Result>(scanConfig)))
         // Make sure that each shard can be handled a different worker
         .apply("Fanout", Reshuffle.<Integer, ExportShard<Result>>of())
         // Now, read the actual rows and write out each shard's elements into a file
-        .apply("Write", ParDo.of(new WriteResultsToSeq(destination)));
+        .apply("Write", ParDo.of(new WriteResultsToSeq(destination, scanConfig)));
 
     return pipeline;
   }
@@ -164,6 +167,13 @@ public class HBaseExportJob {
   static class ShardScans<T> extends DoFn<BoundedSource<T>, KV<Integer, ExportShard<T>>> {
 
     private static final long DESIRED_SHARD_SIZE = 1024 * 1024 * 1024;
+    final Aggregator<Long, Long> totalShardCount;
+    private CloudBigtableScanConfiguration scanConfig;
+
+    public ShardScans(CloudBigtableScanConfiguration scanConfig) {
+      totalShardCount = createAggregator("totalShards", new SumLongFn());
+      this.scanConfig = scanConfig;
+    }
 
     @Override
     public void processElement(ProcessContext c) throws Exception {
@@ -172,12 +182,15 @@ public class HBaseExportJob {
       List<? extends BoundedSource<T>> splitSources = source.splitIntoBundles(
           DESIRED_SHARD_SIZE, c.getPipelineOptions()
       );
+      totalShardCount.addValue((long) splitSources.size());
       LOG.info("Split into {} shards", splitSources.size());
 
       // Assign the filenames now so that the output is stable
       final List<ExportShard<T>> shards = new ArrayList<>(splitSources.size());
       int i = 0;
       for (BoundedSource<T> splitSource : splitSources) {
+        // i++ produces a 0 based file name. While that's not ideal, 0 base is used in many other
+        // places we investigated.
         final String filename = IOChannelUtils.constructName(
             "part", ShardNameTemplate.INDEX_OF_MAX, "", i++, splitSources.size()
         );
@@ -192,6 +205,14 @@ public class HBaseExportJob {
         c.output(KV.of(i++, shard));
       }
     }
+
+    @Override
+    public void populateDisplayData(Builder builder) {
+      // TODO Auto-generated method stub
+      super.populateDisplayData(builder);
+      builder.add(DisplayData.item("instanceId", scanConfig.getInstanceId()));
+      builder.add(DisplayData.item("tableId", scanConfig.getTableId()));
+    }
   }
 
   /**
@@ -199,24 +220,43 @@ public class HBaseExportJob {
    */
   static class WriteResultsToSeq extends DoFn<KV<Integer, ExportShard<Result>>, Void> {
     private final String basePath;
+    private final CloudBigtableScanConfiguration scanConfig;
     final Aggregator<Long, Long> itemCounter;
     final Aggregator<Long, Long> bytesWritten;
+    final Aggregator<Long, Long> shardsCompleted;
+    final Aggregator<Long, Long> shardsInProgress;
 
-    WriteResultsToSeq(String basePath) {
+
+    WriteResultsToSeq(String basePath, CloudBigtableScanConfiguration scanConfig) {
       this.basePath = basePath;
+      this.scanConfig = scanConfig;
 
       itemCounter = createAggregator("itemsProcessed", new SumLongFn());
       bytesWritten = createAggregator("bytesWritten", new SumLongFn());
+      shardsCompleted = createAggregator("shardsProcessed", new SumLongFn());
+      shardsInProgress = createAggregator("shardsInProgress", new SumLongFn());
+    }
+
+    @Override
+    public void populateDisplayData(Builder builder) {
+      // TODO Auto-generated method stub
+      super.populateDisplayData(builder);
+      builder.add(
+        DisplayData.item("instanceId", scanConfig.getInstanceId()));
+      builder.add(DisplayData.item("tableId", scanConfig.getTableId()));
+      builder.add(DisplayData.item("destination", basePath));
+      builder.add(DisplayData.item("Read Row Request", scanConfig.getRequest().toString()));
     }
 
     @Override
     public void processElement(ProcessContext c) throws Exception {
       final ExportShard<Result> shard = c.element().getValue();
 
-      LOG.info("Starting new shard");
+      shardsInProgress.addValue(1l);
 
       final String projectId = c.getPipelineOptions().as(DataflowPipelineOptions.class).getProject();
       final String finalFilePath = basePath + "/" + shard.filename;
+      LOG.info("starting " + shard.filename);
 
       try (BoundedSource.BoundedReader<Result> reader = shard.source.createReader(c.getPipelineOptions())) {
         if (!reader.start()) {
@@ -226,29 +266,30 @@ public class HBaseExportJob {
 
         try (SequenceFile.Writer writer = createWriter(projectId, finalFilePath)) {
           final ImmutableBytesWritable key = new ImmutableBytesWritable();
-          Result value;
           long bytesReported = 0;
 
-          boolean hasMore = true;
-          while (hasMore) {
-            value = reader.getCurrent();
+          do {
+            Result value = reader.getCurrent();
             key.set(value.getRow());
             writer.append(key, value);
 
-            hasMore = reader.advance();
-
             // update metrics
             itemCounter.addValue(1L);
-            long newBytes = writer.getLength() - bytesReported;
-            bytesWritten.addValue(newBytes);
-            bytesReported += newBytes;
-          }
-
-          long newBytes = writer.getLength() - bytesReported;
-          bytesWritten.addValue(newBytes);
-          bytesReported += newBytes;
+            bytesReported = incrementBytesReported(writer, bytesReported);
+          } while (reader.advance());
         }
+      } finally {
+        shardsCompleted.addValue(1l);
+        shardsInProgress.addValue(-1l);
+        LOG.info("finished " + shard.filename);
       }
+    }
+
+    private long incrementBytesReported(SequenceFile.Writer writer, long bytesReported)
+        throws IOException {
+      long fileSize = writer.getLength();
+      bytesWritten.addValue(fileSize - bytesReported);
+      return fileSize;
     }
 
     private SequenceFile.Writer createWriter(String project, String path) throws IOException {
@@ -256,7 +297,8 @@ public class HBaseExportJob {
 
       // Not using setStrings to avoid loading StringUtils which tries to access HADOOP_HOME
       hadoopConfig.set("io.serializations", Joiner.on(',').join(
-          WritableSerialization.class.getName(), ResultSerialization.class.getName())
+          WritableSerialization.class.getName(),
+          ResultSerialization.class.getName())
       );
       hadoopConfig.set("fs.gs.project.id", project);
       for (Map.Entry<String, String> entry : HBaseImportIO.CONST_FILE_READER_PROPERTIES.entrySet()) {
