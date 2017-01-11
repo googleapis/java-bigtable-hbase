@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-client-parent</artifactId>
-        <version>0.9.5</version>
+        <version>0.9.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-client-core-parent</artifactId>
