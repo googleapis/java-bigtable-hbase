@@ -78,6 +78,7 @@ public class Export {
   throws IOException {
     conf.setIfUnset("hbase.client.connection.impl", BigtableConnection.class.getName());
     conf.setIfUnset(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, "60000");
+    conf.setBoolean(TableInputFormat.SHUFFLE_MAPS, true);
 
     String tableName = args[0];
     Path outputDir = new Path(args[1]);
