@@ -93,6 +93,11 @@ public class HBaseExportJob {
   public static void main(String[] args) throws IOException {
     PipelineOptionsFactory.register(HBaseExportOptions.class);
 
+    if (args.length == 0 || "--help".equals(args[0])) {
+      PipelineOptionsFactory.printHelp(System.out, HBaseExportOptions.class);
+      return;
+    }
+
     final HBaseExportOptions options = PipelineOptionsFactory.fromArgs(args)
         .withValidation()
         .as(HBaseExportOptions.class);
