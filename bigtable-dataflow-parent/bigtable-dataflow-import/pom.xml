@@ -109,6 +109,8 @@ limitations under the License.
             <artifactId>netty-tcnative-boringssl-static</artifactId>
         </dependency>
     </dependencies>
+
+
     <profiles>
         <profile>
             <id>sequencefileIntegrationTest</id>
@@ -174,6 +176,34 @@ limitations under the License.
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.google.cloud.bigtable.dataflowimport.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                </configuration>
             </plugin>
         </plugins>
     </build>

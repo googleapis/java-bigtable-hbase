@@ -153,8 +153,14 @@ public class HBaseImportIO {
   }
 
   public static void main(String[] args) throws Exception {
-    HBaseImportOptions options =
-        PipelineOptionsFactory.fromArgs(args).withValidation().as(HBaseImportOptions.class);
+    if (args.length == 0 || "--help".equals(args[0])) {
+      PipelineOptionsFactory.printHelp(System.out, HBaseImportOptions.class);
+      return;
+    }
+
+    HBaseImportOptions options = PipelineOptionsFactory.fromArgs(args)
+        .withValidation()
+        .as(HBaseImportOptions.class);
 
     CloudBigtableTableConfiguration cbtConfig = CloudBigtableTableConfiguration.fromCBTOptions(options)
         .toBuilder()
