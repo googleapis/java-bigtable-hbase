@@ -384,19 +384,24 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     if (isRemoteFileFromLaunchSite) {
       return 0;
     }
-    long size = 0;
+
     try {
+      if (serializableSplit != null) {
+        return serializableSplit.getSplit().getLength();
+      }
       Job job = Job.getInstance(getDeserializerConfiguration()); // new instance
+      long size = 0;
       for (FileStatus st : listStatus(createFormat(job), job)) {
         size += st.getLen();
       }
       return size;
     } catch (IOException | NoSuchMethodException | InvocationTargetException
-        | IllegalAccessException | InstantiationException e) {
+        | IllegalAccessException | InstantiationException | InterruptedException e) {
       // ignore, and return 0
       SOURCE_LOG.error("Got exception while trying to getEstimatedSizeBytes().", e);
       return 0;
     }
+
   }
 
   @SuppressWarnings("unchecked")
