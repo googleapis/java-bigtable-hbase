@@ -385,13 +385,12 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       return 0;
     }
 
-    long size = 0;
     try {
       if (serializableSplit != null) {
         return serializableSplit.getSplit().getLength();
       }
-
       Job job = Job.getInstance(getDeserializerConfiguration()); // new instance
+      long size = 0;
       for (FileStatus st : listStatus(createFormat(job), job)) {
         size += st.getLen();
       }
