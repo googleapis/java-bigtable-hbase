@@ -19,7 +19,6 @@ package com.google.cloud.bigtable.grpc;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -59,6 +58,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import io.grpc.ManagedChannel;
+import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
@@ -489,13 +489,10 @@ public class BigtableSession implements Closeable {
    * @throws java.io.IOException if any.
    */
   protected ChannelPool createChannelPool(final String hostString, int count) throws IOException {
-    // TODO Go back to using host names once more extensive testing of the IPv6 issues.
-    final InetSocketAddress serverAddress =
-        new InetSocketAddress(InetAddress.getByName(hostString), options.getPort());
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
-        return createNettyChannel(serverAddress, options);
+        return createNettyChannel(hostString, options);
       }
     };
     ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory, count);
@@ -551,20 +548,14 @@ public class BigtableSession implements Closeable {
    * @return a {@link ManagedChannel} object.
    * @throws IOException if any.
    */
-  public static ManagedChannel createNettyChannel(String host, BigtableOptions options) throws IOException {
-    // TODO Go back to using host names once more extensive testing of the IPv6 issues.
-    InetAddress address = InetAddress.getByName(host);
-    InetSocketAddress serverAddress = new InetSocketAddress(address, options.getPort());
-    return createNettyChannel(serverAddress, options);
-  }
-
-  private static ManagedChannel createNettyChannel(InetSocketAddress serverAddress,
+  public static ManagedChannel createNettyChannel(String host,
       BigtableOptions options) throws SSLException {
     NegotiationType negotiationType = options.usePlaintextNegotiation() ?
         NegotiationType.PLAINTEXT : NegotiationType.TLS;
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
     return NettyChannelBuilder
-        .forAddress(serverAddress)
+        .forAddress(host, options.getPort())
+        .nameResolverFactory(new DnsNameResolverProvider())
         .maxMessageSize(MAX_MESSAGE_SIZE)
         .sslContext(createSslContext())
         .eventLoopGroup(sharedPools.getElg())
