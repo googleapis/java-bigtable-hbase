@@ -36,6 +36,7 @@ import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
+import io.grpc.Metadata.Key;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
@@ -53,6 +54,9 @@ public class ChannelPool extends ManagedChannel {
   private static final AtomicInteger ChannelIdGenerator = new AtomicInteger();
 
   protected static Stats STATS;
+
+  /** Constant <code>CHANNEL_ID_KEY</code> */
+  public static final Key<String> CHANNEL_ID_KEY = Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
 
   /**
    * A factory for creating ManagedChannels to be used in a {@link ChannelPool}.
@@ -101,11 +105,13 @@ public class ChannelPool extends ManagedChannel {
     private final Timer timer;
 
     private final AtomicBoolean active = new AtomicBoolean(true);
+    private final int channelId;
 
     public InstrumentedChannel(ManagedChannel channel) {
       this.delegate = channel;
+      this.channelId = ChannelIdGenerator.incrementAndGet();
       this.timer = BigtableClientMetrics.timer(MetricLevel.Trace,
-        "channels.channel" + ChannelIdGenerator.incrementAndGet() + ".rpc.latency");
+        "channels.channel" + channelId + ".rpc.latency");
       getStats().ACTIVE_CHANNEL_COUNTER.inc();
     }
 
@@ -189,6 +195,10 @@ public class ChannelPool extends ManagedChannel {
         @Override
         public void onClose(Status status, Metadata trailers) {
           try {
+            if (trailers != null) {
+              // Be extra defensive since this is only used for logging
+              trailers.put(CHANNEL_ID_KEY, Integer.toString(InstrumentedChannel.this.channelId));
+            }
             if (!decremented.getAndSet(true)) {
               getStats().ACTIVE_RPC_COUNTER.dec();
             }
