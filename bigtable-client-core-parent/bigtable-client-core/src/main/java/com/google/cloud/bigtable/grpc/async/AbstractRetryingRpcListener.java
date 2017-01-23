@@ -24,6 +24,7 @@ import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
@@ -163,7 +164,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
 
     // Perform Retry
-    LOG.info("Retrying failed call. Failure #%d, got: %s", status.getCause(), failedCount, status);
+    String channelId = trailers != null ? trailers.get(ChannelPool.CHANNEL_ID_KEY) : "";
+    LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s",
+        status.getCause(), failedCount, status, channelId);
 
     call = null;
 
