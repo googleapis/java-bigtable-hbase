@@ -213,7 +213,7 @@ public class BigtableSession implements Closeable {
           try {
             InetAddress.getByName(host);
           } catch (UnknownHostException e) {
-            LOG.warn("Could not asynchronously initialze host: " + host, e);
+            // ignore.  This doesn't happen frequently, but even if it does, it's inconsequential.
           }
         }
       });
@@ -351,7 +351,7 @@ public class BigtableSession implements Closeable {
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
     dataClient.setCallOptionsFactory(
       new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig()));
-    
+
     // Defer the creation of both the tableAdminClient until we need them.
 
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
@@ -483,7 +483,7 @@ public class BigtableSession implements Closeable {
 
   /**
    * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
-   * 
+   *
    * @param hostString a {@link java.lang.String} object.
    * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
    * @throws java.io.IOException if any.
@@ -517,9 +517,9 @@ public class BigtableSession implements Closeable {
   /**
    * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
    *
-   * @param host a {@link String} object specifying the hsot to connect to.
-   * @param options a {@link BigtableOptions} object with the credentials, retry and other connection optiosn.
-   * @param count an int defining the number of channels to create 
+   * @param host a {@link String} object specifying the host to connect to.
+   * @param options a {@link BigtableOptions} object with the credentials, retry and other connection options.
+   * @param count an int defining the number of channels to create
    * @return a {@link ChannelPool} object.
    * @throws IOException if any.
    * @throws GeneralSecurityException
