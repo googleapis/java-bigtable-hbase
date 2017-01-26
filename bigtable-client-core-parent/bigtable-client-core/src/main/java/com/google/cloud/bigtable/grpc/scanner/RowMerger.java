@@ -212,9 +212,10 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     }
 
     private void updateForFamily(CellChunk chunk) {
-      if (!chunk.getFamilyName().getValue().equals(family)) {
+      String chunkFamily = chunk.getFamilyName().getValue();
+      if (!chunkFamily.equals(family)) {
         // Try to get a reference to the same object if there's equality.
-        this.family = chunk.getFamilyName().getValue();
+        this.family = chunkFamily;
       }
       updateForQualifier(chunk);
     }
