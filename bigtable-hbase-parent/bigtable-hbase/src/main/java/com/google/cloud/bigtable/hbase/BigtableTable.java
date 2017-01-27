@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
@@ -214,7 +215,23 @@ public class BigtableTable implements Table {
   @Override
   public Result[] get(List<Get> gets) throws IOException {
     LOG.trace("get(List<>)");
-    return getBatchExecutor().batch(gets);
+    if (gets == null || gets.isEmpty()) {
+      return new Result[0];
+    } else if (gets.size() == 1) {
+      try {
+        return new Result[] { get(gets.get(0)) };
+      } catch(IOException e) {
+        throw createRetriesExhaustedWithDetailsException(e, gets.get(0));
+      }
+    } else {
+      return getBatchExecutor().batch(gets);
+    }
+  }
+
+  private RetriesExhaustedWithDetailsException
+      createRetriesExhaustedWithDetailsException(Throwable e, Row action) {
+    return new RetriesExhaustedWithDetailsException(Arrays.asList(e), Arrays.asList(action),
+        Arrays.asList(options.getDataHost().toString()));
   }
 
   /** {@inheritDoc} */
@@ -317,7 +334,17 @@ public class BigtableTable implements Table {
   @Override
   public void put(List<Put> puts) throws IOException {
     LOG.trace("put(List<Put>)");
-    getBatchExecutor().batch(puts);
+    if (puts == null || puts.isEmpty()) {
+      return;
+    } else if (puts.size() == 1) {
+      try {
+        put(puts.get(0));
+      } catch (IOException e) {
+        throw createRetriesExhaustedWithDetailsException(e, puts.get(0));
+      }
+    } else {
+      getBatchExecutor().batch(puts);
+    }
   }
 
   /** {@inheritDoc} */
