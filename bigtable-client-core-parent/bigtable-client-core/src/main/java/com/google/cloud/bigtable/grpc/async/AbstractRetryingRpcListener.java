@@ -52,9 +52,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
     @Override
     protected void interruptTask() {
-      if (call != null) {
-        call.cancel("Request interrupted.", null);
-      }
+      AbstractRetryingRpcListener.this.cancel("Request interrupted.");
     }
 
     @Override
@@ -128,6 +126,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     if (code == Status.Code.OK) {
       operationTimerContext.close();
       onOK();
+      call = null;
       return;
     }
 
@@ -135,6 +134,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     if (code == Status.Code.CANCELLED) {
       // An explicit user cancellation is not considered a failure.
       operationTimerContext.close();
+      call = null;
       return;
     }
 
@@ -145,6 +145,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
       this.rpc.getRpcMetrics().markFailure();
       this.operationTimerContext.close();
       setException(status.asRuntimeException());
+      call = null;
       return;
     }
 
@@ -243,6 +244,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   protected void cancel(final String message) {
     if (this.call != null) {
       call.cancel(message, null);
+      call = null;
     }
   }
 }
