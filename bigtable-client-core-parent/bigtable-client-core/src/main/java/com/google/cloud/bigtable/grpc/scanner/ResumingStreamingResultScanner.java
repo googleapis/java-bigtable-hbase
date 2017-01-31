@@ -73,20 +73,20 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
   /** {@inheritDoc} */
   @Override
   public FlatRow next() throws IOException {
-    while (true) {
-      try {
-        Timer.Context timerContext = resultsTimer.time();
-        FlatRow result = responseQueueReader.getNextMergedRow();
-        if (result != null) {
-          resultsMeter.mark();
+    try(Timer.Context ignored = resultsTimer.time()) {
+      while (true) {
+        try {
+          FlatRow result = responseQueueReader.getNextMergedRow();
+          if (result != null) {
+            resultsMeter.mark();
+          }
+          return result;
+        } catch (ScanTimeoutException rte) {
+          scanHandler.handleTimeout(rte);
+        } catch (Throwable e) {
+          scanHandler.cancel();
+          throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", e);
         }
-        timerContext.close();
-        return result;
-      } catch (ScanTimeoutException rte) {
-        scanHandler.handleTimeout(rte);
-      } catch (Throwable e) {
-        scanHandler.cancel();
-        throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", e);
       }
     }
   }
