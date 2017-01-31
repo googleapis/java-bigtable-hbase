@@ -34,6 +34,8 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
@@ -131,27 +133,11 @@ public class TestBigtableTable {
 
   @Test
   public void getRequestsAreFullyPopulated() throws IOException {
-    Mockito.when(mockClient.readFlatRows(Mockito.any(ReadRowsRequest.class)))
-        .thenReturn(new ResultScanner<FlatRow>() {
-          @Override
-          public FlatRow next() throws IOException {
-            return null;
-          }
+    SettableFuture<List<FlatRow>> result = SettableFuture.create();
+    result.set(Lists.<FlatRow>newArrayList());
 
-          @Override
-          public FlatRow[] next(int i) throws IOException {
-            return new FlatRow[i];
-          }
-
-          @Override
-          public int available() {
-            return 0;
-          }
-
-          @Override
-          public void close() throws IOException {
-          }
-        });
+    Mockito.when(mockClient.readFlatRowsAsync(Mockito.any(ReadRowsRequest.class)))
+        .thenReturn(result);
 
     table.get(
         new Get(Bytes.toBytes("rowKey1"))
@@ -162,7 +148,7 @@ public class TestBigtableTable {
     ArgumentCaptor<ReadRowsRequest> argument =
         ArgumentCaptor.forClass(ReadRowsRequest.class);
 
-    Mockito.verify(mockClient).readFlatRows(argument.capture());
+    Mockito.verify(mockClient).readFlatRowsAsync(argument.capture());
 
     Assert.assertEquals(
         "projects/testproject/instances/testinstance/tables/testtable",

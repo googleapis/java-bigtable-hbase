@@ -21,6 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -238,27 +241,27 @@ public class BigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    Timer.Context timerContext = metrics.getTimer.time();
-    Result response = null;
-    try (com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
-        client.readFlatRows(hbaseAdapter.adapt(get))) {
-      response = Adapters.FLAT_ROW_ADAPTER.adaptResponse(scanner.next());
-      // This scanner.next() serves two purposes:
-      //
-      // 1. The obvious check for multiple responses.
-      // 2. This waits for an OK HTTP status to be sent. Sometimes, the client doesn't process the
-      //    OK fast enough. When the OK is not processed, the user will see many CANCELLED exceptions,
-      //    which shows up on the Web UI error graph, which looks scary, and is an indication of a
-      //    possible problem elsewhere but isn't necessarily one.
-      if (scanner.next() != null) {
+
+    final int maxWaitMs = bigtableConnection.getSession().getOptions().getRetryOptions()
+        .getMaxElaspedBackoffMillis() + 1;
+
+    try (Timer.Context ignored = metrics.getTimer.time()) {
+      List<FlatRow> results = client.readFlatRowsAsync(hbaseAdapter.adapt(get))
+          .get(maxWaitMs, TimeUnit.MILLISECONDS);
+
+      if (results == null || results.isEmpty()) {
+        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(null);
+      } else if (results.size() == 1) {
+        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(results.get(0));
+      } else {
         throw new IllegalStateException("Multiple responses found for Get");
       }
-    } catch (Throwable t) {
-      throw logAndCreateIOException("get", get.getRow(), t);
-    } finally {
-      timerContext.close();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw logAndCreateIOException("get", get.getRow(), e);
+    } catch (ExecutionException | TimeoutException | RuntimeException e) {
+      throw logAndCreateIOException("get", get.getRow(), e);
     }
-    return response;
   }
 
   /** {@inheritDoc} */
