@@ -12,15 +12,15 @@ Download [the import/export jar](http://search.maven.org/remotecontent?filepath=
 On the command line:
 
 ```
-java -jar bigtable-dataflow-import-0.9.5.1-shaded.jar export \\
-      --runner=BlockingDataflowPipelineRunner \\
-      --bigtableProjectId=[your_project_id] \\
-      --bigtableInstanceId=[your_instance_id] \\
-      --bigtableTableId=[your_table_id] \\
-      --destination=gs://[bucket_name]/[export_directory] \\
-      --project=[your_project_id] \\
-      --stagingLocation=gs://[bucket_name]/[jar_staging_directory] \\
-      --maxNumWorkers=[5x number of nodes] \\
+java -jar bigtable-dataflow-import-0.9.5.1-shaded.jar export \
+      --runner=BlockingDataflowPipelineRunner \
+      --bigtableProjectId=[your_project_id] \
+      --bigtableInstanceId=[your_instance_id] \
+      --bigtableTableId=[your_table_id] \
+      --destination=gs://[bucket_name]/[export_directory] \
+      --project=[your_project_id] \
+      --stagingLocation=gs://[bucket_name]/[jar_staging_directory] \
+      --maxNumWorkers=[5x number of nodes] \
       --zone=[zone of your cluster]
 ```
 
@@ -31,14 +31,14 @@ Create the table in your cluster.
 On the command line:
 
 ```
-java -jar bigtable-dataflow-import-0.9.5.1-shaded.jar import \\
-      --runner=BlockingDataflowPipelineRunner \\
-      --bigtableProjectId=[your_project_id] \\
-      --bigtableInstanceId=[your_instance_id] \\
-      --bigtableTableId=[your_table_id] \\
-      --destination=gs://[bucket_name]/[export_directory] \\
-      --project=[your_project_id] \\
-      --stagingLocation=gs://[bucket_name]/[jar_staging_directory] \\
-      --maxNumWorkers=[5x number of nodes] \\
+java -jar bigtable-dataflow-import-0.9.5.1-shaded.jar import \
+      --runner=BlockingDataflowPipelineRunner \
+      --bigtableProjectId=[your_project_id] \
+      --bigtableInstanceId=[your_instance_id] \
+      --bigtableTableId=[your_table_id] \
+      --destination=gs://[bucket_name]/[export_directory] \
+      --project=[your_project_id] \
+      --stagingLocation=gs://[bucket_name]/[jar_staging_directory] \
+      --maxNumWorkers=[5x number of nodes] \
       --zone=[zone of your cluster]
 ```
