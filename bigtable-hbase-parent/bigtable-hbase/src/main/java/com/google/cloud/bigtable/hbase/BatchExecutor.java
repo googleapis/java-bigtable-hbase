@@ -134,7 +134,7 @@ public class BatchExecutor {
 
     @Override
     public final void onFailure(Throwable throwable) {
-      resultsArray[index] = null;
+      resultsArray[index] = throwable;
       resultFuture.setException(throwable);
       if (callback != null) {
         callback.update(NO_REGION, row.getRow(), null);
