@@ -340,8 +340,10 @@ public class BatchExecutor {
    */
   public Result[] batch(List<? extends Row> actions) throws IOException {
     try {
-      Result[] results = new Result[actions.size()];
-      batch(actions, results);
+      Object[] resultsOrErrors = new Object[actions.size()];
+      batch(actions, resultsOrErrors);
+      Result[] results = new Result[resultsOrErrors.length];
+      System.arraycopy(resultsOrErrors, 0, results, 0, results.length);
       return results;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

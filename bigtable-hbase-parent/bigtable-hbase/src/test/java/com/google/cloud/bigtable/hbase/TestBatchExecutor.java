@@ -247,7 +247,7 @@ public class TestBatchExecutor {
     when(mockFuture.get()).thenReturn(ImmutableList.of(response));
     final Callback<Result> callback = Mockito.mock(Callback.class);
     List<Get> gets = Arrays.asList(new Get(key));
-    createExecutor(DEFAULT_OPTIONS).batchCallback(gets, new Result[1], callback);
+    createExecutor(DEFAULT_OPTIONS).batchCallback(gets, new Object[1], callback);
 
     verify(callback, times(1)).update(same(BatchExecutor.NO_REGION), same(key),
       argThat(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response))));
