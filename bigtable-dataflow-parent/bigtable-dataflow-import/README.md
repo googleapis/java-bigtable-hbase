@@ -36,7 +36,7 @@ java -jar bigtable-dataflow-import-0.9.5.1-shaded.jar import \
     --bigtableProjectId=[your_project_id] \
     --bigtableInstanceId=[your_instance_id] \
     --bigtableTableId=[your_table_id] \
-    --destination=gs://[bucket_name]/[export_directory] \
+    --filePattern='gs://[bucket_name]/[import_directory]/*' \
     --project=[your_project_id] \
     --stagingLocation=gs://[bucket_name]/[jar_staging_directory] \
     --maxNumWorkers=[5x number of nodes] \
