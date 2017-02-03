@@ -113,7 +113,7 @@ public class BatchExecutor {
     @SuppressWarnings("unchecked")
     @Override
     public final void onSuccess(Object message) {
-        Result result = Result.EMPTY_RESULT;
+      Result result = Result.EMPTY_RESULT;
 
       try {
         if (message instanceof FlatRow) {
@@ -128,10 +128,10 @@ public class BatchExecutor {
         return;
       }
 
-        resultsArray[index] = result;
-        resultFuture.set(result);
+      resultsArray[index] = result;
+      resultFuture.set(result);
 
-        if (callback != null) {
+      if (callback != null) {
         try {
           callback.update(NO_REGION, row.getRow(), (T) result);
         } catch (Throwable t) {
@@ -144,9 +144,6 @@ public class BatchExecutor {
     public final void onFailure(Throwable throwable) {
       resultsArray[index] = throwable;
       resultFuture.setException(throwable);
-      if (callback != null) {
-        callback.update(NO_REGION, row.getRow(), null);
-      }
     }
   }
 
