@@ -54,6 +54,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Class to help BigtableTable with batch operations on an BigtableClient.
@@ -112,23 +113,30 @@ public class BatchExecutor {
     @SuppressWarnings("unchecked")
     @Override
     public final void onSuccess(Object message) {
-      try {
         Result result = Result.EMPTY_RESULT;
+
+      try {
         if (message instanceof FlatRow) {
           result = Adapters.FLAT_ROW_ADAPTER.adaptResponse((FlatRow) message);
         } else if (message instanceof com.google.bigtable.v2.Row) {
           result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v2.Row) message);
         } else if (message instanceof ReadModifyWriteRowResponse) {
-          result =
-              Adapters.ROW_ADAPTER.adaptResponse(((ReadModifyWriteRowResponse) message).getRow());
+          result = Adapters.ROW_ADAPTER.adaptResponse(((ReadModifyWriteRowResponse) message).getRow());
         }
+      } catch(Throwable throwable) {
+        onFailure(throwable);
+        return;
+      }
+
         resultsArray[index] = result;
         resultFuture.set(result);
+
         if (callback != null) {
+        try {
           callback.update(NO_REGION, row.getRow(), (T) result);
+        } catch (Throwable t) {
+          LOG.error("User callback threw an exception for " + Bytes.toString(result.getRow()));
         }
-      } catch (Throwable throwable) {
-        resultFuture.setException(throwable);
       }
     }
 
