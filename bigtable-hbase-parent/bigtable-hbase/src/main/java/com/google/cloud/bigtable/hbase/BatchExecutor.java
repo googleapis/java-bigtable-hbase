@@ -290,35 +290,7 @@ public class BatchExecutor {
     if (results == null) {
       results = new Object[actions.size()];
     }
-    Preconditions.checkArgument(results.length == actions.size(),
-        "Result array must have same dimensions as actions list.");
-    Timer.Context timerContext = batchTimer.time();
-    List<ListenableFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, null);
-    try {
-      // Don't want to throw an exception for failed futures, instead the place in results is
-      // set to null.
-      Futures.successfulAsList(resultFutures).get();
-      List<Throwable> problems = new ArrayList<>();
-      List<Row> problemActions = new ArrayList<>();
-      List<String> hosts = new ArrayList<>();
-      for (int i = 0; i < resultFutures.size(); i++){
-        try {
-          resultFutures.get(i).get();
-        } catch (ExecutionException e) {
-          problemActions.add(actions.get(i));
-          problems.add(e.getCause());
-          hosts.add(options.getDataHost().toString());
-        }
-      }
-      if (problems.size() > 0) {
-        throw new RetriesExhaustedWithDetailsException(problems, problemActions, hosts);
-      }
-    } catch (ExecutionException e) {
-      LOG.error("Encountered exception in batch(List<>, Object[]).", e);
-      throw new IOException("Batch error", e);
-    } finally {
-      timerContext.close();
-    }
+    batchCallback(actions, results, null);
   }
 
   private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
@@ -371,15 +343,31 @@ public class BatchExecutor {
   public <R> void batchCallback(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
     Preconditions.checkArgument(results.length == actions.size(),
-        "Result array must be the same length as actions.");
+        "Result array must have same dimensions as actions list.");
     Timer.Context timerContext = batchTimer.time();
+    List<ListenableFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, callback);
     try {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
-      Futures.successfulAsList(issueAsyncRowRequests(actions, results, callback)).get();
+      Futures.successfulAsList(resultFutures).get();
+      List<Throwable> problems = new ArrayList<>();
+      List<Row> problemActions = new ArrayList<>();
+      List<String> hosts = new ArrayList<>();
+      for (int i = 0; i < resultFutures.size(); i++){
+        try {
+          resultFutures.get(i).get();
+        } catch (ExecutionException e) {
+          problemActions.add(actions.get(i));
+          problems.add(e.getCause());
+          hosts.add(options.getDataHost().toString());
+        }
+      }
+      if (problems.size() > 0) {
+        throw new RetriesExhaustedWithDetailsException(problems, problemActions, hosts);
+      }
     } catch (ExecutionException e) {
-      LOG.error("Encountered exception in batchCallback(List<>, Object[], Batch.Callback). ", e);
-      throw new IOException("batchCallback error", e);
+      LOG.error("Encountered exception in batchCallback(List<>, Object[], callback).", e);
+      throw new IOException("Batch error", e);
     } finally {
       timerContext.close();
     }
