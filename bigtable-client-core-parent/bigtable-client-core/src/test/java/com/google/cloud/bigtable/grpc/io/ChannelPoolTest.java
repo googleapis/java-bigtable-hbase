@@ -39,6 +39,8 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.google.bigtable.v2.BigtableGrpc;
+
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
@@ -85,7 +87,7 @@ public class ChannelPoolTest {
 
   @Test
   public void testInterceptorIsCalled() throws Exception {
-    MethodDescriptor descriptor = mock(MethodDescriptor.class);
+    MethodDescriptor descriptor = BigtableGrpc.METHOD_MUTATE_ROW;
     HeaderInterceptor interceptor = mock(HeaderInterceptor.class);
     ChannelPool pool =
         new ChannelPool(Collections.singletonList(interceptor), new MockChannelFactory());
@@ -98,7 +100,7 @@ public class ChannelPoolTest {
   @Test
   public void testChannelsAreRoundRobinned() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    MethodDescriptor descriptor = mock(MethodDescriptor.class);
+    MethodDescriptor descriptor = BigtableGrpc.METHOD_MUTATE_ROW;
     MockitoAnnotations.initMocks(this);
     ChannelPool pool = new ChannelPool(null, factory, 2);
     pool.newCall(descriptor, CallOptions.DEFAULT);
