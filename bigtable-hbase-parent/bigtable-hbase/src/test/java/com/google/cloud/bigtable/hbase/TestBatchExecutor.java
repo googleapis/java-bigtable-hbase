@@ -75,6 +75,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -183,7 +184,7 @@ public class TestBatchExecutor {
   public void testGet() throws Exception {
     final byte[] key = randomBytes(8);
     FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
-    when(mockFuture.get()).thenReturn(ImmutableList.of(response));
+    setFuture(ImmutableList.of(response));
     Result[] results = batch(Arrays.asList(new Get(key)));
     Assert.assertTrue(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response)).matches(results[0]));
   }
@@ -244,7 +245,7 @@ public class TestBatchExecutor {
   public void testGetCallback() throws Exception {
     byte[] key = randomBytes(8);
     FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
-    when(mockFuture.get()).thenReturn(ImmutableList.of(response));
+    setFuture(ImmutableList.of(response));
     final Callback<Result> callback = Mockito.mock(Callback.class);
     List<Get> gets = Arrays.asList(new Get(key));
     createExecutor(DEFAULT_OPTIONS).batchCallback(gets, new Result[1], callback);
@@ -294,9 +295,14 @@ public class TestBatchExecutor {
   // HELPERS
 
   private void testMutation(org.apache.hadoop.hbase.client.Row mutation) throws Exception {
-    when(mockFuture.get()).thenReturn(Empty.getDefaultInstance());
+    setFuture(Empty.getDefaultInstance());
     Result[] results = batch(Arrays.asList(mutation));
     Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
+  }
+
+  protected void setFuture(Object response) throws InterruptedException, ExecutionException {
+    when(mockFuture.get()).thenReturn(response);
+    when(mockFuture.isDone()).thenReturn(true);
   }
 
   private BatchExecutor createExecutor(BigtableOptions options) {

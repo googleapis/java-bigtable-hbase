@@ -80,9 +80,10 @@ public  final class CreateInstanceRequest extends
               mutable_bitField0_ |= 0x00000008;
             }
             com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.Cluster>
-            clusters = input.readMessage(
+            clusters__ = input.readMessage(
                 ClustersDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-            clusters_.getMutableMap().put(clusters.getKey(), clusters.getValue());
+            clusters_.getMutableMap().put(
+                clusters__.getKey(), clusters__.getValue());
             break;
           }
         }
@@ -375,15 +376,12 @@ public  final class CreateInstanceRequest extends
     if (instance_ != null) {
       output.writeMessage(3, getInstance());
     }
-    for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.Cluster> entry
-         : internalGetClusters().getMap().entrySet()) {
-      com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.Cluster>
-      clusters = ClustersDefaultEntryHolder.defaultEntry.newBuilderForType()
-          .setKey(entry.getKey())
-          .setValue(entry.getValue())
-          .build();
-      output.writeMessage(4, clusters);
-    }
+    com.google.protobuf.GeneratedMessageV3
+      .serializeStringMapTo(
+        output,
+        internalGetClusters(),
+        ClustersDefaultEntryHolder.defaultEntry,
+        4);
   }
 
   public int getSerializedSize() {
@@ -404,12 +402,12 @@ public  final class CreateInstanceRequest extends
     for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.Cluster> entry
          : internalGetClusters().getMap().entrySet()) {
       com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.Cluster>
-      clusters = ClustersDefaultEntryHolder.defaultEntry.newBuilderForType()
+      clusters__ = ClustersDefaultEntryHolder.defaultEntry.newBuilderForType()
           .setKey(entry.getKey())
           .setValue(entry.getValue())
           .build();
       size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, clusters);
+          .computeMessageSize(4, clusters__);
     }
     memoizedSize = size;
     return size;

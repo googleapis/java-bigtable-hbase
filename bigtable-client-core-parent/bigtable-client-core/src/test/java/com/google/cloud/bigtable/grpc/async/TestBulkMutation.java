@@ -386,6 +386,7 @@ public class TestBulkMutation {
 
   private void setResponse(final io.grpc.Status code)
       throws InterruptedException, ExecutionException {
+    when(mockFuture.isDone()).thenReturn(true);
     when(mockFuture.get()).thenAnswer(new Answer<ImmutableList<MutateRowsResponse>>() {
       @Override
       public ImmutableList<MutateRowsResponse> answer(InvocationOnMock invocation) throws Throwable {
