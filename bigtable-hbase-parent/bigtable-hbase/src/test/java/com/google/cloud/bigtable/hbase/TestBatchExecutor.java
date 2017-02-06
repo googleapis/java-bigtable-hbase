@@ -19,6 +19,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -180,6 +181,7 @@ public class TestBatchExecutor {
         return null;
       }
     }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
+    doReturn(true).when(mockFuture).isDone();
   }
 
   @Test
