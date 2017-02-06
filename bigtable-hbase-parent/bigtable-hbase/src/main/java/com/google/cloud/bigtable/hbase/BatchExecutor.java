@@ -15,11 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import java.util.concurrent.ExecutorService;
 import javax.annotation.Nullable;
 
 import org.apache.hadoop.hbase.client.Append;

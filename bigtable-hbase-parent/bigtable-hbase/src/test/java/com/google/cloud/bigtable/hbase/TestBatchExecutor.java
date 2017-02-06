@@ -166,7 +166,8 @@ public class TestBatchExecutor {
     thenAnswer(new Answer<BulkRead>() {
       @Override
       public BulkRead answer(InvocationOnMock invocationOnMock) throws Throwable {
-        return new BulkRead(mockClient, invocationOnMock.getArgumentAt(0, BigtableTableName.class));
+        return new BulkRead(mockClient, invocationOnMock.getArgumentAt(0, BigtableTableName.class),
+            BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
       }
     });
     when(mockBigtableSession.getDataClient()).thenReturn(mockClient);

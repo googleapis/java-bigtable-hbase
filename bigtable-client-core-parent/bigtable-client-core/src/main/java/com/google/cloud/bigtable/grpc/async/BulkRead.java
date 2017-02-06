@@ -17,7 +17,9 @@ package com.google.cloud.bigtable.grpc.async;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
@@ -35,6 +37,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
+import java.util.concurrent.ExecutorService;
 
 /**
  * This class combines a collection of {@link com.google.bigtable.v2.ReadRowsRequest}s with a single row key into a single
@@ -50,36 +53,29 @@ public class BulkRead {
   protected static final Logger LOG = new Logger(BulkRead.class);
 
   private final BigtableDataClient client;
+  private final ExecutorService threadPool;
   private final String tableName;
 
-  /**
-   * ReadRowRequests have to be batched based on the {@link RowFilter} since {@link ReadRowsRequest}
-   * only support a single RowFilter.
-   */
-  private RowFilter currentFilter;
+  private final Map<RowFilter, Batch> batches;
 
-  /**
-   * Maps row keys to a collection of {@link SettableFuture}s that will be populated once the batch
-   * operation is complete. The value of the {@link Multimap} is a {@link SettableFuture} of
-   * a {@link List} of {@link FlatRow}s.  The {@link Multimap} is used because a user could request
-   * the same key multiple times in the same batch. The {@link List} of {@link FlatRow}s mimics the
-   * interface of {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)}.
-   */
-  private Multimap<ByteString, SettableFuture<List<FlatRow>>> futures;
 
   /**
    * <p>Constructor for BulkRead.</p>
-   *
-   * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
-   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
+   *  @param client a {@link BigtableDataClient} object.
+   * @param tableName a {@link BigtableTableName} object.
+   * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
-  public BulkRead(BigtableDataClient client, BigtableTableName tableName) {
+  public BulkRead(BigtableDataClient client, BigtableTableName tableName,
+      ExecutorService threadPool) {
     this.client = client;
+    this.threadPool = threadPool;
     this.tableName = tableName.toString();
+    this.batches = new HashMap<>();
   }
 
   /**
-   * Adds the key in the request to a list of to look up in a batch read.
+   * Adds the key in the request to a batch read. The future will be resolved when the batch response
+   * is received.
    *
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} with a single row key.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated
@@ -91,20 +87,13 @@ public class BulkRead {
     ByteString rowKey = request.getRows().getRowKeysList().get(0);
     Preconditions.checkArgument(!rowKey.equals(ByteString.EMPTY));
 
-    RowFilter filter = request.getFilter();
-    if (currentFilter == null) {
-      currentFilter = filter;
-    } else if (!filter.equals(currentFilter)) {
-      // TODO: this should probably also happen if there is some maximum number of
-      flush();
-      currentFilter = filter;
+    final RowFilter filter = request.getFilter();
+    Batch batch = batches.get(filter);
+    if (batch == null) {
+      batch = new Batch(filter);
+      batches.put(filter, batch);
     }
-    if (futures == null) {
-      futures = HashMultimap.create();
-    }
-    SettableFuture<List<FlatRow>> future = SettableFuture.create();
-    futures.put(rowKey, future);
-    return future;
+    return batch.addKey(rowKey);
   }
 
   /**
@@ -112,13 +101,50 @@ public class BulkRead {
    * complete.
    */
   public void flush() {
-    if (futures != null && !futures.isEmpty()) {
+    for (Batch batch : batches.values()) {
+      threadPool.submit(batch);
+    }
+    batches.clear();
+  }
+
+
+  /**
+   * ReadRowRequests have to be batched based on the {@link RowFilter} since {@link ReadRowsRequest}
+   * only support a single RowFilter. A batch represents this grouping.
+   */
+  class Batch implements Runnable {
+    private final RowFilter filter;
+    /**
+     * Maps row keys to a collection of {@link SettableFuture}s that will be populated once the batch
+     * operation is complete. The value of the {@link Multimap} is a {@link SettableFuture} of
+     * a {@link List} of {@link FlatRow}s.  The {@link Multimap} is used because a user could request
+     * the same key multiple times in the same batch. The {@link List} of {@link FlatRow}s mimics the
+     * interface of {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)}.
+     */
+    private final Multimap<ByteString, SettableFuture<List<FlatRow>>> futures;
+
+    public Batch(RowFilter filter) {
+      this.filter = filter;
+      this.futures = HashMultimap.create();
+    }
+
+    public SettableFuture<List<FlatRow>> addKey(ByteString rowKey) {
+      SettableFuture<List<FlatRow>> future = SettableFuture.create();
+      futures.put(rowKey, future);
+      return future;
+    }
+
+    /**
+     * Sends the requests and resolves the futures using the response.
+     */
+    public void run() {
       try {
         ResultScanner<FlatRow> scanner = client.readFlatRows(ReadRowsRequest.newBuilder()
-          .setTableName(tableName)
-          .setFilter(currentFilter)
-          .setRows(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
-          .build());
+            .setTableName(tableName)
+            .setFilter(filter)
+            .setRows(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
+            .build()
+        );
         while (true) {
           FlatRow row = scanner.next();
           if (row == null) {
@@ -126,7 +152,6 @@ public class BulkRead {
           }
           Collection<SettableFuture<List<FlatRow>>> rowFutures = futures.get(row.getRowKey());
           if (rowFutures != null) {
-            // TODO: What about missing keys?
             for (SettableFuture<List<FlatRow>> rowFuture : rowFutures) {
               rowFuture.set(ImmutableList.of(row));
             }
@@ -135,6 +160,7 @@ public class BulkRead {
             LOG.warn("Found key: %s, but it was not in the original request.", row.getRowKey());
           }
         }
+        // Deal with remaining/missing keys
         for (Entry<ByteString, SettableFuture<List<FlatRow>>> entry : futures.entries()) {
           entry.getValue().set(ImmutableList.<FlatRow> of());
         }
@@ -144,7 +170,5 @@ public class BulkRead {
         }
       }
     }
-    futures = null;
-    currentFilter = null;
   }
 }
