@@ -29,7 +29,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.0.2)",
+    value = "by gRPC proto compiler (version 1.1.1)",
     comments = "Source: google/longrunning/operations.proto")
 public class OperationsGrpc {
 
@@ -163,7 +163,7 @@ public class OperationsGrpc {
       asyncUnimplementedUnaryCall(METHOD_DELETE_OPERATION, responseObserver);
     }
 
-    @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
+    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
             METHOD_GET_OPERATION,
@@ -499,12 +499,31 @@ public class OperationsGrpc {
     }
   }
 
-  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
-    return new io.grpc.ServiceDescriptor(SERVICE_NAME,
-        METHOD_GET_OPERATION,
-        METHOD_LIST_OPERATIONS,
-        METHOD_CANCEL_OPERATION,
-        METHOD_DELETE_OPERATION);
+  private static final class OperationsDescriptorSupplier implements io.grpc.protobuf.ProtoFileDescriptorSupplier {
+    @java.lang.Override
+    public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
+      return com.google.longrunning.OperationsProto.getDescriptor();
+    }
   }
 
+  private static volatile io.grpc.ServiceDescriptor serviceDescriptor;
+
+  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
+    io.grpc.ServiceDescriptor result = serviceDescriptor;
+    if (result == null) {
+      synchronized (OperationsGrpc.class) {
+        result = serviceDescriptor;
+        if (result == null) {
+          serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
+              .setSchemaDescriptor(new OperationsDescriptorSupplier())
+              .addMethod(METHOD_GET_OPERATION)
+              .addMethod(METHOD_LIST_OPERATIONS)
+              .addMethod(METHOD_CANCEL_OPERATION)
+              .addMethod(METHOD_DELETE_OPERATION)
+              .build();
+        }
+      }
+    }
+    return result;
+  }
 }

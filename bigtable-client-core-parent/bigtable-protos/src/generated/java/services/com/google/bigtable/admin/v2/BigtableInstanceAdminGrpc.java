@@ -23,7 +23,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.0.2)",
+    value = "by gRPC proto compiler (version 1.1.1)",
     comments = "Source: google/bigtable/admin/v2/bigtable_instance_admin.proto")
 public class BigtableInstanceAdminGrpc {
 
@@ -255,7 +255,7 @@ public class BigtableInstanceAdminGrpc {
       asyncUnimplementedUnaryCall(METHOD_DELETE_CLUSTER, responseObserver);
     }
 
-    @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
+    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
             METHOD_CREATE_INSTANCE,
@@ -807,18 +807,37 @@ public class BigtableInstanceAdminGrpc {
     }
   }
 
-  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
-    return new io.grpc.ServiceDescriptor(SERVICE_NAME,
-        METHOD_CREATE_INSTANCE,
-        METHOD_GET_INSTANCE,
-        METHOD_LIST_INSTANCES,
-        METHOD_UPDATE_INSTANCE,
-        METHOD_DELETE_INSTANCE,
-        METHOD_CREATE_CLUSTER,
-        METHOD_GET_CLUSTER,
-        METHOD_LIST_CLUSTERS,
-        METHOD_UPDATE_CLUSTER,
-        METHOD_DELETE_CLUSTER);
+  private static final class BigtableInstanceAdminDescriptorSupplier implements io.grpc.protobuf.ProtoFileDescriptorSupplier {
+    @java.lang.Override
+    public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
+      return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.getDescriptor();
+    }
   }
 
+  private static volatile io.grpc.ServiceDescriptor serviceDescriptor;
+
+  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
+    io.grpc.ServiceDescriptor result = serviceDescriptor;
+    if (result == null) {
+      synchronized (BigtableInstanceAdminGrpc.class) {
+        result = serviceDescriptor;
+        if (result == null) {
+          serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
+              .setSchemaDescriptor(new BigtableInstanceAdminDescriptorSupplier())
+              .addMethod(METHOD_CREATE_INSTANCE)
+              .addMethod(METHOD_GET_INSTANCE)
+              .addMethod(METHOD_LIST_INSTANCES)
+              .addMethod(METHOD_UPDATE_INSTANCE)
+              .addMethod(METHOD_DELETE_INSTANCE)
+              .addMethod(METHOD_CREATE_CLUSTER)
+              .addMethod(METHOD_GET_CLUSTER)
+              .addMethod(METHOD_LIST_CLUSTERS)
+              .addMethod(METHOD_UPDATE_CLUSTER)
+              .addMethod(METHOD_DELETE_CLUSTER)
+              .build();
+        }
+      }
+    }
+    return result;
+  }
 }

@@ -62,9 +62,10 @@ public  final class Table extends
               mutable_bitField0_ |= 0x00000002;
             }
             com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
-            columnFamilies = input.readMessage(
+            columnFamilies__ = input.readMessage(
                 ColumnFamiliesDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-            columnFamilies_.getMutableMap().put(columnFamilies.getKey(), columnFamilies.getValue());
+            columnFamilies_.getMutableMap().put(
+                columnFamilies__.getKey(), columnFamilies__.getValue());
             break;
           }
           case 32: {
@@ -576,15 +577,12 @@ public  final class Table extends
     if (!getNameBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
-    for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> entry
-         : internalGetColumnFamilies().getMap().entrySet()) {
-      com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
-      columnFamilies = ColumnFamiliesDefaultEntryHolder.defaultEntry.newBuilderForType()
-          .setKey(entry.getKey())
-          .setValue(entry.getValue())
-          .build();
-      output.writeMessage(3, columnFamilies);
-    }
+    com.google.protobuf.GeneratedMessageV3
+      .serializeStringMapTo(
+        output,
+        internalGetColumnFamilies(),
+        ColumnFamiliesDefaultEntryHolder.defaultEntry,
+        3);
     if (granularity_ != com.google.bigtable.admin.v2.Table.TimestampGranularity.TIMESTAMP_GRANULARITY_UNSPECIFIED.getNumber()) {
       output.writeEnum(4, granularity_);
     }
@@ -601,12 +599,12 @@ public  final class Table extends
     for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> entry
          : internalGetColumnFamilies().getMap().entrySet()) {
       com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
-      columnFamilies = ColumnFamiliesDefaultEntryHolder.defaultEntry.newBuilderForType()
+      columnFamilies__ = ColumnFamiliesDefaultEntryHolder.defaultEntry.newBuilderForType()
           .setKey(entry.getKey())
           .setValue(entry.getValue())
           .build();
       size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, columnFamilies);
+          .computeMessageSize(3, columnFamilies__);
     }
     if (granularity_ != com.google.bigtable.admin.v2.Table.TimestampGranularity.TIMESTAMP_GRANULARITY_UNSPECIFIED.getNumber()) {
       size += com.google.protobuf.CodedOutputStream

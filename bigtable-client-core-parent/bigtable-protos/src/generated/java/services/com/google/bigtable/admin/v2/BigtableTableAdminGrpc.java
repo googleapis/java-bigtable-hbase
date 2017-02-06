@@ -23,7 +23,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.0.2)",
+    value = "by gRPC proto compiler (version 1.1.1)",
     comments = "Source: google/bigtable/admin/v2/bigtable_table_admin.proto")
 public class BigtableTableAdminGrpc {
 
@@ -184,7 +184,7 @@ public class BigtableTableAdminGrpc {
       asyncUnimplementedUnaryCall(METHOD_DROP_ROW_RANGE, responseObserver);
     }
 
-    @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
+    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
             METHOD_CREATE_TABLE,
@@ -575,14 +575,33 @@ public class BigtableTableAdminGrpc {
     }
   }
 
-  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
-    return new io.grpc.ServiceDescriptor(SERVICE_NAME,
-        METHOD_CREATE_TABLE,
-        METHOD_LIST_TABLES,
-        METHOD_GET_TABLE,
-        METHOD_DELETE_TABLE,
-        METHOD_MODIFY_COLUMN_FAMILIES,
-        METHOD_DROP_ROW_RANGE);
+  private static final class BigtableTableAdminDescriptorSupplier implements io.grpc.protobuf.ProtoFileDescriptorSupplier {
+    @java.lang.Override
+    public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
+      return com.google.bigtable.admin.v2.BigtableTableAdminProto.getDescriptor();
+    }
   }
 
+  private static volatile io.grpc.ServiceDescriptor serviceDescriptor;
+
+  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
+    io.grpc.ServiceDescriptor result = serviceDescriptor;
+    if (result == null) {
+      synchronized (BigtableTableAdminGrpc.class) {
+        result = serviceDescriptor;
+        if (result == null) {
+          serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
+              .setSchemaDescriptor(new BigtableTableAdminDescriptorSupplier())
+              .addMethod(METHOD_CREATE_TABLE)
+              .addMethod(METHOD_LIST_TABLES)
+              .addMethod(METHOD_GET_TABLE)
+              .addMethod(METHOD_DELETE_TABLE)
+              .addMethod(METHOD_MODIFY_COLUMN_FAMILIES)
+              .addMethod(METHOD_DROP_ROW_RANGE)
+              .build();
+        }
+      }
+    }
+    return result;
+  }
 }
