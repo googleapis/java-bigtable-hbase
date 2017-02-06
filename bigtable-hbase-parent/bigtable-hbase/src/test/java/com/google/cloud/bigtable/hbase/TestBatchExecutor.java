@@ -37,6 +37,7 @@ import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow.Cell;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -242,13 +243,41 @@ public class TestBatchExecutor {
   }
 
   @Test
+  public void testPartialResults() throws Exception {
+    byte[] key1 = randomBytes(8);
+    byte[] key2 = randomBytes(8);
+    FlatRow response1 = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key1))
+        .addCell(
+            new Cell("cf", ByteString.EMPTY, 10, ByteString.copyFromUtf8("hi!"), new ArrayList<String>())
+        )
+        .build();
+
+    RuntimeException error = new RuntimeException("Something bad happened");
+    when(mockFuture.get())
+        .thenReturn(ImmutableList.of(response1))
+        .thenThrow(error);
+
+    List<Get> gets = Arrays.asList(new Get(key1), new Get(key2));
+    Object[] results = new Object[2];
+
+    try {
+      createExecutor(DEFAULT_OPTIONS).batch(gets, results);
+    } catch(RetriesExhaustedWithDetailsException e) {
+    }
+    Assert.assertTrue("first result is a result", results[0] instanceof Result);
+    Assert.assertArrayEquals(((Result)results[0]).getRow(), key1);
+
+    Assert.assertEquals(error, results[1]);
+  }
+
+  @Test
   public void testGetCallback() throws Exception {
     byte[] key = randomBytes(8);
     FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
     setFuture(ImmutableList.of(response));
     final Callback<Result> callback = Mockito.mock(Callback.class);
     List<Get> gets = Arrays.asList(new Get(key));
-    createExecutor(DEFAULT_OPTIONS).batchCallback(gets, new Result[1], callback);
+    createExecutor(DEFAULT_OPTIONS).batchCallback(gets, new Object[1], callback);
 
     verify(callback, times(1)).update(same(BatchExecutor.NO_REGION), same(key),
       argThat(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response))));
