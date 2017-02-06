@@ -201,7 +201,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
 
   /** {@inheritDoc} */
   @Override
-  public void updateHeaders(Metadata headers) throws Exception {
+  public void updateHeaders(Metadata headers) {
     headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
   }
 
