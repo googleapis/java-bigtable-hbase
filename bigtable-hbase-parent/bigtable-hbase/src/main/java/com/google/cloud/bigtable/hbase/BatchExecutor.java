@@ -319,6 +319,8 @@ public class BatchExecutor {
     try {
       Object[] resultsOrErrors = new Object[actions.size()];
       batch(actions, resultsOrErrors);
+      // At this point we are guaranteed that the array only contains results,
+      // if it had any errors, batch would've thrown an exception
       Result[] results = new Result[resultsOrErrors.length];
       System.arraycopy(resultsOrErrors, 0, results, 0, results.length);
       return results;
