@@ -450,7 +450,9 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkRead} object.
    */
   public BulkRead createBulkRead(BigtableTableName tableName) {
-    return new BulkRead(dataClient, tableName);
+    return new BulkRead(dataClient, tableName,
+        BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool()
+    );
   }
 
   /**
