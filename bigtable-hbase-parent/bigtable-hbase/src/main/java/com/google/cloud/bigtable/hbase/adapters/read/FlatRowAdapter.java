@@ -45,7 +45,7 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
    */
   @Override
   public Result adaptResponse(FlatRow flatRow) {
-    if (flatRow == null) {
+    if (flatRow == null || flatRow.getRowKey() == null) {
       return Result.EMPTY_RESULT;
     }
     byte[] RowKey = ByteStringer.extract(flatRow.getRowKey());
