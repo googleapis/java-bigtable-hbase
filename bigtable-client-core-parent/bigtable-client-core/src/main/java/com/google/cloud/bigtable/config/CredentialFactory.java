@@ -79,16 +79,31 @@ public class CredentialFactory {
   // HTTP transport used for created credentials to perform token-refresh handshakes with remote
   // credential servers. Initialized lazily to move the possibility of throwing
   // GeneralSecurityException to the time a caller actually tries to get a credential.
-  private static HttpTransportFactory httpTransportFactory = new HttpTransportFactory() {
-    @Override
-    public HttpTransport create() {
-      try {
-        return GoogleNetHttpTransport.newTrustedTransport();
-      } catch (Exception e) {
-        throw new RuntimeException("Could not create a GoogleNetHttpTransport: " + e.getMessage(), e);
-      }
+  private static HttpTransportFactory httpTransportFactory;
+
+  /**
+   * Allow for an override of the credentials HttpTransportFactory.
+   * @param httpTransportFactory
+   */
+  public static void setHttpTransportFactory(HttpTransportFactory httpTransportFactory) {
+    CredentialFactory.httpTransportFactory = httpTransportFactory;
+  }
+
+  public static HttpTransportFactory getHttpTransportFactory() {
+    if (httpTransportFactory == null) {
+      httpTransportFactory = new HttpTransportFactory() {
+        @Override
+        public HttpTransport create() {
+          try {
+            return GoogleNetHttpTransport.newTrustedTransport();
+          } catch (Exception e) {
+            throw new RuntimeException("Could not create a GoogleNetHttpTransport: " + e.getMessage(), e);
+          }
+        }
+      };
     }
-  };
+    return httpTransportFactory;
+  }
 
   /**
    * Look up a Credentials object based on a configuration of credentials described in a
@@ -140,7 +155,7 @@ public class CredentialFactory {
    */
   public static Credentials getCredentialFromMetadataServiceAccount()
       throws IOException, GeneralSecurityException {
-    return new ComputeEngineCredentials(httpTransportFactory);
+    return new ComputeEngineCredentials(getHttpTransportFactory());
   }
 
   /**
@@ -157,8 +172,8 @@ public class CredentialFactory {
   public static Credentials getCredentialFromPrivateKeyServiceAccount(
       String serviceAccountEmail, String privateKeyFile)
       throws IOException, GeneralSecurityException {
-    return getCredentialFromPrivateKeyServiceAccount(
-        serviceAccountEmail, privateKeyFile, CLOUD_BIGTABLE_ALL_SCOPES);
+    return getCredentialFromPrivateKeyServiceAccount(serviceAccountEmail, privateKeyFile,
+      CLOUD_BIGTABLE_ALL_SCOPES);
   }
 
   /**
@@ -182,7 +197,7 @@ public class CredentialFactory {
         SecurityUtils.loadPrivateKeyFromKeyStore(SecurityUtils.getPkcs12KeyStore(),
           new FileInputStream(privateKeyFile), "notasecret", "privatekey", "notasecret");
     return new ServiceAccountCredentials(clientId, serviceAccountEmail, privateKey, privateKeyId,
-        scopes, httpTransportFactory, null /* tokenServerUri */);
+        scopes, getHttpTransportFactory(), null /* tokenServerUri */);
   }
 
   /**
@@ -199,8 +214,8 @@ public class CredentialFactory {
    */
   public static Credentials getApplicationDefaultCredential() throws IOException,
       GeneralSecurityException {
-    return GoogleCredentials.getApplicationDefault(httpTransportFactory).createScoped(
-      CLOUD_BIGTABLE_ALL_SCOPES);
+    return GoogleCredentials.getApplicationDefault(getHttpTransportFactory())
+        .createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
   }
 
   /**
@@ -213,7 +228,7 @@ public class CredentialFactory {
    */
   public static Credentials getInputStreamCredential(InputStream inputStream) throws IOException,
       GeneralSecurityException {
-    return GoogleCredentials.fromStream(inputStream, httpTransportFactory).createScoped(
-      CLOUD_BIGTABLE_ALL_SCOPES);
+    return GoogleCredentials.fromStream(inputStream, getHttpTransportFactory())
+        .createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
   }
 }
