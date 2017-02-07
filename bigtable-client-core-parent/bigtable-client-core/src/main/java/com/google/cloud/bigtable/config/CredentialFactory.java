@@ -91,20 +91,16 @@ public class CredentialFactory {
 
   public static HttpTransportFactory getHttpTransportFactory() {
     if (httpTransportFactory == null) {
-      synchronized (CredentialFactory.class) {
-        if (httpTransportFactory == null) {
-          httpTransportFactory = new HttpTransportFactory() {
-            @Override
-            public HttpTransport create() {
-              try {
-                return GoogleNetHttpTransport.newTrustedTransport();
-              } catch (Exception e) {
-                throw new RuntimeException("Could not create a GoogleNetHttpTransport: " + e.getMessage(), e);
-              }
-            }
-          };
+      httpTransportFactory = new HttpTransportFactory() {
+        @Override
+        public HttpTransport create() {
+          try {
+            return GoogleNetHttpTransport.newTrustedTransport();
+          } catch (Exception e) {
+            throw new RuntimeException("Could not create a GoogleNetHttpTransport: " + e.getMessage(), e);
+          }
         }
-      }
+      };
     }
     return httpTransportFactory;
   }
