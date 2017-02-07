@@ -117,6 +117,7 @@ public class TestBulkMutation {
         return null;
       }
     }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
+    doReturn(true).when(mockFuture).isDone();
 
     when(rpcThrottler.registerRetry(any(RetryHandler.class))).then(new Answer<Long>() {
       @Override
