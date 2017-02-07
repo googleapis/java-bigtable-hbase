@@ -54,6 +54,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Class to help BigtableTable with batch operations on an BigtableClient.
@@ -112,33 +113,37 @@ public class BatchExecutor {
     @SuppressWarnings("unchecked")
     @Override
     public final void onSuccess(Object message) {
+      Result result = Result.EMPTY_RESULT;
+
       try {
-        Result result = Result.EMPTY_RESULT;
         if (message instanceof FlatRow) {
           result = Adapters.FLAT_ROW_ADAPTER.adaptResponse((FlatRow) message);
         } else if (message instanceof com.google.bigtable.v2.Row) {
           result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v2.Row) message);
         } else if (message instanceof ReadModifyWriteRowResponse) {
-          result =
-              Adapters.ROW_ADAPTER.adaptResponse(((ReadModifyWriteRowResponse) message).getRow());
+          result = Adapters.ROW_ADAPTER.adaptResponse(((ReadModifyWriteRowResponse) message).getRow());
         }
-        resultsArray[index] = result;
-        resultFuture.set(result);
-        if (callback != null) {
+      } catch(Throwable throwable) {
+        onFailure(throwable);
+        return;
+      }
+
+      resultsArray[index] = result;
+      resultFuture.set(result);
+
+      if (callback != null) {
+        try {
           callback.update(NO_REGION, row.getRow(), (T) result);
+        } catch (Throwable t) {
+          LOG.error("User callback threw an exception for " + Bytes.toString(result.getRow()));
         }
-      } catch (Throwable throwable) {
-        resultFuture.setException(throwable);
       }
     }
 
     @Override
     public final void onFailure(Throwable throwable) {
-      resultsArray[index] = null;
+      resultsArray[index] = throwable;
       resultFuture.setException(throwable);
-      if (callback != null) {
-        callback.update(NO_REGION, row.getRow(), null);
-      }
     }
   }
 
@@ -205,7 +210,7 @@ public class BatchExecutor {
   protected final AsyncExecutor asyncExecutor;
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
-  protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Debug, "batch.latency");
+  protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Info, "batch.latency");
 
   /**
    * Constructor for BatchExecutor.
@@ -285,35 +290,7 @@ public class BatchExecutor {
     if (results == null) {
       results = new Object[actions.size()];
     }
-    Preconditions.checkArgument(results.length == actions.size(),
-        "Result array must have same dimensions as actions list.");
-    Timer.Context timerContext = batchTimer.time();
-    List<ListenableFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, null);
-    try {
-      // Don't want to throw an exception for failed futures, instead the place in results is
-      // set to null.
-      Futures.successfulAsList(resultFutures).get();
-      List<Throwable> problems = new ArrayList<>();
-      List<Row> problemActions = new ArrayList<>();
-      List<String> hosts = new ArrayList<>();
-      for (int i = 0; i < resultFutures.size(); i++){
-        try {
-          resultFutures.get(i).get();
-        } catch (ExecutionException e) {
-          problemActions.add(actions.get(i));
-          problems.add(e.getCause());
-          hosts.add(options.getDataHost().toString());
-        }
-      }
-      if (problems.size() > 0) {
-        throw new RetriesExhaustedWithDetailsException(problems, problemActions, hosts);
-      }
-    } catch (ExecutionException e) {
-      LOG.error("Encountered exception in batch(List<>, Object[]).", e);
-      throw new IOException("Batch error", e);
-    } finally {
-      timerContext.close();
-    }
+    batchCallback(actions, results, null);
   }
 
   private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
@@ -340,8 +317,12 @@ public class BatchExecutor {
    */
   public Result[] batch(List<? extends Row> actions) throws IOException {
     try {
-      Result[] results = new Result[actions.size()];
-      batch(actions, results);
+      Object[] resultsOrErrors = new Object[actions.size()];
+      batch(actions, resultsOrErrors);
+      // At this point we are guaranteed that the array only contains results,
+      // if it had any errors, batch would've thrown an exception
+      Result[] results = new Result[resultsOrErrors.length];
+      System.arraycopy(resultsOrErrors, 0, results, 0, results.length);
       return results;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -364,15 +345,31 @@ public class BatchExecutor {
   public <R> void batchCallback(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
     Preconditions.checkArgument(results.length == actions.size(),
-        "Result array must be the same length as actions.");
+        "Result array must have same dimensions as actions list.");
     Timer.Context timerContext = batchTimer.time();
+    List<ListenableFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, callback);
     try {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
-      Futures.successfulAsList(issueAsyncRowRequests(actions, results, callback)).get();
+      Futures.successfulAsList(resultFutures).get();
+      List<Throwable> problems = new ArrayList<>();
+      List<Row> problemActions = new ArrayList<>();
+      List<String> hosts = new ArrayList<>();
+      for (int i = 0; i < resultFutures.size(); i++){
+        try {
+          resultFutures.get(i).get();
+        } catch (ExecutionException e) {
+          problemActions.add(actions.get(i));
+          problems.add(e.getCause());
+          hosts.add(options.getDataHost().toString());
+        }
+      }
+      if (problems.size() > 0) {
+        throw new RetriesExhaustedWithDetailsException(problems, problemActions, hosts);
+      }
     } catch (ExecutionException e) {
-      LOG.error("Encountered exception in batchCallback(List<>, Object[], Batch.Callback). ", e);
-      throw new IOException("batchCallback error", e);
+      LOG.error("Encountered exception in batchCallback(List<>, Object[], callback).", e);
+      throw new IOException("Batch error", e);
     } finally {
       timerContext.close();
     }

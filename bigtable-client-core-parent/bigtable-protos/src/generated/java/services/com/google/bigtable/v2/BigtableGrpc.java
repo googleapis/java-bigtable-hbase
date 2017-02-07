@@ -21,7 +21,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.0.2)",
+    value = "by gRPC proto compiler (version 1.1.1)",
     comments = "Source: google/bigtable/v2/bigtable.proto")
 public class BigtableGrpc {
 
@@ -189,7 +189,7 @@ public class BigtableGrpc {
       asyncUnimplementedUnaryCall(METHOD_READ_MODIFY_WRITE_ROW, responseObserver);
     }
 
-    @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
+    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
             METHOD_READ_ROWS,
@@ -562,14 +562,33 @@ public class BigtableGrpc {
     }
   }
 
-  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
-    return new io.grpc.ServiceDescriptor(SERVICE_NAME,
-        METHOD_READ_ROWS,
-        METHOD_SAMPLE_ROW_KEYS,
-        METHOD_MUTATE_ROW,
-        METHOD_MUTATE_ROWS,
-        METHOD_CHECK_AND_MUTATE_ROW,
-        METHOD_READ_MODIFY_WRITE_ROW);
+  private static final class BigtableDescriptorSupplier implements io.grpc.protobuf.ProtoFileDescriptorSupplier {
+    @java.lang.Override
+    public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
+      return com.google.bigtable.v2.BigtableProto.getDescriptor();
+    }
   }
 
+  private static volatile io.grpc.ServiceDescriptor serviceDescriptor;
+
+  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
+    io.grpc.ServiceDescriptor result = serviceDescriptor;
+    if (result == null) {
+      synchronized (BigtableGrpc.class) {
+        result = serviceDescriptor;
+        if (result == null) {
+          serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
+              .setSchemaDescriptor(new BigtableDescriptorSupplier())
+              .addMethod(METHOD_READ_ROWS)
+              .addMethod(METHOD_SAMPLE_ROW_KEYS)
+              .addMethod(METHOD_MUTATE_ROW)
+              .addMethod(METHOD_MUTATE_ROWS)
+              .addMethod(METHOD_CHECK_AND_MUTATE_ROW)
+              .addMethod(METHOD_READ_MODIFY_WRITE_ROW)
+              .build();
+        }
+      }
+    }
+    return result;
+  }
 }
