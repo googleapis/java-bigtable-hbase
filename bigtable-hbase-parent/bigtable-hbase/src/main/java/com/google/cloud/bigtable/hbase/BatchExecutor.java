@@ -195,7 +195,7 @@ public class BatchExecutor {
       if (!options.getBulkOptions().useBulkApi()) {
         return Futures.transform(asyncExecutor.readFlatRowsAsync(request), ROWS_TO_ROW_CONVERTER);
       } else {
-        return Futures.transform(bulkRead.add(request), ROWS_TO_ROW_CONVERTER);
+        return bulkRead.add(request);
       }
     }
 
