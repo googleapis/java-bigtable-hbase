@@ -45,6 +45,7 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
    */
   @Override
   public Result adaptResponse(FlatRow flatRow) {
+    // flatRow shouldn't ever have a null row key. The second check is defensive only.
     if (flatRow == null || flatRow.getRowKey() == null) {
       return Result.EMPTY_RESULT;
     }
