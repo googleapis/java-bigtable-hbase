@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.client.Table;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * This is a Cloud Bigtable specific extension of {@link Scan}. The Cloud Bigtable ReadRows API
@@ -32,7 +33,51 @@ import com.google.cloud.bigtable.util.ByteStringer;
  */
 public class BigtableExtendedScan extends Scan {
 
-  RowSet.Builder rowSet = RowSet.newBuilder();
+
+  /**
+   * <p>When scanning for a prefix the scan should stop immediately after the the last row that
+   * has the specified prefix. This method calculates the closest next rowKey immediately following
+   * the given rowKeyPrefix.</p>
+   * <p><b>IMPORTANT: This converts a rowKey<u>Prefix</u> into a rowKey</b>.</p>
+   * <p>If the prefix is an 'ASCII' string put into a byte[] then this is easy because you can
+   * simply increment the last byte of the array.
+   * But if your application uses real binary rowids you may run into the scenario that your
+   * prefix is something like:</p>
+   * &nbsp;&nbsp;&nbsp;<b>{ 0x12, 0x23, 0xFF, 0xFF }</b><br/>
+   * Then this stopRow needs to be fed into the actual scan<br/>
+   * &nbsp;&nbsp;&nbsp;<b>{ 0x12, 0x24 }</b> (Notice that it is shorter now)<br/>
+   * This method calculates the correct stop row value for this usecase.
+   *
+   * @param rowKeyPrefix the rowKey<u>Prefix</u>.
+   * @return the closest next rowKey immediately following the given rowKeyPrefix.
+   */
+  @VisibleForTesting
+  static byte[] calculateTheClosestNextRowKeyForPrefix(byte[] rowKeyPrefix) {
+    // Essentially we are treating it like an 'unsigned very very long' and doing +1 manually.
+    // Search for the place where the trailing 0xFFs start
+    int offset = rowKeyPrefix.length;
+    while (offset > 0) {
+      if (rowKeyPrefix[offset - 1] != (byte) 0xFF) {
+        break;
+      }
+      offset--;
+    }
+
+    if (offset == 0) {
+      // We got an 0xFFFF... (only FFs) stopRow value which is
+      // the last possible prefix before the end of the table.
+      // So set it to stop at the 'end of the table'
+      return HConstants.EMPTY_END_ROW;
+    }
+
+    // Copy the right length of the original
+    byte[] newStopRow = Arrays.copyOfRange(rowKeyPrefix, 0, offset);
+    // And increment the last one
+    newStopRow[newStopRow.length - 1]++;
+    return newStopRow;
+  }
+
+  private RowSet.Builder rowSet = RowSet.newBuilder();
 
   /**
    * @throws UnsupportedOperationException to avoid confusion.  Use {@link #addRange(byte[], byte[])} instead.
@@ -106,47 +151,5 @@ public class BigtableExtendedScan extends Scan {
    */
   public RowSet getRowSet() {
     return rowSet.build();
-  }
-
-  /**
-   * <p>When scanning for a prefix the scan should stop immediately after the the last row that
-   * has the specified prefix. This method calculates the closest next rowKey immediately following
-   * the given rowKeyPrefix.</p>
-   * <p><b>IMPORTANT: This converts a rowKey<u>Prefix</u> into a rowKey</b>.</p>
-   * <p>If the prefix is an 'ASCII' string put into a byte[] then this is easy because you can
-   * simply increment the last byte of the array.
-   * But if your application uses real binary rowids you may run into the scenario that your
-   * prefix is something like:</p>
-   * &nbsp;&nbsp;&nbsp;<b>{ 0x12, 0x23, 0xFF, 0xFF }</b><br/>
-   * Then this stopRow needs to be fed into the actual scan<br/>
-   * &nbsp;&nbsp;&nbsp;<b>{ 0x12, 0x24 }</b> (Notice that it is shorter now)<br/>
-   * This method calculates the correct stop row value for this usecase.
-   *
-   * @param rowKeyPrefix the rowKey<u>Prefix</u>.
-   * @return the closest next rowKey immediately following the given rowKeyPrefix.
-   */
-  private byte[] calculateTheClosestNextRowKeyForPrefix(byte[] rowKeyPrefix) {
-    // Essentially we are treating it like an 'unsigned very very long' and doing +1 manually.
-    // Search for the place where the trailing 0xFFs start
-    int offset = rowKeyPrefix.length;
-    while (offset > 0) {
-      if (rowKeyPrefix[offset - 1] != (byte) 0xFF) {
-        break;
-      }
-      offset--;
-    }
-
-    if (offset == 0) {
-      // We got an 0xFFFF... (only FFs) stopRow value which is
-      // the last possible prefix before the end of the table.
-      // So set it to stop at the 'end of the table'
-      return HConstants.EMPTY_END_ROW;
-    }
-
-    // Copy the right length of the original
-    byte[] newStopRow = Arrays.copyOfRange(rowKeyPrefix, 0, offset);
-    // And increment the last one
-    newStopRow[newStopRow.length - 1]++;
-    return newStopRow;
   }
 }
