@@ -43,7 +43,7 @@ public final class ZeroCopyByteStringUtil {
    * @return a {@link com.google.protobuf.ByteString} object.
    */
   public static ByteString wrap(final byte[] array) {
-    return UnsafeByteOperations.unsafeWrap(ByteBuffer.wrap(array));
+    return UnsafeByteOperations.unsafeWrap(array);
   }
 
   /**
