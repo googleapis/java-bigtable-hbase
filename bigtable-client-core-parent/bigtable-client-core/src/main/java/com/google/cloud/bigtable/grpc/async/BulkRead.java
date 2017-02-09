@@ -164,7 +164,7 @@ public class BulkRead {
         for (Entry<ByteString, SettableFuture<List<FlatRow>>> entry : futures.entries()) {
           entry.getValue().set(ImmutableList.<FlatRow> of());
         }
-      } catch (IOException e) {
+      } catch (Throwable e) {
         for (Entry<ByteString, SettableFuture<List<FlatRow>>> entry : futures.entries()) {
           entry.getValue().setException(e);
         }
