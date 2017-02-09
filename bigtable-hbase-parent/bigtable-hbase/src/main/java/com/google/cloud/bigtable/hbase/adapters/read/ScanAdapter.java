@@ -23,6 +23,7 @@ import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.bigtable.v2.RowSet;
 import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.util.ByteStringer;
@@ -107,17 +108,25 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   @Override
   public Builder adapt(Scan scan, ReadHooks readHooks) {
     throwIfUnsupportedScan(scan);
-    RowFilter filter = buildFilter(scan, readHooks);
+    return ReadRowsRequest.newBuilder()
+        .setRows(getRowSet(scan))
+        .setFilter(buildFilter(scan, readHooks));
+  }
 
-    RowSet.Builder rowSetBuilder = RowSet.newBuilder();
-    ByteString startRow = ByteString.copyFrom(scan.getStartRow());
-    if (scan.isGetScan()) {
-      rowSetBuilder.addRowKeys(startRow);
+  private RowSet getRowSet(Scan scan) {
+    if (scan instanceof BigtableExtendedScan) {
+      return ((BigtableExtendedScan) scan).getRowSet();
     } else {
-      ByteString stopRow = ByteString.copyFrom(scan.getStopRow());
-      rowSetBuilder.addRowRangesBuilder().setStartKeyClosed(startRow).setEndKeyOpen(stopRow);
+      RowSet.Builder rowSetBuilder = RowSet.newBuilder();
+      ByteString startRow = ByteString.copyFrom(scan.getStartRow());
+      if (scan.isGetScan()) {
+        rowSetBuilder.addRowKeys(startRow);
+      } else {
+        ByteString stopRow = ByteString.copyFrom(scan.getStopRow());
+        rowSetBuilder.addRowRangesBuilder().setStartKeyClosed(startRow).setEndKeyOpen(stopRow);
+      }
+      return rowSetBuilder.build();
     }
-    return ReadRowsRequest.newBuilder().setRows(rowSetBuilder).setFilter(filter);
   }
 
   private static byte[] quoteRegex(byte[] unquoted)  {
