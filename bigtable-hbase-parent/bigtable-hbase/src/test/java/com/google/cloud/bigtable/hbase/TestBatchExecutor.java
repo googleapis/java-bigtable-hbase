@@ -136,10 +136,11 @@ public class TestBatchExecutor {
   private HBaseRequestAdapter requestAdapter;
   @Before
   public void setup() throws InterruptedException {
-    BigtableOptions options = new BigtableOptions.Builder()
+    final BigtableOptions options = new BigtableOptions.Builder()
         .setProjectId("projectId")
         .setInstanceId("instanceId")
         .build();
+    final BulkOptions bulkOptions = options.getBulkOptions();
     requestAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
 
@@ -154,8 +155,6 @@ public class TestBatchExecutor {
       any(AsyncExecutor.class))).thenAnswer(new Answer<BulkMutation>() {
         @Override
         public BulkMutation answer(InvocationOnMock invocation) throws Throwable {
-          BigtableOptions options = mockBigtableSession.getOptions();
-          BulkOptions bulkOptions = options.getBulkOptions();
           return new BulkMutation(
             invocation.getArgumentAt(0, BigtableTableName.class),
             invocation.getArgumentAt(1, AsyncExecutor.class),
@@ -168,11 +167,13 @@ public class TestBatchExecutor {
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).
     thenAnswer(new Answer<BulkRead>() {
       @Override
-      public BulkRead answer(InvocationOnMock invocationOnMock) throws Throwable {
-        return new BulkRead(mockClient, invocationOnMock.getArgumentAt(0, BigtableTableName.class),
-            BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
-      }
-    });
+          public BulkRead answer(InvocationOnMock invocationOnMock) throws Throwable {
+            return new BulkRead(mockClient,
+                invocationOnMock.getArgumentAt(0, BigtableTableName.class),
+                bulkOptions.getBulkMaxRowKeyCount(),
+                BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
+          }
+        });
     when(mockBigtableSession.getDataClient()).thenReturn(mockClient);
     doAnswer(new Answer<Void>() {
       @Override
