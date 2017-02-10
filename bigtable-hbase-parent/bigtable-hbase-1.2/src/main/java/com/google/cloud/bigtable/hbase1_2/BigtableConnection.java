@@ -33,7 +33,7 @@ import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.security.User;
 
 /**
- * HBase 1.0 specific implementation of {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection}.
+ * HBase 1.2 specific implementation of {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection}.
  *
  * @author sduskis
  * @version $Id: $Id
