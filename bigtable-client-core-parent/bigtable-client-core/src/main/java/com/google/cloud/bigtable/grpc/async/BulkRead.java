@@ -76,6 +76,7 @@ public class BulkRead {
    * Constructor for BulkRead.
    * @param client a {@link BigtableDataClient} object.
    * @param tableName a {@link BigtableTableName} object.
+   * @param batchSizes The number of keys to lookup per RPC.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
   public BulkRead(BigtableDataClient client, BigtableTableName tableName, int batchSizes,
@@ -123,7 +124,6 @@ public class BulkRead {
     }
     batches.clear();
   }
-
 
   /**
    * ReadRowRequests have to be batched based on the {@link RowFilter} since {@link ReadRowsRequest}
