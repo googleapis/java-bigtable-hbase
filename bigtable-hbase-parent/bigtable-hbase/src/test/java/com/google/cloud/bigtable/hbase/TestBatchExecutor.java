@@ -43,7 +43,6 @@ import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -166,16 +165,14 @@ public class TestBatchExecutor {
             bulkOptions.getBulkMaxRequestSize());
         }
       });
-    when(mockBigtableSession.createBulkRead(any(BigtableTableName.class), any(Function.class))).
+    when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).
     thenAnswer(new Answer<BulkRead>() {
       @Override
-          public BulkRead answer(InvocationOnMock invocationOnMock) throws Throwable {
-            return new BulkRead(mockClient,
-                invocationOnMock.getArgumentAt(0, BigtableTableName.class),
-                BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool(),
-                invocationOnMock.getArgumentAt(1, Function.class));
-          }
-        });
+      public BulkRead answer(InvocationOnMock invocationOnMock) throws Throwable {
+        return new BulkRead(mockClient, invocationOnMock.getArgumentAt(0, BigtableTableName.class),
+            BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
+      }
+    });
     when(mockBigtableSession.getDataClient()).thenReturn(mockClient);
     doAnswer(new Answer<Void>() {
       @Override

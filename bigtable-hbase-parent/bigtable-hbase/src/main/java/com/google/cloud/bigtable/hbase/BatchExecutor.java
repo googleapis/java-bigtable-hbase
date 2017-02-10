@@ -84,14 +84,6 @@ public class BatchExecutor {
         }
       };
 
-  private static final Function<FlatRow, Result> FLAT_ROW_TO_RESULT_ADAPTER =
-      new Function<FlatRow, Result>() {
-        @Override
-        public Result apply(FlatRow input) {
-          return Adapters.FLAT_ROW_ADAPTER.adaptResponse(input);
-        }
-      };
-
   /**
    * A callback for ListenableFutures issued as a result of an RPC
    * @param <T> The type of message the hbase callback requires.
@@ -124,9 +116,7 @@ public class BatchExecutor {
       Result result = Result.EMPTY_RESULT;
 
       try {
-        if (message instanceof Result) {
-          result = (Result) message;
-        } else  if (message instanceof FlatRow) {
+        if (message instanceof FlatRow) {
           result = Adapters.FLAT_ROW_ADAPTER.adaptResponse((FlatRow) message);
         } else if (message instanceof com.google.bigtable.v2.Row) {
           result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v2.Row) message);
@@ -162,7 +152,7 @@ public class BatchExecutor {
     private final HBaseRequestAdapter requestAdapter;
     private final BigtableOptions options;
     private BulkMutation bulkMutation;
-    private BulkRead<Result> bulkRead;
+    private BulkRead bulkRead;
 
     protected BulkOperation(
         BigtableSession session,
@@ -172,7 +162,7 @@ public class BatchExecutor {
       this.asyncExecutor = asyncExecutor;
       this.requestAdapter = requestAdapter;
       this.options = session.getOptions();
-      this.bulkRead = session.createBulkRead(tableName, FLAT_ROW_TO_RESULT_ADAPTER);
+      this.bulkRead = session.createBulkRead(tableName);
       this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
     }
 

@@ -49,12 +49,10 @@ import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
-import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -446,27 +444,15 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * <p>
-   * createBulkRead.
-   * </p>
+   * <p>createBulkRead.</p>
+   *
    * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkRead} object.
    */
-  public BulkRead<FlatRow> createBulkRead(BigtableTableName tableName) {
-    return new BulkRead<FlatRow>(dataClient, tableName,
-        BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
-  }
-
-  /**
-   * createBulkRead.
-   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
-   * @param transformer a {@link Function} that transforms result {@link}
-   * @return a {@link com.google.cloud.bigtable.grpc.async.BulkRead} object.
-   */
-  public <R> BulkRead<R> createBulkRead(BigtableTableName tableName,
-      Function<FlatRow, R> transformer) {
-    return new BulkRead<R>(dataClient, tableName,
-        BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool(), transformer);
+  public BulkRead createBulkRead(BigtableTableName tableName) {
+    return new BulkRead(dataClient, tableName,
+        BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool()
+    );
   }
 
   /**
