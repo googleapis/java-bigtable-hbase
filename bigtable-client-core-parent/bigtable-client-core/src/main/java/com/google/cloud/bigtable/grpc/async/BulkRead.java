@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.appengine.repackaged.com.google.common.base.Functions;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowSet;
@@ -30,6 +31,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -45,7 +47,7 @@ import java.util.concurrent.ExecutorService;
  * @author sduskis
  * @version $Id: $Id
  */
-public class BulkRead {
+public class BulkRead<ResultType> {
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BulkRead.class);
@@ -55,20 +57,34 @@ public class BulkRead {
   private final String tableName;
 
   private final Map<RowFilter, Batch> batches;
-
+  private final Function<FlatRow, ResultType> transformer;
 
   /**
-   * <p>Constructor for BulkRead.</p>
-   *  @param client a {@link BigtableDataClient} object.
+   * Constructor for BulkRead.
+   * @param client a {@link BigtableDataClient} object.
    * @param tableName a {@link BigtableTableName} object.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
+  @SuppressWarnings("unchecked")
   public BulkRead(BigtableDataClient client, BigtableTableName tableName,
       ExecutorService threadPool) {
+    this(client, tableName, threadPool, (Function<FlatRow, ResultType>) Functions.identity());
+  }
+
+  /**
+   * Constructor for BulkRead.
+   * @param client a {@link BigtableDataClient} object.
+   * @param tableName a {@link BigtableTableName} object.
+   * @param threadPool the {@link ExecutorService} to execute the batched reads on
+   * @param transformer a {@link Function} that transforms a FlatRow before return it.
+   */
+  public BulkRead(BigtableDataClient client, BigtableTableName tableName,
+      ExecutorService threadPool, Function<FlatRow, ResultType> transformer) {
     this.client = client;
     this.threadPool = threadPool;
     this.tableName = tableName.toString();
     this.batches = new HashMap<>();
+    this.transformer = transformer;
   }
 
   /**
@@ -79,7 +95,7 @@ public class BulkRead {
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated
    *     with the {@link FlatRow} that corresponds to the request
    */
-  public ListenableFuture<FlatRow> add(ReadRowsRequest request) {
+  public ListenableFuture<ResultType> add(ReadRowsRequest request) {
     Preconditions.checkNotNull(request);
     Preconditions.checkArgument(request.getRows().getRowKeysCount() == 1);
     ByteString rowKey = request.getRows().getRowKeysList().get(0);
@@ -119,15 +135,15 @@ public class BulkRead {
      * the same key multiple times in the same batch. The {@link List} of {@link FlatRow}s mimics the
      * interface of {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)}.
      */
-    private final Multimap<ByteString, SettableFuture<FlatRow>> futures;
+    private final Multimap<ByteString, SettableFuture<ResultType>> futures;
 
     public Batch(RowFilter filter) {
       this.filter = filter;
       this.futures = HashMultimap.create();
     }
 
-    public SettableFuture<FlatRow> addKey(ByteString rowKey) {
-      SettableFuture<FlatRow> future = SettableFuture.create();
+    public SettableFuture<ResultType> addKey(ByteString rowKey) {
+      SettableFuture<ResultType> future = SettableFuture.create();
       futures.put(rowKey, future);
       return future;
     }
@@ -148,10 +164,10 @@ public class BulkRead {
           if (row == null) {
             break;
           }
-          Collection<SettableFuture<FlatRow>> rowFutures = futures.get(row.getRowKey());
+          Collection<SettableFuture<ResultType>> rowFutures = futures.get(row.getRowKey());
           if (rowFutures != null) {
-            for (SettableFuture<FlatRow> rowFuture : rowFutures) {
-              rowFuture.set(row);
+            for (SettableFuture<ResultType> rowFuture : rowFutures) {
+              rowFuture.set(transformer.apply(row));
             }
             futures.removeAll(row.getRowKey());
           } else {
@@ -159,11 +175,12 @@ public class BulkRead {
           }
         }
         // Deal with remaining/missing keys
-        for (Entry<ByteString, SettableFuture<FlatRow>> entry : futures.entries()) {
-          entry.getValue().set(null);
+        ResultType nullValue = transformer.apply(null);
+        for (Entry<ByteString, SettableFuture<ResultType>> entry : futures.entries()) {
+          entry.getValue().set(nullValue);
         }
       } catch (Throwable e) {
-        for (Entry<ByteString, SettableFuture<FlatRow>> entry : futures.entries()) {
+        for (Entry<ByteString, SettableFuture<ResultType>> entry : futures.entries()) {
           entry.getValue().setException(e);
         }
       }
