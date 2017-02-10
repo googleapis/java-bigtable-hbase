@@ -22,6 +22,7 @@ import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowRange.EndKeyCase;
 import com.google.bigtable.v2.RowRange.StartKeyCase;
 import com.google.bigtable.v2.RowSet;
+import com.google.cloud.bigtable.util.ByteStringComparator;
 import com.google.protobuf.ByteString;
 
 /**
@@ -119,31 +120,13 @@ class ReadRowsRequestManager {
 
   private boolean startKeyIsAlreadyRead(ByteString startKey) {
     // empty startKey implies the smallest key
-    return lastFoundKey != null
-        && (startKey.isEmpty() || compareKeys(startKey, lastFoundKey) <= 0);
+    return lastFoundKey != null && (startKey.isEmpty()
+        || ByteStringComparator.INSTANCE.compare(startKey, lastFoundKey) <= 0);
   }
+
   private boolean endKeyIsAlreadyRead(ByteString endKey) {
     // empty endKey implies the largest key
-    return lastFoundKey != null && !endKey.isEmpty() && compareKeys(endKey, lastFoundKey) <= 0;
-  }
-
-  // TODO(igorbernstein2): move this to a better place
-  /**
-   * Lexicographically compare as a string of unsigned bytes
-   */
-  private static int compareKeys(ByteString key1, ByteString key2) {
-    int size1 = key1.size();
-    int size2 = key2.size();
-
-    for (int i = 0; i < Math.min(size1, size2); i++) {
-      // compare bytes as unsigned
-      int byte1 = key1.byteAt(i) & 0xff;
-      int byte2 = key2.byteAt(i) & 0xff;
-
-      if (byte1 != byte2) {
-        return Integer.compare(byte1, byte2);
-      }
-    }
-    return Integer.compare(size1, size2);
+    return lastFoundKey != null && !endKey.isEmpty()
+        && ByteStringComparator.INSTANCE.compare(endKey, lastFoundKey) <= 0;
   }
 }
