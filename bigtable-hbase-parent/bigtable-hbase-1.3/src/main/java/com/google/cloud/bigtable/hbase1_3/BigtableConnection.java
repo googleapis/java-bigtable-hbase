@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.security.User;
 
 /**
- * HBase 1.0 specific implementation of {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection}.
+ * HBase 1.3 specific implementation of {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection}.
  *
  * @author sduskis
  * @version $Id: $Id
