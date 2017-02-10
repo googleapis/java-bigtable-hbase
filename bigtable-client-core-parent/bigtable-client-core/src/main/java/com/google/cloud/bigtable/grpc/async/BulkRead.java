@@ -151,6 +151,7 @@ public class BulkRead<ResultType> {
     /**
      * Sends the requests and resolves the futures using the response.
      */
+    @Override
     public void run() {
       try {
         ResultScanner<FlatRow> scanner = client.readFlatRows(ReadRowsRequest.newBuilder()
