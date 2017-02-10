@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +31,6 @@ import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -58,10 +56,9 @@ public class BulkRead {
 
   private final Map<RowFilter, Batch> batches;
 
-
   /**
-   * <p>Constructor for BulkRead.</p>
-   *  @param client a {@link BigtableDataClient} object.
+   * Constructor for BulkRead.
+   * @param client a {@link BigtableDataClient} object.
    * @param tableName a {@link BigtableTableName} object.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
@@ -81,7 +78,7 @@ public class BulkRead {
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated
    *     with the {@link FlatRow} that corresponds to the request
    */
-  public ListenableFuture<List<FlatRow>> add(ReadRowsRequest request) {
+  public ListenableFuture<FlatRow> add(ReadRowsRequest request) {
     Preconditions.checkNotNull(request);
     Preconditions.checkArgument(request.getRows().getRowKeysCount() == 1);
     ByteString rowKey = request.getRows().getRowKeysList().get(0);
@@ -121,15 +118,15 @@ public class BulkRead {
      * the same key multiple times in the same batch. The {@link List} of {@link FlatRow}s mimics the
      * interface of {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)}.
      */
-    private final Multimap<ByteString, SettableFuture<List<FlatRow>>> futures;
+    private final Multimap<ByteString, SettableFuture<FlatRow>> futures;
 
     public Batch(RowFilter filter) {
       this.filter = filter;
       this.futures = HashMultimap.create();
     }
 
-    public SettableFuture<List<FlatRow>> addKey(ByteString rowKey) {
-      SettableFuture<List<FlatRow>> future = SettableFuture.create();
+    public SettableFuture<FlatRow> addKey(ByteString rowKey) {
+      SettableFuture<FlatRow> future = SettableFuture.create();
       futures.put(rowKey, future);
       return future;
     }
@@ -137,6 +134,7 @@ public class BulkRead {
     /**
      * Sends the requests and resolves the futures using the response.
      */
+    @Override
     public void run() {
       try {
         ResultScanner<FlatRow> scanner = client.readFlatRows(ReadRowsRequest.newBuilder()
@@ -150,10 +148,10 @@ public class BulkRead {
           if (row == null) {
             break;
           }
-          Collection<SettableFuture<List<FlatRow>>> rowFutures = futures.get(row.getRowKey());
+          Collection<SettableFuture<FlatRow>> rowFutures = futures.get(row.getRowKey());
           if (rowFutures != null) {
-            for (SettableFuture<List<FlatRow>> rowFuture : rowFutures) {
-              rowFuture.set(ImmutableList.of(row));
+            for (SettableFuture<FlatRow> rowFuture : rowFutures) {
+              rowFuture.set(row);
             }
             futures.removeAll(row.getRowKey());
           } else {
@@ -161,11 +159,11 @@ public class BulkRead {
           }
         }
         // Deal with remaining/missing keys
-        for (Entry<ByteString, SettableFuture<List<FlatRow>>> entry : futures.entries()) {
-          entry.getValue().set(ImmutableList.<FlatRow> of());
+        for (Entry<ByteString, SettableFuture<FlatRow>> entry : futures.entries()) {
+          entry.getValue().set(null);
         }
       } catch (Throwable e) {
-        for (Entry<ByteString, SettableFuture<List<FlatRow>>> entry : futures.entries()) {
+        for (Entry<ByteString, SettableFuture<FlatRow>> entry : futures.entries()) {
           entry.getValue().setException(e);
         }
       }
