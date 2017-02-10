@@ -15,8 +15,10 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +33,10 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.cloud.bigtable.util.ByteStringComparator;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -52,12 +56,21 @@ public class BulkRead {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BulkRead.class);
 
+  private static final Comparator<Entry<ByteString, SettableFuture<List<FlatRow>>>> ENTRY_SORTER =
+      new Comparator<Entry<ByteString, SettableFuture<List<FlatRow>>>>() {
+        @Override
+        public int compare(Entry<ByteString, SettableFuture<List<FlatRow>>> o1,
+            Entry<ByteString, SettableFuture<List<FlatRow>>> o2) {
+          return ByteStringComparator.INSTANCE.compare(o1.getKey(), o2.getKey());
+        }
+      };
+
   private final BigtableDataClient client;
+  private final int batchSizes;
   private final ExecutorService threadPool;
   private final String tableName;
 
   private final Map<RowFilter, Batch> batches;
-
 
   /**
    * <p>Constructor for BulkRead.</p>
@@ -65,11 +78,12 @@ public class BulkRead {
    * @param tableName a {@link BigtableTableName} object.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
-  public BulkRead(BigtableDataClient client, BigtableTableName tableName,
+  public BulkRead(BigtableDataClient client, BigtableTableName tableName, int batchSizes,
       ExecutorService threadPool) {
     this.client = client;
-    this.threadPool = threadPool;
     this.tableName = tableName.toString();
+    this.batchSizes = batchSizes;
+    this.threadPool = threadPool;
     this.batches = new HashMap<>();
   }
 
@@ -102,7 +116,10 @@ public class BulkRead {
    */
   public void flush() {
     for (Batch batch : batches.values()) {
-      threadPool.submit(batch);
+      Collection<Batch> subbatches = batch.split();
+      for (Batch miniBatch : subbatches) {
+        threadPool.submit(miniBatch);
+      }
     }
     batches.clear();
   }
@@ -126,6 +143,25 @@ public class BulkRead {
     public Batch(RowFilter filter) {
       this.filter = filter;
       this.futures = HashMultimap.create();
+    }
+
+    public Collection<Batch> split() {
+      if (futures.values().size() <= batchSizes) {
+        return ImmutableList.of(this);
+      }
+      List<Entry<ByteString, SettableFuture<List<FlatRow>>>> toSplit =
+          new ArrayList<>(futures.entries());
+      Collections.sort(toSplit, ENTRY_SORTER);
+      
+      List<Batch> batches = new ArrayList<>();
+      for (List<Entry<ByteString, SettableFuture<List<FlatRow>>>> entries : Iterables.partition(toSplit, batchSizes)) {
+        Batch batch = new Batch(filter);
+        for (Entry<ByteString, SettableFuture<List<FlatRow>>> entry : entries) {
+          batch.futures.put(entry.getKey(), entry.getValue());
+        }
+        batches.add(batch);
+      }
+      return batches;
     }
 
     public SettableFuture<List<FlatRow>> addKey(ByteString rowKey) {
