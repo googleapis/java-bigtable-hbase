@@ -81,6 +81,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   protected int failedCount = 0;
 
   protected final GrpcFuture<ResultT> completionFuture;
+  protected Object callLock = new String("");
   protected ClientCall<RequestT, ResponseT> call;
   private Timer.Context operationTimerContext;
   protected Timer.Context rpcTimerContext;
@@ -118,6 +119,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
+    synchronized (callLock) {
+      call = null;
+    }
     rpcTimerContext.close();
 
     Status.Code code = status.getCode();
@@ -126,7 +130,6 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     if (code == Status.Code.OK) {
       operationTimerContext.close();
       onOK();
-      call = null;
       return;
     }
 
@@ -134,7 +137,6 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     if (code == Status.Code.CANCELLED) {
       // An explicit user cancellation is not considered a failure.
       operationTimerContext.close();
-      call = null;
       return;
     }
 
@@ -142,10 +144,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     if (!retryOptions.enableRetries()
         || !retryOptions.isRetryable(code)
         || !isRequestRetryable()) {
-      this.rpc.getRpcMetrics().markFailure();
-      this.operationTimerContext.close();
+      rpc.getRpcMetrics().markFailure();
+      operationTimerContext.close();
       setException(status.asRuntimeException());
-      call = null;
       return;
     }
 
@@ -155,8 +156,8 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
     // Backoffs timed out.
     if (nextBackOff == BackOff.STOP) {
-      this.rpc.getRpcMetrics().markRetriesExhasted();
-      this.operationTimerContext.close();
+      rpc.getRpcMetrics().markRetriesExhasted();
+      operationTimerContext.close();
 
       String message = String.format("Exhausted retries after %d failures.", failedCount);
       StatusRuntimeException cause = status.asRuntimeException();
@@ -168,8 +169,6 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     String channelId = trailers != null ? trailers.get(ChannelPool.CHANNEL_ID_KEY) : "";
     LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s",
         status.getCause(), failedCount, status, channelId);
-
-    call = null;
 
     rpc.getRpcMetrics().markRetry();
     retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
@@ -190,8 +189,8 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   protected abstract void onOK();
 
   private long getNextBackoff() {
-    if (this.currentBackoff == null) {
-      this.currentBackoff = retryOptions.createBackoff();
+    if (currentBackoff == null) {
+      currentBackoff = retryOptions.createBackoff();
     }
     try {
       return currentBackoff.nextBackOffMillis();
@@ -210,41 +209,51 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   }
 
   /**
-   * {@inheritDoc}
-   *
    * <p>Calls {@link BigtableAsyncRpc#newCall(CallOptions)} and {@link
    * BigtableAsyncRpc#start(ClientCall, Object, io.grpc.ClientCall.Listener, Metadata)} with this as
    * the listener so that retries happen correctly.
    */
   @Override
   public void run() {
-    this.rpcTimerContext = this.rpc.getRpcMetrics().timeRpc();
+    rpcTimerContext = rpc.getRpcMetrics().timeRpc();
     Metadata metadata = new Metadata();
     metadata.merge(originalMetadata);
-    this.call = rpc.newCall(callOptions);
-    rpc.start(this.call, getRetryRequest(), this, metadata);
+    synchronized (callLock) {
+      call = rpc.newCall(callOptions);
+    }
+    rpc.start(call, getRetryRequest(), this, metadata);
   }
 
   protected RequestT getRetryRequest() {
     return request;
   }
 
+  /**
+   * Initial execution of the RPC.
+   */
   public void start() {
-    this.operationTimerContext = this.rpc.getRpcMetrics().timeOperation();
+    operationTimerContext = rpc.getRpcMetrics().timeOperation();
     run();
   }
 
   /**
-   * <p>cancel.</p>
+   * Cancels the RPC.
    */
   public synchronized void cancel() {
     cancel("User requested cancelation.");
   }
 
+  /**
+   * Cancels the RPC with a specific message.
+   *
+   * @param message
+   */
   protected void cancel(final String message) {
-    if (this.call != null) {
-      call.cancel(message, null);
-      call = null;
+    synchronized (callLock) {
+      if (call != null) {
+        call.cancel(message, null);
+        call = null;
+      }
     }
   }
 }

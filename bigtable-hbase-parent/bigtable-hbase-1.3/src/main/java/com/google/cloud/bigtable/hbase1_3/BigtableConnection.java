@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase1_2;
+package com.google.cloud.bigtable.hbase1_3;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ProcedureInfo;
@@ -27,13 +28,14 @@ import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.security.User;
 
 /**
- * HBase 1.2 specific implementation of {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection}.
+ * HBase 1.3 specific implementation of {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection}.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -60,6 +62,28 @@ public class BigtableConnection extends AbstractBigtableConnection {
   public Admin getAdmin() throws IOException {
     return new AbstractBigtableAdmin(getOptions(), getConfiguration(), this,
         getBigtableTableAdminClient(), getDisabledTables()) {
+
+          @Override
+          public void deleteTableSnapshots(String arg0, String arg1) throws IOException {
+            throw new UnsupportedOperationException("deleteTableSnapshots");  // TODO
+          }
+    
+          @Override
+          public void deleteTableSnapshots(Pattern arg0, Pattern arg1) throws IOException {
+            throw new UnsupportedOperationException("deleteTableSnapshots");  // TODO
+          }
+    
+          @Override
+          public List<SnapshotDescription> listTableSnapshots(String arg0, String arg1)
+              throws IOException {
+            throw new UnsupportedOperationException("listTableSnapshots");  // TODO
+          }
+    
+          @Override
+          public List<SnapshotDescription> listTableSnapshots(Pattern arg0, Pattern arg1)
+              throws IOException {
+            throw new UnsupportedOperationException("listTableSnapshots");  // TODO
+          }
 
           @Override
           public boolean isBalancerEnabled() throws IOException {
@@ -122,6 +146,22 @@ public class BigtableConnection extends AbstractBigtableConnection {
           @Override
           public List<SecurityCapability> getSecurityCapabilities() throws IOException {
             throw new UnsupportedOperationException("getSecurityCapabilities");  // TODO
+          }
+
+          @Override
+          public boolean balancer(boolean arg0) throws IOException {
+            throw new UnsupportedOperationException("balancer");  // TODO
+          }
+
+          @Override
+          public boolean isSplitOrMergeEnabled(MasterSwitchType arg0) throws IOException {
+            throw new UnsupportedOperationException("isSplitOrMergeEnabled");  // TODO
+          }
+
+          @Override
+          public boolean[] setSplitOrMergeEnabled(boolean arg0, boolean arg1,
+              MasterSwitchType... arg2) throws IOException {
+            throw new UnsupportedOperationException("setSplitOrMergeEnabled");  // TODO
           }
     };
   }
