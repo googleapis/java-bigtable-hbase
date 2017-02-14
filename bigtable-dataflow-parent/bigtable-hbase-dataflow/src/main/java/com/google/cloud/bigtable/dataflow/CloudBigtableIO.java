@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.bigtable.repackaged.com.google.api.client.repackaged.com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.io.IOException;
