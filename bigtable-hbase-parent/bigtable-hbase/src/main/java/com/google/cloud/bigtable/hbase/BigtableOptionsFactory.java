@@ -392,22 +392,10 @@ public class BigtableOptionsFactory {
 
     clientCallOptionsBuilder
         .setUseTimeout(configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT));
-    if (configuration.get(BIGTABLE_RPC_TIMEOUT_MS_KEY) != null) {
-      clientCallOptionsBuilder.setShortRpcTimeoutMs(
-        configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, SHORT_TIMEOUT_MS_DEFAULT));
-    } else {
-      clientCallOptionsBuilder.setShortRpcTimeoutMs(
-        configuration.getInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT, SHORT_TIMEOUT_MS_DEFAULT));
-    }
-
-    if (configuration.get(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY) != null) {
-      clientCallOptionsBuilder.setLongRpcTimeoutMs(
-        configuration.getInt(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY, LONG_TIMEOUT_MS_DEFAULT));
-    } else {
-      clientCallOptionsBuilder.setLongRpcTimeoutMs(configuration
-          .getInt(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, LONG_TIMEOUT_MS_DEFAULT));
-    }
-
+    clientCallOptionsBuilder.setShortRpcTimeoutMs(
+      configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, SHORT_TIMEOUT_MS_DEFAULT));
+    clientCallOptionsBuilder.setLongRpcTimeoutMs(
+      configuration.getInt(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY, LONG_TIMEOUT_MS_DEFAULT));
     bigtableOptionsBuilder.setCallOptionsConfig(clientCallOptionsBuilder.build());
   }
 
