@@ -116,6 +116,7 @@ public class ManyThreadDriver {
       // Sleep 10 seconds to allow stragglers to finish.
       Thread.sleep(10000);
     } finally {
+      finished.set(true);
       executor.shutdownNow();
       finishExecutor.shutdownNow();
     }
@@ -167,8 +168,8 @@ public class ManyThreadDriver {
     return new Runnable() {
       @Override
       public void run() {
-        try {
-          while (!finished.get()) {
+        while (!finished.get()) {
+          try {
             // Workload: two reads and a write.
             final byte[] key = Bytes.toBytes(key());
             table.get(new Get(key));
@@ -178,9 +179,9 @@ public class ManyThreadDriver {
               p.addColumn(COLUMN_FAMILY, qualifiers[i], values[i]);
             }
             table.put(p);
+          } catch(Throwable t) {
+            t.printStackTrace();
           }
-        } catch (Exception e) {
-          e.printStackTrace();
         }
       }
     };
