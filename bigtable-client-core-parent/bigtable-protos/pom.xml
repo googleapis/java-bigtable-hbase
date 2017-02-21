@@ -58,6 +58,11 @@ limitations under the License.
             <artifactId>protobuf-java</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.api.grpc</groupId>
+            <artifactId>grpc-google-common-protos</artifactId>
+            <version>0.1.6</version>
+        </dependency>
+        <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-core</artifactId>
         </dependency>
