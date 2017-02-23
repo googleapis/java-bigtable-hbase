@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.google.protobuf.ByteString;
 
@@ -66,6 +67,42 @@ public class TestScan extends AbstractTest {
 
     Assert.assertArrayEquals(
         new byte[]{0x00, 0x01, 0x02, 0x00}, rowFollowing(new byte[]{0x00, 0x01, 0x02}));
+  }
+
+  @Test
+  @Category(KnownGap.class)
+  public void testGetScannerBeforeTimestamp() throws IOException {
+    Table table = getConnection().getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
+    byte[][] values = dataHelper.randomData("value-", 2);
+
+    long ts1 = 100000l;
+    long ts2 = 200000l;
+
+    table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, ts1, values[0]));
+    table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, ts2, values[1]));
+
+    try (ResultScanner resultScanner =
+        table.getScanner(new Scan(rowKey, rowFollowing(rowKey)).setTimeRange(0, ts1))) {
+      Assert.assertNull(resultScanner.next());
+    }
+
+    try (ResultScanner resultScanner =
+        table.getScanner(new Scan(rowKey, rowFollowing(rowKey)).setTimeRange(0, ts2 + 1))) {
+      Result result = resultScanner.next();
+      Assert.assertNotNull(result);
+      Assert.assertArrayEquals(values[1],
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual)));
+    }
+
+    try (ResultScanner resultScanner = table.getScanner(
+      new Scan(rowKey, rowFollowing(rowKey)).setTimeRange(0, ts1 + 1))) {
+      Result result = resultScanner.next();
+      Assert.assertNotNull(result);
+      Assert.assertArrayEquals(values[0],
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual)));
+    }
   }
 
   @Test
