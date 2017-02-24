@@ -29,7 +29,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import com.google.protobuf.ByteString;
 
@@ -70,7 +69,6 @@ public class TestScan extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testGetScannerBeforeTimestamp() throws IOException {
     Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
