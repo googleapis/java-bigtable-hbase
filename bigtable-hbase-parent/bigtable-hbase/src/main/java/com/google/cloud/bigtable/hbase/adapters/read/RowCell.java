@@ -229,9 +229,19 @@ public class RowCell implements Cell {
   @Override
   public String toString() {
     if (this.rowArray == null || this.rowArray.length == 0) {
-      return "empty";
+      return "";
     }
-    return KeyValue.keyToString(this.rowArray) + "/vlen=" + getValueLength();
+
+
+    return Bytes.toStringBinary(this.rowArray)
+        + "/"
+        + (familyArray.length > 0 ? Bytes.toStringBinary(familyArray) : "")
+        + (familyArray.length > 0 ? ":" : "")
+        + (qualifierArray.length > 0 ? Bytes.toStringBinary(qualifierArray) : "")
+        + "/"
+        + (KeyValue.humanReadableTimestamp(timestamp))
+        + "/"
+        + Type.codeToType(getTypeByte());
   }
 }
 
