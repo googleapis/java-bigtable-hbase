@@ -109,6 +109,7 @@ limitations under the License.
                                 <includes>
                                     <include>com.fasterxml.jackson.core:*</include>
                                     <include>com.google.cloud.bigtable:bigtable-protos</include>
+                                    <include>com.google.api.grpc:grpc-google-common-protos</include>
                                     <include>com.google.cloud.bigtable:bigtable-client-core</include>
                                     <include>com.google.cloud.bigtable:bigtable-hbase</include>
                                     <include>com.google.api-client:*</include>
