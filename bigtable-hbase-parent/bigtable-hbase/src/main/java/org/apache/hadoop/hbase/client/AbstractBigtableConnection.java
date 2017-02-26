@@ -188,7 +188,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     return bigtableBufferedMutator;
   }
 
-  private HBaseRequestAdapter createAdapter(TableName tableName) {
+  public HBaseRequestAdapter createAdapter(TableName tableName) {
     if (mutationAdapters == null) {
       synchronized(this) {
         if (mutationAdapters == null) {
