@@ -15,21 +15,26 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.protobuf.ByteString;
+import org.omg.CORBA.TypeCode;
 
 /**
  * Unit tests for the {@link RowAdapter}.
@@ -124,5 +129,25 @@ public class TestFlatRowAdapter {
         .addCell(family2, ByteString.copyFrom(qualifier2), 54000L, ByteString.copyFrom(value5))
         .build();
     assertEquals(expected, instance.adaptToRow(result));
+  }
+
+  @Test
+  public void adaptToRow_oneRow() {
+    Cell inputKeyValue = CellUtil.createCell(
+        "key".getBytes(), "family".getBytes(), "qualifier".getBytes(), 1200,
+        Type.Put.getCode(), "value".getBytes()
+    );
+    Result inputResult = Result.create(new Cell[]{inputKeyValue});
+
+    FlatRow outputRow = instance.adaptToRow(inputResult);
+    assertEquals("output doesn't have the same number of cells", 1, outputRow.getCells().size());
+    Cell outputCell = inputResult.listCells().get(0);
+
+    assertEquals("key", new String(CellUtil.cloneRow(outputCell)));
+    assertEquals("family", new String(CellUtil.cloneFamily(outputCell)));
+    assertEquals("qualifier", new String(CellUtil.cloneQualifier(outputCell)));
+    assertEquals(1200, outputCell.getTimestamp());
+    assertEquals(Type.Put.getCode(), outputCell.getTypeByte());
+    assertEquals("value", new String(CellUtil.cloneValue(outputCell)));
   }
 }

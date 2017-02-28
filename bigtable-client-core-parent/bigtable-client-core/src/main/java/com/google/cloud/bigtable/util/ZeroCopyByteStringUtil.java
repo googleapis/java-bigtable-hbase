@@ -47,6 +47,18 @@ public final class ZeroCopyByteStringUtil {
   }
 
   /**
+   * Wraps a byte array in a {@link com.google.protobuf.ByteString} without copying it.
+   *
+   * @param array an array of byte.
+   * @param offset the offset of the wrapped region
+   * @param length the number of bytes of the wrapped region
+   * @return a {@link com.google.protobuf.ByteString} object.
+   */
+  public static ByteString wrap(final byte[] array, int offset, int length) {
+    return UnsafeByteOperations.unsafeWrap(array, offset, length);
+  }
+
+  /**
    * Extracts the byte array from the given {@link com.google.protobuf.ByteString} without copy.
    *
    * @param byteString A {@link ByteString} from which to extract the array.
