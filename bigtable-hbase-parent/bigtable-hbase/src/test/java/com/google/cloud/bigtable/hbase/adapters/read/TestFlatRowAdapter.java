@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -29,14 +28,12 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.protobuf.ByteString;
-import org.omg.CORBA.TypeCode;
 
 /**
  * Unit tests for the {@link RowAdapter}.
