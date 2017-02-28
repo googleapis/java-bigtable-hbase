@@ -558,7 +558,8 @@ public class BigtableSession implements Closeable {
     return NettyChannelBuilder
         .forAddress(host, options.getPort())
         .nameResolverFactory(new DnsNameResolverProvider())
-        .maxMessageSize(MAX_MESSAGE_SIZE)
+        .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
+        .maxInboundMessageSize(MAX_MESSAGE_SIZE)
         .sslContext(createSslContext())
         .eventLoopGroup(sharedPools.getElg())
         .executor(sharedPools.getBatchThreadPool())
