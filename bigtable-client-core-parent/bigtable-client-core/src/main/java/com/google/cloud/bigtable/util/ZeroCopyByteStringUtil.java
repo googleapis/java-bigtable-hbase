@@ -66,7 +66,7 @@ public final class ZeroCopyByteStringUtil {
    */
   public static byte[] get(final ByteString byteString) {
     try {
-      ZeroCopyByteOutput byteOutput = new ZeroCopyByteOutput();
+      ZeroCopyByteOutput byteOutput = new ZeroCopyByteOutput(byteString.size());
       UnsafeByteOperations.unsafeWriteTo(byteString, byteOutput);
       return byteOutput.bytes;
     } catch (IOException e) {
@@ -75,14 +75,30 @@ public final class ZeroCopyByteStringUtil {
   }
 
   private static final class ZeroCopyByteOutput extends ByteOutput {
+    private int expectedSize;
+    private int i ;
     private byte[] bytes;
+
+    public ZeroCopyByteOutput(int expectedSize) {
+      this.i = 0;
+      this.expectedSize = expectedSize;
+      this.bytes = null;
+    }
 
     @Override
     public void writeLazy(byte[] value, int offset, int length) {
-      if (offset != 0) {
-        throw new UnsupportedOperationException();
+      // fast path: source is a literal byte string that dumps the entire array
+      if (i == 0 && offset == 0 && length == expectedSize) {
+        bytes = value;
       }
-      bytes = value;
+      else {
+        // slow path: source is a rope or is a partial view into the backing array
+        if (bytes == null) {
+          bytes = new byte[expectedSize];
+        }
+        System.arraycopy(value, offset, bytes, i, length);
+      }
+      i += length;
     }
 
     @Override

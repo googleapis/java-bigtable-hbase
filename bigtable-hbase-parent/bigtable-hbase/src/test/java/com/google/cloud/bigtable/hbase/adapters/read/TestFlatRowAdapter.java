@@ -18,11 +18,13 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Result;
@@ -141,13 +143,29 @@ public class TestFlatRowAdapter {
 
     FlatRow outputRow = instance.adaptToRow(inputResult);
     assertEquals("output doesn't have the same number of cells", 1, outputRow.getCells().size());
-    Cell outputCell = inputResult.listCells().get(0);
+    FlatRow.Cell outputCell = outputRow.getCells().get(0);
 
-    assertEquals("key", new String(CellUtil.cloneRow(outputCell)));
-    assertEquals("family", new String(CellUtil.cloneFamily(outputCell)));
-    assertEquals("qualifier", new String(CellUtil.cloneQualifier(outputCell)));
-    assertEquals(1200, outputCell.getTimestamp());
-    assertEquals(Type.Put.getCode(), outputCell.getTypeByte());
-    assertEquals("value", new String(CellUtil.cloneValue(outputCell)));
+    assertEquals("key", outputRow.getRowKey().toStringUtf8());
+    assertEquals("family", outputCell.getFamily());
+    assertEquals("qualifier", outputCell.getQualifier().toStringUtf8());
+    // bigtable has a higher resolution
+    assertEquals(1200 * 1000, outputCell.getTimestamp());
+    assertEquals("value", outputCell.getValue().toStringUtf8());
+  }
+
+  @Test
+  public void resultRoundTrip() {
+    Cell inputKeyValue = CellUtil.createCell(
+        "key".getBytes(), "family".getBytes(), "qualifier".getBytes(), 1200,
+        Type.Put.getCode(), "value".getBytes()
+    );
+    Result inputResult = Result.create(new Cell[]{inputKeyValue});
+
+    FlatRow intermediateRow = instance.adaptToRow(inputResult);
+
+    Result outputRow = instance.adaptResponse(intermediateRow);
+    Cell outputCell = outputRow.listCells().get(0);
+
+    assertTrue(CellComparator.equals(inputKeyValue, outputCell));
   }
 }
