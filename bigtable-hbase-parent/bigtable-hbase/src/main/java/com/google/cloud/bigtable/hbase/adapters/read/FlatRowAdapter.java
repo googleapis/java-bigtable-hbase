@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -75,7 +76,8 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
         // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
         // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
         // HBase will treat them as duplicates.
-        cell.getTimestamp() / TIME_CONVERSION_UNIT,
+        cell.getTimestamp() == HConstants.LATEST_TIMESTAMP ?
+            HConstants.LATEST_TIMESTAMP : cell.getTimestamp() / TIME_CONVERSION_UNIT,
         ByteStringer.extract(cell.getValue()));
   }
 
@@ -100,7 +102,8 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
         rowBuilder.addCell(
           Bytes.toString(rawCell.getFamilyArray()),
           ByteStringer.wrap(rawCell.getQualifierArray()),
-          rawCell.getTimestamp() * TIME_CONVERSION_UNIT,
+            rawCell.getTimestamp() == HConstants.LATEST_TIMESTAMP ?
+                HConstants.LATEST_TIMESTAMP : rawCell.getTimestamp() * TIME_CONVERSION_UNIT,
           ByteStringer.wrap(rawCell.getValueArray()));
       }
     }
