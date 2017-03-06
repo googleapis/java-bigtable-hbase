@@ -100,11 +100,18 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
     if (rawCells != null && rawCells.length > 0) {
       for (Cell rawCell : rawCells) {
         rowBuilder.addCell(
-          Bytes.toString(rawCell.getFamilyArray()),
-          ByteStringer.wrap(rawCell.getQualifierArray()),
-            rawCell.getTimestamp() == HConstants.LATEST_TIMESTAMP ?
-                HConstants.LATEST_TIMESTAMP : rawCell.getTimestamp() * TIME_CONVERSION_UNIT,
-          ByteStringer.wrap(rawCell.getValueArray()));
+          Bytes.toString(rawCell.getFamilyArray(),
+              rawCell.getFamilyOffset(), rawCell.getFamilyLength()
+          ),
+          ByteStringer.wrap(rawCell.getQualifierArray(),
+              rawCell.getQualifierOffset(), rawCell.getQualifierLength()
+          ),
+          rawCell.getTimestamp() == HConstants.LATEST_TIMESTAMP ?
+              HConstants.LATEST_TIMESTAMP : rawCell.getTimestamp() * TIME_CONVERSION_UNIT,
+          ByteStringer.wrap(rawCell.getValueArray(),
+              rawCell.getValueOffset(), rawCell.getValueLength()
+          )
+        );
       }
     }
 

@@ -67,7 +67,7 @@ public final class ZeroCopyByteStringUtil {
 
     @Override
     public void writeLazy(byte[] value, int offset, int length) {
-      if (offset != 0) {
+      if (offset != 0 || length != value.length) {
         throw new UnsupportedOperationException();
       }
       bytes = value;
