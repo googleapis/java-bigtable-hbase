@@ -58,9 +58,12 @@ public class ByteStringer {
    * Wraps a byte array in a {@link ByteString} without copying it.
    */
   public static ByteString wrap(final byte[] array, int offset, int length) {
-    return USE_ZEROCOPYBYTESTRING?
-        ZeroCopyByteStringUtil.wrap(array, offset, length)
-        : ByteString.copyFrom(array, offset, length);
+    if (USE_ZEROCOPYBYTESTRING && offset == 0 && length == array.length) {
+      return ZeroCopyByteStringUtil.wrap(array);
+    }
+    else {
+      return ByteString.copyFrom(array, offset, length);
+    }
   }
 
   public static byte[] extract(ByteString buf) {

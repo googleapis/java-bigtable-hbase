@@ -47,18 +47,6 @@ public final class ZeroCopyByteStringUtil {
   }
 
   /**
-   * Wraps a byte array in a {@link com.google.protobuf.ByteString} without copying it.
-   *
-   * @param array an array of byte.
-   * @param offset the offset of the wrapped region
-   * @param length the number of bytes of the wrapped region
-   * @return a {@link com.google.protobuf.ByteString} object.
-   */
-  public static ByteString wrap(final byte[] array, int offset, int length) {
-    return UnsafeByteOperations.unsafeWrap(array, offset, length);
-  }
-
-  /**
    * Extracts the byte array from the given {@link com.google.protobuf.ByteString} without copy.
    *
    * @param byteString A {@link ByteString} from which to extract the array.
@@ -66,7 +54,7 @@ public final class ZeroCopyByteStringUtil {
    */
   public static byte[] get(final ByteString byteString) {
     try {
-      ZeroCopyByteOutput byteOutput = new ZeroCopyByteOutput(byteString.size());
+      ZeroCopyByteOutput byteOutput = new ZeroCopyByteOutput();
       UnsafeByteOperations.unsafeWriteTo(byteString, byteOutput);
       return byteOutput.bytes;
     } catch (IOException e) {
@@ -75,30 +63,18 @@ public final class ZeroCopyByteStringUtil {
   }
 
   private static final class ZeroCopyByteOutput extends ByteOutput {
-    private int expectedSize;
-    private int i ;
     private byte[] bytes;
 
-    public ZeroCopyByteOutput(int expectedSize) {
-      this.i = 0;
-      this.expectedSize = expectedSize;
+    public ZeroCopyByteOutput() {
       this.bytes = null;
     }
 
     @Override
     public void writeLazy(byte[] value, int offset, int length) {
-      // fast path: source is a literal byte string that dumps the entire array
-      if (i == 0 && offset == 0 && length == expectedSize) {
-        bytes = value;
+      if (offset != 0 || length != value.length) {
+        throw new UnsupportedOperationException();
       }
-      else {
-        // slow path: source is a rope or is a partial view into the backing array
-        if (bytes == null) {
-          bytes = new byte[expectedSize];
-        }
-        System.arraycopy(value, offset, bytes, i, length);
-      }
-      i += length;
+      bytes = value;
     }
 
     @Override
