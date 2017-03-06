@@ -65,10 +65,6 @@ public final class ZeroCopyByteStringUtil {
   private static final class ZeroCopyByteOutput extends ByteOutput {
     private byte[] bytes;
 
-    public ZeroCopyByteOutput() {
-      this.bytes = null;
-    }
-
     @Override
     public void writeLazy(byte[] value, int offset, int length) {
       if (offset != 0 || length != value.length) {
