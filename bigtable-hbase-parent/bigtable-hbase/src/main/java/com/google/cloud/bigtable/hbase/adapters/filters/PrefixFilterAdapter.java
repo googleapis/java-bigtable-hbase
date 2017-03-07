@@ -19,11 +19,11 @@ import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
-
-import org.apache.hadoop.hbase.filter.PrefixFilter;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
 
 /**
  * Adapter for HBase {@link org.apache.hadoop.hbase.filter.PrefixFilter} instances.
@@ -36,8 +36,7 @@ public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
   @Override
   public RowFilter adapt(FilterAdapterContext context, PrefixFilter filter)
       throws IOException {
-    ByteArrayOutputStream baos =
-        new ByteArrayOutputStream(filter.getPrefix().length * 2);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(filter.getPrefix().length * 2);
     ReaderExpressionHelper.writeQuotedRegularExpression(baos, filter.getPrefix());
     // Unquoted all bytes:
     baos.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
