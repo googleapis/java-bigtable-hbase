@@ -17,14 +17,20 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 
+import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
+import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PageFilter;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
@@ -146,5 +152,82 @@ public class TestFilterListAdapter {
         adapter.adaptFilter(new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
           filterList.getFilters().get(0));
     Assert.assertEquals(qualifierAdapted.get(), adapted.get());
+  }
+
+  @Test
+  public void testChainedIndexHintIntersection() {
+    FilterAdapter adapter = FilterAdapter.buildAdapter();
+
+    PrefixFilter p1 = new PrefixFilter("a".getBytes());
+    PrefixFilter p2 = new PrefixFilter("abc".getBytes());
+    FilterList filterList = new FilterList(Operator.MUST_PASS_ALL, p1, p2);
+
+    RangeSet<RowKeyWrapper> actual = adapter.getIndexScanHint(filterList);
+
+    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
+        Range.closedOpen(
+            new RowKeyWrapper(ByteString.copyFromUtf8("abc")),
+            new RowKeyWrapper(ByteString.copyFromUtf8("abd"))
+        )
+    );
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testChainedIndexHintDisjointIntersection() {
+    FilterAdapter adapter = FilterAdapter.buildAdapter();
+
+    PrefixFilter p1 = new PrefixFilter("a".getBytes());
+    PrefixFilter p2 = new PrefixFilter("b".getBytes());
+    FilterList filterList = new FilterList(Operator.MUST_PASS_ALL, p1, p2);
+
+    RangeSet<RowKeyWrapper> actual = adapter.getIndexScanHint(filterList);
+
+    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of();
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testInterleavedIndexHintUnion() {
+    FilterAdapter adapter = FilterAdapter.buildAdapter();
+
+    PrefixFilter p1 = new PrefixFilter("a".getBytes());
+    PrefixFilter p2 = new PrefixFilter("abc".getBytes());
+    FilterList filterList = new FilterList(Operator.MUST_PASS_ONE, p1, p2);
+
+    RangeSet<RowKeyWrapper> actual = adapter.getIndexScanHint(filterList);
+
+    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
+        Range.closedOpen(
+            new RowKeyWrapper(ByteString.copyFromUtf8("a")),
+            new RowKeyWrapper(ByteString.copyFromUtf8("b"))
+        )
+    );
+
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testInterleavedIndexHintDisjointUnion() {
+    FilterAdapter adapter = FilterAdapter.buildAdapter();
+
+    PrefixFilter p1 = new PrefixFilter("a".getBytes());
+    PrefixFilter p2 = new PrefixFilter("c".getBytes());
+    FilterList filterList = new FilterList(Operator.MUST_PASS_ONE, p1, p2);
+
+    RangeSet<RowKeyWrapper> actual = adapter.getIndexScanHint(filterList);
+
+    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
+        .add(Range.closedOpen(
+            new RowKeyWrapper(ByteString.copyFromUtf8("a")),
+            new RowKeyWrapper(ByteString.copyFromUtf8("b"))
+        ))
+        .add(Range.closedOpen(
+            new RowKeyWrapper(ByteString.copyFromUtf8("c")),
+            new RowKeyWrapper(ByteString.copyFromUtf8("d"))
+        )
+    ).build();
+
+    Assert.assertEquals(expected, actual);
   }
 }
