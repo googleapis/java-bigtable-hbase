@@ -33,7 +33,7 @@ import java.io.IOException;
  * @version $Id: $Id
  */
 public class MultipleColumnPrefixFilterAdapter
-    implements TypedFilterAdapter<MultipleColumnPrefixFilter> {
+    extends TypedFilterAdapterBase<MultipleColumnPrefixFilter> {
 
   /** {@inheritDoc} */
   @Override

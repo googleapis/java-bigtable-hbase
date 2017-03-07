@@ -35,7 +35,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
+public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
 
   /** {@inheritDoc} */
   @Override

@@ -36,7 +36,7 @@ import java.util.List;
  * @version $Id: $Id
  */
 public class FilterListAdapter
-    implements TypedFilterAdapter<FilterList>, UnsupportedStatusCollector<FilterList> {
+    extends TypedFilterAdapterBase<FilterList> implements UnsupportedStatusCollector<FilterList> {
   private final FilterAdapter subFilterAdapter;
 
   /**

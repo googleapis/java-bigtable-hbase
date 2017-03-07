@@ -41,8 +41,8 @@ import com.google.protobuf.ByteString;
  * @author sduskis
  * @version $Id: $Id
  */
-public class RowFilterAdapter implements 
-  TypedFilterAdapter<org.apache.hadoop.hbase.filter.RowFilter> {
+public class RowFilterAdapter
+    extends TypedFilterAdapterBase<org.apache.hadoop.hbase.filter.RowFilter> {
 
   /** {@inheritDoc} */
   @Override

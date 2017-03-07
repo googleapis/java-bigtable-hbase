@@ -37,7 +37,7 @@ import com.google.protobuf.ByteString;
  * @author sduskis
  * @version $Id: $Id
  */
-public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter> {
+public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter> {
   private static final RowFilter ALL_VALUES_FILTER =
       RowFilter.newBuilder()
           .setCellsPerColumnLimitFilter(Integer.MAX_VALUE)

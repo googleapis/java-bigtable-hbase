@@ -30,7 +30,7 @@ import org.apache.hadoop.hbase.filter.TimestampsFilter;
  * @version $Id: $Id
  */
 public class TimestampsFilterAdapter
-    implements TypedFilterAdapter<TimestampsFilter> {
+    extends TypedFilterAdapterBase<TimestampsFilter> {
 
   /** {@inheritDoc} */
   @Override

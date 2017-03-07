@@ -27,7 +27,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class FirstKeyOnlyFilterAdapter implements TypedFilterAdapter<FirstKeyOnlyFilter> {
+public class FirstKeyOnlyFilterAdapter extends TypedFilterAdapterBase<FirstKeyOnlyFilter> {
 
   /** {@inheritDoc} */
   @Override

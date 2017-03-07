@@ -31,7 +31,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class PrefixFilterAdapter implements TypedFilterAdapter<PrefixFilter> {
+public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
   /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, PrefixFilter filter)
