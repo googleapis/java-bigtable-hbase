@@ -50,26 +50,4 @@ public class TestPrefixFilterAdapter {
             .build(),
         adapter.adapt(context, filter));
   }
-
-  @Test
-  public void test_simple() throws IOException {
-    byte[] key = "test".getBytes();
-    byte[] nextKey = PrefixFilterAdapter.calculateTheClosestNextRowKeyForPrefix(key);
-    Assert.assertEquals((byte) (key[key.length - 1] + 1), nextKey[key.length - 1]);
-  }
-
-  @Test
-  public void test_unsignedRange() throws IOException {
-    byte[] key = new byte[] { 0x7f };
-    byte[] nextKey = PrefixFilterAdapter.calculateTheClosestNextRowKeyForPrefix(key);
-    Assert.assertEquals((byte) 0x80, nextKey[0]);
-  }
-
-  @Test
-  public void test_trailing0xFF() throws IOException {
-    byte trailer = (byte)0xFF;
-    byte[] key = new byte[] { 0x01, trailer, trailer, trailer };
-    byte[] nextKey = PrefixFilterAdapter.calculateTheClosestNextRowKeyForPrefix(key);
-    Assert.assertEquals((byte) 0x2, nextKey[0]);
-  }
 }

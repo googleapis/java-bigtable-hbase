@@ -19,6 +19,7 @@ import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.hbase.adapters.filters.PrefixFilterAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.util.RowKeyUtil;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 
@@ -59,7 +60,7 @@ public class BigtableExtendedScan extends Scan {
    * @param prefix
    */
   public void addRangeWithPrefix(byte[] prefix) {
-    addRange(prefix, PrefixFilterAdapter.calculateTheClosestNextRowKeyForPrefix(prefix));
+    addRange(prefix, RowKeyUtil.calculateTheClosestNextRowKeyForPrefix(prefix));
   }
 
   /**
