@@ -39,7 +39,7 @@ import java.util.List;
  * @author sduskis
  * @version $Id: $Id
  */
-public class WhileMatchFilterAdapter implements TypedFilterAdapter<WhileMatchFilter> {
+public class WhileMatchFilterAdapter extends TypedFilterAdapterBase<WhileMatchFilter> {
   
   static final String IN_LABEL_SUFFIX = "-in";
   static final String OUT_LABEL_SUFFIX = "-out";

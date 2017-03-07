@@ -29,7 +29,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class ColumnCountGetFilterAdapter implements TypedFilterAdapter<ColumnCountGetFilter> {
+public class ColumnCountGetFilterAdapter extends TypedFilterAdapterBase<ColumnCountGetFilter> {
 
   /** {@inheritDoc} */
   @Override

@@ -34,7 +34,7 @@ import java.io.IOException;
  * @version $Id: $Id
  */
 public class SingleColumnValueExcludeFilterAdapter
-    implements TypedFilterAdapter<SingleColumnValueExcludeFilter> {
+    extends TypedFilterAdapterBase<SingleColumnValueExcludeFilter> {
 
   private static final String REQUIRE_SINGLE_FAMILY_MESSAGE =
       "Scan or Get operations using SingleColumnValueExcludeFilter must "

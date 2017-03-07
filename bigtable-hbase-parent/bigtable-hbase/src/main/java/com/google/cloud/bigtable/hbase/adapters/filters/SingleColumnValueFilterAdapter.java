@@ -34,7 +34,8 @@ import com.google.cloud.bigtable.util.ByteStringer;
  * @author sduskis
  * @version $Id: $Id
  */
-public class SingleColumnValueFilterAdapter implements TypedFilterAdapter<SingleColumnValueFilter> {
+public class SingleColumnValueFilterAdapter
+    extends TypedFilterAdapterBase<SingleColumnValueFilter> {
 
   private static final RowFilter ALL_VALUES_FILTER =
       RowFilter.newBuilder()

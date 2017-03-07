@@ -27,7 +27,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class RandomRowFilterAdapter implements TypedFilterAdapter<RandomRowFilter> {
+public class RandomRowFilterAdapter extends TypedFilterAdapterBase<RandomRowFilter> {
   /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, RandomRowFilter filter)

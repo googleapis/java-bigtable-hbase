@@ -35,7 +35,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class QualifierFilterAdapter implements TypedFilterAdapter<QualifierFilter> {
+public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilter> {
 
   private static final FilterSupportStatus SINGLE_FAMILY_REQUIRED =
       FilterSupportStatus.newNotSupported(

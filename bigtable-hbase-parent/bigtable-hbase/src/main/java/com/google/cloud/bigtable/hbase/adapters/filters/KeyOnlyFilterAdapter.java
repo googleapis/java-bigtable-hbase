@@ -30,7 +30,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class KeyOnlyFilterAdapter implements TypedFilterAdapter<KeyOnlyFilter> {
+public class KeyOnlyFilterAdapter extends TypedFilterAdapterBase<KeyOnlyFilter> {
   /** Constant <code>TEST_CELL</code> */
   protected static final Cell TEST_CELL = new KeyValue(
       Bytes.toBytes('r'), // Row
