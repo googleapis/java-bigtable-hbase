@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsRequest.Builder;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowRange;
@@ -169,6 +170,17 @@ public class TestScanAdapter {
     scan.setStopRow("z".getBytes());
     scan.setFilter(fakeFilter);
 
-    scanAdapter.adapt(scan, throwingReadHooks);
+    Builder adapted = scanAdapter.adapt(scan, throwingReadHooks);
+
+    Assert.assertEquals(
+        RowSet.newBuilder()
+            .addRowRanges(
+                RowRange.newBuilder()
+                    .setStartKeyClosed(ByteString.copyFromUtf8("b"))
+                    .setEndKeyOpen(ByteString.copyFromUtf8("d"))
+            )
+            .build(),
+        adapted.getRows()
+    );
   }
 }
