@@ -15,11 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.bigtable.v2.RowRange.EndKeyCase;
+import com.google.bigtable.v2.RowRange.StartKeyCase;
+import com.google.common.collect.BoundType;
+import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest.Builder;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
@@ -27,10 +32,14 @@ import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
+import com.google.common.collect.RangeSet;
+import com.google.common.collect.TreeRangeSet;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
 
 import java.io.IOException;
@@ -108,9 +117,16 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   @Override
   public Builder adapt(Scan scan, ReadHooks readHooks) {
     throwIfUnsupportedScan(scan);
+
+    RowSet rowSet = getRowSet(scan);
+
+    rowSet = narrowRowSet(rowSet, scan.getFilter());
+    RowFilter rowFilter = buildFilter(scan, readHooks);
+
+
     return ReadRowsRequest.newBuilder()
-        .setRows(getRowSet(scan))
-        .setFilter(buildFilter(scan, readHooks));
+        .setRows(rowSet)
+        .setFilter(rowFilter);
   }
 
   private RowSet getRowSet(Scan scan) {
@@ -145,6 +161,95 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     } catch (IOException ioe) {
       throw new RuntimeException("Failed to adapt filter", ioe);
     }
+  }
+
+  private RowSet narrowRowSet(RowSet rowSet, Filter filter) {
+    RangeSet<RowKeyWrapper> filterRangeSet = filterAdapter.getIndexScanHint(filter);
+    if (filterRangeSet.encloses(Range.<RowKeyWrapper>all())) {
+      return rowSet;
+    }
+    RangeSet<RowKeyWrapper> scanRangeSet = rowSetToRangeSet(rowSet);
+    scanRangeSet.removeAll(filterRangeSet.complement());
+    return rangeSetToRowSet(scanRangeSet);
+  }
+  private static RangeSet<RowKeyWrapper> rowSetToRangeSet(RowSet rowSet) {
+    RangeSet<RowKeyWrapper> rangeSet = TreeRangeSet.create();
+    for (RowRange rowRange : rowSet.getRowRangesList()) {
+      rangeSet.add(rowRangeToRange(rowRange));
+    }
+    for (ByteString key : rowSet.getRowKeysList()) {
+      rangeSet.add(Range.singleton(new RowKeyWrapper(key)));
+    }
+    return rangeSet;
+  }
+  private static Range<RowKeyWrapper> rowRangeToRange(RowRange range) {
+    if (range.getStartKeyCase() == StartKeyCase.STARTKEY_NOT_SET
+        && range.getEndKeyCase() == EndKeyCase.ENDKEY_NOT_SET) {
+      return Range.all();
+    }
+    else if (range.getStartKeyCase() == StartKeyCase.STARTKEY_NOT_SET) {
+      switch(range.getEndKeyCase()) {
+        case END_KEY_OPEN:
+          return Range.lessThan(new RowKeyWrapper(range.getEndKeyOpen()));
+        case END_KEY_CLOSED:
+          return Range.atMost(new RowKeyWrapper(range.getEndKeyOpen()));
+        default:
+          throw new IllegalStateException("Unexpected end key case: " + range.getEndKeyCase());
+      }
+    }
+    else {
+      switch(range.getStartKeyCase()) {
+        case START_KEY_OPEN:
+          return Range.greaterThan(new RowKeyWrapper(range.getStartKeyOpen()));
+        case START_KEY_CLOSED:
+          return Range.atLeast(new RowKeyWrapper(range.getStartKeyClosed()));
+        default:
+          throw new IllegalStateException("Unexpected end key case: " + range.getEndKeyCase());
+      }
+    }
+  }
+
+  private static RowSet rangeSetToRowSet(RangeSet<RowKeyWrapper> rangeSet) {
+    RowSet.Builder rowSet = RowSet.newBuilder();
+
+    for (Range<RowKeyWrapper> range1 : rangeSet.asRanges()) {
+      if (range1.hasLowerBound() && range1.lowerBoundType() == BoundType.CLOSED
+          && range1.hasUpperBound() && range1.upperBoundType() == BoundType.CLOSED
+          && range1.lowerEndpoint().equals(range1.upperEndpoint())) {
+
+        rowSet.addRowKeys(range1.lowerEndpoint().getKey());
+      }
+      else {
+        RowRange.Builder range2 = RowRange.newBuilder();
+
+        if (range1.hasLowerBound()) {
+          switch(range1.lowerBoundType()) {
+            case CLOSED:
+              range2.setStartKeyClosed(range1.lowerEndpoint().getKey());
+              break;
+            case OPEN:
+              range2.setStartKeyOpen(range1.lowerEndpoint().getKey());
+              break;
+            default:
+              throw new IllegalArgumentException("Unexpected lower bound type: " + range1.lowerBoundType());
+          }
+          if (range1.hasUpperBound()) {
+            switch(range1.upperBoundType()) {
+              case CLOSED:
+                range2.setEndKeyClosed(range1.upperEndpoint().getKey());
+                break;
+              case OPEN:
+                range2.setEndKeyOpen(range1.upperEndpoint().getKey());
+                break;
+              default:
+                throw new IllegalArgumentException("Unexpected upper bound type: " + range1.upperBoundType());
+            }
+          }
+          rowSet.addRowRanges(range2);
+        }
+      }
+    }
+    return rowSet.build();
   }
 
   private RowFilter createColumnQualifierFilter(byte[] unquotedQualifier) {

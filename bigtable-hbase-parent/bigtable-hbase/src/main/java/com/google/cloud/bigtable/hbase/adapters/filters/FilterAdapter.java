@@ -16,9 +16,11 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
+import com.google.common.collect.RangeSet;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
@@ -185,6 +187,10 @@ public class FilterAdapter {
     } else {
       adapter.collectUnsupportedStatuses(context, filter, statuses);
     }
+  }
+
+  public RangeSet<RowKeyWrapper> getIndexScanHint(Filter filter) {
+    return getAdapterForFilterOrThrow(filter).getIndexScanHint(filter);
   }
 
   /**

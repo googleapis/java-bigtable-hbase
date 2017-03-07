@@ -22,17 +22,26 @@ import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
-import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
+import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Function;
-
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
+import com.google.protobuf.ByteString;
+import java.io.IOException;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 /**
  * Lightweight tests for the ScanAdapter. Many of the methods, such as filter building are
@@ -129,5 +138,37 @@ public class TestScanAdapter {
         .build();
 
     Assert.assertEquals(expected, scanAdapter.adapt(scan, throwingReadHooks).getRows());
+  }
+
+  @Test
+  public void testNarrowedScan() throws IOException {
+    FilterAdapter filterAdapter = Mockito.mock(FilterAdapter.class);
+    ScanAdapter scanAdapter = new ScanAdapter(filterAdapter);
+
+    Filter fakeFilter = new FilterBase() {
+      @Override
+      public ReturnCode filterKeyValue(Cell v) throws IOException {
+        return ReturnCode.INCLUDE;
+      }
+    };
+
+    RangeSet<RowKeyWrapper> rangeSet = ImmutableRangeSet.of(
+        Range.closedOpen(
+            new RowKeyWrapper(ByteString.copyFromUtf8("b")),
+            new RowKeyWrapper(ByteString.copyFromUtf8("d"))
+        )
+    );
+    Mockito.when(filterAdapter.getIndexScanHint(Mockito.any(Filter.class))).thenReturn(rangeSet);
+    Mockito.when(filterAdapter.adaptFilter(Mockito.any(FilterAdapterContext.class), Mockito.any(Filter.class)))
+        .thenReturn(
+            Optional.of(RowFilter.getDefaultInstance())
+        );
+
+    Scan scan = new Scan();
+    scan.setStartRow("a".getBytes());
+    scan.setStopRow("z".getBytes());
+    scan.setFilter(fakeFilter);
+
+    scanAdapter.adapt(scan, throwingReadHooks);
   }
 }
