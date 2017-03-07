@@ -17,6 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
+import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -49,5 +53,24 @@ public class TestPrefixFilterAdapter {
                 ByteString.copyFrom(prefixRegex))
             .build(),
         adapter.adapt(context, filter));
+  }
+
+  @Test
+  public void testIndexIsNarrowed() {
+    PrefixFilterAdapter adapter = new PrefixFilterAdapter();
+    String prefix = "Foobar";
+    PrefixFilter filter = new PrefixFilter(Bytes.toBytes(prefix));
+
+    RangeSet<RowKeyWrapper> hint = adapter.getIndexScanHint(filter);
+
+    ImmutableRangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
+        .add(
+            Range.closedOpen(
+                new RowKeyWrapper(ByteString.copyFromUtf8("Foobar")),
+                new RowKeyWrapper(ByteString.copyFromUtf8("Foobas"))
+            ))
+        .build();
+
+    Assert.assertEquals(expected, hint);
   }
 }
