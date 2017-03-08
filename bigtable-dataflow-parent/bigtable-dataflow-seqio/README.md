@@ -5,14 +5,14 @@ Cloud Dataflow.
 
 ## Instructions
 
-Download [the import/export jar](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-dataflow-seqio/0.9.6/bigtable-dataflow-seqio-0.9.6-shaded.jar), which is an aggregation of all required jars.
+Download [the import/export jar](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-dataflow-seqio/0.9.6/bigtable-dataflow-import-0.9.6-shaded.jar), which is an aggregation of all required jars.
 
 ## Export
 
 On the command line:
 
 ```
-java -jar bigtable-dataflow-seqio-0.9.6-shaded.jar export \
+java -jar bigtable-dataflow-import-0.9.5.1-shaded.jar export \
     --runner=BlockingDataflowPipelineRunner \
     --bigtableProjectId=[your_project_id] \
     --bigtableInstanceId=[your_instance_id] \
@@ -31,7 +31,7 @@ Create the table in your cluster.
 On the command line:
 
 ```
-java -jar bigtable-dataflow-seqio-0.9.6-shaded.jar import \
+java -jar bigtable-dataflow-import-0.9.5.1-shaded.jar import \
     --runner=BlockingDataflowPipelineRunner \
     --bigtableProjectId=[your_project_id] \
     --bigtableInstanceId=[your_instance_id] \
