@@ -172,13 +172,18 @@ public class RpcThrottler {
 
         long now = clock.nanoTime();
         if (now >= noSuccessCheckDeadlineNanos) {
-          // There are unusual cases where an RPC could be completed, but we don't clean up
-          // the state and the locks.  Try to clean up if there is a timeout.
-          for (RetryHandler retryHandler : outstandingRetries.values()) {
-            retryHandler.performRetryIfStale();
-          }
-          if (isFlushed()) {
-            break;
+          lock.lock();
+          try {
+            // There are unusual cases where an RPC could be completed, but we don't clean up
+            // the state and the locks.  Try to clean up if there is a timeout.
+            for (RetryHandler retryHandler : outstandingRetries.values()) {
+              retryHandler.performRetryIfStale();
+            }
+            if (isFlushed()) {
+              break;
+            }
+          } finally {
+            lock.unlock();
           }
           logNoSuccessWarning(now);
           resetNoSuccessWarningDeadline();
