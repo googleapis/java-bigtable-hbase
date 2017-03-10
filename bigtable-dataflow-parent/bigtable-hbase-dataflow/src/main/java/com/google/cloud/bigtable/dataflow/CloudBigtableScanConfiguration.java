@@ -83,7 +83,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Builds a {@link CloudBigtableScanConfiguration}.
    */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
-    protected Scan scan = new Scan();
+    private Scan scan;
     private ReadRowsRequest request;
 
     public Builder() {
@@ -195,6 +195,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     public CloudBigtableScanConfiguration build() {
       if (request == null) {
         ReadHooks readHooks = new DefaultReadHooks();
+        if (scan == null) {
+          scan = new Scan();
+        }
         ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
         request = readHooks.applyPreSendHook(builder.build());
       }
