@@ -795,6 +795,9 @@ public class CloudBigtableIO {
      */
     @Override
     public final synchronized BoundedSource<ResultOutputType> splitAtFraction(double fraction) {
+      if (fraction < .01 || fraction > .99) {
+        return null;
+      }
       ByteKey splitKey;
       final ByteKeyRange range = source.getConfiguration().toByteKeyRange();
       try {
@@ -804,7 +807,7 @@ public class CloudBigtableIO {
         return null;
       }
 
-      READER_LOG.debug("Proposing to split {} at fraction {} (key {})", rangeTracker, fraction,
+      READER_LOG.info("Proposing to split {} at fraction {} (key {})", rangeTracker, fraction,
         splitKey);
 
       long estimatedSizeBytes = -1;
