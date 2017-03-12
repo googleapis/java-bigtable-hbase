@@ -986,10 +986,11 @@ public class CloudBigtableIO {
      * Closes the {@link BufferedMutator} and {@link Connection}.
      */
     @Override
-    public void finishBundle(Context context) throws Exception {
+    public synchronized void finishBundle(Context context) throws Exception {
       try {
         if (mutator != null) {
           mutator.close();
+          mutator = null;
         }
       } catch (RetriesExhaustedWithDetailsException exception) {
         exceptionsCounter.addValue((long) exception.getCauses().size());

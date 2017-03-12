@@ -19,6 +19,7 @@ package com.google.cloud.bigtable.grpc.async;
 import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -174,7 +175,7 @@ public class RpcThrottler {
         if (now >= noSuccessCheckDeadlineNanos) {
           // There are unusual cases where an RPC could be completed, but we don't clean up
           // the state and the locks.  Try to clean up if there is a timeout.
-          for (RetryHandler retryHandler : outstandingRetries.values()) {
+          for (RetryHandler retryHandler : ImmutableList.copyOf(outstandingRetries.values())) {
             retryHandler.performRetryIfStale();
           }
           if (isFlushed()) {
