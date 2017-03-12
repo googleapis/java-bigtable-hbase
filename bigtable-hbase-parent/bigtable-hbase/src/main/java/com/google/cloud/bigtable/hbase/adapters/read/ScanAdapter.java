@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.bigtable.v2.RowRange.EndKeyCase;
-import com.google.bigtable.v2.RowRange.StartKeyCase;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -182,33 +180,70 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     }
     return rangeSet;
   }
+
+  /**
+   * Convert Bigtable's RowRange to a guava Range
+   * @param range
+   * @return
+   */
   private static Range<RowKeyWrapper> rowRangeToRange(RowRange range) {
-    if (range.getStartKeyCase() == StartKeyCase.STARTKEY_NOT_SET
-        && range.getEndKeyCase() == EndKeyCase.ENDKEY_NOT_SET) {
+    final BoundType startBound;
+    final ByteString startKey;
+
+    switch(range.getStartKeyCase()) {
+      case START_KEY_OPEN:
+        startBound = BoundType.OPEN;
+        startKey = range.getStartKeyOpen();
+        break;
+      case START_KEY_CLOSED:
+        startBound = BoundType.CLOSED;
+        startKey = range.getStartKeyClosed();
+        break;
+      case STARTKEY_NOT_SET:
+        startBound = null;
+        startKey = null;
+        break;
+      default:
+        throw new IllegalArgumentException("Unexpected start key case: " + range.getStartKeyCase());
+    }
+
+    final BoundType endBound;
+    final ByteString endKey;
+    switch (range.getEndKeyCase()) {
+      case END_KEY_OPEN:
+        endBound = BoundType.OPEN;
+        endKey = range.getEndKeyOpen();
+        break;
+      case END_KEY_CLOSED:
+        endBound = BoundType.CLOSED;
+        endKey = range.getEndKeyClosed();
+        break;
+      case ENDKEY_NOT_SET:
+        endBound = null;
+        endKey = null;
+        break;
+      default:
+        throw new IllegalArgumentException("Unexpected end key case: " +range.getEndKeyCase());
+    }
+
+
+    if (startBound == null && endBound == null) {
       return Range.all();
     }
-    else if (range.getStartKeyCase() == StartKeyCase.STARTKEY_NOT_SET) {
-      switch(range.getEndKeyCase()) {
-        case END_KEY_OPEN:
-          return Range.lessThan(new RowKeyWrapper(range.getEndKeyOpen()));
-        case END_KEY_CLOSED:
-          return Range.atMost(new RowKeyWrapper(range.getEndKeyOpen()));
-        default:
-          throw new IllegalStateException("Unexpected end key case: " + range.getEndKeyCase());
-      }
+    else if (startBound == null) {
+      return Range.upTo(new RowKeyWrapper(endKey), endBound);
+    }
+    else if (endBound == null) {
+      return Range.downTo(new RowKeyWrapper(startKey), startBound);
     }
     else {
-      switch(range.getStartKeyCase()) {
-        case START_KEY_OPEN:
-          return Range.greaterThan(new RowKeyWrapper(range.getStartKeyOpen()));
-        case START_KEY_CLOSED:
-          return Range.atLeast(new RowKeyWrapper(range.getStartKeyClosed()));
-        default:
-          throw new IllegalStateException("Unexpected end key case: " + range.getEndKeyCase());
-      }
+      return Range.range(new RowKeyWrapper(startKey), startBound, new RowKeyWrapper(endKey), endBound);
     }
   }
 
+  /**
+   * Convert guava's RangeSet to Bigtable's RowSet
+   */
   private static RowSet rangeSetToRowSet(RangeSet<RowKeyWrapper> rangeSet) {
     RowSet.Builder rowSet = RowSet.newBuilder();
 
