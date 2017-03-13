@@ -51,7 +51,9 @@ public final class Adapters {
   /** Constant <code>ROW_RANGE_ADAPTER</code> */
   public static final RowRangeAdapter ROW_RANGE_ADAPTER = new RowRangeAdapter();
   /** Constant <code>SCAN_ADAPTER</code> */
-  public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(FILTER_ADAPTER, ROW_RANGE_ADAPTER);
+  public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(
+      FILTER_ADAPTER, ROW_RANGE_ADAPTER
+  );
   /** Constant <code>BIGTABLE_RESULT_SCAN_ADAPTER</code> */
   public static final BigtableResultScannerAdapter<FlatRow> BIGTABLE_RESULT_SCAN_ADAPTER =
       new BigtableResultScannerAdapter<>(FLAT_ROW_ADAPTER);

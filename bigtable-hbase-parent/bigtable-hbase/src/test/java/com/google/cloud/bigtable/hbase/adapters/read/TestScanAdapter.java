@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest.Builder;
 import com.google.bigtable.v2.RowFilter;
@@ -51,7 +54,9 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class TestScanAdapter {
 
-  private final static ScanAdapter scanAdapter = new ScanAdapter(FilterAdapter.buildAdapter(), new RowRangeAdapter());
+  private final static ScanAdapter scanAdapter = new ScanAdapter(
+      FilterAdapter.buildAdapter(), new RowRangeAdapter()
+  );
   private final static ReadHooks throwingReadHooks = new ReadHooks() {
     @Override
     public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
@@ -159,11 +164,9 @@ public class TestScanAdapter {
             new RowKeyWrapper(ByteString.copyFromUtf8("d"))
         )
     );
-    Mockito.when(filterAdapter.getIndexScanHint(Mockito.any(Filter.class))).thenReturn(rangeSet);
-    Mockito.when(filterAdapter.adaptFilter(Mockito.any(FilterAdapterContext.class), Mockito.any(Filter.class)))
-        .thenReturn(
-            Optional.of(RowFilter.getDefaultInstance())
-        );
+    Mockito.when(filterAdapter.getIndexScanHint(any(Filter.class))).thenReturn(rangeSet);
+    Mockito.when(filterAdapter.adaptFilter(any(FilterAdapterContext.class), eq(fakeFilter)))
+        .thenReturn(Optional.of(RowFilter.getDefaultInstance()));
 
     Scan scan = new Scan();
     scan.setStartRow("a".getBytes());

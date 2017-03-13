@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.bigtable.v2.RowRange;
 import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest.Builder;
@@ -34,7 +33,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
 
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
@@ -169,6 +167,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       return rowSet;
     }
     RangeSet<RowKeyWrapper> scanRangeSet = rowRangeAdapter.rowSetToRangeSet(rowSet);
+    // intersection of scan ranges & filter ranges
     scanRangeSet.removeAll(filterRangeSet.complement());
     return rowRangeAdapter.rangeSetToRowSet(scanRangeSet);
   }
