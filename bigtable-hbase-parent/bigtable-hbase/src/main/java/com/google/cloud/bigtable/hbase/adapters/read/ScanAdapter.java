@@ -15,14 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.common.collect.BoundType;
+import com.google.bigtable.v2.RowRange;
 import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest.Builder;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowFilter.Interleave;
-import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
@@ -33,9 +32,9 @@ import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.RangeSet;
-import com.google.common.collect.TreeRangeSet;
 import com.google.protobuf.ByteString;
 
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
@@ -55,13 +54,16 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
 
   private final FilterAdapter filterAdapter;
+  private final RowRangeAdapter rowRangeAdapter;
+
   /**
    * <p>Constructor for ScanAdapter.</p>
    *
    * @param filterAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
    */
-  public ScanAdapter(FilterAdapter filterAdapter) {
+  public ScanAdapter(FilterAdapter filterAdapter, RowRangeAdapter rowRangeAdapter) {
     this.filterAdapter = filterAdapter;
+    this.rowRangeAdapter = rowRangeAdapter;
   }
 
   /**
@@ -166,125 +168,9 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     if (filterRangeSet.encloses(Range.<RowKeyWrapper>all())) {
       return rowSet;
     }
-    RangeSet<RowKeyWrapper> scanRangeSet = rowSetToRangeSet(rowSet);
+    RangeSet<RowKeyWrapper> scanRangeSet = rowRangeAdapter.rowSetToRangeSet(rowSet);
     scanRangeSet.removeAll(filterRangeSet.complement());
-    return rangeSetToRowSet(scanRangeSet);
-  }
-  private static RangeSet<RowKeyWrapper> rowSetToRangeSet(RowSet rowSet) {
-    RangeSet<RowKeyWrapper> rangeSet = TreeRangeSet.create();
-    for (RowRange rowRange : rowSet.getRowRangesList()) {
-      rangeSet.add(rowRangeToRange(rowRange));
-    }
-    for (ByteString key : rowSet.getRowKeysList()) {
-      rangeSet.add(Range.singleton(new RowKeyWrapper(key)));
-    }
-    return rangeSet;
-  }
-
-  /**
-   * Convert Bigtable's RowRange to a guava Range
-   * @param range
-   * @return
-   */
-  private static Range<RowKeyWrapper> rowRangeToRange(RowRange range) {
-    final BoundType startBound;
-    final ByteString startKey;
-
-    switch(range.getStartKeyCase()) {
-      case START_KEY_OPEN:
-        startBound = BoundType.OPEN;
-        startKey = range.getStartKeyOpen();
-        break;
-      case START_KEY_CLOSED:
-        startBound = BoundType.CLOSED;
-        startKey = range.getStartKeyClosed();
-        break;
-      case STARTKEY_NOT_SET:
-        startBound = null;
-        startKey = null;
-        break;
-      default:
-        throw new IllegalArgumentException("Unexpected start key case: " + range.getStartKeyCase());
-    }
-
-    final BoundType endBound;
-    final ByteString endKey;
-    switch (range.getEndKeyCase()) {
-      case END_KEY_OPEN:
-        endBound = BoundType.OPEN;
-        endKey = range.getEndKeyOpen();
-        break;
-      case END_KEY_CLOSED:
-        endBound = BoundType.CLOSED;
-        endKey = range.getEndKeyClosed();
-        break;
-      case ENDKEY_NOT_SET:
-        endBound = null;
-        endKey = null;
-        break;
-      default:
-        throw new IllegalArgumentException("Unexpected end key case: " +range.getEndKeyCase());
-    }
-
-
-    if (startBound == null && endBound == null) {
-      return Range.all();
-    }
-    else if (startBound == null) {
-      return Range.upTo(new RowKeyWrapper(endKey), endBound);
-    }
-    else if (endBound == null) {
-      return Range.downTo(new RowKeyWrapper(startKey), startBound);
-    }
-    else {
-      return Range.range(new RowKeyWrapper(startKey), startBound, new RowKeyWrapper(endKey), endBound);
-    }
-  }
-
-  /**
-   * Convert guava's RangeSet to Bigtable's RowSet
-   */
-  private static RowSet rangeSetToRowSet(RangeSet<RowKeyWrapper> rangeSet) {
-    RowSet.Builder rowSet = RowSet.newBuilder();
-
-    for (Range<RowKeyWrapper> range1 : rangeSet.asRanges()) {
-      if (range1.hasLowerBound() && range1.lowerBoundType() == BoundType.CLOSED
-          && range1.hasUpperBound() && range1.upperBoundType() == BoundType.CLOSED
-          && range1.lowerEndpoint().equals(range1.upperEndpoint())) {
-
-        rowSet.addRowKeys(range1.lowerEndpoint().getKey());
-      }
-      else {
-        RowRange.Builder range2 = RowRange.newBuilder();
-
-        if (range1.hasLowerBound()) {
-          switch(range1.lowerBoundType()) {
-            case CLOSED:
-              range2.setStartKeyClosed(range1.lowerEndpoint().getKey());
-              break;
-            case OPEN:
-              range2.setStartKeyOpen(range1.lowerEndpoint().getKey());
-              break;
-            default:
-              throw new IllegalArgumentException("Unexpected lower bound type: " + range1.lowerBoundType());
-          }
-          if (range1.hasUpperBound()) {
-            switch(range1.upperBoundType()) {
-              case CLOSED:
-                range2.setEndKeyClosed(range1.upperEndpoint().getKey());
-                break;
-              case OPEN:
-                range2.setEndKeyOpen(range1.upperEndpoint().getKey());
-                break;
-              default:
-                throw new IllegalArgumentException("Unexpected upper bound type: " + range1.upperBoundType());
-            }
-          }
-          rowSet.addRowRanges(range2);
-        }
-      }
-    }
-    return rowSet.build();
+    return rowRangeAdapter.rangeSetToRowSet(scanRangeSet);
   }
 
   private RowFilter createColumnQualifierFilter(byte[] unquotedQualifier) {

@@ -51,7 +51,7 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class TestScanAdapter {
 
-  private final static ScanAdapter scanAdapter = new ScanAdapter(FilterAdapter.buildAdapter());
+  private final static ScanAdapter scanAdapter = new ScanAdapter(FilterAdapter.buildAdapter(), new RowRangeAdapter());
   private final static ReadHooks throwingReadHooks = new ReadHooks() {
     @Override
     public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
@@ -144,7 +144,7 @@ public class TestScanAdapter {
   @Test
   public void testNarrowedScan() throws IOException {
     FilterAdapter filterAdapter = Mockito.mock(FilterAdapter.class);
-    ScanAdapter scanAdapter = new ScanAdapter(filterAdapter);
+    ScanAdapter scanAdapter = new ScanAdapter(filterAdapter, new RowRangeAdapter());
 
     Filter fakeFilter = new FilterBase() {
       @Override

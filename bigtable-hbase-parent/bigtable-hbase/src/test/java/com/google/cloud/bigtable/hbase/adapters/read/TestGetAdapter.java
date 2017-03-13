@@ -44,7 +44,7 @@ import java.nio.charset.StandardCharsets;
 public class TestGetAdapter {
 
   private GetAdapter getAdapter =
-      new GetAdapter(new ScanAdapter(FilterAdapter.buildAdapter()));
+      new GetAdapter(new ScanAdapter(FilterAdapter.buildAdapter(), new RowRangeAdapter()));
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
   private ReadHooks throwingReadHooks = new ReadHooks() {
     @Override
