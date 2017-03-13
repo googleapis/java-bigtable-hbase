@@ -122,8 +122,16 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       if (scan.isGetScan()) {
         rowSetBuilder.addRowKeys(startRow);
       } else {
+        RowRange.Builder range = rowSetBuilder.addRowRangesBuilder();
+        if (!startRow.isEmpty()) {
+          range.setStartKeyClosed(startRow);
+        }
+
         ByteString stopRow = ByteString.copyFrom(scan.getStopRow());
-        rowSetBuilder.addRowRangesBuilder().setStartKeyClosed(startRow).setEndKeyOpen(stopRow);
+        if (!stopRow.isEmpty()) {
+          range.setEndKeyOpen(stopRow);
+        }
+        rowSetBuilder.addRowRanges(range);
       }
       return rowSetBuilder.build();
     }
