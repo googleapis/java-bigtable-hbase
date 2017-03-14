@@ -171,6 +171,9 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   }
 
   private RowSet narrowRowSet(RowSet rowSet, Filter filter) {
+    if (filter == null) {
+      return rowSet;
+    }
     RangeSet<RowKeyWrapper> filterRangeSet = filterAdapter.getIndexScanHint(filter);
     if (filterRangeSet.encloses(Range.<RowKeyWrapper>all())) {
       return rowSet;
