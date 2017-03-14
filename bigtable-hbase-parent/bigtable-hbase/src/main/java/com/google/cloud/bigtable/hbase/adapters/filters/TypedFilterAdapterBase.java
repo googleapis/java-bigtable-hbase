@@ -24,9 +24,9 @@ import org.apache.hadoop.hbase.filter.Filter;
 
 /**
  * Base functionality for all filter adapters
- * @param <S>
  */
 public abstract class TypedFilterAdapterBase<S extends Filter> implements TypedFilterAdapter<S> {
+
   @Override
   public RangeSet<RowKeyWrapper> getIndexScanHint(S filter) {
     return ImmutableRangeSet.of(Range.<RowKeyWrapper>all());

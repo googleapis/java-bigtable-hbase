@@ -288,7 +288,7 @@ public class TestRowRangeAdapter {
         )
         .addRowRanges(
             RowRange.newBuilder()
-              .setStartKeyOpen(ByteString.copyFromUtf8("y"))
+                .setStartKeyOpen(ByteString.copyFromUtf8("y"))
         )
         .build();
 

@@ -16,14 +16,10 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
-
-import com.google.bigtable.v2.RowRange;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.RangeSet;
-import java.util.List;
-import org.apache.hadoop.hbase.filter.Filter;
-
 import java.io.IOException;
+import org.apache.hadoop.hbase.filter.Filter;
 
 /**
  * An adapter that can adapt an HBase Filter instance into a Bigtable RowFilter.
@@ -58,9 +54,6 @@ public interface TypedFilterAdapter<S extends Filter> {
    * Get hints how to optimize the scan. For example if the filter will narrow the scan using
    * the prefix "ab" then we can restrict the scan to ["ab" - "ac"). If the filter doesn't narrow
    * the scan then it should return Range.all()
-   *
-   * @param filter
-   * @return
    */
   RangeSet<RowKeyWrapper> getIndexScanHint(S filter);
 }
