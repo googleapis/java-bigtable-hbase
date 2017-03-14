@@ -123,7 +123,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       if (scan.isGetScan()) {
         rowSetBuilder.addRowKeys(startRow);
       } else {
-        RowRange.Builder range = rowSetBuilder.addRowRangesBuilder();
+        RowRange.Builder range =  RowRange.newBuilder();
         if (!startRow.isEmpty()) {
           range.setStartKeyClosed(startRow);
         }
