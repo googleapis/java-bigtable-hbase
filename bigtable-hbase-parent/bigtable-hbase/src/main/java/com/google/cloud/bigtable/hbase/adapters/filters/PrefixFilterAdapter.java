@@ -35,7 +35,10 @@ import org.apache.hadoop.hbase.filter.PrefixFilter;
  * @version $Id: $Id
  */
 public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
-  /** {@inheritDoc} */
+
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public RowFilter adapt(FilterAdapterContext context, PrefixFilter filter)
       throws IOException {
@@ -49,7 +52,9 @@ public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
         .build();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, PrefixFilter filter) {
@@ -60,8 +65,7 @@ public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
   public RangeSet<RowKeyWrapper> getIndexScanHint(PrefixFilter filter) {
     if (filter.getPrefix().length == 0) {
       return ImmutableRangeSet.of(Range.<RowKeyWrapper>all());
-    }
-    else {
+    } else {
       ByteString start = ByteString.copyFrom(filter.getPrefix());
       ByteString end = ByteString.copyFrom(
           RowKeyUtil.calculateTheClosestNextRowKeyForPrefix(filter.getPrefix())

@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
-
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -31,13 +31,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-
 /**
  * Tests for {@link PrefixFilterAdapter}
  */
 @RunWith(JUnit4.class)
 public class TestPrefixFilterAdapter {
+
   @Test
   public void testPrefixAddedAsRowRegex() throws IOException {
     PrefixFilterAdapter adapter = new PrefixFilterAdapter();

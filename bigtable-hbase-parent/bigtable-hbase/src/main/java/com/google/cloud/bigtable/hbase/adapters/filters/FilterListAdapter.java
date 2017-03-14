@@ -21,17 +21,15 @@ import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
-
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.FilterList.Operator;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 
 /**
  * Adapts a FilterList into either a RowFilter with chaining or interleaving.
@@ -41,6 +39,7 @@ import java.util.List;
  */
 public class FilterListAdapter
     extends TypedFilterAdapterBase<FilterList> implements UnsupportedStatusCollector<FilterList> {
+
   private final FilterAdapter subFilterAdapter;
 
   /**
@@ -52,7 +51,9 @@ public class FilterListAdapter
     this.subFilterAdapter = subFilterAdapter;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public RowFilter adapt(FilterAdapterContext context, FilterList filter) throws IOException {
     try (ContextCloseable ignored = context.beginFilterList(filter)) {
@@ -61,7 +62,7 @@ public class FilterListAdapter
         return null;
       } else if (childFilters.size() == 1) {
         return childFilters.get(0);
-      } else  if (filter.getOperator() == Operator.MUST_PASS_ALL) {
+      } else if (filter.getOperator() == Operator.MUST_PASS_ALL) {
         return RowFilter.newBuilder()
             .setChain(Chain.newBuilder().addAllFilters(childFilters))
             .build();
@@ -86,7 +87,9 @@ public class FilterListAdapter
     return result;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context,
@@ -102,7 +105,9 @@ public class FilterListAdapter
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void collectUnsupportedStatuses(
       FilterAdapterContext context,
@@ -127,16 +132,16 @@ public class FilterListAdapter
 
     TreeRangeSet<RowKeyWrapper> result = TreeRangeSet.create(childHints.get(0));
 
-    switch(filter.getOperator()) {
+    switch (filter.getOperator()) {
       case MUST_PASS_ONE:
         // Union all
-        for(int i=1; i<childHints.size(); i++) {
+        for (int i = 1; i < childHints.size(); i++) {
           result.addAll(childHints.get(i));
         }
         break;
       case MUST_PASS_ALL:
         // Intersect all
-        for(int i=1; i<childHints.size(); i++) {
+        for (int i = 1; i < childHints.size(); i++) {
           result.removeAll(childHints.get(i).complement());
         }
         break;

@@ -19,20 +19,21 @@ import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
-
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.List;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.PageFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
-import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -40,9 +41,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.io.IOException;
-import java.util.List;
 
 @RunWith(JUnit4.class)
 public class TestFilterListAdapter {
@@ -140,17 +138,17 @@ public class TestFilterListAdapter {
     byte[] qualA = Bytes.toBytes("qualA");
     PageFilter pageFilter = new PageFilter(20);
     FilterList filterList = new FilterList(
-      Operator.MUST_PASS_ALL,
-      new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
-      pageFilter);
+        Operator.MUST_PASS_ALL,
+        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
+        pageFilter);
     FilterAdapter adapter = FilterAdapter.buildAdapter();
     Optional<RowFilter> adapted =
         adapter.adaptFilter(new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
-          filterList);
+            filterList);
     Assert.assertTrue(adapted.isPresent());
     Optional<RowFilter> qualifierAdapted =
         adapter.adaptFilter(new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
-          filterList.getFilters().get(0));
+            filterList.getFilters().get(0));
     Assert.assertEquals(qualifierAdapted.get(), adapted.get());
   }
 
@@ -225,8 +223,8 @@ public class TestFilterListAdapter {
         .add(Range.closedOpen(
             new RowKeyWrapper(ByteString.copyFromUtf8("c")),
             new RowKeyWrapper(ByteString.copyFromUtf8("d"))
-        )
-    ).build();
+            )
+        ).build();
 
     Assert.assertEquals(expected, actual);
   }
