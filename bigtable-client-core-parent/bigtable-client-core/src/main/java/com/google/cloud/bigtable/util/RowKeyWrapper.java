@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters.filters;
+package com.google.cloud.bigtable.util;
 
-import com.google.cloud.bigtable.util.RowKeyWrapper;
-import com.google.common.collect.ImmutableRangeSet;
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-import org.apache.hadoop.hbase.filter.Filter;
+import com.google.protobuf.ByteString;
 
+public class RowKeyWrapper implements Comparable<RowKeyWrapper> {
 
-/**
- * Base functionality for all filter adapters
- */
-public abstract class TypedFilterAdapterBase<S extends Filter> implements TypedFilterAdapter<S> {
+  private final ByteString key;
+
+  public RowKeyWrapper(ByteString key) {
+    this.key = key;
+  }
+
+  public ByteString getKey() {
+    return key;
+  }
 
   @Override
-  public RangeSet<RowKeyWrapper> getIndexScanHint(S filter) {
-    return ImmutableRangeSet.of(Range.<RowKeyWrapper>all());
+  public int compareTo(RowKeyWrapper o) {
+    return ByteStringComparator.INSTANCE.compare(key, o.key);
   }
 }

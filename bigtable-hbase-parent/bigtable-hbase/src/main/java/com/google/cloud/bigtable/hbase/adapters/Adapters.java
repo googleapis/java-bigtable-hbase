@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.cloud.bigtable.hbase.adapters.read.RowRangeAdapter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Increment;
@@ -47,8 +48,12 @@ public final class Adapters {
   public static final DeleteAdapter DELETE_ADAPTER = new DeleteAdapter();
   /** Constant <code>FILTER_ADAPTER</code> */
   public static final FilterAdapter FILTER_ADAPTER = FilterAdapter.buildAdapter();
+  /** Constant <code>ROW_RANGE_ADAPTER</code> */
+  public static final RowRangeAdapter ROW_RANGE_ADAPTER = new RowRangeAdapter();
   /** Constant <code>SCAN_ADAPTER</code> */
-  public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(FILTER_ADAPTER);
+  public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(
+      FILTER_ADAPTER, ROW_RANGE_ADAPTER
+  );
   /** Constant <code>BIGTABLE_RESULT_SCAN_ADAPTER</code> */
   public static final BigtableResultScannerAdapter<FlatRow> BIGTABLE_RESULT_SCAN_ADAPTER =
       new BigtableResultScannerAdapter<>(FLAT_ROW_ADAPTER);

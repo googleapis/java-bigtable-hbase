@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
-import com.google.cloud.bigtable.hbase.adapters.filters.PrefixFilterAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.cloud.bigtable.util.RowKeyUtil;
 import org.apache.hadoop.hbase.client.Scan;

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest.Builder;
 import com.google.bigtable.v2.RowFilter;
@@ -27,10 +28,13 @@ import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
+import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
 
 import java.io.IOException;
@@ -48,13 +52,16 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
 
   private final FilterAdapter filterAdapter;
+  private final RowRangeAdapter rowRangeAdapter;
+
   /**
    * <p>Constructor for ScanAdapter.</p>
    *
    * @param filterAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
    */
-  public ScanAdapter(FilterAdapter filterAdapter) {
+  public ScanAdapter(FilterAdapter filterAdapter, RowRangeAdapter rowRangeAdapter) {
     this.filterAdapter = filterAdapter;
+    this.rowRangeAdapter = rowRangeAdapter;
   }
 
   /**
@@ -108,9 +115,16 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   @Override
   public Builder adapt(Scan scan, ReadHooks readHooks) {
     throwIfUnsupportedScan(scan);
+
+    RowSet rowSet = getRowSet(scan);
+
+    rowSet = narrowRowSet(rowSet, scan.getFilter());
+    RowFilter rowFilter = buildFilter(scan, readHooks);
+
+
     return ReadRowsRequest.newBuilder()
-        .setRows(getRowSet(scan))
-        .setFilter(buildFilter(scan, readHooks));
+        .setRows(rowSet)
+        .setFilter(rowFilter);
   }
 
   private RowSet getRowSet(Scan scan) {
@@ -145,6 +159,17 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     } catch (IOException ioe) {
       throw new RuntimeException("Failed to adapt filter", ioe);
     }
+  }
+
+  private RowSet narrowRowSet(RowSet rowSet, Filter filter) {
+    RangeSet<RowKeyWrapper> filterRangeSet = filterAdapter.getIndexScanHint(filter);
+    if (filterRangeSet.encloses(Range.<RowKeyWrapper>all())) {
+      return rowSet;
+    }
+    RangeSet<RowKeyWrapper> scanRangeSet = rowRangeAdapter.rowSetToRangeSet(rowSet);
+    // intersection of scan ranges & filter ranges
+    scanRangeSet.removeAll(filterRangeSet.complement());
+    return rowRangeAdapter.rangeSetToRowSet(scanRangeSet);
   }
 
   private RowFilter createColumnQualifierFilter(byte[] unquotedQualifier) {

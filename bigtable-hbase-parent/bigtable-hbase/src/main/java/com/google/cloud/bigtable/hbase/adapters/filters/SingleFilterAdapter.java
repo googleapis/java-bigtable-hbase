@@ -15,9 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Preconditions;
 import com.google.bigtable.v2.RowFilter;
 
+import com.google.common.collect.RangeSet;
 import org.apache.hadoop.hbase.filter.Filter;
 
 import java.io.IOException;
@@ -105,6 +107,10 @@ public class SingleFilterAdapter<T extends Filter> {
         context,
         unchecked(filter),
         statuses);
+  }
+
+  public RangeSet<RowKeyWrapper> getIndexScanHint(Filter filter) {
+    return adapter.getIndexScanHint(unchecked(filter));
   }
 
   @SuppressWarnings("unchecked")
