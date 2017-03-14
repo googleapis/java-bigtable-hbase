@@ -21,6 +21,7 @@ import com.google.bigtable.v2.ReadRowsRequest.Builder;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
@@ -136,8 +137,16 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       if (scan.isGetScan()) {
         rowSetBuilder.addRowKeys(startRow);
       } else {
+        RowRange.Builder range =  RowRange.newBuilder();
+        if (!startRow.isEmpty()) {
+          range.setStartKeyClosed(startRow);
+        }
+
         ByteString stopRow = ByteString.copyFrom(scan.getStopRow());
-        rowSetBuilder.addRowRangesBuilder().setStartKeyClosed(startRow).setEndKeyOpen(stopRow);
+        if (!stopRow.isEmpty()) {
+          range.setEndKeyOpen(stopRow);
+        }
+        rowSetBuilder.addRowRanges(range);
       }
       return rowSetBuilder.build();
     }
