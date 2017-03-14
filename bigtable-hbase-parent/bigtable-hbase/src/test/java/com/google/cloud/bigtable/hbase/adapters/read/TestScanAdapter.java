@@ -186,4 +186,24 @@ public class TestScanAdapter {
         adapted.getRows()
     );
   }
+
+  // Make sure that the scan rowSet is unaffected when the filter is not set
+  @Test
+  public void testNarrowedScanWithoutFilter() {
+    Scan scan = new Scan();
+    scan.setStartRow("a".getBytes());
+    scan.setStopRow("z".getBytes());
+
+    RowSet result = scanAdapter.adapt(scan, throwingReadHooks).build().getRows();
+    RowSet expected = RowSet.newBuilder()
+        .addRowRanges(
+            RowRange.newBuilder()
+                .setStartKeyClosed(ByteString.copyFromUtf8("a"))
+                .setEndKeyOpen(ByteString.copyFromUtf8("z"))
+        )
+        .build();
+
+    Assert.assertEquals(expected, result);
+
+  }
 }
