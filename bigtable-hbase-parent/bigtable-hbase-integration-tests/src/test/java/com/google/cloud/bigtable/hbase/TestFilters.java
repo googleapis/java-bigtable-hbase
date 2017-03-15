@@ -1576,6 +1576,7 @@ public class TestFilters extends AbstractTest {
     String prefix = "testPrefixFilter";
     int rowCount = 10;
     byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
+    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
     List<Put> puts = new ArrayList<>();
     for (byte[] rowKey : rowKeys) {
       puts.add(
@@ -1590,11 +1591,23 @@ public class TestFilters extends AbstractTest {
     ResultScanner scanner = table.getScanner(scan);
     Result[] results = scanner.next(rowCount + 2);
     Assert.assertEquals(rowCount, results.length);
-    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
+
     // Both results[] and rowKeys[] should be in the same order now. Iterate over both
     // and verify rowkeys.
     for (int i = 0; i < rowCount; i++) {
       Assert.assertArrayEquals(rowKeys[i], results[i].getRow());
+    }
+
+    // Make sure that it works with start & end rows: exclude first & last row
+    Scan boundedScan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filter)
+        .setStartRow(rowKeys[1])
+        .setStopRow(rowKeys[rowKeys.length - 1]);
+
+    ResultScanner boundedScanner = table.getScanner(boundedScan);
+    Result[] boundedResults = boundedScanner.next(rowCount + 2);
+    Assert.assertEquals(rowCount - 2, boundedResults.length);
+    for(int i=0; i < rowCount - 2; i++) {
+      Assert.assertArrayEquals(rowKeys[i+1], boundedResults[i].getRow());
     }
   }
 
