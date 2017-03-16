@@ -13,7 +13,7 @@ public interface CreateTableRequestOrBuilder extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   java.lang.String getParent();
   /**
@@ -22,7 +22,7 @@ public interface CreateTableRequestOrBuilder extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   com.google.protobuf.ByteString
       getParentBytes();
@@ -33,7 +33,7 @@ public interface CreateTableRequestOrBuilder extends
    * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
    * </pre>
    *
-   * <code>optional string table_id = 2;</code>
+   * <code>string table_id = 2;</code>
    */
   java.lang.String getTableId();
   /**
@@ -42,7 +42,7 @@ public interface CreateTableRequestOrBuilder extends
    * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
    * </pre>
    *
-   * <code>optional string table_id = 2;</code>
+   * <code>string table_id = 2;</code>
    */
   com.google.protobuf.ByteString
       getTableIdBytes();
@@ -52,7 +52,7 @@ public interface CreateTableRequestOrBuilder extends
    * The Table to create.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+   * <code>.google.bigtable.admin.v2.Table table = 3;</code>
    */
   boolean hasTable();
   /**
@@ -60,7 +60,7 @@ public interface CreateTableRequestOrBuilder extends
    * The Table to create.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+   * <code>.google.bigtable.admin.v2.Table table = 3;</code>
    */
   com.google.bigtable.admin.v2.Table getTable();
   /**
@@ -68,7 +68,7 @@ public interface CreateTableRequestOrBuilder extends
    * The Table to create.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+   * <code>.google.bigtable.admin.v2.Table table = 3;</code>
    */
   com.google.bigtable.admin.v2.TableOrBuilder getTableOrBuilder();
 

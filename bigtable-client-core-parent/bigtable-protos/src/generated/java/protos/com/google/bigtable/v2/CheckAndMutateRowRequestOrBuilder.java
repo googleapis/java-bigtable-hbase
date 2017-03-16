@@ -15,7 +15,7 @@ public interface CheckAndMutateRowRequestOrBuilder extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
@@ -26,7 +26,7 @@ public interface CheckAndMutateRowRequestOrBuilder extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();
@@ -36,7 +36,7 @@ public interface CheckAndMutateRowRequestOrBuilder extends
    * The key of the row to which the conditional mutation should be applied.
    * </pre>
    *
-   * <code>optional bytes row_key = 2;</code>
+   * <code>bytes row_key = 2;</code>
    */
   com.google.protobuf.ByteString getRowKey();
 
@@ -48,7 +48,7 @@ public interface CheckAndMutateRowRequestOrBuilder extends
    * any values at all.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+   * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
    */
   boolean hasPredicateFilter();
   /**
@@ -59,7 +59,7 @@ public interface CheckAndMutateRowRequestOrBuilder extends
    * any values at all.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+   * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
    */
   com.google.bigtable.v2.RowFilter getPredicateFilter();
   /**
@@ -70,7 +70,7 @@ public interface CheckAndMutateRowRequestOrBuilder extends
    * any values at all.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+   * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
    */
   com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder();
 

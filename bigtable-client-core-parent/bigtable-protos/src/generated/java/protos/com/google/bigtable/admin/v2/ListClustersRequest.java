@@ -93,7 +93,7 @@ public  final class ListClustersRequest extends
    * e.g., `projects/myproject/instances/-`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -115,7 +115,7 @@ public  final class ListClustersRequest extends
    * e.g., `projects/myproject/instances/-`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -138,7 +138,7 @@ public  final class ListClustersRequest extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 2;</code>
+   * <code>string page_token = 2;</code>
    */
   public java.lang.String getPageToken() {
     java.lang.Object ref = pageToken_;
@@ -157,7 +157,7 @@ public  final class ListClustersRequest extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 2;</code>
+   * <code>string page_token = 2;</code>
    */
   public com.google.protobuf.ByteString
       getPageTokenBytes() {
@@ -233,7 +233,7 @@ public  final class ListClustersRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + PARENT_FIELD_NUMBER;
     hash = (53 * hash) + getParent().hashCode();
     hash = (37 * hash) + PAGE_TOKEN_FIELD_NUMBER;
@@ -472,7 +472,7 @@ public  final class ListClustersRequest extends
      * e.g., `projects/myproject/instances/-`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -494,7 +494,7 @@ public  final class ListClustersRequest extends
      * e.g., `projects/myproject/instances/-`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -517,7 +517,7 @@ public  final class ListClustersRequest extends
      * e.g., `projects/myproject/instances/-`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -537,7 +537,7 @@ public  final class ListClustersRequest extends
      * e.g., `projects/myproject/instances/-`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -553,7 +553,7 @@ public  final class ListClustersRequest extends
      * e.g., `projects/myproject/instances/-`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -573,7 +573,7 @@ public  final class ListClustersRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 2;</code>
+     * <code>string page_token = 2;</code>
      */
     public java.lang.String getPageToken() {
       java.lang.Object ref = pageToken_;
@@ -592,7 +592,7 @@ public  final class ListClustersRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 2;</code>
+     * <code>string page_token = 2;</code>
      */
     public com.google.protobuf.ByteString
         getPageTokenBytes() {
@@ -612,7 +612,7 @@ public  final class ListClustersRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 2;</code>
+     * <code>string page_token = 2;</code>
      */
     public Builder setPageToken(
         java.lang.String value) {
@@ -629,7 +629,7 @@ public  final class ListClustersRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 2;</code>
+     * <code>string page_token = 2;</code>
      */
     public Builder clearPageToken() {
       
@@ -642,7 +642,7 @@ public  final class ListClustersRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 2;</code>
+     * <code>string page_token = 2;</code>
      */
     public Builder setPageTokenBytes(
         com.google.protobuf.ByteString value) {

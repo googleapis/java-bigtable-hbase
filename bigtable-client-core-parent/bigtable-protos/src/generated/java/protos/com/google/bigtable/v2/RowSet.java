@@ -250,7 +250,7 @@ public  final class RowSet extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     if (getRowKeysCount() > 0) {
       hash = (37 * hash) + ROW_KEYS_FIELD_NUMBER;
       hash = (53 * hash) + getRowKeysList().hashCode();

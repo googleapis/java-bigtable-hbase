@@ -16,7 +16,7 @@ public interface ColumnFamilyOrBuilder extends
    * GC expression for its family.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+   * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
    */
   boolean hasGcRule();
   /**
@@ -28,7 +28,7 @@ public interface ColumnFamilyOrBuilder extends
    * GC expression for its family.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+   * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
    */
   com.google.bigtable.admin.v2.GcRule getGcRule();
   /**
@@ -40,7 +40,7 @@ public interface ColumnFamilyOrBuilder extends
    * GC expression for its family.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+   * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
    */
   com.google.bigtable.admin.v2.GcRuleOrBuilder getGcRuleOrBuilder();
 }

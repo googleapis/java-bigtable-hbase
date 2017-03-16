@@ -42,7 +42,7 @@ public interface ReadRowsResponseOrBuilder extends
    * key, allowing the client to skip that work on a retry.
    * </pre>
    *
-   * <code>optional bytes last_scanned_row_key = 2;</code>
+   * <code>bytes last_scanned_row_key = 2;</code>
    */
   com.google.protobuf.ByteString getLastScannedRowKey();
 }

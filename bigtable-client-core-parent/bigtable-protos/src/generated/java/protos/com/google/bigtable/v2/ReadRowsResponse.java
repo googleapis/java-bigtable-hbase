@@ -100,7 +100,7 @@ public  final class ReadRowsResponse extends
      * previous ReadRowsResponse message.
      * </pre>
      *
-     * <code>optional bytes row_key = 1;</code>
+     * <code>bytes row_key = 1;</code>
      */
     com.google.protobuf.ByteString getRowKey();
 
@@ -114,7 +114,7 @@ public  final class ReadRowsResponse extends
      * `family_name.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+     * <code>.google.protobuf.StringValue family_name = 2;</code>
      */
     boolean hasFamilyName();
     /**
@@ -127,7 +127,7 @@ public  final class ReadRowsResponse extends
      * `family_name.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+     * <code>.google.protobuf.StringValue family_name = 2;</code>
      */
     com.google.protobuf.StringValue getFamilyName();
     /**
@@ -140,7 +140,7 @@ public  final class ReadRowsResponse extends
      * `family_name.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+     * <code>.google.protobuf.StringValue family_name = 2;</code>
      */
     com.google.protobuf.StringValueOrBuilder getFamilyNameOrBuilder();
 
@@ -153,7 +153,7 @@ public  final class ReadRowsResponse extends
      * for `qualifier.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+     * <code>.google.protobuf.BytesValue qualifier = 3;</code>
      */
     boolean hasQualifier();
     /**
@@ -165,7 +165,7 @@ public  final class ReadRowsResponse extends
      * for `qualifier.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+     * <code>.google.protobuf.BytesValue qualifier = 3;</code>
      */
     com.google.protobuf.BytesValue getQualifier();
     /**
@@ -177,7 +177,7 @@ public  final class ReadRowsResponse extends
      * for `qualifier.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+     * <code>.google.protobuf.BytesValue qualifier = 3;</code>
      */
     com.google.protobuf.BytesValueOrBuilder getQualifierOrBuilder();
 
@@ -193,7 +193,7 @@ public  final class ReadRowsResponse extends
      * (for cells split into multiple chunks).
      * </pre>
      *
-     * <code>optional int64 timestamp_micros = 4;</code>
+     * <code>int64 timestamp_micros = 4;</code>
      */
     long getTimestampMicros();
 
@@ -249,7 +249,7 @@ public  final class ReadRowsResponse extends
      * CellChunk came in a previous ReadRowsResponse.
      * </pre>
      *
-     * <code>optional bytes value = 6;</code>
+     * <code>bytes value = 6;</code>
      */
     com.google.protobuf.ByteString getValue();
 
@@ -261,7 +261,7 @@ public  final class ReadRowsResponse extends
      * to pre-allocate memory to hold the full cell value.
      * </pre>
      *
-     * <code>optional int32 value_size = 7;</code>
+     * <code>int32 value_size = 7;</code>
      */
     int getValueSize();
 
@@ -271,7 +271,7 @@ public  final class ReadRowsResponse extends
      * `row_key`, as it will be re-read from the beginning.
      * </pre>
      *
-     * <code>optional bool reset_row = 8;</code>
+     * <code>bool reset_row = 8;</code>
      */
     boolean getResetRow();
 
@@ -281,7 +281,7 @@ public  final class ReadRowsResponse extends
      * `row_key`, as its data has been fully read.
      * </pre>
      *
-     * <code>optional bool commit_row = 9;</code>
+     * <code>bool commit_row = 9;</code>
      */
     boolean getCommitRow();
 
@@ -476,7 +476,7 @@ public  final class ReadRowsResponse extends
      * previous ReadRowsResponse message.
      * </pre>
      *
-     * <code>optional bytes row_key = 1;</code>
+     * <code>bytes row_key = 1;</code>
      */
     public com.google.protobuf.ByteString getRowKey() {
       return rowKey_;
@@ -494,7 +494,7 @@ public  final class ReadRowsResponse extends
      * `family_name.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+     * <code>.google.protobuf.StringValue family_name = 2;</code>
      */
     public boolean hasFamilyName() {
       return familyName_ != null;
@@ -509,7 +509,7 @@ public  final class ReadRowsResponse extends
      * `family_name.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+     * <code>.google.protobuf.StringValue family_name = 2;</code>
      */
     public com.google.protobuf.StringValue getFamilyName() {
       return familyName_ == null ? com.google.protobuf.StringValue.getDefaultInstance() : familyName_;
@@ -524,7 +524,7 @@ public  final class ReadRowsResponse extends
      * `family_name.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+     * <code>.google.protobuf.StringValue family_name = 2;</code>
      */
     public com.google.protobuf.StringValueOrBuilder getFamilyNameOrBuilder() {
       return getFamilyName();
@@ -541,7 +541,7 @@ public  final class ReadRowsResponse extends
      * for `qualifier.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+     * <code>.google.protobuf.BytesValue qualifier = 3;</code>
      */
     public boolean hasQualifier() {
       return qualifier_ != null;
@@ -555,7 +555,7 @@ public  final class ReadRowsResponse extends
      * for `qualifier.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+     * <code>.google.protobuf.BytesValue qualifier = 3;</code>
      */
     public com.google.protobuf.BytesValue getQualifier() {
       return qualifier_ == null ? com.google.protobuf.BytesValue.getDefaultInstance() : qualifier_;
@@ -569,7 +569,7 @@ public  final class ReadRowsResponse extends
      * for `qualifier.value` being non-empty.
      * </pre>
      *
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+     * <code>.google.protobuf.BytesValue qualifier = 3;</code>
      */
     public com.google.protobuf.BytesValueOrBuilder getQualifierOrBuilder() {
       return getQualifier();
@@ -589,7 +589,7 @@ public  final class ReadRowsResponse extends
      * (for cells split into multiple chunks).
      * </pre>
      *
-     * <code>optional int64 timestamp_micros = 4;</code>
+     * <code>int64 timestamp_micros = 4;</code>
      */
     public long getTimestampMicros() {
       return timestampMicros_;
@@ -659,7 +659,7 @@ public  final class ReadRowsResponse extends
      * CellChunk came in a previous ReadRowsResponse.
      * </pre>
      *
-     * <code>optional bytes value = 6;</code>
+     * <code>bytes value = 6;</code>
      */
     public com.google.protobuf.ByteString getValue() {
       return value_;
@@ -675,7 +675,7 @@ public  final class ReadRowsResponse extends
      * to pre-allocate memory to hold the full cell value.
      * </pre>
      *
-     * <code>optional int32 value_size = 7;</code>
+     * <code>int32 value_size = 7;</code>
      */
     public int getValueSize() {
       return valueSize_;
@@ -688,7 +688,7 @@ public  final class ReadRowsResponse extends
      * `row_key`, as it will be re-read from the beginning.
      * </pre>
      *
-     * <code>optional bool reset_row = 8;</code>
+     * <code>bool reset_row = 8;</code>
      */
     public boolean getResetRow() {
       if (rowStatusCase_ == 8) {
@@ -704,7 +704,7 @@ public  final class ReadRowsResponse extends
      * `row_key`, as its data has been fully read.
      * </pre>
      *
-     * <code>optional bool commit_row = 9;</code>
+     * <code>bool commit_row = 9;</code>
      */
     public boolean getCommitRow() {
       if (rowStatusCase_ == 9) {
@@ -863,7 +863,7 @@ public  final class ReadRowsResponse extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + ROW_KEY_FIELD_NUMBER;
       hash = (53 * hash) + getRowKey().hashCode();
       if (hasFamilyName()) {
@@ -1230,7 +1230,7 @@ public  final class ReadRowsResponse extends
        * previous ReadRowsResponse message.
        * </pre>
        *
-       * <code>optional bytes row_key = 1;</code>
+       * <code>bytes row_key = 1;</code>
        */
       public com.google.protobuf.ByteString getRowKey() {
         return rowKey_;
@@ -1243,7 +1243,7 @@ public  final class ReadRowsResponse extends
        * previous ReadRowsResponse message.
        * </pre>
        *
-       * <code>optional bytes row_key = 1;</code>
+       * <code>bytes row_key = 1;</code>
        */
       public Builder setRowKey(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1262,7 +1262,7 @@ public  final class ReadRowsResponse extends
        * previous ReadRowsResponse message.
        * </pre>
        *
-       * <code>optional bytes row_key = 1;</code>
+       * <code>bytes row_key = 1;</code>
        */
       public Builder clearRowKey() {
         
@@ -1284,7 +1284,7 @@ public  final class ReadRowsResponse extends
        * `family_name.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+       * <code>.google.protobuf.StringValue family_name = 2;</code>
        */
       public boolean hasFamilyName() {
         return familyNameBuilder_ != null || familyName_ != null;
@@ -1299,7 +1299,7 @@ public  final class ReadRowsResponse extends
        * `family_name.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+       * <code>.google.protobuf.StringValue family_name = 2;</code>
        */
       public com.google.protobuf.StringValue getFamilyName() {
         if (familyNameBuilder_ == null) {
@@ -1318,7 +1318,7 @@ public  final class ReadRowsResponse extends
        * `family_name.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+       * <code>.google.protobuf.StringValue family_name = 2;</code>
        */
       public Builder setFamilyName(com.google.protobuf.StringValue value) {
         if (familyNameBuilder_ == null) {
@@ -1343,7 +1343,7 @@ public  final class ReadRowsResponse extends
        * `family_name.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+       * <code>.google.protobuf.StringValue family_name = 2;</code>
        */
       public Builder setFamilyName(
           com.google.protobuf.StringValue.Builder builderForValue) {
@@ -1366,7 +1366,7 @@ public  final class ReadRowsResponse extends
        * `family_name.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+       * <code>.google.protobuf.StringValue family_name = 2;</code>
        */
       public Builder mergeFamilyName(com.google.protobuf.StringValue value) {
         if (familyNameBuilder_ == null) {
@@ -1393,7 +1393,7 @@ public  final class ReadRowsResponse extends
        * `family_name.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+       * <code>.google.protobuf.StringValue family_name = 2;</code>
        */
       public Builder clearFamilyName() {
         if (familyNameBuilder_ == null) {
@@ -1416,7 +1416,7 @@ public  final class ReadRowsResponse extends
        * `family_name.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+       * <code>.google.protobuf.StringValue family_name = 2;</code>
        */
       public com.google.protobuf.StringValue.Builder getFamilyNameBuilder() {
         
@@ -1433,7 +1433,7 @@ public  final class ReadRowsResponse extends
        * `family_name.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+       * <code>.google.protobuf.StringValue family_name = 2;</code>
        */
       public com.google.protobuf.StringValueOrBuilder getFamilyNameOrBuilder() {
         if (familyNameBuilder_ != null) {
@@ -1453,7 +1453,7 @@ public  final class ReadRowsResponse extends
        * `family_name.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
+       * <code>.google.protobuf.StringValue family_name = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.google.protobuf.StringValue, com.google.protobuf.StringValue.Builder, com.google.protobuf.StringValueOrBuilder> 
@@ -1481,7 +1481,7 @@ public  final class ReadRowsResponse extends
        * for `qualifier.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+       * <code>.google.protobuf.BytesValue qualifier = 3;</code>
        */
       public boolean hasQualifier() {
         return qualifierBuilder_ != null || qualifier_ != null;
@@ -1495,7 +1495,7 @@ public  final class ReadRowsResponse extends
        * for `qualifier.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+       * <code>.google.protobuf.BytesValue qualifier = 3;</code>
        */
       public com.google.protobuf.BytesValue getQualifier() {
         if (qualifierBuilder_ == null) {
@@ -1513,7 +1513,7 @@ public  final class ReadRowsResponse extends
        * for `qualifier.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+       * <code>.google.protobuf.BytesValue qualifier = 3;</code>
        */
       public Builder setQualifier(com.google.protobuf.BytesValue value) {
         if (qualifierBuilder_ == null) {
@@ -1537,7 +1537,7 @@ public  final class ReadRowsResponse extends
        * for `qualifier.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+       * <code>.google.protobuf.BytesValue qualifier = 3;</code>
        */
       public Builder setQualifier(
           com.google.protobuf.BytesValue.Builder builderForValue) {
@@ -1559,7 +1559,7 @@ public  final class ReadRowsResponse extends
        * for `qualifier.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+       * <code>.google.protobuf.BytesValue qualifier = 3;</code>
        */
       public Builder mergeQualifier(com.google.protobuf.BytesValue value) {
         if (qualifierBuilder_ == null) {
@@ -1585,7 +1585,7 @@ public  final class ReadRowsResponse extends
        * for `qualifier.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+       * <code>.google.protobuf.BytesValue qualifier = 3;</code>
        */
       public Builder clearQualifier() {
         if (qualifierBuilder_ == null) {
@@ -1607,7 +1607,7 @@ public  final class ReadRowsResponse extends
        * for `qualifier.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+       * <code>.google.protobuf.BytesValue qualifier = 3;</code>
        */
       public com.google.protobuf.BytesValue.Builder getQualifierBuilder() {
         
@@ -1623,7 +1623,7 @@ public  final class ReadRowsResponse extends
        * for `qualifier.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+       * <code>.google.protobuf.BytesValue qualifier = 3;</code>
        */
       public com.google.protobuf.BytesValueOrBuilder getQualifierOrBuilder() {
         if (qualifierBuilder_ != null) {
@@ -1642,7 +1642,7 @@ public  final class ReadRowsResponse extends
        * for `qualifier.value` being non-empty.
        * </pre>
        *
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
+       * <code>.google.protobuf.BytesValue qualifier = 3;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.google.protobuf.BytesValue, com.google.protobuf.BytesValue.Builder, com.google.protobuf.BytesValueOrBuilder> 
@@ -1671,7 +1671,7 @@ public  final class ReadRowsResponse extends
        * (for cells split into multiple chunks).
        * </pre>
        *
-       * <code>optional int64 timestamp_micros = 4;</code>
+       * <code>int64 timestamp_micros = 4;</code>
        */
       public long getTimestampMicros() {
         return timestampMicros_;
@@ -1688,7 +1688,7 @@ public  final class ReadRowsResponse extends
        * (for cells split into multiple chunks).
        * </pre>
        *
-       * <code>optional int64 timestamp_micros = 4;</code>
+       * <code>int64 timestamp_micros = 4;</code>
        */
       public Builder setTimestampMicros(long value) {
         
@@ -1708,7 +1708,7 @@ public  final class ReadRowsResponse extends
        * (for cells split into multiple chunks).
        * </pre>
        *
-       * <code>optional int64 timestamp_micros = 4;</code>
+       * <code>int64 timestamp_micros = 4;</code>
        */
       public Builder clearTimestampMicros() {
         
@@ -1875,7 +1875,7 @@ public  final class ReadRowsResponse extends
        * CellChunk came in a previous ReadRowsResponse.
        * </pre>
        *
-       * <code>optional bytes value = 6;</code>
+       * <code>bytes value = 6;</code>
        */
       public com.google.protobuf.ByteString getValue() {
         return value_;
@@ -1889,7 +1889,7 @@ public  final class ReadRowsResponse extends
        * CellChunk came in a previous ReadRowsResponse.
        * </pre>
        *
-       * <code>optional bytes value = 6;</code>
+       * <code>bytes value = 6;</code>
        */
       public Builder setValue(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1909,7 +1909,7 @@ public  final class ReadRowsResponse extends
        * CellChunk came in a previous ReadRowsResponse.
        * </pre>
        *
-       * <code>optional bytes value = 6;</code>
+       * <code>bytes value = 6;</code>
        */
       public Builder clearValue() {
         
@@ -1927,7 +1927,7 @@ public  final class ReadRowsResponse extends
        * to pre-allocate memory to hold the full cell value.
        * </pre>
        *
-       * <code>optional int32 value_size = 7;</code>
+       * <code>int32 value_size = 7;</code>
        */
       public int getValueSize() {
         return valueSize_;
@@ -1940,7 +1940,7 @@ public  final class ReadRowsResponse extends
        * to pre-allocate memory to hold the full cell value.
        * </pre>
        *
-       * <code>optional int32 value_size = 7;</code>
+       * <code>int32 value_size = 7;</code>
        */
       public Builder setValueSize(int value) {
         
@@ -1956,7 +1956,7 @@ public  final class ReadRowsResponse extends
        * to pre-allocate memory to hold the full cell value.
        * </pre>
        *
-       * <code>optional int32 value_size = 7;</code>
+       * <code>int32 value_size = 7;</code>
        */
       public Builder clearValueSize() {
         
@@ -1971,7 +1971,7 @@ public  final class ReadRowsResponse extends
        * `row_key`, as it will be re-read from the beginning.
        * </pre>
        *
-       * <code>optional bool reset_row = 8;</code>
+       * <code>bool reset_row = 8;</code>
        */
       public boolean getResetRow() {
         if (rowStatusCase_ == 8) {
@@ -1985,7 +1985,7 @@ public  final class ReadRowsResponse extends
        * `row_key`, as it will be re-read from the beginning.
        * </pre>
        *
-       * <code>optional bool reset_row = 8;</code>
+       * <code>bool reset_row = 8;</code>
        */
       public Builder setResetRow(boolean value) {
         rowStatusCase_ = 8;
@@ -1999,7 +1999,7 @@ public  final class ReadRowsResponse extends
        * `row_key`, as it will be re-read from the beginning.
        * </pre>
        *
-       * <code>optional bool reset_row = 8;</code>
+       * <code>bool reset_row = 8;</code>
        */
       public Builder clearResetRow() {
         if (rowStatusCase_ == 8) {
@@ -2016,7 +2016,7 @@ public  final class ReadRowsResponse extends
        * `row_key`, as its data has been fully read.
        * </pre>
        *
-       * <code>optional bool commit_row = 9;</code>
+       * <code>bool commit_row = 9;</code>
        */
       public boolean getCommitRow() {
         if (rowStatusCase_ == 9) {
@@ -2030,7 +2030,7 @@ public  final class ReadRowsResponse extends
        * `row_key`, as its data has been fully read.
        * </pre>
        *
-       * <code>optional bool commit_row = 9;</code>
+       * <code>bool commit_row = 9;</code>
        */
       public Builder setCommitRow(boolean value) {
         rowStatusCase_ = 9;
@@ -2044,7 +2044,7 @@ public  final class ReadRowsResponse extends
        * `row_key`, as its data has been fully read.
        * </pre>
        *
-       * <code>optional bool commit_row = 9;</code>
+       * <code>bool commit_row = 9;</code>
        */
       public Builder clearCommitRow() {
         if (rowStatusCase_ == 9) {
@@ -2152,7 +2152,7 @@ public  final class ReadRowsResponse extends
    * key, allowing the client to skip that work on a retry.
    * </pre>
    *
-   * <code>optional bytes last_scanned_row_key = 2;</code>
+   * <code>bytes last_scanned_row_key = 2;</code>
    */
   public com.google.protobuf.ByteString getLastScannedRowKey() {
     return lastScannedRowKey_;
@@ -2220,7 +2220,7 @@ public  final class ReadRowsResponse extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     if (getChunksCount() > 0) {
       hash = (37 * hash) + CHUNKS_FIELD_NUMBER;
       hash = (53 * hash) + getChunksList().hashCode();
@@ -2742,7 +2742,7 @@ public  final class ReadRowsResponse extends
      * key, allowing the client to skip that work on a retry.
      * </pre>
      *
-     * <code>optional bytes last_scanned_row_key = 2;</code>
+     * <code>bytes last_scanned_row_key = 2;</code>
      */
     public com.google.protobuf.ByteString getLastScannedRowKey() {
       return lastScannedRowKey_;
@@ -2758,7 +2758,7 @@ public  final class ReadRowsResponse extends
      * key, allowing the client to skip that work on a retry.
      * </pre>
      *
-     * <code>optional bytes last_scanned_row_key = 2;</code>
+     * <code>bytes last_scanned_row_key = 2;</code>
      */
     public Builder setLastScannedRowKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -2780,7 +2780,7 @@ public  final class ReadRowsResponse extends
      * key, allowing the client to skip that work on a retry.
      * </pre>
      *
-     * <code>optional bytes last_scanned_row_key = 2;</code>
+     * <code>bytes last_scanned_row_key = 2;</code>
      */
     public Builder clearLastScannedRowKey() {
       

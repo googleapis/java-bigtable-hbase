@@ -15,7 +15,7 @@ public interface ListClustersRequestOrBuilder extends
    * e.g., `projects/myproject/instances/-`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   java.lang.String getParent();
   /**
@@ -26,7 +26,7 @@ public interface ListClustersRequestOrBuilder extends
    * e.g., `projects/myproject/instances/-`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   com.google.protobuf.ByteString
       getParentBytes();
@@ -36,7 +36,7 @@ public interface ListClustersRequestOrBuilder extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 2;</code>
+   * <code>string page_token = 2;</code>
    */
   java.lang.String getPageToken();
   /**
@@ -44,7 +44,7 @@ public interface ListClustersRequestOrBuilder extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 2;</code>
+   * <code>string page_token = 2;</code>
    */
   com.google.protobuf.ByteString
       getPageTokenBytes();

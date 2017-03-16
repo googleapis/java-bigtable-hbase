@@ -12,7 +12,7 @@ public interface ColumnRangeOrBuilder extends
    * The name of the column family within which this range falls.
    * </pre>
    *
-   * <code>optional string family_name = 1;</code>
+   * <code>string family_name = 1;</code>
    */
   java.lang.String getFamilyName();
   /**
@@ -20,7 +20,7 @@ public interface ColumnRangeOrBuilder extends
    * The name of the column family within which this range falls.
    * </pre>
    *
-   * <code>optional string family_name = 1;</code>
+   * <code>string family_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getFamilyNameBytes();
@@ -30,7 +30,7 @@ public interface ColumnRangeOrBuilder extends
    * Used when giving an inclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_qualifier_closed = 2;</code>
+   * <code>bytes start_qualifier_closed = 2;</code>
    */
   com.google.protobuf.ByteString getStartQualifierClosed();
 
@@ -39,7 +39,7 @@ public interface ColumnRangeOrBuilder extends
    * Used when giving an exclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_qualifier_open = 3;</code>
+   * <code>bytes start_qualifier_open = 3;</code>
    */
   com.google.protobuf.ByteString getStartQualifierOpen();
 
@@ -48,7 +48,7 @@ public interface ColumnRangeOrBuilder extends
    * Used when giving an inclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_qualifier_closed = 4;</code>
+   * <code>bytes end_qualifier_closed = 4;</code>
    */
   com.google.protobuf.ByteString getEndQualifierClosed();
 
@@ -57,7 +57,7 @@ public interface ColumnRangeOrBuilder extends
    * Used when giving an exclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_qualifier_open = 5;</code>
+   * <code>bytes end_qualifier_open = 5;</code>
    */
   com.google.protobuf.ByteString getEndQualifierOpen();
 

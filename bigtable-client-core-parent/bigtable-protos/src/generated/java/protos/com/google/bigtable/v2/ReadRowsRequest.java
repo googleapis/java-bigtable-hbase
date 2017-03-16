@@ -117,7 +117,7 @@ public  final class ReadRowsRequest extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   public java.lang.String getTableName() {
     java.lang.Object ref = tableName_;
@@ -138,7 +138,7 @@ public  final class ReadRowsRequest extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getTableNameBytes() {
@@ -161,7 +161,7 @@ public  final class ReadRowsRequest extends
    * The row keys and/or ranges to read. If not specified, reads from all rows.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+   * <code>.google.bigtable.v2.RowSet rows = 2;</code>
    */
   public boolean hasRows() {
     return rows_ != null;
@@ -171,7 +171,7 @@ public  final class ReadRowsRequest extends
    * The row keys and/or ranges to read. If not specified, reads from all rows.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+   * <code>.google.bigtable.v2.RowSet rows = 2;</code>
    */
   public com.google.bigtable.v2.RowSet getRows() {
     return rows_ == null ? com.google.bigtable.v2.RowSet.getDefaultInstance() : rows_;
@@ -181,7 +181,7 @@ public  final class ReadRowsRequest extends
    * The row keys and/or ranges to read. If not specified, reads from all rows.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+   * <code>.google.bigtable.v2.RowSet rows = 2;</code>
    */
   public com.google.bigtable.v2.RowSetOrBuilder getRowsOrBuilder() {
     return getRows();
@@ -195,7 +195,7 @@ public  final class ReadRowsRequest extends
    * reads the entirety of each row.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
    */
   public boolean hasFilter() {
     return filter_ != null;
@@ -206,7 +206,7 @@ public  final class ReadRowsRequest extends
    * reads the entirety of each row.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
    */
   public com.google.bigtable.v2.RowFilter getFilter() {
     return filter_ == null ? com.google.bigtable.v2.RowFilter.getDefaultInstance() : filter_;
@@ -217,7 +217,7 @@ public  final class ReadRowsRequest extends
    * reads the entirety of each row.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
    */
   public com.google.bigtable.v2.RowFilterOrBuilder getFilterOrBuilder() {
     return getFilter();
@@ -231,7 +231,7 @@ public  final class ReadRowsRequest extends
    * default (zero) is to return all results.
    * </pre>
    *
-   * <code>optional int64 rows_limit = 4;</code>
+   * <code>int64 rows_limit = 4;</code>
    */
   public long getRowsLimit() {
     return rowsLimit_;
@@ -322,7 +322,7 @@ public  final class ReadRowsRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
     hash = (53 * hash) + getTableName().hashCode();
     if (hasRows()) {
@@ -596,7 +596,7 @@ public  final class ReadRowsRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
@@ -617,7 +617,7 @@ public  final class ReadRowsRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getTableNameBytes() {
@@ -639,7 +639,7 @@ public  final class ReadRowsRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder setTableName(
         java.lang.String value) {
@@ -658,7 +658,7 @@ public  final class ReadRowsRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder clearTableName() {
       
@@ -673,7 +673,7 @@ public  final class ReadRowsRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder setTableNameBytes(
         com.google.protobuf.ByteString value) {
@@ -695,7 +695,7 @@ public  final class ReadRowsRequest extends
      * The row keys and/or ranges to read. If not specified, reads from all rows.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+     * <code>.google.bigtable.v2.RowSet rows = 2;</code>
      */
     public boolean hasRows() {
       return rowsBuilder_ != null || rows_ != null;
@@ -705,7 +705,7 @@ public  final class ReadRowsRequest extends
      * The row keys and/or ranges to read. If not specified, reads from all rows.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+     * <code>.google.bigtable.v2.RowSet rows = 2;</code>
      */
     public com.google.bigtable.v2.RowSet getRows() {
       if (rowsBuilder_ == null) {
@@ -719,7 +719,7 @@ public  final class ReadRowsRequest extends
      * The row keys and/or ranges to read. If not specified, reads from all rows.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+     * <code>.google.bigtable.v2.RowSet rows = 2;</code>
      */
     public Builder setRows(com.google.bigtable.v2.RowSet value) {
       if (rowsBuilder_ == null) {
@@ -739,7 +739,7 @@ public  final class ReadRowsRequest extends
      * The row keys and/or ranges to read. If not specified, reads from all rows.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+     * <code>.google.bigtable.v2.RowSet rows = 2;</code>
      */
     public Builder setRows(
         com.google.bigtable.v2.RowSet.Builder builderForValue) {
@@ -757,7 +757,7 @@ public  final class ReadRowsRequest extends
      * The row keys and/or ranges to read. If not specified, reads from all rows.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+     * <code>.google.bigtable.v2.RowSet rows = 2;</code>
      */
     public Builder mergeRows(com.google.bigtable.v2.RowSet value) {
       if (rowsBuilder_ == null) {
@@ -779,7 +779,7 @@ public  final class ReadRowsRequest extends
      * The row keys and/or ranges to read. If not specified, reads from all rows.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+     * <code>.google.bigtable.v2.RowSet rows = 2;</code>
      */
     public Builder clearRows() {
       if (rowsBuilder_ == null) {
@@ -797,7 +797,7 @@ public  final class ReadRowsRequest extends
      * The row keys and/or ranges to read. If not specified, reads from all rows.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+     * <code>.google.bigtable.v2.RowSet rows = 2;</code>
      */
     public com.google.bigtable.v2.RowSet.Builder getRowsBuilder() {
       
@@ -809,7 +809,7 @@ public  final class ReadRowsRequest extends
      * The row keys and/or ranges to read. If not specified, reads from all rows.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+     * <code>.google.bigtable.v2.RowSet rows = 2;</code>
      */
     public com.google.bigtable.v2.RowSetOrBuilder getRowsOrBuilder() {
       if (rowsBuilder_ != null) {
@@ -824,7 +824,7 @@ public  final class ReadRowsRequest extends
      * The row keys and/or ranges to read. If not specified, reads from all rows.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+     * <code>.google.bigtable.v2.RowSet rows = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowSet, com.google.bigtable.v2.RowSet.Builder, com.google.bigtable.v2.RowSetOrBuilder> 
@@ -849,7 +849,7 @@ public  final class ReadRowsRequest extends
      * reads the entirety of each row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
      */
     public boolean hasFilter() {
       return filterBuilder_ != null || filter_ != null;
@@ -860,7 +860,7 @@ public  final class ReadRowsRequest extends
      * reads the entirety of each row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
      */
     public com.google.bigtable.v2.RowFilter getFilter() {
       if (filterBuilder_ == null) {
@@ -875,7 +875,7 @@ public  final class ReadRowsRequest extends
      * reads the entirety of each row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
      */
     public Builder setFilter(com.google.bigtable.v2.RowFilter value) {
       if (filterBuilder_ == null) {
@@ -896,7 +896,7 @@ public  final class ReadRowsRequest extends
      * reads the entirety of each row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
      */
     public Builder setFilter(
         com.google.bigtable.v2.RowFilter.Builder builderForValue) {
@@ -915,7 +915,7 @@ public  final class ReadRowsRequest extends
      * reads the entirety of each row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
      */
     public Builder mergeFilter(com.google.bigtable.v2.RowFilter value) {
       if (filterBuilder_ == null) {
@@ -938,7 +938,7 @@ public  final class ReadRowsRequest extends
      * reads the entirety of each row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
      */
     public Builder clearFilter() {
       if (filterBuilder_ == null) {
@@ -957,7 +957,7 @@ public  final class ReadRowsRequest extends
      * reads the entirety of each row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
      */
     public com.google.bigtable.v2.RowFilter.Builder getFilterBuilder() {
       
@@ -970,7 +970,7 @@ public  final class ReadRowsRequest extends
      * reads the entirety of each row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
      */
     public com.google.bigtable.v2.RowFilterOrBuilder getFilterOrBuilder() {
       if (filterBuilder_ != null) {
@@ -986,7 +986,7 @@ public  final class ReadRowsRequest extends
      * reads the entirety of each row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder> 
@@ -1009,7 +1009,7 @@ public  final class ReadRowsRequest extends
      * default (zero) is to return all results.
      * </pre>
      *
-     * <code>optional int64 rows_limit = 4;</code>
+     * <code>int64 rows_limit = 4;</code>
      */
     public long getRowsLimit() {
       return rowsLimit_;
@@ -1020,7 +1020,7 @@ public  final class ReadRowsRequest extends
      * default (zero) is to return all results.
      * </pre>
      *
-     * <code>optional int64 rows_limit = 4;</code>
+     * <code>int64 rows_limit = 4;</code>
      */
     public Builder setRowsLimit(long value) {
       
@@ -1034,7 +1034,7 @@ public  final class ReadRowsRequest extends
      * default (zero) is to return all results.
      * </pre>
      *
-     * <code>optional int64 rows_limit = 4;</code>
+     * <code>int64 rows_limit = 4;</code>
      */
     public Builder clearRowsLimit() {
       

@@ -171,7 +171,7 @@ public  final class ValueRange extends
    * Used when giving an inclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_value_closed = 1;</code>
+   * <code>bytes start_value_closed = 1;</code>
    */
   public com.google.protobuf.ByteString getStartValueClosed() {
     if (startValueCase_ == 1) {
@@ -186,7 +186,7 @@ public  final class ValueRange extends
    * Used when giving an exclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_value_open = 2;</code>
+   * <code>bytes start_value_open = 2;</code>
    */
   public com.google.protobuf.ByteString getStartValueOpen() {
     if (startValueCase_ == 2) {
@@ -201,7 +201,7 @@ public  final class ValueRange extends
    * Used when giving an inclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_value_closed = 3;</code>
+   * <code>bytes end_value_closed = 3;</code>
    */
   public com.google.protobuf.ByteString getEndValueClosed() {
     if (endValueCase_ == 3) {
@@ -216,7 +216,7 @@ public  final class ValueRange extends
    * Used when giving an exclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_value_open = 4;</code>
+   * <code>bytes end_value_open = 4;</code>
    */
   public com.google.protobuf.ByteString getEndValueOpen() {
     if (endValueCase_ == 4) {
@@ -335,7 +335,7 @@ public  final class ValueRange extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     switch (startValueCase_) {
       case 1:
         hash = (37 * hash) + START_VALUE_CLOSED_FIELD_NUMBER;
@@ -650,7 +650,7 @@ public  final class ValueRange extends
      * Used when giving an inclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_value_closed = 1;</code>
+     * <code>bytes start_value_closed = 1;</code>
      */
     public com.google.protobuf.ByteString getStartValueClosed() {
       if (startValueCase_ == 1) {
@@ -663,7 +663,7 @@ public  final class ValueRange extends
      * Used when giving an inclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_value_closed = 1;</code>
+     * <code>bytes start_value_closed = 1;</code>
      */
     public Builder setStartValueClosed(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -679,7 +679,7 @@ public  final class ValueRange extends
      * Used when giving an inclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_value_closed = 1;</code>
+     * <code>bytes start_value_closed = 1;</code>
      */
     public Builder clearStartValueClosed() {
       if (startValueCase_ == 1) {
@@ -695,7 +695,7 @@ public  final class ValueRange extends
      * Used when giving an exclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_value_open = 2;</code>
+     * <code>bytes start_value_open = 2;</code>
      */
     public com.google.protobuf.ByteString getStartValueOpen() {
       if (startValueCase_ == 2) {
@@ -708,7 +708,7 @@ public  final class ValueRange extends
      * Used when giving an exclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_value_open = 2;</code>
+     * <code>bytes start_value_open = 2;</code>
      */
     public Builder setStartValueOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -724,7 +724,7 @@ public  final class ValueRange extends
      * Used when giving an exclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_value_open = 2;</code>
+     * <code>bytes start_value_open = 2;</code>
      */
     public Builder clearStartValueOpen() {
       if (startValueCase_ == 2) {
@@ -740,7 +740,7 @@ public  final class ValueRange extends
      * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_value_closed = 3;</code>
+     * <code>bytes end_value_closed = 3;</code>
      */
     public com.google.protobuf.ByteString getEndValueClosed() {
       if (endValueCase_ == 3) {
@@ -753,7 +753,7 @@ public  final class ValueRange extends
      * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_value_closed = 3;</code>
+     * <code>bytes end_value_closed = 3;</code>
      */
     public Builder setEndValueClosed(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -769,7 +769,7 @@ public  final class ValueRange extends
      * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_value_closed = 3;</code>
+     * <code>bytes end_value_closed = 3;</code>
      */
     public Builder clearEndValueClosed() {
       if (endValueCase_ == 3) {
@@ -785,7 +785,7 @@ public  final class ValueRange extends
      * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_value_open = 4;</code>
+     * <code>bytes end_value_open = 4;</code>
      */
     public com.google.protobuf.ByteString getEndValueOpen() {
       if (endValueCase_ == 4) {
@@ -798,7 +798,7 @@ public  final class ValueRange extends
      * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_value_open = 4;</code>
+     * <code>bytes end_value_open = 4;</code>
      */
     public Builder setEndValueOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -814,7 +814,7 @@ public  final class ValueRange extends
      * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_value_open = 4;</code>
+     * <code>bytes end_value_open = 4;</code>
      */
     public Builder clearEndValueOpen() {
       if (endValueCase_ == 4) {

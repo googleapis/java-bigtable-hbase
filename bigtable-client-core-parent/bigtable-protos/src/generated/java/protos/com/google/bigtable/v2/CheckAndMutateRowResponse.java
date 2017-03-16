@@ -83,7 +83,7 @@ public  final class CheckAndMutateRowResponse extends
    * the specified row.
    * </pre>
    *
-   * <code>optional bool predicate_matched = 1;</code>
+   * <code>bool predicate_matched = 1;</code>
    */
   public boolean getPredicateMatched() {
     return predicateMatched_;
@@ -142,7 +142,7 @@ public  final class CheckAndMutateRowResponse extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + PREDICATE_MATCHED_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getPredicateMatched());
@@ -370,7 +370,7 @@ public  final class CheckAndMutateRowResponse extends
      * the specified row.
      * </pre>
      *
-     * <code>optional bool predicate_matched = 1;</code>
+     * <code>bool predicate_matched = 1;</code>
      */
     public boolean getPredicateMatched() {
       return predicateMatched_;
@@ -381,7 +381,7 @@ public  final class CheckAndMutateRowResponse extends
      * the specified row.
      * </pre>
      *
-     * <code>optional bool predicate_matched = 1;</code>
+     * <code>bool predicate_matched = 1;</code>
      */
     public Builder setPredicateMatched(boolean value) {
       
@@ -395,7 +395,7 @@ public  final class CheckAndMutateRowResponse extends
      * the specified row.
      * </pre>
      *
-     * <code>optional bool predicate_matched = 1;</code>
+     * <code>bool predicate_matched = 1;</code>
      */
     public Builder clearPredicateMatched() {
       

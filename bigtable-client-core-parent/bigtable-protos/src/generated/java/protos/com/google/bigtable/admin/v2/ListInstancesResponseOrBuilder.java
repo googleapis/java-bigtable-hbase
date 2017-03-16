@@ -109,7 +109,7 @@ public interface ListInstancesResponseOrBuilder extends
    * page of results.
    * </pre>
    *
-   * <code>optional string next_page_token = 3;</code>
+   * <code>string next_page_token = 3;</code>
    */
   java.lang.String getNextPageToken();
   /**
@@ -119,7 +119,7 @@ public interface ListInstancesResponseOrBuilder extends
    * page of results.
    * </pre>
    *
-   * <code>optional string next_page_token = 3;</code>
+   * <code>string next_page_token = 3;</code>
    */
   com.google.protobuf.ByteString
       getNextPageTokenBytes();

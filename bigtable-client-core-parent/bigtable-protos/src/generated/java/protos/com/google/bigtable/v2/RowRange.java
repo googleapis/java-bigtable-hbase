@@ -171,7 +171,7 @@ public  final class RowRange extends
    * Used when giving an inclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_key_closed = 1;</code>
+   * <code>bytes start_key_closed = 1;</code>
    */
   public com.google.protobuf.ByteString getStartKeyClosed() {
     if (startKeyCase_ == 1) {
@@ -186,7 +186,7 @@ public  final class RowRange extends
    * Used when giving an exclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_key_open = 2;</code>
+   * <code>bytes start_key_open = 2;</code>
    */
   public com.google.protobuf.ByteString getStartKeyOpen() {
     if (startKeyCase_ == 2) {
@@ -201,7 +201,7 @@ public  final class RowRange extends
    * Used when giving an exclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_key_open = 3;</code>
+   * <code>bytes end_key_open = 3;</code>
    */
   public com.google.protobuf.ByteString getEndKeyOpen() {
     if (endKeyCase_ == 3) {
@@ -216,7 +216,7 @@ public  final class RowRange extends
    * Used when giving an inclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_key_closed = 4;</code>
+   * <code>bytes end_key_closed = 4;</code>
    */
   public com.google.protobuf.ByteString getEndKeyClosed() {
     if (endKeyCase_ == 4) {
@@ -335,7 +335,7 @@ public  final class RowRange extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     switch (startKeyCase_) {
       case 1:
         hash = (37 * hash) + START_KEY_CLOSED_FIELD_NUMBER;
@@ -650,7 +650,7 @@ public  final class RowRange extends
      * Used when giving an inclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_key_closed = 1;</code>
+     * <code>bytes start_key_closed = 1;</code>
      */
     public com.google.protobuf.ByteString getStartKeyClosed() {
       if (startKeyCase_ == 1) {
@@ -663,7 +663,7 @@ public  final class RowRange extends
      * Used when giving an inclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_key_closed = 1;</code>
+     * <code>bytes start_key_closed = 1;</code>
      */
     public Builder setStartKeyClosed(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -679,7 +679,7 @@ public  final class RowRange extends
      * Used when giving an inclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_key_closed = 1;</code>
+     * <code>bytes start_key_closed = 1;</code>
      */
     public Builder clearStartKeyClosed() {
       if (startKeyCase_ == 1) {
@@ -695,7 +695,7 @@ public  final class RowRange extends
      * Used when giving an exclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_key_open = 2;</code>
+     * <code>bytes start_key_open = 2;</code>
      */
     public com.google.protobuf.ByteString getStartKeyOpen() {
       if (startKeyCase_ == 2) {
@@ -708,7 +708,7 @@ public  final class RowRange extends
      * Used when giving an exclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_key_open = 2;</code>
+     * <code>bytes start_key_open = 2;</code>
      */
     public Builder setStartKeyOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -724,7 +724,7 @@ public  final class RowRange extends
      * Used when giving an exclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_key_open = 2;</code>
+     * <code>bytes start_key_open = 2;</code>
      */
     public Builder clearStartKeyOpen() {
       if (startKeyCase_ == 2) {
@@ -740,7 +740,7 @@ public  final class RowRange extends
      * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_key_open = 3;</code>
+     * <code>bytes end_key_open = 3;</code>
      */
     public com.google.protobuf.ByteString getEndKeyOpen() {
       if (endKeyCase_ == 3) {
@@ -753,7 +753,7 @@ public  final class RowRange extends
      * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_key_open = 3;</code>
+     * <code>bytes end_key_open = 3;</code>
      */
     public Builder setEndKeyOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -769,7 +769,7 @@ public  final class RowRange extends
      * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_key_open = 3;</code>
+     * <code>bytes end_key_open = 3;</code>
      */
     public Builder clearEndKeyOpen() {
       if (endKeyCase_ == 3) {
@@ -785,7 +785,7 @@ public  final class RowRange extends
      * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_key_closed = 4;</code>
+     * <code>bytes end_key_closed = 4;</code>
      */
     public com.google.protobuf.ByteString getEndKeyClosed() {
       if (endKeyCase_ == 4) {
@@ -798,7 +798,7 @@ public  final class RowRange extends
      * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_key_closed = 4;</code>
+     * <code>bytes end_key_closed = 4;</code>
      */
     public Builder setEndKeyClosed(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -814,7 +814,7 @@ public  final class RowRange extends
      * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_key_closed = 4;</code>
+     * <code>bytes end_key_closed = 4;</code>
      */
     public Builder clearEndKeyClosed() {
       if (endKeyCase_ == 4) {

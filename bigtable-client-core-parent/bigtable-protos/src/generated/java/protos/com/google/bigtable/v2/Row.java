@@ -99,7 +99,7 @@ public  final class Row extends
    * May contain any non-empty byte string up to 4KiB in length.
    * </pre>
    *
-   * <code>optional bytes key = 1;</code>
+   * <code>bytes key = 1;</code>
    */
   public com.google.protobuf.ByteString getKey() {
     return key_;
@@ -227,7 +227,7 @@ public  final class Row extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + KEY_FIELD_NUMBER;
     hash = (53 * hash) + getKey().hashCode();
     if (getFamiliesCount() > 0) {
@@ -506,7 +506,7 @@ public  final class Row extends
      * May contain any non-empty byte string up to 4KiB in length.
      * </pre>
      *
-     * <code>optional bytes key = 1;</code>
+     * <code>bytes key = 1;</code>
      */
     public com.google.protobuf.ByteString getKey() {
       return key_;
@@ -518,7 +518,7 @@ public  final class Row extends
      * May contain any non-empty byte string up to 4KiB in length.
      * </pre>
      *
-     * <code>optional bytes key = 1;</code>
+     * <code>bytes key = 1;</code>
      */
     public Builder setKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -536,7 +536,7 @@ public  final class Row extends
      * May contain any non-empty byte string up to 4KiB in length.
      * </pre>
      *
-     * <code>optional bytes key = 1;</code>
+     * <code>bytes key = 1;</code>
      */
     public Builder clearKey() {
       

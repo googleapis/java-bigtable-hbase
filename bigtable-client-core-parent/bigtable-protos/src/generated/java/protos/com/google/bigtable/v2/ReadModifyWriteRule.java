@@ -139,7 +139,7 @@ public  final class ReadModifyWriteRule extends
    * Must match `[-_.a-zA-Z0-9]+`
    * </pre>
    *
-   * <code>optional string family_name = 1;</code>
+   * <code>string family_name = 1;</code>
    */
   public java.lang.String getFamilyName() {
     java.lang.Object ref = familyName_;
@@ -159,7 +159,7 @@ public  final class ReadModifyWriteRule extends
    * Must match `[-_.a-zA-Z0-9]+`
    * </pre>
    *
-   * <code>optional string family_name = 1;</code>
+   * <code>string family_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getFamilyNameBytes() {
@@ -184,7 +184,7 @@ public  final class ReadModifyWriteRule extends
    * Can be any byte string, including the empty string.
    * </pre>
    *
-   * <code>optional bytes column_qualifier = 2;</code>
+   * <code>bytes column_qualifier = 2;</code>
    */
   public com.google.protobuf.ByteString getColumnQualifier() {
     return columnQualifier_;
@@ -198,7 +198,7 @@ public  final class ReadModifyWriteRule extends
    * empty string.
    * </pre>
    *
-   * <code>optional bytes append_value = 3;</code>
+   * <code>bytes append_value = 3;</code>
    */
   public com.google.protobuf.ByteString getAppendValue() {
     if (ruleCase_ == 3) {
@@ -216,7 +216,7 @@ public  final class ReadModifyWriteRule extends
    * as a 64-bit big-endian signed integer), or the entire request will fail.
    * </pre>
    *
-   * <code>optional int64 increment_amount = 4;</code>
+   * <code>int64 increment_amount = 4;</code>
    */
   public long getIncrementAmount() {
     if (ruleCase_ == 4) {
@@ -319,7 +319,7 @@ public  final class ReadModifyWriteRule extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + FAMILY_NAME_FIELD_NUMBER;
     hash = (53 * hash) + getFamilyName().hashCode();
     hash = (37 * hash) + COLUMN_QUALIFIER_FIELD_NUMBER;
@@ -606,7 +606,7 @@ public  final class ReadModifyWriteRule extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public java.lang.String getFamilyName() {
       java.lang.Object ref = familyName_;
@@ -626,7 +626,7 @@ public  final class ReadModifyWriteRule extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getFamilyNameBytes() {
@@ -647,7 +647,7 @@ public  final class ReadModifyWriteRule extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public Builder setFamilyName(
         java.lang.String value) {
@@ -665,7 +665,7 @@ public  final class ReadModifyWriteRule extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public Builder clearFamilyName() {
       
@@ -679,7 +679,7 @@ public  final class ReadModifyWriteRule extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public Builder setFamilyNameBytes(
         com.google.protobuf.ByteString value) {
@@ -701,7 +701,7 @@ public  final class ReadModifyWriteRule extends
      * Can be any byte string, including the empty string.
      * </pre>
      *
-     * <code>optional bytes column_qualifier = 2;</code>
+     * <code>bytes column_qualifier = 2;</code>
      */
     public com.google.protobuf.ByteString getColumnQualifier() {
       return columnQualifier_;
@@ -713,7 +713,7 @@ public  final class ReadModifyWriteRule extends
      * Can be any byte string, including the empty string.
      * </pre>
      *
-     * <code>optional bytes column_qualifier = 2;</code>
+     * <code>bytes column_qualifier = 2;</code>
      */
     public Builder setColumnQualifier(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -731,7 +731,7 @@ public  final class ReadModifyWriteRule extends
      * Can be any byte string, including the empty string.
      * </pre>
      *
-     * <code>optional bytes column_qualifier = 2;</code>
+     * <code>bytes column_qualifier = 2;</code>
      */
     public Builder clearColumnQualifier() {
       
@@ -747,7 +747,7 @@ public  final class ReadModifyWriteRule extends
      * empty string.
      * </pre>
      *
-     * <code>optional bytes append_value = 3;</code>
+     * <code>bytes append_value = 3;</code>
      */
     public com.google.protobuf.ByteString getAppendValue() {
       if (ruleCase_ == 3) {
@@ -762,7 +762,7 @@ public  final class ReadModifyWriteRule extends
      * empty string.
      * </pre>
      *
-     * <code>optional bytes append_value = 3;</code>
+     * <code>bytes append_value = 3;</code>
      */
     public Builder setAppendValue(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -780,7 +780,7 @@ public  final class ReadModifyWriteRule extends
      * empty string.
      * </pre>
      *
-     * <code>optional bytes append_value = 3;</code>
+     * <code>bytes append_value = 3;</code>
      */
     public Builder clearAppendValue() {
       if (ruleCase_ == 3) {
@@ -799,7 +799,7 @@ public  final class ReadModifyWriteRule extends
      * as a 64-bit big-endian signed integer), or the entire request will fail.
      * </pre>
      *
-     * <code>optional int64 increment_amount = 4;</code>
+     * <code>int64 increment_amount = 4;</code>
      */
     public long getIncrementAmount() {
       if (ruleCase_ == 4) {
@@ -815,7 +815,7 @@ public  final class ReadModifyWriteRule extends
      * as a 64-bit big-endian signed integer), or the entire request will fail.
      * </pre>
      *
-     * <code>optional int64 increment_amount = 4;</code>
+     * <code>int64 increment_amount = 4;</code>
      */
     public Builder setIncrementAmount(long value) {
       ruleCase_ = 4;
@@ -831,7 +831,7 @@ public  final class ReadModifyWriteRule extends
      * as a 64-bit big-endian signed integer), or the entire request will fail.
      * </pre>
      *
-     * <code>optional int64 increment_amount = 4;</code>
+     * <code>int64 increment_amount = 4;</code>
      */
     public Builder clearIncrementAmount() {
       if (ruleCase_ == 4) {

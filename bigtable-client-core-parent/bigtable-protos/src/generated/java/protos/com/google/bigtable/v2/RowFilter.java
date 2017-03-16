@@ -502,7 +502,7 @@ public  final class RowFilter extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (getFiltersCount() > 0) {
         hash = (37 * hash) + FILTERS_FIELD_NUMBER;
         hash = (53 * hash) + getFiltersList().hashCode();
@@ -1614,7 +1614,7 @@ public  final class RowFilter extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (getFiltersCount() > 0) {
         hash = (37 * hash) + FILTERS_FIELD_NUMBER;
         hash = (53 * hash) + getFiltersList().hashCode();
@@ -2641,7 +2641,7 @@ public  final class RowFilter extends
      * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      */
     boolean hasPredicateFilter();
     /**
@@ -2650,7 +2650,7 @@ public  final class RowFilter extends
      * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      */
     com.google.bigtable.v2.RowFilter getPredicateFilter();
     /**
@@ -2659,7 +2659,7 @@ public  final class RowFilter extends
      * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      */
     com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder();
 
@@ -2669,7 +2669,7 @@ public  final class RowFilter extends
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
      */
     boolean hasTrueFilter();
     /**
@@ -2678,7 +2678,7 @@ public  final class RowFilter extends
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
      */
     com.google.bigtable.v2.RowFilter getTrueFilter();
     /**
@@ -2687,7 +2687,7 @@ public  final class RowFilter extends
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
      */
     com.google.bigtable.v2.RowFilterOrBuilder getTrueFilterOrBuilder();
 
@@ -2698,7 +2698,7 @@ public  final class RowFilter extends
      * false case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
      */
     boolean hasFalseFilter();
     /**
@@ -2708,7 +2708,7 @@ public  final class RowFilter extends
      * false case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
      */
     com.google.bigtable.v2.RowFilter getFalseFilter();
     /**
@@ -2718,7 +2718,7 @@ public  final class RowFilter extends
      * false case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
      */
     com.google.bigtable.v2.RowFilterOrBuilder getFalseFilterOrBuilder();
   }
@@ -2840,7 +2840,7 @@ public  final class RowFilter extends
      * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      */
     public boolean hasPredicateFilter() {
       return predicateFilter_ != null;
@@ -2851,7 +2851,7 @@ public  final class RowFilter extends
      * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      */
     public com.google.bigtable.v2.RowFilter getPredicateFilter() {
       return predicateFilter_ == null ? com.google.bigtable.v2.RowFilter.getDefaultInstance() : predicateFilter_;
@@ -2862,7 +2862,7 @@ public  final class RowFilter extends
      * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      */
     public com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder() {
       return getPredicateFilter();
@@ -2876,7 +2876,7 @@ public  final class RowFilter extends
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
      */
     public boolean hasTrueFilter() {
       return trueFilter_ != null;
@@ -2887,7 +2887,7 @@ public  final class RowFilter extends
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
      */
     public com.google.bigtable.v2.RowFilter getTrueFilter() {
       return trueFilter_ == null ? com.google.bigtable.v2.RowFilter.getDefaultInstance() : trueFilter_;
@@ -2898,7 +2898,7 @@ public  final class RowFilter extends
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
      */
     public com.google.bigtable.v2.RowFilterOrBuilder getTrueFilterOrBuilder() {
       return getTrueFilter();
@@ -2913,7 +2913,7 @@ public  final class RowFilter extends
      * false case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
      */
     public boolean hasFalseFilter() {
       return falseFilter_ != null;
@@ -2925,7 +2925,7 @@ public  final class RowFilter extends
      * false case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
      */
     public com.google.bigtable.v2.RowFilter getFalseFilter() {
       return falseFilter_ == null ? com.google.bigtable.v2.RowFilter.getDefaultInstance() : falseFilter_;
@@ -2937,7 +2937,7 @@ public  final class RowFilter extends
      * false case.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
      */
     public com.google.bigtable.v2.RowFilterOrBuilder getFalseFilterOrBuilder() {
       return getFalseFilter();
@@ -3023,7 +3023,7 @@ public  final class RowFilter extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasPredicateFilter()) {
         hash = (37 * hash) + PREDICATE_FILTER_FIELD_NUMBER;
         hash = (53 * hash) + getPredicateFilter().hashCode();
@@ -3303,7 +3303,7 @@ public  final class RowFilter extends
        * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+       * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        */
       public boolean hasPredicateFilter() {
         return predicateFilterBuilder_ != null || predicateFilter_ != null;
@@ -3314,7 +3314,7 @@ public  final class RowFilter extends
        * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+       * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        */
       public com.google.bigtable.v2.RowFilter getPredicateFilter() {
         if (predicateFilterBuilder_ == null) {
@@ -3329,7 +3329,7 @@ public  final class RowFilter extends
        * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+       * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        */
       public Builder setPredicateFilter(com.google.bigtable.v2.RowFilter value) {
         if (predicateFilterBuilder_ == null) {
@@ -3350,7 +3350,7 @@ public  final class RowFilter extends
        * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+       * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        */
       public Builder setPredicateFilter(
           com.google.bigtable.v2.RowFilter.Builder builderForValue) {
@@ -3369,7 +3369,7 @@ public  final class RowFilter extends
        * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+       * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        */
       public Builder mergePredicateFilter(com.google.bigtable.v2.RowFilter value) {
         if (predicateFilterBuilder_ == null) {
@@ -3392,7 +3392,7 @@ public  final class RowFilter extends
        * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+       * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        */
       public Builder clearPredicateFilter() {
         if (predicateFilterBuilder_ == null) {
@@ -3411,7 +3411,7 @@ public  final class RowFilter extends
        * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+       * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        */
       public com.google.bigtable.v2.RowFilter.Builder getPredicateFilterBuilder() {
         
@@ -3424,7 +3424,7 @@ public  final class RowFilter extends
        * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+       * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        */
       public com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder() {
         if (predicateFilterBuilder_ != null) {
@@ -3440,7 +3440,7 @@ public  final class RowFilter extends
        * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
+       * <code>.google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder> 
@@ -3465,7 +3465,7 @@ public  final class RowFilter extends
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+       * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
        */
       public boolean hasTrueFilter() {
         return trueFilterBuilder_ != null || trueFilter_ != null;
@@ -3476,7 +3476,7 @@ public  final class RowFilter extends
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+       * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
        */
       public com.google.bigtable.v2.RowFilter getTrueFilter() {
         if (trueFilterBuilder_ == null) {
@@ -3491,7 +3491,7 @@ public  final class RowFilter extends
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+       * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
        */
       public Builder setTrueFilter(com.google.bigtable.v2.RowFilter value) {
         if (trueFilterBuilder_ == null) {
@@ -3512,7 +3512,7 @@ public  final class RowFilter extends
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+       * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
        */
       public Builder setTrueFilter(
           com.google.bigtable.v2.RowFilter.Builder builderForValue) {
@@ -3531,7 +3531,7 @@ public  final class RowFilter extends
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+       * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
        */
       public Builder mergeTrueFilter(com.google.bigtable.v2.RowFilter value) {
         if (trueFilterBuilder_ == null) {
@@ -3554,7 +3554,7 @@ public  final class RowFilter extends
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+       * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
        */
       public Builder clearTrueFilter() {
         if (trueFilterBuilder_ == null) {
@@ -3573,7 +3573,7 @@ public  final class RowFilter extends
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+       * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
        */
       public com.google.bigtable.v2.RowFilter.Builder getTrueFilterBuilder() {
         
@@ -3586,7 +3586,7 @@ public  final class RowFilter extends
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+       * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
        */
       public com.google.bigtable.v2.RowFilterOrBuilder getTrueFilterOrBuilder() {
         if (trueFilterBuilder_ != null) {
@@ -3602,7 +3602,7 @@ public  final class RowFilter extends
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
+       * <code>.google.bigtable.v2.RowFilter true_filter = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder> 
@@ -3628,7 +3628,7 @@ public  final class RowFilter extends
        * false case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+       * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
        */
       public boolean hasFalseFilter() {
         return falseFilterBuilder_ != null || falseFilter_ != null;
@@ -3640,7 +3640,7 @@ public  final class RowFilter extends
        * false case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+       * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
        */
       public com.google.bigtable.v2.RowFilter getFalseFilter() {
         if (falseFilterBuilder_ == null) {
@@ -3656,7 +3656,7 @@ public  final class RowFilter extends
        * false case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+       * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
        */
       public Builder setFalseFilter(com.google.bigtable.v2.RowFilter value) {
         if (falseFilterBuilder_ == null) {
@@ -3678,7 +3678,7 @@ public  final class RowFilter extends
        * false case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+       * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
        */
       public Builder setFalseFilter(
           com.google.bigtable.v2.RowFilter.Builder builderForValue) {
@@ -3698,7 +3698,7 @@ public  final class RowFilter extends
        * false case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+       * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
        */
       public Builder mergeFalseFilter(com.google.bigtable.v2.RowFilter value) {
         if (falseFilterBuilder_ == null) {
@@ -3722,7 +3722,7 @@ public  final class RowFilter extends
        * false case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+       * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
        */
       public Builder clearFalseFilter() {
         if (falseFilterBuilder_ == null) {
@@ -3742,7 +3742,7 @@ public  final class RowFilter extends
        * false case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+       * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
        */
       public com.google.bigtable.v2.RowFilter.Builder getFalseFilterBuilder() {
         
@@ -3756,7 +3756,7 @@ public  final class RowFilter extends
        * false case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+       * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
        */
       public com.google.bigtable.v2.RowFilterOrBuilder getFalseFilterOrBuilder() {
         if (falseFilterBuilder_ != null) {
@@ -3773,7 +3773,7 @@ public  final class RowFilter extends
        * false case.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
+       * <code>.google.bigtable.v2.RowFilter false_filter = 3;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder> 
@@ -3916,7 +3916,7 @@ public  final class RowFilter extends
    * narrowing the results.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+   * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
    */
   public com.google.bigtable.v2.RowFilter.Chain getChain() {
     if (filterCase_ == 1) {
@@ -3930,7 +3930,7 @@ public  final class RowFilter extends
    * narrowing the results.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+   * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
    */
   public com.google.bigtable.v2.RowFilter.ChainOrBuilder getChainOrBuilder() {
     if (filterCase_ == 1) {
@@ -3946,7 +3946,7 @@ public  final class RowFilter extends
    * results.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+   * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
    */
   public com.google.bigtable.v2.RowFilter.Interleave getInterleave() {
     if (filterCase_ == 2) {
@@ -3960,7 +3960,7 @@ public  final class RowFilter extends
    * results.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+   * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
    */
   public com.google.bigtable.v2.RowFilter.InterleaveOrBuilder getInterleaveOrBuilder() {
     if (filterCase_ == 2) {
@@ -3976,7 +3976,7 @@ public  final class RowFilter extends
    * a predicate RowFilter.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
    */
   public com.google.bigtable.v2.RowFilter.Condition getCondition() {
     if (filterCase_ == 3) {
@@ -3990,7 +3990,7 @@ public  final class RowFilter extends
    * a predicate RowFilter.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
    */
   public com.google.bigtable.v2.RowFilter.ConditionOrBuilder getConditionOrBuilder() {
     if (filterCase_ == 3) {
@@ -4058,7 +4058,7 @@ public  final class RowFilter extends
    * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
    * </pre>
    *
-   * <code>optional bool sink = 16;</code>
+   * <code>bool sink = 16;</code>
    */
   public boolean getSink() {
     if (filterCase_ == 16) {
@@ -4074,7 +4074,7 @@ public  final class RowFilter extends
    * leaving `filter` unset, but included for completeness.
    * </pre>
    *
-   * <code>optional bool pass_all_filter = 17;</code>
+   * <code>bool pass_all_filter = 17;</code>
    */
   public boolean getPassAllFilter() {
     if (filterCase_ == 17) {
@@ -4090,7 +4090,7 @@ public  final class RowFilter extends
    * disabling just part of a filter.
    * </pre>
    *
-   * <code>optional bool block_all_filter = 18;</code>
+   * <code>bool block_all_filter = 18;</code>
    */
   public boolean getBlockAllFilter() {
     if (filterCase_ == 18) {
@@ -4111,7 +4111,7 @@ public  final class RowFilter extends
    * binary key.
    * </pre>
    *
-   * <code>optional bytes row_key_regex_filter = 4;</code>
+   * <code>bytes row_key_regex_filter = 4;</code>
    */
   public com.google.protobuf.ByteString getRowKeyRegexFilter() {
     if (filterCase_ == 4) {
@@ -4127,7 +4127,7 @@ public  final class RowFilter extends
    * from the row with probability 1-p.
    * </pre>
    *
-   * <code>optional double row_sample_filter = 14;</code>
+   * <code>double row_sample_filter = 14;</code>
    */
   public double getRowSampleFilter() {
     if (filterCase_ == 14) {
@@ -4147,7 +4147,7 @@ public  final class RowFilter extends
    * column family names.
    * </pre>
    *
-   * <code>optional string family_name_regex_filter = 5;</code>
+   * <code>string family_name_regex_filter = 5;</code>
    */
   public java.lang.String getFamilyNameRegexFilter() {
     java.lang.Object ref = "";
@@ -4176,7 +4176,7 @@ public  final class RowFilter extends
    * column family names.
    * </pre>
    *
-   * <code>optional string family_name_regex_filter = 5;</code>
+   * <code>string family_name_regex_filter = 5;</code>
    */
   public com.google.protobuf.ByteString
       getFamilyNameRegexFilterBytes() {
@@ -4208,7 +4208,7 @@ public  final class RowFilter extends
    * present in a binary qualifier.
    * </pre>
    *
-   * <code>optional bytes column_qualifier_regex_filter = 6;</code>
+   * <code>bytes column_qualifier_regex_filter = 6;</code>
    */
   public com.google.protobuf.ByteString getColumnQualifierRegexFilter() {
     if (filterCase_ == 6) {
@@ -4223,7 +4223,7 @@ public  final class RowFilter extends
    * Matches only cells from columns within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+   * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
    */
   public com.google.bigtable.v2.ColumnRange getColumnRangeFilter() {
     if (filterCase_ == 7) {
@@ -4236,7 +4236,7 @@ public  final class RowFilter extends
    * Matches only cells from columns within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+   * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
    */
   public com.google.bigtable.v2.ColumnRangeOrBuilder getColumnRangeFilterOrBuilder() {
     if (filterCase_ == 7) {
@@ -4251,7 +4251,7 @@ public  final class RowFilter extends
    * Matches only cells with timestamps within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+   * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
    */
   public com.google.bigtable.v2.TimestampRange getTimestampRangeFilter() {
     if (filterCase_ == 8) {
@@ -4264,7 +4264,7 @@ public  final class RowFilter extends
    * Matches only cells with timestamps within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+   * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
    */
   public com.google.bigtable.v2.TimestampRangeOrBuilder getTimestampRangeFilterOrBuilder() {
     if (filterCase_ == 8) {
@@ -4283,7 +4283,7 @@ public  final class RowFilter extends
    * binary value.
    * </pre>
    *
-   * <code>optional bytes value_regex_filter = 9;</code>
+   * <code>bytes value_regex_filter = 9;</code>
    */
   public com.google.protobuf.ByteString getValueRegexFilter() {
     if (filterCase_ == 9) {
@@ -4298,7 +4298,7 @@ public  final class RowFilter extends
    * Matches only cells with values that fall within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+   * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
    */
   public com.google.bigtable.v2.ValueRange getValueRangeFilter() {
     if (filterCase_ == 15) {
@@ -4311,7 +4311,7 @@ public  final class RowFilter extends
    * Matches only cells with values that fall within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+   * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
    */
   public com.google.bigtable.v2.ValueRangeOrBuilder getValueRangeFilterOrBuilder() {
     if (filterCase_ == 15) {
@@ -4328,7 +4328,7 @@ public  final class RowFilter extends
    * each copy of the cell is counted separately.
    * </pre>
    *
-   * <code>optional int32 cells_per_row_offset_filter = 10;</code>
+   * <code>int32 cells_per_row_offset_filter = 10;</code>
    */
   public int getCellsPerRowOffsetFilter() {
     if (filterCase_ == 10) {
@@ -4345,7 +4345,7 @@ public  final class RowFilter extends
    * each copy of the cell is counted separately.
    * </pre>
    *
-   * <code>optional int32 cells_per_row_limit_filter = 11;</code>
+   * <code>int32 cells_per_row_limit_filter = 11;</code>
    */
   public int getCellsPerRowLimitFilter() {
     if (filterCase_ == 11) {
@@ -4365,7 +4365,7 @@ public  final class RowFilter extends
    * each copy of the cell is counted separately.
    * </pre>
    *
-   * <code>optional int32 cells_per_column_limit_filter = 12;</code>
+   * <code>int32 cells_per_column_limit_filter = 12;</code>
    */
   public int getCellsPerColumnLimitFilter() {
     if (filterCase_ == 12) {
@@ -4380,7 +4380,7 @@ public  final class RowFilter extends
    * Replaces each cell's value with the empty string.
    * </pre>
    *
-   * <code>optional bool strip_value_transformer = 13;</code>
+   * <code>bool strip_value_transformer = 13;</code>
    */
   public boolean getStripValueTransformer() {
     if (filterCase_ == 13) {
@@ -4405,7 +4405,7 @@ public  final class RowFilter extends
    * the future.
    * </pre>
    *
-   * <code>optional string apply_label_transformer = 19;</code>
+   * <code>string apply_label_transformer = 19;</code>
    */
   public java.lang.String getApplyLabelTransformer() {
     java.lang.Object ref = "";
@@ -4439,7 +4439,7 @@ public  final class RowFilter extends
    * the future.
    * </pre>
    *
-   * <code>optional string apply_label_transformer = 19;</code>
+   * <code>string apply_label_transformer = 19;</code>
    */
   public com.google.protobuf.ByteString
       getApplyLabelTransformerBytes() {
@@ -4742,7 +4742,7 @@ public  final class RowFilter extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     switch (filterCase_) {
       case 1:
         hash = (37 * hash) + CHAIN_FIELD_NUMBER;
@@ -5258,7 +5258,7 @@ public  final class RowFilter extends
      * narrowing the results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
      */
     public com.google.bigtable.v2.RowFilter.Chain getChain() {
       if (chainBuilder_ == null) {
@@ -5279,7 +5279,7 @@ public  final class RowFilter extends
      * narrowing the results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
      */
     public Builder setChain(com.google.bigtable.v2.RowFilter.Chain value) {
       if (chainBuilder_ == null) {
@@ -5300,7 +5300,7 @@ public  final class RowFilter extends
      * narrowing the results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
      */
     public Builder setChain(
         com.google.bigtable.v2.RowFilter.Chain.Builder builderForValue) {
@@ -5319,7 +5319,7 @@ public  final class RowFilter extends
      * narrowing the results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
      */
     public Builder mergeChain(com.google.bigtable.v2.RowFilter.Chain value) {
       if (chainBuilder_ == null) {
@@ -5346,7 +5346,7 @@ public  final class RowFilter extends
      * narrowing the results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
      */
     public Builder clearChain() {
       if (chainBuilder_ == null) {
@@ -5370,7 +5370,7 @@ public  final class RowFilter extends
      * narrowing the results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
      */
     public com.google.bigtable.v2.RowFilter.Chain.Builder getChainBuilder() {
       return getChainFieldBuilder().getBuilder();
@@ -5381,7 +5381,7 @@ public  final class RowFilter extends
      * narrowing the results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
      */
     public com.google.bigtable.v2.RowFilter.ChainOrBuilder getChainOrBuilder() {
       if ((filterCase_ == 1) && (chainBuilder_ != null)) {
@@ -5399,7 +5399,7 @@ public  final class RowFilter extends
      * narrowing the results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+     * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowFilter.Chain, com.google.bigtable.v2.RowFilter.Chain.Builder, com.google.bigtable.v2.RowFilter.ChainOrBuilder> 
@@ -5428,7 +5428,7 @@ public  final class RowFilter extends
      * results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
      */
     public com.google.bigtable.v2.RowFilter.Interleave getInterleave() {
       if (interleaveBuilder_ == null) {
@@ -5449,7 +5449,7 @@ public  final class RowFilter extends
      * results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
      */
     public Builder setInterleave(com.google.bigtable.v2.RowFilter.Interleave value) {
       if (interleaveBuilder_ == null) {
@@ -5470,7 +5470,7 @@ public  final class RowFilter extends
      * results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
      */
     public Builder setInterleave(
         com.google.bigtable.v2.RowFilter.Interleave.Builder builderForValue) {
@@ -5489,7 +5489,7 @@ public  final class RowFilter extends
      * results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
      */
     public Builder mergeInterleave(com.google.bigtable.v2.RowFilter.Interleave value) {
       if (interleaveBuilder_ == null) {
@@ -5516,7 +5516,7 @@ public  final class RowFilter extends
      * results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
      */
     public Builder clearInterleave() {
       if (interleaveBuilder_ == null) {
@@ -5540,7 +5540,7 @@ public  final class RowFilter extends
      * results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
      */
     public com.google.bigtable.v2.RowFilter.Interleave.Builder getInterleaveBuilder() {
       return getInterleaveFieldBuilder().getBuilder();
@@ -5551,7 +5551,7 @@ public  final class RowFilter extends
      * results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
      */
     public com.google.bigtable.v2.RowFilter.InterleaveOrBuilder getInterleaveOrBuilder() {
       if ((filterCase_ == 2) && (interleaveBuilder_ != null)) {
@@ -5569,7 +5569,7 @@ public  final class RowFilter extends
      * results.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+     * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowFilter.Interleave, com.google.bigtable.v2.RowFilter.Interleave.Builder, com.google.bigtable.v2.RowFilter.InterleaveOrBuilder> 
@@ -5598,7 +5598,7 @@ public  final class RowFilter extends
      * a predicate RowFilter.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
      */
     public com.google.bigtable.v2.RowFilter.Condition getCondition() {
       if (conditionBuilder_ == null) {
@@ -5619,7 +5619,7 @@ public  final class RowFilter extends
      * a predicate RowFilter.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
      */
     public Builder setCondition(com.google.bigtable.v2.RowFilter.Condition value) {
       if (conditionBuilder_ == null) {
@@ -5640,7 +5640,7 @@ public  final class RowFilter extends
      * a predicate RowFilter.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
      */
     public Builder setCondition(
         com.google.bigtable.v2.RowFilter.Condition.Builder builderForValue) {
@@ -5659,7 +5659,7 @@ public  final class RowFilter extends
      * a predicate RowFilter.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
      */
     public Builder mergeCondition(com.google.bigtable.v2.RowFilter.Condition value) {
       if (conditionBuilder_ == null) {
@@ -5686,7 +5686,7 @@ public  final class RowFilter extends
      * a predicate RowFilter.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
      */
     public Builder clearCondition() {
       if (conditionBuilder_ == null) {
@@ -5710,7 +5710,7 @@ public  final class RowFilter extends
      * a predicate RowFilter.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
      */
     public com.google.bigtable.v2.RowFilter.Condition.Builder getConditionBuilder() {
       return getConditionFieldBuilder().getBuilder();
@@ -5721,7 +5721,7 @@ public  final class RowFilter extends
      * a predicate RowFilter.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
      */
     public com.google.bigtable.v2.RowFilter.ConditionOrBuilder getConditionOrBuilder() {
       if ((filterCase_ == 3) && (conditionBuilder_ != null)) {
@@ -5739,7 +5739,7 @@ public  final class RowFilter extends
      * a predicate RowFilter.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+     * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowFilter.Condition, com.google.bigtable.v2.RowFilter.Condition.Builder, com.google.bigtable.v2.RowFilter.ConditionOrBuilder> 
@@ -5818,7 +5818,7 @@ public  final class RowFilter extends
      * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
      * </pre>
      *
-     * <code>optional bool sink = 16;</code>
+     * <code>bool sink = 16;</code>
      */
     public boolean getSink() {
       if (filterCase_ == 16) {
@@ -5884,7 +5884,7 @@ public  final class RowFilter extends
      * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
      * </pre>
      *
-     * <code>optional bool sink = 16;</code>
+     * <code>bool sink = 16;</code>
      */
     public Builder setSink(boolean value) {
       filterCase_ = 16;
@@ -5950,7 +5950,7 @@ public  final class RowFilter extends
      * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
      * </pre>
      *
-     * <code>optional bool sink = 16;</code>
+     * <code>bool sink = 16;</code>
      */
     public Builder clearSink() {
       if (filterCase_ == 16) {
@@ -5967,7 +5967,7 @@ public  final class RowFilter extends
      * leaving `filter` unset, but included for completeness.
      * </pre>
      *
-     * <code>optional bool pass_all_filter = 17;</code>
+     * <code>bool pass_all_filter = 17;</code>
      */
     public boolean getPassAllFilter() {
       if (filterCase_ == 17) {
@@ -5981,7 +5981,7 @@ public  final class RowFilter extends
      * leaving `filter` unset, but included for completeness.
      * </pre>
      *
-     * <code>optional bool pass_all_filter = 17;</code>
+     * <code>bool pass_all_filter = 17;</code>
      */
     public Builder setPassAllFilter(boolean value) {
       filterCase_ = 17;
@@ -5995,7 +5995,7 @@ public  final class RowFilter extends
      * leaving `filter` unset, but included for completeness.
      * </pre>
      *
-     * <code>optional bool pass_all_filter = 17;</code>
+     * <code>bool pass_all_filter = 17;</code>
      */
     public Builder clearPassAllFilter() {
       if (filterCase_ == 17) {
@@ -6012,7 +6012,7 @@ public  final class RowFilter extends
      * disabling just part of a filter.
      * </pre>
      *
-     * <code>optional bool block_all_filter = 18;</code>
+     * <code>bool block_all_filter = 18;</code>
      */
     public boolean getBlockAllFilter() {
       if (filterCase_ == 18) {
@@ -6026,7 +6026,7 @@ public  final class RowFilter extends
      * disabling just part of a filter.
      * </pre>
      *
-     * <code>optional bool block_all_filter = 18;</code>
+     * <code>bool block_all_filter = 18;</code>
      */
     public Builder setBlockAllFilter(boolean value) {
       filterCase_ = 18;
@@ -6040,7 +6040,7 @@ public  final class RowFilter extends
      * disabling just part of a filter.
      * </pre>
      *
-     * <code>optional bool block_all_filter = 18;</code>
+     * <code>bool block_all_filter = 18;</code>
      */
     public Builder clearBlockAllFilter() {
       if (filterCase_ == 18) {
@@ -6062,7 +6062,7 @@ public  final class RowFilter extends
      * binary key.
      * </pre>
      *
-     * <code>optional bytes row_key_regex_filter = 4;</code>
+     * <code>bytes row_key_regex_filter = 4;</code>
      */
     public com.google.protobuf.ByteString getRowKeyRegexFilter() {
       if (filterCase_ == 4) {
@@ -6081,7 +6081,7 @@ public  final class RowFilter extends
      * binary key.
      * </pre>
      *
-     * <code>optional bytes row_key_regex_filter = 4;</code>
+     * <code>bytes row_key_regex_filter = 4;</code>
      */
     public Builder setRowKeyRegexFilter(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -6103,7 +6103,7 @@ public  final class RowFilter extends
      * binary key.
      * </pre>
      *
-     * <code>optional bytes row_key_regex_filter = 4;</code>
+     * <code>bytes row_key_regex_filter = 4;</code>
      */
     public Builder clearRowKeyRegexFilter() {
       if (filterCase_ == 4) {
@@ -6120,7 +6120,7 @@ public  final class RowFilter extends
      * from the row with probability 1-p.
      * </pre>
      *
-     * <code>optional double row_sample_filter = 14;</code>
+     * <code>double row_sample_filter = 14;</code>
      */
     public double getRowSampleFilter() {
       if (filterCase_ == 14) {
@@ -6134,7 +6134,7 @@ public  final class RowFilter extends
      * from the row with probability 1-p.
      * </pre>
      *
-     * <code>optional double row_sample_filter = 14;</code>
+     * <code>double row_sample_filter = 14;</code>
      */
     public Builder setRowSampleFilter(double value) {
       filterCase_ = 14;
@@ -6148,7 +6148,7 @@ public  final class RowFilter extends
      * from the row with probability 1-p.
      * </pre>
      *
-     * <code>optional double row_sample_filter = 14;</code>
+     * <code>double row_sample_filter = 14;</code>
      */
     public Builder clearRowSampleFilter() {
       if (filterCase_ == 14) {
@@ -6169,7 +6169,7 @@ public  final class RowFilter extends
      * column family names.
      * </pre>
      *
-     * <code>optional string family_name_regex_filter = 5;</code>
+     * <code>string family_name_regex_filter = 5;</code>
      */
     public java.lang.String getFamilyNameRegexFilter() {
       java.lang.Object ref = "";
@@ -6198,7 +6198,7 @@ public  final class RowFilter extends
      * column family names.
      * </pre>
      *
-     * <code>optional string family_name_regex_filter = 5;</code>
+     * <code>string family_name_regex_filter = 5;</code>
      */
     public com.google.protobuf.ByteString
         getFamilyNameRegexFilterBytes() {
@@ -6228,7 +6228,7 @@ public  final class RowFilter extends
      * column family names.
      * </pre>
      *
-     * <code>optional string family_name_regex_filter = 5;</code>
+     * <code>string family_name_regex_filter = 5;</code>
      */
     public Builder setFamilyNameRegexFilter(
         java.lang.String value) {
@@ -6250,7 +6250,7 @@ public  final class RowFilter extends
      * column family names.
      * </pre>
      *
-     * <code>optional string family_name_regex_filter = 5;</code>
+     * <code>string family_name_regex_filter = 5;</code>
      */
     public Builder clearFamilyNameRegexFilter() {
       if (filterCase_ == 5) {
@@ -6270,7 +6270,7 @@ public  final class RowFilter extends
      * column family names.
      * </pre>
      *
-     * <code>optional string family_name_regex_filter = 5;</code>
+     * <code>string family_name_regex_filter = 5;</code>
      */
     public Builder setFamilyNameRegexFilterBytes(
         com.google.protobuf.ByteString value) {
@@ -6294,7 +6294,7 @@ public  final class RowFilter extends
      * present in a binary qualifier.
      * </pre>
      *
-     * <code>optional bytes column_qualifier_regex_filter = 6;</code>
+     * <code>bytes column_qualifier_regex_filter = 6;</code>
      */
     public com.google.protobuf.ByteString getColumnQualifierRegexFilter() {
       if (filterCase_ == 6) {
@@ -6312,7 +6312,7 @@ public  final class RowFilter extends
      * present in a binary qualifier.
      * </pre>
      *
-     * <code>optional bytes column_qualifier_regex_filter = 6;</code>
+     * <code>bytes column_qualifier_regex_filter = 6;</code>
      */
     public Builder setColumnQualifierRegexFilter(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -6333,7 +6333,7 @@ public  final class RowFilter extends
      * present in a binary qualifier.
      * </pre>
      *
-     * <code>optional bytes column_qualifier_regex_filter = 6;</code>
+     * <code>bytes column_qualifier_regex_filter = 6;</code>
      */
     public Builder clearColumnQualifierRegexFilter() {
       if (filterCase_ == 6) {
@@ -6351,7 +6351,7 @@ public  final class RowFilter extends
      * Matches only cells from columns within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+     * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
      */
     public com.google.bigtable.v2.ColumnRange getColumnRangeFilter() {
       if (columnRangeFilterBuilder_ == null) {
@@ -6371,7 +6371,7 @@ public  final class RowFilter extends
      * Matches only cells from columns within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+     * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
      */
     public Builder setColumnRangeFilter(com.google.bigtable.v2.ColumnRange value) {
       if (columnRangeFilterBuilder_ == null) {
@@ -6391,7 +6391,7 @@ public  final class RowFilter extends
      * Matches only cells from columns within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+     * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
      */
     public Builder setColumnRangeFilter(
         com.google.bigtable.v2.ColumnRange.Builder builderForValue) {
@@ -6409,7 +6409,7 @@ public  final class RowFilter extends
      * Matches only cells from columns within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+     * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
      */
     public Builder mergeColumnRangeFilter(com.google.bigtable.v2.ColumnRange value) {
       if (columnRangeFilterBuilder_ == null) {
@@ -6435,7 +6435,7 @@ public  final class RowFilter extends
      * Matches only cells from columns within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+     * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
      */
     public Builder clearColumnRangeFilter() {
       if (columnRangeFilterBuilder_ == null) {
@@ -6458,7 +6458,7 @@ public  final class RowFilter extends
      * Matches only cells from columns within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+     * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
      */
     public com.google.bigtable.v2.ColumnRange.Builder getColumnRangeFilterBuilder() {
       return getColumnRangeFilterFieldBuilder().getBuilder();
@@ -6468,7 +6468,7 @@ public  final class RowFilter extends
      * Matches only cells from columns within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+     * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
      */
     public com.google.bigtable.v2.ColumnRangeOrBuilder getColumnRangeFilterOrBuilder() {
       if ((filterCase_ == 7) && (columnRangeFilterBuilder_ != null)) {
@@ -6485,7 +6485,7 @@ public  final class RowFilter extends
      * Matches only cells from columns within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+     * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.ColumnRange, com.google.bigtable.v2.ColumnRange.Builder, com.google.bigtable.v2.ColumnRangeOrBuilder> 
@@ -6513,7 +6513,7 @@ public  final class RowFilter extends
      * Matches only cells with timestamps within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+     * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
      */
     public com.google.bigtable.v2.TimestampRange getTimestampRangeFilter() {
       if (timestampRangeFilterBuilder_ == null) {
@@ -6533,7 +6533,7 @@ public  final class RowFilter extends
      * Matches only cells with timestamps within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+     * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
      */
     public Builder setTimestampRangeFilter(com.google.bigtable.v2.TimestampRange value) {
       if (timestampRangeFilterBuilder_ == null) {
@@ -6553,7 +6553,7 @@ public  final class RowFilter extends
      * Matches only cells with timestamps within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+     * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
      */
     public Builder setTimestampRangeFilter(
         com.google.bigtable.v2.TimestampRange.Builder builderForValue) {
@@ -6571,7 +6571,7 @@ public  final class RowFilter extends
      * Matches only cells with timestamps within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+     * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
      */
     public Builder mergeTimestampRangeFilter(com.google.bigtable.v2.TimestampRange value) {
       if (timestampRangeFilterBuilder_ == null) {
@@ -6597,7 +6597,7 @@ public  final class RowFilter extends
      * Matches only cells with timestamps within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+     * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
      */
     public Builder clearTimestampRangeFilter() {
       if (timestampRangeFilterBuilder_ == null) {
@@ -6620,7 +6620,7 @@ public  final class RowFilter extends
      * Matches only cells with timestamps within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+     * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
      */
     public com.google.bigtable.v2.TimestampRange.Builder getTimestampRangeFilterBuilder() {
       return getTimestampRangeFilterFieldBuilder().getBuilder();
@@ -6630,7 +6630,7 @@ public  final class RowFilter extends
      * Matches only cells with timestamps within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+     * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
      */
     public com.google.bigtable.v2.TimestampRangeOrBuilder getTimestampRangeFilterOrBuilder() {
       if ((filterCase_ == 8) && (timestampRangeFilterBuilder_ != null)) {
@@ -6647,7 +6647,7 @@ public  final class RowFilter extends
      * Matches only cells with timestamps within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+     * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.TimestampRange, com.google.bigtable.v2.TimestampRange.Builder, com.google.bigtable.v2.TimestampRangeOrBuilder> 
@@ -6677,7 +6677,7 @@ public  final class RowFilter extends
      * binary value.
      * </pre>
      *
-     * <code>optional bytes value_regex_filter = 9;</code>
+     * <code>bytes value_regex_filter = 9;</code>
      */
     public com.google.protobuf.ByteString getValueRegexFilter() {
       if (filterCase_ == 9) {
@@ -6694,7 +6694,7 @@ public  final class RowFilter extends
      * binary value.
      * </pre>
      *
-     * <code>optional bytes value_regex_filter = 9;</code>
+     * <code>bytes value_regex_filter = 9;</code>
      */
     public Builder setValueRegexFilter(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -6714,7 +6714,7 @@ public  final class RowFilter extends
      * binary value.
      * </pre>
      *
-     * <code>optional bytes value_regex_filter = 9;</code>
+     * <code>bytes value_regex_filter = 9;</code>
      */
     public Builder clearValueRegexFilter() {
       if (filterCase_ == 9) {
@@ -6732,7 +6732,7 @@ public  final class RowFilter extends
      * Matches only cells with values that fall within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+     * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
      */
     public com.google.bigtable.v2.ValueRange getValueRangeFilter() {
       if (valueRangeFilterBuilder_ == null) {
@@ -6752,7 +6752,7 @@ public  final class RowFilter extends
      * Matches only cells with values that fall within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+     * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
      */
     public Builder setValueRangeFilter(com.google.bigtable.v2.ValueRange value) {
       if (valueRangeFilterBuilder_ == null) {
@@ -6772,7 +6772,7 @@ public  final class RowFilter extends
      * Matches only cells with values that fall within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+     * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
      */
     public Builder setValueRangeFilter(
         com.google.bigtable.v2.ValueRange.Builder builderForValue) {
@@ -6790,7 +6790,7 @@ public  final class RowFilter extends
      * Matches only cells with values that fall within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+     * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
      */
     public Builder mergeValueRangeFilter(com.google.bigtable.v2.ValueRange value) {
       if (valueRangeFilterBuilder_ == null) {
@@ -6816,7 +6816,7 @@ public  final class RowFilter extends
      * Matches only cells with values that fall within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+     * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
      */
     public Builder clearValueRangeFilter() {
       if (valueRangeFilterBuilder_ == null) {
@@ -6839,7 +6839,7 @@ public  final class RowFilter extends
      * Matches only cells with values that fall within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+     * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
      */
     public com.google.bigtable.v2.ValueRange.Builder getValueRangeFilterBuilder() {
       return getValueRangeFilterFieldBuilder().getBuilder();
@@ -6849,7 +6849,7 @@ public  final class RowFilter extends
      * Matches only cells with values that fall within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+     * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
      */
     public com.google.bigtable.v2.ValueRangeOrBuilder getValueRangeFilterOrBuilder() {
       if ((filterCase_ == 15) && (valueRangeFilterBuilder_ != null)) {
@@ -6866,7 +6866,7 @@ public  final class RowFilter extends
      * Matches only cells with values that fall within the given range.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+     * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.ValueRange, com.google.bigtable.v2.ValueRange.Builder, com.google.bigtable.v2.ValueRangeOrBuilder> 
@@ -6894,7 +6894,7 @@ public  final class RowFilter extends
      * each copy of the cell is counted separately.
      * </pre>
      *
-     * <code>optional int32 cells_per_row_offset_filter = 10;</code>
+     * <code>int32 cells_per_row_offset_filter = 10;</code>
      */
     public int getCellsPerRowOffsetFilter() {
       if (filterCase_ == 10) {
@@ -6909,7 +6909,7 @@ public  final class RowFilter extends
      * each copy of the cell is counted separately.
      * </pre>
      *
-     * <code>optional int32 cells_per_row_offset_filter = 10;</code>
+     * <code>int32 cells_per_row_offset_filter = 10;</code>
      */
     public Builder setCellsPerRowOffsetFilter(int value) {
       filterCase_ = 10;
@@ -6924,7 +6924,7 @@ public  final class RowFilter extends
      * each copy of the cell is counted separately.
      * </pre>
      *
-     * <code>optional int32 cells_per_row_offset_filter = 10;</code>
+     * <code>int32 cells_per_row_offset_filter = 10;</code>
      */
     public Builder clearCellsPerRowOffsetFilter() {
       if (filterCase_ == 10) {
@@ -6942,7 +6942,7 @@ public  final class RowFilter extends
      * each copy of the cell is counted separately.
      * </pre>
      *
-     * <code>optional int32 cells_per_row_limit_filter = 11;</code>
+     * <code>int32 cells_per_row_limit_filter = 11;</code>
      */
     public int getCellsPerRowLimitFilter() {
       if (filterCase_ == 11) {
@@ -6957,7 +6957,7 @@ public  final class RowFilter extends
      * each copy of the cell is counted separately.
      * </pre>
      *
-     * <code>optional int32 cells_per_row_limit_filter = 11;</code>
+     * <code>int32 cells_per_row_limit_filter = 11;</code>
      */
     public Builder setCellsPerRowLimitFilter(int value) {
       filterCase_ = 11;
@@ -6972,7 +6972,7 @@ public  final class RowFilter extends
      * each copy of the cell is counted separately.
      * </pre>
      *
-     * <code>optional int32 cells_per_row_limit_filter = 11;</code>
+     * <code>int32 cells_per_row_limit_filter = 11;</code>
      */
     public Builder clearCellsPerRowLimitFilter() {
       if (filterCase_ == 11) {
@@ -6993,7 +6993,7 @@ public  final class RowFilter extends
      * each copy of the cell is counted separately.
      * </pre>
      *
-     * <code>optional int32 cells_per_column_limit_filter = 12;</code>
+     * <code>int32 cells_per_column_limit_filter = 12;</code>
      */
     public int getCellsPerColumnLimitFilter() {
       if (filterCase_ == 12) {
@@ -7011,7 +7011,7 @@ public  final class RowFilter extends
      * each copy of the cell is counted separately.
      * </pre>
      *
-     * <code>optional int32 cells_per_column_limit_filter = 12;</code>
+     * <code>int32 cells_per_column_limit_filter = 12;</code>
      */
     public Builder setCellsPerColumnLimitFilter(int value) {
       filterCase_ = 12;
@@ -7029,7 +7029,7 @@ public  final class RowFilter extends
      * each copy of the cell is counted separately.
      * </pre>
      *
-     * <code>optional int32 cells_per_column_limit_filter = 12;</code>
+     * <code>int32 cells_per_column_limit_filter = 12;</code>
      */
     public Builder clearCellsPerColumnLimitFilter() {
       if (filterCase_ == 12) {
@@ -7045,7 +7045,7 @@ public  final class RowFilter extends
      * Replaces each cell's value with the empty string.
      * </pre>
      *
-     * <code>optional bool strip_value_transformer = 13;</code>
+     * <code>bool strip_value_transformer = 13;</code>
      */
     public boolean getStripValueTransformer() {
       if (filterCase_ == 13) {
@@ -7058,7 +7058,7 @@ public  final class RowFilter extends
      * Replaces each cell's value with the empty string.
      * </pre>
      *
-     * <code>optional bool strip_value_transformer = 13;</code>
+     * <code>bool strip_value_transformer = 13;</code>
      */
     public Builder setStripValueTransformer(boolean value) {
       filterCase_ = 13;
@@ -7071,7 +7071,7 @@ public  final class RowFilter extends
      * Replaces each cell's value with the empty string.
      * </pre>
      *
-     * <code>optional bool strip_value_transformer = 13;</code>
+     * <code>bool strip_value_transformer = 13;</code>
      */
     public Builder clearStripValueTransformer() {
       if (filterCase_ == 13) {
@@ -7097,7 +7097,7 @@ public  final class RowFilter extends
      * the future.
      * </pre>
      *
-     * <code>optional string apply_label_transformer = 19;</code>
+     * <code>string apply_label_transformer = 19;</code>
      */
     public java.lang.String getApplyLabelTransformer() {
       java.lang.Object ref = "";
@@ -7131,7 +7131,7 @@ public  final class RowFilter extends
      * the future.
      * </pre>
      *
-     * <code>optional string apply_label_transformer = 19;</code>
+     * <code>string apply_label_transformer = 19;</code>
      */
     public com.google.protobuf.ByteString
         getApplyLabelTransformerBytes() {
@@ -7166,7 +7166,7 @@ public  final class RowFilter extends
      * the future.
      * </pre>
      *
-     * <code>optional string apply_label_transformer = 19;</code>
+     * <code>string apply_label_transformer = 19;</code>
      */
     public Builder setApplyLabelTransformer(
         java.lang.String value) {
@@ -7193,7 +7193,7 @@ public  final class RowFilter extends
      * the future.
      * </pre>
      *
-     * <code>optional string apply_label_transformer = 19;</code>
+     * <code>string apply_label_transformer = 19;</code>
      */
     public Builder clearApplyLabelTransformer() {
       if (filterCase_ == 19) {
@@ -7218,7 +7218,7 @@ public  final class RowFilter extends
      * the future.
      * </pre>
      *
-     * <code>optional string apply_label_transformer = 19;</code>
+     * <code>string apply_label_transformer = 19;</code>
      */
     public Builder setApplyLabelTransformerBytes(
         com.google.protobuf.ByteString value) {

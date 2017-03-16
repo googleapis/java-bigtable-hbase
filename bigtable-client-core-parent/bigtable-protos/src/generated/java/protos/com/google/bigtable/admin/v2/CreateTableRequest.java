@@ -118,7 +118,7 @@ public  final class CreateTableRequest extends
      * Row key to use as an initial tablet boundary.
      * </pre>
      *
-     * <code>optional bytes key = 1;</code>
+     * <code>bytes key = 1;</code>
      */
     com.google.protobuf.ByteString getKey();
   }
@@ -201,7 +201,7 @@ public  final class CreateTableRequest extends
      * Row key to use as an initial tablet boundary.
      * </pre>
      *
-     * <code>optional bytes key = 1;</code>
+     * <code>bytes key = 1;</code>
      */
     public com.google.protobuf.ByteString getKey() {
       return key_;
@@ -260,7 +260,7 @@ public  final class CreateTableRequest extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + KEY_FIELD_NUMBER;
       hash = (53 * hash) + getKey().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -486,7 +486,7 @@ public  final class CreateTableRequest extends
        * Row key to use as an initial tablet boundary.
        * </pre>
        *
-       * <code>optional bytes key = 1;</code>
+       * <code>bytes key = 1;</code>
        */
       public com.google.protobuf.ByteString getKey() {
         return key_;
@@ -496,7 +496,7 @@ public  final class CreateTableRequest extends
        * Row key to use as an initial tablet boundary.
        * </pre>
        *
-       * <code>optional bytes key = 1;</code>
+       * <code>bytes key = 1;</code>
        */
       public Builder setKey(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -512,7 +512,7 @@ public  final class CreateTableRequest extends
        * Row key to use as an initial tablet boundary.
        * </pre>
        *
-       * <code>optional bytes key = 1;</code>
+       * <code>bytes key = 1;</code>
        */
       public Builder clearKey() {
         
@@ -578,7 +578,7 @@ public  final class CreateTableRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -598,7 +598,7 @@ public  final class CreateTableRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -622,7 +622,7 @@ public  final class CreateTableRequest extends
    * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
    * </pre>
    *
-   * <code>optional string table_id = 2;</code>
+   * <code>string table_id = 2;</code>
    */
   public java.lang.String getTableId() {
     java.lang.Object ref = tableId_;
@@ -642,7 +642,7 @@ public  final class CreateTableRequest extends
    * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
    * </pre>
    *
-   * <code>optional string table_id = 2;</code>
+   * <code>string table_id = 2;</code>
    */
   public com.google.protobuf.ByteString
       getTableIdBytes() {
@@ -665,7 +665,7 @@ public  final class CreateTableRequest extends
    * The Table to create.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+   * <code>.google.bigtable.admin.v2.Table table = 3;</code>
    */
   public boolean hasTable() {
     return table_ != null;
@@ -675,7 +675,7 @@ public  final class CreateTableRequest extends
    * The Table to create.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+   * <code>.google.bigtable.admin.v2.Table table = 3;</code>
    */
   public com.google.bigtable.admin.v2.Table getTable() {
     return table_ == null ? com.google.bigtable.admin.v2.Table.getDefaultInstance() : table_;
@@ -685,7 +685,7 @@ public  final class CreateTableRequest extends
    * The Table to create.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+   * <code>.google.bigtable.admin.v2.Table table = 3;</code>
    */
   public com.google.bigtable.admin.v2.TableOrBuilder getTableOrBuilder() {
     return getTable();
@@ -892,7 +892,7 @@ public  final class CreateTableRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + PARENT_FIELD_NUMBER;
     hash = (53 * hash) + getParent().hashCode();
     hash = (37 * hash) + TABLE_ID_FIELD_NUMBER;
@@ -1197,7 +1197,7 @@ public  final class CreateTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -1217,7 +1217,7 @@ public  final class CreateTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -1238,7 +1238,7 @@ public  final class CreateTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -1256,7 +1256,7 @@ public  final class CreateTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -1270,7 +1270,7 @@ public  final class CreateTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -1291,7 +1291,7 @@ public  final class CreateTableRequest extends
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
      *
-     * <code>optional string table_id = 2;</code>
+     * <code>string table_id = 2;</code>
      */
     public java.lang.String getTableId() {
       java.lang.Object ref = tableId_;
@@ -1311,7 +1311,7 @@ public  final class CreateTableRequest extends
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
      *
-     * <code>optional string table_id = 2;</code>
+     * <code>string table_id = 2;</code>
      */
     public com.google.protobuf.ByteString
         getTableIdBytes() {
@@ -1332,7 +1332,7 @@ public  final class CreateTableRequest extends
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
      *
-     * <code>optional string table_id = 2;</code>
+     * <code>string table_id = 2;</code>
      */
     public Builder setTableId(
         java.lang.String value) {
@@ -1350,7 +1350,7 @@ public  final class CreateTableRequest extends
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
      *
-     * <code>optional string table_id = 2;</code>
+     * <code>string table_id = 2;</code>
      */
     public Builder clearTableId() {
       
@@ -1364,7 +1364,7 @@ public  final class CreateTableRequest extends
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
      *
-     * <code>optional string table_id = 2;</code>
+     * <code>string table_id = 2;</code>
      */
     public Builder setTableIdBytes(
         com.google.protobuf.ByteString value) {
@@ -1386,7 +1386,7 @@ public  final class CreateTableRequest extends
      * The Table to create.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+     * <code>.google.bigtable.admin.v2.Table table = 3;</code>
      */
     public boolean hasTable() {
       return tableBuilder_ != null || table_ != null;
@@ -1396,7 +1396,7 @@ public  final class CreateTableRequest extends
      * The Table to create.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+     * <code>.google.bigtable.admin.v2.Table table = 3;</code>
      */
     public com.google.bigtable.admin.v2.Table getTable() {
       if (tableBuilder_ == null) {
@@ -1410,7 +1410,7 @@ public  final class CreateTableRequest extends
      * The Table to create.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+     * <code>.google.bigtable.admin.v2.Table table = 3;</code>
      */
     public Builder setTable(com.google.bigtable.admin.v2.Table value) {
       if (tableBuilder_ == null) {
@@ -1430,7 +1430,7 @@ public  final class CreateTableRequest extends
      * The Table to create.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+     * <code>.google.bigtable.admin.v2.Table table = 3;</code>
      */
     public Builder setTable(
         com.google.bigtable.admin.v2.Table.Builder builderForValue) {
@@ -1448,7 +1448,7 @@ public  final class CreateTableRequest extends
      * The Table to create.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+     * <code>.google.bigtable.admin.v2.Table table = 3;</code>
      */
     public Builder mergeTable(com.google.bigtable.admin.v2.Table value) {
       if (tableBuilder_ == null) {
@@ -1470,7 +1470,7 @@ public  final class CreateTableRequest extends
      * The Table to create.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+     * <code>.google.bigtable.admin.v2.Table table = 3;</code>
      */
     public Builder clearTable() {
       if (tableBuilder_ == null) {
@@ -1488,7 +1488,7 @@ public  final class CreateTableRequest extends
      * The Table to create.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+     * <code>.google.bigtable.admin.v2.Table table = 3;</code>
      */
     public com.google.bigtable.admin.v2.Table.Builder getTableBuilder() {
       
@@ -1500,7 +1500,7 @@ public  final class CreateTableRequest extends
      * The Table to create.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+     * <code>.google.bigtable.admin.v2.Table table = 3;</code>
      */
     public com.google.bigtable.admin.v2.TableOrBuilder getTableOrBuilder() {
       if (tableBuilder_ != null) {
@@ -1515,7 +1515,7 @@ public  final class CreateTableRequest extends
      * The Table to create.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
+     * <code>.google.bigtable.admin.v2.Table table = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.Table, com.google.bigtable.admin.v2.Table.Builder, com.google.bigtable.admin.v2.TableOrBuilder> 

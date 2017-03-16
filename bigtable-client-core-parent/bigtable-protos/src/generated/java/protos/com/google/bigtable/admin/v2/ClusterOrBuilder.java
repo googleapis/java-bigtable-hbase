@@ -14,7 +14,7 @@ public interface ClusterOrBuilder extends
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   java.lang.String getName();
   /**
@@ -24,7 +24,7 @@ public interface ClusterOrBuilder extends
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
@@ -38,7 +38,7 @@ public interface ClusterOrBuilder extends
    * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
    * </pre>
    *
-   * <code>optional string location = 2;</code>
+   * <code>string location = 2;</code>
    */
   java.lang.String getLocation();
   /**
@@ -50,7 +50,7 @@ public interface ClusterOrBuilder extends
    * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
    * </pre>
    *
-   * <code>optional string location = 2;</code>
+   * <code>string location = 2;</code>
    */
   com.google.protobuf.ByteString
       getLocationBytes();
@@ -61,7 +61,7 @@ public interface ClusterOrBuilder extends
    * The current state of the cluster.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster.State state = 3;</code>
    */
   int getStateValue();
   /**
@@ -70,7 +70,7 @@ public interface ClusterOrBuilder extends
    * The current state of the cluster.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster.State state = 3;</code>
    */
   com.google.bigtable.admin.v2.Cluster.State getState();
 
@@ -80,7 +80,7 @@ public interface ClusterOrBuilder extends
    * throughput and more consistent performance.
    * </pre>
    *
-   * <code>optional int32 serve_nodes = 4;</code>
+   * <code>int32 serve_nodes = 4;</code>
    */
   int getServeNodes();
 
@@ -91,7 +91,7 @@ public interface ClusterOrBuilder extends
    * parent instance's tables, unless explicitly overridden.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+   * <code>.google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    */
   int getDefaultStorageTypeValue();
   /**
@@ -101,7 +101,7 @@ public interface ClusterOrBuilder extends
    * parent instance's tables, unless explicitly overridden.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+   * <code>.google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    */
   com.google.bigtable.admin.v2.StorageType getDefaultStorageType();
 }

@@ -112,8 +112,7 @@ public enum StorageType
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.google.bigtable.admin.v2.CommonProto.getDescriptor()
-        .getEnumTypes().get(0);
+    return com.google.bigtable.admin.v2.CommonProto.getDescriptor().getEnumTypes().get(0);
   }
 
   private static final StorageType[] VALUES = values();

@@ -107,7 +107,7 @@ public  final class Cell extends
    * values of `timestamp_micros` which are multiples of 1000.
    * </pre>
    *
-   * <code>optional int64 timestamp_micros = 1;</code>
+   * <code>int64 timestamp_micros = 1;</code>
    */
   public long getTimestampMicros() {
     return timestampMicros_;
@@ -122,7 +122,7 @@ public  final class Cell extends
    * length.
    * </pre>
    *
-   * <code>optional bytes value = 2;</code>
+   * <code>bytes value = 2;</code>
    */
   public com.google.protobuf.ByteString getValue() {
     return value_;
@@ -248,7 +248,7 @@ public  final class Cell extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + TIMESTAMP_MICROS_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getTimestampMicros());
@@ -513,7 +513,7 @@ public  final class Cell extends
      * values of `timestamp_micros` which are multiples of 1000.
      * </pre>
      *
-     * <code>optional int64 timestamp_micros = 1;</code>
+     * <code>int64 timestamp_micros = 1;</code>
      */
     public long getTimestampMicros() {
       return timestampMicros_;
@@ -528,7 +528,7 @@ public  final class Cell extends
      * values of `timestamp_micros` which are multiples of 1000.
      * </pre>
      *
-     * <code>optional int64 timestamp_micros = 1;</code>
+     * <code>int64 timestamp_micros = 1;</code>
      */
     public Builder setTimestampMicros(long value) {
       
@@ -546,7 +546,7 @@ public  final class Cell extends
      * values of `timestamp_micros` which are multiples of 1000.
      * </pre>
      *
-     * <code>optional int64 timestamp_micros = 1;</code>
+     * <code>int64 timestamp_micros = 1;</code>
      */
     public Builder clearTimestampMicros() {
       
@@ -563,7 +563,7 @@ public  final class Cell extends
      * length.
      * </pre>
      *
-     * <code>optional bytes value = 2;</code>
+     * <code>bytes value = 2;</code>
      */
     public com.google.protobuf.ByteString getValue() {
       return value_;
@@ -575,7 +575,7 @@ public  final class Cell extends
      * length.
      * </pre>
      *
-     * <code>optional bytes value = 2;</code>
+     * <code>bytes value = 2;</code>
      */
     public Builder setValue(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -593,7 +593,7 @@ public  final class Cell extends
      * length.
      * </pre>
      *
-     * <code>optional bytes value = 2;</code>
+     * <code>bytes value = 2;</code>
      */
     public Builder clearValue() {
       

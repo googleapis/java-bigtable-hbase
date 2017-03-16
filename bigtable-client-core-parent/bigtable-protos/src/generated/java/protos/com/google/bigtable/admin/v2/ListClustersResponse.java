@@ -224,7 +224,7 @@ public  final class ListClustersResponse extends
    * page of results.
    * </pre>
    *
-   * <code>optional string next_page_token = 3;</code>
+   * <code>string next_page_token = 3;</code>
    */
   public java.lang.String getNextPageToken() {
     java.lang.Object ref = nextPageToken_;
@@ -245,7 +245,7 @@ public  final class ListClustersResponse extends
    * page of results.
    * </pre>
    *
-   * <code>optional string next_page_token = 3;</code>
+   * <code>string next_page_token = 3;</code>
    */
   public com.google.protobuf.ByteString
       getNextPageTokenBytes() {
@@ -335,7 +335,7 @@ public  final class ListClustersResponse extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     if (getClustersCount() > 0) {
       hash = (37 * hash) + CLUSTERS_FIELD_NUMBER;
       hash = (53 * hash) + getClustersList().hashCode();
@@ -1104,7 +1104,7 @@ public  final class ListClustersResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public java.lang.String getNextPageToken() {
       java.lang.Object ref = nextPageToken_;
@@ -1125,7 +1125,7 @@ public  final class ListClustersResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public com.google.protobuf.ByteString
         getNextPageTokenBytes() {
@@ -1147,7 +1147,7 @@ public  final class ListClustersResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public Builder setNextPageToken(
         java.lang.String value) {
@@ -1166,7 +1166,7 @@ public  final class ListClustersResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public Builder clearNextPageToken() {
       
@@ -1181,7 +1181,7 @@ public  final class ListClustersResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public Builder setNextPageTokenBytes(
         com.google.protobuf.ByteString value) {

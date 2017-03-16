@@ -132,7 +132,7 @@ public  final class DropRowRangeRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -152,7 +152,7 @@ public  final class DropRowRangeRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -175,7 +175,7 @@ public  final class DropRowRangeRequest extends
    * zero length.
    * </pre>
    *
-   * <code>optional bytes row_key_prefix = 2;</code>
+   * <code>bytes row_key_prefix = 2;</code>
    */
   public com.google.protobuf.ByteString getRowKeyPrefix() {
     if (targetCase_ == 2) {
@@ -190,7 +190,7 @@ public  final class DropRowRangeRequest extends
    * Delete all rows in the table. Setting this to false is a no-op.
    * </pre>
    *
-   * <code>optional bool delete_all_data_from_table = 3;</code>
+   * <code>bool delete_all_data_from_table = 3;</code>
    */
   public boolean getDeleteAllDataFromTable() {
     if (targetCase_ == 3) {
@@ -284,7 +284,7 @@ public  final class DropRowRangeRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + NAME_FIELD_NUMBER;
     hash = (53 * hash) + getName().hashCode();
     switch (targetCase_) {
@@ -562,7 +562,7 @@ public  final class DropRowRangeRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -582,7 +582,7 @@ public  final class DropRowRangeRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -603,7 +603,7 @@ public  final class DropRowRangeRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -621,7 +621,7 @@ public  final class DropRowRangeRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -635,7 +635,7 @@ public  final class DropRowRangeRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -655,7 +655,7 @@ public  final class DropRowRangeRequest extends
      * zero length.
      * </pre>
      *
-     * <code>optional bytes row_key_prefix = 2;</code>
+     * <code>bytes row_key_prefix = 2;</code>
      */
     public com.google.protobuf.ByteString getRowKeyPrefix() {
       if (targetCase_ == 2) {
@@ -669,7 +669,7 @@ public  final class DropRowRangeRequest extends
      * zero length.
      * </pre>
      *
-     * <code>optional bytes row_key_prefix = 2;</code>
+     * <code>bytes row_key_prefix = 2;</code>
      */
     public Builder setRowKeyPrefix(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -686,7 +686,7 @@ public  final class DropRowRangeRequest extends
      * zero length.
      * </pre>
      *
-     * <code>optional bytes row_key_prefix = 2;</code>
+     * <code>bytes row_key_prefix = 2;</code>
      */
     public Builder clearRowKeyPrefix() {
       if (targetCase_ == 2) {
@@ -702,7 +702,7 @@ public  final class DropRowRangeRequest extends
      * Delete all rows in the table. Setting this to false is a no-op.
      * </pre>
      *
-     * <code>optional bool delete_all_data_from_table = 3;</code>
+     * <code>bool delete_all_data_from_table = 3;</code>
      */
     public boolean getDeleteAllDataFromTable() {
       if (targetCase_ == 3) {
@@ -715,7 +715,7 @@ public  final class DropRowRangeRequest extends
      * Delete all rows in the table. Setting this to false is a no-op.
      * </pre>
      *
-     * <code>optional bool delete_all_data_from_table = 3;</code>
+     * <code>bool delete_all_data_from_table = 3;</code>
      */
     public Builder setDeleteAllDataFromTable(boolean value) {
       targetCase_ = 3;
@@ -728,7 +728,7 @@ public  final class DropRowRangeRequest extends
      * Delete all rows in the table. Setting this to false is a no-op.
      * </pre>
      *
-     * <code>optional bool delete_all_data_from_table = 3;</code>
+     * <code>bool delete_all_data_from_table = 3;</code>
      */
     public Builder clearDeleteAllDataFromTable() {
       if (targetCase_ == 3) {

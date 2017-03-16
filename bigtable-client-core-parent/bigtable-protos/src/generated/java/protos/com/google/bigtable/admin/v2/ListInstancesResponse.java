@@ -228,7 +228,7 @@ public  final class ListInstancesResponse extends
    * page of results.
    * </pre>
    *
-   * <code>optional string next_page_token = 3;</code>
+   * <code>string next_page_token = 3;</code>
    */
   public java.lang.String getNextPageToken() {
     java.lang.Object ref = nextPageToken_;
@@ -249,7 +249,7 @@ public  final class ListInstancesResponse extends
    * page of results.
    * </pre>
    *
-   * <code>optional string next_page_token = 3;</code>
+   * <code>string next_page_token = 3;</code>
    */
   public com.google.protobuf.ByteString
       getNextPageTokenBytes() {
@@ -339,7 +339,7 @@ public  final class ListInstancesResponse extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     if (getInstancesCount() > 0) {
       hash = (37 * hash) + INSTANCES_FIELD_NUMBER;
       hash = (53 * hash) + getInstancesList().hashCode();
@@ -1117,7 +1117,7 @@ public  final class ListInstancesResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public java.lang.String getNextPageToken() {
       java.lang.Object ref = nextPageToken_;
@@ -1138,7 +1138,7 @@ public  final class ListInstancesResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public com.google.protobuf.ByteString
         getNextPageTokenBytes() {
@@ -1160,7 +1160,7 @@ public  final class ListInstancesResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public Builder setNextPageToken(
         java.lang.String value) {
@@ -1179,7 +1179,7 @@ public  final class ListInstancesResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public Builder clearNextPageToken() {
       
@@ -1194,7 +1194,7 @@ public  final class ListInstancesResponse extends
      * page of results.
      * </pre>
      *
-     * <code>optional string next_page_token = 3;</code>
+     * <code>string next_page_token = 3;</code>
      */
     public Builder setNextPageTokenBytes(
         com.google.protobuf.ByteString value) {

@@ -297,7 +297,7 @@ public  final class Cluster extends
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -318,7 +318,7 @@ public  final class Cluster extends
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -345,7 +345,7 @@ public  final class Cluster extends
    * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
    * </pre>
    *
-   * <code>optional string location = 2;</code>
+   * <code>string location = 2;</code>
    */
   public java.lang.String getLocation() {
     java.lang.Object ref = location_;
@@ -368,7 +368,7 @@ public  final class Cluster extends
    * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
    * </pre>
    *
-   * <code>optional string location = 2;</code>
+   * <code>string location = 2;</code>
    */
   public com.google.protobuf.ByteString
       getLocationBytes() {
@@ -392,7 +392,7 @@ public  final class Cluster extends
    * The current state of the cluster.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster.State state = 3;</code>
    */
   public int getStateValue() {
     return state_;
@@ -403,7 +403,7 @@ public  final class Cluster extends
    * The current state of the cluster.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster.State state = 3;</code>
    */
   public com.google.bigtable.admin.v2.Cluster.State getState() {
     com.google.bigtable.admin.v2.Cluster.State result = com.google.bigtable.admin.v2.Cluster.State.valueOf(state_);
@@ -418,7 +418,7 @@ public  final class Cluster extends
    * throughput and more consistent performance.
    * </pre>
    *
-   * <code>optional int32 serve_nodes = 4;</code>
+   * <code>int32 serve_nodes = 4;</code>
    */
   public int getServeNodes() {
     return serveNodes_;
@@ -433,7 +433,7 @@ public  final class Cluster extends
    * parent instance's tables, unless explicitly overridden.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+   * <code>.google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    */
   public int getDefaultStorageTypeValue() {
     return defaultStorageType_;
@@ -445,7 +445,7 @@ public  final class Cluster extends
    * parent instance's tables, unless explicitly overridden.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+   * <code>.google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    */
   public com.google.bigtable.admin.v2.StorageType getDefaultStorageType() {
     com.google.bigtable.admin.v2.StorageType result = com.google.bigtable.admin.v2.StorageType.valueOf(defaultStorageType_);
@@ -537,7 +537,7 @@ public  final class Cluster extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + NAME_FIELD_NUMBER;
     hash = (53 * hash) + getName().hashCode();
     hash = (37 * hash) + LOCATION_FIELD_NUMBER;
@@ -801,7 +801,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -822,7 +822,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -844,7 +844,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -863,7 +863,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -878,7 +878,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -902,7 +902,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      *
-     * <code>optional string location = 2;</code>
+     * <code>string location = 2;</code>
      */
     public java.lang.String getLocation() {
       java.lang.Object ref = location_;
@@ -925,7 +925,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      *
-     * <code>optional string location = 2;</code>
+     * <code>string location = 2;</code>
      */
     public com.google.protobuf.ByteString
         getLocationBytes() {
@@ -949,7 +949,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      *
-     * <code>optional string location = 2;</code>
+     * <code>string location = 2;</code>
      */
     public Builder setLocation(
         java.lang.String value) {
@@ -970,7 +970,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      *
-     * <code>optional string location = 2;</code>
+     * <code>string location = 2;</code>
      */
     public Builder clearLocation() {
       
@@ -987,7 +987,7 @@ public  final class Cluster extends
      * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      *
-     * <code>optional string location = 2;</code>
+     * <code>string location = 2;</code>
      */
     public Builder setLocationBytes(
         com.google.protobuf.ByteString value) {
@@ -1008,7 +1008,7 @@ public  final class Cluster extends
      * The current state of the cluster.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public int getStateValue() {
       return state_;
@@ -1019,7 +1019,7 @@ public  final class Cluster extends
      * The current state of the cluster.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public Builder setStateValue(int value) {
       state_ = value;
@@ -1032,7 +1032,7 @@ public  final class Cluster extends
      * The current state of the cluster.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public com.google.bigtable.admin.v2.Cluster.State getState() {
       com.google.bigtable.admin.v2.Cluster.State result = com.google.bigtable.admin.v2.Cluster.State.valueOf(state_);
@@ -1044,7 +1044,7 @@ public  final class Cluster extends
      * The current state of the cluster.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public Builder setState(com.google.bigtable.admin.v2.Cluster.State value) {
       if (value == null) {
@@ -1061,7 +1061,7 @@ public  final class Cluster extends
      * The current state of the cluster.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public Builder clearState() {
       
@@ -1077,7 +1077,7 @@ public  final class Cluster extends
      * throughput and more consistent performance.
      * </pre>
      *
-     * <code>optional int32 serve_nodes = 4;</code>
+     * <code>int32 serve_nodes = 4;</code>
      */
     public int getServeNodes() {
       return serveNodes_;
@@ -1088,7 +1088,7 @@ public  final class Cluster extends
      * throughput and more consistent performance.
      * </pre>
      *
-     * <code>optional int32 serve_nodes = 4;</code>
+     * <code>int32 serve_nodes = 4;</code>
      */
     public Builder setServeNodes(int value) {
       
@@ -1102,7 +1102,7 @@ public  final class Cluster extends
      * throughput and more consistent performance.
      * </pre>
      *
-     * <code>optional int32 serve_nodes = 4;</code>
+     * <code>int32 serve_nodes = 4;</code>
      */
     public Builder clearServeNodes() {
       
@@ -1119,7 +1119,7 @@ public  final class Cluster extends
      * parent instance's tables, unless explicitly overridden.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+     * <code>.google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public int getDefaultStorageTypeValue() {
       return defaultStorageType_;
@@ -1131,7 +1131,7 @@ public  final class Cluster extends
      * parent instance's tables, unless explicitly overridden.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+     * <code>.google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public Builder setDefaultStorageTypeValue(int value) {
       defaultStorageType_ = value;
@@ -1145,7 +1145,7 @@ public  final class Cluster extends
      * parent instance's tables, unless explicitly overridden.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+     * <code>.google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public com.google.bigtable.admin.v2.StorageType getDefaultStorageType() {
       com.google.bigtable.admin.v2.StorageType result = com.google.bigtable.admin.v2.StorageType.valueOf(defaultStorageType_);
@@ -1158,7 +1158,7 @@ public  final class Cluster extends
      * parent instance's tables, unless explicitly overridden.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+     * <code>.google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public Builder setDefaultStorageType(com.google.bigtable.admin.v2.StorageType value) {
       if (value == null) {
@@ -1176,7 +1176,7 @@ public  final class Cluster extends
      * parent instance's tables, unless explicitly overridden.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+     * <code>.google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public Builder clearDefaultStorageType() {
       

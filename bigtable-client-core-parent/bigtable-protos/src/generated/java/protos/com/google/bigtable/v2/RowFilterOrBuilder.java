@@ -13,7 +13,7 @@ public interface RowFilterOrBuilder extends
    * narrowing the results.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+   * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
    */
   com.google.bigtable.v2.RowFilter.Chain getChain();
   /**
@@ -22,7 +22,7 @@ public interface RowFilterOrBuilder extends
    * narrowing the results.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
+   * <code>.google.bigtable.v2.RowFilter.Chain chain = 1;</code>
    */
   com.google.bigtable.v2.RowFilter.ChainOrBuilder getChainOrBuilder();
 
@@ -32,7 +32,7 @@ public interface RowFilterOrBuilder extends
    * results.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+   * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
    */
   com.google.bigtable.v2.RowFilter.Interleave getInterleave();
   /**
@@ -41,7 +41,7 @@ public interface RowFilterOrBuilder extends
    * results.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
+   * <code>.google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
    */
   com.google.bigtable.v2.RowFilter.InterleaveOrBuilder getInterleaveOrBuilder();
 
@@ -51,7 +51,7 @@ public interface RowFilterOrBuilder extends
    * a predicate RowFilter.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
    */
   com.google.bigtable.v2.RowFilter.Condition getCondition();
   /**
@@ -60,7 +60,7 @@ public interface RowFilterOrBuilder extends
    * a predicate RowFilter.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter.Condition condition = 3;</code>
    */
   com.google.bigtable.v2.RowFilter.ConditionOrBuilder getConditionOrBuilder();
 
@@ -122,7 +122,7 @@ public interface RowFilterOrBuilder extends
    * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
    * </pre>
    *
-   * <code>optional bool sink = 16;</code>
+   * <code>bool sink = 16;</code>
    */
   boolean getSink();
 
@@ -132,7 +132,7 @@ public interface RowFilterOrBuilder extends
    * leaving `filter` unset, but included for completeness.
    * </pre>
    *
-   * <code>optional bool pass_all_filter = 17;</code>
+   * <code>bool pass_all_filter = 17;</code>
    */
   boolean getPassAllFilter();
 
@@ -142,7 +142,7 @@ public interface RowFilterOrBuilder extends
    * disabling just part of a filter.
    * </pre>
    *
-   * <code>optional bool block_all_filter = 18;</code>
+   * <code>bool block_all_filter = 18;</code>
    */
   boolean getBlockAllFilter();
 
@@ -157,7 +157,7 @@ public interface RowFilterOrBuilder extends
    * binary key.
    * </pre>
    *
-   * <code>optional bytes row_key_regex_filter = 4;</code>
+   * <code>bytes row_key_regex_filter = 4;</code>
    */
   com.google.protobuf.ByteString getRowKeyRegexFilter();
 
@@ -167,7 +167,7 @@ public interface RowFilterOrBuilder extends
    * from the row with probability 1-p.
    * </pre>
    *
-   * <code>optional double row_sample_filter = 14;</code>
+   * <code>double row_sample_filter = 14;</code>
    */
   double getRowSampleFilter();
 
@@ -181,7 +181,7 @@ public interface RowFilterOrBuilder extends
    * column family names.
    * </pre>
    *
-   * <code>optional string family_name_regex_filter = 5;</code>
+   * <code>string family_name_regex_filter = 5;</code>
    */
   java.lang.String getFamilyNameRegexFilter();
   /**
@@ -194,7 +194,7 @@ public interface RowFilterOrBuilder extends
    * column family names.
    * </pre>
    *
-   * <code>optional string family_name_regex_filter = 5;</code>
+   * <code>string family_name_regex_filter = 5;</code>
    */
   com.google.protobuf.ByteString
       getFamilyNameRegexFilterBytes();
@@ -209,7 +209,7 @@ public interface RowFilterOrBuilder extends
    * present in a binary qualifier.
    * </pre>
    *
-   * <code>optional bytes column_qualifier_regex_filter = 6;</code>
+   * <code>bytes column_qualifier_regex_filter = 6;</code>
    */
   com.google.protobuf.ByteString getColumnQualifierRegexFilter();
 
@@ -218,7 +218,7 @@ public interface RowFilterOrBuilder extends
    * Matches only cells from columns within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+   * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
    */
   com.google.bigtable.v2.ColumnRange getColumnRangeFilter();
   /**
@@ -226,7 +226,7 @@ public interface RowFilterOrBuilder extends
    * Matches only cells from columns within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
+   * <code>.google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
    */
   com.google.bigtable.v2.ColumnRangeOrBuilder getColumnRangeFilterOrBuilder();
 
@@ -235,7 +235,7 @@ public interface RowFilterOrBuilder extends
    * Matches only cells with timestamps within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+   * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
    */
   com.google.bigtable.v2.TimestampRange getTimestampRangeFilter();
   /**
@@ -243,7 +243,7 @@ public interface RowFilterOrBuilder extends
    * Matches only cells with timestamps within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
+   * <code>.google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
    */
   com.google.bigtable.v2.TimestampRangeOrBuilder getTimestampRangeFilterOrBuilder();
 
@@ -256,7 +256,7 @@ public interface RowFilterOrBuilder extends
    * binary value.
    * </pre>
    *
-   * <code>optional bytes value_regex_filter = 9;</code>
+   * <code>bytes value_regex_filter = 9;</code>
    */
   com.google.protobuf.ByteString getValueRegexFilter();
 
@@ -265,7 +265,7 @@ public interface RowFilterOrBuilder extends
    * Matches only cells with values that fall within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+   * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
    */
   com.google.bigtable.v2.ValueRange getValueRangeFilter();
   /**
@@ -273,7 +273,7 @@ public interface RowFilterOrBuilder extends
    * Matches only cells with values that fall within the given range.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
+   * <code>.google.bigtable.v2.ValueRange value_range_filter = 15;</code>
    */
   com.google.bigtable.v2.ValueRangeOrBuilder getValueRangeFilterOrBuilder();
 
@@ -284,7 +284,7 @@ public interface RowFilterOrBuilder extends
    * each copy of the cell is counted separately.
    * </pre>
    *
-   * <code>optional int32 cells_per_row_offset_filter = 10;</code>
+   * <code>int32 cells_per_row_offset_filter = 10;</code>
    */
   int getCellsPerRowOffsetFilter();
 
@@ -295,7 +295,7 @@ public interface RowFilterOrBuilder extends
    * each copy of the cell is counted separately.
    * </pre>
    *
-   * <code>optional int32 cells_per_row_limit_filter = 11;</code>
+   * <code>int32 cells_per_row_limit_filter = 11;</code>
    */
   int getCellsPerRowLimitFilter();
 
@@ -309,7 +309,7 @@ public interface RowFilterOrBuilder extends
    * each copy of the cell is counted separately.
    * </pre>
    *
-   * <code>optional int32 cells_per_column_limit_filter = 12;</code>
+   * <code>int32 cells_per_column_limit_filter = 12;</code>
    */
   int getCellsPerColumnLimitFilter();
 
@@ -318,7 +318,7 @@ public interface RowFilterOrBuilder extends
    * Replaces each cell's value with the empty string.
    * </pre>
    *
-   * <code>optional bool strip_value_transformer = 13;</code>
+   * <code>bool strip_value_transformer = 13;</code>
    */
   boolean getStripValueTransformer();
 
@@ -337,7 +337,7 @@ public interface RowFilterOrBuilder extends
    * the future.
    * </pre>
    *
-   * <code>optional string apply_label_transformer = 19;</code>
+   * <code>string apply_label_transformer = 19;</code>
    */
   java.lang.String getApplyLabelTransformer();
   /**
@@ -355,7 +355,7 @@ public interface RowFilterOrBuilder extends
    * the future.
    * </pre>
    *
-   * <code>optional string apply_label_transformer = 19;</code>
+   * <code>string apply_label_transformer = 19;</code>
    */
   com.google.protobuf.ByteString
       getApplyLabelTransformerBytes();

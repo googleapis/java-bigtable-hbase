@@ -392,7 +392,7 @@ public  final class Table extends
    * &#64;OutputOnly
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -414,7 +414,7 @@ public  final class Table extends
    * &#64;OutputOnly
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -541,7 +541,7 @@ public  final class Table extends
    * &#64;CreationOnly
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
+   * <code>.google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   public int getGranularityValue() {
     return granularity_;
@@ -555,7 +555,7 @@ public  final class Table extends
    * &#64;CreationOnly
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
+   * <code>.google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   public com.google.bigtable.admin.v2.Table.TimestampGranularity getGranularity() {
     com.google.bigtable.admin.v2.Table.TimestampGranularity result = com.google.bigtable.admin.v2.Table.TimestampGranularity.valueOf(granularity_);
@@ -640,7 +640,7 @@ public  final class Table extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + NAME_FIELD_NUMBER;
     hash = (53 * hash) + getName().hashCode();
     if (!internalGetColumnFamilies().getMap().isEmpty()) {
@@ -914,7 +914,7 @@ public  final class Table extends
      * &#64;OutputOnly
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -936,7 +936,7 @@ public  final class Table extends
      * &#64;OutputOnly
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -959,7 +959,7 @@ public  final class Table extends
      * &#64;OutputOnly
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -979,7 +979,7 @@ public  final class Table extends
      * &#64;OutputOnly
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -995,7 +995,7 @@ public  final class Table extends
      * &#64;OutputOnly
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -1110,7 +1110,8 @@ public  final class Table extends
     }
 
     public Builder clearColumnFamilies() {
-      getMutableColumnFamilies().clear();
+      internalGetMutableColumnFamilies().getMutableMap()
+          .clear();
       return this;
     }
     /**
@@ -1126,7 +1127,8 @@ public  final class Table extends
     public Builder removeColumnFamilies(
         java.lang.String key) {
       if (key == null) { throw new java.lang.NullPointerException(); }
-      getMutableColumnFamilies().remove(key);
+      internalGetMutableColumnFamilies().getMutableMap()
+          .remove(key);
       return this;
     }
     /**
@@ -1151,7 +1153,8 @@ public  final class Table extends
         com.google.bigtable.admin.v2.ColumnFamily value) {
       if (key == null) { throw new java.lang.NullPointerException(); }
       if (value == null) { throw new java.lang.NullPointerException(); }
-      getMutableColumnFamilies().put(key, value);
+      internalGetMutableColumnFamilies().getMutableMap()
+          .put(key, value);
       return this;
     }
     /**
@@ -1166,7 +1169,8 @@ public  final class Table extends
 
     public Builder putAllColumnFamilies(
         java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> values) {
-      getMutableColumnFamilies().putAll(values);
+      internalGetMutableColumnFamilies().getMutableMap()
+          .putAll(values);
       return this;
     }
 
@@ -1180,7 +1184,7 @@ public  final class Table extends
      * &#64;CreationOnly
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
+     * <code>.google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public int getGranularityValue() {
       return granularity_;
@@ -1194,7 +1198,7 @@ public  final class Table extends
      * &#64;CreationOnly
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
+     * <code>.google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public Builder setGranularityValue(int value) {
       granularity_ = value;
@@ -1210,7 +1214,7 @@ public  final class Table extends
      * &#64;CreationOnly
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
+     * <code>.google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public com.google.bigtable.admin.v2.Table.TimestampGranularity getGranularity() {
       com.google.bigtable.admin.v2.Table.TimestampGranularity result = com.google.bigtable.admin.v2.Table.TimestampGranularity.valueOf(granularity_);
@@ -1225,7 +1229,7 @@ public  final class Table extends
      * &#64;CreationOnly
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
+     * <code>.google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public Builder setGranularity(com.google.bigtable.admin.v2.Table.TimestampGranularity value) {
       if (value == null) {
@@ -1245,7 +1249,7 @@ public  final class Table extends
      * &#64;CreationOnly
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
+     * <code>.google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public Builder clearGranularity() {
       

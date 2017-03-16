@@ -14,7 +14,7 @@ public interface ReadRowsRequestOrBuilder extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
@@ -24,7 +24,7 @@ public interface ReadRowsRequestOrBuilder extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();
@@ -34,7 +34,7 @@ public interface ReadRowsRequestOrBuilder extends
    * The row keys and/or ranges to read. If not specified, reads from all rows.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+   * <code>.google.bigtable.v2.RowSet rows = 2;</code>
    */
   boolean hasRows();
   /**
@@ -42,7 +42,7 @@ public interface ReadRowsRequestOrBuilder extends
    * The row keys and/or ranges to read. If not specified, reads from all rows.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+   * <code>.google.bigtable.v2.RowSet rows = 2;</code>
    */
   com.google.bigtable.v2.RowSet getRows();
   /**
@@ -50,7 +50,7 @@ public interface ReadRowsRequestOrBuilder extends
    * The row keys and/or ranges to read. If not specified, reads from all rows.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+   * <code>.google.bigtable.v2.RowSet rows = 2;</code>
    */
   com.google.bigtable.v2.RowSetOrBuilder getRowsOrBuilder();
 
@@ -60,7 +60,7 @@ public interface ReadRowsRequestOrBuilder extends
    * reads the entirety of each row.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
    */
   boolean hasFilter();
   /**
@@ -69,7 +69,7 @@ public interface ReadRowsRequestOrBuilder extends
    * reads the entirety of each row.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
    */
   com.google.bigtable.v2.RowFilter getFilter();
   /**
@@ -78,7 +78,7 @@ public interface ReadRowsRequestOrBuilder extends
    * reads the entirety of each row.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+   * <code>.google.bigtable.v2.RowFilter filter = 3;</code>
    */
   com.google.bigtable.v2.RowFilterOrBuilder getFilterOrBuilder();
 
@@ -88,7 +88,7 @@ public interface ReadRowsRequestOrBuilder extends
    * default (zero) is to return all results.
    * </pre>
    *
-   * <code>optional int64 rows_limit = 4;</code>
+   * <code>int64 rows_limit = 4;</code>
    */
   long getRowsLimit();
 }

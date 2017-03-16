@@ -105,7 +105,7 @@ public  final class MutateRowRequest extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   public java.lang.String getTableName() {
     java.lang.Object ref = tableName_;
@@ -126,7 +126,7 @@ public  final class MutateRowRequest extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getTableNameBytes() {
@@ -149,7 +149,7 @@ public  final class MutateRowRequest extends
    * The key of the row to which the mutation should be applied.
    * </pre>
    *
-   * <code>optional bytes row_key = 2;</code>
+   * <code>bytes row_key = 2;</code>
    */
   public com.google.protobuf.ByteString getRowKey() {
     return rowKey_;
@@ -290,7 +290,7 @@ public  final class MutateRowRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
     hash = (53 * hash) + getTableName().hashCode();
     hash = (37 * hash) + ROW_KEY_FIELD_NUMBER;
@@ -577,7 +577,7 @@ public  final class MutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
@@ -598,7 +598,7 @@ public  final class MutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getTableNameBytes() {
@@ -620,7 +620,7 @@ public  final class MutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder setTableName(
         java.lang.String value) {
@@ -639,7 +639,7 @@ public  final class MutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder clearTableName() {
       
@@ -654,7 +654,7 @@ public  final class MutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder setTableNameBytes(
         com.google.protobuf.ByteString value) {
@@ -674,7 +674,7 @@ public  final class MutateRowRequest extends
      * The key of the row to which the mutation should be applied.
      * </pre>
      *
-     * <code>optional bytes row_key = 2;</code>
+     * <code>bytes row_key = 2;</code>
      */
     public com.google.protobuf.ByteString getRowKey() {
       return rowKey_;
@@ -684,7 +684,7 @@ public  final class MutateRowRequest extends
      * The key of the row to which the mutation should be applied.
      * </pre>
      *
-     * <code>optional bytes row_key = 2;</code>
+     * <code>bytes row_key = 2;</code>
      */
     public Builder setRowKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -700,7 +700,7 @@ public  final class MutateRowRequest extends
      * The key of the row to which the mutation should be applied.
      * </pre>
      *
-     * <code>optional bytes row_key = 2;</code>
+     * <code>bytes row_key = 2;</code>
      */
     public Builder clearRowKey() {
       

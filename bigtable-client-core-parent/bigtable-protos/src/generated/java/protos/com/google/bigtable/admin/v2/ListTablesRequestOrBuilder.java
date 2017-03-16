@@ -13,7 +13,7 @@ public interface ListTablesRequestOrBuilder extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   java.lang.String getParent();
   /**
@@ -22,7 +22,7 @@ public interface ListTablesRequestOrBuilder extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   com.google.protobuf.ByteString
       getParentBytes();
@@ -33,7 +33,7 @@ public interface ListTablesRequestOrBuilder extends
    * Defaults to NAME_ONLY if unspecified (no others are currently supported).
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+   * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   int getViewValue();
   /**
@@ -42,7 +42,7 @@ public interface ListTablesRequestOrBuilder extends
    * Defaults to NAME_ONLY if unspecified (no others are currently supported).
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+   * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   com.google.bigtable.admin.v2.Table.View getView();
 
@@ -51,7 +51,7 @@ public interface ListTablesRequestOrBuilder extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 3;</code>
+   * <code>string page_token = 3;</code>
    */
   java.lang.String getPageToken();
   /**
@@ -59,7 +59,7 @@ public interface ListTablesRequestOrBuilder extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 3;</code>
+   * <code>string page_token = 3;</code>
    */
   com.google.protobuf.ByteString
       getPageTokenBytes();

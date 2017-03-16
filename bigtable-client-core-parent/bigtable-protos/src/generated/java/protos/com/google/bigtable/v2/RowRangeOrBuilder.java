@@ -12,7 +12,7 @@ public interface RowRangeOrBuilder extends
    * Used when giving an inclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_key_closed = 1;</code>
+   * <code>bytes start_key_closed = 1;</code>
    */
   com.google.protobuf.ByteString getStartKeyClosed();
 
@@ -21,7 +21,7 @@ public interface RowRangeOrBuilder extends
    * Used when giving an exclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_key_open = 2;</code>
+   * <code>bytes start_key_open = 2;</code>
    */
   com.google.protobuf.ByteString getStartKeyOpen();
 
@@ -30,7 +30,7 @@ public interface RowRangeOrBuilder extends
    * Used when giving an exclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_key_open = 3;</code>
+   * <code>bytes end_key_open = 3;</code>
    */
   com.google.protobuf.ByteString getEndKeyOpen();
 
@@ -39,7 +39,7 @@ public interface RowRangeOrBuilder extends
    * Used when giving an inclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_key_closed = 4;</code>
+   * <code>bytes end_key_closed = 4;</code>
    */
   com.google.protobuf.ByteString getEndKeyClosed();
 

@@ -101,7 +101,7 @@ public  final class Column extends
    * length.
    * </pre>
    *
-   * <code>optional bytes qualifier = 1;</code>
+   * <code>bytes qualifier = 1;</code>
    */
   public com.google.protobuf.ByteString getQualifier() {
     return qualifier_;
@@ -224,7 +224,7 @@ public  final class Column extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + QUALIFIER_FIELD_NUMBER;
     hash = (53 * hash) + getQualifier().hashCode();
     if (getCellsCount() > 0) {
@@ -505,7 +505,7 @@ public  final class Column extends
      * length.
      * </pre>
      *
-     * <code>optional bytes qualifier = 1;</code>
+     * <code>bytes qualifier = 1;</code>
      */
     public com.google.protobuf.ByteString getQualifier() {
       return qualifier_;
@@ -519,7 +519,7 @@ public  final class Column extends
      * length.
      * </pre>
      *
-     * <code>optional bytes qualifier = 1;</code>
+     * <code>bytes qualifier = 1;</code>
      */
     public Builder setQualifier(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -539,7 +539,7 @@ public  final class Column extends
      * length.
      * </pre>
      *
-     * <code>optional bytes qualifier = 1;</code>
+     * <code>bytes qualifier = 1;</code>
      */
     public Builder clearQualifier() {
       

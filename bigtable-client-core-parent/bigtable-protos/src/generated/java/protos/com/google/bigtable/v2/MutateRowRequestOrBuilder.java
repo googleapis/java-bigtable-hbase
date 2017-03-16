@@ -14,7 +14,7 @@ public interface MutateRowRequestOrBuilder extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
@@ -24,7 +24,7 @@ public interface MutateRowRequestOrBuilder extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();
@@ -34,7 +34,7 @@ public interface MutateRowRequestOrBuilder extends
    * The key of the row to which the mutation should be applied.
    * </pre>
    *
-   * <code>optional bytes row_key = 2;</code>
+   * <code>bytes row_key = 2;</code>
    */
   com.google.protobuf.ByteString getRowKey();
 

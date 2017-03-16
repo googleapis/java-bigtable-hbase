@@ -15,7 +15,7 @@ public interface TableOrBuilder extends
    * &#64;OutputOnly
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   java.lang.String getName();
   /**
@@ -26,7 +26,7 @@ public interface TableOrBuilder extends
    * &#64;OutputOnly
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
@@ -104,7 +104,7 @@ public interface TableOrBuilder extends
    * &#64;CreationOnly
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
+   * <code>.google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   int getGranularityValue();
   /**
@@ -116,7 +116,7 @@ public interface TableOrBuilder extends
    * &#64;CreationOnly
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
+   * <code>.google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   com.google.bigtable.admin.v2.Table.TimestampGranularity getGranularity();
 }

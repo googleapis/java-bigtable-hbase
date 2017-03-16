@@ -13,7 +13,7 @@ public interface DeleteInstanceRequestOrBuilder extends
    * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   java.lang.String getName();
   /**
@@ -22,7 +22,7 @@ public interface DeleteInstanceRequestOrBuilder extends
    * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
