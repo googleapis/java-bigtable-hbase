@@ -91,7 +91,7 @@ public  final class GetTableRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -111,7 +111,7 @@ public  final class GetTableRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -135,7 +135,7 @@ public  final class GetTableRequest extends
    * Defaults to SCHEMA_ONLY if unspecified.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+   * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   public int getViewValue() {
     return view_;
@@ -146,7 +146,7 @@ public  final class GetTableRequest extends
    * Defaults to SCHEMA_ONLY if unspecified.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+   * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   public com.google.bigtable.admin.v2.Table.View getView() {
     com.google.bigtable.admin.v2.Table.View result = com.google.bigtable.admin.v2.Table.View.valueOf(view_);
@@ -213,7 +213,7 @@ public  final class GetTableRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + NAME_FIELD_NUMBER;
     hash = (53 * hash) + getName().hashCode();
     hash = (37 * hash) + VIEW_FIELD_NUMBER;
@@ -449,7 +449,7 @@ public  final class GetTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -469,7 +469,7 @@ public  final class GetTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -490,7 +490,7 @@ public  final class GetTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -508,7 +508,7 @@ public  final class GetTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -522,7 +522,7 @@ public  final class GetTableRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -543,7 +543,7 @@ public  final class GetTableRequest extends
      * Defaults to SCHEMA_ONLY if unspecified.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public int getViewValue() {
       return view_;
@@ -554,7 +554,7 @@ public  final class GetTableRequest extends
      * Defaults to SCHEMA_ONLY if unspecified.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public Builder setViewValue(int value) {
       view_ = value;
@@ -567,7 +567,7 @@ public  final class GetTableRequest extends
      * Defaults to SCHEMA_ONLY if unspecified.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public com.google.bigtable.admin.v2.Table.View getView() {
       com.google.bigtable.admin.v2.Table.View result = com.google.bigtable.admin.v2.Table.View.valueOf(view_);
@@ -579,7 +579,7 @@ public  final class GetTableRequest extends
      * Defaults to SCHEMA_ONLY if unspecified.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public Builder setView(com.google.bigtable.admin.v2.Table.View value) {
       if (value == null) {
@@ -596,7 +596,7 @@ public  final class GetTableRequest extends
      * Defaults to SCHEMA_ONLY if unspecified.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public Builder clearView() {
       

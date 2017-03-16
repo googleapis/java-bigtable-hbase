@@ -16,7 +16,7 @@ public interface ColumnOrBuilder extends
    * length.
    * </pre>
    *
-   * <code>optional bytes qualifier = 1;</code>
+   * <code>bytes qualifier = 1;</code>
    */
   com.google.protobuf.ByteString getQualifier();
 

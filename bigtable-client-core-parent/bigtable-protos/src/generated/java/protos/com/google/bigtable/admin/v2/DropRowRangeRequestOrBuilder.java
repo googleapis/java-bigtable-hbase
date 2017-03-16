@@ -13,7 +13,7 @@ public interface DropRowRangeRequestOrBuilder extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   java.lang.String getName();
   /**
@@ -22,7 +22,7 @@ public interface DropRowRangeRequestOrBuilder extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
@@ -33,7 +33,7 @@ public interface DropRowRangeRequestOrBuilder extends
    * zero length.
    * </pre>
    *
-   * <code>optional bytes row_key_prefix = 2;</code>
+   * <code>bytes row_key_prefix = 2;</code>
    */
   com.google.protobuf.ByteString getRowKeyPrefix();
 
@@ -42,7 +42,7 @@ public interface DropRowRangeRequestOrBuilder extends
    * Delete all rows in the table. Setting this to false is a no-op.
    * </pre>
    *
-   * <code>optional bool delete_all_data_from_table = 3;</code>
+   * <code>bool delete_all_data_from_table = 3;</code>
    */
   boolean getDeleteAllDataFromTable();
 

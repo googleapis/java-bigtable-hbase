@@ -12,7 +12,7 @@ public interface CreateInstanceMetadataOrBuilder extends
    * The request that prompted the initiation of this CreateInstance operation.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+   * <code>.google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
    */
   boolean hasOriginalRequest();
   /**
@@ -20,7 +20,7 @@ public interface CreateInstanceMetadataOrBuilder extends
    * The request that prompted the initiation of this CreateInstance operation.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+   * <code>.google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
    */
   com.google.bigtable.admin.v2.CreateInstanceRequest getOriginalRequest();
   /**
@@ -28,7 +28,7 @@ public interface CreateInstanceMetadataOrBuilder extends
    * The request that prompted the initiation of this CreateInstance operation.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+   * <code>.google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
    */
   com.google.bigtable.admin.v2.CreateInstanceRequestOrBuilder getOriginalRequestOrBuilder();
 
@@ -37,7 +37,7 @@ public interface CreateInstanceMetadataOrBuilder extends
    * The time at which the original request was received.
    * </pre>
    *
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+   * <code>.google.protobuf.Timestamp request_time = 2;</code>
    */
   boolean hasRequestTime();
   /**
@@ -45,7 +45,7 @@ public interface CreateInstanceMetadataOrBuilder extends
    * The time at which the original request was received.
    * </pre>
    *
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+   * <code>.google.protobuf.Timestamp request_time = 2;</code>
    */
   com.google.protobuf.Timestamp getRequestTime();
   /**
@@ -53,7 +53,7 @@ public interface CreateInstanceMetadataOrBuilder extends
    * The time at which the original request was received.
    * </pre>
    *
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+   * <code>.google.protobuf.Timestamp request_time = 2;</code>
    */
   com.google.protobuf.TimestampOrBuilder getRequestTimeOrBuilder();
 
@@ -62,7 +62,7 @@ public interface CreateInstanceMetadataOrBuilder extends
    * The time at which the operation failed or was completed successfully.
    * </pre>
    *
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+   * <code>.google.protobuf.Timestamp finish_time = 3;</code>
    */
   boolean hasFinishTime();
   /**
@@ -70,7 +70,7 @@ public interface CreateInstanceMetadataOrBuilder extends
    * The time at which the operation failed or was completed successfully.
    * </pre>
    *
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+   * <code>.google.protobuf.Timestamp finish_time = 3;</code>
    */
   com.google.protobuf.Timestamp getFinishTime();
   /**
@@ -78,7 +78,7 @@ public interface CreateInstanceMetadataOrBuilder extends
    * The time at which the operation failed or was completed successfully.
    * </pre>
    *
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+   * <code>.google.protobuf.Timestamp finish_time = 3;</code>
    */
   com.google.protobuf.TimestampOrBuilder getFinishTimeOrBuilder();
 }

@@ -351,7 +351,7 @@ public  final class GcRule extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (getRulesCount() > 0) {
         hash = (37 * hash) + RULES_FIELD_NUMBER;
         hash = (53 * hash) + getRulesList().hashCode();
@@ -1206,7 +1206,7 @@ public  final class GcRule extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (getRulesCount() > 0) {
         hash = (37 * hash) + RULES_FIELD_NUMBER;
         hash = (53 * hash) + getRulesList().hashCode();
@@ -1874,7 +1874,7 @@ public  final class GcRule extends
    * Delete all cells in a column except the most recent N.
    * </pre>
    *
-   * <code>optional int32 max_num_versions = 1;</code>
+   * <code>int32 max_num_versions = 1;</code>
    */
   public int getMaxNumVersions() {
     if (ruleCase_ == 1) {
@@ -1891,7 +1891,7 @@ public  final class GcRule extends
    * microsecond granularity.
    * </pre>
    *
-   * <code>optional .google.protobuf.Duration max_age = 2;</code>
+   * <code>.google.protobuf.Duration max_age = 2;</code>
    */
   public com.google.protobuf.Duration getMaxAge() {
     if (ruleCase_ == 2) {
@@ -1906,7 +1906,7 @@ public  final class GcRule extends
    * microsecond granularity.
    * </pre>
    *
-   * <code>optional .google.protobuf.Duration max_age = 2;</code>
+   * <code>.google.protobuf.Duration max_age = 2;</code>
    */
   public com.google.protobuf.DurationOrBuilder getMaxAgeOrBuilder() {
     if (ruleCase_ == 2) {
@@ -1921,7 +1921,7 @@ public  final class GcRule extends
    * Delete cells that would be deleted by every nested rule.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+   * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
    */
   public com.google.bigtable.admin.v2.GcRule.Intersection getIntersection() {
     if (ruleCase_ == 3) {
@@ -1934,7 +1934,7 @@ public  final class GcRule extends
    * Delete cells that would be deleted by every nested rule.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+   * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
    */
   public com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder getIntersectionOrBuilder() {
     if (ruleCase_ == 3) {
@@ -1949,7 +1949,7 @@ public  final class GcRule extends
    * Delete cells that would be deleted by any nested rule.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+   * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
    */
   public com.google.bigtable.admin.v2.GcRule.Union getUnion() {
     if (ruleCase_ == 4) {
@@ -1962,7 +1962,7 @@ public  final class GcRule extends
    * Delete cells that would be deleted by any nested rule.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+   * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
    */
   public com.google.bigtable.admin.v2.GcRule.UnionOrBuilder getUnionOrBuilder() {
     if (ruleCase_ == 4) {
@@ -2068,7 +2068,7 @@ public  final class GcRule extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     switch (ruleCase_) {
       case 1:
         hash = (37 * hash) + MAX_NUM_VERSIONS_FIELD_NUMBER;
@@ -2368,7 +2368,7 @@ public  final class GcRule extends
      * Delete all cells in a column except the most recent N.
      * </pre>
      *
-     * <code>optional int32 max_num_versions = 1;</code>
+     * <code>int32 max_num_versions = 1;</code>
      */
     public int getMaxNumVersions() {
       if (ruleCase_ == 1) {
@@ -2381,7 +2381,7 @@ public  final class GcRule extends
      * Delete all cells in a column except the most recent N.
      * </pre>
      *
-     * <code>optional int32 max_num_versions = 1;</code>
+     * <code>int32 max_num_versions = 1;</code>
      */
     public Builder setMaxNumVersions(int value) {
       ruleCase_ = 1;
@@ -2394,7 +2394,7 @@ public  final class GcRule extends
      * Delete all cells in a column except the most recent N.
      * </pre>
      *
-     * <code>optional int32 max_num_versions = 1;</code>
+     * <code>int32 max_num_versions = 1;</code>
      */
     public Builder clearMaxNumVersions() {
       if (ruleCase_ == 1) {
@@ -2414,7 +2414,7 @@ public  final class GcRule extends
      * microsecond granularity.
      * </pre>
      *
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
+     * <code>.google.protobuf.Duration max_age = 2;</code>
      */
     public com.google.protobuf.Duration getMaxAge() {
       if (maxAgeBuilder_ == null) {
@@ -2436,7 +2436,7 @@ public  final class GcRule extends
      * microsecond granularity.
      * </pre>
      *
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
+     * <code>.google.protobuf.Duration max_age = 2;</code>
      */
     public Builder setMaxAge(com.google.protobuf.Duration value) {
       if (maxAgeBuilder_ == null) {
@@ -2458,7 +2458,7 @@ public  final class GcRule extends
      * microsecond granularity.
      * </pre>
      *
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
+     * <code>.google.protobuf.Duration max_age = 2;</code>
      */
     public Builder setMaxAge(
         com.google.protobuf.Duration.Builder builderForValue) {
@@ -2478,7 +2478,7 @@ public  final class GcRule extends
      * microsecond granularity.
      * </pre>
      *
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
+     * <code>.google.protobuf.Duration max_age = 2;</code>
      */
     public Builder mergeMaxAge(com.google.protobuf.Duration value) {
       if (maxAgeBuilder_ == null) {
@@ -2506,7 +2506,7 @@ public  final class GcRule extends
      * microsecond granularity.
      * </pre>
      *
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
+     * <code>.google.protobuf.Duration max_age = 2;</code>
      */
     public Builder clearMaxAge() {
       if (maxAgeBuilder_ == null) {
@@ -2531,7 +2531,7 @@ public  final class GcRule extends
      * microsecond granularity.
      * </pre>
      *
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
+     * <code>.google.protobuf.Duration max_age = 2;</code>
      */
     public com.google.protobuf.Duration.Builder getMaxAgeBuilder() {
       return getMaxAgeFieldBuilder().getBuilder();
@@ -2543,7 +2543,7 @@ public  final class GcRule extends
      * microsecond granularity.
      * </pre>
      *
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
+     * <code>.google.protobuf.Duration max_age = 2;</code>
      */
     public com.google.protobuf.DurationOrBuilder getMaxAgeOrBuilder() {
       if ((ruleCase_ == 2) && (maxAgeBuilder_ != null)) {
@@ -2562,7 +2562,7 @@ public  final class GcRule extends
      * microsecond granularity.
      * </pre>
      *
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
+     * <code>.google.protobuf.Duration max_age = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> 
@@ -2590,7 +2590,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by every nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.Intersection getIntersection() {
       if (intersectionBuilder_ == null) {
@@ -2610,7 +2610,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by every nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public Builder setIntersection(com.google.bigtable.admin.v2.GcRule.Intersection value) {
       if (intersectionBuilder_ == null) {
@@ -2630,7 +2630,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by every nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public Builder setIntersection(
         com.google.bigtable.admin.v2.GcRule.Intersection.Builder builderForValue) {
@@ -2648,7 +2648,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by every nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public Builder mergeIntersection(com.google.bigtable.admin.v2.GcRule.Intersection value) {
       if (intersectionBuilder_ == null) {
@@ -2674,7 +2674,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by every nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public Builder clearIntersection() {
       if (intersectionBuilder_ == null) {
@@ -2697,7 +2697,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by every nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.Intersection.Builder getIntersectionBuilder() {
       return getIntersectionFieldBuilder().getBuilder();
@@ -2707,7 +2707,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by every nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder getIntersectionOrBuilder() {
       if ((ruleCase_ == 3) && (intersectionBuilder_ != null)) {
@@ -2724,7 +2724,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by every nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.GcRule.Intersection, com.google.bigtable.admin.v2.GcRule.Intersection.Builder, com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder> 
@@ -2752,7 +2752,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by any nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.Union getUnion() {
       if (unionBuilder_ == null) {
@@ -2772,7 +2772,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by any nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public Builder setUnion(com.google.bigtable.admin.v2.GcRule.Union value) {
       if (unionBuilder_ == null) {
@@ -2792,7 +2792,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by any nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public Builder setUnion(
         com.google.bigtable.admin.v2.GcRule.Union.Builder builderForValue) {
@@ -2810,7 +2810,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by any nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public Builder mergeUnion(com.google.bigtable.admin.v2.GcRule.Union value) {
       if (unionBuilder_ == null) {
@@ -2836,7 +2836,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by any nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public Builder clearUnion() {
       if (unionBuilder_ == null) {
@@ -2859,7 +2859,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by any nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.Union.Builder getUnionBuilder() {
       return getUnionFieldBuilder().getBuilder();
@@ -2869,7 +2869,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by any nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.UnionOrBuilder getUnionOrBuilder() {
       if ((ruleCase_ == 4) && (unionBuilder_ != null)) {
@@ -2886,7 +2886,7 @@ public  final class GcRule extends
      * Delete cells that would be deleted by any nested rule.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+     * <code>.google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.GcRule.Union, com.google.bigtable.admin.v2.GcRule.Union.Builder, com.google.bigtable.admin.v2.GcRule.UnionOrBuilder> 

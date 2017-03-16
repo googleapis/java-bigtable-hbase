@@ -93,7 +93,7 @@ public  final class ColumnFamily extends
    * GC expression for its family.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+   * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
    */
   public boolean hasGcRule() {
     return gcRule_ != null;
@@ -107,7 +107,7 @@ public  final class ColumnFamily extends
    * GC expression for its family.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+   * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
    */
   public com.google.bigtable.admin.v2.GcRule getGcRule() {
     return gcRule_ == null ? com.google.bigtable.admin.v2.GcRule.getDefaultInstance() : gcRule_;
@@ -121,7 +121,7 @@ public  final class ColumnFamily extends
    * GC expression for its family.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+   * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
    */
   public com.google.bigtable.admin.v2.GcRuleOrBuilder getGcRuleOrBuilder() {
     return getGcRule();
@@ -183,7 +183,7 @@ public  final class ColumnFamily extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     if (hasGcRule()) {
       hash = (37 * hash) + GC_RULE_FIELD_NUMBER;
       hash = (53 * hash) + getGcRule().hashCode();
@@ -425,7 +425,7 @@ public  final class ColumnFamily extends
      * GC expression for its family.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+     * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
      */
     public boolean hasGcRule() {
       return gcRuleBuilder_ != null || gcRule_ != null;
@@ -439,7 +439,7 @@ public  final class ColumnFamily extends
      * GC expression for its family.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+     * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
      */
     public com.google.bigtable.admin.v2.GcRule getGcRule() {
       if (gcRuleBuilder_ == null) {
@@ -457,7 +457,7 @@ public  final class ColumnFamily extends
      * GC expression for its family.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+     * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
      */
     public Builder setGcRule(com.google.bigtable.admin.v2.GcRule value) {
       if (gcRuleBuilder_ == null) {
@@ -481,7 +481,7 @@ public  final class ColumnFamily extends
      * GC expression for its family.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+     * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
      */
     public Builder setGcRule(
         com.google.bigtable.admin.v2.GcRule.Builder builderForValue) {
@@ -503,7 +503,7 @@ public  final class ColumnFamily extends
      * GC expression for its family.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+     * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
      */
     public Builder mergeGcRule(com.google.bigtable.admin.v2.GcRule value) {
       if (gcRuleBuilder_ == null) {
@@ -529,7 +529,7 @@ public  final class ColumnFamily extends
      * GC expression for its family.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+     * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
      */
     public Builder clearGcRule() {
       if (gcRuleBuilder_ == null) {
@@ -551,7 +551,7 @@ public  final class ColumnFamily extends
      * GC expression for its family.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+     * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.Builder getGcRuleBuilder() {
       
@@ -567,7 +567,7 @@ public  final class ColumnFamily extends
      * GC expression for its family.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+     * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
      */
     public com.google.bigtable.admin.v2.GcRuleOrBuilder getGcRuleOrBuilder() {
       if (gcRuleBuilder_ != null) {
@@ -586,7 +586,7 @@ public  final class ColumnFamily extends
      * GC expression for its family.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
+     * <code>.google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.GcRule, com.google.bigtable.admin.v2.GcRule.Builder, com.google.bigtable.admin.v2.GcRuleOrBuilder> 

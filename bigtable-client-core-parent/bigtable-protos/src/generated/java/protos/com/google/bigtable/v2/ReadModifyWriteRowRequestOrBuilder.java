@@ -15,7 +15,7 @@ public interface ReadModifyWriteRowRequestOrBuilder extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
@@ -26,7 +26,7 @@ public interface ReadModifyWriteRowRequestOrBuilder extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();
@@ -36,7 +36,7 @@ public interface ReadModifyWriteRowRequestOrBuilder extends
    * The key of the row to which the read/modify/write rules should be applied.
    * </pre>
    *
-   * <code>optional bytes row_key = 2;</code>
+   * <code>bytes row_key = 2;</code>
    */
   com.google.protobuf.ByteString getRowKey();
 

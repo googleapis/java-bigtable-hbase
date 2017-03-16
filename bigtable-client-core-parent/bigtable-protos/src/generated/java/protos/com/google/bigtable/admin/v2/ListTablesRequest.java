@@ -98,7 +98,7 @@ public  final class ListTablesRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -118,7 +118,7 @@ public  final class ListTablesRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -142,7 +142,7 @@ public  final class ListTablesRequest extends
    * Defaults to NAME_ONLY if unspecified (no others are currently supported).
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+   * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   public int getViewValue() {
     return view_;
@@ -153,7 +153,7 @@ public  final class ListTablesRequest extends
    * Defaults to NAME_ONLY if unspecified (no others are currently supported).
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+   * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   public com.google.bigtable.admin.v2.Table.View getView() {
     com.google.bigtable.admin.v2.Table.View result = com.google.bigtable.admin.v2.Table.View.valueOf(view_);
@@ -167,7 +167,7 @@ public  final class ListTablesRequest extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 3;</code>
+   * <code>string page_token = 3;</code>
    */
   public java.lang.String getPageToken() {
     java.lang.Object ref = pageToken_;
@@ -186,7 +186,7 @@ public  final class ListTablesRequest extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 3;</code>
+   * <code>string page_token = 3;</code>
    */
   public com.google.protobuf.ByteString
       getPageTokenBytes() {
@@ -270,7 +270,7 @@ public  final class ListTablesRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + PARENT_FIELD_NUMBER;
     hash = (53 * hash) + getParent().hashCode();
     hash = (37 * hash) + VIEW_FIELD_NUMBER;
@@ -515,7 +515,7 @@ public  final class ListTablesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -535,7 +535,7 @@ public  final class ListTablesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -556,7 +556,7 @@ public  final class ListTablesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -574,7 +574,7 @@ public  final class ListTablesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -588,7 +588,7 @@ public  final class ListTablesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -609,7 +609,7 @@ public  final class ListTablesRequest extends
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public int getViewValue() {
       return view_;
@@ -620,7 +620,7 @@ public  final class ListTablesRequest extends
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public Builder setViewValue(int value) {
       view_ = value;
@@ -633,7 +633,7 @@ public  final class ListTablesRequest extends
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public com.google.bigtable.admin.v2.Table.View getView() {
       com.google.bigtable.admin.v2.Table.View result = com.google.bigtable.admin.v2.Table.View.valueOf(view_);
@@ -645,7 +645,7 @@ public  final class ListTablesRequest extends
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public Builder setView(com.google.bigtable.admin.v2.Table.View value) {
       if (value == null) {
@@ -662,7 +662,7 @@ public  final class ListTablesRequest extends
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+     * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public Builder clearView() {
       
@@ -677,7 +677,7 @@ public  final class ListTablesRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 3;</code>
+     * <code>string page_token = 3;</code>
      */
     public java.lang.String getPageToken() {
       java.lang.Object ref = pageToken_;
@@ -696,7 +696,7 @@ public  final class ListTablesRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 3;</code>
+     * <code>string page_token = 3;</code>
      */
     public com.google.protobuf.ByteString
         getPageTokenBytes() {
@@ -716,7 +716,7 @@ public  final class ListTablesRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 3;</code>
+     * <code>string page_token = 3;</code>
      */
     public Builder setPageToken(
         java.lang.String value) {
@@ -733,7 +733,7 @@ public  final class ListTablesRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 3;</code>
+     * <code>string page_token = 3;</code>
      */
     public Builder clearPageToken() {
       
@@ -746,7 +746,7 @@ public  final class ListTablesRequest extends
      * The value of `next_page_token` returned by a previous call.
      * </pre>
      *
-     * <code>optional string page_token = 3;</code>
+     * <code>string page_token = 3;</code>
      */
     public Builder setPageTokenBytes(
         com.google.protobuf.ByteString value) {

@@ -88,7 +88,7 @@ public  final class TimestampRange extends
    * Inclusive lower bound. If left empty, interpreted as 0.
    * </pre>
    *
-   * <code>optional int64 start_timestamp_micros = 1;</code>
+   * <code>int64 start_timestamp_micros = 1;</code>
    */
   public long getStartTimestampMicros() {
     return startTimestampMicros_;
@@ -101,7 +101,7 @@ public  final class TimestampRange extends
    * Exclusive upper bound. If left empty, interpreted as infinity.
    * </pre>
    *
-   * <code>optional int64 end_timestamp_micros = 2;</code>
+   * <code>int64 end_timestamp_micros = 2;</code>
    */
   public long getEndTimestampMicros() {
     return endTimestampMicros_;
@@ -169,7 +169,7 @@ public  final class TimestampRange extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + START_TIMESTAMP_MICROS_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getStartTimestampMicros());
@@ -405,7 +405,7 @@ public  final class TimestampRange extends
      * Inclusive lower bound. If left empty, interpreted as 0.
      * </pre>
      *
-     * <code>optional int64 start_timestamp_micros = 1;</code>
+     * <code>int64 start_timestamp_micros = 1;</code>
      */
     public long getStartTimestampMicros() {
       return startTimestampMicros_;
@@ -415,7 +415,7 @@ public  final class TimestampRange extends
      * Inclusive lower bound. If left empty, interpreted as 0.
      * </pre>
      *
-     * <code>optional int64 start_timestamp_micros = 1;</code>
+     * <code>int64 start_timestamp_micros = 1;</code>
      */
     public Builder setStartTimestampMicros(long value) {
       
@@ -428,7 +428,7 @@ public  final class TimestampRange extends
      * Inclusive lower bound. If left empty, interpreted as 0.
      * </pre>
      *
-     * <code>optional int64 start_timestamp_micros = 1;</code>
+     * <code>int64 start_timestamp_micros = 1;</code>
      */
     public Builder clearStartTimestampMicros() {
       
@@ -443,7 +443,7 @@ public  final class TimestampRange extends
      * Exclusive upper bound. If left empty, interpreted as infinity.
      * </pre>
      *
-     * <code>optional int64 end_timestamp_micros = 2;</code>
+     * <code>int64 end_timestamp_micros = 2;</code>
      */
     public long getEndTimestampMicros() {
       return endTimestampMicros_;
@@ -453,7 +453,7 @@ public  final class TimestampRange extends
      * Exclusive upper bound. If left empty, interpreted as infinity.
      * </pre>
      *
-     * <code>optional int64 end_timestamp_micros = 2;</code>
+     * <code>int64 end_timestamp_micros = 2;</code>
      */
     public Builder setEndTimestampMicros(long value) {
       
@@ -466,7 +466,7 @@ public  final class TimestampRange extends
      * Exclusive upper bound. If left empty, interpreted as infinity.
      * </pre>
      *
-     * <code>optional int64 end_timestamp_micros = 2;</code>
+     * <code>int64 end_timestamp_micros = 2;</code>
      */
     public Builder clearEndTimestampMicros() {
       

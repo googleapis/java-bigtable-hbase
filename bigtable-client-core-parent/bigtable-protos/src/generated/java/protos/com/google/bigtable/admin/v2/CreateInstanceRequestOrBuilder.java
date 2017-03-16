@@ -13,7 +13,7 @@ public interface CreateInstanceRequestOrBuilder extends
    * Values are of the form `projects/&lt;project&gt;`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   java.lang.String getParent();
   /**
@@ -22,7 +22,7 @@ public interface CreateInstanceRequestOrBuilder extends
    * Values are of the form `projects/&lt;project&gt;`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   com.google.protobuf.ByteString
       getParentBytes();
@@ -34,7 +34,7 @@ public interface CreateInstanceRequestOrBuilder extends
    * `projects/myproject/instances/myinstance`.
    * </pre>
    *
-   * <code>optional string instance_id = 2;</code>
+   * <code>string instance_id = 2;</code>
    */
   java.lang.String getInstanceId();
   /**
@@ -44,7 +44,7 @@ public interface CreateInstanceRequestOrBuilder extends
    * `projects/myproject/instances/myinstance`.
    * </pre>
    *
-   * <code>optional string instance_id = 2;</code>
+   * <code>string instance_id = 2;</code>
    */
   com.google.protobuf.ByteString
       getInstanceIdBytes();
@@ -55,7 +55,7 @@ public interface CreateInstanceRequestOrBuilder extends
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
+   * <code>.google.bigtable.admin.v2.Instance instance = 3;</code>
    */
   boolean hasInstance();
   /**
@@ -64,7 +64,7 @@ public interface CreateInstanceRequestOrBuilder extends
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
+   * <code>.google.bigtable.admin.v2.Instance instance = 3;</code>
    */
   com.google.bigtable.admin.v2.Instance getInstance();
   /**
@@ -73,7 +73,7 @@ public interface CreateInstanceRequestOrBuilder extends
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
+   * <code>.google.bigtable.admin.v2.Instance instance = 3;</code>
    */
   com.google.bigtable.admin.v2.InstanceOrBuilder getInstanceOrBuilder();
 

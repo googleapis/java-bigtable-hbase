@@ -12,7 +12,7 @@ public interface MutateRowsRequestOrBuilder extends
    * The unique name of the table to which the mutations should be applied.
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
@@ -20,7 +20,7 @@ public interface MutateRowsRequestOrBuilder extends
    * The unique name of the table to which the mutations should be applied.
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();

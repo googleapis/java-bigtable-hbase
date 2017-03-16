@@ -401,7 +401,7 @@ public  final class Instance extends
    * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -422,7 +422,7 @@ public  final class Instance extends
    * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -447,7 +447,7 @@ public  final class Instance extends
    * to avoid confusion.
    * </pre>
    *
-   * <code>optional string display_name = 2;</code>
+   * <code>string display_name = 2;</code>
    */
   public java.lang.String getDisplayName() {
     java.lang.Object ref = displayName_;
@@ -468,7 +468,7 @@ public  final class Instance extends
    * to avoid confusion.
    * </pre>
    *
-   * <code>optional string display_name = 2;</code>
+   * <code>string display_name = 2;</code>
    */
   public com.google.protobuf.ByteString
       getDisplayNameBytes() {
@@ -492,7 +492,7 @@ public  final class Instance extends
    * The current state of the instance.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
+   * <code>.google.bigtable.admin.v2.Instance.State state = 3;</code>
    */
   public int getStateValue() {
     return state_;
@@ -503,7 +503,7 @@ public  final class Instance extends
    * The current state of the instance.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
+   * <code>.google.bigtable.admin.v2.Instance.State state = 3;</code>
    */
   public com.google.bigtable.admin.v2.Instance.State getState() {
     com.google.bigtable.admin.v2.Instance.State result = com.google.bigtable.admin.v2.Instance.State.valueOf(state_);
@@ -517,7 +517,7 @@ public  final class Instance extends
    * The type of the instance. Defaults to `PRODUCTION`.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+   * <code>.google.bigtable.admin.v2.Instance.Type type = 4;</code>
    */
   public int getTypeValue() {
     return type_;
@@ -527,7 +527,7 @@ public  final class Instance extends
    * The type of the instance. Defaults to `PRODUCTION`.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+   * <code>.google.bigtable.admin.v2.Instance.Type type = 4;</code>
    */
   public com.google.bigtable.admin.v2.Instance.Type getType() {
     com.google.bigtable.admin.v2.Instance.Type result = com.google.bigtable.admin.v2.Instance.Type.valueOf(type_);
@@ -610,7 +610,7 @@ public  final class Instance extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + NAME_FIELD_NUMBER;
     hash = (53 * hash) + getName().hashCode();
     hash = (37 * hash) + DISPLAY_NAME_FIELD_NUMBER;
@@ -867,7 +867,7 @@ public  final class Instance extends
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -888,7 +888,7 @@ public  final class Instance extends
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -910,7 +910,7 @@ public  final class Instance extends
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -929,7 +929,7 @@ public  final class Instance extends
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -944,7 +944,7 @@ public  final class Instance extends
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -966,7 +966,7 @@ public  final class Instance extends
      * to avoid confusion.
      * </pre>
      *
-     * <code>optional string display_name = 2;</code>
+     * <code>string display_name = 2;</code>
      */
     public java.lang.String getDisplayName() {
       java.lang.Object ref = displayName_;
@@ -987,7 +987,7 @@ public  final class Instance extends
      * to avoid confusion.
      * </pre>
      *
-     * <code>optional string display_name = 2;</code>
+     * <code>string display_name = 2;</code>
      */
     public com.google.protobuf.ByteString
         getDisplayNameBytes() {
@@ -1009,7 +1009,7 @@ public  final class Instance extends
      * to avoid confusion.
      * </pre>
      *
-     * <code>optional string display_name = 2;</code>
+     * <code>string display_name = 2;</code>
      */
     public Builder setDisplayName(
         java.lang.String value) {
@@ -1028,7 +1028,7 @@ public  final class Instance extends
      * to avoid confusion.
      * </pre>
      *
-     * <code>optional string display_name = 2;</code>
+     * <code>string display_name = 2;</code>
      */
     public Builder clearDisplayName() {
       
@@ -1043,7 +1043,7 @@ public  final class Instance extends
      * to avoid confusion.
      * </pre>
      *
-     * <code>optional string display_name = 2;</code>
+     * <code>string display_name = 2;</code>
      */
     public Builder setDisplayNameBytes(
         com.google.protobuf.ByteString value) {
@@ -1064,7 +1064,7 @@ public  final class Instance extends
      * The current state of the instance.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public int getStateValue() {
       return state_;
@@ -1075,7 +1075,7 @@ public  final class Instance extends
      * The current state of the instance.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public Builder setStateValue(int value) {
       state_ = value;
@@ -1088,7 +1088,7 @@ public  final class Instance extends
      * The current state of the instance.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public com.google.bigtable.admin.v2.Instance.State getState() {
       com.google.bigtable.admin.v2.Instance.State result = com.google.bigtable.admin.v2.Instance.State.valueOf(state_);
@@ -1100,7 +1100,7 @@ public  final class Instance extends
      * The current state of the instance.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public Builder setState(com.google.bigtable.admin.v2.Instance.State value) {
       if (value == null) {
@@ -1117,7 +1117,7 @@ public  final class Instance extends
      * The current state of the instance.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
+     * <code>.google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public Builder clearState() {
       
@@ -1132,7 +1132,7 @@ public  final class Instance extends
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     * <code>.google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public int getTypeValue() {
       return type_;
@@ -1142,7 +1142,7 @@ public  final class Instance extends
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     * <code>.google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public Builder setTypeValue(int value) {
       type_ = value;
@@ -1154,7 +1154,7 @@ public  final class Instance extends
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     * <code>.google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public com.google.bigtable.admin.v2.Instance.Type getType() {
       com.google.bigtable.admin.v2.Instance.Type result = com.google.bigtable.admin.v2.Instance.Type.valueOf(type_);
@@ -1165,7 +1165,7 @@ public  final class Instance extends
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     * <code>.google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public Builder setType(com.google.bigtable.admin.v2.Instance.Type value) {
       if (value == null) {
@@ -1181,7 +1181,7 @@ public  final class Instance extends
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     * <code>.google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public Builder clearType() {
       

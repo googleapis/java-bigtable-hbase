@@ -105,7 +105,7 @@ public interface ListClustersResponseOrBuilder extends
    * page of results.
    * </pre>
    *
-   * <code>optional string next_page_token = 3;</code>
+   * <code>string next_page_token = 3;</code>
    */
   java.lang.String getNextPageToken();
   /**
@@ -115,7 +115,7 @@ public interface ListClustersResponseOrBuilder extends
    * page of results.
    * </pre>
    *
-   * <code>optional string next_page_token = 3;</code>
+   * <code>string next_page_token = 3;</code>
    */
   com.google.protobuf.ByteString
       getNextPageTokenBytes();

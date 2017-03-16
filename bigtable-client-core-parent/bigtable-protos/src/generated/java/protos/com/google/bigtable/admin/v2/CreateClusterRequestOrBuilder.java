@@ -14,7 +14,7 @@ public interface CreateClusterRequestOrBuilder extends
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   java.lang.String getParent();
   /**
@@ -24,7 +24,7 @@ public interface CreateClusterRequestOrBuilder extends
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   com.google.protobuf.ByteString
       getParentBytes();
@@ -36,7 +36,7 @@ public interface CreateClusterRequestOrBuilder extends
    * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
    *
-   * <code>optional string cluster_id = 2;</code>
+   * <code>string cluster_id = 2;</code>
    */
   java.lang.String getClusterId();
   /**
@@ -46,7 +46,7 @@ public interface CreateClusterRequestOrBuilder extends
    * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
    *
-   * <code>optional string cluster_id = 2;</code>
+   * <code>string cluster_id = 2;</code>
    */
   com.google.protobuf.ByteString
       getClusterIdBytes();
@@ -57,7 +57,7 @@ public interface CreateClusterRequestOrBuilder extends
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
    */
   boolean hasCluster();
   /**
@@ -66,7 +66,7 @@ public interface CreateClusterRequestOrBuilder extends
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
    */
   com.google.bigtable.admin.v2.Cluster getCluster();
   /**
@@ -75,7 +75,7 @@ public interface CreateClusterRequestOrBuilder extends
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
    */
   com.google.bigtable.admin.v2.ClusterOrBuilder getClusterOrBuilder();
 }

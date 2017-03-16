@@ -17,7 +17,7 @@ public interface CellOrBuilder extends
    * values of `timestamp_micros` which are multiples of 1000.
    * </pre>
    *
-   * <code>optional int64 timestamp_micros = 1;</code>
+   * <code>int64 timestamp_micros = 1;</code>
    */
   long getTimestampMicros();
 
@@ -28,7 +28,7 @@ public interface CellOrBuilder extends
    * length.
    * </pre>
    *
-   * <code>optional bytes value = 2;</code>
+   * <code>bytes value = 2;</code>
    */
   com.google.protobuf.ByteString getValue();
 

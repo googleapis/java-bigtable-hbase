@@ -182,7 +182,7 @@ public  final class ColumnRange extends
    * The name of the column family within which this range falls.
    * </pre>
    *
-   * <code>optional string family_name = 1;</code>
+   * <code>string family_name = 1;</code>
    */
   public java.lang.String getFamilyName() {
     java.lang.Object ref = familyName_;
@@ -201,7 +201,7 @@ public  final class ColumnRange extends
    * The name of the column family within which this range falls.
    * </pre>
    *
-   * <code>optional string family_name = 1;</code>
+   * <code>string family_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getFamilyNameBytes() {
@@ -223,7 +223,7 @@ public  final class ColumnRange extends
    * Used when giving an inclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_qualifier_closed = 2;</code>
+   * <code>bytes start_qualifier_closed = 2;</code>
    */
   public com.google.protobuf.ByteString getStartQualifierClosed() {
     if (startQualifierCase_ == 2) {
@@ -238,7 +238,7 @@ public  final class ColumnRange extends
    * Used when giving an exclusive lower bound for the range.
    * </pre>
    *
-   * <code>optional bytes start_qualifier_open = 3;</code>
+   * <code>bytes start_qualifier_open = 3;</code>
    */
   public com.google.protobuf.ByteString getStartQualifierOpen() {
     if (startQualifierCase_ == 3) {
@@ -253,7 +253,7 @@ public  final class ColumnRange extends
    * Used when giving an inclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_qualifier_closed = 4;</code>
+   * <code>bytes end_qualifier_closed = 4;</code>
    */
   public com.google.protobuf.ByteString getEndQualifierClosed() {
     if (endQualifierCase_ == 4) {
@@ -268,7 +268,7 @@ public  final class ColumnRange extends
    * Used when giving an exclusive upper bound for the range.
    * </pre>
    *
-   * <code>optional bytes end_qualifier_open = 5;</code>
+   * <code>bytes end_qualifier_open = 5;</code>
    */
   public com.google.protobuf.ByteString getEndQualifierOpen() {
     if (endQualifierCase_ == 5) {
@@ -395,7 +395,7 @@ public  final class ColumnRange extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + FAMILY_NAME_FIELD_NUMBER;
     hash = (53 * hash) + getFamilyName().hashCode();
     switch (startQualifierCase_) {
@@ -723,7 +723,7 @@ public  final class ColumnRange extends
      * The name of the column family within which this range falls.
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public java.lang.String getFamilyName() {
       java.lang.Object ref = familyName_;
@@ -742,7 +742,7 @@ public  final class ColumnRange extends
      * The name of the column family within which this range falls.
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getFamilyNameBytes() {
@@ -762,7 +762,7 @@ public  final class ColumnRange extends
      * The name of the column family within which this range falls.
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public Builder setFamilyName(
         java.lang.String value) {
@@ -779,7 +779,7 @@ public  final class ColumnRange extends
      * The name of the column family within which this range falls.
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public Builder clearFamilyName() {
       
@@ -792,7 +792,7 @@ public  final class ColumnRange extends
      * The name of the column family within which this range falls.
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public Builder setFamilyNameBytes(
         com.google.protobuf.ByteString value) {
@@ -811,7 +811,7 @@ public  final class ColumnRange extends
      * Used when giving an inclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_qualifier_closed = 2;</code>
+     * <code>bytes start_qualifier_closed = 2;</code>
      */
     public com.google.protobuf.ByteString getStartQualifierClosed() {
       if (startQualifierCase_ == 2) {
@@ -824,7 +824,7 @@ public  final class ColumnRange extends
      * Used when giving an inclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_qualifier_closed = 2;</code>
+     * <code>bytes start_qualifier_closed = 2;</code>
      */
     public Builder setStartQualifierClosed(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -840,7 +840,7 @@ public  final class ColumnRange extends
      * Used when giving an inclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_qualifier_closed = 2;</code>
+     * <code>bytes start_qualifier_closed = 2;</code>
      */
     public Builder clearStartQualifierClosed() {
       if (startQualifierCase_ == 2) {
@@ -856,7 +856,7 @@ public  final class ColumnRange extends
      * Used when giving an exclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_qualifier_open = 3;</code>
+     * <code>bytes start_qualifier_open = 3;</code>
      */
     public com.google.protobuf.ByteString getStartQualifierOpen() {
       if (startQualifierCase_ == 3) {
@@ -869,7 +869,7 @@ public  final class ColumnRange extends
      * Used when giving an exclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_qualifier_open = 3;</code>
+     * <code>bytes start_qualifier_open = 3;</code>
      */
     public Builder setStartQualifierOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -885,7 +885,7 @@ public  final class ColumnRange extends
      * Used when giving an exclusive lower bound for the range.
      * </pre>
      *
-     * <code>optional bytes start_qualifier_open = 3;</code>
+     * <code>bytes start_qualifier_open = 3;</code>
      */
     public Builder clearStartQualifierOpen() {
       if (startQualifierCase_ == 3) {
@@ -901,7 +901,7 @@ public  final class ColumnRange extends
      * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_qualifier_closed = 4;</code>
+     * <code>bytes end_qualifier_closed = 4;</code>
      */
     public com.google.protobuf.ByteString getEndQualifierClosed() {
       if (endQualifierCase_ == 4) {
@@ -914,7 +914,7 @@ public  final class ColumnRange extends
      * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_qualifier_closed = 4;</code>
+     * <code>bytes end_qualifier_closed = 4;</code>
      */
     public Builder setEndQualifierClosed(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -930,7 +930,7 @@ public  final class ColumnRange extends
      * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_qualifier_closed = 4;</code>
+     * <code>bytes end_qualifier_closed = 4;</code>
      */
     public Builder clearEndQualifierClosed() {
       if (endQualifierCase_ == 4) {
@@ -946,7 +946,7 @@ public  final class ColumnRange extends
      * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_qualifier_open = 5;</code>
+     * <code>bytes end_qualifier_open = 5;</code>
      */
     public com.google.protobuf.ByteString getEndQualifierOpen() {
       if (endQualifierCase_ == 5) {
@@ -959,7 +959,7 @@ public  final class ColumnRange extends
      * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_qualifier_open = 5;</code>
+     * <code>bytes end_qualifier_open = 5;</code>
      */
     public Builder setEndQualifierOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -975,7 +975,7 @@ public  final class ColumnRange extends
      * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
-     * <code>optional bytes end_qualifier_open = 5;</code>
+     * <code>bytes end_qualifier_open = 5;</code>
      */
     public Builder clearEndQualifierOpen() {
       if (endQualifierCase_ == 5) {

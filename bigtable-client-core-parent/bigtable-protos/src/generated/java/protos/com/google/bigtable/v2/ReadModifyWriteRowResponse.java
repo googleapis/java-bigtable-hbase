@@ -89,7 +89,7 @@ public  final class ReadModifyWriteRowResponse extends
    * A Row containing the new contents of all cells modified by the request.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Row row = 1;</code>
+   * <code>.google.bigtable.v2.Row row = 1;</code>
    */
   public boolean hasRow() {
     return row_ != null;
@@ -99,7 +99,7 @@ public  final class ReadModifyWriteRowResponse extends
    * A Row containing the new contents of all cells modified by the request.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Row row = 1;</code>
+   * <code>.google.bigtable.v2.Row row = 1;</code>
    */
   public com.google.bigtable.v2.Row getRow() {
     return row_ == null ? com.google.bigtable.v2.Row.getDefaultInstance() : row_;
@@ -109,7 +109,7 @@ public  final class ReadModifyWriteRowResponse extends
    * A Row containing the new contents of all cells modified by the request.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Row row = 1;</code>
+   * <code>.google.bigtable.v2.Row row = 1;</code>
    */
   public com.google.bigtable.v2.RowOrBuilder getRowOrBuilder() {
     return getRow();
@@ -171,7 +171,7 @@ public  final class ReadModifyWriteRowResponse extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     if (hasRow()) {
       hash = (37 * hash) + ROW_FIELD_NUMBER;
       hash = (53 * hash) + getRow().hashCode();
@@ -409,7 +409,7 @@ public  final class ReadModifyWriteRowResponse extends
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
+     * <code>.google.bigtable.v2.Row row = 1;</code>
      */
     public boolean hasRow() {
       return rowBuilder_ != null || row_ != null;
@@ -419,7 +419,7 @@ public  final class ReadModifyWriteRowResponse extends
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
+     * <code>.google.bigtable.v2.Row row = 1;</code>
      */
     public com.google.bigtable.v2.Row getRow() {
       if (rowBuilder_ == null) {
@@ -433,7 +433,7 @@ public  final class ReadModifyWriteRowResponse extends
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
+     * <code>.google.bigtable.v2.Row row = 1;</code>
      */
     public Builder setRow(com.google.bigtable.v2.Row value) {
       if (rowBuilder_ == null) {
@@ -453,7 +453,7 @@ public  final class ReadModifyWriteRowResponse extends
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
+     * <code>.google.bigtable.v2.Row row = 1;</code>
      */
     public Builder setRow(
         com.google.bigtable.v2.Row.Builder builderForValue) {
@@ -471,7 +471,7 @@ public  final class ReadModifyWriteRowResponse extends
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
+     * <code>.google.bigtable.v2.Row row = 1;</code>
      */
     public Builder mergeRow(com.google.bigtable.v2.Row value) {
       if (rowBuilder_ == null) {
@@ -493,7 +493,7 @@ public  final class ReadModifyWriteRowResponse extends
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
+     * <code>.google.bigtable.v2.Row row = 1;</code>
      */
     public Builder clearRow() {
       if (rowBuilder_ == null) {
@@ -511,7 +511,7 @@ public  final class ReadModifyWriteRowResponse extends
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
+     * <code>.google.bigtable.v2.Row row = 1;</code>
      */
     public com.google.bigtable.v2.Row.Builder getRowBuilder() {
       
@@ -523,7 +523,7 @@ public  final class ReadModifyWriteRowResponse extends
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
+     * <code>.google.bigtable.v2.Row row = 1;</code>
      */
     public com.google.bigtable.v2.RowOrBuilder getRowOrBuilder() {
       if (rowBuilder_ != null) {
@@ -538,7 +538,7 @@ public  final class ReadModifyWriteRowResponse extends
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
+     * <code>.google.bigtable.v2.Row row = 1;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.Row, com.google.bigtable.v2.Row.Builder, com.google.bigtable.v2.RowOrBuilder> 

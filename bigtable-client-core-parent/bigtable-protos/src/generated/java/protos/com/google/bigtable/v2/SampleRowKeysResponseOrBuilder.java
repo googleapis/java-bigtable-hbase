@@ -18,7 +18,7 @@ public interface SampleRowKeysResponseOrBuilder extends
    * structure that are specific to their use case.
    * </pre>
    *
-   * <code>optional bytes row_key = 1;</code>
+   * <code>bytes row_key = 1;</code>
    */
   com.google.protobuf.ByteString getRowKey();
 
@@ -30,7 +30,7 @@ public interface SampleRowKeysResponseOrBuilder extends
    * `offset_bytes` fields.
    * </pre>
    *
-   * <code>optional int64 offset_bytes = 2;</code>
+   * <code>int64 offset_bytes = 2;</code>
    */
   long getOffsetBytes();
 }

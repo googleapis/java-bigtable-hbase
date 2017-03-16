@@ -105,7 +105,7 @@ public  final class CreateClusterRequest extends
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -126,7 +126,7 @@ public  final class CreateClusterRequest extends
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -151,7 +151,7 @@ public  final class CreateClusterRequest extends
    * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
    *
-   * <code>optional string cluster_id = 2;</code>
+   * <code>string cluster_id = 2;</code>
    */
   public java.lang.String getClusterId() {
     java.lang.Object ref = clusterId_;
@@ -172,7 +172,7 @@ public  final class CreateClusterRequest extends
    * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
    *
-   * <code>optional string cluster_id = 2;</code>
+   * <code>string cluster_id = 2;</code>
    */
   public com.google.protobuf.ByteString
       getClusterIdBytes() {
@@ -196,7 +196,7 @@ public  final class CreateClusterRequest extends
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
    */
   public boolean hasCluster() {
     return cluster_ != null;
@@ -207,7 +207,7 @@ public  final class CreateClusterRequest extends
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
    */
   public com.google.bigtable.admin.v2.Cluster getCluster() {
     return cluster_ == null ? com.google.bigtable.admin.v2.Cluster.getDefaultInstance() : cluster_;
@@ -218,7 +218,7 @@ public  final class CreateClusterRequest extends
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+   * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
    */
   public com.google.bigtable.admin.v2.ClusterOrBuilder getClusterOrBuilder() {
     return getCluster();
@@ -296,7 +296,7 @@ public  final class CreateClusterRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + PARENT_FIELD_NUMBER;
     hash = (53 * hash) + getParent().hashCode();
     hash = (37 * hash) + CLUSTER_ID_FIELD_NUMBER;
@@ -552,7 +552,7 @@ public  final class CreateClusterRequest extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -573,7 +573,7 @@ public  final class CreateClusterRequest extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -595,7 +595,7 @@ public  final class CreateClusterRequest extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -614,7 +614,7 @@ public  final class CreateClusterRequest extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -629,7 +629,7 @@ public  final class CreateClusterRequest extends
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      *
-     * <code>optional string parent = 1;</code>
+     * <code>string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -651,7 +651,7 @@ public  final class CreateClusterRequest extends
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      *
-     * <code>optional string cluster_id = 2;</code>
+     * <code>string cluster_id = 2;</code>
      */
     public java.lang.String getClusterId() {
       java.lang.Object ref = clusterId_;
@@ -672,7 +672,7 @@ public  final class CreateClusterRequest extends
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      *
-     * <code>optional string cluster_id = 2;</code>
+     * <code>string cluster_id = 2;</code>
      */
     public com.google.protobuf.ByteString
         getClusterIdBytes() {
@@ -694,7 +694,7 @@ public  final class CreateClusterRequest extends
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      *
-     * <code>optional string cluster_id = 2;</code>
+     * <code>string cluster_id = 2;</code>
      */
     public Builder setClusterId(
         java.lang.String value) {
@@ -713,7 +713,7 @@ public  final class CreateClusterRequest extends
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      *
-     * <code>optional string cluster_id = 2;</code>
+     * <code>string cluster_id = 2;</code>
      */
     public Builder clearClusterId() {
       
@@ -728,7 +728,7 @@ public  final class CreateClusterRequest extends
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      *
-     * <code>optional string cluster_id = 2;</code>
+     * <code>string cluster_id = 2;</code>
      */
     public Builder setClusterIdBytes(
         com.google.protobuf.ByteString value) {
@@ -751,7 +751,7 @@ public  final class CreateClusterRequest extends
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public boolean hasCluster() {
       return clusterBuilder_ != null || cluster_ != null;
@@ -762,7 +762,7 @@ public  final class CreateClusterRequest extends
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public com.google.bigtable.admin.v2.Cluster getCluster() {
       if (clusterBuilder_ == null) {
@@ -777,7 +777,7 @@ public  final class CreateClusterRequest extends
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public Builder setCluster(com.google.bigtable.admin.v2.Cluster value) {
       if (clusterBuilder_ == null) {
@@ -798,7 +798,7 @@ public  final class CreateClusterRequest extends
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public Builder setCluster(
         com.google.bigtable.admin.v2.Cluster.Builder builderForValue) {
@@ -817,7 +817,7 @@ public  final class CreateClusterRequest extends
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public Builder mergeCluster(com.google.bigtable.admin.v2.Cluster value) {
       if (clusterBuilder_ == null) {
@@ -840,7 +840,7 @@ public  final class CreateClusterRequest extends
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public Builder clearCluster() {
       if (clusterBuilder_ == null) {
@@ -859,7 +859,7 @@ public  final class CreateClusterRequest extends
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public com.google.bigtable.admin.v2.Cluster.Builder getClusterBuilder() {
       
@@ -872,7 +872,7 @@ public  final class CreateClusterRequest extends
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public com.google.bigtable.admin.v2.ClusterOrBuilder getClusterOrBuilder() {
       if (clusterBuilder_ != null) {
@@ -888,7 +888,7 @@ public  final class CreateClusterRequest extends
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
+     * <code>.google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder> 

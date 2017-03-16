@@ -135,7 +135,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     java.lang.String getFamilyName();
     /**
@@ -144,7 +144,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     com.google.protobuf.ByteString
         getFamilyNameBytes();
@@ -155,7 +155,7 @@ public  final class Mutation extends
      * Can be any byte string, including the empty string.
      * </pre>
      *
-     * <code>optional bytes column_qualifier = 2;</code>
+     * <code>bytes column_qualifier = 2;</code>
      */
     com.google.protobuf.ByteString getColumnQualifier();
 
@@ -168,7 +168,7 @@ public  final class Mutation extends
      * Values must match the granularity of the table (e.g. micros, millis).
      * </pre>
      *
-     * <code>optional int64 timestamp_micros = 3;</code>
+     * <code>int64 timestamp_micros = 3;</code>
      */
     long getTimestampMicros();
 
@@ -177,7 +177,7 @@ public  final class Mutation extends
      * The value to be written into the specified cell.
      * </pre>
      *
-     * <code>optional bytes value = 4;</code>
+     * <code>bytes value = 4;</code>
      */
     com.google.protobuf.ByteString getValue();
   }
@@ -280,7 +280,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public java.lang.String getFamilyName() {
       java.lang.Object ref = familyName_;
@@ -300,7 +300,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getFamilyNameBytes() {
@@ -324,7 +324,7 @@ public  final class Mutation extends
      * Can be any byte string, including the empty string.
      * </pre>
      *
-     * <code>optional bytes column_qualifier = 2;</code>
+     * <code>bytes column_qualifier = 2;</code>
      */
     public com.google.protobuf.ByteString getColumnQualifier() {
       return columnQualifier_;
@@ -341,7 +341,7 @@ public  final class Mutation extends
      * Values must match the granularity of the table (e.g. micros, millis).
      * </pre>
      *
-     * <code>optional int64 timestamp_micros = 3;</code>
+     * <code>int64 timestamp_micros = 3;</code>
      */
     public long getTimestampMicros() {
       return timestampMicros_;
@@ -354,7 +354,7 @@ public  final class Mutation extends
      * The value to be written into the specified cell.
      * </pre>
      *
-     * <code>optional bytes value = 4;</code>
+     * <code>bytes value = 4;</code>
      */
     public com.google.protobuf.ByteString getValue() {
       return value_;
@@ -439,7 +439,7 @@ public  final class Mutation extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + FAMILY_NAME_FIELD_NUMBER;
       hash = (53 * hash) + getFamilyName().hashCode();
       hash = (37 * hash) + COLUMN_QUALIFIER_FIELD_NUMBER;
@@ -692,7 +692,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public java.lang.String getFamilyName() {
         java.lang.Object ref = familyName_;
@@ -712,7 +712,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public com.google.protobuf.ByteString
           getFamilyNameBytes() {
@@ -733,7 +733,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public Builder setFamilyName(
           java.lang.String value) {
@@ -751,7 +751,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public Builder clearFamilyName() {
         
@@ -765,7 +765,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public Builder setFamilyNameBytes(
           com.google.protobuf.ByteString value) {
@@ -786,7 +786,7 @@ public  final class Mutation extends
        * Can be any byte string, including the empty string.
        * </pre>
        *
-       * <code>optional bytes column_qualifier = 2;</code>
+       * <code>bytes column_qualifier = 2;</code>
        */
       public com.google.protobuf.ByteString getColumnQualifier() {
         return columnQualifier_;
@@ -797,7 +797,7 @@ public  final class Mutation extends
        * Can be any byte string, including the empty string.
        * </pre>
        *
-       * <code>optional bytes column_qualifier = 2;</code>
+       * <code>bytes column_qualifier = 2;</code>
        */
       public Builder setColumnQualifier(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -814,7 +814,7 @@ public  final class Mutation extends
        * Can be any byte string, including the empty string.
        * </pre>
        *
-       * <code>optional bytes column_qualifier = 2;</code>
+       * <code>bytes column_qualifier = 2;</code>
        */
       public Builder clearColumnQualifier() {
         
@@ -833,7 +833,7 @@ public  final class Mutation extends
        * Values must match the granularity of the table (e.g. micros, millis).
        * </pre>
        *
-       * <code>optional int64 timestamp_micros = 3;</code>
+       * <code>int64 timestamp_micros = 3;</code>
        */
       public long getTimestampMicros() {
         return timestampMicros_;
@@ -847,7 +847,7 @@ public  final class Mutation extends
        * Values must match the granularity of the table (e.g. micros, millis).
        * </pre>
        *
-       * <code>optional int64 timestamp_micros = 3;</code>
+       * <code>int64 timestamp_micros = 3;</code>
        */
       public Builder setTimestampMicros(long value) {
         
@@ -864,7 +864,7 @@ public  final class Mutation extends
        * Values must match the granularity of the table (e.g. micros, millis).
        * </pre>
        *
-       * <code>optional int64 timestamp_micros = 3;</code>
+       * <code>int64 timestamp_micros = 3;</code>
        */
       public Builder clearTimestampMicros() {
         
@@ -879,7 +879,7 @@ public  final class Mutation extends
        * The value to be written into the specified cell.
        * </pre>
        *
-       * <code>optional bytes value = 4;</code>
+       * <code>bytes value = 4;</code>
        */
       public com.google.protobuf.ByteString getValue() {
         return value_;
@@ -889,7 +889,7 @@ public  final class Mutation extends
        * The value to be written into the specified cell.
        * </pre>
        *
-       * <code>optional bytes value = 4;</code>
+       * <code>bytes value = 4;</code>
        */
       public Builder setValue(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -905,7 +905,7 @@ public  final class Mutation extends
        * The value to be written into the specified cell.
        * </pre>
        *
-       * <code>optional bytes value = 4;</code>
+       * <code>bytes value = 4;</code>
        */
       public Builder clearValue() {
         
@@ -972,7 +972,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     java.lang.String getFamilyName();
     /**
@@ -981,7 +981,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     com.google.protobuf.ByteString
         getFamilyNameBytes();
@@ -992,7 +992,7 @@ public  final class Mutation extends
      * Can be any byte string, including the empty string.
      * </pre>
      *
-     * <code>optional bytes column_qualifier = 2;</code>
+     * <code>bytes column_qualifier = 2;</code>
      */
     com.google.protobuf.ByteString getColumnQualifier();
 
@@ -1001,7 +1001,7 @@ public  final class Mutation extends
      * The range of timestamps within which cells should be deleted.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+     * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
      */
     boolean hasTimeRange();
     /**
@@ -1009,7 +1009,7 @@ public  final class Mutation extends
      * The range of timestamps within which cells should be deleted.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+     * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
      */
     com.google.bigtable.v2.TimestampRange getTimeRange();
     /**
@@ -1017,7 +1017,7 @@ public  final class Mutation extends
      * The range of timestamps within which cells should be deleted.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+     * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
      */
     com.google.bigtable.v2.TimestampRangeOrBuilder getTimeRangeOrBuilder();
   }
@@ -1122,7 +1122,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public java.lang.String getFamilyName() {
       java.lang.Object ref = familyName_;
@@ -1142,7 +1142,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getFamilyNameBytes() {
@@ -1166,7 +1166,7 @@ public  final class Mutation extends
      * Can be any byte string, including the empty string.
      * </pre>
      *
-     * <code>optional bytes column_qualifier = 2;</code>
+     * <code>bytes column_qualifier = 2;</code>
      */
     public com.google.protobuf.ByteString getColumnQualifier() {
       return columnQualifier_;
@@ -1179,7 +1179,7 @@ public  final class Mutation extends
      * The range of timestamps within which cells should be deleted.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+     * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
      */
     public boolean hasTimeRange() {
       return timeRange_ != null;
@@ -1189,7 +1189,7 @@ public  final class Mutation extends
      * The range of timestamps within which cells should be deleted.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+     * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
      */
     public com.google.bigtable.v2.TimestampRange getTimeRange() {
       return timeRange_ == null ? com.google.bigtable.v2.TimestampRange.getDefaultInstance() : timeRange_;
@@ -1199,7 +1199,7 @@ public  final class Mutation extends
      * The range of timestamps within which cells should be deleted.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+     * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
      */
     public com.google.bigtable.v2.TimestampRangeOrBuilder getTimeRangeOrBuilder() {
       return getTimeRange();
@@ -1278,7 +1278,7 @@ public  final class Mutation extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + FAMILY_NAME_FIELD_NUMBER;
       hash = (53 * hash) + getFamilyName().hashCode();
       hash = (37 * hash) + COLUMN_QUALIFIER_FIELD_NUMBER;
@@ -1533,7 +1533,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public java.lang.String getFamilyName() {
         java.lang.Object ref = familyName_;
@@ -1553,7 +1553,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public com.google.protobuf.ByteString
           getFamilyNameBytes() {
@@ -1574,7 +1574,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public Builder setFamilyName(
           java.lang.String value) {
@@ -1592,7 +1592,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public Builder clearFamilyName() {
         
@@ -1606,7 +1606,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public Builder setFamilyNameBytes(
           com.google.protobuf.ByteString value) {
@@ -1627,7 +1627,7 @@ public  final class Mutation extends
        * Can be any byte string, including the empty string.
        * </pre>
        *
-       * <code>optional bytes column_qualifier = 2;</code>
+       * <code>bytes column_qualifier = 2;</code>
        */
       public com.google.protobuf.ByteString getColumnQualifier() {
         return columnQualifier_;
@@ -1638,7 +1638,7 @@ public  final class Mutation extends
        * Can be any byte string, including the empty string.
        * </pre>
        *
-       * <code>optional bytes column_qualifier = 2;</code>
+       * <code>bytes column_qualifier = 2;</code>
        */
       public Builder setColumnQualifier(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1655,7 +1655,7 @@ public  final class Mutation extends
        * Can be any byte string, including the empty string.
        * </pre>
        *
-       * <code>optional bytes column_qualifier = 2;</code>
+       * <code>bytes column_qualifier = 2;</code>
        */
       public Builder clearColumnQualifier() {
         
@@ -1672,7 +1672,7 @@ public  final class Mutation extends
        * The range of timestamps within which cells should be deleted.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+       * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
        */
       public boolean hasTimeRange() {
         return timeRangeBuilder_ != null || timeRange_ != null;
@@ -1682,7 +1682,7 @@ public  final class Mutation extends
        * The range of timestamps within which cells should be deleted.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+       * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
        */
       public com.google.bigtable.v2.TimestampRange getTimeRange() {
         if (timeRangeBuilder_ == null) {
@@ -1696,7 +1696,7 @@ public  final class Mutation extends
        * The range of timestamps within which cells should be deleted.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+       * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
        */
       public Builder setTimeRange(com.google.bigtable.v2.TimestampRange value) {
         if (timeRangeBuilder_ == null) {
@@ -1716,7 +1716,7 @@ public  final class Mutation extends
        * The range of timestamps within which cells should be deleted.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+       * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
        */
       public Builder setTimeRange(
           com.google.bigtable.v2.TimestampRange.Builder builderForValue) {
@@ -1734,7 +1734,7 @@ public  final class Mutation extends
        * The range of timestamps within which cells should be deleted.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+       * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
        */
       public Builder mergeTimeRange(com.google.bigtable.v2.TimestampRange value) {
         if (timeRangeBuilder_ == null) {
@@ -1756,7 +1756,7 @@ public  final class Mutation extends
        * The range of timestamps within which cells should be deleted.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+       * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
        */
       public Builder clearTimeRange() {
         if (timeRangeBuilder_ == null) {
@@ -1774,7 +1774,7 @@ public  final class Mutation extends
        * The range of timestamps within which cells should be deleted.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+       * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
        */
       public com.google.bigtable.v2.TimestampRange.Builder getTimeRangeBuilder() {
         
@@ -1786,7 +1786,7 @@ public  final class Mutation extends
        * The range of timestamps within which cells should be deleted.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+       * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
        */
       public com.google.bigtable.v2.TimestampRangeOrBuilder getTimeRangeOrBuilder() {
         if (timeRangeBuilder_ != null) {
@@ -1801,7 +1801,7 @@ public  final class Mutation extends
        * The range of timestamps within which cells should be deleted.
        * </pre>
        *
-       * <code>optional .google.bigtable.v2.TimestampRange time_range = 3;</code>
+       * <code>.google.bigtable.v2.TimestampRange time_range = 3;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.v2.TimestampRange, com.google.bigtable.v2.TimestampRange.Builder, com.google.bigtable.v2.TimestampRangeOrBuilder> 
@@ -1875,7 +1875,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     java.lang.String getFamilyName();
     /**
@@ -1884,7 +1884,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     com.google.protobuf.ByteString
         getFamilyNameBytes();
@@ -1970,7 +1970,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public java.lang.String getFamilyName() {
       java.lang.Object ref = familyName_;
@@ -1990,7 +1990,7 @@ public  final class Mutation extends
      * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      *
-     * <code>optional string family_name = 1;</code>
+     * <code>string family_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getFamilyNameBytes() {
@@ -2058,7 +2058,7 @@ public  final class Mutation extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + FAMILY_NAME_FIELD_NUMBER;
       hash = (53 * hash) + getFamilyName().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -2286,7 +2286,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public java.lang.String getFamilyName() {
         java.lang.Object ref = familyName_;
@@ -2306,7 +2306,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public com.google.protobuf.ByteString
           getFamilyNameBytes() {
@@ -2327,7 +2327,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public Builder setFamilyName(
           java.lang.String value) {
@@ -2345,7 +2345,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public Builder clearFamilyName() {
         
@@ -2359,7 +2359,7 @@ public  final class Mutation extends
        * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        *
-       * <code>optional string family_name = 1;</code>
+       * <code>string family_name = 1;</code>
        */
       public Builder setFamilyNameBytes(
           com.google.protobuf.ByteString value) {
@@ -2534,7 +2534,7 @@ public  final class Mutation extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2842,7 +2842,7 @@ public  final class Mutation extends
    * Set a cell's value.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+   * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
    */
   public com.google.bigtable.v2.Mutation.SetCell getSetCell() {
     if (mutationCase_ == 1) {
@@ -2855,7 +2855,7 @@ public  final class Mutation extends
    * Set a cell's value.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+   * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
    */
   public com.google.bigtable.v2.Mutation.SetCellOrBuilder getSetCellOrBuilder() {
     if (mutationCase_ == 1) {
@@ -2870,7 +2870,7 @@ public  final class Mutation extends
    * Deletes cells from a column.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+   * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
    */
   public com.google.bigtable.v2.Mutation.DeleteFromColumn getDeleteFromColumn() {
     if (mutationCase_ == 2) {
@@ -2883,7 +2883,7 @@ public  final class Mutation extends
    * Deletes cells from a column.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+   * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
    */
   public com.google.bigtable.v2.Mutation.DeleteFromColumnOrBuilder getDeleteFromColumnOrBuilder() {
     if (mutationCase_ == 2) {
@@ -2898,7 +2898,7 @@ public  final class Mutation extends
    * Deletes cells from a column family.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+   * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
    */
   public com.google.bigtable.v2.Mutation.DeleteFromFamily getDeleteFromFamily() {
     if (mutationCase_ == 3) {
@@ -2911,7 +2911,7 @@ public  final class Mutation extends
    * Deletes cells from a column family.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+   * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
    */
   public com.google.bigtable.v2.Mutation.DeleteFromFamilyOrBuilder getDeleteFromFamilyOrBuilder() {
     if (mutationCase_ == 3) {
@@ -2926,7 +2926,7 @@ public  final class Mutation extends
    * Deletes cells from the entire row.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+   * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
    */
   public com.google.bigtable.v2.Mutation.DeleteFromRow getDeleteFromRow() {
     if (mutationCase_ == 4) {
@@ -2939,7 +2939,7 @@ public  final class Mutation extends
    * Deletes cells from the entire row.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+   * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
    */
   public com.google.bigtable.v2.Mutation.DeleteFromRowOrBuilder getDeleteFromRowOrBuilder() {
     if (mutationCase_ == 4) {
@@ -3043,7 +3043,7 @@ public  final class Mutation extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     switch (mutationCase_) {
       case 1:
         hash = (37 * hash) + SET_CELL_FIELD_NUMBER;
@@ -3349,7 +3349,7 @@ public  final class Mutation extends
      * Set a cell's value.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+     * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
      */
     public com.google.bigtable.v2.Mutation.SetCell getSetCell() {
       if (setCellBuilder_ == null) {
@@ -3369,7 +3369,7 @@ public  final class Mutation extends
      * Set a cell's value.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+     * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
      */
     public Builder setSetCell(com.google.bigtable.v2.Mutation.SetCell value) {
       if (setCellBuilder_ == null) {
@@ -3389,7 +3389,7 @@ public  final class Mutation extends
      * Set a cell's value.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+     * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
      */
     public Builder setSetCell(
         com.google.bigtable.v2.Mutation.SetCell.Builder builderForValue) {
@@ -3407,7 +3407,7 @@ public  final class Mutation extends
      * Set a cell's value.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+     * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
      */
     public Builder mergeSetCell(com.google.bigtable.v2.Mutation.SetCell value) {
       if (setCellBuilder_ == null) {
@@ -3433,7 +3433,7 @@ public  final class Mutation extends
      * Set a cell's value.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+     * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
      */
     public Builder clearSetCell() {
       if (setCellBuilder_ == null) {
@@ -3456,7 +3456,7 @@ public  final class Mutation extends
      * Set a cell's value.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+     * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
      */
     public com.google.bigtable.v2.Mutation.SetCell.Builder getSetCellBuilder() {
       return getSetCellFieldBuilder().getBuilder();
@@ -3466,7 +3466,7 @@ public  final class Mutation extends
      * Set a cell's value.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+     * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
      */
     public com.google.bigtable.v2.Mutation.SetCellOrBuilder getSetCellOrBuilder() {
       if ((mutationCase_ == 1) && (setCellBuilder_ != null)) {
@@ -3483,7 +3483,7 @@ public  final class Mutation extends
      * Set a cell's value.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
+     * <code>.google.bigtable.v2.Mutation.SetCell set_cell = 1;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.Mutation.SetCell, com.google.bigtable.v2.Mutation.SetCell.Builder, com.google.bigtable.v2.Mutation.SetCellOrBuilder> 
@@ -3511,7 +3511,7 @@ public  final class Mutation extends
      * Deletes cells from a column.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
      */
     public com.google.bigtable.v2.Mutation.DeleteFromColumn getDeleteFromColumn() {
       if (deleteFromColumnBuilder_ == null) {
@@ -3531,7 +3531,7 @@ public  final class Mutation extends
      * Deletes cells from a column.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
      */
     public Builder setDeleteFromColumn(com.google.bigtable.v2.Mutation.DeleteFromColumn value) {
       if (deleteFromColumnBuilder_ == null) {
@@ -3551,7 +3551,7 @@ public  final class Mutation extends
      * Deletes cells from a column.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
      */
     public Builder setDeleteFromColumn(
         com.google.bigtable.v2.Mutation.DeleteFromColumn.Builder builderForValue) {
@@ -3569,7 +3569,7 @@ public  final class Mutation extends
      * Deletes cells from a column.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
      */
     public Builder mergeDeleteFromColumn(com.google.bigtable.v2.Mutation.DeleteFromColumn value) {
       if (deleteFromColumnBuilder_ == null) {
@@ -3595,7 +3595,7 @@ public  final class Mutation extends
      * Deletes cells from a column.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
      */
     public Builder clearDeleteFromColumn() {
       if (deleteFromColumnBuilder_ == null) {
@@ -3618,7 +3618,7 @@ public  final class Mutation extends
      * Deletes cells from a column.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
      */
     public com.google.bigtable.v2.Mutation.DeleteFromColumn.Builder getDeleteFromColumnBuilder() {
       return getDeleteFromColumnFieldBuilder().getBuilder();
@@ -3628,7 +3628,7 @@ public  final class Mutation extends
      * Deletes cells from a column.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
      */
     public com.google.bigtable.v2.Mutation.DeleteFromColumnOrBuilder getDeleteFromColumnOrBuilder() {
       if ((mutationCase_ == 2) && (deleteFromColumnBuilder_ != null)) {
@@ -3645,7 +3645,7 @@ public  final class Mutation extends
      * Deletes cells from a column.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromColumn delete_from_column = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.Mutation.DeleteFromColumn, com.google.bigtable.v2.Mutation.DeleteFromColumn.Builder, com.google.bigtable.v2.Mutation.DeleteFromColumnOrBuilder> 
@@ -3673,7 +3673,7 @@ public  final class Mutation extends
      * Deletes cells from a column family.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
      */
     public com.google.bigtable.v2.Mutation.DeleteFromFamily getDeleteFromFamily() {
       if (deleteFromFamilyBuilder_ == null) {
@@ -3693,7 +3693,7 @@ public  final class Mutation extends
      * Deletes cells from a column family.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
      */
     public Builder setDeleteFromFamily(com.google.bigtable.v2.Mutation.DeleteFromFamily value) {
       if (deleteFromFamilyBuilder_ == null) {
@@ -3713,7 +3713,7 @@ public  final class Mutation extends
      * Deletes cells from a column family.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
      */
     public Builder setDeleteFromFamily(
         com.google.bigtable.v2.Mutation.DeleteFromFamily.Builder builderForValue) {
@@ -3731,7 +3731,7 @@ public  final class Mutation extends
      * Deletes cells from a column family.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
      */
     public Builder mergeDeleteFromFamily(com.google.bigtable.v2.Mutation.DeleteFromFamily value) {
       if (deleteFromFamilyBuilder_ == null) {
@@ -3757,7 +3757,7 @@ public  final class Mutation extends
      * Deletes cells from a column family.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
      */
     public Builder clearDeleteFromFamily() {
       if (deleteFromFamilyBuilder_ == null) {
@@ -3780,7 +3780,7 @@ public  final class Mutation extends
      * Deletes cells from a column family.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
      */
     public com.google.bigtable.v2.Mutation.DeleteFromFamily.Builder getDeleteFromFamilyBuilder() {
       return getDeleteFromFamilyFieldBuilder().getBuilder();
@@ -3790,7 +3790,7 @@ public  final class Mutation extends
      * Deletes cells from a column family.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
      */
     public com.google.bigtable.v2.Mutation.DeleteFromFamilyOrBuilder getDeleteFromFamilyOrBuilder() {
       if ((mutationCase_ == 3) && (deleteFromFamilyBuilder_ != null)) {
@@ -3807,7 +3807,7 @@ public  final class Mutation extends
      * Deletes cells from a column family.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromFamily delete_from_family = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.Mutation.DeleteFromFamily, com.google.bigtable.v2.Mutation.DeleteFromFamily.Builder, com.google.bigtable.v2.Mutation.DeleteFromFamilyOrBuilder> 
@@ -3835,7 +3835,7 @@ public  final class Mutation extends
      * Deletes cells from the entire row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
      */
     public com.google.bigtable.v2.Mutation.DeleteFromRow getDeleteFromRow() {
       if (deleteFromRowBuilder_ == null) {
@@ -3855,7 +3855,7 @@ public  final class Mutation extends
      * Deletes cells from the entire row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
      */
     public Builder setDeleteFromRow(com.google.bigtable.v2.Mutation.DeleteFromRow value) {
       if (deleteFromRowBuilder_ == null) {
@@ -3875,7 +3875,7 @@ public  final class Mutation extends
      * Deletes cells from the entire row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
      */
     public Builder setDeleteFromRow(
         com.google.bigtable.v2.Mutation.DeleteFromRow.Builder builderForValue) {
@@ -3893,7 +3893,7 @@ public  final class Mutation extends
      * Deletes cells from the entire row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
      */
     public Builder mergeDeleteFromRow(com.google.bigtable.v2.Mutation.DeleteFromRow value) {
       if (deleteFromRowBuilder_ == null) {
@@ -3919,7 +3919,7 @@ public  final class Mutation extends
      * Deletes cells from the entire row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
      */
     public Builder clearDeleteFromRow() {
       if (deleteFromRowBuilder_ == null) {
@@ -3942,7 +3942,7 @@ public  final class Mutation extends
      * Deletes cells from the entire row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
      */
     public com.google.bigtable.v2.Mutation.DeleteFromRow.Builder getDeleteFromRowBuilder() {
       return getDeleteFromRowFieldBuilder().getBuilder();
@@ -3952,7 +3952,7 @@ public  final class Mutation extends
      * Deletes cells from the entire row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
      */
     public com.google.bigtable.v2.Mutation.DeleteFromRowOrBuilder getDeleteFromRowOrBuilder() {
       if ((mutationCase_ == 4) && (deleteFromRowBuilder_ != null)) {
@@ -3969,7 +3969,7 @@ public  final class Mutation extends
      * Deletes cells from the entire row.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
+     * <code>.google.bigtable.v2.Mutation.DeleteFromRow delete_from_row = 4;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.Mutation.DeleteFromRow, com.google.bigtable.v2.Mutation.DeleteFromRow.Builder, com.google.bigtable.v2.Mutation.DeleteFromRowOrBuilder> 

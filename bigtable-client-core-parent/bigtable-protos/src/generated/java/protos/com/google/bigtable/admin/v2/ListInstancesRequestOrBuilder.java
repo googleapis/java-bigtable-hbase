@@ -13,7 +13,7 @@ public interface ListInstancesRequestOrBuilder extends
    * Values are of the form `projects/&lt;project&gt;`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   java.lang.String getParent();
   /**
@@ -22,7 +22,7 @@ public interface ListInstancesRequestOrBuilder extends
    * Values are of the form `projects/&lt;project&gt;`.
    * </pre>
    *
-   * <code>optional string parent = 1;</code>
+   * <code>string parent = 1;</code>
    */
   com.google.protobuf.ByteString
       getParentBytes();
@@ -32,7 +32,7 @@ public interface ListInstancesRequestOrBuilder extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 2;</code>
+   * <code>string page_token = 2;</code>
    */
   java.lang.String getPageToken();
   /**
@@ -40,7 +40,7 @@ public interface ListInstancesRequestOrBuilder extends
    * The value of `next_page_token` returned by a previous call.
    * </pre>
    *
-   * <code>optional string page_token = 2;</code>
+   * <code>string page_token = 2;</code>
    */
   com.google.protobuf.ByteString
       getPageTokenBytes();

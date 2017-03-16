@@ -94,7 +94,7 @@ public  final class SampleRowKeysResponse extends
    * structure that are specific to their use case.
    * </pre>
    *
-   * <code>optional bytes row_key = 1;</code>
+   * <code>bytes row_key = 1;</code>
    */
   public com.google.protobuf.ByteString getRowKey() {
     return rowKey_;
@@ -110,7 +110,7 @@ public  final class SampleRowKeysResponse extends
    * `offset_bytes` fields.
    * </pre>
    *
-   * <code>optional int64 offset_bytes = 2;</code>
+   * <code>int64 offset_bytes = 2;</code>
    */
   public long getOffsetBytes() {
     return offsetBytes_;
@@ -178,7 +178,7 @@ public  final class SampleRowKeysResponse extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + ROW_KEY_FIELD_NUMBER;
     hash = (53 * hash) + getRowKey().hashCode();
     hash = (37 * hash) + OFFSET_BYTES_FIELD_NUMBER;
@@ -419,7 +419,7 @@ public  final class SampleRowKeysResponse extends
      * structure that are specific to their use case.
      * </pre>
      *
-     * <code>optional bytes row_key = 1;</code>
+     * <code>bytes row_key = 1;</code>
      */
     public com.google.protobuf.ByteString getRowKey() {
       return rowKey_;
@@ -435,7 +435,7 @@ public  final class SampleRowKeysResponse extends
      * structure that are specific to their use case.
      * </pre>
      *
-     * <code>optional bytes row_key = 1;</code>
+     * <code>bytes row_key = 1;</code>
      */
     public Builder setRowKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -457,7 +457,7 @@ public  final class SampleRowKeysResponse extends
      * structure that are specific to their use case.
      * </pre>
      *
-     * <code>optional bytes row_key = 1;</code>
+     * <code>bytes row_key = 1;</code>
      */
     public Builder clearRowKey() {
       
@@ -475,7 +475,7 @@ public  final class SampleRowKeysResponse extends
      * `offset_bytes` fields.
      * </pre>
      *
-     * <code>optional int64 offset_bytes = 2;</code>
+     * <code>int64 offset_bytes = 2;</code>
      */
     public long getOffsetBytes() {
       return offsetBytes_;
@@ -488,7 +488,7 @@ public  final class SampleRowKeysResponse extends
      * `offset_bytes` fields.
      * </pre>
      *
-     * <code>optional int64 offset_bytes = 2;</code>
+     * <code>int64 offset_bytes = 2;</code>
      */
     public Builder setOffsetBytes(long value) {
       
@@ -504,7 +504,7 @@ public  final class SampleRowKeysResponse extends
      * `offset_bytes` fields.
      * </pre>
      *
-     * <code>optional int64 offset_bytes = 2;</code>
+     * <code>int64 offset_bytes = 2;</code>
      */
     public Builder clearOffsetBytes() {
       

@@ -85,7 +85,7 @@ public  final class SampleRowKeysRequest extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   public java.lang.String getTableName() {
     java.lang.Object ref = tableName_;
@@ -106,7 +106,7 @@ public  final class SampleRowKeysRequest extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getTableNameBytes() {
@@ -174,7 +174,7 @@ public  final class SampleRowKeysRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
     hash = (53 * hash) + getTableName().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
@@ -403,7 +403,7 @@ public  final class SampleRowKeysRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
@@ -424,7 +424,7 @@ public  final class SampleRowKeysRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getTableNameBytes() {
@@ -446,7 +446,7 @@ public  final class SampleRowKeysRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder setTableName(
         java.lang.String value) {
@@ -465,7 +465,7 @@ public  final class SampleRowKeysRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder clearTableName() {
       
@@ -480,7 +480,7 @@ public  final class SampleRowKeysRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder setTableNameBytes(
         com.google.protobuf.ByteString value) {

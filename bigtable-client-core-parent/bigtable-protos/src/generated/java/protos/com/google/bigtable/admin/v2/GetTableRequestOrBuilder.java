@@ -13,7 +13,7 @@ public interface GetTableRequestOrBuilder extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   java.lang.String getName();
   /**
@@ -22,7 +22,7 @@ public interface GetTableRequestOrBuilder extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
@@ -33,7 +33,7 @@ public interface GetTableRequestOrBuilder extends
    * Defaults to SCHEMA_ONLY if unspecified.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+   * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   int getViewValue();
   /**
@@ -42,7 +42,7 @@ public interface GetTableRequestOrBuilder extends
    * Defaults to SCHEMA_ONLY if unspecified.
    * </pre>
    *
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
+   * <code>.google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   com.google.bigtable.admin.v2.Table.View getView();
 }

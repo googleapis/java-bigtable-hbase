@@ -14,7 +14,7 @@ public interface RowOrBuilder extends
    * May contain any non-empty byte string up to 4KiB in length.
    * </pre>
    *
-   * <code>optional bytes key = 1;</code>
+   * <code>bytes key = 1;</code>
    */
   com.google.protobuf.ByteString getKey();
 

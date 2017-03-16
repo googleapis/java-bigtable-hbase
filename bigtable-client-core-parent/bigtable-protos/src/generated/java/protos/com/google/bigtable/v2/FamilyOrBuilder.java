@@ -17,7 +17,7 @@ public interface FamilyOrBuilder extends
    * Must be no greater than 64 characters in length.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   java.lang.String getName();
   /**
@@ -30,7 +30,7 @@ public interface FamilyOrBuilder extends
    * Must be no greater than 64 characters in length.
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();

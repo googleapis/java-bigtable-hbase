@@ -23,9 +23,9 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.1.1)",
+    value = "by gRPC proto compiler (version 1.2.0)",
     comments = "Source: google/bigtable/admin/v2/bigtable_table_admin.proto")
-public class BigtableTableAdminGrpc {
+public final class BigtableTableAdminGrpc {
 
   private BigtableTableAdminGrpc() {}
 
@@ -518,7 +518,7 @@ public class BigtableTableAdminGrpc {
   private static final int METHODID_MODIFY_COLUMN_FAMILIES = 4;
   private static final int METHODID_DROP_ROW_RANGE = 5;
 
-  private static class MethodHandlers<Req, Resp> implements
+  private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
@@ -526,7 +526,7 @@ public class BigtableTableAdminGrpc {
     private final BigtableTableAdminImplBase serviceImpl;
     private final int methodId;
 
-    public MethodHandlers(BigtableTableAdminImplBase serviceImpl, int methodId) {
+    MethodHandlers(BigtableTableAdminImplBase serviceImpl, int methodId) {
       this.serviceImpl = serviceImpl;
       this.methodId = methodId;
     }

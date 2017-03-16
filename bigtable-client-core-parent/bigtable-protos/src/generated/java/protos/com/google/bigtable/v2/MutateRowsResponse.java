@@ -92,7 +92,7 @@ public  final class MutateRowsResponse extends
      * for which a result is being reported.
      * </pre>
      *
-     * <code>optional int64 index = 1;</code>
+     * <code>int64 index = 1;</code>
      */
     long getIndex();
 
@@ -104,7 +104,7 @@ public  final class MutateRowsResponse extends
      * that this occurs, the same error will be reported for both entries.
      * </pre>
      *
-     * <code>optional .google.rpc.Status status = 2;</code>
+     * <code>.google.rpc.Status status = 2;</code>
      */
     boolean hasStatus();
     /**
@@ -115,7 +115,7 @@ public  final class MutateRowsResponse extends
      * that this occurs, the same error will be reported for both entries.
      * </pre>
      *
-     * <code>optional .google.rpc.Status status = 2;</code>
+     * <code>.google.rpc.Status status = 2;</code>
      */
     com.google.rpc.Status getStatus();
     /**
@@ -126,7 +126,7 @@ public  final class MutateRowsResponse extends
      * that this occurs, the same error will be reported for both entries.
      * </pre>
      *
-     * <code>optional .google.rpc.Status status = 2;</code>
+     * <code>.google.rpc.Status status = 2;</code>
      */
     com.google.rpc.StatusOrBuilder getStatusOrBuilder();
   }
@@ -219,7 +219,7 @@ public  final class MutateRowsResponse extends
      * for which a result is being reported.
      * </pre>
      *
-     * <code>optional int64 index = 1;</code>
+     * <code>int64 index = 1;</code>
      */
     public long getIndex() {
       return index_;
@@ -235,7 +235,7 @@ public  final class MutateRowsResponse extends
      * that this occurs, the same error will be reported for both entries.
      * </pre>
      *
-     * <code>optional .google.rpc.Status status = 2;</code>
+     * <code>.google.rpc.Status status = 2;</code>
      */
     public boolean hasStatus() {
       return status_ != null;
@@ -248,7 +248,7 @@ public  final class MutateRowsResponse extends
      * that this occurs, the same error will be reported for both entries.
      * </pre>
      *
-     * <code>optional .google.rpc.Status status = 2;</code>
+     * <code>.google.rpc.Status status = 2;</code>
      */
     public com.google.rpc.Status getStatus() {
       return status_ == null ? com.google.rpc.Status.getDefaultInstance() : status_;
@@ -261,7 +261,7 @@ public  final class MutateRowsResponse extends
      * that this occurs, the same error will be reported for both entries.
      * </pre>
      *
-     * <code>optional .google.rpc.Status status = 2;</code>
+     * <code>.google.rpc.Status status = 2;</code>
      */
     public com.google.rpc.StatusOrBuilder getStatusOrBuilder() {
       return getStatus();
@@ -332,7 +332,7 @@ public  final class MutateRowsResponse extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + INDEX_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getIndex());
@@ -574,7 +574,7 @@ public  final class MutateRowsResponse extends
        * for which a result is being reported.
        * </pre>
        *
-       * <code>optional int64 index = 1;</code>
+       * <code>int64 index = 1;</code>
        */
       public long getIndex() {
         return index_;
@@ -585,7 +585,7 @@ public  final class MutateRowsResponse extends
        * for which a result is being reported.
        * </pre>
        *
-       * <code>optional int64 index = 1;</code>
+       * <code>int64 index = 1;</code>
        */
       public Builder setIndex(long value) {
         
@@ -599,7 +599,7 @@ public  final class MutateRowsResponse extends
        * for which a result is being reported.
        * </pre>
        *
-       * <code>optional int64 index = 1;</code>
+       * <code>int64 index = 1;</code>
        */
       public Builder clearIndex() {
         
@@ -619,7 +619,7 @@ public  final class MutateRowsResponse extends
        * that this occurs, the same error will be reported for both entries.
        * </pre>
        *
-       * <code>optional .google.rpc.Status status = 2;</code>
+       * <code>.google.rpc.Status status = 2;</code>
        */
       public boolean hasStatus() {
         return statusBuilder_ != null || status_ != null;
@@ -632,7 +632,7 @@ public  final class MutateRowsResponse extends
        * that this occurs, the same error will be reported for both entries.
        * </pre>
        *
-       * <code>optional .google.rpc.Status status = 2;</code>
+       * <code>.google.rpc.Status status = 2;</code>
        */
       public com.google.rpc.Status getStatus() {
         if (statusBuilder_ == null) {
@@ -649,7 +649,7 @@ public  final class MutateRowsResponse extends
        * that this occurs, the same error will be reported for both entries.
        * </pre>
        *
-       * <code>optional .google.rpc.Status status = 2;</code>
+       * <code>.google.rpc.Status status = 2;</code>
        */
       public Builder setStatus(com.google.rpc.Status value) {
         if (statusBuilder_ == null) {
@@ -672,7 +672,7 @@ public  final class MutateRowsResponse extends
        * that this occurs, the same error will be reported for both entries.
        * </pre>
        *
-       * <code>optional .google.rpc.Status status = 2;</code>
+       * <code>.google.rpc.Status status = 2;</code>
        */
       public Builder setStatus(
           com.google.rpc.Status.Builder builderForValue) {
@@ -693,7 +693,7 @@ public  final class MutateRowsResponse extends
        * that this occurs, the same error will be reported for both entries.
        * </pre>
        *
-       * <code>optional .google.rpc.Status status = 2;</code>
+       * <code>.google.rpc.Status status = 2;</code>
        */
       public Builder mergeStatus(com.google.rpc.Status value) {
         if (statusBuilder_ == null) {
@@ -718,7 +718,7 @@ public  final class MutateRowsResponse extends
        * that this occurs, the same error will be reported for both entries.
        * </pre>
        *
-       * <code>optional .google.rpc.Status status = 2;</code>
+       * <code>.google.rpc.Status status = 2;</code>
        */
       public Builder clearStatus() {
         if (statusBuilder_ == null) {
@@ -739,7 +739,7 @@ public  final class MutateRowsResponse extends
        * that this occurs, the same error will be reported for both entries.
        * </pre>
        *
-       * <code>optional .google.rpc.Status status = 2;</code>
+       * <code>.google.rpc.Status status = 2;</code>
        */
       public com.google.rpc.Status.Builder getStatusBuilder() {
         
@@ -754,7 +754,7 @@ public  final class MutateRowsResponse extends
        * that this occurs, the same error will be reported for both entries.
        * </pre>
        *
-       * <code>optional .google.rpc.Status status = 2;</code>
+       * <code>.google.rpc.Status status = 2;</code>
        */
       public com.google.rpc.StatusOrBuilder getStatusOrBuilder() {
         if (statusBuilder_ != null) {
@@ -772,7 +772,7 @@ public  final class MutateRowsResponse extends
        * that this occurs, the same error will be reported for both entries.
        * </pre>
        *
-       * <code>optional .google.rpc.Status status = 2;</code>
+       * <code>.google.rpc.Status status = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder> 
@@ -944,7 +944,7 @@ public  final class MutateRowsResponse extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     if (getEntriesCount() > 0) {
       hash = (37 * hash) + ENTRIES_FIELD_NUMBER;
       hash = (53 * hash) + getEntriesList().hashCode();

@@ -12,7 +12,7 @@ public interface TimestampRangeOrBuilder extends
    * Inclusive lower bound. If left empty, interpreted as 0.
    * </pre>
    *
-   * <code>optional int64 start_timestamp_micros = 1;</code>
+   * <code>int64 start_timestamp_micros = 1;</code>
    */
   long getStartTimestampMicros();
 
@@ -21,7 +21,7 @@ public interface TimestampRangeOrBuilder extends
    * Exclusive upper bound. If left empty, interpreted as infinity.
    * </pre>
    *
-   * <code>optional int64 end_timestamp_micros = 2;</code>
+   * <code>int64 end_timestamp_micros = 2;</code>
    */
   long getEndTimestampMicros();
 }

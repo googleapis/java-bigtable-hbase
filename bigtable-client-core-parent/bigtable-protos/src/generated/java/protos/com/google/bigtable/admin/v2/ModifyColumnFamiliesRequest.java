@@ -98,7 +98,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * The ID of the column family to be modified.
      * </pre>
      *
-     * <code>optional string id = 1;</code>
+     * <code>string id = 1;</code>
      */
     java.lang.String getId();
     /**
@@ -106,7 +106,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * The ID of the column family to be modified.
      * </pre>
      *
-     * <code>optional string id = 1;</code>
+     * <code>string id = 1;</code>
      */
     com.google.protobuf.ByteString
         getIdBytes();
@@ -117,7 +117,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * one already exists with the given ID.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+     * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
      */
     com.google.bigtable.admin.v2.ColumnFamily getCreate();
     /**
@@ -126,7 +126,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * one already exists with the given ID.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+     * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
      */
     com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getCreateOrBuilder();
 
@@ -136,7 +136,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * if no column family exists with the given ID.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+     * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
      */
     com.google.bigtable.admin.v2.ColumnFamily getUpdate();
     /**
@@ -145,7 +145,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * if no column family exists with the given ID.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+     * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
      */
     com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getUpdateOrBuilder();
 
@@ -155,7 +155,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * family exists.
      * </pre>
      *
-     * <code>optional bool drop = 4;</code>
+     * <code>bool drop = 4;</code>
      */
     boolean getDrop();
 
@@ -314,7 +314,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * The ID of the column family to be modified.
      * </pre>
      *
-     * <code>optional string id = 1;</code>
+     * <code>string id = 1;</code>
      */
     public java.lang.String getId() {
       java.lang.Object ref = id_;
@@ -333,7 +333,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * The ID of the column family to be modified.
      * </pre>
      *
-     * <code>optional string id = 1;</code>
+     * <code>string id = 1;</code>
      */
     public com.google.protobuf.ByteString
         getIdBytes() {
@@ -356,7 +356,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * one already exists with the given ID.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+     * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
      */
     public com.google.bigtable.admin.v2.ColumnFamily getCreate() {
       if (modCase_ == 2) {
@@ -370,7 +370,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * one already exists with the given ID.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+     * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
      */
     public com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getCreateOrBuilder() {
       if (modCase_ == 2) {
@@ -386,7 +386,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * if no column family exists with the given ID.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+     * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
      */
     public com.google.bigtable.admin.v2.ColumnFamily getUpdate() {
       if (modCase_ == 3) {
@@ -400,7 +400,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * if no column family exists with the given ID.
      * </pre>
      *
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+     * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
      */
     public com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getUpdateOrBuilder() {
       if (modCase_ == 3) {
@@ -416,7 +416,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * family exists.
      * </pre>
      *
-     * <code>optional bool drop = 4;</code>
+     * <code>bool drop = 4;</code>
      */
     public boolean getDrop() {
       if (modCase_ == 4) {
@@ -519,7 +519,7 @@ public  final class ModifyColumnFamiliesRequest extends
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + ID_FIELD_NUMBER;
       hash = (53 * hash) + getId().hashCode();
       switch (modCase_) {
@@ -815,7 +815,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * The ID of the column family to be modified.
        * </pre>
        *
-       * <code>optional string id = 1;</code>
+       * <code>string id = 1;</code>
        */
       public java.lang.String getId() {
         java.lang.Object ref = id_;
@@ -834,7 +834,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * The ID of the column family to be modified.
        * </pre>
        *
-       * <code>optional string id = 1;</code>
+       * <code>string id = 1;</code>
        */
       public com.google.protobuf.ByteString
           getIdBytes() {
@@ -854,7 +854,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * The ID of the column family to be modified.
        * </pre>
        *
-       * <code>optional string id = 1;</code>
+       * <code>string id = 1;</code>
        */
       public Builder setId(
           java.lang.String value) {
@@ -871,7 +871,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * The ID of the column family to be modified.
        * </pre>
        *
-       * <code>optional string id = 1;</code>
+       * <code>string id = 1;</code>
        */
       public Builder clearId() {
         
@@ -884,7 +884,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * The ID of the column family to be modified.
        * </pre>
        *
-       * <code>optional string id = 1;</code>
+       * <code>string id = 1;</code>
        */
       public Builder setIdBytes(
           com.google.protobuf.ByteString value) {
@@ -906,7 +906,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * one already exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamily getCreate() {
         if (createBuilder_ == null) {
@@ -927,7 +927,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * one already exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public Builder setCreate(com.google.bigtable.admin.v2.ColumnFamily value) {
         if (createBuilder_ == null) {
@@ -948,7 +948,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * one already exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public Builder setCreate(
           com.google.bigtable.admin.v2.ColumnFamily.Builder builderForValue) {
@@ -967,7 +967,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * one already exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public Builder mergeCreate(com.google.bigtable.admin.v2.ColumnFamily value) {
         if (createBuilder_ == null) {
@@ -994,7 +994,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * one already exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public Builder clearCreate() {
         if (createBuilder_ == null) {
@@ -1018,7 +1018,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * one already exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamily.Builder getCreateBuilder() {
         return getCreateFieldBuilder().getBuilder();
@@ -1029,7 +1029,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * one already exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getCreateOrBuilder() {
         if ((modCase_ == 2) && (createBuilder_ != null)) {
@@ -1047,7 +1047,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * one already exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> 
@@ -1076,7 +1076,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * if no column family exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamily getUpdate() {
         if (updateBuilder_ == null) {
@@ -1097,7 +1097,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * if no column family exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public Builder setUpdate(com.google.bigtable.admin.v2.ColumnFamily value) {
         if (updateBuilder_ == null) {
@@ -1118,7 +1118,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * if no column family exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public Builder setUpdate(
           com.google.bigtable.admin.v2.ColumnFamily.Builder builderForValue) {
@@ -1137,7 +1137,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * if no column family exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public Builder mergeUpdate(com.google.bigtable.admin.v2.ColumnFamily value) {
         if (updateBuilder_ == null) {
@@ -1164,7 +1164,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * if no column family exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public Builder clearUpdate() {
         if (updateBuilder_ == null) {
@@ -1188,7 +1188,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * if no column family exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamily.Builder getUpdateBuilder() {
         return getUpdateFieldBuilder().getBuilder();
@@ -1199,7 +1199,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * if no column family exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getUpdateOrBuilder() {
         if ((modCase_ == 3) && (updateBuilder_ != null)) {
@@ -1217,7 +1217,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * if no column family exists with the given ID.
        * </pre>
        *
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
+       * <code>.google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> 
@@ -1244,7 +1244,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * family exists.
        * </pre>
        *
-       * <code>optional bool drop = 4;</code>
+       * <code>bool drop = 4;</code>
        */
       public boolean getDrop() {
         if (modCase_ == 4) {
@@ -1258,7 +1258,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * family exists.
        * </pre>
        *
-       * <code>optional bool drop = 4;</code>
+       * <code>bool drop = 4;</code>
        */
       public Builder setDrop(boolean value) {
         modCase_ = 4;
@@ -1272,7 +1272,7 @@ public  final class ModifyColumnFamiliesRequest extends
        * family exists.
        * </pre>
        *
-       * <code>optional bool drop = 4;</code>
+       * <code>bool drop = 4;</code>
        */
       public Builder clearDrop() {
         if (modCase_ == 4) {
@@ -1340,7 +1340,7 @@ public  final class ModifyColumnFamiliesRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -1360,7 +1360,7 @@ public  final class ModifyColumnFamiliesRequest extends
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    *
-   * <code>optional string name = 1;</code>
+   * <code>string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -1507,7 +1507,7 @@ public  final class ModifyColumnFamiliesRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + NAME_FIELD_NUMBER;
     hash = (53 * hash) + getName().hashCode();
     if (getModificationsCount() > 0) {
@@ -1785,7 +1785,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -1805,7 +1805,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -1826,7 +1826,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -1844,7 +1844,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -1858,7 +1858,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
      *
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {

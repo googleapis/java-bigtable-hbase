@@ -13,7 +13,7 @@ public interface ReadModifyWriteRuleOrBuilder extends
    * Must match `[-_.a-zA-Z0-9]+`
    * </pre>
    *
-   * <code>optional string family_name = 1;</code>
+   * <code>string family_name = 1;</code>
    */
   java.lang.String getFamilyName();
   /**
@@ -22,7 +22,7 @@ public interface ReadModifyWriteRuleOrBuilder extends
    * Must match `[-_.a-zA-Z0-9]+`
    * </pre>
    *
-   * <code>optional string family_name = 1;</code>
+   * <code>string family_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getFamilyNameBytes();
@@ -34,7 +34,7 @@ public interface ReadModifyWriteRuleOrBuilder extends
    * Can be any byte string, including the empty string.
    * </pre>
    *
-   * <code>optional bytes column_qualifier = 2;</code>
+   * <code>bytes column_qualifier = 2;</code>
    */
   com.google.protobuf.ByteString getColumnQualifier();
 
@@ -45,7 +45,7 @@ public interface ReadModifyWriteRuleOrBuilder extends
    * empty string.
    * </pre>
    *
-   * <code>optional bytes append_value = 3;</code>
+   * <code>bytes append_value = 3;</code>
    */
   com.google.protobuf.ByteString getAppendValue();
 
@@ -57,7 +57,7 @@ public interface ReadModifyWriteRuleOrBuilder extends
    * as a 64-bit big-endian signed integer), or the entire request will fail.
    * </pre>
    *
-   * <code>optional int64 increment_amount = 4;</code>
+   * <code>int64 increment_amount = 4;</code>
    */
   long getIncrementAmount();
 

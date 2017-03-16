@@ -13,7 +13,7 @@ public interface CheckAndMutateRowResponseOrBuilder extends
    * the specified row.
    * </pre>
    *
-   * <code>optional bool predicate_matched = 1;</code>
+   * <code>bool predicate_matched = 1;</code>
    */
   boolean getPredicateMatched();
 }

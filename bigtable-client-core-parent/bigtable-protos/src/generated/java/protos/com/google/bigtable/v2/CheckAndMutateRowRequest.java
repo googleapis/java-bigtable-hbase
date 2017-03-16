@@ -132,7 +132,7 @@ public  final class CheckAndMutateRowRequest extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   public java.lang.String getTableName() {
     java.lang.Object ref = tableName_;
@@ -154,7 +154,7 @@ public  final class CheckAndMutateRowRequest extends
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    *
-   * <code>optional string table_name = 1;</code>
+   * <code>string table_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getTableNameBytes() {
@@ -177,7 +177,7 @@ public  final class CheckAndMutateRowRequest extends
    * The key of the row to which the conditional mutation should be applied.
    * </pre>
    *
-   * <code>optional bytes row_key = 2;</code>
+   * <code>bytes row_key = 2;</code>
    */
   public com.google.protobuf.ByteString getRowKey() {
     return rowKey_;
@@ -193,7 +193,7 @@ public  final class CheckAndMutateRowRequest extends
    * any values at all.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+   * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
    */
   public boolean hasPredicateFilter() {
     return predicateFilter_ != null;
@@ -206,7 +206,7 @@ public  final class CheckAndMutateRowRequest extends
    * any values at all.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+   * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
    */
   public com.google.bigtable.v2.RowFilter getPredicateFilter() {
     return predicateFilter_ == null ? com.google.bigtable.v2.RowFilter.getDefaultInstance() : predicateFilter_;
@@ -219,7 +219,7 @@ public  final class CheckAndMutateRowRequest extends
    * any values at all.
    * </pre>
    *
-   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+   * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
    */
   public com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder() {
     return getPredicateFilter();
@@ -466,7 +466,7 @@ public  final class CheckAndMutateRowRequest extends
       return memoizedHashCode;
     }
     int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
     hash = (53 * hash) + getTableName().hashCode();
     hash = (37 * hash) + ROW_KEY_FIELD_NUMBER;
@@ -818,7 +818,7 @@ public  final class CheckAndMutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
@@ -840,7 +840,7 @@ public  final class CheckAndMutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getTableNameBytes() {
@@ -863,7 +863,7 @@ public  final class CheckAndMutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder setTableName(
         java.lang.String value) {
@@ -883,7 +883,7 @@ public  final class CheckAndMutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder clearTableName() {
       
@@ -899,7 +899,7 @@ public  final class CheckAndMutateRowRequest extends
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      *
-     * <code>optional string table_name = 1;</code>
+     * <code>string table_name = 1;</code>
      */
     public Builder setTableNameBytes(
         com.google.protobuf.ByteString value) {
@@ -919,7 +919,7 @@ public  final class CheckAndMutateRowRequest extends
      * The key of the row to which the conditional mutation should be applied.
      * </pre>
      *
-     * <code>optional bytes row_key = 2;</code>
+     * <code>bytes row_key = 2;</code>
      */
     public com.google.protobuf.ByteString getRowKey() {
       return rowKey_;
@@ -929,7 +929,7 @@ public  final class CheckAndMutateRowRequest extends
      * The key of the row to which the conditional mutation should be applied.
      * </pre>
      *
-     * <code>optional bytes row_key = 2;</code>
+     * <code>bytes row_key = 2;</code>
      */
     public Builder setRowKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -945,7 +945,7 @@ public  final class CheckAndMutateRowRequest extends
      * The key of the row to which the conditional mutation should be applied.
      * </pre>
      *
-     * <code>optional bytes row_key = 2;</code>
+     * <code>bytes row_key = 2;</code>
      */
     public Builder clearRowKey() {
       
@@ -965,7 +965,7 @@ public  final class CheckAndMutateRowRequest extends
      * any values at all.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public boolean hasPredicateFilter() {
       return predicateFilterBuilder_ != null || predicateFilter_ != null;
@@ -978,7 +978,7 @@ public  final class CheckAndMutateRowRequest extends
      * any values at all.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public com.google.bigtable.v2.RowFilter getPredicateFilter() {
       if (predicateFilterBuilder_ == null) {
@@ -995,7 +995,7 @@ public  final class CheckAndMutateRowRequest extends
      * any values at all.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public Builder setPredicateFilter(com.google.bigtable.v2.RowFilter value) {
       if (predicateFilterBuilder_ == null) {
@@ -1018,7 +1018,7 @@ public  final class CheckAndMutateRowRequest extends
      * any values at all.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public Builder setPredicateFilter(
         com.google.bigtable.v2.RowFilter.Builder builderForValue) {
@@ -1039,7 +1039,7 @@ public  final class CheckAndMutateRowRequest extends
      * any values at all.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public Builder mergePredicateFilter(com.google.bigtable.v2.RowFilter value) {
       if (predicateFilterBuilder_ == null) {
@@ -1064,7 +1064,7 @@ public  final class CheckAndMutateRowRequest extends
      * any values at all.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public Builder clearPredicateFilter() {
       if (predicateFilterBuilder_ == null) {
@@ -1085,7 +1085,7 @@ public  final class CheckAndMutateRowRequest extends
      * any values at all.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public com.google.bigtable.v2.RowFilter.Builder getPredicateFilterBuilder() {
       
@@ -1100,7 +1100,7 @@ public  final class CheckAndMutateRowRequest extends
      * any values at all.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder() {
       if (predicateFilterBuilder_ != null) {
@@ -1118,7 +1118,7 @@ public  final class CheckAndMutateRowRequest extends
      * any values at all.
      * </pre>
      *
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
+     * <code>.google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder> 
