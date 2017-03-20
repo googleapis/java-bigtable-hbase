@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -1090,6 +1092,7 @@ public class CloudBigtableIO {
 
     // Stats
     private final Aggregator<Long, Long> mutationsCounter;
+    private volatile Map<String, BufferedMutator> mutators;
 
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
@@ -1108,16 +1111,45 @@ public class CloudBigtableIO {
     @Override
     public void processElement(ProcessContext context) throws Exception {
       KV<String, Iterable<Mutation>> element = context.element();
-      String tableName = element.getKey();
-      try (Table t = getConnection().getTable(TableName.valueOf(tableName))) {
-        List<Mutation> mutations = Lists.newArrayList(element.getValue());
-        int mutationCount = mutations.size();
-        t.batch(mutations, new Object[mutationCount]);
-        mutationsCounter.addValue((long) mutationCount);
+      List<Mutation> mutations = Lists.newArrayList(element.getValue());
+      try {
+        getMutator(element.getKey()).mutate(mutations);
       } catch (RetriesExhaustedWithDetailsException exception) {
         logExceptions(context, exception);
         rethrowException(exception);
       }
+      mutationsCounter.addValue((long) mutations.size());
+    }
+
+    private synchronized BufferedMutator getMutator(String tableName) throws IOException {
+      if (mutators == null) {
+        mutators = new HashMap<>();
+      }
+      BufferedMutator mutator = mutators.get(tableName);
+      if (mutator == null) {
+        mutator = getConnection().getBufferedMutator(TableName.valueOf(tableName));
+        mutators.put(tableName, mutator);
+      }
+      return mutator;
+    }
+
+    @Override
+    public void finishBundle(DoFn<KV<String, Iterable<Mutation>>, Void>.Context c)
+        throws Exception {
+      synchronized(this) {
+        if (mutators != null) {
+          for (BufferedMutator bufferedMutator : mutators.values()) {
+            try {
+              bufferedMutator.flush();
+            } catch (RetriesExhaustedWithDetailsException exception) {
+              logExceptions(c, exception);
+              rethrowException(exception);
+            }
+          }
+        }
+        mutators.clear();
+      }
+      super.finishBundle(c);
     }
   }
 
