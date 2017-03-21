@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -35,17 +36,22 @@ import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
+import org.apache.hadoop.hbase.quotas.QuotaFilter;
+import org.apache.hadoop.hbase.quotas.QuotaRetriever;
+import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.regionserver.wal.FailedLogCloseException;
 import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
@@ -1365,4 +1371,103 @@ public abstract class AbstractBigtableAdmin implements Admin {
     throw new UnsupportedOperationException("rollWALWriter");  // TODO
   }
 
+
+  /* HBase 1.1 */
+  @Override
+  public boolean isBalancerEnabled() throws IOException {
+    throw new UnsupportedOperationException("isBalancerEnabled"); // TODO
+  }
+
+  @Override
+  public boolean abortProcedure(long l, boolean b) throws IOException {
+    throw new UnsupportedOperationException("abortProcedure"); // TODO
+  }
+
+  @Override
+  public ProcedureInfo[] listProcedures() throws IOException {
+    throw new UnsupportedOperationException("listProcedures"); // TODO
+  }
+
+  @Override
+  public Future<Boolean> abortProcedureAsync(long l, boolean b) throws IOException {
+    throw new UnsupportedOperationException("abortProcedureAsync"); // TODO
+  }
+
+  @Override
+  public long getLastMajorCompactionTimestamp(TableName tableName) throws IOException {
+    throw new UnsupportedOperationException("getLastMajorCompactionTimestamp"); // TODO
+  }
+
+  @Override
+  public long getLastMajorCompactionTimestampForRegion(byte[] bytes) throws IOException {
+    throw new UnsupportedOperationException("getLastMajorCompactionTimestampForRegion"); // TODO
+  }
+
+  @Override
+  public void setQuota(QuotaSettings quotaSettings) throws IOException {
+    throw new UnsupportedOperationException("setQuota"); // TODO
+  }
+
+  @Override
+  public QuotaRetriever getQuotaRetriever(QuotaFilter quotaFilter) throws IOException {
+    throw new UnsupportedOperationException("getQuotaRetriever"); // TODO
+  }
+
+  /* HBase 1.2 */
+  @Override
+  public boolean normalize() throws IOException {
+    throw new UnsupportedOperationException("normalize"); // TODO
+  }
+
+  @Override
+  public boolean isNormalizerEnabled() throws IOException {
+    throw new UnsupportedOperationException("isNormalizerEnabled"); // TODO
+  }
+
+  @Override
+  public boolean setNormalizerRunning(boolean on) throws IOException {
+    throw new UnsupportedOperationException("setNormalizerRunning"); // TODO
+  }
+
+  @Override
+  public List<SecurityCapability> getSecurityCapabilities() throws IOException {
+    throw new UnsupportedOperationException("getSecurityCapabilities"); // TODO
+  }
+
+  /* Hbase 1.3 */
+  @Override
+  public boolean balancer(boolean b) throws IOException {
+    throw new UnsupportedOperationException("balancer"); // TODO
+  }
+
+  @Override
+  public List<SnapshotDescription> listTableSnapshots(String s, String s1) throws IOException {
+    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
+  }
+
+  @Override
+  public List<SnapshotDescription> listTableSnapshots(Pattern pattern, Pattern pattern1) throws IOException {
+    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
+  }
+
+  @Override
+  public void deleteTableSnapshots(String s, String s1) throws IOException {
+    throw new UnsupportedOperationException("deleteTableSnapshots"); // TODO
+  }
+
+  @Override
+  public void deleteTableSnapshots(Pattern pattern, Pattern pattern1) throws IOException {
+    throw new UnsupportedOperationException("deleteTableSnapshots"); // TODO
+  }
+
+  @Override
+  public boolean[] setSplitOrMergeEnabled(boolean b, boolean b1, MasterSwitchType... masterSwitchTypes)
+      throws IOException {
+    throw new UnsupportedOperationException("setSplitOrMergeEnabled"); // TODO
+  }
+
+  @Override
+  public boolean isSplitOrMergeEnabled(MasterSwitchType masterSwitchType) throws IOException {
+    throw new UnsupportedOperationException("isSplitOrMergeEnabled"); // TODO
+  }
 }

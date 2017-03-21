@@ -733,4 +733,25 @@ public class BigtableTable implements Table {
     }
     return batchExecutor;
   }
+
+
+  @Override
+  public void setOperationTimeout(int i) {
+    throw new UnsupportedOperationException("setOperationTimeout");
+  }
+
+  @Override
+  public int getOperationTimeout() {
+    throw new UnsupportedOperationException("getOperationTimeout");
+  }
+
+  @Override
+  public void setRpcTimeout(int i) {
+    throw new UnsupportedOperationException("setRpcTimeout");
+  }
+
+  @Override
+  public int getRpcTimeout() {
+    throw new UnsupportedOperationException("getRpcTimeout");
+  }
 }
