@@ -51,10 +51,6 @@ public class ChannelPool extends ManagedChannel {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(ChannelPool.class);
 
-  private static final AtomicInteger ChannelIdGenerator = new AtomicInteger();
-
-  protected static Stats STATS;
-
   /** Constant <code>CHANNEL_ID_KEY</code> */
   public static final Key<String> CHANNEL_ID_KEY = Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
 
@@ -67,6 +63,10 @@ public class ChannelPool extends ManagedChannel {
   public interface ChannelFactory {
     ManagedChannel create() throws IOException;
   }
+
+  private static final AtomicInteger ChannelIdGenerator = new AtomicInteger();
+
+  protected static Stats STATS;
 
   private static class Stats {
     /**
@@ -197,7 +197,7 @@ public class ChannelPool extends ManagedChannel {
           try {
             if (trailers != null) {
               // Be extra defensive since this is only used for logging
-              trailers.put(CHANNEL_ID_KEY, Integer.toString(InstrumentedChannel.this.channelId));
+              trailers.put(CHANNEL_ID_KEY, Integer.toString(channelId));
             }
             if (!decremented.getAndSet(true)) {
               getStats().ACTIVE_RPC_COUNTER.dec();
@@ -225,7 +225,7 @@ public class ChannelPool extends ManagedChannel {
     }
   }
 
-  private final ImmutableList<InstrumentedChannel> channels;
+  private final ImmutableList<ManagedChannel> channels;
   private final AtomicInteger requestCount = new AtomicInteger();
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
   private final String authority;
@@ -242,7 +242,7 @@ public class ChannelPool extends ManagedChannel {
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory, int count)
       throws IOException {
     Preconditions.checkArgument(count > 0, "Channel count has to be a positive number.");
-    ImmutableList.Builder<InstrumentedChannel> channeListBuilder = ImmutableList.builder();
+    ImmutableList.Builder<ManagedChannel> channeListBuilder = ImmutableList.builder();
     for (int i = 0; i < count; i++) {
       channeListBuilder.add(new InstrumentedChannel(factory.create()));
     }
@@ -256,12 +256,12 @@ public class ChannelPool extends ManagedChannel {
   }
 
   /**
-   * Performs a simple round robin on the list of {@link InstrumentedChannel}s in the {@code channels}
+   * Performs a simple round robin on the list of {@link ManagedChannel}s in the {@code channels}
    * list. This method should not be synchronized, if possible, to reduce bottlenecks.
    *
-   * @return A {@link InstrumentedChannel} that can be used for a single RPC call.
+   * @return A {@link ManagedChannel} that can be used for a single RPC call.
    */
-  private InstrumentedChannel getNextChannel() {
+  private ManagedChannel getNextChannel() {
     int currentRequestNum = requestCount.getAndIncrement();
     int index = Math.abs(currentRequestNum % channels.size());
     return channels.get(index);
@@ -300,7 +300,7 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public synchronized ManagedChannel shutdown() {
-    for (InstrumentedChannel channelWrapper : channels) {
+    for (ManagedChannel channelWrapper : channels) {
       channelWrapper.shutdown();
     }
     this.shutdown = true;
@@ -316,7 +316,7 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public boolean isTerminated() {
-    for (InstrumentedChannel channel : channels) {
+    for (ManagedChannel channel : channels) {
       if (!channel.isTerminated()) {
         return false;
       }
@@ -327,7 +327,7 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public ManagedChannel shutdownNow() {
-    for (InstrumentedChannel channel : channels) {
+    for (ManagedChannel channel : channels) {
       if (!channel.isTerminated()) {
         channel.shutdownNow();
       }
@@ -339,7 +339,7 @@ public class ChannelPool extends ManagedChannel {
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long endTimeNanos = System.nanoTime() + unit.toNanos(timeout);
-    for (InstrumentedChannel channel : channels) {
+    for (ManagedChannel channel : channels) {
       if (channel.isTerminated()) {
         continue;
       }
