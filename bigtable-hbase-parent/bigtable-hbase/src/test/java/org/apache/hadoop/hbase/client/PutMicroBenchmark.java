@@ -23,13 +23,11 @@ import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
-import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -85,7 +83,7 @@ public class PutMicroBenchmark {
       return BigtableSession.createChannelPool(options.getDataHost(), options);
     } else {
       return new ChannelPool(
-          ImmutableList.<HeaderInterceptor>of(prefixInterceptor()), createFakeChannels());
+          ImmutableList.<HeaderInterceptor>of(prefixInterceptor()), createFakeChannels(), 1);
     }
   }
 

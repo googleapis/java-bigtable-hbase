@@ -539,7 +539,7 @@ public class BigtableSession implements Closeable {
           public ManagedChannel create() throws IOException {
             return createNettyChannel(host, options);
           }
-        });
+        }, count);
   }
 
   /**
