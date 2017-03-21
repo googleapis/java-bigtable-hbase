@@ -21,7 +21,6 @@ import static org.mockito.Matchers.any;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
-import com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
@@ -29,6 +28,8 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,22 +46,16 @@ public class TestGoogleCloudResourcePrefixInterceptor {
   @Mock
   ClientCall call;
   private ChannelPool cp;
-  
+
   @Before
   public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
     Mockito.when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(call);
-    
-    cp = new ChannelPool(
-        Arrays.<HeaderInterceptor>asList(new GoogleCloudResourcePrefixInterceptor(HEADER_VALUE)),
-        new ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return channel;
-          }
-        });
 
+    cp = new ChannelPool(
+        Arrays.<HeaderInterceptor> asList(new GoogleCloudResourcePrefixInterceptor(HEADER_VALUE)),
+        Collections.singletonList(channel));
   }
 
   @Test

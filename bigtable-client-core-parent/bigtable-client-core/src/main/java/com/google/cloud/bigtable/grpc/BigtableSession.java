@@ -491,15 +491,19 @@ public class BigtableSession implements Closeable {
    * @throws java.io.IOException if any.
    */
   protected ChannelPool createChannelPool(final String hostString, int count) throws IOException {
-    ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
-      @Override
-      public ManagedChannel create() throws IOException {
-        return createNettyChannel(hostString, options);
-      }
-    };
-    ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory, count);
+    ChannelPool channelPool =
+        new ChannelPool(headerInterceptors, createChannels(hostString, count, options));
     managedChannels.add(channelPool);
     return channelPool;
+  }
+
+  private static List<ManagedChannel> createChannels(String host, int count,
+      BigtableOptions options) throws SSLException {
+    ArrayList<ManagedChannel> channels = new ArrayList<>(count);
+    for (int i = 0; i < count; i++) {
+      channels.add(createNettyChannel(host, options));
+    }
+    return channels;
   }
 
   /**
@@ -534,12 +538,7 @@ public class BigtableSession implements Closeable {
         new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString());
     return new ChannelPool(
         ImmutableList.<HeaderInterceptor>of(credentialsInterceptor, prefixInterceptor),
-        new ChannelPool.ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return createNettyChannel(host, options);
-          }
-        });
+        createChannels(host, count, options));
   }
 
   /**

@@ -51,38 +51,40 @@ import io.grpc.MethodDescriptor;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ChannelPoolTest {
 
-  private static class MockChannelFactory implements ChannelPool.ChannelFactory {
+  private ManagedChannel createChannel() throws IOException {
+    final ManagedChannel channel = mock(ManagedChannel.class);
+    final AtomicBoolean isShutdown = new AtomicBoolean();
+    ClientCall callStub = mock(ClientCall.class);
+    when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
+        .thenReturn(callStub);
+    when(channel.authority()).thenReturn("");
+    when(channel.shutdown()).thenAnswer(new Answer<ManagedChannel>() {
+      @Override
+      public ManagedChannel answer(InvocationOnMock invocation) throws Throwable {
+        isShutdown.set(true);
+        return channel;
+      }
+    });
+    when(channel.isShutdown()).then(isShutdownAnswer(isShutdown));
+    when(channel.isTerminated()).then(isShutdownAnswer(isShutdown));
+    return channel;
+  }
+
+  private List<ManagedChannel> createPool(int channelCount) throws IOException {
     List<ManagedChannel> channels = new ArrayList<>();
-
-    @Override
-    public ManagedChannel create() throws IOException {
-      final ManagedChannel channel = mock(ManagedChannel.class);
-      final AtomicBoolean isShutdown = new AtomicBoolean();
-      ClientCall callStub = mock(ClientCall.class);
-      when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
-          .thenReturn(callStub);
-      when(channel.authority()).thenReturn("");
-      when(channel.shutdown()).thenAnswer(new Answer<ManagedChannel>() {
-        @Override
-        public ManagedChannel answer(InvocationOnMock invocation) throws Throwable {
-          isShutdown.set(true);
-          return channel;
-        }
-      });
-      when(channel.isShutdown()).then(isShutdownAnswer(isShutdown));
-      when(channel.isTerminated()).then(isShutdownAnswer(isShutdown));
-      channels.add(channel);
-      return channel;
+    for (int i = 0; i < channelCount; i++) {
+      channels.add(createChannel());
     }
+    return channels;
+  }
 
-    protected Answer<Boolean> isShutdownAnswer(final AtomicBoolean isShutdown) {
-      return new Answer<Boolean>() {
-        @Override
-        public Boolean answer(InvocationOnMock invocation) throws Throwable {
-          return isShutdown.get();
-        }
-      };
-    }
+  private Answer<Boolean> isShutdownAnswer(final AtomicBoolean isShutdown) {
+    return new Answer<Boolean>() {
+      @Override
+      public Boolean answer(InvocationOnMock invocation) throws Throwable {
+        return isShutdown.get();
+      }
+    };
   }
 
   @Test
@@ -90,7 +92,7 @@ public class ChannelPoolTest {
     MethodDescriptor descriptor = BigtableGrpc.METHOD_MUTATE_ROW;
     HeaderInterceptor interceptor = mock(HeaderInterceptor.class);
     ChannelPool pool =
-        new ChannelPool(Collections.singletonList(interceptor), new MockChannelFactory());
+        new ChannelPool(Collections.singletonList(interceptor), createPool(1));
     ClientCall call = pool.newCall(descriptor, CallOptions.DEFAULT);
     Metadata headers = new Metadata();
     call.start(null, headers);
@@ -99,53 +101,51 @@ public class ChannelPoolTest {
 
   @Test
   public void testChannelsAreRoundRobinned() throws IOException {
-    MockChannelFactory factory = new MockChannelFactory();
     MethodDescriptor descriptor = BigtableGrpc.METHOD_MUTATE_ROW;
     MockitoAnnotations.initMocks(this);
-    ChannelPool pool = new ChannelPool(null, factory, 2);
+    List<ManagedChannel> channels = createPool(2);
+    ChannelPool pool = new ChannelPool(null, channels);
     pool.newCall(descriptor, CallOptions.DEFAULT);
-    verify(factory.channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
-    verify(factory.channels.get(1), times(0)).newCall(same(descriptor), same(CallOptions.DEFAULT));
+    verify(channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
+    verify(channels.get(1), times(0)).newCall(same(descriptor), same(CallOptions.DEFAULT));
     pool.newCall(descriptor, CallOptions.DEFAULT);
-    verify(factory.channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
-    verify(factory.channels.get(1), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
-}
+    verify(channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
+    verify(channels.get(1), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
+  }
 
   @Test
   public void testEnsureCapcity() throws IOException {
-    MockChannelFactory factory = new MockChannelFactory();
-    ChannelPool pool = new ChannelPool(null, factory, 4);
-    Assert.assertEquals(4, factory.channels.size());
+    ChannelPool pool = new ChannelPool(null, createPool(4));
     Assert.assertEquals(4, pool.size());
   }
 
   @Test
   public void testShutdown() throws IOException {
-    MockChannelFactory factory = new MockChannelFactory();
-    new ChannelPool(null, factory).shutdown();
-    for (ManagedChannel managedChannel : factory.channels) {
+    List<ManagedChannel> channels = createPool(4);
+    new ChannelPool(null, channels).shutdown();
+    for (ManagedChannel managedChannel : channels) {
       verify(managedChannel, times(1)).shutdown();
     }
   }
 
   @Test
   public void testShutdownNow() throws IOException {
-    MockChannelFactory factory = new MockChannelFactory();
-    new ChannelPool(null, factory).shutdownNow();
-    for (ManagedChannel managedChannel : factory.channels) {
+    List<ManagedChannel> channels = createPool(4);
+    new ChannelPool(null, channels).shutdownNow();
+    for (ManagedChannel managedChannel : channels) {
       verify(managedChannel, times(1)).shutdownNow();
     }
   }
 
   @Test
   public void testAwaitTermination() throws IOException, InterruptedException {
-    MockChannelFactory factory = new MockChannelFactory();
-    ChannelPool pool = new ChannelPool(null, factory);
-    for (ManagedChannel managedChannel : factory.channels) {
+    List<ManagedChannel> channels = createPool(4);
+    ChannelPool pool = new ChannelPool(null, channels);
+    for (ManagedChannel managedChannel : channels) {
       when(managedChannel.isTerminated()).thenReturn(false);
     }
     pool.awaitTermination(500, TimeUnit.MILLISECONDS);
-    for (ManagedChannel managedChannel : factory.channels) {
+    for (ManagedChannel managedChannel : channels) {
       verify(managedChannel, times(1)).awaitTermination(anyLong(), eq(TimeUnit.NANOSECONDS));
     }
   }
