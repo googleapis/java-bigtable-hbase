@@ -25,11 +25,13 @@ import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.security.User;
@@ -73,6 +75,12 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       }
     };
     Runtime.getRuntime().addShutdownHook(new Thread(shutDownRunnable));
+
+    // Force the loading of HConstants.class, which shares a bi-directional reference with KeyValue.
+    // This bi-drectional relationship causes problems when KeyValue and HConstants are class loaded
+    // in different threads. This forces a clean class loading of both HConstants and KeyValue along
+    // with a whole bunch of other classes.
+    Adapters.class.getName();
   }
 
   private final Logger LOG = new Logger(getClass());

@@ -57,7 +57,7 @@ import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
@@ -156,6 +156,7 @@ public class CloudBigtableIO {
 
   private static AtomicCoder<Result> RESULT_CODER = new HBaseResultCoder();
   private static AtomicCoder<Result[]> RESULT_ARRAY_CODER = new HBaseResultArrayCoder();
+  private static final com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
 
   @SuppressWarnings("rawtypes")
   private static AtomicCoder HBASE_MUTATION_CODER = new HBaseMutationCoder();
@@ -214,7 +215,7 @@ public class CloudBigtableIO {
       FlatRow row = resultScanner.next();
       if (row != null
           && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getRowKey()))) {
-        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(row);
+        return FLAT_ROW_ADAPTER.adaptResponse(row);
       }
       return null;
     }
@@ -257,7 +258,7 @@ public class CloudBigtableIO {
           // A split occurred and the split key was before this key.
           break;
         }
-        results.add(Adapters.FLAT_ROW_ADAPTER.adaptResponse(row));
+        results.add(FLAT_ROW_ADAPTER.adaptResponse(row));
       }
       return results.toArray(new Result[results.size()]);
     }
