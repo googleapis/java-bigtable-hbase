@@ -1100,6 +1100,12 @@ public class CloudBigtableIO {
       mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
     }
 
+    @Override
+    public void startBundle(DoFn<KV<String, Iterable<Mutation>>, Void>.Context c) throws Exception {
+      super.startBundle(c);
+      mutators = new HashMap<>();
+    }
+
     /**
      * Uses the connection to create a new {@link Table} to write the {@link Mutation}s to.
      *
@@ -1121,10 +1127,7 @@ public class CloudBigtableIO {
       mutationsCounter.addValue((long) mutations.size());
     }
 
-    private synchronized BufferedMutator getMutator(String tableName) throws IOException {
-      if (mutators == null) {
-        mutators = new HashMap<>();
-      }
+    private BufferedMutator getMutator(String tableName) throws IOException {
       BufferedMutator mutator = mutators.get(tableName);
       if (mutator == null) {
         mutator = getConnection().getBufferedMutator(TableName.valueOf(tableName));
@@ -1136,19 +1139,15 @@ public class CloudBigtableIO {
     @Override
     public void finishBundle(DoFn<KV<String, Iterable<Mutation>>, Void>.Context c)
         throws Exception {
-      synchronized(this) {
-        if (mutators != null) {
-          for (BufferedMutator bufferedMutator : mutators.values()) {
-            try {
-              bufferedMutator.flush();
-            } catch (RetriesExhaustedWithDetailsException exception) {
-              logExceptions(c, exception);
-              rethrowException(exception);
-            }
-          }
+      for (BufferedMutator bufferedMutator : mutators.values()) {
+        try {
+          bufferedMutator.flush();
+        } catch (RetriesExhaustedWithDetailsException exception) {
+          logExceptions(c, exception);
+          rethrowException(exception);
         }
-        mutators.clear();
       }
+      mutators.clear();
       super.finishBundle(c);
     }
   }
