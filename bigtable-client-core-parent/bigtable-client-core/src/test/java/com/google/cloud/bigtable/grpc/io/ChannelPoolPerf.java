@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -83,14 +82,12 @@ public class ChannelPoolPerf {
     };
     int threads = 20;
     int concurrent = 400;
-    final ChannelPool.ChannelFactory pool = new ChannelPool.ChannelFactory() {
-      @Override
-      public ManagedChannel create() throws IOException {
-        return channel;
-      }
-    };
     List<HeaderInterceptor> headers = Collections.<HeaderInterceptor> emptyList();
-    final ChannelPool cp = new ChannelPool(headers, pool, 40);
+    List<ManagedChannel> channels = new ArrayList<>();
+    for (int i = 0; i < 40; i++) {
+      channels.add(channel);
+    }
+    final ChannelPool cp = new ChannelPool(headers, channels);
     ExecutorService es = Executors.newFixedThreadPool(threads);
     final List<Double> results = new ArrayList<>(1000);
     Callable<Void> runnable = new Callable<Void>() {

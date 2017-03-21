@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,20 +54,22 @@ public class ChannelPool extends ManagedChannel {
 
   private static final AtomicInteger ChannelIdGenerator = new AtomicInteger();
 
+  public static ImmutableList<InstrumentedChannel>
+      toInstrummentedChannels(List<ManagedChannel> channels) {
+    Preconditions.checkArgument(channels != null && !channels.isEmpty(),
+      "Channels have to be non-null and not empty.");
+    ImmutableList.Builder<InstrumentedChannel> response = ImmutableList.builder();
+    for (ManagedChannel channel : channels) {
+      response.add(new InstrumentedChannel(channel));
+    }
+    return response.build();
+  }
+
   protected static Stats STATS;
 
   /** Constant <code>CHANNEL_ID_KEY</code> */
-  public static final Key<String> CHANNEL_ID_KEY = Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
-
-  /**
-   * A factory for creating ManagedChannels to be used in a {@link ChannelPool}.
-   *
-   * @author sduskis
-   *
-   */
-  public interface ChannelFactory {
-    ManagedChannel create() throws IOException;
-  }
+  public static final Key<String> CHANNEL_ID_KEY =
+      Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
 
   private static class Stats {
     /**
@@ -99,7 +102,7 @@ public class ChannelPool extends ManagedChannel {
    * @author sduskis
    *
    */
-  private class InstrumentedChannel extends ManagedChannel {
+  public static class InstrumentedChannel extends ManagedChannel {
     private final ManagedChannel delegate;
     // a uniquely named timer for this channel's latency
     private final Timer timer;
@@ -159,9 +162,6 @@ public class ChannelPool extends ManagedChannel {
         @Override
         protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
             throws Exception {
-          for (HeaderInterceptor interceptor : headerInterceptors) {
-            interceptor.updateHeaders(headers);
-          }
           ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext, decremented);
           getStats().ACTIVE_RPC_COUNTER.inc();
           getStats().RPC_METER.mark();
@@ -239,28 +239,35 @@ public class ChannelPool extends ManagedChannel {
    * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
    * @throws java.io.IOException if any.
    */
-  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
+  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ManagedChannel channel)
       throws IOException {
-    this(headerInterceptors, factory, 1);
+    this(headerInterceptors, Collections.singletonList(channel));
   }
-
 
   /**
    * <p>Constructor for ChannelPool.</p>
    *
    * @param headerInterceptors a {@link java.util.List} object.
-   * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
+   * @param channels a {@link List} of {@link ManagedChannel}s.
    * @throws java.io.IOException if any.
    */
-  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory, int count)
+  public ChannelPool(List<HeaderInterceptor> headerInterceptors, List<ManagedChannel> channels)
       throws IOException {
-    Preconditions.checkArgument(count > 0, "Channel count has to be a positive number.");
-    ImmutableList.Builder<InstrumentedChannel> channeListBuilder = ImmutableList.builder();
-    for (int i = 0; i < count; i++) {
-      channeListBuilder.add(new InstrumentedChannel(factory.create()));
-    }
-    this.channels = channeListBuilder.build();
-    authority = channels.get(0).authority();
+    this(headerInterceptors, toInstrummentedChannels(channels));
+  }
+
+  /**
+   * <p>
+   * Constructor for ChannelPool.
+   * </p>
+   * @param headerInterceptors a {@link java.util.List} object.
+   * @param channels a {@link ImmutableList} of {@link InstrumentedChannel}s.
+   * @throws java.io.IOException if any.
+   */
+  public ChannelPool(List<HeaderInterceptor> headerInterceptors,
+      ImmutableList<InstrumentedChannel> channels) throws IOException {
+    this.channels = channels;
+    authority = this.channels.get(0).authority();
     if (headerInterceptors == null) {
       this.headerInterceptors = ImmutableList.of();
     } else {
@@ -295,10 +302,20 @@ public class ChannelPool extends ManagedChannel {
    * {@link ClientCall#start(ClientCall.Listener, io.grpc.Metadata)} is invoked.
    */
   @Override
-  public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
-      MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
+  public <ReqT, RespT> ClientCall<ReqT, RespT>
+      newCall(final MethodDescriptor<ReqT, RespT> methodDescriptor, final CallOptions callOptions) {
     Preconditions.checkState(!shutdown, "Cannot perform operations on a closed connection");
-    return getNextChannel().newCall(methodDescriptor, callOptions);
+    return new CheckedForwardingClientCall<ReqT, RespT>(
+        getNextChannel().newCall(methodDescriptor, callOptions)) {
+      @Override
+      protected void checkedStart(ClientCall.Listener<RespT> listener, Metadata headers)
+          throws Exception {
+        for (HeaderInterceptor interceptor : headerInterceptors) {
+          interceptor.updateHeaders(headers);
+        }
+        delegate().start(listener, headers);
+      }
+    };
   }
 
   /**

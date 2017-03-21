@@ -23,13 +23,11 @@ import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
-import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -93,14 +91,8 @@ public class PutMicroBenchmark {
     return new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString());
   }
 
-  protected static ChannelPool.ChannelFactory createFakeChannels() {
-    final ManagedChannel channel = createFakeChannel();
-    return new ChannelPool.ChannelFactory() {
-      @Override
-      public ManagedChannel create() throws IOException {
-        return channel;
-      }
-    };
+  protected static ManagedChannel createFakeChannels() {
+    return createFakeChannel();
   }
 
   private static void createRandomData() {
