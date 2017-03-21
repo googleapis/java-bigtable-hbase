@@ -51,7 +51,12 @@ public class ChannelPool extends ManagedChannel {
   protected static final Logger LOG = new Logger(ChannelPool.class);
 
   /** Constant <code>CHANNEL_ID_KEY</code> */
-  public static final Key<String> CHANNEL_ID_KEY = Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
+  private static final Key<String> CHANNEL_ID_KEY =
+      Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
+
+  public static final String extractIdentifier(Metadata trailers) {
+    return trailers != null ? trailers.get(ChannelPool.CHANNEL_ID_KEY) : "";
+  }
 
   /**
    * A factory for creating ManagedChannels to be used in a {@link ChannelPool}.
