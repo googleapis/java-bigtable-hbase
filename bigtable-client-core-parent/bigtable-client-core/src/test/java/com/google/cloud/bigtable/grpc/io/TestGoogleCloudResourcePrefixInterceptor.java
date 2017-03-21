@@ -59,7 +59,7 @@ public class TestGoogleCloudResourcePrefixInterceptor {
           public ManagedChannel create() throws IOException {
             return channel;
           }
-        });
+        }, 1);
 
   }
 

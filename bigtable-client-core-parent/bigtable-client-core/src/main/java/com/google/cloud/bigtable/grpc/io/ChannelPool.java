@@ -239,19 +239,6 @@ public class ChannelPool extends ManagedChannel {
    * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
    * @throws java.io.IOException if any.
    */
-  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
-      throws IOException {
-    this(headerInterceptors, factory, 1);
-  }
-
-
-  /**
-   * <p>Constructor for ChannelPool.</p>
-   *
-   * @param headerInterceptors a {@link java.util.List} object.
-   * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
-   * @throws java.io.IOException if any.
-   */
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory, int count)
       throws IOException {
     Preconditions.checkArgument(count > 0, "Channel count has to be a positive number.");

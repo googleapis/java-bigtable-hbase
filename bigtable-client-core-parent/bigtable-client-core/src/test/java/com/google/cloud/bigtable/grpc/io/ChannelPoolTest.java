@@ -90,7 +90,7 @@ public class ChannelPoolTest {
     MethodDescriptor descriptor = BigtableGrpc.METHOD_MUTATE_ROW;
     HeaderInterceptor interceptor = mock(HeaderInterceptor.class);
     ChannelPool pool =
-        new ChannelPool(Collections.singletonList(interceptor), new MockChannelFactory());
+        new ChannelPool(Collections.singletonList(interceptor), new MockChannelFactory(), 1);
     ClientCall call = pool.newCall(descriptor, CallOptions.DEFAULT);
     Metadata headers = new Metadata();
     call.start(null, headers);
@@ -122,7 +122,7 @@ public class ChannelPoolTest {
   @Test
   public void testShutdown() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    new ChannelPool(null, factory).shutdown();
+    new ChannelPool(null, factory, 1).shutdown();
     for (ManagedChannel managedChannel : factory.channels) {
       verify(managedChannel, times(1)).shutdown();
     }
@@ -131,7 +131,7 @@ public class ChannelPoolTest {
   @Test
   public void testShutdownNow() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    new ChannelPool(null, factory).shutdownNow();
+    new ChannelPool(null, factory, 1).shutdownNow();
     for (ManagedChannel managedChannel : factory.channels) {
       verify(managedChannel, times(1)).shutdownNow();
     }
@@ -140,7 +140,7 @@ public class ChannelPoolTest {
   @Test
   public void testAwaitTermination() throws IOException, InterruptedException {
     MockChannelFactory factory = new MockChannelFactory();
-    ChannelPool pool = new ChannelPool(null, factory);
+    ChannelPool pool = new ChannelPool(null, factory, 1);
     for (ManagedChannel managedChannel : factory.channels) {
       when(managedChannel.isTerminated()).thenReturn(false);
     }
