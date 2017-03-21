@@ -54,6 +54,7 @@ import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.DoFnTester;
+import com.google.cloud.dataflow.sdk.values.KV;
 
 public class CloudBigtableIOIntegrationTest {
   private static final String BIGTABLE_PROJECT_KEY = "google.bigtable.project.id";
@@ -158,6 +159,42 @@ public class CloudBigtableIOIntegrationTest {
         admin.deleteTable(tableName);
       }
     }
+  }
+
+  @Test
+  public void testWriteToTable_multiTablewrites() throws Exception {
+    final int INSERT_COUNT_PER_TABLE = 50;
+    int BATCH_SIZE = INSERT_COUNT_PER_TABLE / 2;
+    try (Admin admin = connection.getAdmin()) {
+      TableName tableName1 = createNewTable(admin);
+      TableName tableName2 = createNewTable(admin);
+      DoFn<KV<String, Iterable<Mutation>>, Void> writer =
+          new CloudBigtableIO.CloudBigtableMultiTableWriteFn(config);
+
+      try {
+        DoFnTester<KV<String, Iterable<Mutation>>, Void> tester = DoFnTester.of(writer);
+        tester.processBatch(
+          createKV(tableName1, 0, BATCH_SIZE),
+          createKV(tableName2, 0, BATCH_SIZE),
+          createKV(tableName1, BATCH_SIZE, BATCH_SIZE),
+          createKV(tableName2, BATCH_SIZE, BATCH_SIZE));
+        checkTableRowCount(tableName1, INSERT_COUNT_PER_TABLE);
+        checkTableRowCount(tableName2, INSERT_COUNT_PER_TABLE);
+      } finally {
+        admin.deleteTable(tableName1);
+        admin.deleteTable(tableName2);
+      }
+    }
+  }
+
+  protected KV<String, Iterable<Mutation>> createKV(TableName tableName, int start_count, int insertCount) {
+    List<Mutation> mutations = new ArrayList<>();
+    for (int i = 0; i < insertCount; i++) {
+      byte[] row = Bytes.toBytes("row_" + (i + start_count));
+      mutations.add(new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER1,
+        Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8))));
+    }
+    return KV.<String, Iterable<Mutation>> of(tableName.getNameAsString(), mutations);
   }
 
   private void writeThroughDataflow(DoFn<Mutation, Void> writer, int insertCount) throws Exception {
