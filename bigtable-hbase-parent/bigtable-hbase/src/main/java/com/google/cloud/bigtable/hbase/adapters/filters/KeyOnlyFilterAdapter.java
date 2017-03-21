@@ -17,9 +17,8 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
-
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -33,7 +32,7 @@ import java.io.IOException;
  */
 public class KeyOnlyFilterAdapter extends TypedFilterAdapterBase<KeyOnlyFilter> {
   /** Constant <code>TEST_CELL</code> */
-  protected static final Cell TEST_CELL = new RowCell(
+  protected static final Cell TEST_CELL = new KeyValue(
       Bytes.toBytes('r'), // Row
       Bytes.toBytes('f'), // Family
       Bytes.toBytes('q'), // qualifier
