@@ -1117,14 +1117,16 @@ public class CloudBigtableIO {
     @Override
     public void processElement(ProcessContext context) throws Exception {
       KV<String, Iterable<Mutation>> element = context.element();
-      List<Mutation> mutations = Lists.newArrayList(element.getValue());
+      BufferedMutator mutator = getMutator(element.getKey());
       try {
-        getMutator(element.getKey()).mutate(mutations);
+        for (Mutation mutation : element.getValue()) {
+          mutator.mutate(mutation);
+          mutationsCounter.addValue(1l);
+        }
       } catch (RetriesExhaustedWithDetailsException exception) {
         logExceptions(context, exception);
         rethrowException(exception);
       }
-      mutationsCounter.addValue((long) mutations.size());
     }
 
     private BufferedMutator getMutator(String tableName) throws IOException {
