@@ -15,7 +15,16 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.StatusException;
+import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 
 /**
  * Adds a header ("google-cloud-resource-prefix") that usually contains a fully qualified instance
@@ -25,7 +34,7 @@ import io.grpc.Metadata;
  * @version $Id: $Id
  * @since 0.9.2
  */
-public class GoogleCloudResourcePrefixInterceptor implements HeaderInterceptor {
+public class GoogleCloudResourcePrefixInterceptor implements ClientInterceptor {
 
   /** Constant <code>GRPC_RESOURCE_PREFIX_KEY</code> */
   public static final Metadata.Key<String> GRPC_RESOURCE_PREFIX_KEY =
@@ -44,7 +53,20 @@ public class GoogleCloudResourcePrefixInterceptor implements HeaderInterceptor {
 
   /** {@inheritDoc} */
   @Override
-  public void updateHeaders(Metadata headers) throws Exception {
+  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+      CallOptions callOptions, Channel next) {
+    return new CheckedForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+      @Override
+      protected void checkedStart(Listener<RespT> responseListener, Metadata headers)
+          throws StatusException {
+        updateHeaders(headers);
+        delegate().start(responseListener, headers);
+      }
+    };
+  }
+
+  @VisibleForTesting
+  public void updateHeaders(Metadata headers) {
     if (!headers.containsKey(GRPC_RESOURCE_PREFIX_KEY)) {
       headers.put(GRPC_RESOURCE_PREFIX_KEY, defaultValue);
     }
