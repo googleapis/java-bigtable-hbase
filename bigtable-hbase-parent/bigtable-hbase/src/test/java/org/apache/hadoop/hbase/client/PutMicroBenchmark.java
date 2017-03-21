@@ -42,6 +42,7 @@ import io.grpc.Status;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -82,8 +83,8 @@ public class PutMicroBenchmark {
     if (useRealConnection) {
       return BigtableSession.createChannelPool(options.getDataHost(), options);
     } else {
-      return new ChannelPool(
-          ImmutableList.<HeaderInterceptor>of(prefixInterceptor()), createFakeChannels());
+      return new ChannelPool(ImmutableList.<HeaderInterceptor> of(prefixInterceptor()),
+          Collections.singletonList(createFakeChannels()));
     }
   }
 

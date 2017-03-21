@@ -28,6 +28,8 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +55,7 @@ public class TestGoogleCloudResourcePrefixInterceptor {
 
     cp = new ChannelPool(
         Arrays.<HeaderInterceptor> asList(new GoogleCloudResourcePrefixInterceptor(HEADER_VALUE)),
-        channel);
+        Collections.singletonList(channel));
   }
 
   @Test

@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,57 +51,61 @@ public class ChannelPool extends ManagedChannel {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(ChannelPool.class);
 
-  private static final AtomicInteger ChannelIdGenerator = new AtomicInteger();
-
-  public static ImmutableList<InstrumentedChannel>
-      toInstrummentedChannels(List<ManagedChannel> channels) {
-    Preconditions.checkArgument(channels != null && !channels.isEmpty(),
-      "Channels have to be non-null and not empty.");
-    ImmutableList.Builder<InstrumentedChannel> response = ImmutableList.builder();
-    for (ManagedChannel channel : channels) {
-      response.add(new InstrumentedChannel(channel));
-    }
-    return response.build();
-  }
-
-  protected static Stats STATS;
-
-  /** Constant <code>CHANNEL_ID_KEY</code> */
-  public static final Key<String> CHANNEL_ID_KEY =
-      Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
-
-  private static class Stats {
-    /**
-     * Best effort counter of active channels. There may be some cases where channel termination
-     * counting may not accurately be decremented.
-     */
-    Counter ACTIVE_CHANNEL_COUNTER =
-        BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active");
-
-    /**
-     * Best effort counter of active RPCs.
-     */
-    Counter ACTIVE_RPC_COUNTER = BigtableClientMetrics.counter(MetricLevel.Info, "grpc.rpc.active");
-
-    /**
-     * Best effort counter of RPCs.
-     */
-    Meter RPC_METER = BigtableClientMetrics.meter(MetricLevel.Info, "grpc.rpc.performed");
-  }
-
-  protected static synchronized Stats getStats() {
-    if (STATS == null) {
-      STATS = new Stats();
-    }
-    return STATS;
-  }
-
   /**
    * Contains a {@link ManagedChannel} and metrics for the channel
    * @author sduskis
    *
    */
   public static class InstrumentedChannel extends ManagedChannel {
+
+    private static final AtomicInteger ChannelIdGenerator = new AtomicInteger();
+
+    /** Constant <code>CHANNEL_ID_KEY</code> */
+    public static final Key<String> CHANNEL_ID_KEY =
+        Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
+
+    static ImmutableList<ManagedChannel> toInstrummentedChannels(List<ManagedChannel> channels) {
+      Preconditions.checkArgument(channels != null && !channels.isEmpty(),
+        "Channels have to be non-null and not empty.");
+      ImmutableList.Builder<ManagedChannel> instrummentedChannels = ImmutableList.builder();
+      for (ManagedChannel channel : channels) {
+        if (channel instanceof InstrumentedChannel) {
+          instrummentedChannels.add(channel);
+        } else {
+          instrummentedChannels.add(new InstrumentedChannel(channel));
+        }
+      }
+      return instrummentedChannels.build();
+    }
+
+    protected static Stats STATS;
+
+    private static class Stats {
+      /**
+       * Best effort counter of active channels. There may be some cases where channel termination
+       * counting may not accurately be decremented.
+       */
+      Counter ACTIVE_CHANNEL_COUNTER =
+          BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active");
+
+      /**
+       * Best effort counter of active RPCs.
+       */
+      Counter ACTIVE_RPC_COUNTER = BigtableClientMetrics.counter(MetricLevel.Info, "grpc.rpc.active");
+
+      /**
+       * Best effort counter of RPCs.
+       */
+      Meter RPC_METER = BigtableClientMetrics.meter(MetricLevel.Info, "grpc.rpc.performed");
+    }
+
+    static synchronized Stats getStats() {
+      if (STATS == null) {
+        STATS = new Stats();
+      }
+      return STATS;
+    }
+
     private final ManagedChannel delegate;
     // a uniquely named timer for this channel's latency
     private final Timer timer;
@@ -225,7 +228,7 @@ public class ChannelPool extends ManagedChannel {
     }
   }
 
-  private final ImmutableList<InstrumentedChannel> channels;
+  private final ImmutableList<ManagedChannel> channels;
   private final AtomicInteger requestCount = new AtomicInteger();
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
   private final String authority;
@@ -236,37 +239,12 @@ public class ChannelPool extends ManagedChannel {
    * <p>Constructor for ChannelPool.</p>
    *
    * @param headerInterceptors a {@link java.util.List} object.
-   * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
-   * @throws java.io.IOException if any.
-   */
-  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ManagedChannel channel)
-      throws IOException {
-    this(headerInterceptors, Collections.singletonList(channel));
-  }
-
-  /**
-   * <p>Constructor for ChannelPool.</p>
-   *
-   * @param headerInterceptors a {@link java.util.List} object.
    * @param channels a {@link List} of {@link ManagedChannel}s.
    * @throws java.io.IOException if any.
    */
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, List<ManagedChannel> channels)
       throws IOException {
-    this(headerInterceptors, toInstrummentedChannels(channels));
-  }
-
-  /**
-   * <p>
-   * Constructor for ChannelPool.
-   * </p>
-   * @param headerInterceptors a {@link java.util.List} object.
-   * @param channels a {@link ImmutableList} of {@link InstrumentedChannel}s.
-   * @throws java.io.IOException if any.
-   */
-  public ChannelPool(List<HeaderInterceptor> headerInterceptors,
-      ImmutableList<InstrumentedChannel> channels) throws IOException {
-    this.channels = channels;
+    this.channels = InstrumentedChannel.toInstrummentedChannels(channels);
     authority = this.channels.get(0).authority();
     if (headerInterceptors == null) {
       this.headerInterceptors = ImmutableList.of();
@@ -281,7 +259,7 @@ public class ChannelPool extends ManagedChannel {
    *
    * @return A {@link InstrumentedChannel} that can be used for a single RPC call.
    */
-  private InstrumentedChannel getNextChannel() {
+  private ManagedChannel getNextChannel() {
     int currentRequestNum = requestCount.getAndIncrement();
     int index = Math.abs(currentRequestNum % channels.size());
     return channels.get(index);
@@ -330,7 +308,7 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public synchronized ManagedChannel shutdown() {
-    for (InstrumentedChannel channelWrapper : channels) {
+    for (ManagedChannel channelWrapper : channels) {
       channelWrapper.shutdown();
     }
     this.shutdown = true;
@@ -346,7 +324,7 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public boolean isTerminated() {
-    for (InstrumentedChannel channel : channels) {
+    for (ManagedChannel channel : channels) {
       if (!channel.isTerminated()) {
         return false;
       }
@@ -357,7 +335,7 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public ManagedChannel shutdownNow() {
-    for (InstrumentedChannel channel : channels) {
+    for (ManagedChannel channel : channels) {
       if (!channel.isTerminated()) {
         channel.shutdownNow();
       }
@@ -369,7 +347,7 @@ public class ChannelPool extends ManagedChannel {
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long endTimeNanos = System.nanoTime() + unit.toNanos(timeout);
-    for (InstrumentedChannel channel : channels) {
+    for (ManagedChannel channel : channels) {
       if (channel.isTerminated()) {
         continue;
       }
