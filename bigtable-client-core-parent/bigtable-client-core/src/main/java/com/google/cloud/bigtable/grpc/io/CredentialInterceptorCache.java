@@ -25,6 +25,8 @@ import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
 
+import io.grpc.ClientInterceptor;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.ExecutorService;
@@ -52,7 +54,7 @@ public class CredentialInterceptorCache {
   private final ExecutorService executor =
       Executors.newCachedThreadPool(createThreadFactory("Credentials-Refresh"));
 
-  private HeaderInterceptor defaultCredentialInterceptor;
+  private ClientInterceptor defaultCredentialInterceptor;
 
   private CredentialInterceptorCache() {
   }
@@ -79,7 +81,7 @@ public class CredentialInterceptorCache {
    * @throws java.io.IOException if any.
    * @throws java.security.GeneralSecurityException if any.
    */
-  public synchronized HeaderInterceptor getCredentialsInterceptor(
+  public synchronized ClientInterceptor getCredentialsInterceptor(
       CredentialOptions credentialOptions, RetryOptions retryOptions)
       throws IOException, GeneralSecurityException {
     // Default credentials is the most likely CredentialType. It's also the only CredentialType

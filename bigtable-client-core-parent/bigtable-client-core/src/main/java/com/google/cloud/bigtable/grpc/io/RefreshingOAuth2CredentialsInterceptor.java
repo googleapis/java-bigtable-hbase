@@ -15,9 +15,17 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
+import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Date;
@@ -56,7 +64,7 @@ import com.google.common.annotations.VisibleForTesting;
  * @author sduskis
  * @version $Id: $Id
  */
-public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor {
+public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor {
 
   /**
    * <p>
@@ -201,8 +209,16 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
 
   /** {@inheritDoc} */
   @Override
-  public void updateHeaders(Metadata headers) {
-    headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
+  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+      CallOptions callOptions, Channel next) {
+    return new CheckedForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+      @Override
+      protected void checkedStart(Listener<RespT> responseListener, Metadata headers)
+          throws StatusException {
+        headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
+        delegate().start(responseListener, headers);
+      }
+    };
   }
 
   /**

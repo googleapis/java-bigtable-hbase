@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -159,9 +158,6 @@ public class ChannelPool extends ManagedChannel {
         @Override
         protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
             throws Exception {
-          for (HeaderInterceptor interceptor : headerInterceptors) {
-            interceptor.updateHeaders(headers);
-          }
           ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext, decremented);
           getStats().ACTIVE_RPC_COUNTER.inc();
           getStats().RPC_METER.mark();
@@ -227,20 +223,18 @@ public class ChannelPool extends ManagedChannel {
 
   private final ImmutableList<ManagedChannel> channels;
   private final AtomicInteger requestCount = new AtomicInteger();
-  private final ImmutableList<HeaderInterceptor> headerInterceptors;
   private final String authority;
 
   private boolean shutdown = false;
 
+
   /**
    * <p>Constructor for ChannelPool.</p>
    *
-   * @param headerInterceptors a {@link java.util.List} object.
    * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
    * @throws java.io.IOException if any.
    */
-  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory, int count)
-      throws IOException {
+  public ChannelPool(ChannelFactory factory, int count) throws IOException {
     Preconditions.checkArgument(count > 0, "Channel count has to be a positive number.");
     ImmutableList.Builder<ManagedChannel> channeListBuilder = ImmutableList.builder();
     for (int i = 0; i < count; i++) {
@@ -248,11 +242,6 @@ public class ChannelPool extends ManagedChannel {
     }
     this.channels = channeListBuilder.build();
     authority = channels.get(0).authority();
-    if (headerInterceptors == null) {
-      this.headerInterceptors = ImmutableList.of();
-    } else {
-      this.headerInterceptors = ImmutableList.copyOf(headerInterceptors);
-    }
   }
 
   /**

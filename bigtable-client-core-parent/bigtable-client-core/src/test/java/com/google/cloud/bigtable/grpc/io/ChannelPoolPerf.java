@@ -89,8 +89,7 @@ public class ChannelPoolPerf {
         return channel;
       }
     };
-    List<HeaderInterceptor> headers = Collections.<HeaderInterceptor> emptyList();
-    final ChannelPool cp = new ChannelPool(headers, pool, 40);
+    final ChannelPool cp = new ChannelPool(pool, 40);
     ExecutorService es = Executors.newFixedThreadPool(threads);
     final List<Double> results = new ArrayList<>(1000);
     Callable<Void> runnable = new Callable<Void>() {

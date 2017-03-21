@@ -48,7 +48,6 @@ import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
-import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
@@ -57,6 +56,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
+import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.netty.GrpcSslContexts;
@@ -236,7 +236,7 @@ public class BigtableSession implements Closeable {
   private final BigtableOptions options;
   private final List<ManagedChannel> managedChannels = Collections
       .synchronizedList(new ArrayList<ManagedChannel>());
-  private final ImmutableList<HeaderInterceptor> headerInterceptors;
+  private final ClientInterceptor[] headerInterceptors;
 
   /**
    * This cluster name is either configured via BigtableOptions' clusterId, or via a lookup of the
@@ -321,7 +321,7 @@ public class BigtableSession implements Closeable {
           + "netty-tcnative were properly configured.");
     }
 
-    Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
+    Builder<ClientInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
     headerInterceptorBuilder.add(
         new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
     // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
@@ -331,7 +331,7 @@ public class BigtableSession implements Closeable {
     RetryOptions retryOptions = options.getRetryOptions();
     CredentialOptions credentialOptions = options.getCredentialOptions();
     try {
-      HeaderInterceptor headerInterceptor =
+      ClientInterceptor headerInterceptor =
           credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
       if (headerInterceptor != null) {
         headerInterceptorBuilder.add(headerInterceptor);
@@ -340,7 +340,7 @@ public class BigtableSession implements Closeable {
       throw new IOException("Could not initialize credentials.", e);
     }
 
-    headerInterceptors = headerInterceptorBuilder.build();
+    headerInterceptors = headerInterceptorBuilder.build().toArray(new ClientInterceptor[0]);
 
     ChannelPool dataChannel = createChannelPool(options.getDataHost(), options.getChannelCount());
 
@@ -494,10 +494,10 @@ public class BigtableSession implements Closeable {
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
-        return createNettyChannel(hostString, options);
+        return createNettyChannel(hostString, options, headerInterceptors);
       }
     };
-    ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory, count);
+    ChannelPool channelPool = new ChannelPool(channelFactory, count);
     managedChannels.add(channelPool);
     return channelPool;
   }
@@ -528,16 +528,15 @@ public class BigtableSession implements Closeable {
    */
   public static ChannelPool createChannelPool(final String host, final BigtableOptions options, int count)
       throws IOException, GeneralSecurityException {
-    HeaderInterceptor credentialsInterceptor = CredentialInterceptorCache.getInstance()
+    final ClientInterceptor credentialsInterceptor = CredentialInterceptorCache.getInstance()
         .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
-    HeaderInterceptor prefixInterceptor =
+    final ClientInterceptor prefixInterceptor =
         new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString());
     return new ChannelPool(
-        ImmutableList.<HeaderInterceptor>of(credentialsInterceptor, prefixInterceptor),
         new ChannelPool.ChannelFactory() {
           @Override
           public ManagedChannel create() throws IOException {
-            return createNettyChannel(host, options);
+            return createNettyChannel(host, options, credentialsInterceptor, prefixInterceptor);
           }
         }, count);
   }
@@ -551,7 +550,7 @@ public class BigtableSession implements Closeable {
    * @throws IOException if any.
    */
   public static ManagedChannel createNettyChannel(String host,
-      BigtableOptions options) throws SSLException {
+      BigtableOptions options, ClientInterceptor ... interceptors) throws SSLException {
     NegotiationType negotiationType = options.usePlaintextNegotiation() ?
         NegotiationType.PLAINTEXT : NegotiationType.TLS;
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
@@ -566,6 +565,7 @@ public class BigtableSession implements Closeable {
         .negotiationType(negotiationType)
         .userAgent(BigtableVersionInfo.CORE_UESR_AGENT + "," + options.getUserAgent())
         .flowControlWindow(FLOW_CONTROL_WINDOW)
+        .intercept(interceptors)
         .build();
   }
 
