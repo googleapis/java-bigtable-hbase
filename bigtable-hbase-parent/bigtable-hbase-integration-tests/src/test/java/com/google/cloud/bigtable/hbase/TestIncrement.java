@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.containsString;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
@@ -32,6 +34,9 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.core.CombinableMatcher;
+import org.hamcrest.core.CombinableMatcher.CombinableEitherMatcher;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -232,7 +237,14 @@ public class TestIncrement extends AbstractTest {
     // Increment
     Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qual, 1L);
     expectedException.expect(DoNotRetryIOException.class);
-    expectedException.expectMessage("Attempted to increment field that isn't 64 bits wide");
+
+    ;
+    expectedException.expectMessage(
+        anyOf(
+            containsString("Attempted to increment field that isn't 64 bits wide"),
+            containsString("Field is not a long")
+        )
+    );
     table.increment(increment);
   }
 
@@ -253,7 +265,12 @@ public class TestIncrement extends AbstractTest {
     // Increment
     Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qual, 1L);
     expectedException.expect(DoNotRetryIOException.class);
-    expectedException.expectMessage("Attempted to increment field that isn't 64 bits wide");
+    expectedException.expectMessage(
+        anyOf(
+            containsString("Attempted to increment field that isn't 64 bits wide"),
+            containsString(" Field is not a long")
+        )
+    );
     table.increment(increment);
   }
 
