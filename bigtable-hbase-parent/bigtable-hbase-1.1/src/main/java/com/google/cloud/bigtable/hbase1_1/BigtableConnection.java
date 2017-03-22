@@ -57,51 +57,6 @@ public class BigtableConnection extends AbstractBigtableConnection {
   @Override
   public Admin getAdmin() throws IOException {
     return new AbstractBigtableAdmin(getOptions(), getConfiguration(), this,
-        getBigtableTableAdminClient(), getDisabledTables()) {
-
-          @Override
-          public boolean isBalancerEnabled() throws IOException {
-            throw new UnsupportedOperationException("isBalancerEnabled");  // TODO
-          }
-
-          @Override
-          public long getLastMajorCompactionTimestamp(TableName tableName) throws IOException {
-            throw new UnsupportedOperationException("getLastMajorCompactionTimestamp");  // TODO
-          }
-
-          @Override
-          public long getLastMajorCompactionTimestampForRegion(byte[] regionName)
-              throws IOException {
-            throw new UnsupportedOperationException("getLastMajorCompactionTimestampForRegion");  // TODO
-          }
-
-          @Override
-          public void setQuota(QuotaSettings quota) throws IOException {
-            throw new UnsupportedOperationException("setQuota");  // TODO
-          }
-
-          @Override
-          public QuotaRetriever getQuotaRetriever(QuotaFilter filter) throws IOException {
-            throw new UnsupportedOperationException("getQuotaRetriever");  // TODO
-          }
-
-          @Override
-          public boolean abortProcedure(long arg0, boolean arg1) throws IOException {
-            // TODO Auto-generated method stub
-            return false;
-          }
-
-          @Override
-          public Future<Boolean> abortProcedureAsync(long arg0, boolean arg1) throws IOException {
-            // TODO Auto-generated method stub
-            return null;
-          }
-
-          @Override
-          public ProcedureInfo[] listProcedures() throws IOException {
-            // TODO Auto-generated method stub
-            return null;
-          }
-    };
+        getBigtableTableAdminClient(), getDisabledTables()) {};
   }
 }
