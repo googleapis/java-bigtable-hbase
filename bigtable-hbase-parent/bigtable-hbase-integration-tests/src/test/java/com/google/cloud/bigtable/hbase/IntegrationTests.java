@@ -40,6 +40,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 @SuppressWarnings("deprecation")
 @RunWith(Suite.class)
@@ -81,6 +82,10 @@ public class IntegrationTests {
   private static Configuration configuration;
 
   static {
+    // Pipe all logging through slf4j/log4j
+    SLF4JBridgeHandler.removeHandlersForRootLogger();
+    SLF4JBridgeHandler.install();
+
     TABLE_NAME = newTestTableName();
     addExtraResources(BASE_CONFIGURATION);
   }
