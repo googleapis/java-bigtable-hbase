@@ -20,10 +20,6 @@ language: java
 jdk:
 - openjdk8
 
-env:
-  matrix:
-  - INT_HBASE=1.3.0 INT_TARGET=bigtable-hbase-1.3 INT_CONN=com.google.cloud.bigtable.hbase1_3.BigtableConnection
-
 script:
 - ./travis.sh
 
