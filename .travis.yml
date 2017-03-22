@@ -27,11 +27,10 @@ os:
 dist: trusty
 
 script:
-- ./travis.sh $CONFIG $HBASE
+- ./travis.sh $CONFIG
 env:
   matrix:
-  - CONFIG=java_jdk8 HBASE=1.3.0
-  - CONFIG=java_jdk8 HBASE=1.0.0
+  - CONFIG=java_jdk8
 branches:
   only:
   - master

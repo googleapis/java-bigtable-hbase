@@ -53,29 +53,27 @@ use_java() {
 
 build_java() {
   (
-  mvn --batch-mode clean verify -DskipTests -Dexec.skip=true -Dhbase.version=${HBASE_VERSION} | egrep -v "(^\[INFO\] Download|^\[INFO\].*skipping)"
+  mvn --batch-mode clean verify -DskipTests -Dexec.skip=true | egrep -v "(^\[INFO\] Download|^\[INFO\].*skipping)"
   )
 }
 
 print_usage() {
   echo "
-Usage: $0 { java_jdk8 | java_oracle8 } <hbase_version>
+Usage: $0 { java_jdk8 |
+            java_oracle8 }
 "
 }
 
 # -------- main --------
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 1 ]; then
   print_usage
   exit 1
 fi
 
-JDK_NAME=$1
-HBASE_VERSION=$2
-
 set -e  # exit immediately on error
 set -x  # display all commands
-case $JDK_NAME in
+case $1 in
 java_jdk8)
   use_java jdk8
   build_java
