@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableConfiguration;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
@@ -36,7 +38,11 @@ import java.util.TreeMap;
 public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, Out> {
   private static final long serialVersionUID = 1L;
 
-  static final CloudBigtableConnectionPool pool = new CloudBigtableConnectionPool();
+  static {
+    // This forces the data channel to be cached. New HBase connections will use the same data
+    // channels, which improves performance.
+    BigtableSession.enableDataChannelPoolCache();
+  }
 
   public static void logRetriesExhaustedWithDetailsException(
       Logger log, String context, RetriesExhaustedWithDetailsException exception) {
@@ -93,7 +99,8 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
 
   protected synchronized Connection getConnection() throws IOException {
     if (connection == null) {
-      connection = pool.getConnection(config.toHBaseConfig());
+      // This uses cached grpc channels, if there was a previous connection created.
+      connection = BigtableConfiguration.connect(config.toHBaseConfig());
     }
     return connection;
   }

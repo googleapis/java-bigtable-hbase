@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
@@ -56,6 +55,7 @@ import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
@@ -147,6 +147,12 @@ import com.google.common.annotations.VisibleForTesting;
  */
 
 public class CloudBigtableIO {
+
+  static {
+    // This forces the data channel to be cached. New HBase connections will use the same data
+    // channels, which improves performance.
+    BigtableSession.enableDataChannelPoolCache();
+  }
 
   enum CoderType {
     RESULT,
@@ -764,9 +770,9 @@ public class CloudBigtableIO {
     @VisibleForTesting
     void initializeScanner() throws IOException {
       Configuration config = source.getConfiguration().toHBaseConfig();
-      AbstractBigtableConnection connection =
-          AbstractCloudBigtableTableDoFn.pool.getConnection(config);
-      session = connection.getSession();
+
+      // This will use cached data channels under the covers.
+      session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(config));
       scanner = session.getDataClient().readFlatRows(source.getConfiguration().getRequest());
     }
 
