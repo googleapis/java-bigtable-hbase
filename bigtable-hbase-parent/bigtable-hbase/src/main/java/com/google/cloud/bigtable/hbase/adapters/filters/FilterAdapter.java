@@ -103,6 +103,15 @@ public class FilterAdapter {
         org.apache.hadoop.hbase.filter.RowFilter.class, new RowFilterAdapter());
     adapter.addFilterAdapter(FuzzyRowFilter.class, new FuzzyRowFilterAdapter());
 
+    // MultiRowRangeFilter only exists in hbase >= 1.1
+    try {
+      adapter.addFilterAdapter(
+          org.apache.hadoop.hbase.filter.MultiRowRangeFilter.class,
+          new MultiRowRangeFilterAdapter()
+      );
+    } catch (NoClassDefFoundError ignored) {
+    }
+
     // Passing the FilterAdapter in to the FilterListAdapter is a bit
     // unfortunate, but makes adapting the FilterList's subfilters simpler.
     FilterListAdapter filterListAdapter = new FilterListAdapter(adapter);
