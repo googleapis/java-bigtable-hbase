@@ -21,7 +21,8 @@ jdk:
 - openjdk8
 
 script:
-- mvn --batch-mode clean verify
+# build & run tests
+- mvn --batch-mode clean verify | egrep -v "(^\[INFO\] Download|^\[INFO\].*skipping)"
 
 branches:
   only:
