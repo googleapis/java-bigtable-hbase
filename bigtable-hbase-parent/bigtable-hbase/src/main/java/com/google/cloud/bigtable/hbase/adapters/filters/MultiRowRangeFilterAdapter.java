@@ -1,12 +1,12 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.hbase.adapters.read.RowRangeAdapter;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.BoundType;
+import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.ImmutableRangeSet.Builder;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
-import com.google.common.collect.TreeRangeSet;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import org.apache.hadoop.hbase.HConstants;
@@ -34,12 +34,12 @@ public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowR
 
   @Override
   public RangeSet<RowKeyWrapper> getIndexScanHint(MultiRowRangeFilter filter) {
-    TreeRangeSet<RowKeyWrapper> rangeSet = TreeRangeSet.create();
+    Builder<RowKeyWrapper> rangeSetBuilder = ImmutableRangeSet.builder();
 
     for (RowRange rowRange : filter.getRowRanges()) {
-      rangeSet.add(rowRangeToRange(rowRange));
+      rangeSetBuilder.add(rowRangeToRange(rowRange));
     }
-    return super.getIndexScanHint(filter);
+    return rangeSetBuilder.build();
   }
 
   private Range<RowKeyWrapper> rowRangeToRange(RowRange rowRange) {
