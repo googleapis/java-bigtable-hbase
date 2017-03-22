@@ -10,7 +10,7 @@ $MVN clean install \
   | egrep -v "(^\[INFO\] Download|^\[INFO\].*skipping)"
 
 # run integration tests using a specific hbase version
-$MVN integration-test \
+$MVN verify \
   -pl bigtable-hbase-parent/bigtable-hbase-integration-tests \
   -PhbaseLocalMiniClusterTest \
   -Dhbase.version=${INT_HBASE:-1.3.0} \
