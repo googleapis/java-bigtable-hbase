@@ -166,7 +166,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
 
     // Perform Retry
-    String channelId = trailers != null ? trailers.get(ChannelPool.CHANNEL_ID_KEY) : "";
+    String channelId = ChannelPool.extractIdentifier(trailers);
     LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s",
         status.getCause(), failedCount, status, channelId);
 
