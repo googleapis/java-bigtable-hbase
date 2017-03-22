@@ -238,7 +238,6 @@ public class TestIncrement extends AbstractTest {
     Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qual, 1L);
     expectedException.expect(DoNotRetryIOException.class);
 
-    ;
     expectedException.expectMessage(
         anyOf(
             containsString("Attempted to increment field that isn't 64 bits wide"),
