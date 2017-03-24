@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import static com.google.cloud.bigtable.util.ThreadPoolUtil.createThreadFactory;
-
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
@@ -26,6 +24,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
 
 import io.grpc.ClientInterceptor;
+import io.grpc.internal.GrpcUtil;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -52,7 +51,7 @@ public class CredentialInterceptorCache {
   }
 
   private final ExecutorService executor =
-      Executors.newCachedThreadPool(createThreadFactory("Credentials-Refresh"));
+      Executors.newCachedThreadPool(GrpcUtil.getThreadFactory("Credentials-Refresh-%d", true));
 
   private ClientInterceptor defaultCredentialInterceptor;
 

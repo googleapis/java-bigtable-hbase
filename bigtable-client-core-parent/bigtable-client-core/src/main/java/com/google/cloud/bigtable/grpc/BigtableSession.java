@@ -27,10 +27,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
 import com.google.api.client.util.Strings;
@@ -50,7 +48,6 @@ import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -59,10 +56,10 @@ import com.google.common.collect.ImmutableList.Builder;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.internal.DnsNameResolverProvider;
+import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
-import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -176,7 +173,7 @@ public class BigtableSession implements Closeable {
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
     ExecutorService connectionStartupExecutor = Executors
-        .newCachedThreadPool(ThreadPoolUtil.createThreadFactory("BigtableSession-startup"));
+        .newCachedThreadPool(GrpcUtil.getThreadFactory("BigtableSession-startup-%d", true));
 
     connectionStartupExecutor.execute(new Runnable() {
       @Override
@@ -243,53 +240,6 @@ public class BigtableSession implements Closeable {
    * clusterID based on BigtableOptions projectId and instanceId.  See {@link BigtableClusterUtilities}
    */
   private BigtableClusterName clusterName;
-
-
-  /**
-   * Use {@link com.google.cloud.bigtable.grpc.BigtableSession#BigtableSession(BigtableOptions)} instead;
-   *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param batchPool a {@link java.util.concurrent.ExecutorService} object.
-   * @throws java.io.IOException if any.
-   */
-  @Deprecated
-  public BigtableSession(
-      BigtableOptions options, @SuppressWarnings("unused") ExecutorService batchPool)
-      throws IOException {
-    this(options);
-  }
-
-  /**
-   * Use {@link com.google.cloud.bigtable.grpc.BigtableSession#BigtableSession(BigtableOptions)} instead;
-   *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param batchPool a {@link java.util.concurrent.ExecutorService} object.
-   * @param elg a {@link io.netty.channel.EventLoopGroup} object.
-   * @param scheduledRetries a {@link java.util.concurrent.ScheduledExecutorService} object.
-   * @throws java.io.IOException if any.
-   */
-  @Deprecated
-  public BigtableSession(
-      BigtableOptions options,
-      @SuppressWarnings("unused") @Nullable ExecutorService batchPool,
-      @Nullable EventLoopGroup elg,
-      @Nullable ScheduledExecutorService scheduledRetries)
-      throws IOException {
-    this(options);
-    if (elg != null) {
-      // There used to be a default EventLoopGroup if the elg is not passed in.
-      // AbstractBigtableConnection never sent one in, but some users may have. With the shared
-      // threadpools, the user supplied EventLoopGroup is no longer used. Previously, the elg would
-      // have been shut down in BigtableSession.close(), so shut it here.
-      elg.shutdown();
-    }
-    if (scheduledRetries != null) {
-      // Just like the EventLoopGroup, the schedule retries threadpool used to be a user feature
-      // that wasn't often used. It was shutdown in the close() method. Since it's no longer used,
-      // shut it down immediately.
-      scheduledRetries.shutdown();
-    }
-  }
 
   /**
    * <p>Constructor for BigtableSession.</p>
@@ -553,15 +503,12 @@ public class BigtableSession implements Closeable {
       BigtableOptions options, ClientInterceptor ... interceptors) throws SSLException {
     NegotiationType negotiationType = options.usePlaintextNegotiation() ?
         NegotiationType.PLAINTEXT : NegotiationType.TLS;
-    BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
     return NettyChannelBuilder
         .forAddress(host, options.getPort())
         .nameResolverFactory(new DnsNameResolverProvider())
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
         .sslContext(createSslContext())
-        .eventLoopGroup(sharedPools.getElg())
-        .executor(sharedPools.getBatchThreadPool())
         .negotiationType(negotiationType)
         .userAgent(BigtableVersionInfo.CORE_UESR_AGENT + "," + options.getUserAgent())
         .flowControlWindow(FLOW_CONTROL_WINDOW)
