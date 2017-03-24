@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.bigtable.v2.ValueRange;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
@@ -28,6 +29,8 @@ import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Adapt a single HBase ValueFilter.
@@ -77,10 +80,8 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
       case LESS_OR_EQUAL:
         return createRowFilter(ValueRange.newBuilder().setEndValueClosed(value));
       case EQUAL:
-        byte[] quotedBytes = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
-        return RowFilter.newBuilder()
-            .setValueRegexFilter(ByteStringer.wrap(quotedBytes))
-            .build();
+      return createRowFilter(
+        ValueRange.newBuilder().setStartValueClosed(value).setEndValueClosed(value));
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
         return RowFilter.newBuilder()
