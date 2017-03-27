@@ -81,7 +81,6 @@ import io.netty.util.Recycler;
  */
 public class BigtableSession implements Closeable {
 
-  private static boolean cacheDataChannels = false;
   private static ChannelPool cachedDataChannelPool = null;
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
@@ -228,10 +227,6 @@ public class BigtableSession implements Closeable {
     }
   }
 
-  public static void enableDataChannelPoolCache() {
-    cacheDataChannels = true;
-  }
-
   private final BigtableDataClient dataClient;
   private BigtableTableAdminClient tableAdminClient;
   private BigtableInstanceGrpcClient instanceAdminClient;
@@ -317,8 +312,8 @@ public class BigtableSession implements Closeable {
   private ChannelPool getDataChannelPool() throws IOException {
     String host = options.getDataHost();
     int channelCount = options.getChannelCount();
-    synchronized (BigtableSession.class) {
-      if (cacheDataChannels) {
+    if (options.useCachedChannel()) {
+      synchronized (BigtableSession.class) {
         if (cachedDataChannelPool == null) {
           cachedDataChannelPool = createChannelPool(host, channelCount);
         }

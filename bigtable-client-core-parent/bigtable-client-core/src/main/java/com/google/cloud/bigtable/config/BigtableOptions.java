@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -88,6 +89,7 @@ public class BigtableOptions implements Serializable {
 
     private BulkOptions bulkOptions;
     private boolean usePlaintextNegotiation = false;
+    private boolean useCachedDataPool = false;
 
     private RetryOptions retryOptions = new RetryOptions.Builder().build();
     private CallOptionsConfig callOptionsConfig = new CallOptionsConfig.Builder().build();
@@ -191,6 +193,18 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
+    /**
+     * This enables an experimental {@link BigtableSession} feature that caches datapools for cases
+     * where there are many HBase Connections / BigtableSessions opened. This happens frequently in
+     * Dataflow
+     * @param useCachedDataPool
+     * @return this
+     */
+    public Builder setUseCachedDataPool(boolean useCachedDataPool) {
+      this.useCachedDataPool = useCachedDataPool;
+      return this;
+    }
+
     public Builder setCallOptionsConfig(CallOptionsConfig callOptionsConfig) {
       this.callOptionsConfig = callOptionsConfig;
       return this;
@@ -250,6 +264,7 @@ public class BigtableOptions implements Serializable {
           zoneId,
           clusterId,
           usePlaintextNegotiation,
+          useCachedDataPool,
           dataChannelCount,
           bulkOptions,
           callOptionsConfig,
@@ -269,6 +284,7 @@ public class BigtableOptions implements Serializable {
   private final String clusterId;
   private final int dataChannelCount;
   private final boolean usePlaintextNegotiation;
+  private final boolean useCachedDataPool;
 
   private final BigtableInstanceName instanceName;
 
@@ -291,6 +307,7 @@ public class BigtableOptions implements Serializable {
       dataChannelCount = 1;
       instanceName = null;
       usePlaintextNegotiation = false;
+      useCachedDataPool = false;
 
       bulkOptions = null;
       callOptionsConfig = null;
@@ -309,6 +326,7 @@ public class BigtableOptions implements Serializable {
       String zoneId,
       String clusterId,
       boolean usePlaintextNegotiation,
+      boolean useCachedChannel,
       int channelCount,
       BulkOptions bulkOptions,
       CallOptionsConfig callOptionsConfig,
@@ -332,6 +350,7 @@ public class BigtableOptions implements Serializable {
     this.dataChannelCount = channelCount;
     this.bulkOptions = bulkOptions;
     this.usePlaintextNegotiation = usePlaintextNegotiation;
+    this.useCachedDataPool = useCachedChannel;
     this.callOptionsConfig = callOptionsConfig;
 
     if (!Strings.isNullOrEmpty(projectId)
@@ -557,5 +576,14 @@ public class BigtableOptions implements Serializable {
    */
   public Builder toBuilder() {
     return new Builder(this);
+  }
+
+  /**
+   * Experimental feature to allow situations with multiple connections to optimize their startup
+   * time.
+   * @return true if this feature should be turned on in {@link BigtableSession}.
+   */
+  public boolean useCachedChannel() {
+    return useCachedDataPool;
   }
 }
