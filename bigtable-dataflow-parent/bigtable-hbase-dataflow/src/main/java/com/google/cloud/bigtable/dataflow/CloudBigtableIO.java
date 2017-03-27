@@ -48,7 +48,6 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
@@ -732,9 +731,9 @@ public class CloudBigtableIO {
     private CloudBigtableIO.AbstractSource<ResultOutputType> source;
     private final ScanIterator<ResultOutputType> scanIterator;
 
-    private volatile BigtableSession session;
-    private volatile ResultScanner<FlatRow> scanner;
-    private volatile ResultOutputType current;
+    private transient BigtableSession session;
+    private transient ResultScanner<FlatRow> scanner;
+    private transient ResultOutputType current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
     private final ByteKeyRangeTracker rangeTracker;
@@ -1093,7 +1092,7 @@ public class CloudBigtableIO {
 
     // Stats
     private final Aggregator<Long, Long> mutationsCounter;
-    private volatile Map<String, BufferedMutator> mutators;
+    private transient Map<String, BufferedMutator> mutators;
 
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
