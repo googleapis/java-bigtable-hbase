@@ -32,7 +32,7 @@ limitations under the License.
 
     <modules>
         <module>bigtable-hbase-dataflow</module>
-        <module>bigtable-dataflow-import</module>
+        <module>bigtable-dataflow-seqio</module>
     </modules>
 
     <profiles>
