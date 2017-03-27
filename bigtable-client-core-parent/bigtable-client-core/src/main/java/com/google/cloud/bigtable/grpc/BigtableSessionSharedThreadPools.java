@@ -15,14 +15,11 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import com.google.cloud.bigtable.util.ThreadPoolUtil;
-
-import io.netty.channel.nio.NioEventLoopGroup;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+
+import io.grpc.internal.GrpcUtil;
 
 /**
  * This class contains executors and other thread pool related resources that can be reused across a
@@ -32,12 +29,10 @@ import java.util.concurrent.ThreadFactory;
  * @version $Id: $Id
  */
 public class BigtableSessionSharedThreadPools {
-  /** Constant <code>BATCH_POOL_THREAD_NAME="bigtable-batch-pool"</code> */
-  public static final String BATCH_POOL_THREAD_NAME = "bigtable-batch-pool";
-  /** Constant <code>RETRY_THREADPOOL_NAME="bigtable-rpc-retry"</code> */
-  public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
-  /** Constant <code>GRPC_EVENTLOOP_GROUP_NAME="bigtable-grpc-elg"</code> */
-  public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
+  /** Constant <code>BATCH_POOL_THREAD_NAME="bigtable-batch-pool-%d"</code> */
+  private static final String BATCH_POOL_THREAD_NAME_PATTERN = "bigtable-batch-pool-%d";
+  /** Constant <code>RETRY_THREADPOOL_NAME="bigtable-rpc-retry-%d"</code> */
+  private static final String RETRY_THREADPOOL_NAME_PATTERN = "bigtable-rpc-retry-%d";
 
   /** Number of threads to use to initiate retry calls */
   public static final int RETRY_THREAD_COUNT = 4;
@@ -54,16 +49,9 @@ public class BigtableSessionSharedThreadPools {
   }
 
   /**
-   * This is used to do pre and post RPC work, and not the i/o itself.
+   * This is used to do i/o work.
    */
   protected ExecutorService batchThreadPool;
-
-  /**
-   * This is needed by nio. We create daemon threads rather than default threads so that if a user
-   * shuts down a JVM, the bigtable connection doesn't block the shutdown. By default, the ELG is
-   * not a daemon thread pool.
-   */
-  protected NioEventLoopGroup elg;
 
   /**
    * Used for a few cases that benefit from retries, such as puts, gets and scans.
@@ -71,48 +59,16 @@ public class BigtableSessionSharedThreadPools {
   protected ScheduledExecutorService retryExecutor;
 
   /**
-   * <p>Constructor for BigtableSessionSharedThreadPools.</p>
-   */
-  protected BigtableSessionSharedThreadPools() {
-    init();
-  }
-
-  /**
-   * <p>init.</p>
-   */
-  protected void init() {
-    batchThreadPool = Executors.newCachedThreadPool(createThreadFactory(BATCH_POOL_THREAD_NAME));
-    elg = new NioEventLoopGroup(0, createThreadFactory(GRPC_EVENTLOOP_GROUP_NAME));
-    retryExecutor = Executors.newScheduledThreadPool(RETRY_THREAD_COUNT,
-      createThreadFactory(RETRY_THREADPOOL_NAME));
-  }
-
-  /**
-   * <p>createThreadFactory.</p>
-   *
-   * @param name a {@link java.lang.String} object.
-   * @return a {@link java.util.concurrent.ThreadFactory} object.
-   */
-  protected ThreadFactory createThreadFactory(String name) {
-    return ThreadPoolUtil.createThreadFactory(name);
-  }
-
-  /**
    * <p>Getter for the field <code>batchThreadPool</code>.</p>
    *
    * @return a {@link java.util.concurrent.ExecutorService} object.
    */
-  public ExecutorService getBatchThreadPool() {
+  public synchronized ExecutorService getBatchThreadPool() {
+    if (batchThreadPool == null) {
+      batchThreadPool = Executors
+          .newCachedThreadPool(GrpcUtil.getThreadFactory(BATCH_POOL_THREAD_NAME_PATTERN, true));
+    }
     return batchThreadPool;
-  }
-
-  /**
-   * <p>Getter for the field <code>elg</code>.</p>
-   *
-   * @return a {@link io.netty.channel.nio.NioEventLoopGroup} object.
-   */
-  public NioEventLoopGroup getElg() {
-    return elg;
   }
 
   /**
@@ -120,7 +76,11 @@ public class BigtableSessionSharedThreadPools {
    *
    * @return a {@link java.util.concurrent.ScheduledExecutorService} object.
    */
-  public ScheduledExecutorService getRetryExecutor() {
+  public synchronized ScheduledExecutorService getRetryExecutor() {
+    if (retryExecutor == null) {
+      retryExecutor = Executors.newScheduledThreadPool(RETRY_THREAD_COUNT,
+        GrpcUtil.getThreadFactory(RETRY_THREADPOOL_NAME_PATTERN, true));
+    }
     return retryExecutor;
   }
 }

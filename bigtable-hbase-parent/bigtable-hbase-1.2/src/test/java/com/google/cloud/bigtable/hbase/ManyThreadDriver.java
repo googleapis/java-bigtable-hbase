@@ -28,11 +28,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.PickledGraphite;
+import com.google.bigtable.repackaged.io.grpc.internal.GrpcUtil;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.DropwizardMetricRegistry;
 import com.google.cloud.bigtable.metrics.MetricRegistry;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
@@ -101,7 +101,7 @@ public class ManyThreadDriver {
     final TableName tableName = TableName.valueOf(tableNameStr);
     final AtomicBoolean finished = new AtomicBoolean(false);
     ExecutorService executor = Executors.newFixedThreadPool(numThreads,
-      ThreadPoolUtil.createThreadFactory("WORK_EXECUTOR"));
+      GrpcUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
     ScheduledExecutorService finishExecutor = setupShutdown(finished);
     try (Connection connection = BigtableConfiguration.connect(projectId, instanceId)) {
       setupTable(tableName, connection);
@@ -144,7 +144,7 @@ public class ManyThreadDriver {
 
   static ScheduledExecutorService setupShutdown(final AtomicBoolean finished) {
     ScheduledExecutorService finishExecutor =
-        Executors.newScheduledThreadPool(1, ThreadPoolUtil.createThreadFactory("FINISH_SCHEDULER"));
+        Executors.newScheduledThreadPool(1, GrpcUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
     finishExecutor.schedule(new Runnable() {
       @Override
       public void run() {
