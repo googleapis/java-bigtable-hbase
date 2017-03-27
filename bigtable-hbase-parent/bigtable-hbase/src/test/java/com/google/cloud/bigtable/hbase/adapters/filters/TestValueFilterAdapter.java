@@ -33,11 +33,13 @@ import org.junit.runners.JUnit4;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.bigtable.v2.ValueRange;
+import com.google.bigtable.v2.ValueRange.Builder;
 import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
 public class TestValueFilterAdapter {
   private static final byte[] FOO_BYTES = Bytes.toBytes("Foo");
+  ByteString FOO_BYTESTRING = ByteString.copyFrom(FOO_BYTES);
   private static final BinaryComparator FOO_BINARY_COMPARATOR =
       new BinaryComparator(FOO_BYTES);
 
@@ -45,12 +47,8 @@ public class TestValueFilterAdapter {
   Scan emptyScan = new Scan();
   FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
-  private void assertAdaptedForm(
-      ByteArrayComparable comparable, CompareFilter.CompareOp op, RowFilter expectedFilter)
-      throws IOException {
-    ValueFilter filter = new ValueFilter(op, comparable);
-    RowFilter actualFilter = adapter.adapt(emptyScanContext, filter);
-    Assert.assertEquals(expectedFilter, actualFilter);
+  protected static RowFilter toRowFilter(Builder valueRange) {
+    return RowFilter.newBuilder().setValueRangeFilter(valueRange).build();
   }
 
   @Test
@@ -60,83 +58,44 @@ public class TestValueFilterAdapter {
 
   @Test
   public void testLessThanValueFilter() throws IOException {
-    assertAdaptedForm(
-        FOO_BINARY_COMPARATOR,
-        CompareOp.LESS,
-        RowFilter.newBuilder()
-            .setValueRangeFilter(
-                ValueRange.newBuilder()
-                    .setEndValueOpen(
-                        ByteString.copyFrom(FOO_BYTES))).build());
+    assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.LESS,
+      toRowFilter(ValueRange.newBuilder().setEndValueOpen(ByteString.copyFrom(FOO_BYTES))));
   }
 
   @Test
   public void testLessThanEqualValueFilter() throws IOException {
-    assertAdaptedForm(
-        FOO_BINARY_COMPARATOR,
-        CompareOp.LESS_OR_EQUAL,
-        RowFilter.newBuilder()
-            .setValueRangeFilter(
-                ValueRange.newBuilder()
-                    .setEndValueClosed(
-                        ByteString.copyFrom(FOO_BYTES))).build());
+    assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.LESS_OR_EQUAL,
+      toRowFilter(ValueRange.newBuilder().setEndValueClosed(FOO_BYTESTRING)));
   }
 
   @Test
   public void testEqualValueFilter() throws IOException {
-    assertAdaptedForm(
-        FOO_BINARY_COMPARATOR,
-        CompareOp.EQUAL,
-        RowFilter.newBuilder()
-            .setValueRegexFilter(
-                ByteString.copyFrom(FOO_BYTES)).build());
+    Builder valueRange = ValueRange.newBuilder()
+        .setStartValueClosed(FOO_BYTESTRING)
+        .setEndValueClosed(FOO_BYTESTRING);
+    assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.EQUAL, toRowFilter(valueRange));
   }
 
   @Test
   public void testGreaterThanValueFilter() throws IOException {
-    assertAdaptedForm(
-        FOO_BINARY_COMPARATOR,
-        CompareOp.GREATER,
-        RowFilter.newBuilder()
-            .setValueRangeFilter(
-                ValueRange.newBuilder()
-                    .setStartValueOpen(
-                        ByteString.copyFrom(FOO_BYTES))).build());
+    assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.GREATER,
+      toRowFilter(ValueRange.newBuilder().setStartValueOpen(FOO_BYTESTRING)));
   }
 
   @Test
   public void testGreaterThanEqualValueFilter() throws IOException {
-    assertAdaptedForm(
-        FOO_BINARY_COMPARATOR,
-        CompareOp.GREATER_OR_EQUAL,
-        RowFilter.newBuilder()
-            .setValueRangeFilter(
-                ValueRange.newBuilder()
-                    .setStartValueClosed(
-                        ByteString.copyFrom(FOO_BYTES))).build());
+    assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.GREATER_OR_EQUAL,
+      toRowFilter(ValueRange.newBuilder().setStartValueClosed(FOO_BYTESTRING)));
   }
 
   @Test
   public void testNotEqualValueFilter() throws IOException {
-    assertAdaptedForm(
-        FOO_BINARY_COMPARATOR,
-        CompareOp.NOT_EQUAL,
-        RowFilter.newBuilder()
-            .setInterleave(
-                Interleave.newBuilder()
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setValueRangeFilter(
-                                ValueRange.newBuilder()
-                                    .setEndValueOpen(
-                                        ByteString.copyFrom(FOO_BYTES))))
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setValueRangeFilter(
-                                ValueRange.newBuilder()
-                                    .setStartValueOpen(
-                                        ByteString.copyFrom(FOO_BYTES)))))
-            .build());
+    assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.NOT_EQUAL,
+      RowFilter.newBuilder()
+          .setInterleave(Interleave.newBuilder()
+              .addFilters(toRowFilter(ValueRange.newBuilder().setEndValueOpen(FOO_BYTESTRING)))
+              .addFilters(toRowFilter(ValueRange.newBuilder().setStartValueOpen(FOO_BYTESTRING))))
+          .build());
  }
 
   @Test
@@ -148,5 +107,13 @@ public class TestValueFilterAdapter {
         RowFilter.newBuilder()
             .setValueRegexFilter(ByteString.copyFromUtf8(pattern))
             .build());
+  }
+
+  private void assertAdaptedForm(
+      ByteArrayComparable comparable, CompareFilter.CompareOp op, RowFilter expectedFilter)
+      throws IOException {
+    ValueFilter filter = new ValueFilter(op, comparable);
+    RowFilter actualFilter = adapter.adapt(emptyScanContext, filter);
+    Assert.assertEquals(expectedFilter, actualFilter);
   }
 }

@@ -66,25 +66,23 @@ public class TestFilterListAdapter {
   @Test
   public void interleavedFiltersAreAdapted() throws IOException {
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ONE);
-    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList).get();
-    Assert.assertEquals(
-        "value",
-        rowFilter.getInterleave().getFilters(0).getValueRegexFilter().toStringUtf8());
-    Assert.assertEquals(
-        "value2",
-        rowFilter.getInterleave().getFilters(1).getValueRegexFilter().toStringUtf8());
+    List<Filter> filters = filterList.getFilters();
+    RowFilter rowFilter = adapt(filterList);
+    Assert.assertEquals(filters.size(), rowFilter.getInterleave().getFiltersCount());
+    for (int i = 0; i < filters.size(); i++) {
+      Assert.assertEquals(adapt(filters.get(i)), rowFilter.getInterleave().getFilters(i));
+    }
   }
 
   @Test
   public void chainedFiltersAreAdapted() throws IOException {
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ALL);
-    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList).get();
-    Assert.assertEquals(
-        "value",
-        rowFilter.getChain().getFilters(0).getValueRegexFilter().toStringUtf8());
-    Assert.assertEquals(
-        "value2",
-        rowFilter.getChain().getFilters(1).getValueRegexFilter().toStringUtf8());
+    List<Filter> filters = filterList.getFilters();
+    RowFilter rowFilter = adapt(filterList);
+    Assert.assertEquals(filters.size(), rowFilter.getChain().getFiltersCount());
+    for (int i = 0; i < filters.size(); i++) {
+      Assert.assertEquals(adapt(filters.get(i)), rowFilter.getChain().getFilters(i));
+    }
   }
 
   @Test
@@ -228,4 +226,9 @@ public class TestFilterListAdapter {
 
     Assert.assertEquals(expected, actual);
   }
+
+  protected RowFilter adapt(Filter filter) throws IOException {
+    return filterAdapter.adaptFilter(emptyScanContext, filter).get();
+  }
+
 }
