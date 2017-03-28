@@ -46,6 +46,8 @@ import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
+import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
 import org.apache.hadoop.hbase.filter.PageFilter;
@@ -1609,6 +1611,77 @@ public class TestFilters extends AbstractTest {
     for(int i=0; i < rowCount - 2; i++) {
       Assert.assertArrayEquals(rowKeys[i+1], boundedResults[i].getRow());
     }
+  }
+  @Test
+  public void testMultiRangeFilter() throws IOException {
+    String prefix = "testMultiRangeFilter";
+    int rowCount = 10;
+    byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
+    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
+    List<Put> puts = new ArrayList<>();
+    for (byte[] rowKey : rowKeys) {
+      puts.add(
+          new Put(rowKey)
+              .addColumn(COLUMN_FAMILY, Bytes.toBytes("q1"), Bytes.toBytes("val1")));
+    }
+    Table table = getTable();
+    table.put(puts);
+
+    MultiRowRangeFilter filter = new MultiRowRangeFilter(Arrays.asList(
+        // rows 1 & 2
+        new RowRange(rowKeys[1], true, rowKeys[3], false),
+        // rows 6 & 7
+        new RowRange(rowKeys[5], false, rowKeys[7], true)
+    ));
+
+    Scan scan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filter);
+    ResultScanner scanner = table.getScanner(scan);
+    Result[] results = scanner.next(rowCount + 2);
+    Assert.assertEquals(4, results.length);
+
+    // first range: rows 1 & 2
+    Assert.assertArrayEquals(rowKeys[1], results[0].getRow());
+    Assert.assertArrayEquals(rowKeys[2], results[1].getRow());
+    // second range: rows 6 & 7
+    Assert.assertArrayEquals(rowKeys[6], results[2].getRow());
+    Assert.assertArrayEquals(rowKeys[7], results[3].getRow());
+  }
+
+  @Test
+  @Category(KnownGap.class)
+  public void testMultiRangeFilterOrList() throws IOException {
+    String prefix = "testMultiRangeFilterOrList";
+    int rowCount = 10;
+    byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
+    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
+    List<Put> puts = new ArrayList<>();
+    for (byte[] rowKey : rowKeys) {
+      puts.add(
+          new Put(rowKey)
+              .addColumn(COLUMN_FAMILY, Bytes.toBytes("q1"), Bytes.toBytes("val1")));
+    }
+    Table table = getTable();
+    table.put(puts);
+
+    MultiRowRangeFilter rangeFilter = new MultiRowRangeFilter(Arrays.asList(
+        // rows 1 & 2
+        new RowRange(rowKeys[1], true, rowKeys[3], false)
+    ));
+
+    PrefixFilter prefixFilter = new PrefixFilter(rowKeys[8]);
+
+    FilterList filterList = new FilterList(Operator.MUST_PASS_ONE, rangeFilter, prefixFilter);
+
+    Scan scan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filterList);
+    ResultScanner scanner = table.getScanner(scan);
+    Result[] results = scanner.next(rowCount + 2);
+    Assert.assertEquals(3, results.length);
+
+    // first range: rows 1 & 2
+    Assert.assertArrayEquals(rowKeys[1], results[0].getRow());
+    Assert.assertArrayEquals(rowKeys[2], results[1].getRow());
+    // second range: rows 9
+    Assert.assertArrayEquals(rowKeys[8], results[2].getRow());
   }
 
   @Test
