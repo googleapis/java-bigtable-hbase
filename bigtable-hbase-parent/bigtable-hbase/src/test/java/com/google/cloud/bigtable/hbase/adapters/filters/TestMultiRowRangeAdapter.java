@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
+import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
@@ -26,6 +28,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
 import org.junit.Assert;
@@ -219,5 +224,18 @@ public class TestMultiRowRangeAdapter {
         )
     );
     Assert.assertEquals(expected, indexScanHint);
+  }
+
+  @Test
+  public void testInterleaveIsUnsupported() throws IOException {
+    MultiRowRangeFilter rangeFilter = new MultiRowRangeFilter(Arrays.asList(
+        new RowRange("b", true, "b", true)
+    ));
+    ColumnPrefixFilter colPrefix = new ColumnPrefixFilter("c".getBytes());
+    FilterList filterList = new FilterList(Operator.MUST_PASS_ONE, rangeFilter, colPrefix);
+
+    try(ContextCloseable ignored = context.beginFilterList(filterList)) {
+      Assert.assertFalse(adapter.isFilterSupported(context, rangeFilter).isSupported());
+    }
   }
 }

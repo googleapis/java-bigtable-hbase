@@ -1648,6 +1648,43 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
+  public void testMultiRangeFilterOrList() throws IOException {
+    String prefix = "testMultiRangeFilterOrList";
+    int rowCount = 10;
+    byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
+    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
+    List<Put> puts = new ArrayList<>();
+    for (byte[] rowKey : rowKeys) {
+      puts.add(
+          new Put(rowKey)
+              .addColumn(COLUMN_FAMILY, Bytes.toBytes("q1"), Bytes.toBytes("val1")));
+    }
+    Table table = getTable();
+    table.put(puts);
+
+    MultiRowRangeFilter rangeFilter = new MultiRowRangeFilter(Arrays.asList(
+        // rows 1 & 2
+        new RowRange(rowKeys[1], true, rowKeys[3], false)
+    ));
+
+    PrefixFilter prefixFilter = new PrefixFilter(rowKeys[8]);
+
+    FilterList filterList = new FilterList(rangeFilter, prefixFilter);
+
+    Scan scan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filterList);
+    ResultScanner scanner = table.getScanner(scan);
+    Result[] results = scanner.next(rowCount + 2);
+    Assert.assertEquals(3, results.length);
+
+    // first range: rows 1 & 2
+    Assert.assertArrayEquals(rowKeys[1], results[0].getRow());
+    Assert.assertArrayEquals(rowKeys[2], results[1].getRow());
+    // second range: rows 9
+    Assert.assertArrayEquals(rowKeys[8], results[2].getRow());
+  }
+
+  @Test
   public void testQualifierFilter() throws IOException {
     byte[] rowKey = dataHelper.randomData("testQaulifierFilter");
     byte[] qualA = dataHelper.randomData("qualA");

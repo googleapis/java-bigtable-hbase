@@ -25,6 +25,8 @@ import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
 
@@ -32,6 +34,10 @@ import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
  * Adapter for {@link MultiRowRangeFilter}, it converts the filter into an index scan hint
  */
 public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowRangeFilter>  {
+  private static final FilterSupportStatus NO_MUST_PASS_ONE =
+      FilterSupportStatus.newNotSupported(
+          "MultiRowRange filters can not be contained in MUST_PASS_ONE FilterLists");
+
   @Override
   public RowFilter adapt(FilterAdapterContext context, MultiRowRangeFilter filter)
       throws IOException {
@@ -44,6 +50,16 @@ public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowR
   @Override
   public FilterSupportStatus isFilterSupported(FilterAdapterContext context,
       MultiRowRangeFilter filter) {
+
+    // Since this filter only affects the top level row ranges, it can't support arbitrary usage.
+    // Specifically, it can't 'or' filter lists. Cases like:
+    // MUST_PASS_ONE( MultiRange(a-b), ColumnPrefix('c'))
+    // will exclude the all cells out of the key range a-b that whose column starts with c
+    for (FilterList filterList : context.getCurrentFilterLists()) {
+      if (filterList.getOperator() == Operator.MUST_PASS_ONE) {
+        return NO_MUST_PASS_ONE;
+      }
+    }
     return FilterSupportStatus.SUPPORTED;
   }
 
