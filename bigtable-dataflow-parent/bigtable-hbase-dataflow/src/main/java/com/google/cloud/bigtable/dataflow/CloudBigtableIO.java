@@ -148,12 +148,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 public class CloudBigtableIO {
 
-  static {
-    // This forces the data channel to be cached. New HBase connections will use the same data
-    // channels, which improves performance.
-    BigtableSession.enableDataChannelPoolCache();
-  }
-
   enum CoderType {
     RESULT,
     RESULT_ARRAY;
@@ -161,7 +155,7 @@ public class CloudBigtableIO {
 
   private static AtomicCoder<Result> RESULT_CODER = new HBaseResultCoder();
   private static AtomicCoder<Result[]> RESULT_ARRAY_CODER = new HBaseResultArrayCoder();
-  private static final com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
+  private static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
 
   @SuppressWarnings("rawtypes")
   private static AtomicCoder HBASE_MUTATION_CODER = new HBaseMutationCoder();

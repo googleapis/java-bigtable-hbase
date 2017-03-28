@@ -204,9 +204,19 @@ public class BigtableOptionsFactory {
       "google.bigtable.buffered.mutator.max.memory";
 
 
-  /** Constant <code>BIGTABLE_USE_PLAINTEXT_NEGOTIATION="google.bigtable.use.plaintext.negotiati"{trunked}</code> */
+  /**
+   * Constant
+   * <code>BIGTABLE_USE_PLAINTEXT_NEGOTIATION="google.bigtable.use.plaintext.negotiation"</code>
+   */
   public static final String BIGTABLE_USE_PLAINTEXT_NEGOTIATION =
       "google.bigtable.use.plaintext.negotiation";
+
+  /**
+   * Constant
+   * <code>BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL="google.bigtable.use.cached.data.channel.pool"</code>
+   */
+  public static final String BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL =
+      "google.bigtable.use.cached.data.channel.pool";
 
   /**
    * The number of asynchronous workers to use for buffered mutator operations.
@@ -304,6 +314,12 @@ public class BigtableOptionsFactory {
     int channelCount = configuration.getInt(
         BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
     builder.setDataChannelCount(channelCount);
+
+    // This is primarily used by Dataflow where connections open and close often. This is a
+    // performance optimization that will reduce the cost to open connections.
+    boolean useCachedDataPool =
+        configuration.getBoolean(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, false);
+    builder.setUseCachedDataPool(useCachedDataPool);
 
     // This information is in addition to bigtable-client-core version, and jdk version.
     StringBuilder agentBuilder = new StringBuilder();

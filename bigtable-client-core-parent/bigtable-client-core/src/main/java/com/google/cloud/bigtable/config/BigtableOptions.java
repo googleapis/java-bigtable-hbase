@@ -50,6 +50,8 @@ public class BigtableOptions implements Serializable {
       "bigtableadmin.googleapis.com";
   /** Constant <code>BIGTABLE_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
+  /** Constant <code>BIGTABLE_BATCH_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
+  public static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
   /** Constant <code>BIGTABLE_PORT_DEFAULT=443</code> */
   public static final int BIGTABLE_PORT_DEFAULT = 443;
 
