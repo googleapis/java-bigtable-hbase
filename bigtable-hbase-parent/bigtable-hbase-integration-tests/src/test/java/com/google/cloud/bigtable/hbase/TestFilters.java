@@ -1670,7 +1670,7 @@ public class TestFilters extends AbstractTest {
 
     PrefixFilter prefixFilter = new PrefixFilter(rowKeys[8]);
 
-    FilterList filterList = new FilterList(rangeFilter, prefixFilter);
+    FilterList filterList = new FilterList(Operator.MUST_PASS_ONE, rangeFilter, prefixFilter);
 
     Scan scan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filterList);
     ResultScanner scanner = table.getScanner(scan);
