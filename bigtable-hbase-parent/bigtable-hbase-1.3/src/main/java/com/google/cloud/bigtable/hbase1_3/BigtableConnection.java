@@ -61,6 +61,108 @@ public class BigtableConnection extends AbstractBigtableConnection {
   @Override
   public Admin getAdmin() throws IOException {
     return new AbstractBigtableAdmin(getOptions(), getConfiguration(), this,
-        getBigtableTableAdminClient(), getDisabledTables()) {};
+        getBigtableTableAdminClient(), getDisabledTables()) {
+
+          @Override
+          public void deleteTableSnapshots(String arg0, String arg1) throws IOException {
+            throw new UnsupportedOperationException("deleteTableSnapshots");  // TODO
+          }
+    
+          @Override
+          public void deleteTableSnapshots(Pattern arg0, Pattern arg1) throws IOException {
+            throw new UnsupportedOperationException("deleteTableSnapshots");  // TODO
+          }
+    
+          @Override
+          public List<SnapshotDescription> listTableSnapshots(String arg0, String arg1)
+              throws IOException {
+            throw new UnsupportedOperationException("listTableSnapshots");  // TODO
+          }
+    
+          @Override
+          public List<SnapshotDescription> listTableSnapshots(Pattern arg0, Pattern arg1)
+              throws IOException {
+            throw new UnsupportedOperationException("listTableSnapshots");  // TODO
+          }
+
+          @Override
+          public boolean isBalancerEnabled() throws IOException {
+            throw new UnsupportedOperationException("isBalancerEnabled");  // TODO
+          }
+
+          @Override
+          public long getLastMajorCompactionTimestamp(TableName tableName) throws IOException {
+            throw new UnsupportedOperationException("getLastMajorCompactionTimestamp");  // TODO
+          }
+
+          @Override
+          public long getLastMajorCompactionTimestampForRegion(byte[] regionName)
+              throws IOException {
+            throw new UnsupportedOperationException("getLastMajorCompactionTimestampForRegion");  // TODO
+          }
+
+          @Override
+          public void setQuota(QuotaSettings quota) throws IOException {
+            throw new UnsupportedOperationException("setQuota");  // TODO
+          }
+
+          @Override
+          public QuotaRetriever getQuotaRetriever(QuotaFilter filter) throws IOException {
+            throw new UnsupportedOperationException("getQuotaRetriever");  // TODO
+          }
+
+          @Override
+          public boolean normalize() throws IOException {
+            throw new UnsupportedOperationException("normalize");  // TODO
+          }
+
+          @Override
+          public boolean isNormalizerEnabled() throws IOException {
+            throw new UnsupportedOperationException("isNormalizerEnabled");  // TODO
+          }
+
+          @Override
+          public boolean setNormalizerRunning(boolean on) throws IOException {
+            throw new UnsupportedOperationException("setNormalizerRunning");  // TODO
+          }
+
+          @Override
+          public boolean abortProcedure(long procId, boolean mayInterruptIfRunning)
+              throws IOException {
+            throw new UnsupportedOperationException("abortProcedure");  // TODO
+          }
+
+          @Override
+          public ProcedureInfo[] listProcedures() throws IOException {
+            throw new UnsupportedOperationException("listProcedures");  // TODO
+          }
+
+          @Override
+          public Future<Boolean> abortProcedureAsync(long procId, boolean mayInterruptIfRunning)
+              throws IOException {
+            throw new UnsupportedOperationException("abortProcedureAsync");  // TODO
+          }
+
+          @Override
+          public List<SecurityCapability> getSecurityCapabilities() throws IOException {
+            throw new UnsupportedOperationException("getSecurityCapabilities");  // TODO
+          }
+
+          @Override
+          public boolean balancer(boolean arg0) throws IOException {
+            throw new UnsupportedOperationException("balancer");  // TODO
+          }
+
+          @Override
+          public boolean isSplitOrMergeEnabled(MasterSwitchType arg0) throws IOException {
+            throw new UnsupportedOperationException("isSplitOrMergeEnabled");  // TODO
+          }
+
+          @Override
+          public boolean[] setSplitOrMergeEnabled(boolean arg0, boolean arg1,
+              MasterSwitchType... arg2) throws IOException {
+            throw new UnsupportedOperationException("setSplitOrMergeEnabled");  // TODO
+          }
+    };
   }
 }

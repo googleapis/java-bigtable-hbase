@@ -57,6 +57,48 @@ public class BigtableConnection extends AbstractBigtableConnection {
   @Override
   public Admin getAdmin() throws IOException {
     return new AbstractBigtableAdmin(getOptions(), getConfiguration(), this,
-        getBigtableTableAdminClient(), getDisabledTables()) {};
+        getBigtableTableAdminClient(), getDisabledTables()) {
+
+          @Override
+          public boolean isBalancerEnabled() throws IOException {
+            throw new UnsupportedOperationException("isBalancerEnabled");  // TODO
+          }
+
+          @Override
+          public long getLastMajorCompactionTimestamp(TableName tableName) throws IOException {
+            throw new UnsupportedOperationException("getLastMajorCompactionTimestamp");  // TODO
+          }
+
+          @Override
+          public long getLastMajorCompactionTimestampForRegion(byte[] regionName)
+              throws IOException {
+            throw new UnsupportedOperationException("getLastMajorCompactionTimestampForRegion");  // TODO
+          }
+
+          @Override
+          public void setQuota(QuotaSettings quota) throws IOException {
+            throw new UnsupportedOperationException("setQuota");  // TODO
+          }
+
+          @Override
+          public QuotaRetriever getQuotaRetriever(QuotaFilter filter) throws IOException {
+            throw new UnsupportedOperationException("getQuotaRetriever");  // TODO
+          }
+
+          @Override
+          public boolean abortProcedure(long arg0, boolean arg1) throws IOException {
+            throw new UnsupportedOperationException("abortProcedure");  // TODO
+          }
+
+          @Override
+          public Future<Boolean> abortProcedureAsync(long arg0, boolean arg1) throws IOException {
+            throw new UnsupportedOperationException("abortProcedureAsync");  // TODO
+          }
+
+          @Override
+          public ProcedureInfo[] listProcedures() throws IOException {
+            throw new UnsupportedOperationException("listProcedures");  // TODO
+          }
+    };
   }
 }
