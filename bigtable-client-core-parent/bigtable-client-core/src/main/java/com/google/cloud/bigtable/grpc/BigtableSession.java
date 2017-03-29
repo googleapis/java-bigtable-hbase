@@ -314,6 +314,7 @@ public class BigtableSession implements Closeable {
     int channelCount = options.getChannelCount();
     if (options.useCachedChannel()) {
       synchronized (BigtableSession.class) {
+        // TODO: Ensure that the host and channelCount are the same.
         if (cachedDataChannelPool == null) {
           cachedDataChannelPool = createChannelPool(host, channelCount);
         }
