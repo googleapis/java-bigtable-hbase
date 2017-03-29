@@ -253,8 +253,10 @@ public class CloudBigtableConfiguration implements Serializable {
   public Configuration toHBaseConfig() {
     Configuration config = new Configuration(false);
 
+    config.set(BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
     // Dataflow should use a different endpoint for data operations than online traffic.
-    config.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, "batch-bigtable.googleapis.com");
+    config.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY,
+      BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT);
 
     // This setting can potentially decrease performance for large scale writes. However, this
     // setting prevents problems that occur when streaming Sources, such as PubSub, are used.

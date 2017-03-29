@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
@@ -56,6 +55,7 @@ import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
@@ -155,7 +155,7 @@ public class CloudBigtableIO {
 
   private static AtomicCoder<Result> RESULT_CODER = new HBaseResultCoder();
   private static AtomicCoder<Result[]> RESULT_ARRAY_CODER = new HBaseResultArrayCoder();
-  private static final com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
+  private static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
 
   @SuppressWarnings("rawtypes")
   private static AtomicCoder HBASE_MUTATION_CODER = new HBaseMutationCoder();
@@ -764,9 +764,9 @@ public class CloudBigtableIO {
     @VisibleForTesting
     void initializeScanner() throws IOException {
       Configuration config = source.getConfiguration().toHBaseConfig();
-      AbstractBigtableConnection connection =
-          AbstractCloudBigtableTableDoFn.pool.getConnection(config);
-      session = connection.getSession();
+
+      // This will use cached data channels under the covers.
+      session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(config));
       scanner = session.getDataClient().readFlatRows(source.getConfiguration().getRequest());
     }
 

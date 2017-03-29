@@ -81,6 +81,7 @@ import io.netty.util.Recycler;
  */
 public class BigtableSession implements Closeable {
 
+  private static ChannelPool cachedDataChannelPool = null;
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
   private static ResourceLimiter resourceLimiter;
@@ -292,7 +293,7 @@ public class BigtableSession implements Closeable {
 
     headerInterceptors = headerInterceptorBuilder.build().toArray(new ClientInterceptor[0]);
 
-    ChannelPool dataChannel = createChannelPool(options.getDataHost(), options.getChannelCount());
+    ChannelPool dataChannel = getDataChannelPool();
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
@@ -306,6 +307,21 @@ public class BigtableSession implements Closeable {
 
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
     initializeResourceLimiter(options);
+  }
+
+  private ChannelPool getDataChannelPool() throws IOException {
+    String host = options.getDataHost();
+    int channelCount = options.getChannelCount();
+    if (options.useCachedChannel()) {
+      synchronized (BigtableSession.class) {
+        // TODO: Ensure that the host and channelCount are the same.
+        if (cachedDataChannelPool == null) {
+          cachedDataChannelPool = createChannelPool(host, channelCount);
+        }
+        return cachedDataChannelPool;
+      }
+    }
+    return createManagedPool(host, channelCount);
   }
 
   /**
@@ -447,7 +463,19 @@ public class BigtableSession implements Closeable {
         return createNettyChannel(hostString, options, headerInterceptors);
       }
     };
-    ChannelPool channelPool = new ChannelPool(channelFactory, count);
+    return new ChannelPool(channelFactory, count);
+  }
+
+  /**
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers, that
+   * will be cleaned up when the connection closes.
+   *
+   * @param hostString a {@link java.lang.String} object.
+   * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
+   * @throws java.io.IOException if any.
+   */
+  protected ChannelPool createManagedPool(String host, int channelCount) throws IOException {
+    ChannelPool channelPool = createChannelPool(host, channelCount);
     managedChannels.add(channelPool);
     return channelPool;
   }
