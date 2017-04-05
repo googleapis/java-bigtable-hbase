@@ -32,6 +32,7 @@ public class BigtableConfiguration {
     "com.google.cloud.bigtable.hbase1_0.BigtableConnection",
     "com.google.cloud.bigtable.hbase1_1.BigtableConnection",
     "com.google.cloud.bigtable.hbase1_2.BigtableConnection",
+    "com.google.cloud.bigtable.hbase1_3.BigtableConnection",
   };
 
   private static final Class<? extends Connection> CONNECTION_CLASS = chooseConnectionClass();
