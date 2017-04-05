@@ -19,7 +19,7 @@ limitations under the License.
 
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-parent</artifactId>
-    <version>0.9.6.1</version>
+    <version>0.9.7-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <url>https://cloud.google.com/bigtable/</url>
@@ -384,7 +384,7 @@ limitations under the License.
         <connection>scm:git:https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git</connection>
         <url>scm:git:https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git</url>
         <developerConnection>scm:git:https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git</developerConnection>
-        <tag>bigtable-client-0.9.6.1</tag>
+        <tag>bigtable-client-parent-0.9.3-SNAPSHOT</tag>
     </scm>
 
     <developers>
