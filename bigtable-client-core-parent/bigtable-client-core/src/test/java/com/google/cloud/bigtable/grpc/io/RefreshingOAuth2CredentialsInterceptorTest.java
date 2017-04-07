@@ -147,12 +147,10 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     final int maxElaspedBackoffMillis = retryOptions.getMaxElaspedBackoffMillis();
     final int max_end = startTime + maxElaspedBackoffMillis * 10;
     final AtomicInteger refreshCount = new AtomicInteger();
+
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        credentialOptions, retryOptions, logger) {
-      protected void refreshCredentials() {
-        refreshCount.incrementAndGet();
-      };
-    };
+        credentialOptions, retryOptions, logger);
+
     underTest.sleeper = new Sleeper() {
       @Override
       public void sleep(long ms) throws InterruptedException {
@@ -174,7 +172,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Assert.assertTrue(timeInMillis > startTime + maxElaspedBackoffMillis);
 
     verify(logger, atLeast(1)).warn(any(String.class), eq(ioException));
-    Assert.assertTrue(refreshCount.get() > 0);
+    verify(credentials, atLeast(2)).refreshAccessToken();
   }
 
   @Test
