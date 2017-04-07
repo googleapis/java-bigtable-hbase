@@ -20,7 +20,6 @@ import com.google.api.client.util.Clock;
 import com.google.api.client.util.Sleeper;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.annotations.VisibleForTesting;
@@ -168,31 +167,26 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private final ExecutorService executor;
   private final RetryOptions retryOptions;
   private final Logger logger;
-  private final CredentialOptions credentialOptions;
   private final boolean isAppEngine;
 
   private OAuth2Credentials credentials;
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
-   *
-   * @param scheduler a {@link java.util.concurrent.ExecutorService} object.
-   * @param credentials a {@link com.google.auth.oauth2.OAuth2Credentials} object.
-   * @param credentialOptions a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
-   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
+   *  @param scheduler a {@link ExecutorService} object.
+   * @param credentials a {@link OAuth2Credentials} object.
+   * @param retryOptions a {@link RetryOptions} object.
    */
   public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler,
-      OAuth2Credentials credentials, CredentialOptions credentialOptions,
-      RetryOptions retryOptions) {
-    this(scheduler, credentials, credentialOptions, retryOptions, LOG);
+      OAuth2Credentials credentials, RetryOptions retryOptions) {
+    this(scheduler, credentials, retryOptions, LOG);
   }
 
   @VisibleForTesting
   RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials,
-      CredentialOptions credentialOptions, RetryOptions retryOptions, Logger logger) {
+      RetryOptions retryOptions, Logger logger) {
     this.executor = Preconditions.checkNotNull(scheduler);
     this.credentials = Preconditions.checkNotNull(credentials);
-    this.credentialOptions = Preconditions.checkNotNull(credentialOptions);
     this.retryOptions = Preconditions.checkNotNull(retryOptions);
     this.logger = Preconditions.checkNotNull(logger);
 
