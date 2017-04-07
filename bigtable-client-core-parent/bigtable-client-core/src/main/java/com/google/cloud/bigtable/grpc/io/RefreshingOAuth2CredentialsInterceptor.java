@@ -27,7 +27,6 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,7 +40,6 @@ import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Sleeper;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -401,7 +399,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
             return new HeaderCacheElement(exception);
           } // else Retry.
 
-          refreshCredentials();
         } catch (IOException e) {
           logger.warn("Got an exception while trying to run backoff.nextBackOffMillis()", e);
           return new HeaderCacheElement(exception);
@@ -437,18 +434,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       Thread.currentThread().interrupt();
       // If the thread is interrupted, terminate immediately.
       return RetryState.Interrupted;
-    }
-  }
-
-  /**
-   * Call {@link CredentialFactory#clearHttpTransport()} and retrieve a new {@link OAuth2Credentials}.
-   */
-  @VisibleForTesting
-  void refreshCredentials() {
-    try {
-      this.credentials = (OAuth2Credentials) CredentialFactory.getCredentials(credentialOptions);
-    } catch (IOException | GeneralSecurityException e1) {
-      logger.warn("Could not retrieve new credentials", e1);
     }
   }
 }
