@@ -105,7 +105,7 @@ public class CredentialInterceptorCache {
 
     RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
         new RefreshingOAuth2CredentialsInterceptor(executor, (OAuth2Credentials) credentials,
-            credentialOptions, retryOptions);
+            retryOptions);
 
     // The RefreshingOAuth2CredentialsInterceptor uses the credentials to get a security token that
     // will live for a short time.  That token is added on all calls by the gRPC interceptor to

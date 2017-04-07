@@ -15,35 +15,32 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.Clock;
+import com.google.api.client.util.Sleeper;
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.OAuth2Credentials;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
+import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
-import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
-
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.annotation.Nullable;
-
-import com.google.api.client.util.BackOff;
-import com.google.api.client.util.Clock;
-import com.google.api.client.util.Preconditions;
-import com.google.api.client.util.Sleeper;
-import com.google.auth.oauth2.AccessToken;
-import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.cloud.bigtable.config.CredentialOptions;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Client interceptor that authenticates all calls by binding header data provided by a credential.
@@ -170,31 +167,26 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private final ExecutorService executor;
   private final RetryOptions retryOptions;
   private final Logger logger;
-  private final CredentialOptions credentialOptions;
   private final boolean isAppEngine;
 
   private OAuth2Credentials credentials;
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
-   *
-   * @param scheduler a {@link java.util.concurrent.ExecutorService} object.
-   * @param credentials a {@link com.google.auth.oauth2.OAuth2Credentials} object.
-   * @param credentialOptions a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
-   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
+   *  @param scheduler a {@link ExecutorService} object.
+   * @param credentials a {@link OAuth2Credentials} object.
+   * @param retryOptions a {@link RetryOptions} object.
    */
   public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler,
-      OAuth2Credentials credentials, CredentialOptions credentialOptions,
-      RetryOptions retryOptions) {
-    this(scheduler, credentials, credentialOptions, retryOptions, LOG);
+      OAuth2Credentials credentials, RetryOptions retryOptions) {
+    this(scheduler, credentials, retryOptions, LOG);
   }
 
   @VisibleForTesting
   RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials,
-      CredentialOptions credentialOptions, RetryOptions retryOptions, Logger logger) {
+      RetryOptions retryOptions, Logger logger) {
     this.executor = Preconditions.checkNotNull(scheduler);
     this.credentials = Preconditions.checkNotNull(credentials);
-    this.credentialOptions = Preconditions.checkNotNull(credentialOptions);
     this.retryOptions = Preconditions.checkNotNull(retryOptions);
     this.logger = Preconditions.checkNotNull(logger);
 
@@ -243,11 +235,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   private boolean canRefresh() {
     return !isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good;
-  }
-
-  @VisibleForTesting
-  boolean isRefreshing() {
-    return isRefreshing.get();
   }
 
   /**
@@ -368,41 +355,23 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *     or an exception.
    */
   protected HeaderCacheElement refreshCredentialsWithRetry() {
-    BackOff backoff = null;
+    final BackOff backoff = retryOptions.createBackoff();
+
     while (true) {
       try {
         logger.info("Refreshing the OAuth token");
         AccessToken newToken = credentials.refreshAccessToken();
-        if (newToken == null) {
-          // The current implementations of refreshAccessToken() throws an IOException or return
-          // a valid token. This handling is future proofing just in case credentials returns null for
-          // some reason. This case was caught by a poorly coded unit test.
-          logger.info("Refreshed the OAuth token");
-          return new HeaderCacheElement(new IOException("Could not load the token for credentials: "
-              + credentials));
-        } else {
-          // Success!
-          return new HeaderCacheElement(newToken);
-        }
+        return new HeaderCacheElement(newToken);
       } catch (IOException exception) {
         logger.warn("Got an unexpected IOException when refreshing google credentials.", exception);
         // An IOException occurred. Retry with backoff.
-        if (backoff == null) {
-          // initialize backoff.
-          backoff = retryOptions.createBackoff();
-        }
         // Given the backoff, either sleep for a short duration, or terminate if the backoff has
         // reached its configured timeout limit.
-        try {
-          RetryState retryState = getRetryState(backoff);
-          if (retryState != RetryState.PerformRetry) {
-            return new HeaderCacheElement(exception);
-          } // else Retry.
-
-        } catch (IOException e) {
-          logger.warn("Got an exception while trying to run backoff.nextBackOffMillis()", e);
+        RetryState retryState = getRetryState(backoff);
+        if (retryState != RetryState.PerformRetry) {
           return new HeaderCacheElement(exception);
-        }
+        } // else Retry.
+
       } catch (Exception e) {
         logger.warn("Got an unexpected exception while trying to refresh google credentials.", e);
         return new HeaderCacheElement(new IOException("Could not read headers", e));
@@ -418,8 +387,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * @throws java.io.IOException in some cases from {@link
    *     com.google.api.client.util.BackOff#nextBackOffMillis()}
    */
-  protected RetryState getRetryState(BackOff backoff) throws IOException {
-    long nextBackOffMillis = backoff.nextBackOffMillis();
+  protected RetryState getRetryState(BackOff backoff) {
+    final long nextBackOffMillis;
+    try {
+      nextBackOffMillis = backoff.nextBackOffMillis();
+    } catch (IOException e) {
+      // Should never happen since we use an ExponentialBackoff
+      throw Throwables.propagate(e);
+    }
     if (nextBackOffMillis == BackOff.STOP) {
       logger.warn("Exhausted the number of retries for credentials refresh after "
           + this.retryOptions.getMaxElaspedBackoffMillis() + " milliseconds.");
