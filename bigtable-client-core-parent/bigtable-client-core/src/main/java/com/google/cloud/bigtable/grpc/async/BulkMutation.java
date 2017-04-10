@@ -138,6 +138,9 @@ public class BulkMutation {
           || lastRpcSentTime < (clock.currentTimeMillis() - MAX_RPC_WAIT_TIME);
     }
 
+    public boolean wasSent() {
+      return lastRpcSentTime != null;
+    }
   }
 
   @VisibleForTesting
