@@ -25,6 +25,10 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -37,7 +41,11 @@ import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.Date;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -158,13 +166,15 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @VisibleForTesting
   final AtomicReference<HeaderCacheElement> headerCache = new AtomicReference<>();
 
+  ListenableFuture<HeaderCacheElement> futureToken = null;
+
   @VisibleForTesting
   final AtomicBoolean isRefreshing = new AtomicBoolean(false);
 
   @VisibleForTesting
   Sleeper sleeper = Sleeper.DEFAULT;
 
-  private final ExecutorService executor;
+  private final ListeningExecutorService executor;
   private final RetryOptions retryOptions;
   private final Logger logger;
   private final boolean isAppEngine;
@@ -185,7 +195,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @VisibleForTesting
   RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials,
       RetryOptions retryOptions, Logger logger) {
-    this.executor = Preconditions.checkNotNull(scheduler);
+    this.executor = MoreExecutors.listeningDecorator(Preconditions.checkNotNull(scheduler));
     this.credentials = Preconditions.checkNotNull(credentials);
     this.retryOptions = Preconditions.checkNotNull(retryOptions);
     this.logger = Preconditions.checkNotNull(logger);
@@ -220,21 +230,34 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *
    * @throws IOException
    */
-  public void asyncRefresh() throws IOException {
+  synchronized ListenableFuture<HeaderCacheElement> asyncRefresh() {
     if (isAppEngine) {
-      syncRefresh();
-    } else if (canRefresh()) {
-      executor.execute(new Runnable() {
+      SettableFuture<HeaderCacheElement> f = SettableFuture.create();
+      try {
+        f.set(syncRefresh());
+      } catch (Exception e) {
+        f.setException(e);
+      }
+      return f;
+    }
+
+    if (!this.isRefreshing.get()) {
+      isRefreshing.set(true);
+      this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
         @Override
-        public void run() {
-          doRefresh();
+        public HeaderCacheElement call() throws Exception {
+          HeaderCacheElement newToken = refreshCredentialsWithRetry();
+
+          synchronized (RefreshingOAuth2CredentialsInterceptor.this) {
+            headerCache.set(newToken);
+            futureToken = null;
+            isRefreshing.set(false);
+          }
+          return newToken;
         }
       });
     }
-  }
-
-  private boolean canRefresh() {
-    return !isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good;
+    return this.futureToken;
   }
 
   /**
@@ -242,31 +265,51 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *
    * @throws java.io.IOException if any.
    */
-  public void syncRefresh() throws IOException {
-    synchronized (isRefreshing) {
-      if (!isRefreshing.get()) {
-        doRefresh();
-      } else {
-        while (isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good) {
-          try {
-            isRefreshing.wait(250);
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException(e);
-          }
-        }
+  HeaderCacheElement syncRefresh() throws IOException {
+    ListenableFuture<HeaderCacheElement> readerFuture = null;
+    SettableFuture<HeaderCacheElement> writerFuture = null;
+
+    synchronized (this) {
+      if (this.isRefreshing.get()) {
+        readerFuture = this.futureToken;
+      }
+      else {
+        writerFuture = SettableFuture.create();
+        this.futureToken = writerFuture;
+        this.isRefreshing.set(true);
       }
     }
+
+    if (readerFuture != null) {
+      try {
+        return readerFuture.get(250, TimeUnit.MILLISECONDS);
+      } catch (ExecutionException|TimeoutException e) {
+        // Should never happen
+        throw new IOException(e.getCause());
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException(e);
+      }
+    }
+
+    HeaderCacheElement result = refreshCredentialsWithRetry();
+    synchronized (this) {
+      this.headerCache.set(result);
+      writerFuture.set(result);
+      this.futureToken = null;
+      isRefreshing.set(false);
+      return result;
+    }
   }
+
 
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
   @VisibleForTesting
   String getHeader()  {
-    HeaderCacheElement headerCache;
+    HeaderCacheElement headerCache = this.headerCache.get();
     try {
-      headerCache = getCachedHeader();
       CacheState state = getCacheState(headerCache);
       switch (state) {
         case Good:
@@ -275,8 +318,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
           asyncRefresh();
           break;
         case Expired:
-          syncRefresh();
-          headerCache = getCachedHeader();
+          headerCache = syncRefresh();
           break;
         case Exception:
           asyncRefresh();
@@ -298,42 +340,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @VisibleForTesting
   static CacheState getCacheState(HeaderCacheElement headerCache) {
     return (headerCache == null) ? CacheState.Expired : headerCache.getCacheState();
-  }
-
-  private HeaderCacheElement getCachedHeader() throws IOException {
-    HeaderCacheElement headerCache = this.headerCache.get();
-    if (headerCache != null && headerCache.exception != null) {
-      throw headerCache.exception;
-    }
-    return headerCache;
-  }
-
-  /**
-   * Perform a credentials refresh.
-   */
-  @VisibleForTesting
-  boolean doRefresh() {
-    if (!canRefresh()) {
-      return false;
-    }
-    synchronized (isRefreshing) {
-      if (!canRefresh()) {
-        return false;
-      }
-      isRefreshing.set(true);
-    }
-    try {
-      HeaderCacheElement cacheElement = refreshCredentialsWithRetry();
-      synchronized (isRefreshing) {
-        headerCache.set(cacheElement);
-      }
-    } finally {
-      synchronized (isRefreshing) {
-        isRefreshing.set(false);
-        isRefreshing.notifyAll();
-      }
-    }
-    return true;
   }
 
   /**
@@ -384,8 +390,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *
    * @param backoff a {@link com.google.api.client.util.BackOff} object.
    * @return RetryState indicating the current state of the retry logic.
-   * @throws java.io.IOException in some cases from {@link
-   *     com.google.api.client.util.BackOff#nextBackOffMillis()}
    */
   protected RetryState getRetryState(BackOff backoff) {
     final long nextBackOffMillis;
