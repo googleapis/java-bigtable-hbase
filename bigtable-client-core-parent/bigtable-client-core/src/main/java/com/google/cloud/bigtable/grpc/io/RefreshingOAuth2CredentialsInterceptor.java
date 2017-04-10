@@ -276,9 +276,16 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
           @Override
           public HeaderCacheElement call() throws Exception {
             HeaderCacheElement newToken = refreshCredentialsWithRetry();
-            headerCache.set(newToken);
 
             synchronized (isRefreshing) {
+              // Update the token only if the new token is good or the old token is bad
+              boolean newTokenOk = newToken.getCacheState() == CacheState.Good || newToken.getCacheState() == CacheState.Stale;
+              CacheState oldCacheState = headerCache.get().getCacheState();
+              boolean oldTokenOk = oldCacheState == CacheState.Good || oldCacheState == CacheState.Stale;
+              if (newTokenOk || !oldTokenOk) {
+                headerCache.set(newToken);
+              }
+
               futureToken = null;
               isRefreshing.set(false);
             }
