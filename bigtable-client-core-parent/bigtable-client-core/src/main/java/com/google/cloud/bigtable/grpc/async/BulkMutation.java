@@ -45,6 +45,7 @@ import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -92,6 +93,14 @@ public class BulkMutation {
     }
   }
 
+  private static boolean isNullOrEmpty(Collection<?> c) {
+    return c == null || c.isEmpty();
+  }
+
+  private static boolean isNullOrEmpty(RequestManager rm) {
+    return rm == null || rm.isEmpty();
+  }
+
   @VisibleForTesting
   static Clock clock = Clock.SYSTEM;
 
@@ -133,9 +142,13 @@ public class BulkMutation {
       return futures.size();
     }
 
+    public boolean wasSent() {
+      return lastRpcSentTime != null;
+    }
+
     public boolean isStale() {
-      return lastRpcSentTime == null
-          || lastRpcSentTime < (clock.currentTimeMillis() - MAX_RPC_WAIT_TIME);
+      return lastRpcSentTime != null
+          && lastRpcSentTime < (clock.currentTimeMillis() - MAX_RPC_WAIT_TIME);
     }
 
   }
@@ -148,14 +161,18 @@ public class BulkMutation {
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.retried");
 
     @VisibleForTesting
-    Long retryId;
-    private RequestManager currentRequestManager;
+    final AtomicReference<Long> retryIdReference;
+    private final AtomicReference<RequestManager> requestnManagerReference;
+    private final AtomicReference<ListenableFuture<List<MutateRowsResponse>>> mutateRowsFutureReference;
     private BackOff currentBackoff;
     private int failedCount;
-    private ListenableFuture<List<MutateRowsResponse>> mutateRowsFuture;
 
     private Batch() {
-      this.currentRequestManager = new RequestManager(tableName, mutationMeter);
+      this.requestnManagerReference =
+          new AtomicReference<>(new RequestManager(tableName, mutationMeter));
+      this.retryIdReference = new AtomicReference<>(
+          asyncExecutor.getRpcThrottler().registerRetry(createRetryHandler()));
+      this.mutateRowsFutureReference = new AtomicReference<>(null);
     }
 
     /**
@@ -171,14 +188,16 @@ public class BulkMutation {
     private ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
       Preconditions.checkNotNull(entry);
       SettableFuture<MutateRowResponse> future = SettableFuture.create();
-      currentRequestManager.add(future, entry);
+      RequestManager requestManager = requestnManagerReference.get();
+      Preconditions.checkNotNull(requestManager);
+      requestManager.add(future, entry);
       return future;
     }
 
     private boolean isFull() {
-      Preconditions.checkNotNull(currentRequestManager);
+      RequestManager requestManager = requestnManagerReference.get();
       return getRequestCount() >= maxRowKeyCount
-          || (currentRequestManager.approximateByteSize >= maxRequestSize);
+          || (requestManager != null && requestManager.approximateByteSize >= maxRequestSize);
     }
 
     /**
@@ -193,29 +212,30 @@ public class BulkMutation {
           new FutureCallback<List<MutateRowsResponse>>() {
             @Override
             public void onSuccess(List<MutateRowsResponse> result) {
-              mutateRowsFuture = null;
+              mutateRowsFutureReference.set(null);
               handleResult(result);
             }
 
             @Override
             public void onFailure(Throwable t) {
-              mutateRowsFuture = null;
-              performFullRetry(new AtomicReference<Long>(), t);
+              mutateRowsFutureReference.set(null);
+              performFullRetry(new AtomicReference<Long>(), requestnManagerReference.get(), t);
             }
           });
     }
 
-    private synchronized void handleResult(List<MutateRowsResponse> results) {
+    private void handleResult(List<MutateRowsResponse> results) {
 
       AtomicReference<Long> backoffTime = new AtomicReference<>();
+      RequestManager previousRequestManager = requestnManagerReference.get();
       try {
-        if (operationsAreComplete()) {
+        if (isNullOrEmpty(previousRequestManager)) {
           LOG.warn("Got duplicate responses for bulk mutation.");
           setRetryComplete();
           return;
         }
-        if (results == null || results.isEmpty()) {
-          performFullRetry(backoffTime,
+        if (isNullOrEmpty(results)) {
+          performFullRetry(backoffTime, previousRequestManager,
             new IllegalStateException("No MutateRowResponses were found."));
           return;
         }
@@ -226,37 +246,41 @@ public class BulkMutation {
         }
 
         if (entries.isEmpty()) {
-          performFullRetry(backoffTime,
+          performFullRetry(backoffTime, previousRequestManager,
             new IllegalStateException("No MutateRowsResponses entries were found."));
           return;
         }
 
-        String tableName = currentRequestManager.request.getTableName();
+        String tableName = previousRequestManager.request.getTableName();
         RequestManager retryRequestManager = new RequestManager(tableName, mutationRetryMeter);
 
-        handleResponses(backoffTime, entries, retryRequestManager);
-        handleExtraFutures(backoffTime, retryRequestManager, entries);
+        handleResponses(backoffTime, entries, previousRequestManager, retryRequestManager);
+        handleExtraFutures(backoffTime, previousRequestManager, retryRequestManager, entries);
         completeOrRetry(backoffTime, retryRequestManager);
       } catch (Throwable e) {
         LOG.error(
           "Unexpected Exception occurred. Treating this issue as a temporary issue and retrying.",
           e);
-        performFullRetry(backoffTime, e);
+        performFullRetry(backoffTime, previousRequestManager, e);
       }
     }
 
-    private void performFullRetry(AtomicReference<Long> backoff, Throwable t) {
-      if (currentRequestManager == null) {
+    private void performFullRetry(AtomicReference<Long> backoff, RequestManager requestManager,
+        Throwable t) {
+      if (requestManager == null) {
         setRetryComplete();
         return;
       }
       Long backoffMs = getCurrentBackoff(backoff);
       failedCount++;
+      Long retryId = retryIdReference.get();
       if (backoffMs == BackOff.STOP) {
-        setFailure(new BigtableRetriesExhaustedException("Batch #" + retryId + " Exhausted retries.", t));
+        BigtableRetriesExhaustedException exception =
+            new BigtableRetriesExhaustedException("Batch #" + retryId + " Exhausted retries.", t);
+        setFailure(exception, requestManager);
       } else {
-        LOG.info("Retrying failed call for batch #%d. Failure #%d, got: %s", t, retryId, failedCount,
-          io.grpc.Status.fromThrowable(t));
+        LOG.info("Retrying failed call for batch #%d. Failure #%d, got: %s", t,
+          retryId, failedCount, io.grpc.Status.fromThrowable(t));
         mutationRetryMeter.mark(getRequestCount());
         retryExecutorService.schedule(this, backoffMs, TimeUnit.MILLISECONDS);
       }
@@ -281,7 +305,8 @@ public class BulkMutation {
     }
 
     private void handleResponses(AtomicReference<Long> backoffTime,
-        Iterable<MutateRowsResponse.Entry> entries, RequestManager retryRequestManager) {
+        Iterable<MutateRowsResponse.Entry> entries, RequestManager previousRequestManager,
+        RequestManager retryRequestManager) {
       for (MutateRowsResponse.Entry entry : entries) {
         int index = (int) entry.getIndex();
         if (index >= getRequestCount()) {
@@ -289,7 +314,7 @@ public class BulkMutation {
           break;
         }
 
-        SettableFuture<MutateRowResponse> future = currentRequestManager.futures.get(index);
+        SettableFuture<MutateRowResponse> future = previousRequestManager.futures.get(index);
 
         if (future == null) {
           LOG.warn("Could not find a future for index %d.", index);
@@ -303,12 +328,13 @@ public class BulkMutation {
         } else if (!isRetryable(statusCode) || getCurrentBackoff(backoffTime) == BackOff.STOP) {
           future.setException(toException(status));
         } else {
-          retryRequestManager.add(future, currentRequestManager.request.getEntries(index));
+          retryRequestManager.add(future, previousRequestManager.request.getEntries(index));
         }
       }
     }
 
-    private void handleExtraFutures(AtomicReference<Long> backoffTime, RequestManager retryRequestManager,
+    private void handleExtraFutures(AtomicReference<Long> backoffTime,
+        RequestManager previousRequestManager, RequestManager retryRequestManager,
         List<Entry> entries) {
       Set<Integer> indexes = getIndexes(entries);
       long missingEntriesCount = 0;
@@ -318,10 +344,10 @@ public class BulkMutation {
         if (!indexes.remove(i)) {
           missingEntriesCount++;
           if (backoffTime.get() == BackOff.STOP) {
-            currentRequestManager.futures.get(i).setException(MISSING_ENTRY_EXCEPTION);
+            previousRequestManager.futures.get(i).setException(MISSING_ENTRY_EXCEPTION);
           } else {
-            retryRequestManager.add(currentRequestManager.futures.get(i),
-              this.currentRequestManager.request.getEntries(i));
+            retryRequestManager.add(previousRequestManager.futures.get(i),
+              previousRequestManager.request.getEntries(i));
           }
         }
       }
@@ -345,7 +371,7 @@ public class BulkMutation {
       if (retryRequestManager == null || retryRequestManager.isEmpty()) {
         setRetryComplete();
       } else {
-        this.currentRequestManager = retryRequestManager;
+        this.requestnManagerReference.set(retryRequestManager);
         failedCount++;
         mutationRetryMeter.mark(getRequestCount());
         LOG.info(
@@ -361,25 +387,24 @@ public class BulkMutation {
     }
 
     @Override
-    public synchronized void run() {
-      if (operationsAreComplete()) {
+    public void run() {
+      RequestManager requestManager = requestnManagerReference.get();
+      if (requestManager == null || requestManager.isEmpty()) {
         setRetryComplete();
         return;
       }
+      ListenableFuture<List<MutateRowsResponse>> future = null;
       try {
-        if (retryId == null) {
-          retryId =
-              Long.valueOf(asyncExecutor.getRpcThrottler().registerRetry(createRetryHandler()));
-        }
-        mutateRowsFuture = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
-        currentRequestManager.lastRpcSentTime = clock.currentTimeMillis();
+        future = asyncExecutor.mutateRowsAsync(requestManager.build());
+        requestManager.lastRpcSentTime = clock.currentTimeMillis();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
+        future = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } catch (Throwable e) {
-        mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
+        future = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
-        addCallback(mutateRowsFuture);
+        addCallback(future);
+        mutateRowsFutureReference.set(future);
       }
     }
 
@@ -391,9 +416,12 @@ public class BulkMutation {
       return new RetryHandler() {
         @Override
         public void performRetryIfStale() {
+          // Get a reference to the currentRequestManager
+          RequestManager requestManager = requestnManagerReference.get();
           // If the retryId is null, it means that the operation somehow fails partially,
           // cleanup the retry.
-          if (retryId == null || operationsAreComplete() || currentRequestManager.isStale()) {
+          Long retryId = retryIdReference.get();
+          if (retryId == null || isNullOrEmpty(requestManager) || requestManager.isStale()) {
             setRetryComplete();
           }
         }
@@ -404,10 +432,10 @@ public class BulkMutation {
      * This would have happened after all retries are exhausted on the MutateRowsRequest. Don't
      * retry individual mutations.
      */
-    private void setFailure(Throwable t) {
+    private void setFailure(Throwable t, RequestManager requestManager) {
       try {
-        if (currentRequestManager != null) {
-          for (SettableFuture<MutateRowResponse> future : currentRequestManager.futures) {
+        if (requestManager != null) {
+          for (SettableFuture<MutateRowResponse> future : requestManager.futures) {
             future.setException(t);
           }
         }
@@ -416,28 +444,29 @@ public class BulkMutation {
       }
     }
 
-    private synchronized void setRetryComplete() {
+    private void setRetryComplete() {
+      requestnManagerReference.set(null);
+      Long retryId = retryIdReference.get();
       if (retryId != null) {
-        if (mutateRowsFuture != null) {
-          mutateRowsFuture.cancel(true);
-        }
-        mutateRowsFuture = null;
+        // This should not be in the synchronized block, since this has incurred deadlocking in the
+        // past.
         asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
         if (failedCount > 0) {
           LOG.info("Batch #%d recovered from the failure and completed.", retryId);
         }
-        retryId = null;
+        retryIdReference.set(null);
       }
-      currentRequestManager = null;
+      ListenableFuture<List<MutateRowsResponse>> future = mutateRowsFutureReference.get();
+      if (future != null) {
+        future.cancel(true);
+        mutateRowsFutureReference.set(null);
+      }
     }
 
     @VisibleForTesting
     int getRequestCount() {
-      return currentRequestManager == null ? 0 : currentRequestManager.getRequestCount();
-    }
-
-    boolean operationsAreComplete() {
-      return currentRequestManager == null || currentRequestManager.isEmpty();
+      RequestManager requestManager = requestnManagerReference.get();
+      return requestManager == null ? 0 : requestManager.getRequestCount();
     }
   }
 
@@ -512,6 +541,7 @@ public class BulkMutation {
     this.maxRequestSize = maxRequestSize;
     this.autoflushMs = autoflushMs;
   }
+
   public ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     return add(convert(request));
   }
