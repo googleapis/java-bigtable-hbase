@@ -84,7 +84,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
   private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
-    "Authorization", Metadata.ASCII_STRING_MARSHALLER);
+      "Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
   @VisibleForTesting
   static Clock clock = Clock.SYSTEM;
@@ -92,6 +92,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   @VisibleForTesting
   static class HeaderCacheElement {
+
     /**
      * This specifies how far in advance of a header expiration do we consider the token stale. The
      * Stale state indicates that the interceptor needs to do an asynchronous refresh.
@@ -117,11 +118,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       }
       header = "Bearer " + token.getTokenValue();
     }
+
     HeaderCacheElement(String header, long actualExpirationTimeMs) {
       this.status = Status.OK;
       this.header = header;
-      this.actualExpirationTimeMs =actualExpirationTimeMs;
+      this.actualExpirationTimeMs = actualExpirationTimeMs;
     }
+
     HeaderCacheElement(Status errorStatus) {
       Preconditions.checkArgument(!errorStatus.isOk(), "Error status can't be OK");
       this.status = errorStatus;
@@ -166,7 +169,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
-   *  @param scheduler a {@link ExecutorService} object.
+   *
+   * @param scheduler a {@link ExecutorService} object.
    * @param credentials a {@link OAuth2Credentials} object.
    * @param retryOptions a {@link RetryOptions} object.
    */
@@ -183,13 +187,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     this.retryOptions = Preconditions.checkNotNull(retryOptions);
     this.logger = Preconditions.checkNotNull(logger);
 
-    // com.google.auth.oauth2.AppEngineCredentials is package private, so we don't have direct
-    // visibility to it. This is a way to detect that this application runs on App Engine so that
-    // we can always get credentials within the request time.
-    this.isAppEngine = credentials.getClass().getName().contains("AppEngineCredentials");
+    // From MoreExecutors
+    this.isAppEngine = System.getProperty("com.google.appengine.runtime.environment") != null;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
       CallOptions callOptions, Channel next) {
@@ -209,14 +213,61 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     };
   }
 
+  HeaderCacheElement getHeaderSafe() {
+    try {
+      return getHeader();
+    } catch (Exception e) {
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withDescription("Unexpected failure get auth token")
+              .withCause(e)
+      );
+    }
+  }
+
+  /**
+   * Get the http credential header we need from a new oauth2 AccessToken.
+   */
+  @VisibleForTesting
+  HeaderCacheElement getHeader() throws ExecutionException, InterruptedException {
+    HeaderCacheElement headerCache = this.headerCache.get();
+    CacheState state = headerCache.getCacheState();
+
+    if (state == CacheState.Good || state == CacheState.Exception) {
+      return headerCache;
+    // AppEngine doesn't allow threads to outlive the request, so disable background refresh
+    } else if (!isAppEngine && state == CacheState.Stale) {
+      asyncRefresh();
+    } else if (state == CacheState.Expired) {
+      headerCache = asyncRefresh().get();
+    } else {
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withCause(new IllegalStateException("Could not process state: " + state))
+      );
+    }
+
+    return headerCache;
+  }
+
+  /**
+   * Refresh the credentials and block. Will return an error if the credentials haven't
+   * been refreshed
+   */
+  HeaderCacheElement syncRefresh() {
+    try {
+      return asyncRefresh().get(250, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withCause(e)
+      );
+    }
+  }
+
   /**
    * Refreshes the OAuth2 token asynchronously. This method will only start an async refresh if
-   * there isn't a currently running asynchronous refresh or the credentials are for App Engine.
-   * App Engine has some credentials related state in a {@link ThreadLocal} which prevents it from
-   * running asynchronously. In the App Engine case, this method will defer to
-   * {@link #syncRefresh()}.
-   *
-   * @throws IOException
+   * there isn't a currently running asynchronous refresh.
    */
   ListenableFuture<HeaderCacheElement> asyncRefresh() {
     synchronized (this.isRefreshing) {
@@ -240,57 +291,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   /**
-   * <p>syncRefresh.</p>
-   */
-  HeaderCacheElement syncRefresh() {
-    try {
-      return asyncRefresh().get(250, TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-            .withCause(e)
-      );
-    }
-  }
-
-
-  HeaderCacheElement getHeaderSafe() {
-    try {
-      return getHeader();
-    } catch(Exception e) {
-      return new HeaderCacheElement(
-        Status.UNAUTHENTICATED
-            .withDescription("Unexpected failure get auth token")
-            .withCause(e)
-    );
-  }
-
-}
-  /**
-   * Get the http credential header we need from a new oauth2 AccessToken.
-   */
-  @VisibleForTesting
-  HeaderCacheElement getHeader() throws ExecutionException, InterruptedException {
-    HeaderCacheElement headerCache = this.headerCache.get();
-    CacheState state = headerCache.getCacheState();
-
-    if (state == CacheState.Good || state == CacheState.Exception) {
-      return headerCache;
-    } else if (!isAppEngine && state == CacheState.Stale) {
-      asyncRefresh();
-    } else if (state == CacheState.Expired) {
-        headerCache = asyncRefresh().get();
-    } else {
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-            .withCause(new IllegalStateException("Could not process state: " + state))
-      );
-    }
-
-    return headerCache;
-  }
-
-  /**
    * Calls {@link com.google.auth.oauth2.OAuth2Credentials#refreshAccessToken()}. In case of an
    * IOException, retry the call as per the {@link com.google.api.client.util.BackOff} policy
    * defined by {@link com.google.cloud.bigtable.config.RetryOptions#createBackoff()}.
@@ -301,12 +301,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * <li>An OAuth request was completed. If the value is null, return an exception.
    * <li>A non-IOException Exception is thrown - return an error status
    * <li>All retries have been exhausted, i.e. when the Backoff.nextBackOffMillis() returns
-   *     BackOff.STOP
+   * BackOff.STOP
    * <li>An interrupt occurs.
    * </ol>
    *
    * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken}
-   *     or an exception.
+   * or an exception.
    */
   protected HeaderCacheElement refreshCredentialsWithRetry() {
     final BackOff backoff = retryOptions.createBackoff();
@@ -325,8 +325,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         if (retryState != RetryState.PerformRetry) {
           return new HeaderCacheElement(
               Status.UNAUTHENTICATED
-                .withDescription("Exhausted retries trying to authenticate")
-                .withCause(exception)
+                  .withDescription("Exhausted retries trying to authenticate")
+                  .withCause(exception)
           );
         } // else Retry.
 
@@ -334,8 +334,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         logger.warn("Got an unexpected exception while trying to refresh google credentials.", e);
         return new HeaderCacheElement(
             Status.UNAUTHENTICATED
-              .withDescription("Unexpected error trying to authenticate")
-              .withCause(e)
+                .withDescription("Unexpected error trying to authenticate")
+                .withCause(e)
         );
       }
     }
