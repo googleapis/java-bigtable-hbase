@@ -29,17 +29,16 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
-import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
@@ -105,13 +104,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
      */
     static final int TOKEN_EXPIRES_MS = 15 * 1000;
 
-    final IOException exception;
+    final Status status;
     final String header;
-
     final long actualExpirationTimeMs;
 
     HeaderCacheElement(AccessToken token) {
-      this.exception = null;
+      this.status = Status.OK;
       if (token.getExpirationTime() == null) {
         actualExpirationTimeMs = Long.MAX_VALUE;
       } else {
@@ -120,8 +118,15 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       header = "Bearer " + token.getTokenValue();
     }
 
-    HeaderCacheElement(IOException exception) {
-      this.exception = exception;
+    HeaderCacheElement(String header, long actualExpirationTimeMs) {
+      this.status = Status.OK;
+      this.header = header;
+      this.actualExpirationTimeMs = actualExpirationTimeMs;
+    }
+
+    HeaderCacheElement(Status errorStatus) {
+      Preconditions.checkArgument(!errorStatus.isOk(), "Error status can't be OK");
+      this.status = errorStatus;
       this.header = null;
       this.actualExpirationTimeMs = 0;
     }
@@ -129,7 +134,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     CacheState getCacheState() {
       long now = clock.currentTimeMillis();
 
-      if (exception != null) {
+      if (!status.isOk()) {
         return CacheState.Exception;
       } else if (actualExpirationTimeMs - TOKEN_EXPIRES_MS <= now) {
         return CacheState.Expired;
@@ -140,6 +145,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       }
     }
   }
+
+  private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
 
   private final Logger logger;
   private final ExecutorService executor;
@@ -155,7 +162,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   @VisibleForTesting
   @GuardedBy("lock")
-  HeaderCacheElement headerCache = null;
+  HeaderCacheElement headerCache = EMPTY_HEADER;
 
   @VisibleForTesting
   @GuardedBy("lock")
@@ -192,67 +199,79 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
       CallOptions callOptions, Channel next) {
-    return new CheckedForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+    return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
       @Override
-      protected void checkedStart(Listener<RespT> responseListener, Metadata headers)
-          throws StatusException {
-        headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
+      public void start(Listener<RespT> responseListener, Metadata headers) {
+        HeaderCacheElement headerCache = getHeaderSafe();
+
+        if (!headerCache.status.isOk()) {
+          responseListener.onClose(headerCache.status, new Metadata());
+          return;
+        }
+
+        headers.put(AUTHORIZATION_HEADER_KEY, headerCache.header);
         delegate().start(responseListener, headers);
       }
     };
   }
 
+  private HeaderCacheElement getHeaderSafe() {
+    try {
+      return getHeader();
+    } catch (Exception e) {
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withDescription("Unexpected failure get auth token")
+              .withCause(e)
+      );
+    }
+  }
+
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
-  private String getHeader() {
-    try {
-      final Future<HeaderCacheElement> deferredResult;
+  private HeaderCacheElement getHeader() throws ExecutionException, InterruptedException {
+    final Future<HeaderCacheElement> deferredResult;
 
-      synchronized (lock) {
-        CacheState state = getCacheState(headerCache);
+    synchronized (lock) {
+      CacheState state = headerCache.getCacheState();
 
-        // AppEngine doesn't allow threads to outlive the request, so disable background refresh
-        if (isAppEngine && state == CacheState.Stale) {
-          state = CacheState.Good;
-        }
-
-        switch (state) {
-          case Good:
-            return headerCache.header;
-          case Stale:
-            asyncRefresh();
-            return headerCache.header;
-          case Expired:
-            // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
-            deferredResult = asyncRefresh();
-            break;
-          case Exception:
-            asyncRefresh();
-            throw asUnauthenticatedException(headerCache.exception);
-          default:
-            throw asUnauthenticatedException(
-                new IllegalStateException("Could not process state: " + state));
-        }
+      // AppEngine doesn't allow threads to outlive the request, so disable background refresh
+      if (isAppEngine && state == CacheState.Stale) {
+        state = CacheState.Good;
       }
 
-      return deferredResult.get().header;
-    } catch (InterruptedException | ExecutionException e) {
-      throw asUnauthenticatedException(e);
+      if (state == CacheState.Good || state == CacheState.Exception) {
+        return headerCache;
+      } else if (state == CacheState.Stale) {
+        asyncRefresh();
+        return headerCache;
+      } else if (state == CacheState.Expired) {
+        // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
+        deferredResult = asyncRefresh();
+      } else {
+        return new HeaderCacheElement(
+            Status.UNAUTHENTICATED
+                .withCause(new IllegalStateException("Could not process state: " + state))
+        );
+      }
     }
+    return deferredResult.get();
   }
 
   /**
    * Refresh the credentials and block. Will return an error if the credentials haven't
    * been refreshed.
    * This method should not be called while holding the refresh lock
-   * @throws java.io.IOException,RuntimeException if any.
    */
-  HeaderCacheElement syncRefresh() throws IOException {
+  HeaderCacheElement syncRefresh() {
     try {
-      return asyncRefresh().get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+      return asyncRefresh().get(250, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withCause(e)
+      );
     }
   }
 
@@ -271,15 +290,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
-            try {
-              HeaderCacheElement newToken = refreshCredentialsWithRetry();
-              return updateToken(newToken);
-            } finally {
-              synchronized (lock) {
-                futureToken = null;
-                isRefreshing = false;
-              }
-            }
+            HeaderCacheElement newToken = refreshCredentialsWithRetry();
+            return updateToken(newToken);
           }
         });
       } catch (RuntimeException e) {
@@ -291,28 +303,23 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
   }
 
-  private static StatusRuntimeException asUnauthenticatedException(Exception e) {
-    return Status.UNAUTHENTICATED.withCause(e).asRuntimeException();
-  }
-
-  @VisibleForTesting
-  static CacheState getCacheState(HeaderCacheElement headerCache) {
-    return (headerCache == null) ? CacheState.Expired : headerCache.getCacheState();
-  }
-
   private HeaderCacheElement updateToken(HeaderCacheElement newToken) {
-    // Update the token only if the new token is good or the old token is bad
-    CacheState newState = newToken.getCacheState();
-    boolean newTokenOk = newState == CacheState.Good || newState == CacheState.Stale;
-    CacheState oldCacheState = getCacheState(headerCache);
-    boolean oldTokenOk = oldCacheState == CacheState.Good || oldCacheState == CacheState.Stale;
+    synchronized (lock) {
+      // Update the token only if the new token is good or the old token is bad
+      CacheState newState = newToken.getCacheState();
+      boolean newTokenOk = newState == CacheState.Good || newState == CacheState.Stale;
+      CacheState oldCacheState = headerCache.getCacheState();
+      boolean oldTokenOk = oldCacheState == CacheState.Good || oldCacheState == CacheState.Stale;
 
-    if (newTokenOk || !oldTokenOk) {
-      headerCache = newToken;
-      return newToken;
-    } else {
-      LOG.warn("Failed to refresh the access token. Falling back to existing token. "
-          + "New token state: {}", newState);
+      if (newTokenOk || !oldTokenOk) {
+        headerCache = newToken;
+      } else {
+        LOG.warn("Failed to refresh the access token. Falling back to existing token. "
+            + "New token state: {}, status: {}", newState, newToken.status);
+      }
+      futureToken = null;
+      isRefreshing = false;
+
       return headerCache;
     }
   }
@@ -350,12 +357,20 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         // reached its configured timeout limit.
         RetryState retryState = getRetryState(backoff);
         if (retryState != RetryState.PerformRetry) {
-          return new HeaderCacheElement(exception);
+          return new HeaderCacheElement(
+              Status.UNAUTHENTICATED
+                  .withDescription("Exhausted retries trying to authenticate")
+                  .withCause(exception)
+          );
         } // else Retry.
 
       } catch (Exception e) {
         logger.warn("Got an unexpected exception while trying to refresh google credentials.", e);
-        return new HeaderCacheElement(new IOException("Could not read headers", e));
+        return new HeaderCacheElement(
+            Status.UNAUTHENTICATED
+                .withDescription("Unexpected error trying to authenticate")
+                .withCause(e)
+        );
       }
     }
   }

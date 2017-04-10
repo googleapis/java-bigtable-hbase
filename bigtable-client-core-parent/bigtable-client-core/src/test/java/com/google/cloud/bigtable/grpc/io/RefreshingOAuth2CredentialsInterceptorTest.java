@@ -111,25 +111,21 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   @Test
   public void testSyncRefresh() throws IOException {
     initialize(HeaderCacheElement.TOKEN_STALENESS_MS + 1);
-    Assert.assertEquals(CacheState.Good,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
+    Assert.assertEquals(CacheState.Good, underTest.headerCache.getCacheState());
   }
 
   @Test
   public void testStaleAndExpired() throws IOException {
     int expiration = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
     initialize(expiration);
-    Assert.assertEquals(CacheState.Good,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
+    Assert.assertEquals(CacheState.Good, underTest.headerCache.getCacheState());
     long startTime = 2L;
     setTimeInMillieconds(startTime);
-    Assert.assertEquals(CacheState.Stale,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
+    Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
     long expiredStaleDiff =
         HeaderCacheElement.TOKEN_STALENESS_MS - HeaderCacheElement.TOKEN_EXPIRES_MS;
     setTimeInMillieconds(startTime + expiredStaleDiff);
-    Assert.assertEquals(CacheState.Expired,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
+    Assert.assertEquals(CacheState.Expired, underTest.headerCache.getCacheState());
   }
 
   @Test
@@ -157,7 +153,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     HeaderCacheElement header = underTest.refreshCredentialsWithRetry();
 
     Assert.assertNull(header.header);
-    Assert.assertSame(ioException, header.exception);
+    Assert.assertSame(ioException, header.status.getCause());
 
     // Make sure that the system "slept" for more than the retryOption max millis. The Backoff logic
     // adds some random variability to the exact elapsed time, so add in a bit of wiggle room.
@@ -227,14 +223,12 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
-    Assert.assertEquals(CacheState.Expired,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
+    Assert.assertEquals(CacheState.Expired, underTest.headerCache.getCacheState());
 
     syncCall(lock, syncRefreshCallable);
 
     // Check to make sure that the AccessToken was retrieved.
-    Assert.assertEquals(CacheState.Stale,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
+    Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
 
     // Check to make sure we're no longer refreshing.
     Assert.assertFalse(underTest.isRefreshing);
