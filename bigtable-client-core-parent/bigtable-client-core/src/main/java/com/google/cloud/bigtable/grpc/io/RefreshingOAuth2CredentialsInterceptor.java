@@ -287,7 +287,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       try {
         return readerFuture.get(250, TimeUnit.MILLISECONDS);
       } catch (ExecutionException|TimeoutException e) {
-        // Should never happen
         throw new IOException(e.getCause());
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
