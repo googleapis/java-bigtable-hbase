@@ -284,6 +284,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
       new AccessToken("", new Date(expiration)));
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
         retryOptions, logger);
-    Assert.assertTrue(underTest.doRefresh());
+    underTest.syncRefresh();
   }
 }
