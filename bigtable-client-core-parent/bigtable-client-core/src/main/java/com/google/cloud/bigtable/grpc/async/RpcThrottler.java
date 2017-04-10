@@ -258,13 +258,9 @@ public class RpcThrottler {
    * @param id a long.
    */
   public void onRetryCompletion(long id) {
-    if (!outstandingRetries.containsValue(id)) {
-      return;
-    }
     lock.lock();
     try {
-      outstandingRetries.remove(id);
-      if (isFlushed()) {
+      if (outstandingRetries.remove(id) != null && isFlushed()) {
         flushedCondition.signal();
         isFlushed = true;
       }
