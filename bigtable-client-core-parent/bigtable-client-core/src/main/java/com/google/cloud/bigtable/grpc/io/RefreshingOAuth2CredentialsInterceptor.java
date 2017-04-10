@@ -33,14 +33,12 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
-import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -48,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
 
 /**
  * Client interceptor that authenticates all calls by binding header data provided by a credential.
@@ -102,69 +99,58 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
      * This specifies how far in advance of a header expiration do we consider the token stale. The
      * Stale state indicates that the interceptor needs to do an asynchronous refresh.
      */
-    public static final int TOKEN_STALENESS_MS = 75 * 1000;
+    static final int TOKEN_STALENESS_MS = 75 * 1000;
 
     /**
      * After the token is "expired," the interceptor blocks gRPC calls. The Expired state indicates
      * that the interceptor needs to do a synchronous refresh.
      */
-    public static final int TOKEN_EXPIRES_MS = 15 * 1000;
+    static final int TOKEN_EXPIRES_MS = 15 * 1000;
 
-    final IOException exception;
+    final Status status;
     final String header;
+    final long actualExpirationTimeMs;
 
-    /**
-     * Defines the amount of time in ms when the header is considered "stale" and should be
-     * refreshed in the near future. A {@code null} value means that the header does not become stale.
-     */
-    final @Nullable Long staleTimeMs;
-
-    /**
-     * Defines the amount of time in ms when the header is considered "expired" and must be
-     * refreshed. A {@code null} value means that the header does not expire.
-     */
-    final @Nullable Long expiresTimeMs;
-
-    public HeaderCacheElement(AccessToken token) {
-      this.exception = null;
-      this.header = "Bearer " + token.getTokenValue();
-      Date expirationTime = token.getExpirationTime();
-      if (expirationTime != null) {
-        long tokenExpiresTime = expirationTime.getTime();
-        this.staleTimeMs = tokenExpiresTime - TOKEN_STALENESS_MS;
-        // Block until refresh at this point.
-        this.expiresTimeMs = tokenExpiresTime - TOKEN_EXPIRES_MS;
-        Preconditions.checkState(staleTimeMs < expiresTimeMs);
+    HeaderCacheElement(AccessToken token) {
+      this.status = Status.OK;
+      if (token.getExpirationTime() == null) {
+        actualExpirationTimeMs = Long.MAX_VALUE;
       } else {
-        this.staleTimeMs = null;
-        this.expiresTimeMs = null;
+        actualExpirationTimeMs = token.getExpirationTime().getTime();
       }
+      header = "Bearer " + token.getTokenValue();
     }
-
-    public HeaderCacheElement(IOException exception) {
-      this.exception = exception;
+    HeaderCacheElement(String header, long actualExpirationTimeMs) {
+      this.status = Status.OK;
+      this.header = header;
+      this.actualExpirationTimeMs =actualExpirationTimeMs;
+    }
+    HeaderCacheElement(Status errorStatus) {
+      Preconditions.checkArgument(!errorStatus.isOk(), "Error status can't be OK");
+      this.status = errorStatus;
       this.header = null;
-      this.staleTimeMs = null;
-      this.expiresTimeMs = null;
+      this.actualExpirationTimeMs = 0;
     }
 
-    public CacheState getCacheState() {
-      if (exception != null) {
+    CacheState getCacheState() {
+      long diff = actualExpirationTimeMs - clock.currentTimeMillis();
+
+      if (!status.isOk()) {
         return CacheState.Exception;
-      }
-      long now = clock.currentTimeMillis();
-      if (staleTimeMs == null || now < staleTimeMs) {
-        return CacheState.Good;
-      } else if (now < expiresTimeMs) {
+      } else if (diff <= TOKEN_EXPIRES_MS) {
+        return CacheState.Expired;
+      } else if (diff <= TOKEN_STALENESS_MS) {
         return CacheState.Stale;
       } else {
-        return CacheState.Expired;
+        return CacheState.Good;
       }
     }
   }
 
+  private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
+
   @VisibleForTesting
-  final AtomicReference<HeaderCacheElement> headerCache = new AtomicReference<>();
+  final AtomicReference<HeaderCacheElement> headerCache = new AtomicReference<>(EMPTY_HEADER);
 
   ListenableFuture<HeaderCacheElement> futureToken = null;
 
@@ -211,11 +197,17 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
       CallOptions callOptions, Channel next) {
-    return new CheckedForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+    return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
       @Override
-      protected void checkedStart(Listener<RespT> responseListener, Metadata headers)
-          throws StatusException {
-        headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
+      public void start(Listener<RespT> responseListener, Metadata headers) {
+        HeaderCacheElement headerCache = getHeader();
+
+        if (!headerCache.status.isOk()) {
+          responseListener.onClose(headerCache.status, new Metadata());
+          return;
+        }
+
+        headers.put(AUTHORIZATION_HEADER_KEY, headerCache.header);
         delegate().start(responseListener, headers);
       }
     };
@@ -246,16 +238,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
-            try {
-              HeaderCacheElement newToken = refreshCredentialsWithRetry();
-              headerCache.set(newToken);
-              return newToken;
-            } finally {
-              synchronized (isRefreshing) {
-                futureToken = null;
-                isRefreshing.set(false);
-              }
+            HeaderCacheElement newToken = refreshCredentialsWithRetry();
+            headerCache.set(newToken);
+
+            synchronized (isRefreshing) {
+              futureToken = null;
+              isRefreshing.set(false);
             }
+            return newToken;
           }
         });
       }
@@ -265,10 +255,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   /**
    * <p>syncRefresh.</p>
-   *
-   * @throws java.io.IOException if any.
    */
-  HeaderCacheElement syncRefresh() throws IOException {
+  HeaderCacheElement syncRefresh() {
     ListenableFuture<HeaderCacheElement> readerFuture = null;
     SettableFuture<HeaderCacheElement> writerFuture = null;
 
@@ -288,11 +276,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     if (readerFuture != null) {
       try {
         return readerFuture.get(250, TimeUnit.MILLISECONDS);
-      } catch (ExecutionException|TimeoutException e) {
-        throw new IOException(e.getCause());
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new IOException(e);
+      } catch (ExecutionException|TimeoutException|InterruptedException e) {
+        if (e instanceof InterruptedException) {
+          Thread.currentThread().interrupt();
+        }
+        return new HeaderCacheElement(
+            Status.UNAUTHENTICATED.withCause(e)
+        );
       }
     }
 
@@ -312,39 +302,33 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
   @VisibleForTesting
-  String getHeader()  {
+  HeaderCacheElement getHeader()  {
     HeaderCacheElement headerCache = this.headerCache.get();
-    try {
-      CacheState state = getCacheState(headerCache);
-      switch (state) {
-        case Good:
-          break;
-        case Stale:
-          asyncRefresh();
-          break;
-        case Expired:
-          headerCache = syncRefresh();
-          break;
-        case Exception:
-          asyncRefresh();
-          throw asUnauthenticatedException(headerCache.exception);
-        default:
-          throw asUnauthenticatedException(
-              new IllegalStateException("Could not process state: " + state));
-      }
-    } catch(IOException e) {
-      throw asUnauthenticatedException(e);
+    CacheState state = headerCache.getCacheState();
+
+    switch (state) {
+      case Good:
+        break;
+      case Stale:
+        asyncRefresh();
+        break;
+      case Expired:
+        headerCache = syncRefresh();
+        break;
+      case Exception:
+        asyncRefresh();
+        break;
+      default:
+        return new HeaderCacheElement(
+            Status.UNAUTHENTICATED
+              .withCause(new IllegalStateException("Could not process state: " + state))
+        );
     }
-    return headerCache.header;
+    return headerCache;
   }
 
   private static StatusRuntimeException asUnauthenticatedException(Exception e) {
     return Status.UNAUTHENTICATED.withCause(e).asRuntimeException();
-  }
-
-  @VisibleForTesting
-  static CacheState getCacheState(HeaderCacheElement headerCache) {
-    return (headerCache == null) ? CacheState.Expired : headerCache.getCacheState();
   }
 
   /**
@@ -380,12 +364,20 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         // reached its configured timeout limit.
         RetryState retryState = getRetryState(backoff);
         if (retryState != RetryState.PerformRetry) {
-          return new HeaderCacheElement(exception);
+          return new HeaderCacheElement(
+              Status.UNAUTHENTICATED
+                .withDescription("Exhausted retries trying to authenticate")
+                .withCause(exception)
+          );
         } // else Retry.
 
       } catch (Exception e) {
         logger.warn("Got an unexpected exception while trying to refresh google credentials.", e);
-        return new HeaderCacheElement(new IOException("Could not read headers", e));
+        return new HeaderCacheElement(
+            Status.UNAUTHENTICATED
+              .withDescription("Unexpected error trying to authenticate")
+              .withCause(e)
+        );
       }
     }
   }
