@@ -246,14 +246,16 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
-            HeaderCacheElement newToken = refreshCredentialsWithRetry();
-
-            synchronized (RefreshingOAuth2CredentialsInterceptor.this) {
+            try {
+              HeaderCacheElement newToken = refreshCredentialsWithRetry();
               headerCache.set(newToken);
-              futureToken = null;
-              isRefreshing.set(false);
+              return newToken;
+            } finally {
+              synchronized (isRefreshing) {
+                futureToken = null;
+                isRefreshing.set(false);
+              }
             }
-            return newToken;
           }
         });
       }
