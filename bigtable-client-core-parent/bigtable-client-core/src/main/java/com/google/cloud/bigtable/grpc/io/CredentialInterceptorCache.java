@@ -110,11 +110,8 @@ public class CredentialInterceptorCache {
     // The RefreshingOAuth2CredentialsInterceptor uses the credentials to get a security token that
     // will live for a short time.  That token is added on all calls by the gRPC interceptor to
     // allow users to access secure resources.
-    //
-    // Perform that token lookup asynchronously. This permits other work to be done in
-    // parallel. The RefreshingOAuth2CredentialsInterceptor has internal locking that assures that
-    // the oauth2 token is loaded before the interceptor proceeds with any calls.
-    oauth2Interceptor.asyncRefresh();
+    oauth2Interceptor.syncRefresh();
+
     if (isDefaultCredentials) {
       defaultCredentialInterceptor = oauth2Interceptor;
     }

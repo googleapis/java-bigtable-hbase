@@ -28,7 +28,6 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -37,13 +36,11 @@ import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -133,13 +130,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
 
     CacheState getCacheState() {
-      long diff = actualExpirationTimeMs - clock.currentTimeMillis();
+      long now = clock.currentTimeMillis();
 
       if (!status.isOk()) {
         return CacheState.Exception;
-      } else if (diff <= TOKEN_EXPIRES_MS) {
+      } else if (actualExpirationTimeMs - TOKEN_EXPIRES_MS <= now) {
         return CacheState.Expired;
-      } else if (diff <= TOKEN_STALENESS_MS) {
+      } else if (actualExpirationTimeMs - TOKEN_STALENESS_MS <= now) {
         return CacheState.Stale;
       } else {
         return CacheState.Good;
@@ -188,8 +185,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
     // com.google.auth.oauth2.AppEngineCredentials is package private, so we don't have direct
     // visibility to it. This is a way to detect that this application runs on App Engine so that
-    // we can always get credentials synchronously, which must be done for AppEngineCredentials
-    // which relies on a ThreadLocal.
+    // we can always get credentials within the request time.
     this.isAppEngine = credentials.getClass().getName().contains("AppEngineCredentials");
   }
 
@@ -200,7 +196,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
-        HeaderCacheElement headerCache = getHeader();
+        HeaderCacheElement headerCache = getHeaderSafe();
 
         if (!headerCache.status.isOk()) {
           responseListener.onClose(headerCache.status, new Metadata());
@@ -223,18 +219,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * @throws IOException
    */
   ListenableFuture<HeaderCacheElement> asyncRefresh() {
-    if (isAppEngine) {
-      SettableFuture<HeaderCacheElement> f = SettableFuture.create();
-      try {
-        f.set(syncRefresh());
-      } catch (Exception e) {
-        f.setException(e);
-      }
-      return f;
-    }
-
     synchronized (this.isRefreshing) {
-      if (!this.isRefreshing.compareAndSet(false, true)) {
+      if (this.isRefreshing.compareAndSet(false, true)) {
         this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
@@ -257,78 +243,51 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * <p>syncRefresh.</p>
    */
   HeaderCacheElement syncRefresh() {
-    ListenableFuture<HeaderCacheElement> readerFuture = null;
-    SettableFuture<HeaderCacheElement> writerFuture = null;
-
-    // Check if another thread is already refreshing and set the appropriate future
-    synchronized (this.isRefreshing) {
-      if (this.isRefreshing.get()) {
-        readerFuture = this.futureToken;
-      }
-      else {
-        writerFuture = SettableFuture.create();
-        this.futureToken = writerFuture;
-        this.isRefreshing.set(true);
-      }
-    }
-
-    // Another thread is refreshing, return its future
-    if (readerFuture != null) {
-      try {
-        return readerFuture.get(250, TimeUnit.MILLISECONDS);
-      } catch (ExecutionException|TimeoutException|InterruptedException e) {
-        if (e instanceof InterruptedException) {
-          Thread.currentThread().interrupt();
-        }
-        return new HeaderCacheElement(
-            Status.UNAUTHENTICATED.withCause(e)
-        );
-      }
-    }
-
-    // No other thread is refreshing, refresh in this one
-    HeaderCacheElement result = refreshCredentialsWithRetry();
-    synchronized (this.isRefreshing) {
-      this.headerCache.set(result);
-      writerFuture.set(result);
-      this.futureToken = null;
-      isRefreshing.set(false);
-      return result;
+    try {
+      return asyncRefresh().get(250, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+            .withCause(e)
+      );
     }
   }
 
 
+  HeaderCacheElement getHeaderSafe() {
+    try {
+      return getHeader();
+    } catch(Exception e) {
+      return new HeaderCacheElement(
+        Status.UNAUTHENTICATED
+            .withDescription("Unexpected failure get auth token")
+            .withCause(e)
+    );
+  }
+
+}
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
   @VisibleForTesting
-  HeaderCacheElement getHeader()  {
+  HeaderCacheElement getHeader() throws ExecutionException, InterruptedException {
     HeaderCacheElement headerCache = this.headerCache.get();
     CacheState state = headerCache.getCacheState();
 
-    switch (state) {
-      case Good:
-        break;
-      case Stale:
-        asyncRefresh();
-        break;
-      case Expired:
-        headerCache = syncRefresh();
-        break;
-      case Exception:
-        asyncRefresh();
-        break;
-      default:
-        return new HeaderCacheElement(
-            Status.UNAUTHENTICATED
-              .withCause(new IllegalStateException("Could not process state: " + state))
-        );
+    if (state == CacheState.Good || state == CacheState.Exception) {
+      return headerCache;
+    } else if (!isAppEngine && state == CacheState.Stale) {
+      asyncRefresh();
+    } else if (state == CacheState.Expired) {
+        headerCache = asyncRefresh().get();
+    } else {
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+            .withCause(new IllegalStateException("Could not process state: " + state))
+      );
     }
-    return headerCache;
-  }
 
-  private static StatusRuntimeException asUnauthenticatedException(Exception e) {
-    return Status.UNAUTHENTICATED.withCause(e).asRuntimeException();
+    return headerCache;
   }
 
   /**
