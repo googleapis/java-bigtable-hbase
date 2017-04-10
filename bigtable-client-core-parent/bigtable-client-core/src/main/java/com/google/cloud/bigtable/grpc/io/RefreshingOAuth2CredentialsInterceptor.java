@@ -230,7 +230,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *
    * @throws IOException
    */
-  synchronized ListenableFuture<HeaderCacheElement> asyncRefresh() {
+  ListenableFuture<HeaderCacheElement> asyncRefresh() {
     if (isAppEngine) {
       SettableFuture<HeaderCacheElement> f = SettableFuture.create();
       try {
@@ -241,23 +241,24 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       return f;
     }
 
-    if (!this.isRefreshing.get()) {
-      isRefreshing.set(true);
-      this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
-        @Override
-        public HeaderCacheElement call() throws Exception {
-          HeaderCacheElement newToken = refreshCredentialsWithRetry();
+    synchronized (this.isRefreshing) {
+      if (!this.isRefreshing.compareAndSet(false, true)) {
+        this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
+          @Override
+          public HeaderCacheElement call() throws Exception {
+            HeaderCacheElement newToken = refreshCredentialsWithRetry();
 
-          synchronized (RefreshingOAuth2CredentialsInterceptor.this) {
-            headerCache.set(newToken);
-            futureToken = null;
-            isRefreshing.set(false);
+            synchronized (RefreshingOAuth2CredentialsInterceptor.this) {
+              headerCache.set(newToken);
+              futureToken = null;
+              isRefreshing.set(false);
+            }
+            return newToken;
           }
-          return newToken;
-        }
-      });
+        });
+      }
+      return this.futureToken;
     }
-    return this.futureToken;
   }
 
   /**
@@ -269,7 +270,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     ListenableFuture<HeaderCacheElement> readerFuture = null;
     SettableFuture<HeaderCacheElement> writerFuture = null;
 
-    synchronized (this) {
+    // Check if another thread is already refreshing and set the appropriate future
+    synchronized (this.isRefreshing) {
       if (this.isRefreshing.get()) {
         readerFuture = this.futureToken;
       }
@@ -280,6 +282,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       }
     }
 
+    // Another thread is refreshing, return its future
     if (readerFuture != null) {
       try {
         return readerFuture.get(250, TimeUnit.MILLISECONDS);
@@ -292,8 +295,9 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       }
     }
 
+    // No other thread is refreshing, refresh in this one
     HeaderCacheElement result = refreshCredentialsWithRetry();
-    synchronized (this) {
+    synchronized (this.isRefreshing) {
       this.headerCache.set(result);
       writerFuture.set(result);
       this.futureToken = null;
