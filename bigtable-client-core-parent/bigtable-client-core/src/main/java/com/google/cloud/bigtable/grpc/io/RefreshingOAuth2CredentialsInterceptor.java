@@ -19,7 +19,6 @@ import com.google.api.client.util.Clock;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -39,9 +38,9 @@ import io.grpc.Status;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.concurrent.GuardedBy;
 
 /**
  * Client interceptor that authenticates all calls by binding header data provided by a credential.
@@ -144,21 +143,27 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
 
-  @VisibleForTesting
-  final AtomicReference<HeaderCacheElement> headerCache = new AtomicReference<>(EMPTY_HEADER);
-
-  ListenableFuture<HeaderCacheElement> futureToken = null;
-
-  @VisibleForTesting
-  final AtomicBoolean isRefreshing = new AtomicBoolean(false);
-
   private final ListeningExecutorService executor;
-  private final boolean isAppEngine;
-
-  private OAuth2Credentials credentials;
 
   @VisibleForTesting
   final RateLimiter rateLimiter;
+
+  private final boolean isAppEngine;
+
+  private final OAuth2Credentials credentials;
+
+  final Object lock = new Object();
+
+  @VisibleForTesting
+  @GuardedBy("lock")
+  HeaderCacheElement headerCache = EMPTY_HEADER;
+
+  @GuardedBy("lock")
+  boolean refreshing = false;
+
+  @GuardedBy("lock")
+  private ListenableFuture<HeaderCacheElement> futureToken = null;
+
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
@@ -200,7 +205,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     };
   }
 
-  HeaderCacheElement getHeaderSafe() {
+  private HeaderCacheElement getHeaderSafe() {
     try {
       return getHeader();
     } catch (Exception e) {
@@ -215,31 +220,36 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
-  @VisibleForTesting
-  HeaderCacheElement getHeader() throws ExecutionException, InterruptedException {
-    HeaderCacheElement headerCache = this.headerCache.get();
-    CacheState state = headerCache.getCacheState();
+  private HeaderCacheElement getHeader() throws ExecutionException, InterruptedException {
+    final Future<HeaderCacheElement> deferredResult;
 
-    if (state == CacheState.Good || state == CacheState.Exception) {
-      return headerCache;
-      // AppEngine doesn't allow threads to outlive the request, so disable background refresh
-    } else if (!isAppEngine && state == CacheState.Stale) {
-      asyncRefresh();
-    } else if (state == CacheState.Expired) {
-      headerCache = asyncRefresh().get();
-    } else {
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-              .withCause(new IllegalStateException("Could not process state: " + state))
-      );
+    synchronized (lock) {
+      CacheState state = headerCache.getCacheState();
+
+      if (state == CacheState.Good || state == CacheState.Exception) {
+        return headerCache;
+        // AppEngine doesn't allow threads to outlive the request, so disable background refresh
+      } else if (!isAppEngine && state == CacheState.Stale) {
+        asyncRefresh();
+        return headerCache;
+      } else if (state == CacheState.Expired) {
+        // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
+        deferredResult = asyncRefresh();
+      } else {
+        return new HeaderCacheElement(
+            Status.UNAUTHENTICATED
+                .withCause(new IllegalStateException("Could not process state: " + state))
+        );
+      }
     }
-
-    return headerCache;
+    return deferredResult.get();
   }
 
   /**
    * Refresh the credentials and block. Will return an error if the credentials haven't
-   * been refreshed
+   * been refreshed.
+   *
+   * This method should not be called while holding the refresh lock
    */
   HeaderCacheElement syncRefresh() {
     try {
@@ -257,44 +267,62 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * there isn't a currently running asynchronous refresh.
    */
   ListenableFuture<HeaderCacheElement> asyncRefresh() {
-    synchronized (this.isRefreshing) {
-      if (this.isRefreshing.compareAndSet(false, true)) {
+    synchronized (lock) {
+      if (refreshing) {
+        return futureToken;
+      }
+      refreshing = true;
+
+      try {
         this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
             HeaderCacheElement newToken = refreshCredentials();
-
-            synchronized (isRefreshing) {
-              // Update the token only if the new token is good or the old token is bad
-              boolean newTokenOk = newToken.getCacheState() == CacheState.Good || newToken.getCacheState() == CacheState.Stale;
-              CacheState oldCacheState = headerCache.get().getCacheState();
-              boolean oldTokenOk = oldCacheState == CacheState.Good || oldCacheState == CacheState.Stale;
-              if (newTokenOk || !oldTokenOk) {
-                headerCache.set(newToken);
-              }
-
-              futureToken = null;
-              isRefreshing.set(false);
-            }
-            return newToken;
+            return updateToken(newToken);
           }
         });
+      } catch (RuntimeException e) {
+        refreshing = false;
+        throw e;
       }
+
       return this.futureToken;
+    }
+  }
+
+  private HeaderCacheElement updateToken(HeaderCacheElement newToken) {
+    synchronized (lock) {
+      try {
+        // Update the token only if the new token is good or the old token is bad
+        CacheState newState = newToken.getCacheState();
+        boolean newTokenOk = newState == CacheState.Good || newState == CacheState.Stale;
+        CacheState oldCacheState = headerCache.getCacheState();
+        boolean oldTokenOk = oldCacheState == CacheState.Good || oldCacheState == CacheState.Stale;
+
+        if (newTokenOk || !oldTokenOk) {
+          headerCache = newToken;
+        } else {
+          LOG.warn("Failed to refresh the access token. Falling back to existing token. "
+              + "New token state: {}, status: {}", newState, newToken.status);
+        }
+        return headerCache;
+      } finally {
+        futureToken = null;
+        refreshing = false;
+      }
     }
   }
 
   /**
    * Calls {@link com.google.auth.oauth2.OAuth2Credentials#refreshAccessToken()}.
    *
-   * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken}
-   * or an exception.
+   * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
    */
   protected HeaderCacheElement refreshCredentials() {
     if (!rateLimiter.tryAcquire()) {
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
-            .withDescription("Too many attempts to authenticate")
+              .withDescription("Authentication rate limit has been exceeded, failing fast")
       );
     }
 
@@ -311,16 +339,22 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       );
     }
   }
+
   void revokeUnauthToken(HeaderCacheElement oldToken) {
-    synchronized (isRefreshing) {
-      headerCache.compareAndSet(oldToken, EMPTY_HEADER);
+    synchronized (lock) {
+      if (headerCache == oldToken) {
+        headerCache = EMPTY_HEADER;
+      } else {
+        LOG.info("Skipping revoke, since the revoked token has already changed");
+      }
     }
   }
 
   class UnAuthResponseListener<RespT> extends SimpleForwardingClientCallListener<RespT> {
+
     private final HeaderCacheElement origToken;
 
-    public UnAuthResponseListener(Listener<RespT> delegate, HeaderCacheElement origToken) {
+    UnAuthResponseListener(Listener<RespT> delegate, HeaderCacheElement origToken) {
       super(delegate);
       this.origToken = origToken;
     }
@@ -328,6 +362,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     @Override
     public void onClose(Status status, Metadata trailers) {
       if (status == Status.UNAUTHENTICATED) {
+        LOG.warn("Got unauthenticated response from server, revoking the current token");
         revokeUnauthToken(origToken);
       }
       super.onClose(status, trailers);

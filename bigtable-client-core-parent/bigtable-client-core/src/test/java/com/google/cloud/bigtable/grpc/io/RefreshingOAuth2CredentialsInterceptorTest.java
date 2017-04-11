@@ -82,21 +82,21 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   @Test
   public void testSyncRefresh() throws IOException {
     initialize(HeaderCacheElement.TOKEN_STALENESS_MS + 1);
-    Assert.assertEquals(CacheState.Good, underTest.headerCache.get().getCacheState());
+    Assert.assertEquals(CacheState.Good, underTest.headerCache.getCacheState());
   }
 
   @Test
   public void testStaleAndExpired() throws IOException {
     int expiration = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
     initialize(expiration);
-    Assert.assertEquals(CacheState.Good, underTest.headerCache.get().getCacheState());
+    Assert.assertEquals(CacheState.Good, underTest.headerCache.getCacheState());
     long startTime = 2L;
     setTimeInMillieconds(startTime);
-    Assert.assertEquals(CacheState.Stale, underTest.headerCache.get().getCacheState());
+    Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
     long expiredStaleDiff =
         HeaderCacheElement.TOKEN_STALENESS_MS - HeaderCacheElement.TOKEN_EXPIRES_MS;
     setTimeInMillieconds(startTime + expiredStaleDiff);
-    Assert.assertEquals(CacheState.Expired, underTest.headerCache.get().getCacheState());
+    Assert.assertEquals(CacheState.Expired, underTest.headerCache.getCacheState());
   }
 
   @Test
@@ -158,15 +158,17 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
-    Assert.assertEquals(CacheState.Expired, underTest.headerCache.get().getCacheState());
+    Assert.assertEquals(CacheState.Expired, underTest.headerCache.getCacheState());
 
     syncCall(lock, syncRefreshCallable);
 
     // Check to make sure that the AccessToken was retrieved.
-    Assert.assertEquals(CacheState.Stale, underTest.headerCache.get().getCacheState());
+    Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
 
     // Check to make sure we're no longer refreshing.
-    Assert.assertFalse(underTest.isRefreshing.get());
+    synchronized (underTest.lock) {
+      Assert.assertFalse(underTest.refreshing);
+    }
 
     // Kick off a couple of asynchronous refreshes. Kicking off more than one shouldn't be
     // necessary, but also should not be harmful, since there are likely to be multiple concurrent
@@ -176,7 +178,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     underTest.asyncRefresh();
 
     syncCall(lock, syncRefreshCallable);
-    Assert.assertFalse(underTest.isRefreshing.get());
+    Assert.assertFalse(underTest.refreshing);
   }
 
   private void syncCall(final Object lock, Callable<Void> syncRefreshCallable)
@@ -189,11 +191,14 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     } catch (TimeoutException ignored) {
     }
 
+
     // There should be a single thread kicked off by the underTest.asyncRefresh() calls about
     // actually doing a refresh at this point; the other ones will have see that a refresh is in
     // progress and finish the invocation of the Thread without performing a refres().. Make sure
     // that at least 1 refresh process is in progress.
-    Assert.assertTrue(underTest.isRefreshing.get());
+    synchronized (underTest.lock) {
+      Assert.assertTrue(underTest.refreshing);
+    }
 
     synchronized(lock) {
       lock.notifyAll();
