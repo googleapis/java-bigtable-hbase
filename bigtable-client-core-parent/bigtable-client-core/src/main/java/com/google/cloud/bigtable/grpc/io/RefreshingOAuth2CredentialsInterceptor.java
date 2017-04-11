@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import com.google.api.client.util.Clock;
-import com.google.api.client.util.Sleeper;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
@@ -30,8 +29,10 @@ import com.google.common.util.concurrent.RateLimiter;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -151,9 +152,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @VisibleForTesting
   final AtomicBoolean isRefreshing = new AtomicBoolean(false);
 
-  @VisibleForTesting
-  Sleeper sleeper = Sleeper.DEFAULT;
-
   private final ListeningExecutorService executor;
   private final Logger logger;
   private final boolean isAppEngine;
@@ -161,7 +159,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private OAuth2Credentials credentials;
 
   @VisibleForTesting
-  RateLimiter rateLimiter;
+  final RateLimiter rateLimiter;
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
@@ -205,7 +203,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
         headers.put(AUTHORIZATION_HEADER_KEY, headerCache.header);
 
-        delegate().start(responseListener, headers);
+        delegate().start(new UnAuthResponseListener<>(responseListener, headerCache), headers);
       }
     };
   }
@@ -319,6 +317,28 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
               .withDescription("Unexpected error trying to authenticate")
               .withCause(e)
       );
+    }
+  }
+  void revokeUnauthToken(HeaderCacheElement oldToken) {
+    synchronized (isRefreshing) {
+      headerCache.compareAndSet(oldToken, EMPTY_HEADER);
+    }
+  }
+
+  class UnAuthResponseListener<RespT> extends SimpleForwardingClientCallListener<RespT> {
+    private final HeaderCacheElement origToken;
+
+    public UnAuthResponseListener(Listener<RespT> delegate, HeaderCacheElement origToken) {
+      super(delegate);
+      this.origToken = origToken;
+    }
+
+    @Override
+    public void onClose(Status status, Metadata trailers) {
+      if (status == Status.UNAUTHENTICATED) {
+        revokeUnauthToken(origToken);
+      }
+      super.onClose(status, trailers);
     }
   }
 }
