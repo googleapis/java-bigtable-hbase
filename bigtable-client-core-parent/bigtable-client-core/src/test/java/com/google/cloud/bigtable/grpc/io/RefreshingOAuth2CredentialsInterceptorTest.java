@@ -16,27 +16,15 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
-import com.google.api.client.util.NanoClock;
-import com.google.api.client.util.Sleeper;
 import com.google.appengine.repackaged.com.google.common.util.concurrent.Futures;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.config.RetryOptions.Builder;
-import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.HeaderCacheElement;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.RateLimiter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -46,7 +34,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.hamcrest.core.StringContains;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -81,24 +68,9 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   @Mock
   private OAuth2Credentials credentials;
 
-  @Mock
-  private NanoClock nanoClock;
-
-  @Mock
-  private Logger logger;
-
-  private RetryOptions retryOptions;
-
   @Before
   public void setupMocks() {
     MockitoAnnotations.initMocks(this);
-    when(nanoClock.nanoTime()).then(new Answer<Long>() {
-      @Override
-      public Long answer(InvocationOnMock invocation) throws Throwable {
-        return getTimeInMilliseconds() * 1000000;
-      }
-    });
-    retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
     setTimeInMillieconds(0L);
   }
 
@@ -109,10 +81,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         return timeMs;
       }
     };
-  }
-
-  private long getTimeInMilliseconds() {
-    return RefreshingOAuth2CredentialsInterceptor.clock.currentTimeMillis();
   }
 
   @Test
@@ -136,42 +104,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   }
 
   @Test
-  public void testRetriesExhausted() throws Exception {
-    IOException ioException = new IOException("something bad happend");
-    Mockito.when(credentials.refreshAccessToken()).thenThrow(ioException);
-    final int startTime = 100000000;
-    setTimeInMillieconds(startTime);
-    final int maxElaspedBackoffMillis = retryOptions.getMaxElaspedBackoffMillis();
-    final int max_end = startTime + maxElaspedBackoffMillis * 10;
-
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        retryOptions, logger);
-
-    underTest.sleeper = new Sleeper() {
-      @Override
-      public void sleep(long ms) throws InterruptedException {
-        long now = getTimeInMilliseconds() + ms;
-        setTimeInMillieconds(now);
-        // Make sure that the system "slept" for more than the retryOption max millis. The Backoff logic
-        // adds some random variability to the exact elapsed time, so add in a bit of wiggle room.
-        Assert.assertTrue(String.format("%d > %d", now, max_end), now < max_end);
-      }
-    };
-    HeaderCacheElement header = underTest.refreshCredentialsWithRetry();
-
-    Assert.assertNull(header.header);
-    Assert.assertSame(ioException, header.status.getCause());
-
-    // Make sure that the system "slept" for more than the retryOption max millis. The Backoff logic
-    // adds some random variability to the exact elapsed time, so add in a bit of wiggle room.
-    long timeInMillis = getTimeInMilliseconds();
-    Assert.assertTrue(timeInMillis > startTime + maxElaspedBackoffMillis);
-
-    verify(logger, atLeast(1)).warn(any(String.class), eq(ioException));
-    verify(credentials, atLeast(2)).refreshAccessToken();
-  }
-
-  @Test
   public void testNullExpiration() {
     setTimeInMillieconds(100);
     HeaderCacheElement element = new HeaderCacheElement(new AccessToken("", null));
@@ -184,14 +116,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Test
   public void testRefreshAfterFailure() throws Exception {
-    RetryOptions mockRetryOptions = Mockito.mock(RetryOptions.class);
-    BackOff mockBackOff = Mockito.mock(BackOff.class);
-
-    when(mockRetryOptions.createBackoff()).thenReturn(mockBackOff);
-    when(mockBackOff.nextBackOffMillis()).thenReturn(BackOff.STOP);
-
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        mockRetryOptions);
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
+    underTest.rateLimiter.setRate(100000);
 
     final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
 
@@ -216,8 +142,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Test
   public void testRefreshAfterStale() throws Exception {
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        retryOptions);
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
+    underTest.rateLimiter.setRate(100000);
 
     final AccessToken staleToken = new AccessToken("stale", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
     AccessToken goodToken = new AccessToken("good", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 11));
@@ -302,8 +228,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     };
 
     underTest =
-        new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-            new RetryOptions.Builder().build());
+        new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
+    underTest.rateLimiter.setRate(100000);
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
@@ -357,8 +283,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   private void initialize(long expiration) throws IOException {
     Mockito.when(credentials.refreshAccessToken()).thenReturn(
         new AccessToken("", new Date(expiration)));
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        retryOptions, logger);
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
     underTest.syncRefresh();
   }
 }
