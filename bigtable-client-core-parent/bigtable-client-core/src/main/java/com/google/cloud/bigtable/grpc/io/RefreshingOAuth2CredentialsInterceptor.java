@@ -25,8 +25,10 @@ import com.google.common.util.concurrent.RateLimiter;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -194,7 +196,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
         headers.put(AUTHORIZATION_HEADER_KEY, headerCache.header);
 
-        delegate().start(responseListener, headers);
+        delegate().start(new UnAuthResponseListener<>(responseListener, headerCache), headers);
       }
     };
   }
@@ -330,7 +332,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
-              .withDescription("Too many attempts to authenticate")
+              .withDescription("Authentication rate limit has been exceeded, failing fast")
       );
     }
 
@@ -345,6 +347,35 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
               .withDescription("Unexpected error trying to authenticate")
               .withCause(e)
       );
+    }
+  }
+
+  private void revokeUnauthToken(HeaderCacheElement oldToken) {
+    synchronized (lock) {
+      if (headerCache == oldToken) {
+        headerCache = EMPTY_HEADER;
+      } else {
+        LOG.info("Skipping revoke, since the revoked token has already changed");
+      }
+    }
+  }
+
+  class UnAuthResponseListener<RespT> extends SimpleForwardingClientCallListener<RespT> {
+
+    private final HeaderCacheElement origToken;
+
+    UnAuthResponseListener(Listener<RespT> delegate, HeaderCacheElement origToken) {
+      super(delegate);
+      this.origToken = origToken;
+    }
+
+    @Override
+    public void onClose(Status status, Metadata trailers) {
+      if (status == Status.UNAUTHENTICATED) {
+        LOG.warn("Got unauthenticated response from server, revoking the current token");
+        revokeUnauthToken(origToken);
+      }
+      super.onClose(status, trailers);
     }
   }
 }

@@ -241,7 +241,9 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
 
     // Check to make sure we're no longer refreshing.
-    Assert.assertFalse(underTest.isRefreshing);
+    synchronized (underTest.lock) {
+      Assert.assertFalse(underTest.isRefreshing);
+    }
 
     // Kick off a couple of asynchronous refreshes. Kicking off more than one shouldn't be
     // necessary, but also should not be harmful, since there are likely to be multiple concurrent
@@ -268,7 +270,9 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // actually doing a refresh at this point; the other ones will have see that a refresh is in
     // progress and finish the invocation of the Thread without performing a refres().. Make sure
     // that at least 1 refresh process is in progress.
-    Assert.assertTrue(underTest.isRefreshing);
+    synchronized (underTest.lock) {
+      Assert.assertTrue(underTest.isRefreshing);
+    }
 
     synchronized (lock) {
       lock.notifyAll();
