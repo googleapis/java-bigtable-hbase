@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.grpc.io;
 import com.google.api.client.util.Clock;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.HeaderCacheElement;
 import java.io.IOException;
@@ -64,9 +63,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Mock
   private OAuth2Credentials credentials;
-
-  @Mock
-  private Logger logger;
 
   @Before
   public void setupMocks() {
@@ -157,7 +153,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     };
 
     underTest =
-        new RefreshingOAuth2CredentialsInterceptor(executorService, credentials, logger);
+        new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
     underTest.rateLimiter.setRate(10);
 
     // At this point, the access token wasn't retrieved yet. The
@@ -212,7 +208,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   private void initialize(long expiration) throws IOException {
     Mockito.when(credentials.refreshAccessToken()).thenReturn(
       new AccessToken("", new Date(expiration)));
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials, logger);
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
     underTest.syncRefresh();
   }
 }

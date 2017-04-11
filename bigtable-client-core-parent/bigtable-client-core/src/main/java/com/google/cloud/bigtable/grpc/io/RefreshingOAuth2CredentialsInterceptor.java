@@ -153,7 +153,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   final AtomicBoolean isRefreshing = new AtomicBoolean(false);
 
   private final ListeningExecutorService executor;
-  private final Logger logger;
   private final boolean isAppEngine;
 
   private OAuth2Credentials credentials;
@@ -169,15 +168,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler,
       OAuth2Credentials credentials) {
-    this(scheduler, credentials, LOG);
-  }
-
-  @VisibleForTesting
-  RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials,
-      Logger logger) {
     this.executor = MoreExecutors.listeningDecorator(Preconditions.checkNotNull(scheduler));
     this.credentials = Preconditions.checkNotNull(credentials);
-    this.logger = Preconditions.checkNotNull(logger);
 
     // From MoreExecutors
     this.isAppEngine = System.getProperty("com.google.appengine.runtime.environment") != null;
@@ -307,11 +299,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
 
     try {
-      logger.info("Refreshing the OAuth token");
+      LOG.info("Refreshing the OAuth token");
       AccessToken newToken = credentials.refreshAccessToken();
       return new HeaderCacheElement(newToken);
     } catch (Exception e) {
-      logger.warn("Got an unexpected exception while trying to refresh google credentials.", e);
+      LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
               .withDescription("Unexpected error trying to authenticate")
