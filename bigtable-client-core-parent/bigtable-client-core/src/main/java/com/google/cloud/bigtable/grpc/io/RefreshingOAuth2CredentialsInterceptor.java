@@ -82,7 +82,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
   private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
-    "Authorization", Metadata.ASCII_STRING_MARSHALLER);
+      "Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
   @VisibleForTesting
   static Clock clock = Clock.SYSTEM;
@@ -90,17 +90,18 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   @VisibleForTesting
   static class HeaderCacheElement {
+
     /**
      * This specifies how far in advance of a header expiration do we consider the token stale. The
      * Stale state indicates that the interceptor needs to do an asynchronous refresh.
      */
-    public static final int TOKEN_STALENESS_MS = 75 * 1000;
+    static final int TOKEN_STALENESS_MS = 75 * 1000;
 
     /**
      * After the token is "expired," the interceptor blocks gRPC calls. The Expired state indicates
      * that the interceptor needs to do a synchronous refresh.
      */
-    public static final int TOKEN_EXPIRES_MS = 15 * 1000;
+    static final int TOKEN_EXPIRES_MS = 15 * 1000;
 
     final IOException exception;
     final String header;
@@ -109,13 +110,15 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
      * Defines the amount of time in ms when the header is considered "stale" and should be
      * refreshed in the near future. A {@code null} value means that the header does not become stale.
      */
-    final @Nullable Long staleTimeMs;
+    @Nullable
+    final Long staleTimeMs;
 
     /**
      * Defines the amount of time in ms when the header is considered "expired" and must be
      * refreshed. A {@code null} value means that the header does not expire.
      */
-    final @Nullable Long expiresTimeMs;
+    @Nullable
+    final Long expiresTimeMs;
 
     public HeaderCacheElement(AccessToken token) {
       this.exception = null;
@@ -169,11 +172,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private final Logger logger;
   private final boolean isAppEngine;
 
-  private OAuth2Credentials credentials;
+  private final OAuth2Credentials credentials;
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
-   *  @param scheduler a {@link ExecutorService} object.
+   *
+   * @param scheduler a {@link ExecutorService} object.
    * @param credentials a {@link OAuth2Credentials} object.
    * @param retryOptions a {@link RetryOptions} object.
    */
@@ -197,7 +201,9 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     this.isAppEngine = credentials.getClass().getName().contains("AppEngineCredentials");
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
       CallOptions callOptions, Channel next) {
@@ -212,29 +218,35 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   /**
-   * Refreshes the OAuth2 token asynchronously. This method will only start an async refresh if
-   * there isn't a currently running asynchronous refresh or the credentials are for App Engine.
-   * App Engine has some credentials related state in a {@link ThreadLocal} which prevents it from
-   * running asynchronously. In the App Engine case, this method will defer to
-   * {@link #syncRefresh()}.
-   *
-   * @throws IOException
+   * Get the http credential header we need from a new oauth2 AccessToken.
    */
-  public void asyncRefresh() throws IOException {
-    if (isAppEngine) {
-      syncRefresh();
-    } else if (canRefresh()) {
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          doRefresh();
-        }
-      });
+  @VisibleForTesting
+  String getHeader() {
+    HeaderCacheElement headerCache;
+    try {
+      headerCache = getCachedHeader();
+      CacheState state = getCacheState(headerCache);
+      switch (state) {
+        case Good:
+          break;
+        case Stale:
+          asyncRefresh();
+          break;
+        case Expired:
+          syncRefresh();
+          headerCache = getCachedHeader();
+          break;
+        case Exception:
+          asyncRefresh();
+          throw asUnauthenticatedException(headerCache.exception);
+        default:
+          throw asUnauthenticatedException(
+              new IllegalStateException("Could not process state: " + state));
+      }
+    } catch (IOException e) {
+      throw asUnauthenticatedException(e);
     }
-  }
-
-  private boolean canRefresh() {
-    return !isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good;
+    return headerCache.header;
   }
 
   /**
@@ -260,35 +272,27 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   /**
-   * Get the http credential header we need from a new oauth2 AccessToken.
+   * Refreshes the OAuth2 token asynchronously. This method will only start an async refresh if
+   * there isn't a currently running asynchronous refresh or the credentials are for App Engine.
+   * App Engine has some credentials related state in a {@link ThreadLocal} which prevents it from
+   * running asynchronously. In the App Engine case, this method will defer to
+   * {@link #syncRefresh()}.
    */
-  @VisibleForTesting
-  String getHeader()  {
-    HeaderCacheElement headerCache;
-    try {
-      headerCache = getCachedHeader();
-      CacheState state = getCacheState(headerCache);
-      switch (state) {
-        case Good:
-          break;
-        case Stale:
-          asyncRefresh();
-          break;
-        case Expired:
-          syncRefresh();
-          headerCache = getCachedHeader();
-          break;
-        case Exception:
-          asyncRefresh();
-          throw asUnauthenticatedException(headerCache.exception);
-        default:
-          throw asUnauthenticatedException(
-              new IllegalStateException("Could not process state: " + state));
-      }
-    } catch(IOException e) {
-      throw asUnauthenticatedException(e);
+  public void asyncRefresh() throws IOException {
+    if (isAppEngine) {
+      syncRefresh();
+    } else if (canRefresh()) {
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          doRefresh();
+        }
+      });
     }
-    return headerCache.header;
+  }
+
+  private boolean canRefresh() {
+    return !isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good;
   }
 
   private static StatusRuntimeException asUnauthenticatedException(Exception e) {
@@ -347,12 +351,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * <li>An OAuth request was completed. If the value is null, return an exception.
    * <li>A non-IOException Exception is thrown - return an error status
    * <li>All retries have been exhausted, i.e. when the Backoff.nextBackOffMillis() returns
-   *     BackOff.STOP
+   * BackOff.STOP
    * <li>An interrupt occurs.
    * </ol>
    *
-   * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken}
-   *     or an exception.
+   * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
    */
   protected HeaderCacheElement refreshCredentialsWithRetry() {
     final BackOff backoff = retryOptions.createBackoff();
@@ -384,8 +387,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *
    * @param backoff a {@link com.google.api.client.util.BackOff} object.
    * @return RetryState indicating the current state of the retry logic.
-   * @throws java.io.IOException in some cases from {@link
-   *     com.google.api.client.util.BackOff#nextBackOffMillis()}
    */
   protected RetryState getRetryState(BackOff backoff) {
     final long nextBackOffMillis;
