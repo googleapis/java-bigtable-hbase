@@ -194,11 +194,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     this.retryOptions = Preconditions.checkNotNull(retryOptions);
     this.logger = Preconditions.checkNotNull(logger);
 
-    // com.google.auth.oauth2.AppEngineCredentials is package private, so we don't have direct
-    // visibility to it. This is a way to detect that this application runs on App Engine so that
-    // we can always get credentials synchronously, which must be done for AppEngineCredentials
-    // which relies on a ThreadLocal.
-    this.isAppEngine = credentials.getClass().getName().contains("AppEngineCredentials");
+    // From MoreExecutors
+    this.isAppEngine = System.getProperty("com.google.appengine.runtime.environment") != null;
   }
 
   /**
