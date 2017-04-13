@@ -54,7 +54,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 
-
 @RunWith(JUnit4.class)
 public class RefreshingOAuth2CredentialsInterceptorTest {
 
@@ -113,7 +112,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   public void testSyncRefresh() throws IOException {
     initialize(HeaderCacheElement.TOKEN_STALENESS_MS + 1);
     Assert.assertEquals(CacheState.Good,
-      RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
   }
 
   @Test
@@ -121,16 +120,16 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     int expiration = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
     initialize(expiration);
     Assert.assertEquals(CacheState.Good,
-      RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
     long startTime = 2L;
     setTimeInMillieconds(startTime);
     Assert.assertEquals(CacheState.Stale,
-      RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
     long expiredStaleDiff =
         HeaderCacheElement.TOKEN_STALENESS_MS - HeaderCacheElement.TOKEN_EXPIRES_MS;
     setTimeInMillieconds(startTime + expiredStaleDiff);
     Assert.assertEquals(CacheState.Expired,
-      RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
   }
 
   @Test
@@ -170,7 +169,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   }
 
   @Test
-  public void testNullExpiration(){
+  public void testNullExpiration() {
     setTimeInMillieconds(100);
     HeaderCacheElement element = new HeaderCacheElement(new AccessToken("", null));
     Assert.assertNull(element.expiresTimeMs);
@@ -231,13 +230,13 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
     Assert.assertEquals(CacheState.Expired,
-      RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
 
     syncCall(lock, syncRefreshCallable);
 
     // Check to make sure that the AccessToken was retrieved.
     Assert.assertEquals(CacheState.Stale,
-      RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
 
     // Check to make sure we're no longer refreshing.
     Assert.assertFalse(underTest.isRefreshing.get());
@@ -269,7 +268,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // that at least 1 refresh process is in progress.
     Assert.assertTrue(underTest.isRefreshing.get());
 
-    synchronized(lock) {
+    synchronized (lock) {
       lock.notifyAll();
     }
 
@@ -281,7 +280,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   private void initialize(long expiration) throws IOException {
     Mockito.when(credentials.refreshAccessToken()).thenReturn(
-      new AccessToken("", new Date(expiration)));
+        new AccessToken("", new Date(expiration)));
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
         retryOptions, logger);
     Assert.assertTrue(underTest.doRefresh());

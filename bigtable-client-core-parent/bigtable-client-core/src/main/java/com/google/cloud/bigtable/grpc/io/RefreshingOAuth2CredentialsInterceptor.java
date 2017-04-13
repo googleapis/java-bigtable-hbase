@@ -158,21 +158,22 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
   }
 
+  private final Logger logger;
+  private final ExecutorService executor;
+  @VisibleForTesting
+  Sleeper sleeper = Sleeper.DEFAULT;
+
+  private final RetryOptions retryOptions;
+  private final boolean isAppEngine;
+
+  private final OAuth2Credentials credentials;
+
   @VisibleForTesting
   final AtomicReference<HeaderCacheElement> headerCache = new AtomicReference<>();
 
   @VisibleForTesting
   final AtomicBoolean isRefreshing = new AtomicBoolean(false);
-
-  @VisibleForTesting
-  Sleeper sleeper = Sleeper.DEFAULT;
-
-  private final ExecutorService executor;
-  private final RetryOptions retryOptions;
-  private final Logger logger;
-  private final boolean isAppEngine;
-
-  private final OAuth2Credentials credentials;
+  
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
