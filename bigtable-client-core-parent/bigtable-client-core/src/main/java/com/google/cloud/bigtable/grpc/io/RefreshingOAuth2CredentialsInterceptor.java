@@ -306,7 +306,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     try {
       HeaderCacheElement cacheElement = refreshCredentialsWithRetry();
       synchronized (isRefreshing) {
-        headerCache.set(cacheElement);
+        updateToken(cacheElement);
       }
     } finally {
       synchronized (isRefreshing) {
@@ -315,6 +315,23 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       }
     }
     return true;
+  }
+
+  private HeaderCacheElement updateToken(HeaderCacheElement newToken) {
+    // Update the token only if the new token is good or the old token is bad
+    CacheState newState = newToken.getCacheState();
+    boolean newTokenOk = newState == CacheState.Good || newState == CacheState.Stale;
+    CacheState oldCacheState = getCacheState(headerCache.get());
+    boolean oldTokenOk = oldCacheState == CacheState.Good || oldCacheState == CacheState.Stale;
+
+    if (newTokenOk || !oldTokenOk) {
+      headerCache.set(newToken);
+      return newToken;
+    } else {
+      LOG.warn("Failed to refresh the access token. Falling back to existing token. "
+          + "New token state: {}", newState);
+      return headerCache.get();
+    }
   }
 
   /**

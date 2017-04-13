@@ -172,8 +172,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   public void testNullExpiration() {
     setTimeInMillieconds(100);
     HeaderCacheElement element = new HeaderCacheElement(new AccessToken("", null));
-    Assert.assertNull(element.expiresTimeMs);
-    Assert.assertNull(element.staleTimeMs);
     Assert.assertEquals(CacheState.Good, element.getCacheState());
 
     // Make sure that the header doesn't expire in the distant future.
