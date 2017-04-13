@@ -120,7 +120,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     @Nullable
     final Long expiresTimeMs;
 
-    public HeaderCacheElement(AccessToken token) {
+    HeaderCacheElement(AccessToken token) {
       this.exception = null;
       this.header = "Bearer " + token.getTokenValue();
       Date expirationTime = token.getExpirationTime();
@@ -136,14 +136,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       }
     }
 
-    public HeaderCacheElement(IOException exception) {
+    HeaderCacheElement(IOException exception) {
       this.exception = exception;
       this.header = null;
       this.staleTimeMs = null;
       this.expiresTimeMs = null;
     }
 
-    public CacheState getCacheState() {
+    CacheState getCacheState() {
       if (exception != null) {
         return CacheState.Exception;
       }
@@ -252,7 +252,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *
    * @throws java.io.IOException if any.
    */
-  public void syncRefresh() throws IOException {
+  void syncRefresh() throws IOException {
     synchronized (isRefreshing) {
       if (!isRefreshing.get()) {
         doRefresh();
@@ -276,7 +276,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * running asynchronously. In the App Engine case, this method will defer to
    * {@link #syncRefresh()}.
    */
-  public void asyncRefresh() throws IOException {
+  void asyncRefresh() throws IOException {
     if (isAppEngine) {
       syncRefresh();
     } else if (canRefresh()) {
@@ -355,7 +355,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *
    * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
    */
-  protected HeaderCacheElement refreshCredentialsWithRetry() {
+  HeaderCacheElement refreshCredentialsWithRetry() {
     final BackOff backoff = retryOptions.createBackoff();
 
     while (true) {
@@ -386,7 +386,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * @param backoff a {@link com.google.api.client.util.BackOff} object.
    * @return RetryState indicating the current state of the retry logic.
    */
-  protected RetryState getRetryState(BackOff backoff) {
+  RetryState getRetryState(BackOff backoff) {
     final long nextBackOffMillis;
     try {
       nextBackOffMillis = backoff.nextBackOffMillis();
