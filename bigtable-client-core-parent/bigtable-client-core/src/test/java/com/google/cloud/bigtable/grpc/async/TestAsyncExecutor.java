@@ -63,14 +63,14 @@ public class TestAsyncExecutor {
   private ListenableFuture future;
 
   private AsyncExecutor underTest;
-  private OperationAccountant rpcThrottler;
+  private OperationAccountant operationAccountant;
   private List<FutureCallback<?>> callbacks;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     callbacks = new ArrayList<>();
-    rpcThrottler = new OperationAccountant(new ResourceLimiter(1000, 10)) {
+    operationAccountant = new OperationAccountant(new ResourceLimiter(1000, 10)) {
       @Override
       public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, long id) {
         FutureCallback<T> callback = super.addCallback(future, id);
@@ -81,48 +81,48 @@ public class TestAsyncExecutor {
       }
     };
 
-    underTest = new AsyncExecutor(client, rpcThrottler);
+    underTest = new AsyncExecutor(client, operationAccountant);
   }
 
   @Test
   public void testNoMutation() {
-    Assert.assertTrue(rpcThrottler.isFlushed());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
   public void testMutation() throws InterruptedException {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
     underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-    Assert.assertFalse(rpcThrottler.isFlushed());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
     completeCall();
-    Assert.assertTrue(rpcThrottler.isFlushed());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
   public void testCheckAndMutate() throws InterruptedException {
     when(client.checkAndMutateRowAsync(any(CheckAndMutateRowRequest.class))).thenReturn(future);
     underTest.checkAndMutateRowAsync(CheckAndMutateRowRequest.getDefaultInstance());
-    Assert.assertFalse(rpcThrottler.isFlushed());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
     completeCall();
-    Assert.assertTrue(rpcThrottler.isFlushed());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
   public void testReadWriteModify() throws InterruptedException {
     when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(future);
     underTest.readModifyWriteRowAsync(ReadModifyWriteRowRequest.getDefaultInstance());
-    Assert.assertFalse(rpcThrottler.isFlushed());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
     completeCall();
-    Assert.assertTrue(rpcThrottler.isFlushed());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
   public void testReadRowsAsync() throws InterruptedException {
     when(client.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(future);
     underTest.readRowsAsync(ReadRowsRequest.getDefaultInstance());
-    Assert.assertFalse(rpcThrottler.isFlushed());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
     completeCall();
-    Assert.assertTrue(rpcThrottler.isFlushed());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
@@ -133,7 +133,7 @@ public class TestAsyncExecutor {
     } catch(Exception ignored) {
     }
     completeCall();
-    Assert.assertTrue(rpcThrottler.isFlushed());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test

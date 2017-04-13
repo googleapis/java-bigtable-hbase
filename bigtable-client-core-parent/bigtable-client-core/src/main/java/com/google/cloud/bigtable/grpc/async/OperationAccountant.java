@@ -212,6 +212,23 @@ public class OperationAccountant {
     return resourceLimiter.getMaxHeapSize();
   }
 
+
+  /**
+   * <p>
+   * hasInflightRequests.
+   * </p>
+   * @return true if there are any outstanding requests being tracked by this
+   *         {@link OperationAccountant}
+   */
+  public boolean hasInflightOperations() {
+    lock.lock();
+    try {
+      return !isFlushed();
+    } finally {
+      lock.unlock();
+    }
+  }
+
   /**
    * <p>
    * isFlushed.
@@ -219,8 +236,7 @@ public class OperationAccountant {
    * @return true if there are no outstanding requests being tracked by this
    *         {@link OperationAccountant}
    */
-  @VisibleForTesting
-  boolean isFlushed() {
+  private boolean isFlushed() {
     return operations.isEmpty() && complexOperations.isEmpty();
   }
 

@@ -61,8 +61,8 @@ import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.OperationAccountant;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -108,8 +108,8 @@ public class TestBigtableBufferedMutator {
             new Answer<AsyncExecutor>() {
               @Override
               public AsyncExecutor answer(InvocationOnMock invocation) throws Throwable {
-                RpcThrottler rpcThrottler =
-                    new RpcThrottler(new ResourceLimiter(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT,
+                OperationAccountant operationAccountant =
+                    new OperationAccountant(new ResourceLimiter(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT,
                       BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT)) {
                   @Override
                   public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, long id) {
@@ -119,7 +119,7 @@ public class TestBigtableBufferedMutator {
                   }
                 };
 
-                return new AsyncExecutor(mockClient, rpcThrottler);
+                return new AsyncExecutor(mockClient, operationAccountant);
               }
             });
     when(mockSession.createBulkMutation(any(BigtableTableName.class), any(AsyncExecutor.class)))

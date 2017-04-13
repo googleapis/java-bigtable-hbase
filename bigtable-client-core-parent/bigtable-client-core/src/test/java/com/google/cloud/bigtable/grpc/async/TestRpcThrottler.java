@@ -70,12 +70,12 @@ public class TestRpcThrottler {
     ResourceLimiter resourceLimiter = new ResourceLimiter(10l, 1000);
     OperationAccountant underTest = new OperationAccountant(resourceLimiter);
     long id = underTest.registerOperationWithHeapSize(5l);
-    assertFalse(underTest.isFlushed());
+    assertTrue(underTest.hasInflightOperations());
 
     FutureCallback<?> callback = underTest.addCallback(future, id);
-    assertFalse(underTest.isFlushed());
+    assertTrue(underTest.hasInflightOperations());
     callback.onSuccess(null);
-    assertTrue(underTest.isFlushed());
+    assertFalse(underTest.hasInflightOperations());
   }
 
   @Test
@@ -89,7 +89,7 @@ public class TestRpcThrottler {
       ResourceLimiter resourceLimiter = new ResourceLimiter(1l, 1);
       final OperationAccountant underTest = new OperationAccountant(resourceLimiter);
       long id = underTest.registerOperationWithHeapSize(5l);
-      assertFalse(underTest.isFlushed());
+      assertTrue(underTest.hasInflightOperations());
       assertTrue(resourceLimiter.isFull());
       final CountDownLatch secondRequestRegisteredLatch = new CountDownLatch(1);
       pool.submit(new Runnable() {

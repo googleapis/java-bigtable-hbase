@@ -337,6 +337,15 @@ public class AsyncExecutor {
   }
 
   /**
+   * <p>hasInflightRequests.</p>
+   *
+   * @return a boolean.
+   */
+  public boolean hasInflightRequests() {
+    return operationsAccountant.hasInflightOperations();
+  }
+
+  /**
    * <p>getMaxHeapSize.</p>
    *
    * @return a long.
