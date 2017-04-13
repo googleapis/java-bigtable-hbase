@@ -172,10 +172,18 @@ public class OperationAccountant {
         long now = clock.nanoTime();
         if (now >= noSuccessCheckDeadlineNanos) {
           // There are unusual cases where an RPC could be completed, but we don't clean up
-          // the state and the locks. Try to clean up if there is a timeout.
-          for (ComplexOperationStalenessHandler retryHandler : ImmutableList
-              .copyOf(complexOperations.values())) {
-            retryHandler.performRetryIfStale();
+          // the state and the locks.  Try to clean up if there is a timeout.
+          ImmutableList<ComplexOperationStalenessHandler> toCheck =
+              ImmutableList.copyOf(complexOperations.values());
+
+          // The cleanup process can potentially incur deadlocks, so unlock to avoid deadlocking.
+          lock.unlock();
+          try {
+            for (ComplexOperationStalenessHandler stalenessHandler : toCheck) {
+              stalenessHandler.performRetryIfStale();
+            }
+          } finally {
+            lock.lock();
           }
           if (isFlushed()) {
             break;
