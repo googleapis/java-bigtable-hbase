@@ -36,11 +36,9 @@ import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
 
 /**
  * Client interceptor that authenticates all calls by binding header data provided by a credential.
@@ -106,54 +104,35 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     final IOException exception;
     final String header;
 
-    /**
-     * Defines the amount of time in ms when the header is considered "stale" and should be
-     * refreshed in the near future. A {@code null} value means that the header does not become stale.
-     */
-    @Nullable
-    final Long staleTimeMs;
-
-    /**
-     * Defines the amount of time in ms when the header is considered "expired" and must be
-     * refreshed. A {@code null} value means that the header does not expire.
-     */
-    @Nullable
-    final Long expiresTimeMs;
+    final long actualExpirationTimeMs;
 
     HeaderCacheElement(AccessToken token) {
       this.exception = null;
-      this.header = "Bearer " + token.getTokenValue();
-      Date expirationTime = token.getExpirationTime();
-      if (expirationTime != null) {
-        long tokenExpiresTime = expirationTime.getTime();
-        this.staleTimeMs = tokenExpiresTime - TOKEN_STALENESS_MS;
-        // Block until refresh at this point.
-        this.expiresTimeMs = tokenExpiresTime - TOKEN_EXPIRES_MS;
-        Preconditions.checkState(staleTimeMs < expiresTimeMs);
+      if (token.getExpirationTime() == null) {
+        actualExpirationTimeMs = Long.MAX_VALUE;
       } else {
-        this.staleTimeMs = null;
-        this.expiresTimeMs = null;
+        actualExpirationTimeMs = token.getExpirationTime().getTime();
       }
+      header = "Bearer " + token.getTokenValue();
     }
 
     HeaderCacheElement(IOException exception) {
       this.exception = exception;
       this.header = null;
-      this.staleTimeMs = null;
-      this.expiresTimeMs = null;
+      this.actualExpirationTimeMs = 0;
     }
 
     CacheState getCacheState() {
+      long now = clock.currentTimeMillis();
+
       if (exception != null) {
         return CacheState.Exception;
-      }
-      long now = clock.currentTimeMillis();
-      if (staleTimeMs == null || now < staleTimeMs) {
-        return CacheState.Good;
-      } else if (now < expiresTimeMs) {
+      } else if (actualExpirationTimeMs - TOKEN_EXPIRES_MS <= now) {
+        return CacheState.Expired;
+      } else if (actualExpirationTimeMs - TOKEN_STALENESS_MS <= now) {
         return CacheState.Stale;
       } else {
-        return CacheState.Expired;
+        return CacheState.Good;
       }
     }
   }
