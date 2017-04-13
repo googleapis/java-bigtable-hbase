@@ -175,8 +175,16 @@ public class RpcThrottler {
         if (now >= noSuccessCheckDeadlineNanos) {
           // There are unusual cases where an RPC could be completed, but we don't clean up
           // the state and the locks.  Try to clean up if there is a timeout.
-          for (RetryHandler retryHandler : ImmutableList.copyOf(outstandingRetries.values())) {
-            retryHandler.performRetryIfStale();
+          ImmutableList<RetryHandler> toCheck = ImmutableList.copyOf(outstandingRetries.values());
+
+          // The cleanup process can potentially cause deadlocks.
+          lock.unlock();
+          try {
+            for (RetryHandler retryHandler : toCheck) {
+              retryHandler.performRetryIfStale();
+            }
+          } finally {
+            lock.lock();
           }
           if (isFlushed()) {
             break;
