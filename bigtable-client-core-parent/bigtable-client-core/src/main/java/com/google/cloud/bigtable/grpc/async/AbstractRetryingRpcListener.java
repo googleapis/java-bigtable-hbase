@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import io.grpc.Status.Code;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -143,7 +144,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     // Non retry scenario
     if (!retryOptions.enableRetries()
         || !retryOptions.isRetryable(code)
-        || !isRequestRetryable()) {
+        // Unauthenticated is special because the request never made it to
+        // to the server, so all requests are retryable
+        || !(isRequestRetryable() || code == Code.UNAUTHENTICATED)) {
       rpc.getRpcMetrics().markFailure();
       operationTimerContext.close();
       setException(status.asRuntimeException());
