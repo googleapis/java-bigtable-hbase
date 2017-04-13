@@ -112,7 +112,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   public void testSyncRefresh() throws IOException {
     initialize(HeaderCacheElement.TOKEN_STALENESS_MS + 1);
     Assert.assertEquals(CacheState.Good,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
   }
 
   @Test
@@ -120,16 +120,16 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     int expiration = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
     initialize(expiration);
     Assert.assertEquals(CacheState.Good,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
     long startTime = 2L;
     setTimeInMillieconds(startTime);
     Assert.assertEquals(CacheState.Stale,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
     long expiredStaleDiff =
         HeaderCacheElement.TOKEN_STALENESS_MS - HeaderCacheElement.TOKEN_EXPIRES_MS;
     setTimeInMillieconds(startTime + expiredStaleDiff);
     Assert.assertEquals(CacheState.Expired,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
   }
 
   @Test
@@ -228,13 +228,13 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
     Assert.assertEquals(CacheState.Expired,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
 
     syncCall(lock, syncRefreshCallable);
 
     // Check to make sure that the AccessToken was retrieved.
     Assert.assertEquals(CacheState.Stale,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache));
 
     // Check to make sure we're no longer refreshing.
     Assert.assertFalse(underTest.isRefreshing);
@@ -281,6 +281,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         new AccessToken("", new Date(expiration)));
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
         retryOptions, logger);
-    Assert.assertTrue(underTest.doRefresh());
+    underTest.syncRefresh();
   }
 }

@@ -36,8 +36,10 @@ import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.Future;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
@@ -153,11 +155,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   @VisibleForTesting
   @GuardedBy("lock")
-  final AtomicReference<HeaderCacheElement> headerCache = new AtomicReference<>();
+  HeaderCacheElement headerCache = null;
 
   @VisibleForTesting
   @GuardedBy("lock")
   boolean isRefreshing = false;
+
+  @GuardedBy("lock")
+  private Future<HeaderCacheElement> futureToken = null;
 
 
   /**
@@ -200,80 +205,89 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
-  @VisibleForTesting
-  String getHeader() {
-    HeaderCacheElement headerCache;
+  private String getHeader() {
     try {
-      headerCache = getCachedHeader();
-      CacheState state = getCacheState(headerCache);
-      switch (state) {
-        case Good:
-          break;
-        case Stale:
-          asyncRefresh();
-          break;
-        case Expired:
-          syncRefresh();
-          headerCache = getCachedHeader();
-          break;
-        case Exception:
-          asyncRefresh();
-          throw asUnauthenticatedException(headerCache.exception);
-        default:
-          throw asUnauthenticatedException(
-              new IllegalStateException("Could not process state: " + state));
+      final Future<HeaderCacheElement> deferredResult;
+
+      synchronized (lock) {
+        CacheState state = getCacheState(headerCache);
+
+        // AppEngine doesn't allow threads to outlive the request, so disable background refresh
+        if (isAppEngine && state == CacheState.Stale) {
+          state = CacheState.Good;
+        }
+
+        switch (state) {
+          case Good:
+            return headerCache.header;
+          case Stale:
+            asyncRefresh();
+            return headerCache.header;
+          case Expired:
+            // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
+            deferredResult = asyncRefresh();
+            break;
+          case Exception:
+            asyncRefresh();
+            throw asUnauthenticatedException(headerCache.exception);
+          default:
+            throw asUnauthenticatedException(
+                new IllegalStateException("Could not process state: " + state));
+        }
       }
-    } catch (IOException e) {
+
+      return deferredResult.get().header;
+    } catch (InterruptedException | ExecutionException e) {
       throw asUnauthenticatedException(e);
     }
-    return headerCache.header;
   }
 
   /**
-   * <p>syncRefresh.</p>
-   *
-   * @throws java.io.IOException if any.
+   * Refresh the credentials and block. Will return an error if the credentials haven't
+   * been refreshed.
+   * This method should not be called while holding the refresh lock
+   * @throws java.io.IOException,RuntimeException if any.
    */
-  void syncRefresh() throws IOException {
-    synchronized (lock) {
-      if (!isRefreshing) {
-        doRefresh();
-      } else {
-        while (isRefreshing && getCacheState(this.headerCache.get()) != CacheState.Good) {
-          try {
-            lock.wait(250);
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException(e);
-          }
-        }
-      }
+  HeaderCacheElement syncRefresh() throws IOException {
+    try {
+      return asyncRefresh().get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
     }
   }
 
   /**
    * Refreshes the OAuth2 token asynchronously. This method will only start an async refresh if
-   * there isn't a currently running asynchronous refresh or the credentials are for App Engine.
-   * App Engine has some credentials related state in a {@link ThreadLocal} which prevents it from
-   * running asynchronously. In the App Engine case, this method will defer to
-   * {@link #syncRefresh()}.
+   * there isn't a currently running asynchronous refresh.
    */
-  void asyncRefresh() throws IOException {
-    if (isAppEngine) {
-      syncRefresh();
-    } else if (canRefresh()) {
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          doRefresh();
-        }
-      });
-    }
-  }
-
-  private boolean canRefresh() {
+  Future<HeaderCacheElement> asyncRefresh() {
     synchronized (lock) {
-      return !isRefreshing && getCacheState(this.headerCache.get()) != CacheState.Good;
+      if (isRefreshing) {
+        return futureToken;
+      }
+      isRefreshing = true;
+
+      try {
+        this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
+          @Override
+          public HeaderCacheElement call() throws Exception {
+            try {
+              HeaderCacheElement newToken = refreshCredentialsWithRetry();
+              return updateToken(newToken);
+            } finally {
+              synchronized (lock) {
+                futureToken = null;
+                isRefreshing = false;
+              }
+            }
+          }
+        });
+      } catch (RuntimeException e) {
+        isRefreshing = false;
+        throw e;
+      }
+
+      return this.futureToken;
     }
   }
 
@@ -286,56 +300,20 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     return (headerCache == null) ? CacheState.Expired : headerCache.getCacheState();
   }
 
-  private HeaderCacheElement getCachedHeader() throws IOException {
-    HeaderCacheElement headerCache = this.headerCache.get();
-    if (headerCache != null && headerCache.exception != null) {
-      throw headerCache.exception;
-    }
-    return headerCache;
-  }
-
-  /**
-   * Perform a credentials refresh.
-   */
-  @VisibleForTesting
-  boolean doRefresh() {
-    if (!canRefresh()) {
-      return false;
-    }
-    synchronized (lock) {
-      if (!canRefresh()) {
-        return false;
-      }
-      isRefreshing = true;
-    }
-    try {
-      HeaderCacheElement cacheElement = refreshCredentialsWithRetry();
-      synchronized (lock) {
-        updateToken(cacheElement);
-      }
-    } finally {
-      synchronized (lock) {
-        isRefreshing = false;
-        lock.notifyAll();
-      }
-    }
-    return true;
-  }
-
   private HeaderCacheElement updateToken(HeaderCacheElement newToken) {
     // Update the token only if the new token is good or the old token is bad
     CacheState newState = newToken.getCacheState();
     boolean newTokenOk = newState == CacheState.Good || newState == CacheState.Stale;
-    CacheState oldCacheState = getCacheState(headerCache.get());
+    CacheState oldCacheState = getCacheState(headerCache);
     boolean oldTokenOk = oldCacheState == CacheState.Good || oldCacheState == CacheState.Stale;
 
     if (newTokenOk || !oldTokenOk) {
-      headerCache.set(newToken);
+      headerCache = newToken;
       return newToken;
     } else {
       LOG.warn("Failed to refresh the access token. Falling back to existing token. "
           + "New token state: {}", newState);
-      return headerCache.get();
+      return headerCache;
     }
   }
 
@@ -356,6 +334,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *
    * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
    */
+  @VisibleForTesting
   HeaderCacheElement refreshCredentialsWithRetry() {
     final BackOff backoff = retryOptions.createBackoff();
 
