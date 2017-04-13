@@ -123,27 +123,27 @@ public class AsyncExecutor {
       };
 
   private final BigtableDataClient client;
-  private final RpcThrottler rpcThrottler;
+  private final OperationAccountant operationsAccountant;
 
   /**
    * <p>Constructor for AsyncExecutor.</p>
    *
    * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
-   * @param rpcThrottler a {@link com.google.cloud.bigtable.grpc.async.RpcThrottler} object.
+   * @param operationAccountant a {@link com.google.cloud.bigtable.grpc.async.OperationAccountant} object.
    */
-  public AsyncExecutor(BigtableDataClient client, RpcThrottler rpcThrottler) {
+  public AsyncExecutor(BigtableDataClient client, OperationAccountant operationAccountant) {
     this.client = client;
-    this.rpcThrottler = rpcThrottler;
+    this.operationsAccountant = operationAccountant;
   }
 
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#mutateRowAsync(MutateRowRequest)} on the
    * {@link com.google.bigtable.v2.MutateRowRequest} given an operationId generated from
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)}.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link com.google.bigtable.v2.MutateRowRequest} to send.
    * @param operationId The Id generated from
-   *          {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} that will be released when
+   *          {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} that will be released when
    *          the mutate operation is completed.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
    */
@@ -155,11 +155,11 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#mutateRowsAsync(MutateRowsRequest)} on the
    * {@link com.google.bigtable.v2.MutateRowsRequest} given an operationId generated from
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)}.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link com.google.bigtable.v2.MutateRowsRequest} to send.
    * @param operationId The Id generated from
-   *          {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} that will be released when
+   *          {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} that will be released when
    *          the mutate operation is completed.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
    */
@@ -171,11 +171,11 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)} on the
    * {@link com.google.bigtable.v2.CheckAndMutateRowRequest} given an operationId generated from
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)}.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link com.google.bigtable.v2.CheckAndMutateRowRequest} to send.
    * @param operationId The Id generated from
-   *          {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} that will be released when
+   *          {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} that will be released when
    *          the checkAndMutateRow operation is completed.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
    */
@@ -187,11 +187,11 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRowRequest)} on the
    * {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} given an operationId generated from
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)}.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} to send.
    * @param operationId The Id generated from
-   *          {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} that will be released when
+   *          {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} that will be released when
    *          the readModifyWriteRowAsync operation is completed.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
    */
@@ -203,7 +203,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
    * {@link com.google.bigtable.v2.ReadRowsRequest} given an operationId generated from
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)}.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link com.google.bigtable.v2.ReadRowsRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -216,7 +216,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#mutateRowAsync(MutateRowRequest)} on the
    * {@link com.google.bigtable.v2.MutateRowRequest}. This method may block if
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} blocks.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.MutateRowRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -230,7 +230,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#mutateRowsAsync(MutateRowsRequest)} on the
    * {@link com.google.bigtable.v2.MutateRowsRequest}. This method may block if
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} blocks.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.MutateRowRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -244,7 +244,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)} on the
    * {@link com.google.bigtable.v2.CheckAndMutateRowRequest}. This method may block if
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} blocks.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.CheckAndMutateRowRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -258,7 +258,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readModifyWriteRow(ReadModifyWriteRowRequest)} on the
    * {@link com.google.bigtable.v2.ReadModifyWriteRowRequest}. This method may block if
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} blocks.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -272,7 +272,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
    * {@link com.google.bigtable.v2.ReadRowsRequest}. This method may block if
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} blocks.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.ReadRowsRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -287,7 +287,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
    * {@link com.google.bigtable.v2.ReadRowsRequest}. This method may block if
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} blocks.
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.ReadRowsRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -302,7 +302,7 @@ public class AsyncExecutor {
       AsyncCall<RequestT, ResponseT> rpc, RequestT request) throws InterruptedException {
     // Wait until both the memory and rpc count maximum requirements are achieved before getting a
     // unique id used to track this request.
-    long id = rpcThrottler.registerOperationWithHeapSize(request.getSerializedSize());
+    long id = operationsAccountant.registerOperationWithHeapSize(request.getSerializedSize());
     return call(rpc, request, id);
   }
 
@@ -314,20 +314,21 @@ public class AsyncExecutor {
     } catch (Throwable e) {
       future = Futures.immediateFailedFuture(e);
     }
-    rpcThrottler.addCallback(future, id);
+    operationsAccountant.addCallback(future, id);
     return future;
   }
 
   /**
-   * Waits until all operations managed by the {@link com.google.cloud.bigtable.grpc.async.RpcThrottler} complete. See
-   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#awaitCompletion()} for more information.
-   *
+   * Waits until all operations managed by the
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant} complete. See
+   * {@link com.google.cloud.bigtable.grpc.async.OperationAccountant#awaitCompletion()} for more
+   * information.
    * @throws java.io.IOException if something goes wrong.
    */
   public void flush() throws IOException {
     LOG.trace("Flushing");
     try {
-      rpcThrottler.awaitCompletion();
+      operationsAccountant.awaitCompletion();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Batch operations were interrupted.");
@@ -336,21 +337,12 @@ public class AsyncExecutor {
   }
 
   /**
-   * <p>hasInflightRequests.</p>
-   *
-   * @return a boolean.
-   */
-  public boolean hasInflightRequests() {
-    return rpcThrottler.hasInflightRequests();
-  }
-
-  /**
    * <p>getMaxHeapSize.</p>
    *
    * @return a long.
    */
   public long getMaxHeapSize() {
-    return rpcThrottler.getMaxHeapSize();
+    return operationsAccountant.getMaxHeapSize();
   }
 
   /**
@@ -363,11 +355,11 @@ public class AsyncExecutor {
   }
 
   /**
-   * <p>Getter for the field <code>rpcThrottler</code>.</p>
+   * <p>Getter for the field <code>operationsAccountant</code>.</p>
    *
-   * @return a {@link com.google.cloud.bigtable.grpc.async.RpcThrottler} object.
+   * @return a {@link com.google.cloud.bigtable.grpc.async.OperationAccountant} object.
    */
-  public RpcThrottler getRpcThrottler() {
-    return rpcThrottler;
+  public OperationAccountant getOperationAccountant() {
+    return operationsAccountant;
   }
 }

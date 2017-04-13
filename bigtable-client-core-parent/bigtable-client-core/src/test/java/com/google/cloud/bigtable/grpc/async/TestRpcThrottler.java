@@ -42,7 +42,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler.RetryHandler;
+import com.google.cloud.bigtable.grpc.async.OperationAccountant.ComplexOperationStalenessHandler;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -58,7 +58,7 @@ public class TestRpcThrottler {
   NanoClock clock;
 
   @Mock
-  RetryHandler handler;
+  ComplexOperationStalenessHandler handler;
 
   @Before
   public void setup(){
@@ -68,14 +68,14 @@ public class TestRpcThrottler {
   @Test
   public void testCallback() throws InterruptedException {
     ResourceLimiter resourceLimiter = new ResourceLimiter(10l, 1000);
-    RpcThrottler underTest = new RpcThrottler(resourceLimiter);
+    OperationAccountant underTest = new OperationAccountant(resourceLimiter);
     long id = underTest.registerOperationWithHeapSize(5l);
-    assertTrue(underTest.hasInflightRequests());
+    assertFalse(underTest.isFlushed());
 
     FutureCallback<?> callback = underTest.addCallback(future, id);
-    assertTrue(underTest.hasInflightRequests());
+    assertFalse(underTest.isFlushed());
     callback.onSuccess(null);
-    assertFalse(underTest.hasInflightRequests());
+    assertTrue(underTest.isFlushed());
   }
 
   @Test
@@ -87,9 +87,9 @@ public class TestRpcThrottler {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
       ResourceLimiter resourceLimiter = new ResourceLimiter(1l, 1);
-      final RpcThrottler underTest = new RpcThrottler(resourceLimiter);
+      final OperationAccountant underTest = new OperationAccountant(resourceLimiter);
       long id = underTest.registerOperationWithHeapSize(5l);
-      assertTrue(underTest.hasInflightRequests());
+      assertFalse(underTest.isFlushed());
       assertTrue(resourceLimiter.isFull());
       final CountDownLatch secondRequestRegisteredLatch = new CountDownLatch(1);
       pool.submit(new Runnable() {
@@ -122,7 +122,7 @@ public class TestRpcThrottler {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
       final ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
-      final RpcThrottler underTest = new RpcThrottler(resourceLimiter);
+      final OperationAccountant underTest = new OperationAccountant(resourceLimiter);
       final AtomicBoolean allOperationsDone = new AtomicBoolean();
       final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
       Future<?> writeFuture = pool.submit(new Runnable() {
@@ -157,7 +157,7 @@ public class TestRpcThrottler {
                   // Exercise the .offer and the awaitCompletion() in the writeFuture.
                   Thread.sleep(4);
                 }
-                underTest.onRpcCompletion(registeredId);
+                underTest.onOperationCompletion(registeredId);
               }
             }
           } catch (InterruptedException e) {
@@ -181,7 +181,7 @@ public class TestRpcThrottler {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
       final ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
-      final RpcThrottler underTest = new RpcThrottler(resourceLimiter);
+      final OperationAccountant underTest = new OperationAccountant(resourceLimiter);
       final AtomicBoolean allOperationsDone = new AtomicBoolean();
       final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
       final List<SettableFuture<Boolean>> retryFutures = new ArrayList<>();
@@ -195,13 +195,13 @@ public class TestRpcThrottler {
               registeredEvents.offer(underTest.registerOperationWithHeapSize(1));
 
               // Add a retry for each rpc
-              final long id = underTest.registerRetry(handler);
+              final long id = underTest.registerComplexOperation(handler);
               SettableFuture<Boolean> future = SettableFuture.create();
               Futures.addCallback(future, new FutureCallback<Boolean>(){
 
                 @Override
                 public void onSuccess(@Nullable Boolean result) {
-                  underTest.onRetryCompletion(id);
+                  underTest.onComplexOperationCompletion(id);
                 }
 
                 @Override
@@ -235,7 +235,7 @@ public class TestRpcThrottler {
               if (registeredId == null){
                 i--;
               } else {
-                underTest.onRpcCompletion(registeredId);
+                underTest.onOperationCompletion(registeredId);
               }
             }
           } catch (InterruptedException e) {
@@ -283,9 +283,9 @@ public class TestRpcThrottler {
     int iterations = 4;
 
     final ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
-    final RpcThrottler underTest = new RpcThrottler(resourceLimiter, clock, finishWaitTime);
+    final OperationAccountant underTest = new OperationAccountant(resourceLimiter, clock, finishWaitTime);
 
-    long id = underTest.registerRetry(handler);
+    long id = underTest.registerComplexOperation(handler);
 
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
@@ -303,7 +303,7 @@ public class TestRpcThrottler {
       // Sleep a multiple of the finish wait time to force a few iterations
       Thread.sleep(finishWaitTime * (iterations + 1));
       // Trigger completion
-      underTest.onRetryCompletion(id);
+      underTest.onComplexOperationCompletion(id);
     } finally {
       pool.shutdown();
       pool.awaitTermination(100, TimeUnit.MILLISECONDS);

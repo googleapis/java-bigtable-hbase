@@ -35,18 +35,18 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
- * Throttles the number of RPCs that are outstanding at any point in time.
+ * Throttles the number of operations that are outstanding at any point in time.
  *
  * @author sduskis
  * @version $Id: $Id
  */
-public class RpcThrottler {
+public class OperationAccountant {
   /** Constant <code>LOG</code> */
-  protected static final Logger LOG = new Logger(RpcThrottler.class);
+  protected static final Logger LOG = new Logger(OperationAccountant.class);
 
   private static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
 
-  public static interface RetryHandler {
+  public static interface ComplexOperationStalenessHandler {
     void performRetryIfStale();
   }
 
@@ -58,32 +58,30 @@ public class RpcThrottler {
   private final ResourceLimiter resourceLimiter;
   private final NanoClock clock;
   private final long finishWaitMillis;
-  private final AtomicLong retrySequenceGenerator = new AtomicLong();
+  private final AtomicLong complexOperationIdGenerator = new AtomicLong();
 
   private ReentrantLock lock = new ReentrantLock();
   private Condition flushedCondition = lock.newCondition();
 
   @GuardedBy("lock")
-  private Set<Long> outstandingRequests = new HashSet<>();
+  private Set<Long> operations = new HashSet<>();
   @GuardedBy("lock")
-  private Map<Long, RetryHandler> outstandingRetries = new HashMap<>();
-  @GuardedBy("lock")
-  private boolean isFlushed = true;
+  private Map<Long, ComplexOperationStalenessHandler> complexOperations = new HashMap<>();
 
   private long noSuccessCheckDeadlineNanos;
   private int noSuccessWarningCount;
 
   /**
-   * <p>Constructor for RpcThrottler.</p>
+   * <p>Constructor for {@link OperationAccountant}.</p>
    *
    * @param resourceLimiter a {@link com.google.cloud.bigtable.grpc.async.ResourceLimiter} object.
    */
-  public RpcThrottler(ResourceLimiter resourceLimiter) {
+  public OperationAccountant(ResourceLimiter resourceLimiter) {
     this(resourceLimiter, NanoClock.SYSTEM, DEFAULT_FINISH_WAIT_MILLIS);
   }
 
   @VisibleForTesting
-  RpcThrottler(ResourceLimiter resourceLimiter, NanoClock clock, long finishWaitMillis) {
+  OperationAccountant(ResourceLimiter resourceLimiter, NanoClock clock, long finishWaitMillis) {
     this.resourceLimiter = resourceLimiter;
     this.clock = clock;
     this.finishWaitMillis = finishWaitMillis;
@@ -104,8 +102,7 @@ public class RpcThrottler {
 
     lock.lock();
     try {
-      outstandingRequests.add(id);
-      isFlushed = false;
+      operations.add(id);
     } finally {
       lock.unlock();
     }
@@ -113,25 +110,24 @@ public class RpcThrottler {
   }
 
   /**
-   * Add a callback to a Future representing an RPC call with the given
-   * operation id that will clean upon completion and reclaim any utilized resources.
-   * This method must be paired with every call to {@code registerOperationWithHeapSize}.
-   *
+   * Add a callback to a Future representing an RPC call with the given operation id that will clean
+   * upon completion and reclaim any utilized resources. This method must be paired with every call
+   * to {@code registerOperationWithHeapSize}.
    * @param future a {@link com.google.common.util.concurrent.ListenableFuture} object.
    * @param id a long.
-   * @return a {@link com.google.common.util.concurrent.FutureCallback} object.
    * @param <T> a T object.
+   * @return a {@link com.google.common.util.concurrent.FutureCallback} object.
    */
   public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, final long id) {
     FutureCallback<T> callback = new FutureCallback<T>() {
       @Override
       public void onSuccess(T result) {
-        onRpcCompletion(id);
+        onOperationCompletion(id);
       }
 
       @Override
       public void onFailure(Throwable t) {
-        onRpcCompletion(id);
+        onOperationCompletion(id);
       }
     };
     Futures.addCallback(future, callback);
@@ -139,19 +135,21 @@ public class RpcThrottler {
   }
 
   /**
-   * Registers a retry, if a retry is necessary, it
-   * will be complete before a call to {@code awaitCompletion} returns.
-   * Retries do not count against any RPC resource limits.
-   *
-   * @return a long.
-   * @param <T> a T object.
+   * Registers a complex operation, like bulk mutation operations, that has a more subtle definition
+   * of success than a normal operation. Bulk mutation RPCs can have some mutations succeed and some
+   * fail; the failed mutations have to be retried in a subsequent RPC.
+   * @return a long id of the complex operation.
+   * @param handler a ComplexOperationStalenessHandler that will be periodically checked in
+   *          {@link #awaitCompletion()}
    */
-  public <T> long registerRetry(RetryHandler handler) {
-    final long id = retrySequenceGenerator.incrementAndGet();
+  // TODO: This functionality should be moved to BulkMutation where the functionality is used. The
+  // abstraction.
+  public <T> long registerComplexOperation(ComplexOperationStalenessHandler handler) {
+    final long id = complexOperationIdGenerator.incrementAndGet();
 
     lock.lock();
     try {
-      outstandingRetries.put(id, handler);
+      complexOperations.put(id, handler);
     } finally {
       lock.unlock();
     }
@@ -174,8 +172,9 @@ public class RpcThrottler {
         long now = clock.nanoTime();
         if (now >= noSuccessCheckDeadlineNanos) {
           // There are unusual cases where an RPC could be completed, but we don't clean up
-          // the state and the locks.  Try to clean up if there is a timeout.
-          for (RetryHandler retryHandler : ImmutableList.copyOf(outstandingRetries.values())) {
+          // the state and the locks. Try to clean up if there is a timeout.
+          for (ComplexOperationStalenessHandler retryHandler : ImmutableList
+              .copyOf(complexOperations.values())) {
             retryHandler.performRetryIfStale();
           }
           if (isFlushed()) {
@@ -197,9 +196,10 @@ public class RpcThrottler {
   private void logNoSuccessWarning(long now) {
     long lastUpdateNanos = now - noSuccessCheckDeadlineNanos + INTERVAL_NO_SUCCESS_WARNING_NANOS;
     long lastUpdated = TimeUnit.NANOSECONDS.toSeconds(lastUpdateNanos);
-    LOG.warn("No operations completed within the last %d seconds. "
-            + "There are still %d rpcs and %d retries in progress.", lastUpdated,
-        outstandingRequests.size(), outstandingRetries.size());
+    LOG.warn(
+      "No operations completed within the last %d seconds. "
+          + "There are still %d simple operations and %d complex operations in progress.",
+      lastUpdated, operations.size(), complexOperations.size());
     noSuccessWarningCount++;
   }
 
@@ -213,20 +213,18 @@ public class RpcThrottler {
   }
 
   /**
-   * <p>hasInflightRequests.</p>
-   *
-   * @return true if there are any outstanding requests being tracked by this throttler
+   * <p>
+   * isFlushed.
+   * </p>
+   * @return true if there are no outstanding requests being tracked by this
+   *         {@link OperationAccountant}
    */
-  public boolean hasInflightRequests() {
-    return !isFlushed;
-  }
-
-  private boolean isFlushed() {
-    return outstandingRequests.isEmpty() && outstandingRetries.isEmpty();
-  }
-
   @VisibleForTesting
-  void resetNoSuccessWarningDeadline() {
+  boolean isFlushed() {
+    return operations.isEmpty() && complexOperations.isEmpty();
+  }
+
+  private void resetNoSuccessWarningDeadline() {
     noSuccessCheckDeadlineNanos = clock.nanoTime() + INTERVAL_NO_SUCCESS_WARNING_NANOS;
   }
 
@@ -236,15 +234,14 @@ public class RpcThrottler {
   }
 
   @VisibleForTesting
-  void onRpcCompletion(long id) {
+  void onOperationCompletion(long id) {
     resourceLimiter.markCanBeCompleted(id);
 
     lock.lock();
     try {
-      outstandingRequests.remove(id);
+      operations.remove(id);
       if (isFlushed()) {
         flushedCondition.signal();
-        isFlushed = true;
       }
     } finally {
       lock.unlock();
@@ -253,17 +250,16 @@ public class RpcThrottler {
   }
 
   /**
-   * <p>onRetryCompletion.</p>
+   * <p>onComplexOperationCompletion.</p>
    *
    * @param id a long.
    */
-  public void onRetryCompletion(long id) {
+  public void onComplexOperationCompletion(long id) {
     lock.lock();
     try {
-      outstandingRetries.remove(id);
+      complexOperations.remove(id);
       if (isFlushed()) {
         flushedCondition.signal();
-        isFlushed = true;
       }
     } finally {
       lock.unlock();
