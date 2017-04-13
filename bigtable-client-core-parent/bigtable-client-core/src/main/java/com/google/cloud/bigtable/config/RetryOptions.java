@@ -229,7 +229,6 @@ public class RetryOptions implements Serializable {
    * @param backoffMultiplier a double.
    * @param maxElaspedBackoffMillis a int.
    * @param streamingBufferSize a int.
-   * @param streamingBatchSize a int.
    * @param readPartialRowTimeoutMillis a int.
    * @param maxScanTimeoutRetries a int.
    * @param statusToRetryOn a Set.
