@@ -43,7 +43,7 @@ import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler;
+import com.google.cloud.bigtable.grpc.async.OperationAccountant;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -63,14 +63,14 @@ public class TestAsyncExecutor {
   private ListenableFuture future;
 
   private AsyncExecutor underTest;
-  private RpcThrottler rpcThrottler;
+  private OperationAccountant operationAccountant;
   private List<FutureCallback<?>> callbacks;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     callbacks = new ArrayList<>();
-    rpcThrottler = new RpcThrottler(new ResourceLimiter(1000, 10)) {
+    operationAccountant = new OperationAccountant(new ResourceLimiter(1000, 10)) {
       @Override
       public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, long id) {
         FutureCallback<T> callback = super.addCallback(future, id);
@@ -81,48 +81,48 @@ public class TestAsyncExecutor {
       }
     };
 
-    underTest = new AsyncExecutor(client, rpcThrottler);
+    underTest = new AsyncExecutor(client, operationAccountant);
   }
 
   @Test
   public void testNoMutation() {
-    Assert.assertFalse(underTest.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
   public void testMutation() throws InterruptedException {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
     underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-    Assert.assertTrue(underTest.hasInflightRequests());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
     completeCall();
-    Assert.assertFalse(underTest.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
   public void testCheckAndMutate() throws InterruptedException {
     when(client.checkAndMutateRowAsync(any(CheckAndMutateRowRequest.class))).thenReturn(future);
     underTest.checkAndMutateRowAsync(CheckAndMutateRowRequest.getDefaultInstance());
-    Assert.assertTrue(underTest.hasInflightRequests());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
     completeCall();
-    Assert.assertFalse(underTest.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
   public void testReadWriteModify() throws InterruptedException {
     when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(future);
     underTest.readModifyWriteRowAsync(ReadModifyWriteRowRequest.getDefaultInstance());
-    Assert.assertTrue(underTest.hasInflightRequests());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
     completeCall();
-    Assert.assertFalse(underTest.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
   public void testReadRowsAsync() throws InterruptedException {
     when(client.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(future);
     underTest.readRowsAsync(ReadRowsRequest.getDefaultInstance());
-    Assert.assertTrue(underTest.hasInflightRequests());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
     completeCall();
-    Assert.assertFalse(underTest.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
@@ -133,7 +133,7 @@ public class TestAsyncExecutor {
     } catch(Exception ignored) {
     }
     completeCall();
-    Assert.assertFalse(underTest.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test

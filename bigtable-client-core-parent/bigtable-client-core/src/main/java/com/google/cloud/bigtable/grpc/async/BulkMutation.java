@@ -27,7 +27,7 @@ import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler.RetryHandler;
+import com.google.cloud.bigtable.grpc.async.OperationAccountant.ComplexOperationStalenessHandler;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
@@ -371,8 +371,8 @@ public class BulkMutation {
       }
       try {
         if (retryId == null) {
-          retryId =
-              Long.valueOf(asyncExecutor.getRpcThrottler().registerRetry(createRetryHandler()));
+          retryId = Long.valueOf(
+            asyncExecutor.getOperationAccountant().registerComplexOperation(createRetryHandler()));
         }
         mutateRowsFuture = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
         currentRequestManager.lastRpcSentTime = clock.currentTimeMillis();
@@ -387,11 +387,11 @@ public class BulkMutation {
     }
 
     /**
-     * A {@link RetryHandler} is a method of last resort in cases where somehow the various
+     * A {@link ComplexOperationStalenessHandler} is a method of last resort in cases where somehow the various
      * listeners failed to get a response, or had some kind of strange issue.
      */
-    private RetryHandler createRetryHandler() {
-      return new RetryHandler() {
+    private ComplexOperationStalenessHandler createRetryHandler() {
+      return new ComplexOperationStalenessHandler() {
         @Override
         public void performRetryIfStale() {
           // If the retryId is null, it means that the operation somehow fails partially,
@@ -425,7 +425,7 @@ public class BulkMutation {
           mutateRowsFuture.cancel(true);
         }
         mutateRowsFuture = null;
-        asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
+        asyncExecutor.getOperationAccountant().onComplexOperationCompletion(retryId);
         if (failedCount > 0) {
           LOG.info("Batch #%d recovered from the failure and completed.", retryId);
         }

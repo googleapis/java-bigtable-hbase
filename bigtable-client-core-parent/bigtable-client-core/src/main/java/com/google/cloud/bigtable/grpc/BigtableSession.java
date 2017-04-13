@@ -42,7 +42,7 @@ import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler;
+import com.google.cloud.bigtable.grpc.async.OperationAccountant;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
@@ -388,7 +388,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
    */
   public AsyncExecutor createAsyncExecutor() {
-    return new AsyncExecutor(dataClient, new RpcThrottler(resourceLimiter));
+    return new AsyncExecutor(dataClient, new OperationAccountant(resourceLimiter));
   }
 
   /**

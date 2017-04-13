@@ -305,8 +305,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
         // TODO: Do this logic asynchronously.
         addExceptionCallback(bulkMutation.add(adapt(mutation)), mutation);
       } else {
-        long operationId =
-            asyncExecutor.getRpcThrottler().registerOperationWithHeapSize(mutation.heapSize());
+        long operationId = asyncExecutor.getOperationAccountant()
+            .registerOperationWithHeapSize(mutation.heapSize());
         operation = new MutationOperation(mutation, operationId);
         if (executorService != null && bulkOptions.getAsyncMutatorCount() > 0) {
           initializeAsyncMutators();
