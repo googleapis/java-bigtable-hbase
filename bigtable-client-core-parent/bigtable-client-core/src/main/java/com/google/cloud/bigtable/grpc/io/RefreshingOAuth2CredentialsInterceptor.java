@@ -37,8 +37,8 @@ import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.concurrent.GuardedBy;
 
 /**
  * Client interceptor that authenticates all calls by binding header data provided by a credential.
@@ -148,11 +148,16 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private final OAuth2Credentials credentials;
 
   @VisibleForTesting
+  final Object lock = new Object();
+
+  @VisibleForTesting
+  @GuardedBy("lock")
   final AtomicReference<HeaderCacheElement> headerCache = new AtomicReference<>();
 
   @VisibleForTesting
-  final AtomicBoolean isRefreshing = new AtomicBoolean(false);
-  
+  @GuardedBy("lock")
+  boolean isRefreshing = false;
+
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
@@ -232,13 +237,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * @throws java.io.IOException if any.
    */
   void syncRefresh() throws IOException {
-    synchronized (isRefreshing) {
-      if (!isRefreshing.get()) {
+    synchronized (lock) {
+      if (!isRefreshing) {
         doRefresh();
       } else {
-        while (isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good) {
+        while (isRefreshing && getCacheState(this.headerCache.get()) != CacheState.Good) {
           try {
-            isRefreshing.wait(250);
+            lock.wait(250);
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IOException(e);
@@ -269,7 +274,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   private boolean canRefresh() {
-    return !isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good;
+    return !isRefreshing && getCacheState(this.headerCache.get()) != CacheState.Good;
   }
 
   private static StatusRuntimeException asUnauthenticatedException(Exception e) {
@@ -297,21 +302,21 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     if (!canRefresh()) {
       return false;
     }
-    synchronized (isRefreshing) {
+    synchronized (lock) {
       if (!canRefresh()) {
         return false;
       }
-      isRefreshing.set(true);
+      isRefreshing = true;
     }
     try {
       HeaderCacheElement cacheElement = refreshCredentialsWithRetry();
-      synchronized (isRefreshing) {
+      synchronized (lock) {
         updateToken(cacheElement);
       }
     } finally {
-      synchronized (isRefreshing) {
-        isRefreshing.set(false);
-        isRefreshing.notifyAll();
+      synchronized (lock) {
+        isRefreshing = false;
+        lock.notifyAll();
       }
     }
     return true;
