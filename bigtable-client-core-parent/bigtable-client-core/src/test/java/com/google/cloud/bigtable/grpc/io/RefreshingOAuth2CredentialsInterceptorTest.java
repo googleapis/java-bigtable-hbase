@@ -189,7 +189,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         .build();
 
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        disabledRetryOptions, logger);
+        disabledRetryOptions);
 
     final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
 
@@ -302,7 +302,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     underTest =
         new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-            new RetryOptions.Builder().build(), logger);
+            new RetryOptions.Builder().build());
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.

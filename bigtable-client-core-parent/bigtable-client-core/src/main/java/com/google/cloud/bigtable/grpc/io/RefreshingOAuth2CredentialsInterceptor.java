@@ -236,8 +236,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   @VisibleForTesting
   HeaderCacheElement getHeader() throws ExecutionException, InterruptedException, TimeoutException {
-    LOG.info("Getting header");
-
     final Future<HeaderCacheElement> deferredResult;
 
     // Optimize for the common case: do a volatile read to peek for a Good cache value
