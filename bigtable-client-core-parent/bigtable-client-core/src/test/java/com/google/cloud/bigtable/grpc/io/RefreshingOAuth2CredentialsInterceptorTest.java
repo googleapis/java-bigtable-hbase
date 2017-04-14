@@ -31,6 +31,7 @@ import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.config.RetryOptions.Builder;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.HeaderCacheElement;
@@ -182,8 +183,13 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Test
   public void testRefreshAfterFailure() throws Exception {
+    RetryOptions disabledRetryOptions = new Builder()
+        .setEnableRetries(false)
+        .setMaxElapsedBackoffMillis(0)
+        .build();
+
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        retryOptions, logger);
+        disabledRetryOptions, logger);
 
     final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
 
@@ -210,7 +216,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   @Test
   public void testRefreshAfterStale() throws Exception {
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        retryOptions, logger);
+        retryOptions);
 
     final AccessToken staleToken = new AccessToken("stale", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
     AccessToken goodToken = new AccessToken("good", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 11));
