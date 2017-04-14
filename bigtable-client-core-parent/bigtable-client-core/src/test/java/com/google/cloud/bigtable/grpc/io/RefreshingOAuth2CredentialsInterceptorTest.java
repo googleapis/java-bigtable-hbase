@@ -15,22 +15,28 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.NanoClock;
 import com.google.api.client.util.Sleeper;
+import com.google.appengine.repackaged.com.google.common.util.concurrent.Futures;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.config.RetryOptions.Builder;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.HeaderCacheElement;
+import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -40,6 +46,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.hamcrest.core.StringContains;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -111,25 +118,21 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   @Test
   public void testSyncRefresh() throws IOException {
     initialize(HeaderCacheElement.TOKEN_STALENESS_MS + 1);
-    Assert.assertEquals(CacheState.Good,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+    Assert.assertEquals(CacheState.Good, underTest.headerCache.getCacheState());
   }
 
   @Test
   public void testStaleAndExpired() throws IOException {
     int expiration = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
     initialize(expiration);
-    Assert.assertEquals(CacheState.Good,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+    Assert.assertEquals(CacheState.Good, underTest.headerCache.getCacheState());
     long startTime = 2L;
     setTimeInMillieconds(startTime);
-    Assert.assertEquals(CacheState.Stale,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+    Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
     long expiredStaleDiff =
         HeaderCacheElement.TOKEN_STALENESS_MS - HeaderCacheElement.TOKEN_EXPIRES_MS;
     setTimeInMillieconds(startTime + expiredStaleDiff);
-    Assert.assertEquals(CacheState.Expired,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+    Assert.assertEquals(CacheState.Expired, underTest.headerCache.getCacheState());
   }
 
   @Test
@@ -157,7 +160,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     HeaderCacheElement header = underTest.refreshCredentialsWithRetry();
 
     Assert.assertNull(header.header);
-    Assert.assertSame(ioException, header.exception);
+    Assert.assertSame(ioException, header.status.getCause());
 
     // Make sure that the system "slept" for more than the retryOption max millis. The Backoff logic
     // adds some random variability to the exact elapsed time, so add in a bit of wiggle room.
@@ -178,6 +181,83 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     setTimeInMillieconds(100000000000L);
     Assert.assertEquals(CacheState.Good, element.getCacheState());
   }
+
+  @Test
+  public void testRefreshAfterFailure() throws Exception {
+    RetryOptions mockRetryOptions = Mockito.mock(RetryOptions.class);
+    BackOff mockBackOff = Mockito.mock(BackOff.class);
+
+    when(mockRetryOptions.createBackoff()).thenReturn(mockBackOff);
+    when(mockBackOff.nextBackOffMillis()).thenReturn(BackOff.STOP);
+
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
+        mockRetryOptions);
+
+    final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
+
+    //noinspection unchecked
+    Mockito.when(credentials.refreshAccessToken())
+        // First call will throw Exception & bypass retries
+        .thenThrow(Exception.class)
+        // Second call will succeed
+        .thenReturn(accessToken);
+
+    // First call
+    HeaderCacheElement firstResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Exception, firstResult.getCacheState());
+
+    // Now the second token should be available
+    HeaderCacheElement secondResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Good, secondResult.getCacheState());
+    Assert.assertThat(secondResult.header, containsString("hi"));
+    // Make sure that the token was only requested twice: once for the first failure & second time for background recovery
+    Mockito.verify(credentials, times(2)).refreshAccessToken();
+  }
+
+  @Test
+  public void testRefreshAfterStale() throws Exception {
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
+        retryOptions);
+
+    final AccessToken staleToken = new AccessToken("stale", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
+    AccessToken goodToken = new AccessToken("good", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 11));
+
+    //noinspection unchecked
+    Mockito.when(credentials.refreshAccessToken())
+        // First call will setup a stale token
+        .thenReturn(staleToken)
+        // Second call will give a good token
+        .thenReturn(goodToken);
+
+    // First call - setup
+    HeaderCacheElement firstResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Good, firstResult.getCacheState());
+    Assert.assertThat(firstResult.header, containsString("stale"));
+
+    // Fast forward until token is stale
+    setTimeInMillieconds(10);
+
+    // Second call - return stale token, but schedule refresh
+    HeaderCacheElement secondResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Stale, secondResult.getCacheState());
+    Assert.assertThat(secondResult.header, containsString("stale"));
+
+    // Wait for the refresh to finish
+    final Future<?> waiter;
+    synchronized (underTest.lock) {
+      waiter = underTest.isRefreshing ? underTest.futureToken : Futures.immediateFuture(null);
+    }
+    waiter.get();
+
+    // Third call - now returns good token
+    HeaderCacheElement thirdResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Good, thirdResult.getCacheState());
+    Assert.assertThat(thirdResult.header, containsString("good"));
+
+    // Make sure that the token was only requested twice: once for the stale token & second time for the good token
+    Mockito.verify(credentials, times(2)).refreshAccessToken();
+  }
+
 
   @Test
   /*
@@ -223,18 +303,16 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     underTest =
         new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-            new RetryOptions.Builder().build(), logger);
+            new RetryOptions.Builder().build());
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
-    Assert.assertEquals(CacheState.Expired,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+    Assert.assertEquals(CacheState.Expired, underTest.headerCache.getCacheState());
 
     syncCall(lock, syncRefreshCallable);
 
     // Check to make sure that the AccessToken was retrieved.
-    Assert.assertEquals(CacheState.Stale,
-        RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
+    Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
 
     // Check to make sure we're no longer refreshing.
     Assert.assertFalse(underTest.isRefreshing);
@@ -281,6 +359,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         new AccessToken("", new Date(expiration)));
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
         retryOptions, logger);
-    Assert.assertTrue(underTest.doRefresh());
+    underTest.syncRefresh();
   }
 }
