@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeast;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.NanoClock;
 import com.google.api.client.util.Sleeper;
+import com.google.appengine.repackaged.com.google.common.util.concurrent.Futures;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
@@ -187,7 +189,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     //noinspection unchecked
     Mockito.when(credentials.refreshAccessToken())
-        // First call will throw IOException & bypass retries
+        // First call will throw Exception & bypass retries
         .thenThrow(Exception.class)
         // Second call will succeed
         .thenReturn(accessToken);
@@ -200,8 +202,52 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // Now the second token should be available
     HeaderCacheElement secondResult = underTest.getHeaderSafe();
     Assert.assertEquals(CacheState.Good, secondResult.getCacheState());
-    Assert.assertThat(secondResult.header, new StringContains("hi"));
+    Assert.assertThat(secondResult.header, containsString("hi"));
     // Make sure that the token was only requested twice: once for the first failure & second time for background recovery
+    Mockito.verify(credentials, times(2)).refreshAccessToken();
+  }
+
+  @Test
+  public void testRefreshAfterStale() throws Exception {
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
+        retryOptions, logger);
+
+    final AccessToken staleToken = new AccessToken("stale", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
+    AccessToken goodToken = new AccessToken("good", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 11));
+
+    //noinspection unchecked
+    Mockito.when(credentials.refreshAccessToken())
+        // First call will setup a stale token
+        .thenReturn(staleToken)
+        // Second call will give a good token
+        .thenReturn(goodToken);
+
+    // First call - setup
+    HeaderCacheElement firstResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Good, firstResult.getCacheState());
+    Assert.assertThat(firstResult.header, containsString("stale"));
+
+    // Fast forward until token is stale
+    setTimeInMillieconds(10);
+
+    // Second call - return stale token, but schedule refresh
+    HeaderCacheElement secondResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Stale, secondResult.getCacheState());
+    Assert.assertThat(secondResult.header, containsString("stale"));
+
+    // Wait for the refresh to finish
+    final Future<?> waiter;
+    synchronized (underTest.lock) {
+      waiter = underTest.isRefreshing ? underTest.futureToken : Futures.immediateFuture(null);
+    }
+    waiter.get();
+
+    // Third call - now returns good token
+    HeaderCacheElement thirdResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Good, thirdResult.getCacheState());
+    Assert.assertThat(thirdResult.header, containsString("good"));
+
+    // Make sure that the token was only requested twice: once for the stale token & second time for the good token
     Mockito.verify(credentials, times(2)).refreshAccessToken();
   }
 
