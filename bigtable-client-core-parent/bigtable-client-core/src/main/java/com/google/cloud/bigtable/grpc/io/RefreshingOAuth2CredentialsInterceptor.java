@@ -249,7 +249,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         state = CacheState.Good;
       }
 
-      if (state == CacheState.Good || state == CacheState.Exception) {
+      if (state == CacheState.Good) {
         return headerCache;
       } else if (state == CacheState.Stale) {
         asyncRefresh();
@@ -257,6 +257,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       } else if (state == CacheState.Expired) {
         // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
         deferredResult = asyncRefresh();
+      } else if (state == CacheState.Exception) {
+        // If we aren't on appengine, try a background refresh in case of failure
+        if (!isAppEngine) {
+          asyncRefresh();
+        }
+        return headerCache;
       } else {
         return new HeaderCacheElement(
             Status.UNAUTHENTICATED
