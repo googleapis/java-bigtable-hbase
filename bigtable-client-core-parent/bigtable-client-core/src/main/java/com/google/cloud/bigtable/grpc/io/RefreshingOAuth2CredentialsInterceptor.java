@@ -89,13 +89,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
      * This specifies how far in advance of a header expiration do we consider the token stale. The
      * Stale state indicates that the interceptor needs to do an asynchronous refresh.
      */
-    static final int TOKEN_STALENESS_MS = 75 * 1000;
+    static final int TOKEN_STALENESS_MS = 6 * 60 * 1000; // 6 minutes
 
     /**
      * After the token is "expired," the interceptor blocks gRPC calls. The Expired state indicates
      * that the interceptor needs to do a synchronous refresh.
      */
-    static final int TOKEN_EXPIRES_MS = 15 * 1000;
+    // 5 minutes as per https://github.com/google/google-auth-library-java/pull/95
+    static final int TOKEN_EXPIRES_MS = 5 * 60 * 1000;
 
     final Status status;
     final String header;
