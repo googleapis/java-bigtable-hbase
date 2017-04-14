@@ -55,14 +55,10 @@ import com.google.common.collect.ImmutableList.Builder;
 
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.internal.GrpcUtil;
-import io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
-import io.netty.handler.ssl.OpenSsl;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.Recycler;
 
 /**
@@ -83,14 +79,10 @@ public class BigtableSession implements Closeable {
 
   private static ChannelPool cachedDataChannelPool = null;
   private static final Logger LOG = new Logger(BigtableSession.class);
-  private static SslContextBuilder sslBuilder;
   private static ResourceLimiter resourceLimiter;
 
   // 256 MB, server has 256 MB limit.
   private final static int MAX_MESSAGE_SIZE = 1 << 28;
-
-  // 1 MB -- TODO(sduskis): make this configurable
-  private final static int FLOW_CONTROL_WINDOW = 1 << 20;
 
   @VisibleForTesting
   static final String PROJECT_ID_EMPTY_OR_NULL = "ProjectId must not be empty or null.";
@@ -123,33 +115,11 @@ public class BigtableSession implements Closeable {
     }
   }
 
-  private synchronized static SslContext createSslContext() throws SSLException {
-    if (sslBuilder == null) {
-      sslBuilder = GrpcSslContexts.forClient().ciphers(null);
-    }
-    return sslBuilder.build();
-  }
-
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
     ExecutorService connectionStartupExecutor = Executors
         .newCachedThreadPool(GrpcUtil.getThreadFactory("BigtableSession-startup-%d", true));
 
-    connectionStartupExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        // The first invocation of createSslContext() is expensive.
-        // Create a throw away object in order to speed up the creation of the first
-        // BigtableConnection which uses SslContexts under the covers.
-        try {
-          // We create multiple channels via refreshing and pooling channel implementation.
-          // Each one needs its own SslContext.
-          createSslContext();
-        } catch (SSLException e) {
-          LOG.warn("Could not asynchronously create the ssl context", e);
-        }
-      }
-    });
     connectionStartupExecutor.execute(new Runnable() {
       @Override
       public void run() {
@@ -478,17 +448,18 @@ public class BigtableSession implements Closeable {
    */
   public static ManagedChannel createNettyChannel(String host,
       BigtableOptions options, ClientInterceptor ... interceptors) throws SSLException {
-    NegotiationType negotiationType = options.usePlaintextNegotiation() ?
-        NegotiationType.PLAINTEXT : NegotiationType.TLS;
-    return NettyChannelBuilder
-        .forAddress(host, options.getPort())
+
+    // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
+    // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
+    ManagedChannelBuilder<?> builder = NettyChannelBuilder.forAddress(host, options.getPort());
+    if (options.usePlaintextNegotiation()) {
+      builder.usePlaintext(true);
+    }
+    return builder
         .nameResolverFactory(new DnsNameResolverProvider())
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
-        .sslContext(createSslContext())
-        .negotiationType(negotiationType)
         .userAgent(BigtableVersionInfo.CORE_UESR_AGENT + "," + options.getUserAgent())
-        .flowControlWindow(FLOW_CONTROL_WINDOW)
         .intercept(interceptors)
         .build();
   }
