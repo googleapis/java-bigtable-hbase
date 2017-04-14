@@ -23,6 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.NanoClock;
 import com.google.api.client.util.Sleeper;
@@ -183,13 +184,14 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Test
   public void testRefreshAfterFailure() throws Exception {
-    RetryOptions disabledRetryOptions = new Builder()
-        .setEnableRetries(false)
-        .setMaxElapsedBackoffMillis(0)
-        .build();
+    RetryOptions mockRetryOptions = Mockito.mock(RetryOptions.class);
+    BackOff mockBackOff = Mockito.mock(BackOff.class);
+
+    when(mockRetryOptions.createBackoff()).thenReturn(mockBackOff);
+    when(mockBackOff.nextBackOffMillis()).thenReturn(BackOff.STOP);
 
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        disabledRetryOptions);
+        mockRetryOptions);
 
     final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
 
@@ -203,7 +205,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // First call
     HeaderCacheElement firstResult = underTest.getHeaderSafe();
     Assert.assertEquals(CacheState.Exception, firstResult.getCacheState());
-
 
     // Now the second token should be available
     HeaderCacheElement secondResult = underTest.getHeaderSafe();
