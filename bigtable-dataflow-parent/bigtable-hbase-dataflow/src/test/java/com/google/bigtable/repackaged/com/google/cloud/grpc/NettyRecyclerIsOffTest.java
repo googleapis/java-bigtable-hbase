@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.bigtable.repackaged.com.google.cloud.grpc;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -35,9 +35,7 @@ public class NettyRecyclerIsOffTest {
   @Test
   public void testRecyclerIsOff() throws NoSuchFieldException, SecurityException,
       IllegalArgumentException, IllegalAccessException, IOException {
-    // Make sure BigtableSession does its setup.  This call is just to make sure that the BigtableSession's static
-    // code snippets are invoked.
-    BigtableSession.isAlpnProviderEnabled();
+    BigtableSession.turnOffNettyRecycler();
     Field field = Recycler.class.getDeclaredField("DEFAULT_MAX_CAPACITY_PER_THREAD");
     field.setAccessible(true);
     Assert.assertEquals(0, field.getInt(null));
