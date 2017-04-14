@@ -87,9 +87,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @VisibleForTesting
   static Clock clock = Clock.SYSTEM;
 
-  // From MoreExecutors
-  private static final boolean isAppEngine = System.getProperty("com.google.appengine.runtime.environment") != null;
-
   @VisibleForTesting
   static class HeaderCacheElement {
 
@@ -244,13 +241,9 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       return headerCacheUnsync;
     }
 
+    // TODO(igorbernstein2): figure out how to make this work with appengine request scoped threads
     synchronized (lock) {
       CacheState state = headerCache.getCacheState();
-
-      // AppEngine doesn't allow threads to outlive the request, so disable background refresh
-      if (isAppEngine && state == CacheState.Stale) {
-        state = CacheState.Good;
-      }
 
       switch (state) {
         case Good:
