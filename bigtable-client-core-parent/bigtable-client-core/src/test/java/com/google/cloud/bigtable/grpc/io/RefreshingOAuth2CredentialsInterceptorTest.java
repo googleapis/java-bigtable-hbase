@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc.io;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +32,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.HeaderCacheElement;
+import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -173,6 +175,42 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // Make sure that the header doesn't expire in the distant future.
     setTimeInMillieconds(100000000000L);
     Assert.assertEquals(CacheState.Good, element.getCacheState());
+  }
+
+  @Test
+  public void testRefreshAfterFailure() throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
+        retryOptions, logger);
+
+    final SettableFuture<AccessToken> future = SettableFuture.create();
+    final AccessToken accessToken = new AccessToken("", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
+
+    //noinspection unchecked
+    Mockito.when(credentials.refreshAccessToken())
+        // First call will throw IOException & bypass retries
+        .thenThrow(IOException.class)
+        // Second call will succeed
+        .thenAnswer(new Answer<AccessToken>() {
+          @Override
+          public AccessToken answer(InvocationOnMock invocation) throws Throwable {
+            return future.get();
+          }
+        });
+
+    // First call
+    HeaderCacheElement firstResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Exception, firstResult.getCacheState());
+
+    // unblock the background refresh & wait for it to finish
+    Future<HeaderCacheElement> retryAttempt = underTest.futureToken;
+    future.set(accessToken);
+    retryAttempt.get();
+
+    // Now the second token should be available
+    HeaderCacheElement secondResult = underTest.getHeader();
+    Assert.assertEquals(CacheState.Good, secondResult.getCacheState());
+    // Make sure that the token was only requested twice: once for the first failure & second time for background recovery
+    Mockito.verify(credentials, times(2)).refreshAccessToken();
   }
 
   @Test

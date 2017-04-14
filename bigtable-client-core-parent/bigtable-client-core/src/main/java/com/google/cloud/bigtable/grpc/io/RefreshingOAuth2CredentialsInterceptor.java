@@ -170,8 +170,9 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @GuardedBy("lock")
   boolean isRefreshing = false;
 
+  @VisibleForTesting
   @GuardedBy("lock")
-  private Future<HeaderCacheElement> futureToken = null;
+  Future<HeaderCacheElement> futureToken = null;
 
 
   /**
@@ -217,7 +218,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     };
   }
 
-  private HeaderCacheElement getHeaderSafe() {
+  @VisibleForTesting
+  HeaderCacheElement getHeaderSafe() {
     try {
       return getHeader();
     } catch (Exception e) {
@@ -232,7 +234,10 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
-  private HeaderCacheElement getHeader() throws ExecutionException, InterruptedException, TimeoutException {
+  @VisibleForTesting
+  HeaderCacheElement getHeader() throws ExecutionException, InterruptedException, TimeoutException {
+    LOG.info("Getting header");
+
     final Future<HeaderCacheElement> deferredResult;
 
     // Optimize for the common case: do a volatile read to peek for a Good cache value
