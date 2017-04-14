@@ -256,6 +256,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
       switch (state) {
         case Good:
+        case Exception:
           return headerCache;
         case Stale:
           asyncRefresh();
@@ -264,12 +265,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
           // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
           deferredResult = asyncRefresh();
           break;
-        case Exception:
-          // If we aren't on appengine, try a background refresh in case of failure
-          if (!isAppEngine) {
-            asyncRefresh();
-          }
-          return headerCache;
         default:
           return new HeaderCacheElement(
               Status.UNAUTHENTICATED

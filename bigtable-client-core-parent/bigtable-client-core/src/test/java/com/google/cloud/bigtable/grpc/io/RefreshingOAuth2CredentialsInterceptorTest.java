@@ -178,42 +178,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   }
 
   @Test
-  public void testRefreshAfterFailure() throws IOException, InterruptedException, ExecutionException, TimeoutException {
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-        retryOptions, logger);
-
-    final SettableFuture<AccessToken> future = SettableFuture.create();
-    final AccessToken accessToken = new AccessToken("", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
-
-    //noinspection unchecked
-    Mockito.when(credentials.refreshAccessToken())
-        // First call will throw IOException & bypass retries
-        .thenThrow(IOException.class)
-        // Second call will succeed
-        .thenAnswer(new Answer<AccessToken>() {
-          @Override
-          public AccessToken answer(InvocationOnMock invocation) throws Throwable {
-            return future.get();
-          }
-        });
-
-    // First call
-    HeaderCacheElement firstResult = underTest.getHeaderSafe();
-    Assert.assertEquals(CacheState.Exception, firstResult.getCacheState());
-
-    // unblock the background refresh & wait for it to finish
-    Future<HeaderCacheElement> retryAttempt = underTest.futureToken;
-    future.set(accessToken);
-    retryAttempt.get();
-
-    // Now the second token should be available
-    HeaderCacheElement secondResult = underTest.getHeader();
-    Assert.assertEquals(CacheState.Good, secondResult.getCacheState());
-    // Make sure that the token was only requested twice: once for the first failure & second time for background recovery
-    Mockito.verify(credentials, times(2)).refreshAccessToken();
-  }
-
-  @Test
   /*
    * Test that checks that concurrent requests to RefreshingOAuth2CredentialsInterceptor refresh
    * logic doesn't cause hanging behavior.  Specifically, when an Expired condition occurs it
