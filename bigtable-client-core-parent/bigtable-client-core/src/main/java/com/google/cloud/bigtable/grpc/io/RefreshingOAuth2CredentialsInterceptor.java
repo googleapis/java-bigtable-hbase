@@ -271,11 +271,15 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * there isn't a currently running asynchronous refresh.
    */
   Future<HeaderCacheElement> asyncRefresh() {
+    LOG.trace("asyncRefresh");
+
     synchronized (lock) {
       if (isRefreshing) {
+        LOG.trace("asyncRefresh is already in progress");
         return futureToken;
       }
       isRefreshing = true;
+      LOG.trace("asyncRefresh taking ownership");
 
       try {
         this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
@@ -322,6 +326,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   private HeaderCacheElement refreshCredentials() {
     if (!rateLimiter.tryAcquire()) {
+      LOG.trace("Rate limited");
+
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
               .withDescription("Too many attempts to authenticate")
