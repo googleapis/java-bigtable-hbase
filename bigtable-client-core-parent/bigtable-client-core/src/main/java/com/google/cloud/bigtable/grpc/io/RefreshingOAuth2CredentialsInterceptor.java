@@ -249,25 +249,27 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         state = CacheState.Good;
       }
 
-      if (state == CacheState.Good) {
-        return headerCache;
-      } else if (state == CacheState.Stale) {
-        asyncRefresh();
-        return headerCache;
-      } else if (state == CacheState.Expired) {
-        // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
-        deferredResult = asyncRefresh();
-      } else if (state == CacheState.Exception) {
-        // If we aren't on appengine, try a background refresh in case of failure
-        if (!isAppEngine) {
+      switch (state) {
+        case Good:
+          return headerCache;
+        case Stale:
           asyncRefresh();
-        }
-        return headerCache;
-      } else {
-        return new HeaderCacheElement(
-            Status.UNAUTHENTICATED
-                .withCause(new IllegalStateException("Could not process state: " + state))
-        );
+          return headerCache;
+        case Expired:
+          // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
+          deferredResult = asyncRefresh();
+          break;
+        case Exception:
+          // If we aren't on appengine, try a background refresh in case of failure
+          if (!isAppEngine) {
+            asyncRefresh();
+          }
+          return headerCache;
+        default:
+          return new HeaderCacheElement(
+              Status.UNAUTHENTICATED
+                  .withCause(new IllegalStateException("Could not process state: " + state))
+          );
       }
     }
     return deferredResult.get(250, TimeUnit.MILLISECONDS);
