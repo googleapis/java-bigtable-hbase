@@ -77,7 +77,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   enum RetryState {
-    PerformRetry, RetriesExhausted, Interrupted
+    PerformRetry, RetriesExhausted, Interrupted, Error
   }
 
   private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
@@ -394,7 +394,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       nextBackOffMillis = backoff.nextBackOffMillis();
     } catch (IOException e) {
       // Should never happen since we use an ExponentialBackoff
-      throw Throwables.propagate(e);
+      logger.error("Unexpected error while getting next back time", e);
+      return RetryState.Error;
     }
     if (nextBackOffMillis == BackOff.STOP) {
       logger.warn("Exhausted the number of retries for credentials refresh after "
