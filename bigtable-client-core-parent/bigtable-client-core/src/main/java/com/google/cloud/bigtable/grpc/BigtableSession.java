@@ -126,50 +126,8 @@ public class BigtableSession implements Closeable {
   private synchronized static SslContext createSslContext() throws SSLException {
     if (sslBuilder == null) {
       sslBuilder = GrpcSslContexts.forClient().ciphers(null);
-      // gRPC uses tcnative / OpenSsl by default, if it's available.  It defaults to alpn-boot
-      // if tcnative is not in the classpath.
-      if (OpenSsl.isAvailable()) {
-        LOG.info("SslContext: gRPC is using the OpenSSL provider (tcnactive jar - Open Ssl version: %s)",
-          OpenSsl.versionString());
-      } else {
-        if (isJettyAlpnConfigured()) {
-          // gRPC uses jetty ALPN as a backup to tcnative.
-          LOG.info("SslContext: gRPC is using the JDK provider (alpn-boot jar)");
-        } else {
-          LOG.info("SslContext: gRPC cannot be configured.  Neither OpenSsl nor Alpn are available.");
-        }
-      }
     }
     return sslBuilder.build();
-  }
-
-  /**
-   * <p>isAlpnProviderEnabled.</p>
-   *
-   * @return a boolean.
-   */
-  private static boolean isAlpnProviderEnabled() {
-    final boolean openSslAvailable = OpenSsl.isAvailable();
-    final boolean jettyAlpnConfigured = isJettyAlpnConfigured();
-    LOG.debug("OpenSSL available: %s", openSslAvailable);
-    LOG.debug("Jetty ALPN available: %s", jettyAlpnConfigured);
-    return openSslAvailable || jettyAlpnConfigured;
-  }
-
-  /**
-   * Indicates whether or not the Jetty ALPN jar is installed in the boot classloader.
-   */
-  private static boolean isJettyAlpnConfigured() {
-    final String alpnClassName = "org.eclipse.jetty.alpn.ALPN";
-    try {
-      Class.forName(alpnClassName, true, null);
-      return true;
-    } catch (ClassNotFoundException | NoClassDefFoundError e) {
-      return false;
-    } catch (Exception e) {
-      LOG.warn("Could not resolve alpn class: %s", e, alpnClassName);
-      return false;
-    }
   }
 
   private static void performWarmup() {
@@ -183,14 +141,12 @@ public class BigtableSession implements Closeable {
         // The first invocation of createSslContext() is expensive.
         // Create a throw away object in order to speed up the creation of the first
         // BigtableConnection which uses SslContexts under the covers.
-        if (isAlpnProviderEnabled()) {
-          try {
-            // We create multiple channels via refreshing and pooling channel implementation.
-            // Each one needs its own SslContext.
-            createSslContext();
-          } catch (SSLException e) {
-            LOG.warn("Could not asynchronously create the ssl context", e);
-          }
+        try {
+          // We create multiple channels via refreshing and pooling channel implementation.
+          // Each one needs its own SslContext.
+          createSslContext();
+        } catch (SSLException e) {
+          LOG.warn("Could not asynchronously create the ssl context", e);
         }
       }
     });
@@ -264,14 +220,6 @@ public class BigtableSession implements Closeable {
         options.getProjectId(), options.getInstanceId(), options.getDataHost(),
         options.getTableAdminHost());
     LOG.info("Bigtable options: %s.", options);
-    if (!isAlpnProviderEnabled()) {
-      LOG.error(
-          "Neither Jetty ALPN nor OpenSSL are available. "
-          + "OpenSSL unavailability cause:\n%s",
-          OpenSsl.unavailabilityCause().toString());
-      throw new IllegalStateException("Neither Jetty ALPN nor OpenSSL via "
-          + "netty-tcnative were properly configured.");
-    }
 
     Builder<ClientInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
     headerInterceptorBuilder.add(
