@@ -42,6 +42,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.hamcrest.core.StringContains;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -176,6 +177,34 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     setTimeInMillieconds(100000000000L);
     Assert.assertEquals(CacheState.Good, element.getCacheState());
   }
+
+  @Test
+  public void testRefreshAfterFailure() throws Exception {
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
+        retryOptions, logger);
+
+    final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
+
+    //noinspection unchecked
+    Mockito.when(credentials.refreshAccessToken())
+        // First call will throw IOException & bypass retries
+        .thenThrow(Exception.class)
+        // Second call will succeed
+        .thenReturn(accessToken);
+
+    // First call
+    HeaderCacheElement firstResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Exception, firstResult.getCacheState());
+
+
+    // Now the second token should be available
+    HeaderCacheElement secondResult = underTest.getHeaderSafe();
+    Assert.assertEquals(CacheState.Good, secondResult.getCacheState());
+    Assert.assertThat(secondResult.header, new StringContains("hi"));
+    // Make sure that the token was only requested twice: once for the first failure & second time for background recovery
+    Mockito.verify(credentials, times(2)).refreshAccessToken();
+  }
+
 
   @Test
   /*

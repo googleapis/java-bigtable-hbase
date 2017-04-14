@@ -256,12 +256,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
       switch (state) {
         case Good:
-        case Exception:
           return headerCache;
         case Stale:
           asyncRefresh();
           return headerCache;
         case Expired:
+        case Exception:
           // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
           deferredResult = asyncRefresh();
           break;
