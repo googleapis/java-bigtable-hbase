@@ -39,6 +39,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
@@ -230,7 +231,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
-  private HeaderCacheElement getHeader() throws ExecutionException, InterruptedException {
+  private HeaderCacheElement getHeader() throws ExecutionException, InterruptedException, TimeoutException {
     final Future<HeaderCacheElement> deferredResult;
 
     synchronized (lock) {
@@ -256,7 +257,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         );
       }
     }
-    return deferredResult.get();
+    return deferredResult.get(250, TimeUnit.MILLISECONDS);
   }
 
   /**
