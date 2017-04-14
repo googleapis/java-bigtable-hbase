@@ -272,7 +272,9 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   private boolean canRefresh() {
-    return !isRefreshing && getCacheState(this.headerCache.get()) != CacheState.Good;
+    synchronized (lock) {
+      return !isRefreshing && getCacheState(this.headerCache.get()) != CacheState.Good;
+    }
   }
 
   private static StatusRuntimeException asUnauthenticatedException(Exception e) {
