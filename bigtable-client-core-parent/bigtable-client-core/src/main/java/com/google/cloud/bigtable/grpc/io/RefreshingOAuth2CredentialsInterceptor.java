@@ -161,9 +161,10 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @VisibleForTesting
   final Object lock = new Object();
 
+  // Note that the cache is volatile to allow us to peek for a Good value
   @VisibleForTesting
   @GuardedBy("lock")
-  HeaderCacheElement headerCache = EMPTY_HEADER;
+  volatile HeaderCacheElement headerCache = EMPTY_HEADER;
 
   @VisibleForTesting
   @GuardedBy("lock")
@@ -233,6 +234,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   private HeaderCacheElement getHeader() throws ExecutionException, InterruptedException, TimeoutException {
     final Future<HeaderCacheElement> deferredResult;
+
+    // Optimize for the common case: do a volatile read to peek for a Good cache value
+    HeaderCacheElement headerCacheUnsync = this.headerCache;
+    if (headerCacheUnsync.getCacheState() == CacheState.Good) {
+      return headerCacheUnsync;
+    }
 
     synchronized (lock) {
       CacheState state = headerCache.getCacheState();
