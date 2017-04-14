@@ -112,7 +112,8 @@ public class BigtableSession implements Closeable {
    * process, and ends up being similar to the Recycler's package name. This method sets the value
    * to "0" if the value is not set.
    */
-  private static void turnOffNettyRecycler() {
+  @VisibleForTesting
+  static void turnOffNettyRecycler() {
     String packageName = Recycler.class.getName();
     String prefix = packageName.substring(0, packageName.indexOf(".util.Recycler"));
     final String key = prefix + ".recycler.maxCapacity";
@@ -147,7 +148,7 @@ public class BigtableSession implements Closeable {
    *
    * @return a boolean.
    */
-  public static boolean isAlpnProviderEnabled() {
+  private static boolean isAlpnProviderEnabled() {
     final boolean openSslAvailable = OpenSsl.isAvailable();
     final boolean jettyAlpnConfigured = isJettyAlpnConfigured();
     LOG.debug("OpenSSL available: %s", openSslAvailable);
