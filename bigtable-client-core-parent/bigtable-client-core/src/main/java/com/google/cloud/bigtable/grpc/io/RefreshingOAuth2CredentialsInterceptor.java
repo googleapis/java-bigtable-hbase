@@ -85,6 +85,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @VisibleForTesting
   static Clock clock = Clock.SYSTEM;
 
+  // From MoreExecutors
+  private static final boolean isAppEngine = System.getProperty("com.google.appengine.runtime.environment") != null;
 
   @VisibleForTesting
   static class HeaderCacheElement {
@@ -143,7 +145,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   Sleeper sleeper = Sleeper.DEFAULT;
 
   private final RetryOptions retryOptions;
-  private final boolean isAppEngine;
 
   private final OAuth2Credentials credentials;
 
@@ -178,9 +179,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     this.credentials = Preconditions.checkNotNull(credentials);
     this.retryOptions = Preconditions.checkNotNull(retryOptions);
     this.logger = Preconditions.checkNotNull(logger);
-
-    // From MoreExecutors
-    this.isAppEngine = System.getProperty("com.google.appengine.runtime.environment") != null;
   }
 
   /**
