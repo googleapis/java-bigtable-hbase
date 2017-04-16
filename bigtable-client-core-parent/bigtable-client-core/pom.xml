@@ -126,6 +126,11 @@ limitations under the License.
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-tcnative-boringssl-static</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
