@@ -17,15 +17,14 @@ package com.google.cloud.bigtable.grpc.io;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
 
 import com.google.api.client.util.Clock;
 import com.google.appengine.repackaged.com.google.common.util.concurrent.Futures;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.cloud.bigtable.util.AsyncBackOff;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.HeaderCacheElement;
+import com.google.common.util.concurrent.RateLimiter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -35,33 +34,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.matchers.InstanceOf;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 
 @RunWith(JUnit4.class)
 public class RefreshingOAuth2CredentialsInterceptorTest {
-
-  @Rule
-  public MockitoRule initMocks = MockitoJUnit.rule();
-
-  @Mock
-  private AsyncBackOff asyncBackOff;
 
   private static ExecutorService executorService;
 
@@ -82,7 +70,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Before
   public void setupMocks() {
-    when(asyncBackOff.tryAcquire()).thenReturn(true);
+    MockitoAnnotations.initMocks(this);
     setTimeInMillieconds(0L);
   }
 
@@ -128,7 +116,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Test
   public void testRefreshAfterFailure() throws Exception {
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials, asyncBackOff);
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
+    underTest.rateLimiter.setRate(100000);
 
     final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
 
@@ -153,7 +142,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Test
   public void testRefreshAfterStale() throws Exception {
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials, asyncBackOff);
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
+    underTest.rateLimiter.setRate(100000);
 
     final AccessToken staleToken = new AccessToken("stale", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
     AccessToken goodToken = new AccessToken("good", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 11));
@@ -192,16 +182,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     // Make sure that the token was only requested twice: once for the stale token & second time for the good token
     Mockito.verify(credentials, times(2)).refreshAccessToken();
-  }
-
-  @Test
-  public void testRefreshDuringBackOff() throws Exception {
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials, asyncBackOff);
-    when(asyncBackOff.tryAcquire()).thenReturn(false);
-
-    HeaderCacheElement result = underTest.getHeaderSafe();
-    Assert.assertEquals(CacheState.Exception, result.getCacheState());
-    Assert.assertThat(result.status.getDescription(), containsString("rate limit"));
   }
 
 
@@ -249,6 +229,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     underTest =
         new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
+    underTest.rateLimiter.setRate(100000);
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
@@ -306,7 +287,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   private void initialize(long expiration) throws IOException {
     Mockito.when(credentials.refreshAccessToken()).thenReturn(
         new AccessToken("", new Date(expiration)));
-    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials, asyncBackOff);
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
     underTest.syncRefresh();
   }
 }

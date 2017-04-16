@@ -19,9 +19,9 @@ import com.google.api.client.util.Clock;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.util.AsyncBackOff;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.RateLimiter;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -144,7 +144,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   private final ExecutorService executor;
 
-  private final AsyncBackOff asyncBackOff;
+  @VisibleForTesting
+  RateLimiter rateLimiter;
 
   private final OAuth2Credentials credentials;
 
@@ -172,15 +173,10 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * @param credentials a {@link OAuth2Credentials} object.
    */
   public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials) {
-    this(scheduler, credentials, new AsyncBackOff());
-  }
-
-  @VisibleForTesting
-  RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials, AsyncBackOff asyncBackOff) {
     this.executor = Preconditions.checkNotNull(scheduler);
     this.credentials = Preconditions.checkNotNull(credentials);
 
-    this.asyncBackOff = asyncBackOff;
+    rateLimiter = RateLimiter.create(1);
   }
 
   /**
@@ -332,7 +328,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
    */
   private HeaderCacheElement refreshCredentials() {
-    if (!asyncBackOff.tryAcquire()) {
+    if (!rateLimiter.tryAcquire()) {
       LOG.trace("Rate limited");
 
       return new HeaderCacheElement(
@@ -344,7 +340,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     try {
       LOG.info("Refreshing the OAuth token");
       AccessToken newToken = credentials.refreshAccessToken();
-      asyncBackOff.reset();
       return new HeaderCacheElement(newToken);
     } catch (Exception e) {
       LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
