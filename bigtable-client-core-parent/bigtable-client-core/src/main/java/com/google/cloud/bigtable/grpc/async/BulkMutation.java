@@ -134,8 +134,8 @@ public class BulkMutation {
     }
 
     public boolean isStale() {
-      return lastRpcSentTime == null
-          || lastRpcSentTime < (clock.currentTimeMillis() - MAX_RPC_WAIT_TIME);
+      return lastRpcSentTime != null
+          && lastRpcSentTime < (clock.currentTimeMillis() - MAX_RPC_WAIT_TIME);
     }
 
     public boolean wasSent() {
