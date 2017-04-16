@@ -41,7 +41,6 @@ import com.google.common.base.Strings;
 import io.grpc.Status;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.util.VersionInfo;
 
 import java.io.FileInputStream;
@@ -148,6 +147,14 @@ public class BigtableOptionsFactory {
    */
   public static final String ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY =
       "google.bigtable.grpc.retry.deadlineexceeded.enable";
+
+  /**
+   * Key to set the initial amount of time to wait for retries, given a backoff policy on errors.
+   * This flag is used only when grpc retries is enabled.
+   */
+  public static final String INITIAL_ELAPSED_BACKOFF_MILLIS_KEY =
+      "google.bigtable.grpc.retry.initial.elapsed.backoff.ms";
+
   /**
    * Key to set the maximum amount of time to wait for retries, given a backoff policy on errors.
    * This flag is used only when grpc retries is enabled.
@@ -444,6 +451,12 @@ public class BigtableOptionsFactory {
         configuration.getBoolean(ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, true);
     LOG.debug("gRPC retry on deadline exceeded enabled: %s", retryOnDeadlineExceeded);
     retryOptionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
+
+    int initialElapsedBackoffMillis = configuration.getInt(
+      INITIAL_ELAPSED_BACKOFF_MILLIS_KEY,
+      RetryOptions.DEFAULT_INITIAL_BACKOFF_MILLIS);
+    LOG.debug("gRPC retry initialElapsedBackoffMillis: %d", initialElapsedBackoffMillis);
+    retryOptionsBuilder.setInitialBackoffMillis(initialElapsedBackoffMillis);
 
     int maxElapsedBackoffMillis = configuration.getInt(
         MAX_ELAPSED_BACKOFF_MILLIS_KEY,
