@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
@@ -254,9 +255,16 @@ public class CloudBigtableConfiguration implements Serializable {
     Configuration config = new Configuration(false);
 
     config.set(BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
+
     // Dataflow should use a different endpoint for data operations than online traffic.
     config.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY,
       BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT);
+
+    config.set(BigtableOptionsFactory.INITIAL_ELAPSED_BACKOFF_MILLIS_KEY,
+      String.valueOf(TimeUnit.SECONDS.toMillis(5)));
+
+    config.set(BigtableOptionsFactory.MAX_ELAPSED_BACKOFF_MILLIS_KEY,
+      String.valueOf(TimeUnit.MINUTES.toMillis(5)));
 
     // This setting can potentially decrease performance for large scale writes. However, this
     // setting prevents problems that occur when streaming Sources, such as PubSub, are used.
