@@ -89,14 +89,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
      * This specifies how far in advance of a header expiration do we consider the token stale. The
      * Stale state indicates that the interceptor needs to do an asynchronous refresh.
      */
-    static final int TOKEN_STALENESS_MS = 6 * 60 * 1000; // 6 minutes
+    static final long TOKEN_STALENESS_MS = TimeUnit.MINUTES.toMillis(6);
 
     /**
      * After the token is "expired," the interceptor blocks gRPC calls. The Expired state indicates
      * that the interceptor needs to do a synchronous refresh.
      */
     // 5 minutes as per https://github.com/google/google-auth-library-java/pull/95
-    static final int TOKEN_EXPIRES_MS = 5 * 60 * 1000;
+    static final long TOKEN_EXPIRES_MS = TimeUnit.MINUTES.toMillis(5);
 
     final Status status;
     final String header;
@@ -354,6 +354,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private void revokeUnauthToken(HeaderCacheElement oldToken) {
     synchronized (lock) {
       if (headerCache == oldToken) {
+        LOG.warn("Got unauthenticated response from server, revoking the current token");
         headerCache = EMPTY_HEADER;
       } else {
         LOG.info("Skipping revoke, since the revoked token has already changed");
@@ -373,7 +374,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     @Override
     public void onClose(Status status, Metadata trailers) {
       if (status == Status.UNAUTHENTICATED) {
-        LOG.warn("Got unauthenticated response from server, revoking the current token");
         revokeUnauthToken(origToken);
       }
       super.onClose(status, trailers);
