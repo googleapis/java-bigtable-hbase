@@ -91,7 +91,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Test
   public void testStaleAndExpired() throws IOException {
-    int expiration = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
+    long expiration = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
     initialize(expiration);
     Assert.assertEquals(CacheState.Good, underTest.headerCache.getCacheState());
     long startTime = 2L;
