@@ -15,25 +15,23 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
-import com.google.api.client.util.Sleeper;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.RateLimiter;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -61,6 +59,8 @@ import javax.annotation.concurrent.GuardedBy;
  */
 public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor {
 
+  private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
+
   /**
    * <p>
    * This enum describes the states of the OAuth header.
@@ -75,12 +75,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   enum CacheState {
     Good, Stale, Expired, Exception
   }
-
-  enum RetryState {
-    PerformRetry, RetriesExhausted, Interrupted, Error
-  }
-
-  private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
+  
   private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
       "Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
@@ -94,13 +89,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
      * This specifies how far in advance of a header expiration do we consider the token stale. The
      * Stale state indicates that the interceptor needs to do an asynchronous refresh.
      */
-    static final int TOKEN_STALENESS_MS = 75 * 1000;
+    static final long TOKEN_STALENESS_MS = TimeUnit.MINUTES.toMillis(6);
 
     /**
      * After the token is "expired," the interceptor blocks gRPC calls. The Expired state indicates
      * that the interceptor needs to do a synchronous refresh.
      */
-    static final int TOKEN_EXPIRES_MS = 15 * 1000;
+    // 5 minutes as per https://github.com/google/google-auth-library-java/pull/95
+    static final long TOKEN_EXPIRES_MS = TimeUnit.MINUTES.toMillis(5);
 
     final Status status;
     final String header;
@@ -146,12 +142,10 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
 
-  private final Logger logger;
   private final ExecutorService executor;
-  @VisibleForTesting
-  Sleeper sleeper = Sleeper.DEFAULT;
 
-  private final RetryOptions retryOptions;
+  @VisibleForTesting
+  RateLimiter rateLimiter;
 
   private final OAuth2Credentials credentials;
 
@@ -177,20 +171,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *
    * @param scheduler a {@link ExecutorService} object.
    * @param credentials a {@link OAuth2Credentials} object.
-   * @param retryOptions a {@link RetryOptions} object.
    */
-  public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler,
-      OAuth2Credentials credentials, RetryOptions retryOptions) {
-    this(scheduler, credentials, retryOptions, LOG);
-  }
-
-  @VisibleForTesting
-  RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials,
-      RetryOptions retryOptions, Logger logger) {
+  public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials) {
     this.executor = Preconditions.checkNotNull(scheduler);
     this.credentials = Preconditions.checkNotNull(credentials);
-    this.retryOptions = Preconditions.checkNotNull(retryOptions);
-    this.logger = Preconditions.checkNotNull(logger);
+
+    rateLimiter = RateLimiter.create(1);
   }
 
   /**
@@ -210,7 +196,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         }
 
         headers.put(AUTHORIZATION_HEADER_KEY, headerCache.header);
-        delegate().start(responseListener, headers);
+
+        delegate().start(new UnAuthResponseListener<>(responseListener, headerCache), headers);
       }
     };
   }
@@ -287,17 +274,21 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * there isn't a currently running asynchronous refresh.
    */
   Future<HeaderCacheElement> asyncRefresh() {
+    LOG.trace("asyncRefresh");
+
     synchronized (lock) {
       if (isRefreshing) {
+        LOG.trace("asyncRefresh is already in progress");
         return futureToken;
       }
       isRefreshing = true;
+      LOG.trace("asyncRefresh taking ownership");
 
       try {
         this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
-            HeaderCacheElement newToken = refreshCredentialsWithRetry();
+            HeaderCacheElement newToken = refreshCredentials();
             return updateToken(newToken);
           }
         });
@@ -332,85 +323,60 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   /**
-   * Calls {@link com.google.auth.oauth2.OAuth2Credentials#refreshAccessToken()}. In case of an
-   * IOException, retry the call as per the {@link com.google.api.client.util.BackOff} policy
-   * defined by {@link com.google.cloud.bigtable.config.RetryOptions#createBackoff()}.
-   *
-   * <p>This method retries until one of the following conditions occurs:
-   *
-   * <ol>
-   * <li>An OAuth request was completed. If the value is null, return an exception.
-   * <li>A non-IOException Exception is thrown - return an error status
-   * <li>All retries have been exhausted, i.e. when the Backoff.nextBackOffMillis() returns
-   * BackOff.STOP
-   * <li>An interrupt occurs.
-   * </ol>
+   * Calls {@link com.google.auth.oauth2.OAuth2Credentials#refreshAccessToken()}.
    *
    * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
    */
-  @VisibleForTesting
-  HeaderCacheElement refreshCredentialsWithRetry() {
-    final BackOff backoff = retryOptions.createBackoff();
+  private HeaderCacheElement refreshCredentials() {
+    if (!rateLimiter.tryAcquire()) {
+      LOG.trace("Rate limited");
 
-    while (true) {
-      try {
-        logger.info("Refreshing the OAuth token");
-        AccessToken newToken = credentials.refreshAccessToken();
-        return new HeaderCacheElement(newToken);
-      } catch (IOException exception) {
-        logger.warn("Got an unexpected IOException when refreshing google credentials.", exception);
-        // An IOException occurred. Retry with backoff.
-        // Given the backoff, either sleep for a short duration, or terminate if the backoff has
-        // reached its configured timeout limit.
-        RetryState retryState = getRetryState(backoff);
-        if (retryState != RetryState.PerformRetry) {
-          return new HeaderCacheElement(
-              Status.UNAUTHENTICATED
-                  .withDescription("Exhausted retries trying to authenticate")
-                  .withCause(exception)
-          );
-        } // else Retry.
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withDescription("Authentication rate limit has been exceeded, failing fast")
+      );
+    }
 
-      } catch (Exception e) {
-        logger.warn("Got an unexpected exception while trying to refresh google credentials.", e);
-        return new HeaderCacheElement(
-            Status.UNAUTHENTICATED
-                .withDescription("Unexpected error trying to authenticate")
-                .withCause(e)
-        );
+    try {
+      LOG.info("Refreshing the OAuth token");
+      AccessToken newToken = credentials.refreshAccessToken();
+      return new HeaderCacheElement(newToken);
+    } catch (Exception e) {
+      LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withDescription("Unexpected error trying to authenticate")
+              .withCause(e)
+      );
+    }
+  }
+
+  private void revokeUnauthToken(HeaderCacheElement oldToken) {
+    synchronized (lock) {
+      if (headerCache == oldToken) {
+        LOG.warn("Got unauthenticated response from server, revoking the current token");
+        headerCache = EMPTY_HEADER;
+      } else {
+        LOG.info("Skipping revoke, since the revoked token has already changed");
       }
     }
   }
 
-  /**
-   * Sleep and/or determine if the backoff has timed out.
-   *
-   * @param backoff a {@link com.google.api.client.util.BackOff} object.
-   * @return RetryState indicating the current state of the retry logic.
-   */
-  RetryState getRetryState(BackOff backoff) {
-    final long nextBackOffMillis;
-    try {
-      nextBackOffMillis = backoff.nextBackOffMillis();
-    } catch (IOException e) {
-      // Should never happen since we use an ExponentialBackoff
-      logger.error("Unexpected error while getting next back time", e);
-      return RetryState.Error;
+  class UnAuthResponseListener<RespT> extends SimpleForwardingClientCallListener<RespT> {
+
+    private final HeaderCacheElement origToken;
+
+    UnAuthResponseListener(Listener<RespT> delegate, HeaderCacheElement origToken) {
+      super(delegate);
+      this.origToken = origToken;
     }
-    if (nextBackOffMillis == BackOff.STOP) {
-      logger.warn("Exhausted the number of retries for credentials refresh after "
-          + this.retryOptions.getMaxElaspedBackoffMillis() + " milliseconds.");
-      return RetryState.RetriesExhausted;
-    }
-    try {
-      sleeper.sleep(nextBackOffMillis);
-      // Try to perform another call.
-      return RetryState.PerformRetry;
-    } catch (InterruptedException e) {
-      logger.warn("Interrupted while trying to refresh credentials.");
-      Thread.currentThread().interrupt();
-      // If the thread is interrupted, terminate immediately.
-      return RetryState.Interrupted;
+
+    @Override
+    public void onClose(Status status, Metadata trailers) {
+      if (status == Status.UNAUTHENTICATED) {
+        revokeUnauthToken(origToken);
+      }
+      super.onClose(status, trailers);
     }
   }
 }
