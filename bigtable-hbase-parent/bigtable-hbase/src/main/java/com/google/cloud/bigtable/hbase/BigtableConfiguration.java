@@ -54,7 +54,8 @@ public class BigtableConfiguration {
    */
   public static Class<? extends Connection> getConnectionClass() {
     Preconditions.checkState(CONNECTION_CLASS != null,
-        "Could not find an appropriate BigtableConnection class");
+        "Could not load a concrete implementation of BigtableTableConnection: "
+            + "failed to find bigtable-hbase-1.x on the classpath.");
     return CONNECTION_CLASS;
   }
 
@@ -103,8 +104,9 @@ public class BigtableConfiguration {
    * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
    */
   public static Connection connect(Configuration conf) {
+    Class<? extends Connection> connectionClass = getConnectionClass();
     try {
-      return getConnectionClass().getConstructor(Configuration.class).newInstance(conf);
+      return connectionClass.getConstructor(Configuration.class).newInstance(conf);
     } catch (Exception e) {
       throw new IllegalStateException("Could not find an appropriate constructor for "
           + CONNECTION_CLASS.getCanonicalName(), e);
