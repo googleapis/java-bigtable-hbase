@@ -32,7 +32,6 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
-import com.google.common.collect.ImmutableList;
 
 /**
  * <p>BigtableRegionLocator class.</p>
@@ -85,7 +84,7 @@ public class BigtableRegionLocator implements RegionLocator {
     LOG.debug("Sampling rowkeys for table %s", request.getTableName());
 
     try {
-      ImmutableList<SampleRowKeysResponse> responses = client.sampleRowKeys(request.build());
+      List<SampleRowKeysResponse> responses = client.sampleRowKeys(request.build());
       regions = adapter.adaptResponse(responses);
       regionsFetchTimeMillis = System.currentTimeMillis();
       return regions;
