@@ -32,7 +32,6 @@ import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.stub.StreamObserver;
@@ -119,9 +118,9 @@ public interface BigtableDataClient {
    * Sample row keys from a table.
    *
    * @param request a {@link com.google.bigtable.v2.SampleRowKeysRequest} object.
-   * @return a {@link com.google.common.collect.ImmutableList} object.
+   * @return an immutable {@link List} object.
    */
-  ImmutableList<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request);
+  List<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request);
 
   /**
    * Sample row keys from a table, returning a Future that will complete when the sampling has
