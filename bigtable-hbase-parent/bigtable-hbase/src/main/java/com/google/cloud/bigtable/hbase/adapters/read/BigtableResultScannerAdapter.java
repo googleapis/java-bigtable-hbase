@@ -72,8 +72,8 @@ public class BigtableResultScannerAdapter<T> {
       }
 
       /**
-       * This is an HBase concept that was added in hbase 1.0.2.  It's not relevent for Cloud
-       * Bigtable.  It will not be called from the hbase code and should not be called by the user.
+       * This is an HBase concept that was added in HBase 1.0.2.  It's not relevant for Cloud
+       * Bigtable.  It will not be called from the HBase code and should not be called by the user.
        */
       // Developers Note: Do not add @Override so that this can remain backwards compatible with
       // 1.0.1.

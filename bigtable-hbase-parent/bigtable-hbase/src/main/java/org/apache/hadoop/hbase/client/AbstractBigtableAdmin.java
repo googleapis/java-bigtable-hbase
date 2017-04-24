@@ -84,6 +84,7 @@ import io.grpc.Status;
  * @author sduskis
  * @version $Id: $Id
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractBigtableAdmin implements Admin {
 
   private static final Logger LOG = new Logger(AbstractBigtableAdmin.class);
@@ -825,15 +826,15 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   /**
-   * Creates a snapshot from an existing table.  NOTE: Cloud Bigtable has a cleanup policy
+   * Creates a snapshot from an existing table. NOTE: Cloud Bigtable has a cleanup policy
    *
    * @param snapshotName
    * @param tableName
-   * @return
+   * @return a {@link Operation} with ids relevant to retrieving further information about
+   *     the long running operation.
    * @throws IOException
    */
-  private Operation snapshotTable(String snapshotName, TableName tableName)
-      throws IOException {
+  private Operation snapshotTable(String snapshotName, TableName tableName) throws IOException {
     throw new IllegalArgumentException("snapshotTable is not supported");
   }
 

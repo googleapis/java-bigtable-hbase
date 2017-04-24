@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.util;
 
-import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,21 +24,21 @@ import org.junit.Test;
 public class RowKeyUtilTest {
 
   @Test
-  public void test_simple() throws IOException {
+  public void test_simple()  {
     byte[] key = "test".getBytes();
     byte[] nextKey = RowKeyUtil.calculateTheClosestNextRowKeyForPrefix(key);
     Assert.assertEquals((byte) (key[key.length - 1] + 1), nextKey[key.length - 1]);
   }
 
   @Test
-  public void test_unsignedRange() throws IOException {
+  public void test_unsignedRange() {
     byte[] key = new byte[] { 0x7f };
     byte[] nextKey = RowKeyUtil.calculateTheClosestNextRowKeyForPrefix(key);
     Assert.assertEquals((byte) 0x80, nextKey[0]);
   }
 
   @Test
-  public void test_trailing0xFF() throws IOException {
+  public void test_trailing0xFF() {
     byte trailer = (byte)0xFF;
     byte[] key = new byte[] { 0x01, trailer, trailer, trailer };
     byte[] nextKey = RowKeyUtil.calculateTheClosestNextRowKeyForPrefix(key);

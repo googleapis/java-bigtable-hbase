@@ -31,7 +31,7 @@ public class HBaseResultCoderTest {
 
   public static final Result TEST_RESULT =
       Result.create(new Cell[] { new RowCell("key".getBytes(), "family".getBytes(),
-          "qualifier".getBytes(), System.currentTimeMillis(), "value".getBytes()) });;
+          "qualifier".getBytes(), System.currentTimeMillis(), "value".getBytes()) });
 
   @Test
   public void testRoundTrip() throws Exception {

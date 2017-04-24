@@ -82,7 +82,7 @@ public class Export {
 
     String tableName = args[0];
     Path outputDir = new Path(args[1]);
-    Job job = new Job(conf, NAME + "_" + tableName);
+    Job job = Job.getInstance(conf, NAME + "_" + tableName);
     job.setJobName(NAME + "_" + tableName);
     job.setJarByClass(Export.class);
     // Set optional scan parameters

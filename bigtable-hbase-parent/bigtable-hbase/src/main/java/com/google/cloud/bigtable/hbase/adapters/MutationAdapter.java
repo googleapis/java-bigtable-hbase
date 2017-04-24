@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import java.util.Collection;
-
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Row;
 
@@ -26,12 +26,13 @@ import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 /**
- * Adapt an HBase {@link Mutation} Operation into a Bigtable {@link MutateRowRequest.Builder} or
- * {@link MutateRowsRequest.Entry}.
+ * Adapt an HBase {@link Mutation} Operation into a Google Cloud Bigtable {@link
+ * com.google.bigtable.v2.MutateRowRequest.Builder} or {@link
+ * com.google.bigtable.v2.MutateRowsRequest.Entry}.
+ *
  * @author sduskis
  * @version $Id: $Id
  */
-
 public abstract class MutationAdapter<T extends Row>
     implements OperationAdapter<T, MutateRowRequest.Builder> {
 
@@ -57,12 +58,12 @@ public abstract class MutationAdapter<T extends Row>
    * Converts an HBase {@link Mutation} which represents a set of changes to a single row from an
    * HBase perspective to a collection of Cloud Bigtable {@link com.google.bigtable.v2.Mutation}
    * which represent the set of changes. The name "Mutation" represents a more granular change in
-   * Bigtable than an HBase "Mutation"; An HBase {@link Cell} is akin to a Cloud Bigtable
-   * {@link com.google.bigtable.v2.Mutation}. A CloudBigtable {@link MutateRowRequest} or
-   * {@link MutateRowsRequest.Entry} is akin to an HBase {@link Mutation}.
+   * Bigtable than an HBase "Mutation"; An HBase {@link Cell} is akin to a Cloud Bigtable {@link
+   * com.google.bigtable.v2.Mutation}. A CloudBigtable {@link MutateRowRequest} or {@link
+   * com.google.bigtable.v2.MutateRowsRequest.Entry} is akin to an HBase {@link Mutation}.
    *
    * @param operation The HBase {@link Mutation} to convert
-   * @return a {@link Collection} of Cloud Bigtable {@link}
+   * @return a {@link Collection} of Cloud Bigtable {@link Mutation}
    */
   protected abstract Collection<com.google.bigtable.v2.Mutation> adaptMutations(T operation);
 }

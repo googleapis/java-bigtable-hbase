@@ -15,7 +15,6 @@
  */
 package com.google.bigtable.repackaged.com.google.cloud.grpc;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 
 import org.junit.Assert;
@@ -34,7 +33,7 @@ public class NettyRecyclerIsOffTest {
 
   @Test
   public void testRecyclerIsOff() throws NoSuchFieldException, SecurityException,
-      IllegalArgumentException, IllegalAccessException, IOException {
+      IllegalArgumentException, IllegalAccessException {
     BigtableSession.turnOffNettyRecycler();
     Field field = Recycler.class.getDeclaredField("DEFAULT_MAX_CAPACITY_PER_THREAD");
     field.setAccessible(true);

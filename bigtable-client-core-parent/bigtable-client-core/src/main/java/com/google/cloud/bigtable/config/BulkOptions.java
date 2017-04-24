@@ -222,7 +222,7 @@ public class BulkOptions implements Serializable {
 
   /**
    * <p>Getter for the field <code>autoflushMs</code>.</p>
-   * @return
+   * @return a long
    */
   public long getAutoflushMs() {
     return autoflushMs;

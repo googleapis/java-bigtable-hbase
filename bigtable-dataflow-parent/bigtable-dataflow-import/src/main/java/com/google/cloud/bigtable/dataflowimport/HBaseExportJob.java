@@ -37,7 +37,6 @@ import com.google.cloud.dataflow.sdk.util.Reshuffle;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;

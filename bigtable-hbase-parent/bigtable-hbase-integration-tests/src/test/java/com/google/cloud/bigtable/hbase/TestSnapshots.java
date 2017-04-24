@@ -51,7 +51,7 @@ public class TestSnapshots extends AbstractTest {
       TableName.valueOf(tableName.getNameAsString().substring(40) + "_clone");
 
   @After
-  public void cleanup() throws IOException {
+  public void cleanup() {
     if (IntegrationTests.isBigtable() && !enableTestForBigtable()) {
       return;
     }
