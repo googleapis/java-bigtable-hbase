@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 import io.grpc.CallOptions;
+import io.grpc.Channel;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.Nullable;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
@@ -49,7 +51,6 @@ import com.google.cloud.bigtable.grpc.async.RetryingCollectingClientCallListener
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryRpcCallListener;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
-import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
@@ -94,8 +95,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       };
 
   /** Constant <code>ARE_RETRYABLE_MUTATIONS</code> */
-  @VisibleForTesting
-  public static final Predicate<MutateRowsRequest> ARE_RETRYABLE_MUTATIONS =
+  private static final Predicate<MutateRowsRequest> ARE_RETRYABLE_MUTATIONS =
       new Predicate<MutateRowsRequest>() {
         @Override
         public boolean apply(MutateRowsRequest mutateRowsRequest) {
@@ -112,8 +112,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       };
 
   /** Constant <code>IS_RETRYABLE_CHECK_AND_MUTATE</code> */
-  @VisibleForTesting
-  public static final Predicate<CheckAndMutateRowRequest> IS_RETRYABLE_CHECK_AND_MUTATE =
+  private static final Predicate<CheckAndMutateRowRequest> IS_RETRYABLE_CHECK_AND_MUTATE =
       new Predicate<CheckAndMutateRowRequest>() {
         @Override
         public boolean apply(CheckAndMutateRowRequest checkAndMutateRowRequest) {
@@ -165,36 +164,29 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final BigtableAsyncRpc<SampleRowKeysRequest, SampleRowKeysResponse> sampleRowKeysAsync;
   private final BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readRowsAsync;
 
-  private final BigtableAsyncRpc<MutateRowRequest, MutateRowResponse> mutateRowRpc;
-  private final BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> mutateRowsRpc;
-  private final BigtableAsyncRpc<CheckAndMutateRowRequest, CheckAndMutateRowResponse> checkAndMutateRpc;
+  @VisibleForTesting
+  final BigtableAsyncRpc<MutateRowRequest, MutateRowResponse> mutateRowRpc;
+  @VisibleForTesting
+  final BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> mutateRowsRpc;
+  @VisibleForTesting
+  final BigtableAsyncRpc<CheckAndMutateRowRequest, CheckAndMutateRowResponse> checkAndMutateRpc;
   private final BigtableAsyncRpc<ReadModifyWriteRowRequest, ReadModifyWriteRowResponse> readWriteModifyRpc;
 
   /**
    * <p>Constructor for BigtableDataGrpcClient.</p>
    *
-   * @param channelPool a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
+   * @param channel a {@link Channel} object.
    * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param bigtableOptions a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
   public BigtableDataGrpcClient(
-      ChannelPool channelPool,
+      Channel channel,
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions) {
-    this(
-        retryExecutorService,
-        bigtableOptions,
-        new BigtableAsyncUtilities.Default(channelPool));
-  }
-
-  @VisibleForTesting
-  BigtableDataGrpcClient(
-      ScheduledExecutorService retryExecutorService,
-      BigtableOptions bigtableOptions,
-      BigtableAsyncUtilities asyncUtilities) {
     this.retryExecutorService = retryExecutorService;
     this.retryOptions = bigtableOptions.getRetryOptions();
 
+    BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
     this.sampleRowKeysAsync =
         asyncUtilities.createAsyncRpc(
              BigtableGrpc.METHOD_SAMPLE_ROW_KEYS,
@@ -229,7 +221,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private <T> Predicate<T> getMutationRetryableFunction(Predicate<T> isRetryableMutation) {
     if (retryOptions.allowRetriesWithoutTimestamp()) {
-      return Predicates.<T> alwaysTrue();
+      return new Predicate<T>() {
+        @Override
+        public boolean apply(@Nullable T input) {
+          return input != null;
+        }
+      };
     } else {
       return isRetryableMutation;
     }
