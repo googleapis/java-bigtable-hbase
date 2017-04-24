@@ -281,7 +281,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<ReadModifyWriteRowResponse> readModifyWriteRowAsync(
       ReadModifyWriteRowRequest request) {
-    return createUnaryListener(request, readWriteModifyRpc, request.getTableName()).getAsyncResult();
+    return createUnaryListener(request, readWriteModifyRpc, request.getTableName())
+        .getAsyncResult();
   }
 
   /** {@inheritDoc} */
@@ -295,7 +296,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(
       SampleRowKeysRequest request) {
-    return createStreamingListener(request, sampleRowKeysAsync, request.getTableName()).getAsyncResult();
+    return createStreamingListener(request, sampleRowKeysAsync, request.getTableName())
+        .getAsyncResult();
   }
 
   /** {@inheritDoc} */
