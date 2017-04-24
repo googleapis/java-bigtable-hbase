@@ -21,10 +21,10 @@ import com.google.bigtable.admin.v2.ListClustersRequest;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.common.base.Preconditions;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
+import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.TimeUnit;
@@ -132,7 +132,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
 
 
   private final BigtableInstanceName instanceName;
-  private final ChannelPool channelPool;
+  private final ManagedChannel channel;
   private final BigtableInstanceClient client;
 
   /**
@@ -149,8 +149,8 @@ public class BigtableClusterUtilities implements AutoCloseable {
         Preconditions.checkNotNull(
             options.getInstanceName(),
             "ProjectId and instanceId have to be set in the options.  Use '-' for all instanceIds.");
-    channelPool = BigtableSession.createChannelPool(options.getInstanceAdminHost(), options);
-    client = new BigtableInstanceGrpcClient(channelPool);
+    channel = BigtableSession.createChannelPool(options.getInstanceAdminHost(), options);
+    client = new BigtableInstanceGrpcClient(channel);
   }
 
   /**
@@ -330,6 +330,6 @@ public class BigtableClusterUtilities implements AutoCloseable {
    */
   @Override
   public void close() {
-    channelPool.shutdownNow();
+    channel.shutdownNow();
   }
 }

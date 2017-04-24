@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 import io.grpc.CallOptions;
+import io.grpc.Channel;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -49,7 +50,6 @@ import com.google.cloud.bigtable.grpc.async.RetryingCollectingClientCallListener
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryRpcCallListener;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
-import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
@@ -173,18 +173,18 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /**
    * <p>Constructor for BigtableDataGrpcClient.</p>
    *
-   * @param channelPool a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
+   * @param channel a {@link Channel} object.
    * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param bigtableOptions a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
   public BigtableDataGrpcClient(
-      ChannelPool channelPool,
+      Channel channel,
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions) {
     this(
         retryExecutorService,
         bigtableOptions,
-        new BigtableAsyncUtilities.Default(channelPool));
+        new BigtableAsyncUtilities.Default(channel));
   }
 
   @VisibleForTesting
