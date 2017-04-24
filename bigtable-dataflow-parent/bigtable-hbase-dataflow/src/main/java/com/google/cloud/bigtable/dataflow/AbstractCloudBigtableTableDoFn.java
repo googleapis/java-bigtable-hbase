@@ -22,7 +22,6 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -90,7 +89,7 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
     this.config = config;
   }
 
-  protected synchronized Connection getConnection() throws IOException {
+  protected synchronized Connection getConnection() {
     if (connection == null) {
       // This uses cached grpc channels, if there was a previous connection created.
       connection = BigtableConfiguration.connect(config.toHBaseConfig());
