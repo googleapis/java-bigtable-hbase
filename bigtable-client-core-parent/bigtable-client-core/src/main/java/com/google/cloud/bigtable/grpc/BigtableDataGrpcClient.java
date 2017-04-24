@@ -19,12 +19,10 @@ import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterce
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
@@ -47,7 +45,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryingCollectingClientCallListener;
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryRpcCallListener;
-import com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -62,7 +59,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -238,150 +234,105 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public MutateRowResponse mutateRow(MutateRowRequest request) {
-    return getBlockingUnaryResult(request, mutateRowRpc, request.getTableName());
+    return createUnaryListener(request, mutateRowRpc, request.getTableName()).getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<MutateRowResponse> mutateRowAsync(MutateRowRequest request) {
-    return getUnaryFuture(request, mutateRowRpc, request.getTableName());
+    return createUnaryListener(request, mutateRowRpc, request.getTableName()).getAsyncResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public List<MutateRowsResponse> mutateRows(MutateRowsRequest request) {
-    return getBlockingStreamingResult(request, mutateRowsRpc, request.getTableName());
+    return createStreamingListener(request, mutateRowsRpc, request.getTableName())
+        .getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request) {
-    return getStreamingFuture(request, mutateRowsRpc, request.getTableName());
+    return createStreamingListener(request, mutateRowsRpc, request.getTableName()).getAsyncResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request) {
-    return getBlockingUnaryResult(request, checkAndMutateRpc, request.getTableName());
+    return createUnaryListener(request, checkAndMutateRpc, request.getTableName())
+        .getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request) {
-    return getUnaryFuture(request, checkAndMutateRpc, request.getTableName());
+    return createUnaryListener(request, checkAndMutateRpc, request.getTableName()).getAsyncResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ReadModifyWriteRowResponse readModifyWriteRow(ReadModifyWriteRowRequest request) {
-    return getBlockingUnaryResult(request, readWriteModifyRpc, request.getTableName());
+    return createUnaryListener(request, readWriteModifyRpc, request.getTableName())
+        .getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<ReadModifyWriteRowResponse> readModifyWriteRowAsync(
       ReadModifyWriteRowRequest request) {
-    return getUnaryFuture(request, readWriteModifyRpc, request.getTableName());
+    return createUnaryListener(request, readWriteModifyRpc, request.getTableName()).getAsyncResult();
   }
 
   /** {@inheritDoc} */
   @Override
-  public ImmutableList<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request) {
-    return ImmutableList.copyOf(
-        getBlockingStreamingResult(request, sampleRowKeysAsync, request.getTableName()));
+  public List<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request) {
+    return createStreamingListener(request, sampleRowKeysAsync, request.getTableName())
+        .getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(
       SampleRowKeysRequest request) {
-    return getStreamingFuture(request, sampleRowKeysAsync, request.getTableName());
+    return createStreamingListener(request, sampleRowKeysAsync, request.getTableName()).getAsyncResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request) {
-    return Futures.transform(getStreamingFuture(request, readRowsAsync, request.getTableName()),
-      ROW_LIST_TRANSFORMER);
+    return Futures.transform(
+        createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
+        ROW_LIST_TRANSFORMER);
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request) {
-    return Futures.transform(getStreamingFuture(request, readRowsAsync, request.getTableName()),
-      FLAT_ROW_LIST_TRANSFORMER);
-  }
-  
-  // Helper methods
-  /**
-   * <p>getStreamingFuture.</p>
-   *
-   * @param request a ReqT object.
-   * @param rpc a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
-   * @param tableName a {@link java.lang.String} object.
-   * @param <ReqT> a ReqT object.
-   * @param <RespT> a RespT object.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} object.
-   */
-  protected <ReqT, RespT> ListenableFuture<List<RespT>> getStreamingFuture(ReqT request,
-      BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    return getCompletionFuture(createStreamingListener(request, rpc, tableName));
+    return Futures.transform(
+        createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
+        FLAT_ROW_LIST_TRANSFORMER);
   }
 
-  private <ReqT, RespT> List<RespT> getBlockingStreamingResult(ReqT request,
-      BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    return getBlockingResult(createStreamingListener(request, rpc, tableName));
-  }
-
-  private <ReqT, RespT> ListenableFuture<RespT> getUnaryFuture(ReqT request,
-      BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    return getCompletionFuture(createUnaryListener(request, rpc, tableName));
-  }
-
-  private <ReqT, RespT> RespT getBlockingUnaryResult(ReqT request,
-      BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    return getBlockingResult(createUnaryListener(request, rpc, tableName));
-  }
-
-  private <ReqT, RespT> RetryingUnaryRpcCallListener<ReqT, RespT> createUnaryListener(ReqT request,
-      BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
+  private <ReqT, RespT> RetryingUnaryRpcCallListener<ReqT, RespT> createUnaryListener(
+      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
     CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
-    return new RetryingUnaryRpcCallListener<>(retryOptions, request, rpc, callOptions,
-        retryExecutorService, createMetadata(tableName));
+    Metadata metadata = createMetadata(tableName);
+    return new RetryingUnaryRpcCallListener<>(
+        retryOptions, request, rpc, callOptions, retryExecutorService, metadata);
   }
 
-  private <ReqT, RespT> RetryingCollectingClientCallListener<ReqT, RespT>
-      createStreamingListener(ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
+  private <ReqT, RespT> RetryingCollectingClientCallListener<ReqT, RespT> createStreamingListener(
+      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
     CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
-    return new RetryingCollectingClientCallListener<>(retryOptions, request, rpc, callOptions,
-        retryExecutorService, createMetadata(tableName));
+    Metadata metadata = createMetadata(tableName);
+    return new RetryingCollectingClientCallListener<>(
+        retryOptions, request, rpc, callOptions, retryExecutorService, metadata);
   }
 
   private <ReqT> CallOptions getCallOptions(final MethodDescriptor<ReqT, ?> methodDescriptor,
       ReqT request) {
     return callOptionsFactory.create(methodDescriptor, request);
-  }
-
-  private static <ReqT, RespT, OutputT> ListenableFuture<OutputT>
-      getCompletionFuture(AbstractRetryingRpcListener<ReqT, RespT, OutputT> listener) {
-    listener.start();
-    return listener.getCompletionFuture();
-  }
-
-  private static <ReqT, RespT, OutputT> OutputT getBlockingResult(
-      AbstractRetryingRpcListener<ReqT, RespT, OutputT> listener) {
-    try {
-      listener.start();
-      return listener.getCompletionFuture().get();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      listener.cancel();
-      throw Status.CANCELLED.withCause(e).asRuntimeException();
-    } catch (ExecutionException e) {
-      listener.cancel();
-      throw Status.fromThrowable(e).asRuntimeException();
-    }
   }
 
   /**
@@ -461,7 +412,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
           getCallOptions(readRowsAsync.getMethodDescriptor(), request),
           retryExecutorService,
           createMetadata(request.getTableName()));
-    listener.start();
+    listener.getAsyncResult();
     return listener;
   }
 }

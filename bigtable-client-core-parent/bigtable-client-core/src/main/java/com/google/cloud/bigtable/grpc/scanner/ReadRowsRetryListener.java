@@ -209,7 +209,7 @@ public class ReadRowsRetryListener extends
       this.rpc.getRpcMetrics().markRetry();
       resetStatusBasedBackoff();
       // run the rpc asynchronously.
-      retryExecutorService.execute(this);
+      retryExecutorService.execute(getRunnable());
     } else {
       // terminate
       this.rpc.getRpcMetrics().markRetriesExhasted();
