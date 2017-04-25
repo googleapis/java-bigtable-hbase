@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
-import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;

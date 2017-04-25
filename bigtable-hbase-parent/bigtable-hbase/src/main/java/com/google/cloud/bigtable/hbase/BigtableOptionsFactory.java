@@ -29,9 +29,11 @@ import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS
 import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
 
+import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
+import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -43,9 +45,11 @@ import io.grpc.Status;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.VersionInfo;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Static methods to convert an instance of {@link org.apache.hadoop.conf.Configuration}
@@ -118,6 +122,12 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY =
       "google.bigtable.auth.json.keyfile";
+
+  /**
+   * Key to set to a json security credentials string.
+   */
+  public static final String BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY =
+      "google.bigtable.auth.json.value";
 
   /**
    * Key to set to a boolean flag indicating whether or not grpc retries should be enabled.
@@ -379,12 +389,18 @@ public class BigtableOptionsFactory {
         BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
       LOG.debug("Using service accounts");
 
-      if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY) != null) {
+      if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY) != null) {
+        String jsonValue = configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY);
+        LOG.debug("Using json value");
+        builder.setCredentialOptions(
+          CredentialOptions.jsonCredentials(jsonValue));
+      } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY) != null) {
         String keyfileLocation =
             configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
         LOG.debug("Using json keyfile: %s", keyfileLocation);
-        builder.setCredentialOptions(CredentialOptions.jsonCredentials(new FileInputStream(
-            keyfileLocation)));
+        builder.setCredentialOptions(
+          CredentialOptions.jsonCredentials(
+            new FileInputStream(keyfileLocation)));
       } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY) != null) {
         String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
         LOG.debug("Service account %s specified.", serviceAccount);
@@ -393,11 +409,12 @@ public class BigtableOptionsFactory {
         Preconditions.checkState(!isNullOrEmpty(keyfileLocation),
           "Key file location must be specified when setting service account email");
         LOG.debug("Using p12 keyfile: %s", keyfileLocation);
-        builder.setCredentialOptions(CredentialOptions.p12Credential(serviceAccount,
-          keyfileLocation));
+        builder.setCredentialOptions(
+          CredentialOptions.p12Credential(serviceAccount,  keyfileLocation));
       } else {
         LOG.debug("Using default credentials.");
-        builder.setCredentialOptions(CredentialOptions.defaultCredentials());
+        builder.setCredentialOptions(
+          CredentialOptions.defaultCredentials());
       }
     } else if (configuration.getBoolean(
         BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT)) {

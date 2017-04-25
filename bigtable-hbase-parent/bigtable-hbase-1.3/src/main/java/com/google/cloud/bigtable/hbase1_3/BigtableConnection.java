@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.security.User;
  * @author sduskis
  * @version $Id: $Id
  */
+@SuppressWarnings("deprecation")
 public class BigtableConnection extends AbstractBigtableConnection {
 
   /**

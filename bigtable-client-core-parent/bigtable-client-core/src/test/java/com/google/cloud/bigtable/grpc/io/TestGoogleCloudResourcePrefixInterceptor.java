@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc.io;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 import io.grpc.Metadata;
-import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +27,7 @@ public class TestGoogleCloudResourcePrefixInterceptor {
   private GoogleCloudResourcePrefixInterceptor underTest;
 
   @Before
-  public void setup() throws IOException {
+  public void setup() {
     underTest = new GoogleCloudResourcePrefixInterceptor(HEADER_VALUE);
   }
 

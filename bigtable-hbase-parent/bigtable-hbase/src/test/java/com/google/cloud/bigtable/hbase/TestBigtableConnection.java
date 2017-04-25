@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
 
+@SuppressWarnings("deprecation")
 public class TestBigtableConnection extends AbstractBigtableConnection {
 
   public TestBigtableConnection(Configuration conf) throws IOException {

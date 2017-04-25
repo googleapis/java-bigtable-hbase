@@ -381,12 +381,13 @@ public class TestBulkMutation {
   }
 
   @Test
-  public void testAutoflushDisabled() throws ExecutionException, InterruptedException {
+  public void testAutoflushDisabled() {
     // buffer a request, with a mocked success
     MutateRowRequest mutateRowRequest = createRequest();
     underTest.add(mutateRowRequest);
 
-    verify(retryExecutorService, never()).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+    verify(retryExecutorService, never())
+        .schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
   }
 
   @Test

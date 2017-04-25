@@ -37,7 +37,6 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
@@ -119,7 +118,7 @@ public class TestBigtableTable {
   }
 
   @Test
-  public void projectIsPopulatedInMutationRequests() throws ServiceException, IOException {
+  public void projectIsPopulatedInMutationRequests() throws IOException {
     table.delete(new Delete(Bytes.toBytes("rowKey1")));
 
     ArgumentCaptor<MutateRowRequest> argument =

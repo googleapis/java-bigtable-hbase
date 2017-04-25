@@ -18,13 +18,11 @@ package com.google.cloud.bigtable.dataflow;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Collections;
-
 import org.junit.Assert;
 
 import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration;
-
+import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration.Builder;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,9 +39,7 @@ public class CloudBigtableConfigurationTest {
 
   @Test
   public void testHBaseConfig() {
-    CloudBigtableConfiguration underTest =
-        new CloudBigtableConfiguration(PROJECT, INSTANCE,
-            Collections.<String, String> emptyMap());
+    CloudBigtableConfiguration underTest = createBaseBuilder().build();
 
     Configuration config = underTest.toHBaseConfig();
 
@@ -53,16 +49,13 @@ public class CloudBigtableConfigurationTest {
 
   @Test
   public void testEquals() {
-    CloudBigtableConfiguration underTest1 =
-        new CloudBigtableConfiguration(PROJECT, INSTANCE, Collections.<String, String> emptyMap());
-    CloudBigtableConfiguration underTest2 =
-        new CloudBigtableConfiguration(PROJECT, INSTANCE, Collections.<String, String> emptyMap());
-    CloudBigtableConfiguration underTest3 = new CloudBigtableConfiguration(PROJECT, INSTANCE,
-        Collections.singletonMap("somekey", "somevalue"));
-    CloudBigtableConfiguration underTest4 = new CloudBigtableConfiguration("other_project",
-        INSTANCE, Collections.<String, String> emptyMap());
-    CloudBigtableConfiguration underTest5 = new CloudBigtableConfiguration(PROJECT, INSTANCE,
-        Collections.singletonMap("somekey", "somevalue"));
+    CloudBigtableConfiguration underTest1 = createBaseBuilder().build();
+    CloudBigtableConfiguration underTest2 = createBaseBuilder().build();
+    CloudBigtableConfiguration underTest3 =
+        createBaseBuilder().withConfiguration("somekey", "somevalue").build();
+    CloudBigtableConfiguration underTest4 = createBaseBuilder("other_project", INSTANCE).build();
+    CloudBigtableConfiguration underTest5 =
+        createBaseBuilder().withConfiguration("somekey", "somevalue").build();
 
     // Test CloudBigtableConfiguration that should be equal.
     Assert.assertEquals(underTest1, underTest2);
@@ -77,11 +70,18 @@ public class CloudBigtableConfigurationTest {
     Assert.assertEquals(underTest3, underTest5);
 }
 
+  private Builder createBaseBuilder() {
+    return createBaseBuilder(PROJECT, INSTANCE);
+  }
+
+  private Builder createBaseBuilder(String project, String instance) {
+    return new CloudBigtableConfiguration.Builder().withProjectId(project).withInstanceId(instance);
+  }
+
   @Test
   public void testToBuilder() {
     CloudBigtableConfiguration underTest =
-        new CloudBigtableConfiguration(PROJECT, INSTANCE, Collections.singletonMap("somekey",
-          "somevalue"));
+        createBaseBuilder().withConfiguration("somekey", "somevalue").build();
     CloudBigtableConfiguration copy = underTest.toBuilder().build();
     Assert.assertNotSame(underTest, copy);
     Assert.assertEquals(underTest, copy);

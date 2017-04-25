@@ -15,8 +15,10 @@
  */
 package com.google.cloud.bigtable.config;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import com.google.auth.Credentials;
@@ -70,6 +72,17 @@ public class CredentialOptions implements Serializable {
    */
   public static CredentialOptions jsonCredentials(InputStream jsonInputStream) {
     return new JsonCredentialsOptions(jsonInputStream);
+  }
+
+  /**
+   * <p>
+   * jsonCredentials.
+   * </p>
+   * @param jsonString a {@link java.io.String} object.
+   * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
+   */
+  public static CredentialOptions jsonCredentials(String jsonString) {
+    return jsonCredentials(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
   }
 
   /**

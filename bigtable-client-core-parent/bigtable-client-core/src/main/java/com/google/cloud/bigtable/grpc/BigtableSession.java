@@ -415,7 +415,7 @@ public class BigtableSession implements Closeable {
    * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers, that
    * will be cleaned up when the connection closes.
    *
-   * @param hostString a {@link java.lang.String} object.
+   * @param host a {@link java.lang.String} object.
    * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
    * @throws java.io.IOException if any.
    */
@@ -470,7 +470,7 @@ public class BigtableSession implements Closeable {
    * @param host a {@link String} object.
    * @param options a {@link BigtableOptions} object.
    * @return a {@link ManagedChannel} object.
-   * @throws IOException if any.
+   * @throws SSLException if any.
    */
   public static ManagedChannel createNettyChannel(String host,
       BigtableOptions options, ClientInterceptor ... interceptors) throws SSLException {

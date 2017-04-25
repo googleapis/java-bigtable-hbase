@@ -16,11 +16,8 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.bigtable.v2.ValueRange;
-import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
@@ -29,8 +26,6 @@ import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Adapt a single HBase ValueFilter.
@@ -72,7 +67,7 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
   }
 
   private RowFilter adaptBinaryComparator(
-      CompareOp compareOp, BinaryComparator comparator) throws IOException {
+      CompareOp compareOp, BinaryComparator comparator) {
     ByteString value = ByteString.copyFrom(comparator.getValue());
     switch (compareOp) {
       case LESS:

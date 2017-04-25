@@ -154,8 +154,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    */
   public static <K, V, T extends FileInputFormat<K, V>> HadoopFileSource<K, V> from(
       String filepattern, Class<T> formatClass, Class<K> keyClass, Class<V> valueClass) {
-    return (HadoopFileSource<K, V>)
-        new HadoopFileSource<K, V>(filepattern, formatClass, keyClass, valueClass);
+    return new HadoopFileSource<K, V>(filepattern, formatClass, keyClass, valueClass);
   }
 
   /**

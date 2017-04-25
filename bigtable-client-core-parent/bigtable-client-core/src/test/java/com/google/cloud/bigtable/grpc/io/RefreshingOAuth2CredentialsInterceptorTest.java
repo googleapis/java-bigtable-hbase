@@ -24,7 +24,6 @@ import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.HeaderCacheElement;
-import com.google.common.util.concurrent.RateLimiter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -124,7 +123,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     //noinspection unchecked
     Mockito.when(credentials.refreshAccessToken())
         // First call will throw Exception & bypass retries
-        .thenThrow(Exception.class)
+        .thenThrow(new IOException())
         // Second call will succeed
         .thenReturn(accessToken);
 

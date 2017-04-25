@@ -308,7 +308,7 @@ public class ReadRowsRetryListenerTest {
   }
 
   private void start() {
-    underTest.start();
+    underTest.getAsyncResult();
     verify(mockRpcMetrics, times(1)).timeOperation();
     verify(mockRpcMetrics, times(1)).timeRpc();
     verify(mockRetryableRpc, times(1)).newCall(eq(CallOptions.DEFAULT));
