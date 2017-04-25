@@ -25,6 +25,7 @@ import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.Nullable;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
@@ -90,8 +91,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       };
 
   /** Constant <code>ARE_RETRYABLE_MUTATIONS</code> */
-  @VisibleForTesting
-  public static final Predicate<MutateRowsRequest> ARE_RETRYABLE_MUTATIONS =
+  private static final Predicate<MutateRowsRequest> ARE_RETRYABLE_MUTATIONS =
       new Predicate<MutateRowsRequest>() {
         @Override
         public boolean apply(MutateRowsRequest mutateRowsRequest) {
@@ -108,8 +108,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       };
 
   /** Constant <code>IS_RETRYABLE_CHECK_AND_MUTATE</code> */
-  @VisibleForTesting
-  public static final Predicate<CheckAndMutateRowRequest> IS_RETRYABLE_CHECK_AND_MUTATE =
+  private static final Predicate<CheckAndMutateRowRequest> IS_RETRYABLE_CHECK_AND_MUTATE =
       new Predicate<CheckAndMutateRowRequest>() {
         @Override
         public boolean apply(CheckAndMutateRowRequest checkAndMutateRowRequest) {
@@ -161,9 +160,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final BigtableAsyncRpc<SampleRowKeysRequest, SampleRowKeysResponse> sampleRowKeysAsync;
   private final BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readRowsAsync;
 
-  private final BigtableAsyncRpc<MutateRowRequest, MutateRowResponse> mutateRowRpc;
-  private final BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> mutateRowsRpc;
-  private final BigtableAsyncRpc<CheckAndMutateRowRequest, CheckAndMutateRowResponse> checkAndMutateRpc;
+  @VisibleForTesting
+  final BigtableAsyncRpc<MutateRowRequest, MutateRowResponse> mutateRowRpc;
+  @VisibleForTesting
+  final BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> mutateRowsRpc;
+  @VisibleForTesting
+  final BigtableAsyncRpc<CheckAndMutateRowRequest, CheckAndMutateRowResponse> checkAndMutateRpc;
   private final BigtableAsyncRpc<ReadModifyWriteRowRequest, ReadModifyWriteRowResponse> readWriteModifyRpc;
 
   /**
@@ -177,20 +179,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       Channel channel,
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions) {
-    this(
-        retryExecutorService,
-        bigtableOptions,
-        new BigtableAsyncUtilities.Default(channel));
-  }
-
-  @VisibleForTesting
-  BigtableDataGrpcClient(
-      ScheduledExecutorService retryExecutorService,
-      BigtableOptions bigtableOptions,
-      BigtableAsyncUtilities asyncUtilities) {
     this.retryExecutorService = retryExecutorService;
     this.retryOptions = bigtableOptions.getRetryOptions();
 
+    BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
     this.sampleRowKeysAsync =
         asyncUtilities.createAsyncRpc(
              BigtableGrpc.METHOD_SAMPLE_ROW_KEYS,
@@ -225,7 +217,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private <T> Predicate<T> getMutationRetryableFunction(Predicate<T> isRetryableMutation) {
     if (retryOptions.allowRetriesWithoutTimestamp()) {
-      return Predicates.<T> alwaysTrue();
+      return new Predicate<T>() {
+        @Override
+        public boolean apply(@Nullable T input) {
+          return input != null;
+        }
+      };
     } else {
       return isRetryableMutation;
     }
