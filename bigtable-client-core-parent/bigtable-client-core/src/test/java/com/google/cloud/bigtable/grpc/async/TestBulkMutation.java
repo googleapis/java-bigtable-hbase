@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -47,7 +46,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.api.client.util.Clock;
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
@@ -139,10 +137,6 @@ public class TestBulkMutation {
         retryExecutorService, MAX_ROW_COUNT, 1000000L);
   }
 
-  @After
-  public void turnDown() {
-    BulkMutation.clock = Clock.SYSTEM;
-  }
 
   @Test
   public void testAdd() {
@@ -161,8 +155,8 @@ public class TestBulkMutation {
   }
 
   private RequestManager createTestRequestManager() {
-    return new BulkMutation.RequestManager(
-        TABLE_NAME.toString(), BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"));
+    return new BulkMutation.RequestManager(TABLE_NAME.toString(),
+        BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"), underTest.clock);
   }
 
   protected static MutateRowRequest createRequest() {
@@ -308,20 +302,21 @@ public class TestBulkMutation {
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), result);
     verify(operationAccountant, times(1)).onComplexOperationCompletion(eq(retryIdGenerator.get()));
   }
+
   @Test
   public void testRequestTimer() {
-    RequestManager requestManager = createTestRequestManager();
-    Assert.assertFalse(requestManager.wasSent());
-    final AtomicLong currentTime = new AtomicLong(500);
-    BulkMutation.clock = new Clock() {
+    final AtomicLong currentTime = new AtomicLong(System.nanoTime());
+    underTest.clock = new NanoClock() {
       @Override
-      public long currentTimeMillis() {
+      public long nanoTime() {
         return currentTime.get();
       }
     };
-    requestManager.lastRpcSentTime = currentTime.get();
+    RequestManager requestManager = createTestRequestManager();
+    Assert.assertFalse(requestManager.wasSent());
+    requestManager.lastRpcSentTimeNanos = currentTime.get();
     Assert.assertFalse(requestManager.isStale());
-    currentTime.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME - 1);
+    currentTime.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME_NANOS - 1);
     Assert.assertFalse(requestManager.isStale());
     currentTime.addAndGet(2);
     Assert.assertTrue(requestManager.isStale());
