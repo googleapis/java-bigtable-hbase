@@ -57,8 +57,8 @@ import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFact
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.cloud.bigtable.batch.util.ByteStringUtil;
-import com.google.cloud.bigtable.batch.util.CloudBigtableServiceImpl;
+import com.google.cloud.bigtable.batch.common.ByteStringUtil;
+import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;

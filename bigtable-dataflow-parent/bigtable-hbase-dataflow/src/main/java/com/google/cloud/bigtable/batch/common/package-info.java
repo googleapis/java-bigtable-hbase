@@ -27,4 +27,4 @@
  * as Google Analytics and Gmail.
  * </p>
  */
-package com.google.cloud.bigtable.batch.util;
+package com.google.cloud.bigtable.batch.common;

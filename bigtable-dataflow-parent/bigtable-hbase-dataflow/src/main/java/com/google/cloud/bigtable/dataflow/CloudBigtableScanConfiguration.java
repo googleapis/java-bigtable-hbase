@@ -27,7 +27,7 @@ import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRows
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowSet;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
-import com.google.cloud.bigtable.batch.util.ByteStringUtil;
+import com.google.cloud.bigtable.batch.common.ByteStringUtil;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 
 import java.util.Map;
