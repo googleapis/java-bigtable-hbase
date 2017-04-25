@@ -48,17 +48,17 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.cloud.bigtable.batch.common.ByteStringUtil;
+import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
@@ -410,14 +410,7 @@ public class CloudBigtableIO {
      */
     public synchronized List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
       if (sampleRowKeys == null) {
-        BigtableOptions bigtableOptions = getConfiguration().toBigtableOptions();
-        try (BigtableSession session = new BigtableSession(bigtableOptions)) {
-          BigtableTableName tableName =
-              bigtableOptions.getInstanceName().toTableName(getConfiguration().getTableId());
-          SampleRowKeysRequest request =
-              SampleRowKeysRequest.newBuilder().setTableName(tableName.toString()).build();
-          sampleRowKeys = session.getDataClient().sampleRowKeys(request);
-        }
+        sampleRowKeys = new CloudBigtableServiceImpl().getSampleRowKeys(getConfiguration());
       }
       return sampleRowKeys;
     }
