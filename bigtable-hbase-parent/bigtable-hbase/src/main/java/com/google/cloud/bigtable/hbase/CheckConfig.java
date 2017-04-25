@@ -42,6 +42,7 @@ import java.security.GeneralSecurityException;
  * @author sduskis
  * @version $Id: $Id
  */
+@SuppressWarnings("deprecation")
 public class CheckConfig {
   /**
    * <p>main.</p>

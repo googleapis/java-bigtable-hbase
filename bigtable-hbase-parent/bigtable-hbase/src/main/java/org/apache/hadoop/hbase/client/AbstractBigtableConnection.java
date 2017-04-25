@@ -31,7 +31,6 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdap
 import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.security.User;

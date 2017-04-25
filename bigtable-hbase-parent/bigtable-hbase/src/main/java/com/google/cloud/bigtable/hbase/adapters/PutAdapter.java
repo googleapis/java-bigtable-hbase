@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.client.util.Clock;
 import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.Mutation.SetCell;
@@ -37,8 +36,10 @@ import java.util.List;
 import java.util.Map.Entry;
 
 /**
- * Adapt an HBase {@link Put} Operation into a Bigtable {@link MutateRowRequest.Builder} or
- * {@link MutateRowsRequest.Entry}.
+ * Adapt an HBase {@link Put} Operation into a Cloud Bigtable {@link
+ * com.google.bigtable.v2.MutateRowRequest.Builder} or {@link
+ * com.google.bigtable.v2.MutateRowsRequest.Entry}.
+ *
  * @author sduskis
  * @version $Id: $Id
  */

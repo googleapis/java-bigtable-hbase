@@ -27,6 +27,7 @@ import com.google.api.client.repackaged.com.google.common.base.Preconditions;
  * @author sduskis
  * @version $Id: $Id
  */
+@SuppressWarnings("deprecation")
 public class BigtableConfiguration {
   private static final String[] CONNECTION_CLASS_NAMES = {
     "com.google.cloud.bigtable.hbase1_0.BigtableConnection",

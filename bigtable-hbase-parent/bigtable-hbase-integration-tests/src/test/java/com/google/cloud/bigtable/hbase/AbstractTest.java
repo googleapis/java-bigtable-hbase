@@ -74,10 +74,12 @@ public abstract class AbstractTest {
   }
 
   /** Hook to setup class level resources after the connection is created. */
+  @SuppressWarnings("unused")
   protected void setup() throws IOException {
   }
 
   /** Hook to remove class level resources after the connection is created. */
+  @SuppressWarnings("unused")
   protected void tearDown() throws IOException {
   }
 

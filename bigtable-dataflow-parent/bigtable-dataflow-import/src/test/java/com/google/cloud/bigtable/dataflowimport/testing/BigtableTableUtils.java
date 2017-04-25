@@ -47,8 +47,7 @@ public class BigtableTableUtils implements AutoCloseable {
   private final String[] columnFamilyNames;
 
   private BigtableTableUtils(
-      Connection connection, Admin admin, String tableName, String ...columnFamilyNames)
-      throws IOException {
+      Connection connection, Admin admin, String tableName, String ...columnFamilyNames) {
     this.connection = connection;
     this.admin = admin;
     this.tableName = TableName.valueOf(tableName);
@@ -122,8 +121,7 @@ public class BigtableTableUtils implements AutoCloseable {
      * Creates a {@link BigtableTableUtils} instance that manages a table named {@code tableName}.
      * The {@code columnFamilies} parameter defines the column families in this table.
      */
-    public BigtableTableUtils createBigtableTableUtils(String tableName, String ...columnFamilies)
-        throws IOException {
+    public BigtableTableUtils createBigtableTableUtils(String tableName, String... columnFamilies) {
       return new BigtableTableUtils(connection, admin, tableName, columnFamilies);
     }
 

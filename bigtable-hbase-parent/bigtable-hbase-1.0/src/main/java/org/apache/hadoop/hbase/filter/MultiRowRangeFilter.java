@@ -72,6 +72,7 @@ public class MultiRowRangeFilter extends FilterBase {
   /**
    * @return The filter serialized using pb
    */
+  @Override
   public byte[] toByteArray() {
     throw new UnsupportedOperationException("toByteArray");
   }
