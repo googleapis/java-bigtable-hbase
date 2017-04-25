@@ -47,7 +47,7 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
-
+import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
@@ -102,7 +102,7 @@ public class TestRetryingUnaryRpcCallListener {
         long value = invocation.getArgumentAt(1, Long.class);
         TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
         totalSleep.addAndGet(timeUnit.toNanos(value));
-        new Thread(invocation.getArgumentAt(0, Runnable.class)).start();
+        invocation.getArgumentAt(0, Runnable.class).run();
         return null;
       }
     }).when(executorService).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
@@ -142,8 +142,8 @@ public class TestRetryingUnaryRpcCallListener {
             any(ReadRowsRequest.class),
             any(ClientCall.Listener.class),
             any(Metadata.class));
-    underTest.start();
-    Assert.assertEquals(result, underTest.getCompletionFuture().get(1, TimeUnit.SECONDS));
+    ListenableFuture future = underTest.getAsyncResult();
+    Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
     verify(nanoClock, times(0)).nanoTime();
   }
 
@@ -167,9 +167,9 @@ public class TestRetryingUnaryRpcCallListener {
     };
     doAnswer(answer).when(readAsync).start(any(ClientCall.class), any(ReadRowsRequest.class),
       any(ClientCall.Listener.class), any(Metadata.class));
-    underTest.start();
+    ListenableFuture future = underTest.getAsyncResult();
 
-    Assert.assertEquals(result, underTest.getCompletionFuture().get(1, TimeUnit.HOURS));
+    Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
     Assert.assertEquals(5, counter.get());
   }
 
@@ -186,8 +186,7 @@ public class TestRetryingUnaryRpcCallListener {
     doAnswer(answer).when(readAsync).start(any(ClientCall.class), any(ReadRowsRequest.class),
       any(ClientCall.Listener.class), any(Metadata.class));
     try {
-      underTest.start();
-      underTest.getCompletionFuture().get(1, TimeUnit.MINUTES);
+      underTest.getAsyncResult().get(1, TimeUnit.SECONDS);
       Assert.fail();
     } catch (ExecutionException e) {
       Assert.assertEquals(BigtableRetriesExhaustedException.class, e.getCause().getClass());

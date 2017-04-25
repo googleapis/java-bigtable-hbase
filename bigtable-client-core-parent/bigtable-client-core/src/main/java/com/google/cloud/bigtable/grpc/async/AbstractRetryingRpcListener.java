@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import io.grpc.Status.Code;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -45,7 +46,7 @@ import io.grpc.StatusRuntimeException;
  * @version $Id: $Id
  */
 public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
-    extends ClientCall.Listener<ResponseT> implements Runnable {
+    extends ClientCall.Listener<ResponseT>  {
 
   /** Constant <code>LOG</code> */
   protected final static Logger LOG = new Logger(AbstractRetryingRpcListener.class);
@@ -174,7 +175,16 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
         status.getCause(), failedCount, status, channelId);
 
     rpc.getRpcMetrics().markRetry();
-    retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
+    retryExecutorService.schedule(getRunnable(), nextBackOff, TimeUnit.MILLISECONDS);
+  }
+
+  protected Runnable getRunnable() {
+    return new Runnable() {
+      @Override
+      public void run() {
+        AbstractRetryingRpcListener.this.run();
+      }
+    };
   }
 
   protected boolean isRequestRetryable() {
@@ -203,28 +213,18 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   }
 
   /**
-   * <p>Getter for the field <code>completionFuture</code>.</p>
-   *
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} object.
-   */
-  public ListenableFuture<ResultT> getCompletionFuture() {
-    return completionFuture;
-  }
-
-  /**
    * <p>Calls {@link BigtableAsyncRpc#newCall(CallOptions)} and {@link
    * BigtableAsyncRpc#start(ClientCall, Object, io.grpc.ClientCall.Listener, Metadata)} with this as
    * the listener so that retries happen correctly.
    */
-  @Override
-  public void run() {
+  protected void run() {
     rpcTimerContext = rpc.getRpcMetrics().timeRpc();
     Metadata metadata = new Metadata();
     metadata.merge(originalMetadata);
     synchronized (callLock) {
       call = rpc.newCall(callOptions);
+      rpc.start(call, getRetryRequest(), this, metadata);
     }
-    rpc.start(call, getRetryRequest(), this, metadata);
   }
 
   protected RequestT getRetryRequest() {
@@ -234,16 +234,30 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   /**
    * Initial execution of the RPC.
    */
-  public void start() {
+  public ListenableFuture<ResultT> getAsyncResult() {
     operationTimerContext = rpc.getRpcMetrics().timeOperation();
     run();
+    return completionFuture;
   }
 
   /**
    * Cancels the RPC.
    */
-  public synchronized void cancel() {
+  public void cancel() {
     cancel("User requested cancelation.");
+  }
+
+  public ResultT getBlockingResult() {
+    try {
+      return getAsyncResult().get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      cancel();
+      throw Status.CANCELLED.withCause(e).asRuntimeException();
+    } catch (ExecutionException e) {
+      cancel();
+      throw Status.fromThrowable(e).asRuntimeException();
+    }
   }
 
   /**
