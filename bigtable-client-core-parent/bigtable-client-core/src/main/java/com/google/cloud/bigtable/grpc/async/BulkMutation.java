@@ -195,20 +195,18 @@ public class BulkMutation {
           new FutureCallback<List<MutateRowsResponse>>() {
             @Override
             public void onSuccess(List<MutateRowsResponse> result) {
-              mutateRowsFuture = null;
               handleResult(result);
             }
 
             @Override
             public void onFailure(Throwable t) {
-              mutateRowsFuture = null;
               performFullRetry(new AtomicReference<Long>(), t);
             }
           });
     }
 
     private synchronized void handleResult(List<MutateRowsResponse> results) {
-
+      mutateRowsFuture = null;
       AtomicReference<Long> backoffTime = new AtomicReference<>();
       try {
         if (operationsAreComplete()) {
@@ -217,8 +215,8 @@ public class BulkMutation {
           return;
         }
         if (results == null || results.isEmpty()) {
-          performFullRetry(backoffTime,
-            new IllegalStateException("No MutateRowResponses were found."));
+          performFullRetry(backoffTime, io.grpc.Status.INTERNAL
+              .withDescription("No MutateRowResponses were found."));
           return;
         }
 
@@ -228,8 +226,8 @@ public class BulkMutation {
         }
 
         if (entries.isEmpty()) {
-          performFullRetry(backoffTime,
-            new IllegalStateException("No MutateRowsResponses entries were found."));
+          performFullRetry(backoffTime, io.grpc.Status.INTERNAL
+              .withDescription("No MutateRowsResponses entries were found."));
           return;
         }
 
@@ -244,11 +242,16 @@ public class BulkMutation {
         LOG.error(
           "Unexpected Exception occurred. Treating this issue as a temporary issue and retrying.",
           e);
-        performFullRetry(backoffTime, e);
+        performFullRetry(backoffTime, io.grpc.Status.INTERNAL.withCause(e));
       }
     }
 
-    private void performFullRetry(AtomicReference<Long> backoff, Throwable t) {
+    private void performFullRetry(AtomicReference<Long> backoff, io.grpc.Status status) {
+      performFullRetry(backoff, status.asRuntimeException());
+    }
+
+    private synchronized void performFullRetry(AtomicReference<Long> backoff, Throwable t) {
+      mutateRowsFuture = null;
       if (currentRequestManager == null) {
         setRetryComplete();
         return;
@@ -256,7 +259,8 @@ public class BulkMutation {
       Long backoffMs = getCurrentBackoff(backoff);
       failedCount++;
       if (backoffMs == BackOff.STOP) {
-        setFailure(new BigtableRetriesExhaustedException("Batch #" + retryId + " Exhausted retries.", t));
+        setFailure(
+          new BigtableRetriesExhaustedException("Batch #" + retryId + " Exhausted retries.", t));
       } else {
         LOG.info("Retrying failed call for batch #%d. Failure #%d, got: %s", t, retryId, failedCount,
           io.grpc.Status.fromThrowable(t));
@@ -394,10 +398,15 @@ public class BulkMutation {
       return new ComplexOperationStalenessHandler() {
         @Override
         public void performRetryIfStale() {
-          // If the retryId is null, it means that the operation somehow fails partially,
-          // cleanup the retry.
-          if (retryId == null || operationsAreComplete() || currentRequestManager.isStale()) {
-            setRetryComplete();
+          synchronized(Batch.this) {
+            // If the retryId is null, it means that the operation somehow fails partially,
+            // cleanup the retry.
+            if (currentRequestManager == null || currentRequestManager.isEmpty()) {
+              setRetryComplete();
+            } else if (currentRequestManager.isStale()) {
+              setFailure(
+                io.grpc.Status.UNKNOWN.withDescription("Stale requests.").asRuntimeException());
+            }
           }
         }
       };
@@ -420,11 +429,11 @@ public class BulkMutation {
     }
 
     private synchronized void setRetryComplete() {
-      if (retryId != null) {
-        if (mutateRowsFuture != null) {
-          mutateRowsFuture.cancel(true);
-        }
+      if (mutateRowsFuture != null) {
+        mutateRowsFuture.cancel(true);
         mutateRowsFuture = null;
+      }
+      if (retryId != null) {
         asyncExecutor.getOperationAccountant().onComplexOperationCompletion(retryId);
         if (failedCount > 0) {
           LOG.info("Batch #%d recovered from the failure and completed.", retryId);
@@ -517,6 +526,7 @@ public class BulkMutation {
     this.maxRequestSize = maxRequestSize;
     this.autoflushMs = autoflushMs;
   }
+
   public ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     return add(convert(request));
   }
@@ -574,5 +584,10 @@ public class BulkMutation {
    */
   public boolean isFlushed() {
     return currentBatch == null;
+  }
+
+  @VisibleForTesting
+  AsyncExecutor getAsyncExecutor() {
+    return asyncExecutor;
   }
 }

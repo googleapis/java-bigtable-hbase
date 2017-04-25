@@ -55,7 +55,7 @@ public class RetryOptions implements Serializable {
       Status.Code.INTERNAL,
       Status.Code.UNAVAILABLE,
       Status.Code.ABORTED,
-      Code.UNAUTHENTICATED);
+      Status.Code.UNAUTHENTICATED);
 
   /** We can timeout when reading large cells with a low value here. With a 10MB
    * cell limit, 60 seconds allows our connection to drop to ~170kbyte/s. A 10 second

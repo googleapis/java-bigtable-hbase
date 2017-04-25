@@ -44,7 +44,8 @@ public class OperationAccountant {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(OperationAccountant.class);
 
-  private static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
+  @VisibleForTesting
+  static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
 
   public static interface ComplexOperationStalenessHandler {
     void performRetryIfStale();
@@ -289,5 +290,15 @@ public class OperationAccountant {
       lock.unlock();
     }
     resetNoSuccessWarningDeadline();
+  }
+
+  @VisibleForTesting
+  void awaitCompletionPing(){
+    lock.lock();
+    try {
+      flushedCondition.signal();
+    } finally {
+      lock.unlock();
+    }
   }
 }
