@@ -58,13 +58,13 @@ import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
-import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
 import io.grpc.CallOptions;
+import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
@@ -84,7 +84,7 @@ public class TestBigtableDataGrpcClient {
       BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.METHOD_READ_ROWS);
 
   @Mock
-  ChannelPool mockChannelPool;
+  Channel mockChannel;
 
   @Mock
   ClientCall mockClientCall;
@@ -111,7 +111,7 @@ public class TestBigtableDataGrpcClient {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    when(mockChannelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
+    when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(mockClientCall);
 
     when(mockBigtableRpc.getRpcMetrics()).thenReturn(metrics);
