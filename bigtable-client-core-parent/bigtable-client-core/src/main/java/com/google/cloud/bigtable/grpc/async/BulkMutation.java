@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.api.client.util.BackOff;
-import com.google.api.client.util.Clock;
+import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
@@ -70,7 +70,7 @@ public class BulkMutation {
   /** Constant <code>LOG</code> */
   protected final static Logger LOG = new Logger(BulkMutation.class);
 
-  public static final long MAX_RPC_WAIT_TIME = TimeUnit.MINUTES.toMillis(5);
+  public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(5);
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -93,9 +93,6 @@ public class BulkMutation {
   }
 
   @VisibleForTesting
-  static Clock clock = Clock.SYSTEM;
-
-  @VisibleForTesting
   static class RequestManager {
     private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
     private final MutateRowsRequest.Builder builder;
@@ -105,12 +102,14 @@ public class BulkMutation {
     private long approximateByteSize = 0l;
 
     @VisibleForTesting
-    Long lastRpcSentTime;
+    Long lastRpcSentTimeNanos;
+    private NanoClock clock;
 
-    RequestManager(String tableName, Meter addMeter) {
+    RequestManager(String tableName, Meter addMeter, NanoClock clock) {
       this.builder = MutateRowsRequest.newBuilder().setTableName(tableName);
       this.approximateByteSize = tableName.length() + 2;
       this.addMeter = addMeter;
+      this.clock = clock;
     }
 
     void add(SettableFuture<MutateRowResponse> future, MutateRowsRequest.Entry entry) {
@@ -134,12 +133,12 @@ public class BulkMutation {
     }
 
     public boolean isStale() {
-      return lastRpcSentTime != null
-          && lastRpcSentTime < (clock.currentTimeMillis() - MAX_RPC_WAIT_TIME);
+      return lastRpcSentTimeNanos != null
+          && lastRpcSentTimeNanos < (clock.nanoTime() - MAX_RPC_WAIT_TIME_NANOS);
     }
 
     public boolean wasSent() {
-      return lastRpcSentTime != null;
+      return lastRpcSentTimeNanos != null;
     }
   }
 
@@ -158,7 +157,7 @@ public class BulkMutation {
     private ListenableFuture<List<MutateRowsResponse>> mutateRowsFuture;
 
     private Batch() {
-      this.currentRequestManager = new RequestManager(tableName, mutationMeter);
+      this.currentRequestManager = new RequestManager(tableName, mutationMeter, clock);
     }
 
     /**
@@ -235,7 +234,8 @@ public class BulkMutation {
         }
 
         String tableName = currentRequestManager.request.getTableName();
-        RequestManager retryRequestManager = new RequestManager(tableName, mutationRetryMeter);
+        RequestManager retryRequestManager =
+            new RequestManager(tableName, mutationRetryMeter, clock);
 
         handleResponses(backoffTime, entries, retryRequestManager);
         handleExtraFutures(backoffTime, retryRequestManager, entries);
@@ -375,7 +375,7 @@ public class BulkMutation {
             asyncExecutor.getOperationAccountant().registerComplexOperation(createRetryHandler()));
         }
         mutateRowsFuture = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
-        currentRequestManager.lastRpcSentTime = clock.currentTimeMillis();
+        currentRequestManager.lastRpcSentTimeNanos = clock.nanoTime();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
@@ -459,6 +459,8 @@ public class BulkMutation {
   private final Meter batchMeter =
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.batch.meter");
 
+  @VisibleForTesting
+  NanoClock clock = NanoClock.SYSTEM;
 
   /**
    * Constructor for BulkMutation.
