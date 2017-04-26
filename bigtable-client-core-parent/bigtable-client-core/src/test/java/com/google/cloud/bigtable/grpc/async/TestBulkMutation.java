@@ -76,7 +76,7 @@ import io.grpc.StatusRuntimeException;
 @SuppressWarnings({"rawtypes", "unchecked"})
 @RunWith(JUnit4.class)
 public class TestBulkMutation {
-  private final static BigtableTableName TABLE_NAME =
+  public final static BigtableTableName TABLE_NAME =
       new BigtableInstanceName("project", "instance").toTableName("table");
   private final static ByteString QUALIFIER = ByteString.copyFrom("qual".getBytes());
   private static AtomicLong retryIdGenerator = new AtomicLong();
@@ -134,9 +134,8 @@ public class TestBulkMutation {
 
   protected BulkMutation createBulkMutation() {
     return new BulkMutation(TABLE_NAME, asyncExecutor, retryOptions,
-        retryExecutorService, MAX_ROW_COUNT, 1000000L);
+        retryExecutorService, MAX_ROW_COUNT, 1000000L, 0);
   }
-
 
   @Test
   public void testAdd() {
@@ -159,7 +158,7 @@ public class TestBulkMutation {
         BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"), underTest.clock);
   }
 
-  protected static MutateRowRequest createRequest() {
+  public static MutateRowRequest createRequest() {
     SetCell setCell = SetCell.newBuilder()
         .setFamilyName("cf1")
         .setColumnQualifier(QUALIFIER)
