@@ -755,9 +755,6 @@ public class CloudBigtableIO {
       long connectionStart = System.currentTimeMillis();
       initializeScanner();
       workStart = System.currentTimeMillis();
-      READER_LOG.info("{} Starting work. Creating Scanner took: {} ms.",
-        this,
-        workStart - connectionStart);
       return advance();
     }
 
