@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.config;
 
 import io.grpc.Status;
-import io.grpc.Status.Code;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -219,7 +218,7 @@ public class RetryOptions implements Serializable {
   private final int streamingBufferSize;
   private final int readPartialRowTimeoutMillis;
   private final int maxScanTimeoutRetries;
-  private final ImmutableSet<Code> statusToRetryOn;
+  private final ImmutableSet<Status.Code> statusToRetryOn;
 
   /**
    * <p>Constructor for RetryOptions.</p>
@@ -243,7 +242,7 @@ public class RetryOptions implements Serializable {
       int streamingBufferSize,
       int readPartialRowTimeoutMillis,
       int maxScanTimeoutRetries,
-      Set<Code> statusToRetryOn) {
+      Set<Status.Code> statusToRetryOn) {
     this.retriesEnabled = retriesEnabled;
     this.allowRetriesWithoutTimestamp = allowRetriesWithoutTimestamp;
     this.initialBackoffMillis = initialBackoffMillis;
