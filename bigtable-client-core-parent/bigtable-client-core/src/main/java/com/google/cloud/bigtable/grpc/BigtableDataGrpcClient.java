@@ -45,8 +45,8 @@ import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
-import com.google.cloud.bigtable.grpc.async.RetryingCollectingClientCallListener;
-import com.google.cloud.bigtable.grpc.async.RetryingUnaryRpcCallListener;
+import com.google.cloud.bigtable.grpc.async.RetryingStreamOperation;
+import com.google.cloud.bigtable.grpc.async.RetryingUnaryOperation;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
@@ -55,7 +55,7 @@ import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
-import com.google.cloud.bigtable.grpc.scanner.ReadRowsRetryListener;
+import com.google.cloud.bigtable.grpc.scanner.RetryingReadRowsOperation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -313,19 +313,19 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         FLAT_ROW_LIST_TRANSFORMER);
   }
 
-  private <ReqT, RespT> RetryingUnaryRpcCallListener<ReqT, RespT> createUnaryListener(
+  private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
     CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
     Metadata metadata = createMetadata(tableName);
-    return new RetryingUnaryRpcCallListener<>(
+    return new RetryingUnaryOperation<>(
         retryOptions, request, rpc, callOptions, retryExecutorService, metadata);
   }
 
-  private <ReqT, RespT> RetryingCollectingClientCallListener<ReqT, RespT> createStreamingListener(
+  private <ReqT, RespT> RetryingStreamOperation<ReqT, RespT> createStreamingListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
     CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
     Metadata metadata = createMetadata(tableName);
-    return new RetryingCollectingClientCallListener<>(
+    return new RetryingStreamOperation<>(
         retryOptions, request, rpc, callOptions, retryExecutorService, metadata);
   }
 
@@ -390,7 +390,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
     ResponseQueueReader reader = new ResponseQueueReader(retryOptions.getStreamingBufferSize());
-    final ReadRowsRetryListener listener = createReadRowsRetryListener(request, reader);
+    final RetryingReadRowsOperation listener = createReadRowsRetryListener(request, reader);
     return new ResumingStreamingResultScanner(reader, listener);
   }
 
@@ -400,10 +400,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return createReadRowsRetryListener(request, observer);
   }
 
-  private ReadRowsRetryListener createReadRowsRetryListener(ReadRowsRequest request,
+  private RetryingReadRowsOperation createReadRowsRetryListener(ReadRowsRequest request,
       StreamObserver<FlatRow> observer) {
-    ReadRowsRetryListener listener =
-      new ReadRowsRetryListener(
+    RetryingReadRowsOperation listener =
+      new RetryingReadRowsOperation(
           observer,
           retryOptions,
           request,

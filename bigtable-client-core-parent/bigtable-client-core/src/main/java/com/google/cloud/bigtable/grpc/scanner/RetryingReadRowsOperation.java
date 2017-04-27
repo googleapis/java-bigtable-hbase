@@ -24,7 +24,7 @@ import com.google.api.client.util.Clock;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener;
+import com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
@@ -35,15 +35,15 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 /**
- * An extension of {@link AbstractRetryingRpcListener} that manages retries for the readRows
+ * An extension of {@link AbstractRetryingOperation} that manages retries for the readRows
  * streaming RPC. This class will keep track of the last returned row key via
  * {@link ReadRowsRequestManager} and automatically retry from the last row key .
  *
  * @author sduskis
  */
 @NotThreadSafe
-public class ReadRowsRetryListener extends
-    AbstractRetryingRpcListener<ReadRowsRequest, ReadRowsResponse, Void> implements ScanHandler {
+public class RetryingReadRowsOperation extends
+    AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, Void> implements ScanHandler {
 
   private static final String TIMEOUT_CANCEL_MSG = "Client side timeout induced cancellation";
 
@@ -57,7 +57,7 @@ public class ReadRowsRetryListener extends
   // The number of times we've retried after a timeout
   private int timeoutRetryCount = 0;
 
-  public ReadRowsRetryListener(
+  public RetryingReadRowsOperation(
       StreamObserver<FlatRow> observer,
       RetryOptions retryOptions,
       ReadRowsRequest request,
@@ -74,9 +74,9 @@ public class ReadRowsRetryListener extends
    * The stream observer handles responses. Return null here, since a Future is not needed.
    *
    * <p>TODO(sduskis): Move {@link
-   * com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener.GrpcFuture} functionality into
+   * com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation.GrpcFuture} functionality into
    * a {@link StreamObserver}, and use {@link StreamObserver} in {@link
-   * AbstractRetryingRpcListener}.
+   * AbstractRetryingOperation}.
    */
   @Override
   protected GrpcFuture<Void> createCompletionFuture() {

@@ -15,30 +15,29 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.common.collect.ImmutableList;
 
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 
 /**
- * A {@link com.google.common.util.concurrent.AsyncFunction} that retries a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} request.
+ * An extension of {@link AbstractRetryingOperation} that aggregates all responses from a streaming
+ * request into a List.
  *
  * @author sduskis
  * @version $Id: $Id
  */
-public class RetryingUnaryRpcCallListener<RequestT, ResponseT>
-    extends AbstractRetryingRpcListener<RequestT, ResponseT, ResponseT> {
-  final static StatusRuntimeException NO_VALUE_SET_EXCEPTION =
-      Status.INTERNAL.withDescription("No value received for unary call").asRuntimeException();
+public class RetryingStreamOperation<RequestT, ResponseT>
+    extends AbstractRetryingOperation<RequestT, ResponseT, List<ResponseT>> {
 
-  private ResponseT value;
+  private ImmutableList.Builder<ResponseT> buffer;
 
   /**
-   * <p>Constructor for RetryingUnaryRpcListener.</p>
+   * <p>Constructor for RetryingCollectingClientCallListener.</p>
    *
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param request a RequestT object.
@@ -47,7 +46,7 @@ public class RetryingUnaryRpcCallListener<RequestT, ResponseT>
    * @param executorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param metadata a {@link io.grpc.Metadata} object.
    */
-  public RetryingUnaryRpcCallListener(RetryOptions retryOptions, RequestT request,
+  public RetryingStreamOperation(RetryOptions retryOptions, RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, CallOptions callOptions,
       ScheduledExecutorService executorService, Metadata metadata) {
     super(retryOptions, request, retryableRpc, callOptions, executorService, metadata);
@@ -55,17 +54,21 @@ public class RetryingUnaryRpcCallListener<RequestT, ResponseT>
 
   /** {@inheritDoc} */
   @Override
+  public void run() {
+    buffer = new ImmutableList.Builder<>();
+    super.run();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void onMessage(ResponseT message) {
-    value = message;
-    completionFuture.set(value);
+    call.request(1);
+    buffer.add(message);
   }
 
   /** {@inheritDoc} */
   @Override
   protected void onOK() {
-    if (value == null) {
-      // No value received so mark the future as an error
-      completionFuture.setException(NO_VALUE_SET_EXCEPTION);
-    }
+    completionFuture.set(buffer.build());
   }
 }

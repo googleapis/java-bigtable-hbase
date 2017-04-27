@@ -45,16 +45,16 @@ import io.grpc.StatusRuntimeException;
  * @author sduskis
  * @version $Id: $Id
  */
-public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
+public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT>  {
 
   /** Constant <code>LOG</code> */
-  protected final static Logger LOG = new Logger(AbstractRetryingRpcListener.class);
+  protected final static Logger LOG = new Logger(AbstractRetryingOperation.class);
 
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
     @Override
     protected void interruptTask() {
-      AbstractRetryingRpcListener.this.cancel("Request interrupted.");
+      AbstractRetryingOperation.this.cancel("Request interrupted.");
     }
 
     @Override
@@ -98,7 +98,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
    * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param originalMetadata a {@link io.grpc.Metadata} object.
    */
-  public AbstractRetryingRpcListener(
+  public AbstractRetryingOperation(
           RetryOptions retryOptions,
           RequestT request,
           BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
@@ -182,7 +182,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     return new Runnable() {
       @Override
       public void run() {
-        AbstractRetryingRpcListener.this.run();
+        AbstractRetryingOperation.this.run();
       }
     };
   }

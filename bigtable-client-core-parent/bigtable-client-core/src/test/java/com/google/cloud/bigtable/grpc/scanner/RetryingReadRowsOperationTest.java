@@ -58,10 +58,10 @@ import io.grpc.stub.StreamObserver;
 import org.junit.Assert;
 
 /**
- * Test for the {@link ReadRowsRetryListener}
+ * Test for the {@link RetryingReadRowsOperation}
  */
 @RunWith(JUnit4.class)
-public class ReadRowsRetryListenerTest {
+public class RetryingReadRowsOperationTest {
   static final RetryOptions RETRY_OPTIONS = new RetryOptions.Builder().build();
 
   private static ReadRowsRequest READ_ENTIRE_TABLE_REQUEST =
@@ -109,7 +109,7 @@ public class ReadRowsRetryListenerTest {
 
   private Metadata metaData;
 
-  private ReadRowsRetryListener underTest;
+  private RetryingReadRowsOperation underTest;
 
   @SuppressWarnings("rawtypes")
   @Before
@@ -123,7 +123,7 @@ public class ReadRowsRetryListenerTest {
     when(mockRpcMetrics.timeRpc()).thenReturn(mockRpcTimerContext);
 
     underTest =
-        new ReadRowsRetryListener(mockFlatRowObserver, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
+        new RetryingReadRowsOperation(mockFlatRowObserver, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
             mockRetryableRpc, CallOptions.DEFAULT, mockRetryExecutorService, metaData);
 
     Answer<ScheduledFuture> runAutomatically = new Answer<ScheduledFuture>() {

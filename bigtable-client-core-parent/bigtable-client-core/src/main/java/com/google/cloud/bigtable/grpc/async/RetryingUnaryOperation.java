@@ -15,28 +15,30 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.common.collect.ImmutableList;
 
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 
 /**
- * <p>RetryingCollectingClientCallListener class.</p>
+ * A {@link AbstractRetryingOperation} for a unary operation.
  *
  * @author sduskis
  * @version $Id: $Id
  */
-public class RetryingCollectingClientCallListener<RequestT, ResponseT>
-    extends AbstractRetryingRpcListener<RequestT, ResponseT, List<ResponseT>> {
+public class RetryingUnaryOperation<RequestT, ResponseT>
+    extends AbstractRetryingOperation<RequestT, ResponseT, ResponseT> {
+  static final StatusRuntimeException NO_VALUE_SET_EXCEPTION =
+      Status.INTERNAL.withDescription("No value received for unary call").asRuntimeException();
 
-  private ImmutableList.Builder<ResponseT> buffer;
+  private ResponseT value;
 
   /**
-   * <p>Constructor for RetryingCollectingClientCallListener.</p>
+   * <p>Constructor for RetryingUnaryRpcListener.</p>
    *
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param request a RequestT object.
@@ -45,7 +47,7 @@ public class RetryingCollectingClientCallListener<RequestT, ResponseT>
    * @param executorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param metadata a {@link io.grpc.Metadata} object.
    */
-  public RetryingCollectingClientCallListener(RetryOptions retryOptions, RequestT request,
+  public RetryingUnaryOperation(RetryOptions retryOptions, RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, CallOptions callOptions,
       ScheduledExecutorService executorService, Metadata metadata) {
     super(retryOptions, request, retryableRpc, callOptions, executorService, metadata);
@@ -53,21 +55,17 @@ public class RetryingCollectingClientCallListener<RequestT, ResponseT>
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    buffer = new ImmutableList.Builder<>();
-    super.run();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void onMessage(ResponseT message) {
-    call.request(1);
-    buffer.add(message);
+    value = message;
+    completionFuture.set(value);
   }
 
   /** {@inheritDoc} */
   @Override
   protected void onOK() {
-    completionFuture.set(buffer.build());
+    if (value == null) {
+      // No value received so mark the future as an error
+      completionFuture.setException(NO_VALUE_SET_EXCEPTION);
+    }
   }
 }
