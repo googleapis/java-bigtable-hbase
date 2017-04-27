@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -42,8 +42,8 @@ public class TestTruncateTable extends AbstractTest {
 
   @Test
   public void testTruncate() throws IOException {
-    TableName tableName = IntegrationTests.newTestTableName();
-    IntegrationTests.createTable(tableName);
+    TableName tableName = sharedTestEnv.newTestTableName();
+    sharedTestEnv.createTable(tableName);
     Admin admin = getConnection().getAdmin();
     try (Table table = getConnection().getTable(tableName)) {
       byte[] rowKey = dataHelper.randomData("testrow-");
@@ -77,7 +77,7 @@ public class TestTruncateTable extends AbstractTest {
         Bytes.toBytes("CCC"),
     };
 
-    TableName tableName = IntegrationTests.newTestTableName();
+    TableName tableName = sharedTestEnv.newTestTableName();
     HTableDescriptor descriptor = new HTableDescriptor(tableName);
     descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
 

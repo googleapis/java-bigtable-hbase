@@ -15,17 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import org.apache.hadoop.conf.Configuration;
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
-import java.io.IOException;
 
 public abstract class AbstractTest {
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -42,49 +40,16 @@ public abstract class AbstractTest {
     }
   };
 
-  private Connection connection;
-
-  @Rule
-  public ExternalResource connectionResource = new ExternalResource() {
-    @Override
-    public Statement apply(Statement base, Description description) {
-      return super.apply(base, description);
-    }
-
-    @Override
-    protected void before() throws Throwable {
-      connection = IntegrationTests.getConnection();
-      setup();
-    }
-
-    @Override
-    protected void after() {
-      try {
-        tearDown();
-      } catch (IOException e) {
-        logger.warn("Could not perform preClose", e);
-      }
-    }
-  };
+  @ClassRule
+  public static SharedTestEnvRule sharedTestEnv = new SharedTestEnvRule();
 
   // This is for when we need to look at the results outside of the current connection
   public Connection createNewConnection() throws IOException {
-    Configuration conf = IntegrationTests.getConfiguration();
-    return ConnectionFactory.createConnection(conf);
-  }
-
-  /** Hook to setup class level resources after the connection is created. */
-  @SuppressWarnings("unused")
-  protected void setup() throws IOException {
-  }
-
-  /** Hook to remove class level resources after the connection is created. */
-  @SuppressWarnings("unused")
-  protected void tearDown() throws IOException {
+    return sharedTestEnv.createConnection();
   }
 
   protected Connection getConnection() {
-    return connection;
+    return sharedTestEnv.getConnection();
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {

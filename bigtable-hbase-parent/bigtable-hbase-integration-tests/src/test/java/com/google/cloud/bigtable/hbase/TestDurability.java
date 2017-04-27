@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
-
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -55,23 +54,23 @@ public class TestDurability extends AbstractTest {
     // Put
     Put put = new Put(rowKey);
     put.setDurability(durability);
-    put.addColumn(COLUMN_FAMILY, testQualifier, testValue);
-    Table table = getConnection().getTable(TABLE_NAME);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, testQualifier, testValue);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     table.put(put);
 
     // Get
-    Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, testQualifier);
+    Get get = new Get(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, testQualifier);
     Result result = table.get(get);
     Assert.assertTrue("Durability=" + durability,
-        result.containsColumn(COLUMN_FAMILY, testQualifier));
-    List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
+        result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, testQualifier));
+    List<Cell> cells = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, testQualifier);
     Assert.assertEquals("Durability=" + durability, 1, cells.size());
     Assert.assertArrayEquals("Durability=" + durability, testValue,
         CellUtil.cloneValue(cells.get(0)));
 
     // Delete
     Delete delete = new Delete(rowKey);
-    delete.addColumns(COLUMN_FAMILY, testQualifier);
+    delete.addColumns(SharedTestEnvRule.COLUMN_FAMILY, testQualifier);
     table.delete(delete);
 
     // Confirm deleted

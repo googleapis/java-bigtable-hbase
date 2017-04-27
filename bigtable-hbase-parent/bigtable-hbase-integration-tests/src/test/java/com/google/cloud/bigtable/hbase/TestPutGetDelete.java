@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -43,7 +42,7 @@ public class TestPutGetDelete extends AbstractTest {
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = dataHelper.randomData("testValue-");
 
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
 
     // Put
     Put put = new Put(rowKey);

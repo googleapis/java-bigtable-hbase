@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -118,7 +117,7 @@ public class TestFilters extends AbstractTest {
   }
 
   private Table getTable() throws IOException {
-    return getConnection().getTable(TABLE_NAME);
+    return getConnection().getTable(sharedTestEnv.getDefaultTableName());
   }
 
   /**
@@ -1785,7 +1784,7 @@ public class TestFilters extends AbstractTest {
    */
   @Test
   public void testFuzzyRowFilter() throws IOException {
-    if (!IntegrationTests.isBigtable()) {
+    if (!sharedTestEnv.isBigtable()) {
       // HBase doesn't seem to work as expected.  Test to make sure that bigtable does the right thing.
       return;
     }

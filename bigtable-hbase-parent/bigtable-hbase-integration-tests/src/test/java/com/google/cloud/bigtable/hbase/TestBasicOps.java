@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import com.google.common.base.Stopwatch;
 
@@ -75,7 +74,7 @@ public class TestBasicOps extends AbstractTest {
   @Test
   public void testNullQualifier() throws IOException {
     // Initialize values
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] testValue = dataHelper.randomData("testValue-");
 
@@ -193,7 +192,7 @@ public class TestBasicOps extends AbstractTest {
   private void
       testPutGetDelete(boolean doGet, byte[] rowKey, byte[] testQualifier, byte[] testValue)
           throws IOException {
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
 
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();

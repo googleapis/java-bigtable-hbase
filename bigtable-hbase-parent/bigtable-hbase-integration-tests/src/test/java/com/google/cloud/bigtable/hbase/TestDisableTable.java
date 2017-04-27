@@ -33,8 +33,9 @@ public class TestDisableTable extends AbstractTest {
   // TODO(sduskis): Disabled tables should throw TableNotEnabledException for gets.
   public void testDisable() throws IOException {
     Admin admin = getConnection().getAdmin();
-    TableName tableName = TableName.valueOf("test_table-" + UUID.randomUUID().toString());
-    IntegrationTests.createTable(tableName);
+    TableName tableName = sharedTestEnv.newTestTableName();
+    sharedTestEnv.createTable(tableName);
+
     try (Table table = getConnection().getTable(tableName)) {
       Get get = new Get("row".getBytes());
       table.get(get);

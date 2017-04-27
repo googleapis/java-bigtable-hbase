@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -68,7 +67,7 @@ public class TestBatch extends AbstractTest {
 
   private void testGetPutDelete(int count, boolean sameQualifier)
       throws IOException, InterruptedException, ArrayComparisonFailure {
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     // Initialize data
     byte[][] rowKeys = new byte[count][];
     byte[][] quals = new byte[count][];
@@ -131,7 +130,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchIncrement() throws IOException, InterruptedException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     Random random = new Random();
@@ -170,7 +169,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchAppend() throws IOException, InterruptedException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] value1_1 = dataHelper.randomData("value-");
@@ -217,7 +216,7 @@ public class TestBatch extends AbstractTest {
   // INVALID_ARGUMENT for all 5 puts.
   public void testBatchWithException() throws IOException, InterruptedException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[][] rowKeys = dataHelper.randomData("testrow-", 5);
     byte[][] quals = dataHelper.randomData("qual-", 5);
     byte[][] values = dataHelper.randomData("value-", 5);
@@ -282,7 +281,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testRowMutations() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("qual-", 3);
     byte[][] values = dataHelper.randomData("value-", 3);
@@ -325,7 +324,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchGets() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] value1 = dataHelper.randomData("value-");
@@ -373,9 +372,11 @@ public class TestBatch extends AbstractTest {
 
   @Test
   public void testBatchDoesntHang() throws Exception {
-    Connection closedConnection = ConnectionFactory.createConnection(IntegrationTests.getConfiguration());
-    Table table = closedConnection.getTable(TABLE_NAME);
-    closedConnection.close();
+    Table table;
+    try(Connection closedConnection = sharedTestEnv.createConnection()) {
+      table = closedConnection.getTable(sharedTestEnv.getDefaultTableName());
+    }
+
     try {
       table.batch(Arrays.asList(new Get(Bytes.toBytes("key"))), new Object[1]);
       Assert.fail("Expected an exception");

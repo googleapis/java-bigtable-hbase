@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
-
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,15 +27,15 @@ import java.util.concurrent.Executors;
 public class TestGetTable extends AbstractTest {
   @Test
   public void testGetTable1() throws Exception {
-    Table table = getConnection().getTable(TABLE_NAME);
-    Assert.assertEquals(TABLE_NAME, table.getName());
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Assert.assertEquals(sharedTestEnv.getDefaultTableName(), table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable2() throws Exception {
-    Table table = getConnection().getTable(TABLE_NAME, Executors.newFixedThreadPool(1));
-    Assert.assertEquals(TABLE_NAME, table.getName());
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName(), Executors.newFixedThreadPool(1));
+    Assert.assertEquals(sharedTestEnv.getDefaultTableName(), table.getName());
     table.close();
   }
 }

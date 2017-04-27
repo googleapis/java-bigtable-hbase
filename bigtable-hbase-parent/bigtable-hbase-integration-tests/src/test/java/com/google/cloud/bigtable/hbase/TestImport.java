@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
-
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.Cell;
@@ -45,17 +44,17 @@ public class TestImport extends AbstractTest {
   public void testMapReduce() throws IOException, ClassNotFoundException, InterruptedException {
     Admin admin = getConnection().getAdmin();
 
-    admin.disableTable(TABLE_NAME);
-    admin.deleteTable(TABLE_NAME);
-    IntegrationTests.createTable(TABLE_NAME);
+    admin.disableTable(sharedTestEnv.getDefaultTableName());
+    admin.deleteTable(sharedTestEnv.getDefaultTableName());
+    sharedTestEnv.createTable(sharedTestEnv.getDefaultTableName());
     // Put a value.
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("testQualifier-");
     byte[] value = dataHelper.randomData("testValue-");
 
-    try (Table oldTable = getConnection().getTable(TABLE_NAME)){
+    try (Table oldTable = getConnection().getTable(sharedTestEnv.getDefaultTableName())){
       Put put = new Put(rowKey);
-      put.addColumn(COLUMN_FAMILY, qual, value);
+      put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value);
       oldTable.put(put);
 
       // Assert the value is there.
@@ -70,11 +69,10 @@ public class TestImport extends AbstractTest {
     Configuration conf = getConnection().getConfiguration();
 
     //conf.set("fs.defaultFS", "file:///");
-    FileSystem dfs = IntegrationTests.getMiniCluster().getFileSystem();
-    String tempDir = "hdfs://" + dfs.getCanonicalServiceName() + "/tmp/backup";
+    String tempDir = "hdfs:///tmp/backup";
 
     String[] args = new String[]{
-        TABLE_NAME.getNameAsString(),
+        sharedTestEnv.getDefaultTableName().getNameAsString(),
         tempDir
     };
     Job job = Export.createSubmittableJob(conf, args);
@@ -83,10 +81,10 @@ public class TestImport extends AbstractTest {
     Assert.assertTrue(job.waitForCompletion(true));
 
     // Create new table.
-    TableName newTableName = IntegrationTests.newTestTableName();
+    TableName newTableName = sharedTestEnv.newTestTableName();
     try (Table newTable = getConnection().getTable(newTableName)){
       // Change for method in IntegrationTests
-      HColumnDescriptor hcd = new HColumnDescriptor(IntegrationTests.COLUMN_FAMILY);
+      HColumnDescriptor hcd = new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY);
       HTableDescriptor htd = new HTableDescriptor(newTableName);
       htd.addFamily(hcd);
       admin.createTable(htd);

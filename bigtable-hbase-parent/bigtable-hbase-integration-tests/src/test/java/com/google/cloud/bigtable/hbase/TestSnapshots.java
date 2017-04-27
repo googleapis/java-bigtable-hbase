@@ -14,7 +14,7 @@
  * limitations under the License.
  */package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class TestSnapshots extends AbstractTest {
 
   final byte[] QUALIFIER = dataHelper.randomData("TestSingleColumnValueFilter");
 
-  private final TableName tableName = IntegrationTests.newTestTableName();
+  private final TableName tableName = sharedTestEnv.newTestTableName();
   // The maximum size of a table id or snapshot id is 50. newTestTableName().size() can approach 50.
   // Make sure that the snapshot name and cloned table are within the 50 character limit
   private final String snapshotName = tableName.getNameAsString().substring(40) + "_snp";
@@ -52,7 +52,7 @@ public class TestSnapshots extends AbstractTest {
 
   @After
   public void cleanup() {
-    if (IntegrationTests.isBigtable() && !enableTestForBigtable()) {
+    if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
       return;
     }
     try (Admin admin = getConnection().getAdmin()) {
@@ -80,7 +80,7 @@ public class TestSnapshots extends AbstractTest {
   @Test
   @Category(KnownGap.class)
   public void testSnapshot() throws IOException {
-    if (IntegrationTests.isBigtable() && !enableTestForBigtable()) {
+    if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
       return;
     }
     try (Admin admin = getConnection().getAdmin()) {
