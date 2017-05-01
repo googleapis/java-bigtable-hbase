@@ -69,7 +69,7 @@ public class TestBasicOps extends AbstractTest {
   }
 
   /**
-   * Requirement 1.9 - Referring to a column without the qualifier implicity sets a special "empty"
+   * Requirement 1.9 - Referring to a column without the qualifier implicitly sets a special "empty"
    * qualifier.
    */
   @Test

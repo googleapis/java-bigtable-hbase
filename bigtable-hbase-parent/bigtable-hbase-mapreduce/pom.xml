@@ -76,7 +76,6 @@ limitations under the License.
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
