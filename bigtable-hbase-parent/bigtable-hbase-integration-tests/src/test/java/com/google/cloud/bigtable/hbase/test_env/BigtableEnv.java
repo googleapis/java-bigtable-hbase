@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
-import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.Map.Entry;
@@ -23,6 +22,7 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 
 
 class BigtableEnv extends SharedTestEnv {
@@ -64,6 +64,6 @@ class BigtableEnv extends SharedTestEnv {
 
   @Override
   public Connection createConnection() throws IOException {
-    return BigtableConfiguration.connect(new Configuration(configuration));
+    return ConnectionFactory.createConnection(configuration);
   }
 }
