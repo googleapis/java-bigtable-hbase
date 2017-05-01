@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase.test_env;
 
 import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -38,6 +40,18 @@ class MiniClusterEnv extends SharedTestEnv {
 
   @Override
   public Connection createConnection() throws IOException {
-    return ConnectionFactory.createConnection(helper.getConfiguration());
+    // Need to create a separate config for the client to avoid
+    // leaking hadoop configs, which messes up local mapreduce jobs
+    Configuration clientConfig = HBaseConfiguration.create();
+
+    String[] keys = new String[] {
+        "hbase.zookeeper.quorum",
+        "hbase.zookeeper.property.clientPort"
+    };
+    for (String key : keys) {
+      clientConfig.set(key, helper.getConfiguration().get(key));
+    }
+
+    return ConnectionFactory.createConnection(clientConfig);
   }
 }
