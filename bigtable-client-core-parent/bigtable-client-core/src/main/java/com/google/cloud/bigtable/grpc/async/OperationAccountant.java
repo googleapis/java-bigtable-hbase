@@ -42,7 +42,8 @@ import javax.annotation.concurrent.GuardedBy;
  */
 public class OperationAccountant {
   /** Constant <code>LOG</code> */
-  protected static final Logger LOG = new Logger(OperationAccountant.class);
+  @VisibleForTesting
+  static Logger LOG = new Logger(OperationAccountant.class);
 
   @VisibleForTesting
   static final long DEFAULT_FINISH_WAIT_MILLIS = 250;

@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,6 +53,7 @@ import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
@@ -74,7 +76,13 @@ public class TestBulkMutationAwaitCompletion {
       Status.newBuilder().setCode(io.grpc.Status.Code.OK.value()).build();
 
   @Mock
-  private BigtableDataClient client;
+  private BigtableDataClient mockClient;
+
+  @Mock
+  private ScheduledExecutorService mockScheduler;
+
+  @Mock
+  private Logger mockLogger;
 
   private AtomicLong currentTime = new AtomicLong(500);
   private NanoClock clock = new NanoClock() {
@@ -90,6 +98,8 @@ public class TestBulkMutationAwaitCompletion {
   private ExecutorService testExecutor;
   private List<OperationAccountant> accountants;
   private List<ListenableFuture<MutateRowResponse>> singleMutationFutures;
+  private Logger originalBulkMutatorLog;
+  private Logger originalOperationAccountantLog;
 
   @Before
   public void setup() {
@@ -105,7 +115,7 @@ public class TestBulkMutationAwaitCompletion {
 
     // Keep track of methods of completing mutateRowsAsync calls.  This methdo will add a Runnable
     // that can set the correct value of the MutateRowsResponse future.
-    when(client.mutateRowsAsync(any(MutateRowsRequest.class)))
+    when(mockClient.mutateRowsAsync(any(MutateRowsRequest.class)))
         .thenAnswer(new Answer<ListenableFuture<List<MutateRowsResponse>>>() {
           @Override
           public ListenableFuture<List<MutateRowsResponse>> answer(InvocationOnMock invocation)
@@ -127,11 +137,17 @@ public class TestBulkMutationAwaitCompletion {
             return future;
           }
         });
+    originalBulkMutatorLog = BulkMutation.LOG;
+    originalOperationAccountantLog = OperationAccountant.LOG;
+    BulkMutation.LOG = mockLogger;
+    OperationAccountant.LOG = mockLogger;
   }
 
   @After
   public void teardown(){
     testExecutor.shutdownNow();
+    BulkMutation.LOG = originalBulkMutatorLog;
+    OperationAccountant.LOG = originalOperationAccountantLog;
   }
 
   /**
@@ -145,7 +161,7 @@ public class TestBulkMutationAwaitCompletion {
   public void testBulkMutationNoCompletions() throws InterruptedException, ExecutionException {
     for (int i = 0; i < 5; i++) {
       runOneBulkMutation();
-      verify(client, times((i+1) * PER_BULK_MUTATION_OPERATIONS))
+      verify(mockClient, times((i+1) * PER_BULK_MUTATION_OPERATIONS))
           .mutateRowsAsync(any(MutateRowsRequest.class));
     }
 
@@ -242,9 +258,16 @@ public class TestBulkMutationAwaitCompletion {
   private BulkMutation createBulkMutation() {
     OperationAccountant operationAccountant = new OperationAccountant(
         resourceLimiter, clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
-    AsyncExecutor asyncExecutor = new AsyncExecutor(client, operationAccountant);
-    BulkMutation bulkMutation = new BulkMutation(TestBulkMutation.TABLE_NAME, asyncExecutor,
-        retryOptions, null, MUTATIONS_PER_RPC, 1000000000, 0);
+    AsyncExecutor asyncExecutor = new AsyncExecutor(mockClient, operationAccountant);
+    BulkMutation bulkMutation =
+        new BulkMutation(
+            TestBulkMutation.TABLE_NAME,
+            asyncExecutor,
+            retryOptions,
+            mockScheduler,
+            MUTATIONS_PER_RPC,
+            1000000000,
+            0);
     bulkMutation.clock = clock;
     return bulkMutation;
   }
