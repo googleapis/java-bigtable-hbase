@@ -19,7 +19,6 @@ import static com.google.bigtable.repackaged.com.google.api.client.repackaged.co
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,11 +53,14 @@ import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.batch.common.ByteStringUtil;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
+import com.google.cloud.bigtable.batch.common.ScanIterator;
+import com.google.cloud.bigtable.batch.common.ScanIteratorFactory;
+import com.google.cloud.bigtable.batch.common.SplitTracker;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
@@ -155,7 +157,6 @@ public class CloudBigtableIO {
 
   private static AtomicCoder<Result> RESULT_CODER = new HBaseResultCoder();
   private static AtomicCoder<Result[]> RESULT_ARRAY_CODER = new HBaseResultArrayCoder();
-  private static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
 
   @SuppressWarnings("rawtypes")
   private static AtomicCoder HBASE_MUTATION_CODER = new HBaseMutationCoder();
@@ -171,106 +172,6 @@ public class CloudBigtableIO {
 
       default:
         throw new IllegalArgumentException("Can't get a coder for type: " + type.name());
-    }
-  }
-
-  /**
-   * Performs a {@link ResultScanner#next()} or {@link ResultScanner#next(int)}.  It also checks if
-   * the ResultOutputType marks the last value in the {@link ResultScanner}.
-   *
-   * @param <ResultOutputType> is either a {@link Result} or {@link Result}[];
-   */
-  @VisibleForTesting
-  interface ScanIterator<ResultOutputType> extends Serializable {
-    /**
-     * Get the next unit of work.
-     *
-     * @param resultScanner The {@link ResultScanner} on which to operate.
-     * @param rangeTracker The {@link ByteKeyRangeTracker} that defines the range in which to get results.
-     */
-    ResultOutputType next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker) throws IOException;
-
-    /**
-     * Is the work complete? Checks for null in the case of {@link Result}, or empty in the case of
-     * an array of ResultOutputType.
-     */
-    boolean isCompletionMarker(ResultOutputType result);
-
-    /**
-     * This is used to figure out how many results were read.  This is more useful for {@link Result}[].
-     */
-    long getRowCount(ResultOutputType result);
-  }
-
-  /**
-   * Iterates the {@link ResultScanner} via {@link ResultScanner#next()}.
-   */
-  static final ScanIterator<Result> RESULT_ADVANCER = new ScanIterator<Result>() {
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public Result next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker)
-        throws IOException {
-      FlatRow row = resultScanner.next();
-      if (row != null
-          && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getRowKey()))) {
-        return FLAT_ROW_ADAPTER.adaptResponse(row);
-      }
-      return null;
-    }
-
-    @Override
-    public boolean isCompletionMarker(Result result) {
-      return result == null;
-    }
-
-    @Override
-    public long getRowCount(Result result) {
-      return result == null ? 0 : 1;
-    }
-  };
-
-  /**
-   * Iterates the {@link ResultScanner} via {@link ResultScanner#next(int)}.
-   */
-  static final class ResultArrayIterator implements ScanIterator<Result[]> {
-    private static final long serialVersionUID = 1L;
-    private final int arraySize;
-
-    public ResultArrayIterator(int arraySize) {
-      this.arraySize = arraySize;
-    }
-
-
-    @Override
-    public Result[] next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker)
-        throws IOException {
-      List<Result> results = new ArrayList<>();
-      for (int i = 0; i < arraySize; i++) {
-        FlatRow row = resultScanner.next();
-        if (row == null) {
-          // The scan completed.
-          break;
-        }
-        ByteKey key = ByteStringUtil.toByteKey(row.getRowKey());
-        if (!rangeTracker.tryReturnRecordAt(true, key)) {
-          // A split occurred and the split key was before this key.
-          break;
-        }
-        results.add(FLAT_ROW_ADAPTER.adaptResponse(row));
-      }
-      return results.toArray(new Result[results.size()]);
-    }
-
-
-    @Override
-    public boolean isCompletionMarker(Result[] result) {
-      return result == null || result.length == 0;
-    }
-
-    @Override
-    public long getRowCount(Result[] result) {
-      return result == null ? 0 : result.length;
     }
   }
 
@@ -410,7 +311,9 @@ public class CloudBigtableIO {
      */
     public synchronized List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
       if (sampleRowKeys == null) {
-        sampleRowKeys = new CloudBigtableServiceImpl().getSampleRowKeys(getConfiguration());
+        CloudBigtableScanConfiguration config = getConfiguration();
+        sampleRowKeys = new CloudBigtableServiceImpl().getSampleRowKeys(config.toBigtableOptions(),
+          config.getTableId());
       }
       return sampleRowKeys;
     }
@@ -730,6 +633,7 @@ public class CloudBigtableIO {
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
     private final ByteKeyRangeTracker rangeTracker;
+    private final SplitTracker splitTracker;
 
     @VisibleForTesting
     Reader(CloudBigtableIO.AbstractSource<ResultOutputType> source,
@@ -737,6 +641,13 @@ public class CloudBigtableIO {
       this.source = source;
       this.scanIterator = scanIterator;
       this.rangeTracker = ByteKeyRangeTracker.of(source.getConfiguration().toByteKeyRange());
+      this.splitTracker = new SplitTracker() {
+        @Override
+        public boolean isAfterSplit(ByteString rowKey) {
+          ByteKey key = ByteStringUtil.toByteKey(rowKey);
+          return !rangeTracker.tryReturnRecordAt(true, key);
+        }
+      };
     }
 
     /**
@@ -745,7 +656,6 @@ public class CloudBigtableIO {
       */
     @Override
     public boolean start() throws IOException {
-      long connectionStart = System.currentTimeMillis();
       initializeScanner();
       workStart = System.currentTimeMillis();
       return advance();
@@ -765,7 +675,7 @@ public class CloudBigtableIO {
      */
     @Override
     public boolean advance() throws IOException {
-      current = scanIterator.next(scanner, rangeTracker);
+      current = scanIterator.next(scanner, splitTracker);
       if (scanIterator.isCompletionMarker(current)) {
         rangeTracker.markDone();
         return false;
@@ -1219,7 +1129,8 @@ public class CloudBigtableIO {
    */
   public static com.google.cloud.dataflow.sdk.io.BoundedSource<Result>
       read(CloudBigtableScanConfiguration config) {
-    return new Source<Result>(config, CoderType.RESULT, RESULT_ADVANCER);
+    return new Source<Result>(config, CoderType.RESULT,
+        ScanIteratorFactory.getSingleResultIterator());
   }
 
   /**
@@ -1231,7 +1142,8 @@ public class CloudBigtableIO {
    */
   public static com.google.cloud.dataflow.sdk.io.BoundedSource<Result[]>
       readBulk(CloudBigtableScanConfiguration config, int resultCount) {
-    return new Source<>(config, CoderType.RESULT_ARRAY, new ResultArrayIterator(resultCount));
+    return new Source<>(config, CoderType.RESULT_ARRAY,
+        ScanIteratorFactory.getMultiResultIterator(resultCount));
   }
 
   private static void checkNotNullOrEmpty(String value, String type) {

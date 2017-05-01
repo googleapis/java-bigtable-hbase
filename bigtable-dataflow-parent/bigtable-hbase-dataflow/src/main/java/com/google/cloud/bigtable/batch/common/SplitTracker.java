@@ -15,15 +15,12 @@
  */
 package com.google.cloud.bigtable.batch.common;
 
-import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
-import java.io.IOException;
-import java.util.List;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 
 /**
- * This interface describes functionality required by a Dataflow Cloud Bigtable connector.
+ * Determines whether or not a split occurred before a rowKey.
+ *
  */
-public interface CloudBigtableService {
-  List<SampleRowKeysResponse> getSampleRowKeys(BigtableOptions bigtableOptions, String tableId)
-      throws IOException;
+public interface SplitTracker {
+  public boolean isAfterSplit(ByteString rowKey);
 }

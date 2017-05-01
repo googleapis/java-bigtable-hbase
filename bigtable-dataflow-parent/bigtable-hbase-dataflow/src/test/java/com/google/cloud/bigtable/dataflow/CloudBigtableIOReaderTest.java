@@ -32,6 +32,7 @@ import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.batch.common.ScanIteratorFactory;
 import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration.Builder;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
@@ -88,7 +89,8 @@ public class CloudBigtableIOReaderTest {
 
   private CloudBigtableIO.Reader<Result> initializeReader(CloudBigtableScanConfiguration config) {
     when(mockSource.getConfiguration()).thenReturn(config);
-    return new CloudBigtableIO.Reader<Result>(mockSource, CloudBigtableIO.RESULT_ADVANCER) {
+    return new CloudBigtableIO.Reader<Result>(mockSource,
+        ScanIteratorFactory.getSingleResultIterator()) {
       @Override
       void initializeScanner() throws IOException {
         setSession(mockSession);
