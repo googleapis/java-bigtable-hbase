@@ -745,7 +745,6 @@ public class CloudBigtableIO {
       */
     @Override
     public boolean start() throws IOException {
-      long connectionStart = System.currentTimeMillis();
       initializeScanner();
       workStart = System.currentTimeMillis();
       return advance();

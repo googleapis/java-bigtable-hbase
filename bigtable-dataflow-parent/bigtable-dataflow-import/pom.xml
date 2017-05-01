@@ -19,7 +19,6 @@ limitations under the License.
         <version>0.9.7-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-dataflow-import</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
@@ -73,7 +72,6 @@ limitations under the License.
             <!-- hbase-server jar provides Deserializer for the Result class. -->
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>

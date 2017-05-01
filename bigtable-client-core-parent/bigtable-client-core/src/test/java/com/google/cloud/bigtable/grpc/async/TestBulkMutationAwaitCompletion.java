@@ -224,9 +224,6 @@ public class TestBulkMutationAwaitCompletion {
   /**
    * Creates a single {@link BulkMutation}, and adds {@link #OPERATIONS_PER_MUTATOR} Mutations to
    * it.
-   * @param futures
-   * @return The {@link OperationAccountant} used to track the operations within
-   *         {@link BulkMutation}
    */
   private void runOneBulkMutation() {
     MutateRowRequest request = TestBulkMutation.createRequest();
@@ -241,7 +238,6 @@ public class TestBulkMutationAwaitCompletion {
 
   /**
    * Creates a fully formed {@link BulkMutation}
-   * @return
    */
   private BulkMutation createBulkMutation() {
     OperationAccountant operationAccountant = new OperationAccountant(
@@ -301,15 +297,12 @@ public class TestBulkMutationAwaitCompletion {
    * Checks to make sure that for all accountants that
    * !{@link OperationAccountant#hasInflightOperations()} and that for all futures that
    * {@link Future#isDone()}.
-   * @param accountants
-   * @param singleMutationFutures
    */
   protected void confirmCompletion() {
     for (OperationAccountant accountant : accountants) {
       Assert.assertFalse(accountant.hasInflightOperations());
     }
     for (ListenableFuture<MutateRowResponse> future : singleMutationFutures) {
-//      System.out.println("Future is null?");
       Assert.assertTrue(future.isDone());
     }
   }

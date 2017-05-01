@@ -78,7 +78,7 @@ public class CredentialOptions implements Serializable {
    * <p>
    * jsonCredentials.
    * </p>
-   * @param jsonString a {@link java.io.String} object.
+   * @param jsonString a {@link String} object.
    * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
    */
   public static CredentialOptions jsonCredentials(String jsonString) {

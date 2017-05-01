@@ -39,6 +39,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 
+@SuppressWarnings("deprecation")
 public class TestSnapshots extends AbstractTest {
 
   final byte[] QUALIFIER = dataHelper.randomData("TestSingleColumnValueFilter");
