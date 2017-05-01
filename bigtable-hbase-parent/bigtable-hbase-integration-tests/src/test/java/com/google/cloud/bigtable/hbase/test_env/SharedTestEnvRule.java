@@ -31,12 +31,11 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 public class SharedTestEnvRule extends ExternalResource {
 
-  private TableName defaultTableName;
   public static final int MAX_VERSIONS = 6;
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final byte[] COLUMN_FAMILY2 = Bytes.toBytes("test_family2");
   private static final Log LOG = LogFactory.getLog(SharedTestEnvRule.class);
-
+  private TableName defaultTableName;
   private SharedTestEnv sharedTestEnv;
   private Connection connection;
   private java.util.logging.Logger julLogger;
@@ -102,7 +101,10 @@ public class SharedTestEnvRule extends ExternalResource {
     return sharedTestEnv instanceof BigtableEnv;
   }
 
-  public TableName getDefaultTableName() { return  defaultTableName; }
+  public TableName getDefaultTableName() {
+    return defaultTableName;
+  }
+
   public TableName newTestTableName() {
     return TableName.valueOf("test_table-" + UUID.randomUUID().toString());
   }

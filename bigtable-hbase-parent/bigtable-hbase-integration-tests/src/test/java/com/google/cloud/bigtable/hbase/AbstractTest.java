@@ -26,22 +26,20 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 public abstract class AbstractTest {
-  protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
-  protected Logger logger = new Logger(this.getClass());
-
+  @ClassRule
+  public static SharedTestEnvRule sharedTestEnv = new SharedTestEnvRule();
   @Rule
   public TestRule loggingRule = new TestRule() {
     @Override
     public Statement apply(Statement base, Description description) {
-      System.out.println(String.format("Running: %s",description.getDisplayName()));
+      System.out.println(String.format("Running: %s", description.getDisplayName()));
 
       return base;
     }
   };
-
-  @ClassRule
-  public static SharedTestEnvRule sharedTestEnv = new SharedTestEnvRule();
+  protected DataGenerationHelper dataHelper = new DataGenerationHelper();
+  protected Logger logger = new Logger(this.getClass());
 
   // This is for when we need to look at the results outside of the current connection
   public Connection createNewConnection() throws IOException {
@@ -53,6 +51,7 @@ public abstract class AbstractTest {
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {
+
     protected final byte[] qualifier;
     protected final byte[] value;
 

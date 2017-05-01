@@ -44,7 +44,7 @@ class MiniClusterEnv extends SharedTestEnv {
     // leaking hadoop configs, which messes up local mapreduce jobs
     Configuration clientConfig = HBaseConfiguration.create();
 
-    String[] keys = new String[] {
+    String[] keys = new String[]{
         "hbase.zookeeper.quorum",
         "hbase.zookeeper.property.clientPort"
     };

@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 
 
 class BigtableEnv extends SharedTestEnv {
+
   private static final Set<String> KEYS = Sets.newHashSet(
       "hbase.client.connection.impl",
       "google.bigtable.endpoint.host",

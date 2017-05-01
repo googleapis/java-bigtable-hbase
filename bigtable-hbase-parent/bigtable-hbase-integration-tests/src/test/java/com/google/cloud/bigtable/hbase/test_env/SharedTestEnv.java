@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.client.Connection;
  * to submit mapreduce jobs.
  */
 abstract class SharedTestEnv {
+
   private static SharedTestEnv instance;
   private long refCount = 0;
 
