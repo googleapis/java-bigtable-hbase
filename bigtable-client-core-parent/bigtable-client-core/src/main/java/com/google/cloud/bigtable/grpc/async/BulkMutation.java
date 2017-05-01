@@ -68,7 +68,8 @@ public class BulkMutation {
           .withDescription("Mutation does not have a status")
           .asRuntimeException();
   /** Constant <code>LOG</code> */
-  protected final static Logger LOG = new Logger(BulkMutation.class);
+  @VisibleForTesting
+  static Logger LOG = new Logger(BulkMutation.class);
 
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(5);
 
@@ -256,7 +257,7 @@ public class BulkMutation {
         setRetryComplete();
         return;
       }
-      Long backoffMs = getCurrentBackoff(backoff);
+      long backoffMs = getCurrentBackoff(backoff);
       failedCount++;
       if (backoffMs == BackOff.STOP) {
         setFailure(
@@ -269,7 +270,7 @@ public class BulkMutation {
       }
     }
 
-    private Long getCurrentBackoff(AtomicReference<Long> backOffTime) {
+    private long getCurrentBackoff(AtomicReference<Long> backOffTime) {
       if (backOffTime.get() == null) {
         try {
           if(this.currentBackoff == null) {
@@ -429,10 +430,10 @@ public class BulkMutation {
     }
 
     private synchronized void setRetryComplete() {
-      if (mutateRowsFuture != null) {
+      if (mutateRowsFuture != null && !mutateRowsFuture.isDone()) {
         mutateRowsFuture.cancel(true);
-        mutateRowsFuture = null;
       }
+      mutateRowsFuture = null;
       if (retryId != null) {
         asyncExecutor.getOperationAccountant().onComplexOperationCompletion(retryId);
         if (failedCount > 0) {
