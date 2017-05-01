@@ -46,15 +46,20 @@ class BigtableEnv extends SharedTestEnv {
   protected void setup() throws IOException {
     configuration = HBaseConfiguration.create();
 
-    String legacyConnectionValue = System.getProperty("google.bigtable.connection.impl");
-    if (legacyConnectionValue != null) {
-      configuration.set("hbase.client.connection.impl", legacyConnectionValue);
+
+    String connectionClass = System.getProperty("google.bigtable.connection.impl");
+    if (connectionClass != null) {
+      configuration.set("hbase.client.connection.impl", connectionClass);
     }
 
     for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
       if (KEYS.contains(entry.getKey())) {
         configuration.set(entry.getKey().toString(), entry.getValue().toString());
       }
+    }
+
+    try (Connection connection = createConnection() ) {
+      createConnection().getAdmin().deleteTables("test_table-.*");
     }
   }
 

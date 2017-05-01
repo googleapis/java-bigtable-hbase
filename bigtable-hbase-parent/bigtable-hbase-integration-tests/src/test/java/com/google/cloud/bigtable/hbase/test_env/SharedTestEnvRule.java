@@ -53,14 +53,14 @@ public class SharedTestEnvRule extends ExternalResource {
     sharedTestEnv = SharedTestEnv.get();
     connection = createConnection();
 
-    connection.getAdmin().deleteTables("test_table-.*");
     defaultTableName = newTestTableName();
     createTable(defaultTableName);
   }
 
   @Override
   protected void after() {
-    try (Admin admin = connection.getAdmin();) {
+    try (Admin admin = connection.getAdmin()) {
+
       admin.disableTable(defaultTableName);
       admin.deleteTable(defaultTableName);
     } catch (Exception e) {

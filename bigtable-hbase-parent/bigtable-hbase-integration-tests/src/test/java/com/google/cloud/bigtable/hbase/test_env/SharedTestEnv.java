@@ -41,15 +41,12 @@ abstract class SharedTestEnv {
   }
 
   private static SharedTestEnv create() {
-    String testEnvType = System.getProperty("BIGTABLE_TEST_ENV", "minicluster");
+    String bigtableConnectionClassName = System.getProperty("google.bigtable.connection.impl", "");
 
-    switch (testEnvType) {
-      case "bigtable":
-        return new BigtableEnv();
-      case "minicluster":
-        return new MiniClusterEnv();
-      default:
-        throw new RuntimeException("Invalid BIGTABLE_TEST_ENV: " + testEnvType);
+    if (!bigtableConnectionClassName.isEmpty()) {
+      return new BigtableEnv();
+    } else {
+      return new MiniClusterEnv();
     }
   }
 

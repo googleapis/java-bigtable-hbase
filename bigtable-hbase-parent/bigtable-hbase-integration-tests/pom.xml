@@ -35,9 +35,6 @@ limitations under the License.
         <google.bigtable.project.under.test>bigtable-hbase-1.0</google.bigtable.project.under.test>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_0.BigtableConnection</google.bigtable.connection.impl>
         <protobuff-java.version>2.5.0</protobuff-java.version>
-        <google.bigtable.endpoint.port>443</google.bigtable.endpoint.port>
-        <google.bigtable.use.bulk.api>true</google.bigtable.use.bulk.api>
-        <google.bigtable.use.plaintext.negotiation>false</google.bigtable.use.plaintext.negotiation>
     </properties>
 
     <profiles>
@@ -80,7 +77,7 @@ limitations under the License.
                                     </includes>
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
+                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
@@ -128,7 +125,7 @@ limitations under the License.
                                     </includes>
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
+                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
@@ -217,9 +214,8 @@ limitations under the License.
                                     </includes>
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
+                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
