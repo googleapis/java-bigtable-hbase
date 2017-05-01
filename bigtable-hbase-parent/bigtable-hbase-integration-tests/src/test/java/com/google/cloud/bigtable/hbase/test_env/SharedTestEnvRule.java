@@ -48,7 +48,6 @@ public class SharedTestEnvRule extends ExternalResource {
     for (Handler h : savedJulHandlers) {
       julLogger.removeHandler(h);
     }
-
     SLF4JBridgeHandler.install();
 
     sharedTestEnv = SharedTestEnv.get();
@@ -81,6 +80,7 @@ public class SharedTestEnvRule extends ExternalResource {
     }
     sharedTestEnv = null;
 
+    SLF4JBridgeHandler.uninstall();
     for (Handler handler : savedJulHandlers) {
       julLogger.addHandler(handler);
     }
