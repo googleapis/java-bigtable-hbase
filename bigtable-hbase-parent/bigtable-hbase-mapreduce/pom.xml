@@ -33,7 +33,7 @@ limitations under the License.
     </description>
 
     <properties>
-        <hbase.version>1.2.4</hbase.version>
+        <hbase.version>${hbase.version.1.2}</hbase.version>
         <hadoop.version>2.7.3</hadoop.version>
         <hadoop.scope>provided</hadoop.scope>
     </properties>
