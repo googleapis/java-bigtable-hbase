@@ -15,10 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
-
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import com.google.common.io.Files;
+import java.io.File;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -32,7 +35,9 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.mapreduce.Export;
 import org.apache.hadoop.hbase.mapreduce.Import;
 import org.apache.hadoop.mapreduce.Job;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -40,22 +45,35 @@ import java.io.IOException;
 import java.util.List;
 
 public class TestImport extends AbstractTest {
+  private File baseDir;
+
+  @Before
+  public void setup() {
+    System.out.println("Setting up TestImport");
+    baseDir = Files.createTempDir();
+  }
+  @After
+  public void teardown() throws IOException {
+    FileUtils.deleteDirectory(baseDir);
+    System.out.println("Tore Down TestImport");
+  }
+
   @Test
   @Category(KnownGap.class)
   public void testMapReduce() throws IOException, ClassNotFoundException, InterruptedException {
     Admin admin = getConnection().getAdmin();
 
-    admin.disableTable(TABLE_NAME);
-    admin.deleteTable(TABLE_NAME);
-    IntegrationTests.createTable(TABLE_NAME);
+    admin.disableTable(sharedTestEnv.getDefaultTableName());
+    admin.deleteTable(sharedTestEnv.getDefaultTableName());
+    sharedTestEnv.createTable(sharedTestEnv.getDefaultTableName());
     // Put a value.
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("testQualifier-");
     byte[] value = dataHelper.randomData("testValue-");
 
-    try (Table oldTable = getConnection().getTable(TABLE_NAME)){
+    try (Table oldTable = getConnection().getTable(sharedTestEnv.getDefaultTableName())){
       Put put = new Put(rowKey);
-      put.addColumn(COLUMN_FAMILY, qual, value);
+      put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value);
       oldTable.put(put);
 
       // Assert the value is there.
@@ -67,26 +85,22 @@ public class TestImport extends AbstractTest {
     }
 
     // Run the export.
-    Configuration conf = getConnection().getConfiguration();
+    Configuration conf = new Configuration(getConnection().getConfiguration());
+    String outputDir = baseDir.getAbsolutePath() + "/output";
 
-    //conf.set("fs.defaultFS", "file:///");
-    FileSystem dfs = IntegrationTests.getMiniCluster().getFileSystem();
-    String tempDir = "hdfs://" + dfs.getCanonicalServiceName() + "/tmp/backup";
 
     String[] args = new String[]{
-        TABLE_NAME.getNameAsString(),
-        tempDir
+        sharedTestEnv.getDefaultTableName().getNameAsString(),
+        outputDir
     };
     Job job = Export.createSubmittableJob(conf, args);
-    // So it looks for jars in the local FS, not HDFS.
-    job.getConfiguration().set("fs.defaultFS", "file:///");
     Assert.assertTrue(job.waitForCompletion(true));
 
     // Create new table.
-    TableName newTableName = IntegrationTests.newTestTableName();
+    TableName newTableName = sharedTestEnv.newTestTableName();
     try (Table newTable = getConnection().getTable(newTableName)){
       // Change for method in IntegrationTests
-      HColumnDescriptor hcd = new HColumnDescriptor(IntegrationTests.COLUMN_FAMILY);
+      HColumnDescriptor hcd = new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY);
       HTableDescriptor htd = new HTableDescriptor(newTableName);
       htd.addFamily(hcd);
       admin.createTable(htd);
@@ -94,10 +108,9 @@ public class TestImport extends AbstractTest {
       // Run the import.
       args = new String[]{
           newTableName.getNameAsString(),
-          tempDir
+          outputDir
       };
       job = Import.createSubmittableJob(conf, args);
-      job.getConfiguration().set("fs.defaultFS", "file:///");
       Assert.assertTrue(job.waitForCompletion(true));
 
       // Assert the value is there.

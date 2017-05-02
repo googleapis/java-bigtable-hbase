@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
-
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -38,16 +37,16 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteRow() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
-    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2, 1L, value);
     table.put(put);
 
     // Check values
@@ -65,7 +64,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteEmptyRow() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
 
     Delete delete = new Delete(rowKey);
@@ -81,13 +80,13 @@ public class TestDelete extends AbstractTest {
   @Category(KnownGap.class)
   public void testDeleteLatestColumnVersion() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
     Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, qual, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, 2L, value);
     table.put(put);
 
     // Check values
@@ -98,14 +97,14 @@ public class TestDelete extends AbstractTest {
 
     // Delete latest column version
     Delete delete = new Delete(rowKey);
-    delete.addColumn(COLUMN_FAMILY, qual);
+    delete.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual);
     table.delete(delete);
 
     // Confirm results.
     result = table.get(get);
     Assert.assertEquals(1, result.size());
     Assert.assertEquals("Version 2 should be deleted, but not version 1.",
-      1L, result.getColumnLatestCell(COLUMN_FAMILY, qual).getTimestamp());
+      1L, result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual).getTimestamp());
 
     table.close();
   }
@@ -116,14 +115,14 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteSpecificColumnVersion() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
     Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, qual, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual, 2L, value);
-    put.addColumn(COLUMN_FAMILY, qual, 3L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, 3L, value);
     table.put(put);
 
     // Check values
@@ -134,13 +133,13 @@ public class TestDelete extends AbstractTest {
 
     // Delete latest column version
     Delete delete = new Delete(rowKey);
-    delete.addColumn(COLUMN_FAMILY, qual, 2L);
+    delete.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, 2L);
     table.delete(delete);
 
     // Confirm results
     result = table.get(get);
     Assert.assertEquals("Only one version should be deleted", 2, result.size());
-    List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qual);
+    List<Cell> cells = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, qual);
     Assert.assertEquals("Version 3 should be the latest version", 3L, cells.get(0).getTimestamp());
     Assert.assertEquals("Version 1 should be the oldest version", 1L, cells.get(1).getTimestamp());
 
@@ -153,16 +152,16 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteAllColumnVersions() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
-    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2, 1L, value);
     table.put(put);
 
     // Check values
@@ -173,15 +172,15 @@ public class TestDelete extends AbstractTest {
 
     // Delete row
     Delete delete = new Delete(rowKey);
-    delete.addColumns(COLUMN_FAMILY, qual1);
+    delete.addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual1);
     table.delete(delete);
 
     // Check results
     result = table.get(get);
     Assert.assertEquals("Qual1 values should have been deleted", 1, result.size());
-    Assert.assertTrue("Qual2 should be intact", result.containsColumn(COLUMN_FAMILY, qual2));
+    Assert.assertTrue("Qual2 should be intact", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2));
     Assert.assertArrayEquals("Qual2 value should match", qual2,
-      CellUtil.cloneQualifier(result.getColumnLatestCell(COLUMN_FAMILY, qual2)));
+      CellUtil.cloneQualifier(result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual2)));
 
     table.close();
   }
@@ -192,14 +191,14 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteOlderColumnVersions() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
     Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, qual, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual, 2L, value);
-    put.addColumn(COLUMN_FAMILY, qual, 3L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, 3L, value);
     table.put(put);
 
     // Check values
@@ -210,14 +209,14 @@ public class TestDelete extends AbstractTest {
 
     // Delete latest column version
     Delete delete = new Delete(rowKey);
-    delete.addColumns(COLUMN_FAMILY, qual, 2L);
+    delete.addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual, 2L);
     table.delete(delete);
 
     // Confirm results
     result = table.get(get);
     Assert.assertEquals("Only one version should remain", 1, result.size());
     Assert.assertEquals("Version 3 should be the only version", 3L,
-      result.getColumnLatestCell(COLUMN_FAMILY, qual).getTimestamp());
+      result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual).getTimestamp());
 
     table.close();
   }
@@ -228,16 +227,16 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteFamily() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
-    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2, 1L, value);
     table.put(put);
 
     // Check values
@@ -248,7 +247,7 @@ public class TestDelete extends AbstractTest {
 
     // Delete row
     Delete delete = new Delete(rowKey);
-    delete.addFamily(COLUMN_FAMILY);
+    delete.addFamily(SharedTestEnvRule.COLUMN_FAMILY);
     table.delete(delete);
 
     // Check results
@@ -264,18 +263,18 @@ public class TestDelete extends AbstractTest {
   @Category(KnownGap.class)
   public void testDeleteOlderFamilyColumns() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
-    put.addColumn(COLUMN_FAMILY, qual1, 3L, value);
-    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual2, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 3L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2, 2L, value);
     table.put(put);
 
     // Check values
@@ -286,15 +285,15 @@ public class TestDelete extends AbstractTest {
 
     // Delete row
     Delete delete = new Delete(rowKey);
-    delete.addFamily(COLUMN_FAMILY, 2L);
+    delete.addFamily(SharedTestEnvRule.COLUMN_FAMILY, 2L);
     table.delete(delete);
 
     // Confirm results
     result = table.get(get);
     Assert.assertEquals("Only one version of qual1 should remain", 1, result.size());
-    Assert.assertTrue("Qual1 should be the remaining cell", result.containsColumn(COLUMN_FAMILY, qual1));
+    Assert.assertTrue("Qual1 should be the remaining cell", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1));
     Assert.assertEquals("Version 3 should be the only version", 3L,
-      result.getColumnLatestCell(COLUMN_FAMILY, qual1).getTimestamp());
+      result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual1).getTimestamp());
 
     table.close();
   }
@@ -306,18 +305,18 @@ public class TestDelete extends AbstractTest {
   @Category(KnownGap.class)
   public void testDeleteFamilyWithSpecificTimestamp() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
-    put.addColumn(COLUMN_FAMILY, qual1, 3L, value);
-    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
-    put.addColumn(COLUMN_FAMILY, qual2, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, 3L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2, 2L, value);
     table.put(put);
 
     // Check values
@@ -328,19 +327,19 @@ public class TestDelete extends AbstractTest {
 
     // Delete row
     Delete delete = new Delete(rowKey);
-    delete.addFamilyVersion(COLUMN_FAMILY, 2L);
+    delete.addFamilyVersion(SharedTestEnvRule.COLUMN_FAMILY, 2L);
     table.delete(delete);
 
     // Confirm results
     result = table.get(get);
     Assert.assertEquals("Three versions should remain", 3, result.size());
-    Assert.assertTrue("Qual1 should have cells", result.containsColumn(COLUMN_FAMILY, qual1));
-    Assert.assertTrue("Qual2 should have a cell", result.containsColumn(COLUMN_FAMILY, qual2));
-    List<Cell> cells1 = result.getColumnCells(COLUMN_FAMILY, qual1);
+    Assert.assertTrue("Qual1 should have cells", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1));
+    Assert.assertTrue("Qual2 should have a cell", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2));
+    List<Cell> cells1 = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, qual1);
     Assert.assertEquals("Qual1 should have 2 cells", 2, cells1.size());
     Assert.assertEquals("Version 3 should be the latest version", 3L, cells1.get(0).getTimestamp());
     Assert.assertEquals("Version 1 should be the oldest version", 1L, cells1.get(1).getTimestamp());
-    List<Cell> cells2 = result.getColumnCells(COLUMN_FAMILY, qual2);
+    List<Cell> cells2 = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, qual2);
     Assert.assertEquals("Qual2 should have 1 cell", 1, cells2.size());
     Assert.assertEquals("Version 1 should be the latest version", 1L, cells2.get(0).getTimestamp());
 

@@ -15,14 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -39,10 +41,10 @@ public class TestColumnFamilyAdmin extends AbstractTest {
   private TableName tableName;
   private HTableDescriptor descriptor;
 
-  @Override
-  protected void setup() throws IOException {
+  @Before
+  public void setup() throws IOException {
     admin = getConnection().getAdmin();
-    tableName = IntegrationTests.newTestTableName();
+    tableName = sharedTestEnv.newTestTableName();
 
     descriptor = new HTableDescriptor(tableName);
     descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
@@ -50,8 +52,8 @@ public class TestColumnFamilyAdmin extends AbstractTest {
     admin.createTable(descriptor);
   }
 
-  @Override
-  protected void tearDown() throws IOException {
+  @After
+  public void tearDown() throws IOException {
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
   }

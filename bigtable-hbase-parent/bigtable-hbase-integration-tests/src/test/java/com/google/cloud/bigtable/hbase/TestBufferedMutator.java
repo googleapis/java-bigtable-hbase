@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.BufferedMutator;
@@ -40,9 +39,9 @@ public class TestBufferedMutator extends AbstractTest {
 
   @Test
   public void testAutoFlushOff() throws Exception {
-    try (BufferedMutator mutator = getConnection().getBufferedMutator(TABLE_NAME);
+    try (BufferedMutator mutator = getConnection().getBufferedMutator(sharedTestEnv.getDefaultTableName());
         Connection c = createNewConnection();
-        Table tableForRead = c.getTable(TABLE_NAME);) {
+        Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName());) {
       // Set up the tiny write and read
       mutator.mutate(getPut());
       Get get = getGet();
@@ -56,9 +55,9 @@ public class TestBufferedMutator extends AbstractTest {
 
   @Test
   public void testAutoFlushOn() throws Exception {
-    try (Table mutator = getConnection().getTable(TABLE_NAME);
+    try (Table mutator = getConnection().getTable(sharedTestEnv.getDefaultTableName());
         Connection c = createNewConnection();
-        Table tableForRead = c.getTable(TABLE_NAME);) {
+        Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName());) {
       mutator.put(getPut());
       Assert.assertEquals("Expecting one result", 1, tableForRead.get(getGet()).size());
     }
@@ -68,7 +67,7 @@ public class TestBufferedMutator extends AbstractTest {
   @Ignore(value="We need a better test now that BigtableBufferedMutator has different logic")
   public void testBufferSizeFlush() throws Exception {
     int maxSize = 1024;
-    BufferedMutatorParams params = new BufferedMutatorParams(TABLE_NAME)
+    BufferedMutatorParams params = new BufferedMutatorParams(sharedTestEnv.getDefaultTableName())
         .writeBufferSize(maxSize);
     try (BufferedMutator mutator = getConnection().getBufferedMutator(params)) {
       // HBase 1.0.0 has a bug in it. It returns maxSize instead of the buffer size for
