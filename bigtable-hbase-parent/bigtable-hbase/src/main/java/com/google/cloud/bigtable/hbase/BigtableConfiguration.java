@@ -19,7 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.HConnection;
 
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 
 /**
  * This class provides a simplified mechanism of creating a programmatic Bigtable Connection.

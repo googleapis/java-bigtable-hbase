@@ -19,7 +19,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Mockito.times;
 
 import com.google.api.client.util.Clock;
-import com.google.appengine.repackaged.com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.Futures;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
