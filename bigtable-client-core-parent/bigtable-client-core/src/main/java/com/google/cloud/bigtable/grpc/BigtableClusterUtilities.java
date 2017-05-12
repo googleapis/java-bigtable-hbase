@@ -21,6 +21,7 @@ import com.google.bigtable.admin.v2.ListClustersRequest;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
@@ -124,12 +125,14 @@ public class BigtableClusterUtilities implements AutoCloseable {
 
   public static String getZoneId(Cluster cluster) {
     Preconditions.checkState(cluster != null, "Cluster doesn't exist");
-    String name = cluster.getLocation();
-    String key = "/locations/";
-    int index = name.lastIndexOf(key) + key.length() + 1;
-    return name.substring(index);
+    return getZoneId(cluster.getLocation());
   }
 
+  @VisibleForTesting
+  static String getZoneId(String name) {
+    final String prefix = "/locations/";
+    return name.substring(name.lastIndexOf(prefix) + prefix.length());
+  }
 
   private final BigtableInstanceName instanceName;
   private final ManagedChannel channel;
@@ -197,9 +200,9 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
    *           received
    */
-  public void setClusterSize(String clusterId, String zoneId, int newSize)
+  public Cluster setClusterSize(String clusterId, String zoneId, int newSize)
       throws InterruptedException {
-    setClusterSize(getCluster(clusterId, zoneId), newSize);
+    return setClusterSize(getCluster(clusterId, zoneId), newSize);
   }
 
   /**
@@ -218,22 +221,23 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @param newSize
    * @throws InterruptedException
    */
-  private void setClusterSize(Cluster cluster, int newSize)
+  private Cluster setClusterSize(Cluster cluster, int newSize)
       throws InterruptedException {
     Preconditions.checkArgument(newSize > 0, "Cluster size must be > 0");
     int currentSize = cluster.getServeNodes();
     if (currentSize == newSize) {
       logger.info("Cluster %s already has %d nodes.", getClusterId(cluster), newSize);
+      return cluster;
     } else {
       String clusterName = cluster.getName();
       logger.info("Updating cluster %s to size %d", clusterName, newSize);
-      Cluster updatedCluster = Cluster.newBuilder()
-          .setName(clusterName)
+      Cluster updatedCluster = cluster.toBuilder()
           .setServeNodes(newSize)
           .build();
       Operation operation = client.updateCluster(updatedCluster);
       waitForOperation(operation.getName(), 60);
       logger.info("Done updating cluster %s.", clusterName);
+      return updatedCluster;
     }
   }
 
