@@ -48,8 +48,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
+/**
+ * Tests for {@link OperationAccountant}
+ *
+ */
 @RunWith(JUnit4.class)
-public class TestRpcThrottler {
+public class TestOperationAccountant {
 
   @Mock
   ListenableFuture<?> future;
