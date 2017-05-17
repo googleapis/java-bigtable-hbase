@@ -222,8 +222,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     Metadata metadata = new Metadata();
     metadata.merge(originalMetadata);
     synchronized (callLock) {
-      call = rpc.newCall(callOptions);
-      rpc.start(call, getRetryRequest(), this, metadata);
+      call = rpc.startNewCall(callOptions, getRetryRequest(), this, metadata);
     }
   }
 

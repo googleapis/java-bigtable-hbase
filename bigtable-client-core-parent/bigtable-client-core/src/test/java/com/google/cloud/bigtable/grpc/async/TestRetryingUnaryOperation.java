@@ -108,17 +108,17 @@ public class TestRetryingUnaryOperation {
       }
     }).when(executorService).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
 
-    final long start = System.nanoTime();
+    final long startNewCall = System.nanoTime();
 
     // We want the nanoClock to mimic the behavior of sleeping, but without the time penalty.
     // This will allow the RetryingRpcFutureFallback's ExponentialBackOff to work properly.
     // The ExponentialBackOff sends a BackOff.STOP only when the clock time reaches
-    // start + maxElapsedTimeMillis.  Since we don't want to wait maxElapsedTimeMillis (60 seconds)
+    // startNewCall + maxElapsedTimeMillis.  Since we don't want to wait maxElapsedTimeMillis (60 seconds)
     // for the test to complete, we mock the clock.
     when(nanoClock.nanoTime()).then(new Answer<Long>() {
       @Override
       public Long answer(InvocationOnMock invocation) throws Throwable {
-        return start + totalSleep.get();
+        return startNewCall + totalSleep.get();
       }
     });
     when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
@@ -138,8 +138,8 @@ public class TestRetryingUnaryOperation {
     };
     doAnswer(answer)
         .when(readAsync)
-        .start(
-            any(ClientCall.class),
+        .startNewCall(
+            any(CallOptions.class),
             any(ReadRowsRequest.class),
             any(ClientCall.Listener.class),
             any(Metadata.class));
@@ -166,8 +166,8 @@ public class TestRetryingUnaryOperation {
         return null;
       }
     };
-    doAnswer(answer).when(readAsync).start(any(ClientCall.class), any(ReadRowsRequest.class),
-      any(ClientCall.Listener.class), any(Metadata.class));
+    doAnswer(answer).when(readAsync).startNewCall(any(CallOptions.class),
+      any(ReadRowsRequest.class), any(ClientCall.Listener.class), any(Metadata.class));
     ListenableFuture future = underTest.getAsyncResult();
 
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
@@ -184,8 +184,8 @@ public class TestRetryingUnaryOperation {
         return null;
       }
     };
-    doAnswer(answer).when(readAsync).start(any(ClientCall.class), any(ReadRowsRequest.class),
-      any(ClientCall.Listener.class), any(Metadata.class));
+    doAnswer(answer).when(readAsync).startNewCall(any(CallOptions.class),
+      any(ReadRowsRequest.class), any(ClientCall.Listener.class), any(Metadata.class));
     try {
       underTest.getAsyncResult().get(1, TimeUnit.SECONDS);
       Assert.fail();
