@@ -116,7 +116,6 @@ limitations under the License.
                                     <include>com.google.auth:*</include>
                                     <include>com.google.guava:guava</include>
                                     <include>com.google.http-client:*</include>
-                                    <include>com.google.instrumentation:instrumentation-api</include>
                                     <include>com.google.oauth-client:*</include>
                                     <include>com.google.protobuf:*</include>
                                     <include>com.twitter:hpack</include>
@@ -125,6 +124,9 @@ limitations under the License.
                                     <include>io.dropwizard.metrics:metrics-core</include>
 
                                 </includes>
+                                <excludes>
+                                    <exclude>io.grpc:grpc-context</exclude>>
+                                </excludes>
                             </artifactSet>
                             <relocations>
                                 <relocation>
@@ -146,10 +148,6 @@ limitations under the License.
                                 <relocation>
                                     <pattern>com.google.common</pattern>
                                     <shadedPattern>com.google.bigtable.repackaged.com.google.common</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.instrumentation</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.instrumentation</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>com.google.logging</pattern>
@@ -182,6 +180,11 @@ limitations under the License.
                                 <relocation>
                                     <pattern>io.grpc</pattern>
                                     <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
+                                    <excludes>
+                                        <exclude>io.grpc.Context*</exclude>
+                                        <exclude>io.grpc.Deadline</exclude>
+                                        <exclude>io.grpc.ThreadLocalContextStorage</exclude>
+                                    </excludes>
                                 </relocation>
                                 <relocation>
                                     <pattern>io.netty</pattern>
