@@ -207,6 +207,9 @@ public class BulkMutation {
     }
 
     private synchronized void handleResult(List<MutateRowsResponse> results) {
+      asyncExecutor.getOperationAccountant().getResourceLimiterStats().markMutationsRpcCompletion(
+        System.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
+
       mutateRowsFuture = null;
       AtomicReference<Long> backoffTime = new AtomicReference<>();
       try {
@@ -350,6 +353,9 @@ public class BulkMutation {
 
     private void completeOrRetry(
         AtomicReference<Long> backoffTime, RequestManager retryRequestManager) {
+      asyncExecutor.getOperationAccountant().getResourceLimiterStats().markMutationsSuccess(
+        currentRequestManager.futures.size() - retryRequestManager.futures.size());
+
       if (retryRequestManager == null || retryRequestManager.isEmpty()) {
         setRetryComplete();
       } else {
