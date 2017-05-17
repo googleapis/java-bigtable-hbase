@@ -111,13 +111,14 @@ public class RetryingReadRowsOperationTest {
 
   private RetryingReadRowsOperation underTest;
 
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     metaData = new Metadata();
 
-    when(mockRetryableRpc.newCall(any(CallOptions.class))).thenReturn(mockClientCall);
+    when(mockRetryableRpc.startNewCall(any(CallOptions.class), any(ReadRowsRequest.class),
+      any(ClientCall.Listener.class), any(Metadata.class))).thenReturn(mockClientCall);
     when(mockRetryableRpc.getRpcMetrics()).thenReturn(mockRpcMetrics);
     when(mockRpcMetrics.timeOperation()).thenReturn(mockOperationTimerContext);
     when(mockRpcMetrics.timeRpc()).thenReturn(mockRpcTimerContext);
@@ -311,9 +312,8 @@ public class RetryingReadRowsOperationTest {
     underTest.getAsyncResult();
     verify(mockRpcMetrics, times(1)).timeOperation();
     verify(mockRpcMetrics, times(1)).timeRpc();
-    verify(mockRetryableRpc, times(1)).newCall(eq(CallOptions.DEFAULT));
-    verify(mockRetryableRpc, times(1)).start(
-      same(mockClientCall),
+    verify(mockRetryableRpc, times(1)).startNewCall(
+      eq(CallOptions.DEFAULT),
       eq(READ_ENTIRE_TABLE_REQUEST),
       same(underTest),
       any(Metadata.class));

@@ -82,26 +82,17 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
   }
 
   /**
-   * Creates a {@link io.grpc.ClientCall}.
+   * Creates a {@link io.grpc.ClientCall} and starts it.
    *
    * @param callOptions A set of gRPC options to use on this call.
-   * @return A ClientCall that represents a new request.
-   */
-  ClientCall<REQUEST, RESPONSE> newCall(CallOptions callOptions);
-
-  /**
-   * Creates a {@link io.grpc.ClientCall}.
-   *
-   * @param call The ClientCall to use. See {@link BigtableAsyncRpc#newCall(CallOptions)}
    * @param request The request to send.
    * @param listener A listener which handles responses.
    * @param metadata A set of predefined headers to use.
+   *
+   * @return A ClientCall that represents a new request.
    */
-  void start(
-      ClientCall<REQUEST, RESPONSE> call,
-      REQUEST request,
-      ClientCall.Listener<RESPONSE> listener,
-      Metadata metadata);
+  ClientCall<REQUEST, RESPONSE> startNewCall(CallOptions callOptions, REQUEST request,
+      ClientCall.Listener<RESPONSE> listener, Metadata metadata);
 
   /**
    * Can this request be retried?
