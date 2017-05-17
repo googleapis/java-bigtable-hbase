@@ -100,6 +100,9 @@ public class TestBulkMutation {
 
   @Mock NanoClock nanoClock;
 
+  @Mock
+  ResourceLimiterStats mockResourceLimiterStats;
+
   RetryOptions retryOptions;
 
   private BulkMutation underTest;
@@ -111,6 +114,7 @@ public class TestBulkMutation {
 
     when(asyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
     when(asyncExecutor.getOperationAccountant()).thenReturn(operationAccountant);
+    when(operationAccountant.getResourceLimiterStats()).thenReturn(mockResourceLimiterStats);
 
     doAnswer(new Answer<Void>() {
       @Override
