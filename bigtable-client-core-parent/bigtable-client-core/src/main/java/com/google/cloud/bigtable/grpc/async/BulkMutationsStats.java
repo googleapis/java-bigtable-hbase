@@ -25,14 +25,74 @@ import com.codahale.metrics.Timer;
  * This class tracks timing and counts of mutations performed by {@link BulkMutation} and throttling
  * performed by {@link ResourceLimiter}.
  */
-public class ResourceLimiterStats {
+public class BulkMutationsStats {
+
+  private static BulkMutationsStats instance = new BulkMutationsStats();
+
+  public static BulkMutationsStats getInstance() {
+    return instance;
+  }
+
+  public static class Snapshot {
+    private final Long mutationRpcLatencyInMillis;
+    private final Long mutationRatePerSecond;
+    private final Long throttlingPerRpcInMicros;
+
+    public Snapshot(Long mutationRpcLatencyInMillis, Long mutationRatePerSecond,
+        Long throttlingPerRpcInMicros) {
+      this.mutationRpcLatencyInMillis = mutationRpcLatencyInMillis;
+      this.mutationRatePerSecond = mutationRatePerSecond;
+      this.throttlingPerRpcInMicros = throttlingPerRpcInMicros;
+    }
+
+    public Long getMutationRpcLatencyInMillis() {
+      return mutationRpcLatencyInMillis;
+    }
+
+    public Long getMutationRatePerSecond() {
+      return mutationRatePerSecond;
+    }
+
+    public Long getThrottlingPerRpcInMicros() {
+      return throttlingPerRpcInMicros;
+    }
+  }
 
   private final MetricRegistry registry = new MetricRegistry();
 
   private Timer mutationTimer;
   private Meter mutationMeter;
-
   private Timer throttlingTimer;
+
+  public synchronized Snapshot snapshotAndReset() {
+    Snapshot snap = getSnapshot();
+    reset();
+    return snap;
+  }
+
+  public synchronized Snapshot getSnapshot() {
+    return new Snapshot(getRpcLatencyMs(), getMutationRate(), getThrottlingMicros());
+  }
+
+  protected void reset() {
+    mutationTimer = null;
+    mutationMeter = null;
+    throttlingTimer = null;
+  }
+
+  private Long getRpcLatencyMs() {
+    return mutationTimer == null ? null
+        : TimeUnit.NANOSECONDS.toMillis((long) mutationTimer.getSnapshot().getMean());
+  }
+
+  private Long getMutationRate() {
+    return mutationMeter == null ? null : (long) mutationMeter.getMeanRate();
+  }
+
+  private Long getThrottlingMicros() {
+    return throttlingTimer == null ? null
+        : TimeUnit.NANOSECONDS.toMicros((long) throttlingTimer.getSnapshot().getMean());
+  }
 
   /**
    * This method updates rpc time statistics statistics.
@@ -74,9 +134,9 @@ public class ResourceLimiterStats {
   }
 
   private Timer getThrottlingTimer() {
-    if (mutationTimer == null) {
-      mutationTimer = registry.timer("MutationStats.throttle.timer");
+    if (throttlingTimer == null) {
+      throttlingTimer = registry.timer("MutationStats.throttle.timer");
     }
-    return mutationTimer;
+    return throttlingTimer;
   }
 }

@@ -207,8 +207,8 @@ public class BulkMutation {
     }
 
     private synchronized void handleResult(List<MutateRowsResponse> results) {
-      asyncExecutor.getOperationAccountant().getResourceLimiterStats().markMutationsRpcCompletion(
-        System.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
+      BulkMutationsStats.getInstance().markMutationsRpcCompletion(
+        clock.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
 
       mutateRowsFuture = null;
       AtomicReference<Long> backoffTime = new AtomicReference<>();
@@ -353,7 +353,7 @@ public class BulkMutation {
 
     private void completeOrRetry(
         AtomicReference<Long> backoffTime, RequestManager retryRequestManager) {
-      asyncExecutor.getOperationAccountant().getResourceLimiterStats().markMutationsSuccess(
+      BulkMutationsStats.getInstance().markMutationsSuccess(
         currentRequestManager.futures.size() - retryRequestManager.futures.size());
 
       if (retryRequestManager == null || retryRequestManager.isEmpty()) {
@@ -385,8 +385,11 @@ public class BulkMutation {
           retryId = Long.valueOf(
             asyncExecutor.getOperationAccountant().registerComplexOperation(createRetryHandler()));
         }
+        long start = clock.nanoTime();
         mutateRowsFuture = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
-        currentRequestManager.lastRpcSentTimeNanos = clock.nanoTime();
+        long now = clock.nanoTime();
+        BulkMutationsStats.getInstance().markThrottling(now - start);
+        currentRequestManager.lastRpcSentTimeNanos = now;
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);

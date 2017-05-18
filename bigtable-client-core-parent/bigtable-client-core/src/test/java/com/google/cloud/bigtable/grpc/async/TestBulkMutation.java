@@ -60,6 +60,7 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.BulkMutation.Batch;
 import com.google.cloud.bigtable.grpc.async.BulkMutation.RequestManager;
+import com.google.cloud.bigtable.grpc.async.BulkMutationsStats.Snapshot;
 import com.google.cloud.bigtable.grpc.async.OperationAccountant.ComplexOperationStalenessHandler;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
@@ -98,10 +99,8 @@ public class TestBulkMutation {
   @Mock
   ListenableFuture mockFuture;
 
-  @Mock NanoClock nanoClock;
-
   @Mock
-  ResourceLimiterStats mockResourceLimiterStats;
+  NanoClock mockNanoClock;
 
   RetryOptions retryOptions;
 
@@ -110,11 +109,10 @@ public class TestBulkMutation {
   @Before
   public void setup() throws InterruptedException {
     MockitoAnnotations.initMocks(this);
-    retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
+    retryOptions = RetryOptionsUtil.createTestRetryOptions(mockNanoClock);
 
     when(asyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
     when(asyncExecutor.getOperationAccountant()).thenReturn(operationAccountant);
-    when(operationAccountant.getResourceLimiterStats()).thenReturn(mockResourceLimiterStats);
 
     doAnswer(new Answer<Void>() {
       @Override
@@ -143,6 +141,7 @@ public class TestBulkMutation {
 
   @Test
   public void testAdd() {
+    BulkMutationsStats.getInstance().snapshotAndReset();
     MutateRowRequest mutateRowRequest = createRequest();
     BulkMutation.RequestManager requestManager = createTestRequestManager();
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
@@ -155,6 +154,8 @@ public class TestBulkMutation {
         .addEntries(entry)
         .build();
     Assert.assertEquals(expected, requestManager.build());
+    Assert
+        .assertNull(BulkMutationsStats.getInstance().snapshotAndReset().getMutationRatePerSecond());
   }
 
   private RequestManager createTestRequestManager() {
@@ -178,7 +179,10 @@ public class TestBulkMutation {
   @Test
   public void testCallableSuccess()
       throws InterruptedException, ExecutionException, TimeoutException {
+    BulkMutationsStats.getInstance().snapshotAndReset();
     long preRunId = retryIdGenerator.get();
+    underTest.clock = mockNanoClock;
+
     ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
     setResponse(io.grpc.Status.OK);
     Assert.assertEquals(preRunId + 1, retryIdGenerator.get());
@@ -187,6 +191,10 @@ public class TestBulkMutation {
     Assert.assertTrue(rowFuture.isDone());
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), result);
     verify(operationAccountant, times(1)).onComplexOperationCompletion(eq(retryIdGenerator.get()));
+    Snapshot snap = BulkMutationsStats.getInstance().snapshotAndReset();
+    Assert.assertNotNull(snap.getMutationRatePerSecond());
+    Assert.assertNotNull(snap.getMutationRpcLatencyInMillis());
+    Assert.assertNotNull(snap.getThrottlingPerRpcInMicros());
   }
 
   @Test
@@ -195,7 +203,7 @@ public class TestBulkMutation {
     long preRunId = retryIdGenerator.get();
     ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
     ListenableFuture<List<MutateRowsResponse>> rowsFuture = SettableFuture.<List<MutateRowsResponse>>create();
-    when(nanoClock.nanoTime()).thenReturn(1l);
+    when(mockNanoClock.nanoTime()).thenReturn(1l);
     underTest.currentBatch.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture.isDone());
     setResponse(io.grpc.Status.NOT_FOUND);
@@ -220,7 +228,7 @@ public class TestBulkMutation {
     setFuture(io.grpc.Status.DEADLINE_EXCEEDED);
     underTest.flush();
     Assert.assertEquals(preRunId + 1, retryIdGenerator.get());
-    when(nanoClock.nanoTime()).thenReturn(1l);
+    when(mockNanoClock.nanoTime()).thenReturn(1l);
 
     // Make sure that the request is scheduled
     Assert.assertFalse(rowFuture.isDone());
@@ -252,7 +260,7 @@ public class TestBulkMutation {
     setResponse(io.grpc.Status.OK);
     Assert.assertEquals(preRunId + 1, retryIdGenerator.get());
 
-    when(nanoClock.nanoTime()).thenReturn(0l);
+    when(mockNanoClock.nanoTime()).thenReturn(0l);
     Assert.assertEquals(1, batch.getRequestCount());
 
     // Make sure that the first request completes, but the second does not.
@@ -436,7 +444,7 @@ public class TestBulkMutation {
       public Long answer(InvocationOnMock invocation) throws Throwable {
         return start + waitedNanos.get();
       }
-    }).when(nanoClock).nanoTime();
+    }).when(mockNanoClock).nanoTime();
 
     doAnswer(new Answer<ScheduledFuture<?>>() {
       @Override
