@@ -53,10 +53,15 @@ public interface CallOptionsFactory {
    * Always returns {@link CallOptions#DEFAULT}.
    */
   public static class Default implements CallOptionsFactory {
+    public static CallOptions DEFAULT =
+        CallOptions.DEFAULT
+          //.withCompression("gzip")
+          .withWaitForReady();
+
     @Override
     public <RequestT> CallOptions create(MethodDescriptor<RequestT, ?> descriptor,
         RequestT request) {
-      return CallOptions.DEFAULT;
+      return DEFAULT;
     }
   }
 
@@ -72,14 +77,14 @@ public interface CallOptionsFactory {
     public <RequestT> CallOptions create(
         MethodDescriptor<RequestT, ?> descriptor, RequestT request) {
       if (!config.isUseTimeout() || request == null) {
-        return CallOptions.DEFAULT;
+        return Default.DEFAULT;
       }
 
       int timeout = config.getShortRpcTimeoutMs();
       if (isLongRequest(request)) {
         timeout = config.getLongRpcTimeoutMs();
       }
-      return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
+      return Default.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
     }
 
     /**

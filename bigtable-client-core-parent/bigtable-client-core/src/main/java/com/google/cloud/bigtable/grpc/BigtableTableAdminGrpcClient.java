@@ -43,7 +43,9 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
    * @param channel a {@link io.grpc.Channel} object.
    */
   public BigtableTableAdminGrpcClient(Channel channel) {
-    blockingStub = BigtableTableAdminGrpc.newBlockingStub(channel);
+    blockingStub = BigtableTableAdminGrpc
+        .newBlockingStub(channel)
+        .withWaitForReady();
   }
 
   /** {@inheritDoc} */
