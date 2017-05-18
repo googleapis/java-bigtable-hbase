@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.grpc.async;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,12 +38,12 @@ import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.OperationAccountant;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 
 /**
@@ -59,29 +57,18 @@ public class TestAsyncExecutor {
   private BigtableDataClient client;
 
   @SuppressWarnings("rawtypes")
-  @Mock
-  private ListenableFuture future;
+  private SettableFuture future;
 
   private AsyncExecutor underTest;
   private OperationAccountant operationAccountant;
-  private List<FutureCallback<?>> callbacks;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    callbacks = new ArrayList<>();
-    operationAccountant = new OperationAccountant(new ResourceLimiter(1000, 10)) {
-      @Override
-      public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, long id) {
-        FutureCallback<T> callback = super.addCallback(future, id);
-        synchronized (callbacks) {
-          callbacks.add(callback);
-        }
-        return callback;
-      }
-    };
+    operationAccountant = new OperationAccountant(new ResourceLimiter(1000, 10));
 
     underTest = new AsyncExecutor(client, operationAccountant);
+    future = SettableFuture.create();
   }
 
   @Test
@@ -94,7 +81,7 @@ public class TestAsyncExecutor {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
     underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
     Assert.assertTrue(operationAccountant.hasInflightOperations());
-    completeCall();
+    future.set("");
     Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
@@ -103,7 +90,7 @@ public class TestAsyncExecutor {
     when(client.checkAndMutateRowAsync(any(CheckAndMutateRowRequest.class))).thenReturn(future);
     underTest.checkAndMutateRowAsync(CheckAndMutateRowRequest.getDefaultInstance());
     Assert.assertTrue(operationAccountant.hasInflightOperations());
-    completeCall();
+    future.set("");
     Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
@@ -112,7 +99,7 @@ public class TestAsyncExecutor {
     when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(future);
     underTest.readModifyWriteRowAsync(ReadModifyWriteRowRequest.getDefaultInstance());
     Assert.assertTrue(operationAccountant.hasInflightOperations());
-    completeCall();
+    future.set("");
     Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
@@ -121,7 +108,7 @@ public class TestAsyncExecutor {
     when(client.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(future);
     underTest.readRowsAsync(ReadRowsRequest.getDefaultInstance());
     Assert.assertTrue(operationAccountant.hasInflightOperations());
-    completeCall();
+    future.set("");
     Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
@@ -132,7 +119,7 @@ public class TestAsyncExecutor {
       underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
     } catch(Exception ignored) {
     }
-    completeCall();
+    future.set(ReadRowsResponse.getDefaultInstance());
     Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
@@ -160,7 +147,7 @@ public class TestAsyncExecutor {
       });
       Thread.sleep(50);
       Assert.assertFalse(eleventhRpcInvoked.get());
-      completeCall();
+      future.set("");
       Thread.sleep(50);
       Assert.assertTrue(eleventhRpcInvoked.get());
     } finally {
@@ -181,7 +168,7 @@ public class TestAsyncExecutor {
       underTest.mutateRowAsync(MutateRowRequest.newBuilder()
           .setRowKey(ByteString.copyFrom(new byte[1000])).build());
       final AtomicBoolean newRpcInvoked = new AtomicBoolean(false);
-      Future<Void> future = testExecutor.submit(new Callable<Void>() {
+      Future<Void> future1 = testExecutor.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
@@ -190,25 +177,16 @@ public class TestAsyncExecutor {
         }
       });
       try {
-        future.get(50, TimeUnit.MILLISECONDS);
+        future1.get(50, TimeUnit.MILLISECONDS);
         Assert.fail("The future.get() call should timeout.");
       } catch(TimeoutException expected) {
         // Expected Exception.
       }
-      completeCall();
-      future.get(50, TimeUnit.MILLISECONDS);
+      future.set("");
+      future1.get(50, TimeUnit.MILLISECONDS);
       Assert.assertTrue(newRpcInvoked.get());
     } finally {
       testExecutor.shutdownNow();
-    }
-  }
-
-  private void completeCall() {
-    synchronized (callbacks) {
-      for (FutureCallback<?> fc : callbacks) {
-        fc.onSuccess(null);
-      }
-      callbacks.clear();
     }
   }
 }
