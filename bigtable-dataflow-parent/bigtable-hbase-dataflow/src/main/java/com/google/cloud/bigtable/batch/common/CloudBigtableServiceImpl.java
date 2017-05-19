@@ -20,19 +20,17 @@ import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
 import java.io.IOException;
 import java.util.List;
 
 public class CloudBigtableServiceImpl implements CloudBigtableService {
 
   @Override
-  public List<SampleRowKeysResponse> getSampleRowKeys(CloudBigtableTableConfiguration config)
-      throws IOException {
-    BigtableOptions bigtableOptions = config.toBigtableOptions();
+  public List<SampleRowKeysResponse> getSampleRowKeys(BigtableOptions bigtableOptions,
+      String tableId) throws IOException {
     try (BigtableSession session = new BigtableSession(bigtableOptions)) {
       BigtableTableName tableName =
-          bigtableOptions.getInstanceName().toTableName(config.getTableId());
+          bigtableOptions.getInstanceName().toTableName(tableId);
       SampleRowKeysRequest request =
           SampleRowKeysRequest.newBuilder().setTableName(tableName.toString()).build();
       return session.getDataClient().sampleRowKeys(request);
