@@ -60,7 +60,7 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.BulkMutation.Batch;
 import com.google.cloud.bigtable.grpc.async.BulkMutation.RequestManager;
-import com.google.cloud.bigtable.grpc.async.BulkMutationsStats.Snapshot;
+import com.google.cloud.bigtable.grpc.async.BulkMutationsStats.StatsSnapshot;
 import com.google.cloud.bigtable.grpc.async.OperationAccountant.ComplexOperationStalenessHandler;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
@@ -111,7 +111,8 @@ public class TestBulkMutation {
     MockitoAnnotations.initMocks(this);
     retryOptions = RetryOptionsUtil.createTestRetryOptions(mockNanoClock);
 
-    when(asyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
+    when(asyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class), anyLong()))
+        .thenReturn(mockFuture);
     when(asyncExecutor.getOperationAccountant()).thenReturn(operationAccountant);
 
     doAnswer(new Answer<Void>() {
@@ -191,7 +192,7 @@ public class TestBulkMutation {
     Assert.assertTrue(rowFuture.isDone());
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), result);
     verify(operationAccountant, times(1)).onComplexOperationCompletion(eq(retryIdGenerator.get()));
-    Snapshot snap = BulkMutationsStats.getInstance().snapshotAndReset();
+    StatsSnapshot snap = BulkMutationsStats.getInstance().snapshotAndReset();
     Assert.assertNotNull(snap.getMutationRatePerSecond());
     Assert.assertNotNull(snap.getMutationRpcLatencyInMillis());
     Assert.assertNotNull(snap.getThrottlingPerRpcInMicros());
@@ -249,7 +250,8 @@ public class TestBulkMutation {
     long preRunId = retryIdGenerator.get();
     ListenableFuture<MutateRowResponse> rowFuture1 = underTest.add(createRequest());
     ListenableFuture<MutateRowResponse> rowFuture2 = underTest.add(createRequest());
-    SettableFuture<List<MutateRowsResponse>> rowsFuture = SettableFuture.<List<MutateRowsResponse>> create();
+    SettableFuture<List<MutateRowsResponse>> rowsFuture =
+        SettableFuture.<List<MutateRowsResponse>> create();
     Batch batch = underTest.currentBatch;
     batch.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture1.isDone());
@@ -292,7 +294,8 @@ public class TestBulkMutation {
       rowFuture.get(1, TimeUnit.MINUTES);
       Assert.fail("Expected exception");
     } catch (ExecutionException e) {
-      Assert.assertEquals(io.grpc.Status.DEADLINE_EXCEEDED.getCode(), io.grpc.Status.fromThrowable(e).getCode());
+      Assert.assertEquals(io.grpc.Status.DEADLINE_EXCEEDED.getCode(),
+        io.grpc.Status.fromThrowable(e).getCode());
     }
     verify(operationAccountant, times(1)).onComplexOperationCompletion(eq(retryIdGenerator.get()));
     Assert.assertTrue(
@@ -398,14 +401,15 @@ public class TestBulkMutation {
 
   @Test
   public void testAutoflush() throws InterruptedException, ExecutionException {
-    // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the scheduled executor mock
+    // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the
+    // scheduled executor mock
     underTest = new BulkMutation(TABLE_NAME, asyncExecutor, retryOptions,
         retryExecutorService, 1000, 1000000L, 1000L);
 
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
     ScheduledFuture f = Mockito.mock(ScheduledFuture.class);
-    doReturn(f)
-        .when(retryExecutorService).schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class));
+    doReturn(f).when(retryExecutorService).schedule(autoflusher.capture(), anyLong(),
+      any(TimeUnit.class));
 
     // buffer a request, with a mocked success (for never it gets invoked)
     MutateRowRequest mutateRowRequest = createRequest();
@@ -428,13 +432,13 @@ public class TestBulkMutation {
         .schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class));
 
     // Verify that the request wasn't sent
-    verify(asyncExecutor, never()).mutateRowsAsync(any(MutateRowsRequest.class));
+    verify(asyncExecutor, never()).mutateRowsAsync(any(MutateRowsRequest.class), anyLong());
 
     // Fake the triggering of the autoflusher
     autoflusher.getValue().run();
 
     // Verify that the request was sent
-    verify(asyncExecutor, times(1)).mutateRowsAsync(any(MutateRowsRequest.class));
+    verify(asyncExecutor, times(1)).mutateRowsAsync(any(MutateRowsRequest.class), anyLong());
   }
 
   private void setupScheduler(final AtomicLong waitedNanos) {
@@ -469,7 +473,8 @@ public class TestBulkMutation {
     when(mockFuture.isDone()).thenReturn(true);
     when(mockFuture.get()).thenAnswer(new Answer<ImmutableList<MutateRowsResponse>>() {
       @Override
-      public ImmutableList<MutateRowsResponse> answer(InvocationOnMock invocation) throws Throwable {
+      public ImmutableList<MutateRowsResponse> answer(InvocationOnMock invocation)
+          throws Throwable {
         MutateRowsResponse.Builder responseBuilder = MutateRowsResponse.newBuilder();
         responseBuilder.addEntriesBuilder()
             .setIndex(0)

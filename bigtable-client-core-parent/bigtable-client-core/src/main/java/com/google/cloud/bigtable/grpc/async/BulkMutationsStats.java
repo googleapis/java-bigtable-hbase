@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.grpc.async;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nullable;
+
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -33,26 +35,41 @@ public class BulkMutationsStats {
     return instance;
   }
 
-  public static class Snapshot {
+  /**
+   * This class is a point in time summary of mean latency and mutaiton throughput.
+   */
+  public static class StatsSnapshot {
     private final Long mutationRpcLatencyInMillis;
     private final Long mutationRatePerSecond;
     private final Long throttlingPerRpcInMicros;
 
-    public Snapshot(Long mutationRpcLatencyInMillis, Long mutationRatePerSecond,
-        Long throttlingPerRpcInMicros) {
+    public StatsSnapshot(@Nullable Long mutationRpcLatencyInMillis,
+        @Nullable Long mutationRatePerSecond, @Nullable Long throttlingPerRpcInMicros) {
       this.mutationRpcLatencyInMillis = mutationRpcLatencyInMillis;
       this.mutationRatePerSecond = mutationRatePerSecond;
       this.throttlingPerRpcInMicros = throttlingPerRpcInMicros;
     }
 
+    /**
+     * @return latency of RPCs in milliseconds.  Return null if no RPCs have been made.
+     */
+    @Nullable
     public Long getMutationRpcLatencyInMillis() {
       return mutationRpcLatencyInMillis;
     }
 
+    /**
+     * @return mutations per second.  Return null if no RPCs have been made.
+     */
+    @Nullable
     public Long getMutationRatePerSecond() {
       return mutationRatePerSecond;
     }
 
+    /**
+     * @return throttling per RPC in microseconds.  Return null if no RPCs have been made.
+     */
+    @Nullable
     public Long getThrottlingPerRpcInMicros() {
       return throttlingPerRpcInMicros;
     }
@@ -64,17 +81,32 @@ public class BulkMutationsStats {
   private Meter mutationMeter;
   private Timer throttlingTimer;
 
-  public synchronized Snapshot snapshotAndReset() {
-    Snapshot snap = getSnapshot();
+  /**
+   * <p>
+   * This method is useful for throttling. Periodically, throttling will need some statistics to
+   * make decisions about whether to throttle or increase throughput. The decisions need to be made
+   * with recent information, rather than with information gathered since the inception of the
+   * application.
+   * </p>
+   * <p>
+   * This method will reset all of the statistics so that the next time throttling decisions have to
+   * be made, the decisions will be made on near-term information.
+   * </p>
+   *
+   * @return a {@link StatsSnapshot} that summarizes the stats as of the time right before the
+   *         reset.
+   */
+  public synchronized StatsSnapshot snapshotAndReset() {
+    StatsSnapshot snap = getSnapshot();
     reset();
     return snap;
   }
 
-  public synchronized Snapshot getSnapshot() {
-    return new Snapshot(getRpcLatencyMs(), getMutationRate(), getThrottlingMicros());
+  public synchronized StatsSnapshot getSnapshot() {
+    return new StatsSnapshot(getRpcLatencyMs(), getMutationRate(), getThrottlingMicros());
   }
 
-  protected void reset() {
+  public void reset() {
     mutationTimer = null;
     mutationMeter = null;
     throttlingTimer = null;

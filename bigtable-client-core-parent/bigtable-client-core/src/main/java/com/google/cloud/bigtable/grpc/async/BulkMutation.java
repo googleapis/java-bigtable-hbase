@@ -385,10 +385,13 @@ public class BulkMutation {
           retryId = Long.valueOf(
             asyncExecutor.getOperationAccountant().registerComplexOperation(createRetryHandler()));
         }
+        MutateRowsRequest request = currentRequestManager.build();
         long start = clock.nanoTime();
-        mutateRowsFuture = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
+        long operationId = asyncExecutor.getOperationAccountant()
+            .registerOperationWithHeapSize(request.getSerializedSize());
         long now = clock.nanoTime();
         BulkMutationsStats.getInstance().markThrottling(now - start);
+        mutateRowsFuture = asyncExecutor.mutateRowsAsync(request, operationId);
         currentRequestManager.lastRpcSentTimeNanos = now;
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
