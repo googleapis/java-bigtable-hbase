@@ -164,7 +164,7 @@ public class AsyncExecutor {
    *          the mutate operation is completed.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
    */
-  public ListenableFuture<List<MutateRowsResponse>> mutateRowAsync(MutateRowsRequest request,
+  public ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request,
       long operationId) {
     return call(MUTATE_ROWS_ASYNC, request, operationId);
   }
