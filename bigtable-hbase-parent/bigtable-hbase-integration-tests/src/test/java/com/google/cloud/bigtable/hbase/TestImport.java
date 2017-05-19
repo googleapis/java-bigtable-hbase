@@ -20,8 +20,6 @@ import com.google.common.io.Files;
 import java.io.File;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -49,13 +47,11 @@ public class TestImport extends AbstractTest {
 
   @Before
   public void setup() {
-    System.out.println("Setting up TestImport");
     baseDir = Files.createTempDir();
   }
   @After
   public void teardown() throws IOException {
     FileUtils.deleteDirectory(baseDir);
-    System.out.println("Tore Down TestImport");
   }
 
   @Test
