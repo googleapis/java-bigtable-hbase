@@ -62,7 +62,6 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
         String.format("Cell type %s is unsupported.", cell.getTypeByte()));
   }
 
-  @SuppressWarnings("unused")
   static void throwOnUnsupportedDeleteFamilyVersion(Cell cell) {
     throw new UnsupportedOperationException(
         "Cannot perform column family deletion at timestamp.");

@@ -210,7 +210,6 @@ public class TestBigtableDataGrpcClient {
   }
 
   private void checkHeader(Metadata metadata) {
-    System.out.println("Checking header" ); 
     Assert.assertEquals(
         TABLE_NAME, metadata.get(GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY));
   }
