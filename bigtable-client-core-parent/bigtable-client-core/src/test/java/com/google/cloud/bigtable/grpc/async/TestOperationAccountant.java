@@ -77,7 +77,7 @@ public class TestOperationAccountant {
     assertTrue(underTest.hasInflightOperations());
 
     assertTrue(underTest.hasInflightOperations());
-    underTest.onComplexOperationCompletion(id);
+    underTest.onOperationCompletion(id);
     assertFalse(underTest.hasInflightOperations());
   }
 
