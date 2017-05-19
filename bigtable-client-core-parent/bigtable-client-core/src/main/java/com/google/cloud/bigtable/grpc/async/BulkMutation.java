@@ -250,7 +250,8 @@ public class BulkMutation {
       }
     }
 
-    private void performFullRetry(AtomicReference<Long> backoff, io.grpc.Status status) {
+    @VisibleForTesting
+    void performFullRetry(AtomicReference<Long> backoff, io.grpc.Status status) {
       performFullRetry(backoff, status.asRuntimeException());
     }
 
