@@ -142,7 +142,7 @@ public class TestBulkMutation {
 
   @Test
   public void testAdd() {
-    BulkMutationsStats.getInstance().snapshotAndReset();
+    BulkMutationsStats.getInstance().reset();
     MutateRowRequest mutateRowRequest = createRequest();
     BulkMutation.RequestManager requestManager = createTestRequestManager();
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
@@ -156,7 +156,7 @@ public class TestBulkMutation {
         .build();
     Assert.assertEquals(expected, requestManager.build());
     Assert
-        .assertNull(BulkMutationsStats.getInstance().snapshotAndReset().getMutationRatePerSecond());
+        .assertNull(BulkMutationsStats.getInstance().getSnapshot().getMutationRatePerSecond());
   }
 
   private RequestManager createTestRequestManager() {
@@ -180,7 +180,7 @@ public class TestBulkMutation {
   @Test
   public void testCallableSuccess()
       throws InterruptedException, ExecutionException, TimeoutException {
-    BulkMutationsStats.getInstance().snapshotAndReset();
+    BulkMutationsStats.getInstance().reset();
     long preRunId = retryIdGenerator.get();
     underTest.clock = mockNanoClock;
 
@@ -192,7 +192,7 @@ public class TestBulkMutation {
     Assert.assertTrue(rowFuture.isDone());
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), result);
     verify(operationAccountant, times(1)).onComplexOperationCompletion(eq(retryIdGenerator.get()));
-    StatsSnapshot snap = BulkMutationsStats.getInstance().snapshotAndReset();
+    StatsSnapshot snap = BulkMutationsStats.getInstance().getSnapshot();
     Assert.assertNotNull(snap.getMutationRatePerSecond());
     Assert.assertNotNull(snap.getMutationRpcLatencyInMillis());
     Assert.assertNotNull(snap.getThrottlingPerRpcInMicros());

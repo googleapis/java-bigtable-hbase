@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * This class tracks timing and counts of mutations performed by {@link BulkMutation} and throttling
@@ -81,32 +82,12 @@ public class BulkMutationsStats {
   private Meter mutationMeter;
   private Timer throttlingTimer;
 
-  /**
-   * <p>
-   * This method is useful for throttling. Periodically, throttling will need some statistics to
-   * make decisions about whether to throttle or increase throughput. The decisions need to be made
-   * with recent information, rather than with information gathered since the inception of the
-   * application.
-   * </p>
-   * <p>
-   * This method will reset all of the statistics so that the next time throttling decisions have to
-   * be made, the decisions will be made on near-term information.
-   * </p>
-   *
-   * @return a {@link StatsSnapshot} that summarizes the stats as of the time right before the
-   *         reset.
-   */
-  public synchronized StatsSnapshot snapshotAndReset() {
-    StatsSnapshot snap = getSnapshot();
-    reset();
-    return snap;
-  }
-
   public synchronized StatsSnapshot getSnapshot() {
     return new StatsSnapshot(getRpcLatencyMs(), getMutationRate(), getThrottlingMicros());
   }
 
-  public void reset() {
+  @VisibleForTesting
+  void reset() {
     mutationTimer = null;
     mutationMeter = null;
     throttlingTimer = null;
