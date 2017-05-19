@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -104,6 +103,7 @@ public class TestBulkMutation {
 
   @Test
   public void testAdd() {
+    BulkMutationsStats.reset();
     MutateRowRequest mutateRowRequest = createRequest();
     BulkMutation.RequestManager requestManager = createTestRequestManager();
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
@@ -116,6 +116,9 @@ public class TestBulkMutation {
         .addEntries(entry)
         .build();
     Assert.assertEquals(expected, requestManager.build());
+    Assert.assertEquals(0, BulkMutationsStats.getInstance().getMutationTimer().getCount());
+    Assert.assertEquals(0, BulkMutationsStats.getInstance().getMutationMeter().getCount());
+    Assert.assertEquals(0, BulkMutationsStats.getInstance().getThrottlingTimer().getCount());
   }
 
   private RequestManager createTestRequestManager() {
@@ -194,9 +197,8 @@ public class TestBulkMutation {
     Assert.assertFalse(rowFuture1.isDone());
     Assert.assertFalse(rowFuture2.isDone());
     Assert.assertEquals(2, batch.getRequestCount());
-
-    // Send only one response - this is poor server behavior.
     setResponse(Status.OK);
+    // Send only one response - this is poor server behavior.
 
     when(nanoClock.nanoTime()).thenReturn(0l);
     Assert.assertEquals(1, batch.getRequestCount());

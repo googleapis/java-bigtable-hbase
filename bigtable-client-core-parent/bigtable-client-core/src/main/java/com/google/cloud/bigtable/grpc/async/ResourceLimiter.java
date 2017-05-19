@@ -27,7 +27,6 @@ public class ResourceLimiter {
   private final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
   private final LinkedBlockingDeque<Long> completedOperationIds = new LinkedBlockingDeque<>();
   private long currentWriteBufferSize;
-  private final ResourceLimiterStats resourceLimiterStats = new ResourceLimiterStats();
 
   /**
    * <p>Constructor for ResourceLimiter.</p>
@@ -53,20 +52,13 @@ public class ResourceLimiter {
   public synchronized long registerOperationWithHeapSize(long heapSize)
       throws InterruptedException {
     long operationId = operationSequenceGenerator.incrementAndGet();
-    long start = System.nanoTime();
     while (unsynchronizedIsFull()) {
       waitForCompletions(REGISTER_WAIT_MILLIS);
     }
-    resourceLimiterStats.markThrottling(System.nanoTime() - start);
 
     pendingOperationsWithSize.put(operationId, heapSize);
     currentWriteBufferSize += heapSize;
     return operationId;
-  }
-
-
-  public ResourceLimiterStats getResourceLimiterStats() {
-	return resourceLimiterStats;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,25 +20,37 @@ import java.util.concurrent.TimeUnit;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * This class tracks timing and counts of mutations performed by {@link BulkMutation} and throttling
  * performed by {@link ResourceLimiter}.
  */
-public class ResourceLimiterStats {
+public class BulkMutationsStats {
+
+  private static BulkMutationsStats instance = new BulkMutationsStats();
+
+  public static BulkMutationsStats getInstance() {
+    return instance;
+  }
+
+  @VisibleForTesting
+  static void reset(){
+    instance = new BulkMutationsStats();
+  }
 
   private final MetricRegistry registry = new MetricRegistry();
 
-  private Timer mutationTimer;
-  private Meter mutationMeter;
-  private Timer throttlingTimer;
+  private final Timer mutationTimer = registry.timer("MutationStats.mutation.timer");
+  private final Meter mutationMeter = registry.meter("MutationStats.mutation.meter");
+  private final Timer throttlingTimer = registry.timer("MutationStats.throttling.timer");
 
   /**
    * This method updates rpc time statistics statistics.
    * @param rpcDurationInNanos
    */
-  synchronized void markMutationsRpcCompletion(long rpcDurationInNanos) {
-    getMutationTimer().update(rpcDurationInNanos, TimeUnit.NANOSECONDS);
+  void markMutationsRpcCompletion(long rpcDurationInNanos) {
+    mutationTimer.update(rpcDurationInNanos, TimeUnit.NANOSECONDS);
   }
 
   /**
@@ -46,36 +58,27 @@ public class ResourceLimiterStats {
    * @param mutationCount
    * @param rpcTimeInNanos
    */
-  synchronized void markMutationsSuccess(long mutationCount) {
-    getMutationMeter().mark(mutationCount);
+  void markMutationsSuccess(long mutationCount) {
+    mutationMeter.mark(mutationCount);
   }
 
   /**
    * This method updates throttling statistics.
    * @param throttlingTimeinNanos
    */
-  synchronized void markThrottling(long throttlingDurationInNanos) {
-    getThrottlingTimer().update(throttlingDurationInNanos, TimeUnit.NANOSECONDS);
+  void markThrottling(long throttlingDurationInNanos) {
+    throttlingTimer.update(throttlingDurationInNanos, TimeUnit.NANOSECONDS);
   }
 
-  private Timer getMutationTimer() {
-    if (mutationTimer == null) {
-      mutationTimer = registry.timer("MutationStats.mutation.timer");
-    }
+  public Timer getMutationTimer() {
     return mutationTimer;
   }
 
-  private Meter getMutationMeter() {
-    if (mutationMeter == null) {
-      mutationMeter = registry.meter("MutationStats.mutations.meter");
-    }
+  public Meter getMutationMeter() {
     return mutationMeter;
   }
 
-  private Timer getThrottlingTimer() {
-    if (throttlingTimer == null) {
-      throttlingTimer = registry.timer("MutationStats.throttle.timer");
-    }
+  public Timer getThrottlingTimer() {
     return throttlingTimer;
   }
 }

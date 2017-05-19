@@ -264,10 +264,6 @@ public class OperationAccountant {
     resetNoSuccessWarningDeadline();
   }
 
-  public ResourceLimiterStats getResourceLimiterStats(){
-    return resourceLimiter.getResourceLimiterStats();
-  }
-
   @VisibleForTesting
   void awaitCompletionPing(){
     lock.lock();
