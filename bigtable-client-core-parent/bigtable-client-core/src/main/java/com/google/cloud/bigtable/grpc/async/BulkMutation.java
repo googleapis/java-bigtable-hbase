@@ -150,8 +150,7 @@ public class BulkMutation {
     private final Meter mutationRetryMeter =
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.retried");
 
-    @VisibleForTesting
-    Long retryId;
+    private Long retryId;
     private RequestManager currentRequestManager;
     private BackOff currentBackoff;
     private int failedCount;
@@ -189,8 +188,7 @@ public class BulkMutation {
      * {@link BulkMutation#add(MutateRowRequest)} when the provided {@link ListenableFuture} for the
      * {@link MutateRowsResponse} is complete.
      */
-    @VisibleForTesting
-    void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture) {
+    private void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture) {
       Futures.addCallback(
           bulkFuture,
           new FutureCallback<List<MutateRowsResponse>>() {
