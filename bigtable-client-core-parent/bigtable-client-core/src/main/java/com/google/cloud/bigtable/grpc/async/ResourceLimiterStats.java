@@ -31,7 +31,6 @@ public class ResourceLimiterStats {
 
   private Timer mutationTimer;
   private Meter mutationMeter;
-
   private Timer throttlingTimer;
 
   /**
@@ -74,9 +73,9 @@ public class ResourceLimiterStats {
   }
 
   private Timer getThrottlingTimer() {
-    if (mutationTimer == null) {
-      mutationTimer = registry.timer("MutationStats.throttle.timer");
+    if (throttlingTimer == null) {
+      throttlingTimer = registry.timer("MutationStats.throttle.timer");
     }
-    return mutationTimer;
+    return throttlingTimer;
   }
 }
