@@ -61,7 +61,6 @@ import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
-import com.google.cloud.bigtable.grpc.async.OperationAccountant;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.SettableFuture;
@@ -102,11 +101,9 @@ public class TestBigtableBufferedMutator {
             new Answer<AsyncExecutor>() {
               @Override
               public AsyncExecutor answer(InvocationOnMock invocation) throws Throwable {
-                OperationAccountant operationAccountant =
-                    new OperationAccountant(new ResourceLimiter(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT,
-                      BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT));
-
-                return new AsyncExecutor(mockClient, operationAccountant);
+                ResourceLimiter resourceLimiter = new ResourceLimiter(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT,
+                  BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT);
+                return new AsyncExecutor(mockClient, resourceLimiter);
               }
             });
     when(mockSession.createBulkMutation(any(BigtableTableName.class), any(AsyncExecutor.class)))

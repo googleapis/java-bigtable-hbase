@@ -56,8 +56,8 @@ public class OperationAccountantPerf {
    */
   private static void test(ListeningExecutorService pool)
       throws InterruptedException, ExecutionException, TimeoutException {
-    final OperationAccountant underTest =
-        new OperationAccountant(new ResourceLimiter(SIZE, (int) SIZE));
+    final ResourceLimiter resourceLimiter = new ResourceLimiter(SIZE, (int) SIZE);
+    final OperationAccountant underTest = new OperationAccountant();
     final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
 
     final int writerCount = 1;
@@ -70,7 +70,9 @@ public class OperationAccountantPerf {
             int offerCount = REGISTER_COUNT / writerCount;
             try {
               for (int i = 0; i < offerCount; i++) {
-                registeredEvents.add(underTest.registerOperationWithHeapSize(1));
+                long id = resourceLimiter.registerOperationWithHeapSize(1);
+                underTest.registerOperation(id);
+                registeredEvents.add(id);
               }
             } catch (InterruptedException e) {
               Thread.currentThread().interrupt();
@@ -100,6 +102,7 @@ public class OperationAccountantPerf {
                 if (registeredId == null) {
                   i--;
                 } else {
+                  resourceLimiter.markCanBeCompleted(registeredId);
                   underTest.onOperationCompletion(registeredId);
                 }
               }

@@ -51,6 +51,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -72,6 +73,7 @@ public class BulkMutation {
   static Logger LOG = new Logger(BulkMutation.class);
 
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(5);
+  private final AtomicLong batchIdGenerator = new AtomicLong();
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -145,12 +147,13 @@ public class BulkMutation {
 
   @VisibleForTesting
   class Batch implements Runnable {
+    
     private final Meter mutationMeter =
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.added");
     private final Meter mutationRetryMeter =
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.retried");
 
-    private Long retryId;
+    private Long batchId;
     private RequestManager currentRequestManager;
     private BackOff currentBackoff;
     private int failedCount;
@@ -204,7 +207,8 @@ public class BulkMutation {
           });
     }
 
-    private synchronized void handleResult(List<MutateRowsResponse> results) {
+    @VisibleForTesting
+    synchronized void handleResult(List<MutateRowsResponse> results) {
       BulkMutationsStats.getInstance().markMutationsRpcCompletion(
         clock.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
 
@@ -263,9 +267,9 @@ public class BulkMutation {
       failedCount++;
       if (backoffMs == BackOff.STOP) {
         setFailure(
-          new BigtableRetriesExhaustedException("Batch #" + retryId + " Exhausted retries.", t));
+          new BigtableRetriesExhaustedException("Batch #" + batchId + " Exhausted retries.", t));
       } else {
-        LOG.info("Retrying failed call for batch #%d. Failure #%d, got: %s", t, retryId, failedCount,
+        LOG.info("Retrying failed call for batch #%d. Failure #%d, got: %s", t, batchId, failedCount,
           io.grpc.Status.fromThrowable(t));
         mutationRetryMeter.mark(getRequestCount());
         retryExecutorService.schedule(this, backoffMs, TimeUnit.MILLISECONDS);
@@ -380,14 +384,14 @@ public class BulkMutation {
         return;
       }
       try {
-        if (retryId == null) {
-          retryId = Long.valueOf(
-            asyncExecutor.getOperationAccountant().registerComplexOperation(createRetryHandler()));
+        if (batchId == null) {
+          batchId = batchIdGenerator.incrementAndGet();
+          asyncExecutor.getOperationAccountant().registerComplexOperation(batchId,
+            createRetryHandler());
         }
         MutateRowsRequest request = currentRequestManager.build();
         long start = clock.nanoTime();
-        long operationId = asyncExecutor.getOperationAccountant()
-            .registerOperationWithHeapSize(request.getSerializedSize());
+        long operationId = asyncExecutor.registerOperation(request);
         long now = clock.nanoTime();
         BulkMutationsStats.getInstance().markThrottling(now - start);
         mutateRowsFuture = asyncExecutor.mutateRowsAsync(request, operationId);
@@ -411,7 +415,7 @@ public class BulkMutation {
         @Override
         public void performRetryIfStale() {
           synchronized(Batch.this) {
-            // If the retryId is null, it means that the operation somehow fails partially,
+            // If the batchId is null, it means that the operation somehow fails partially,
             // cleanup the retry.
             if (currentRequestManager == null || currentRequestManager.isEmpty()) {
               setRetryComplete();
@@ -445,12 +449,12 @@ public class BulkMutation {
         mutateRowsFuture.cancel(true);
       }
       mutateRowsFuture = null;
-      if (retryId != null) {
-        asyncExecutor.getOperationAccountant().onComplexOperationCompletion(retryId);
+      if (batchId != null) {
+        asyncExecutor.getOperationAccountant().onComplexOperationCompletion(batchId);
         if (failedCount > 0) {
-          LOG.info("Batch #%d recovered from the failure and completed.", retryId);
+          LOG.info("Batch #%d recovered from the failure and completed.", batchId);
         }
-        retryId = null;
+        batchId = null;
       }
       currentRequestManager = null;
     }

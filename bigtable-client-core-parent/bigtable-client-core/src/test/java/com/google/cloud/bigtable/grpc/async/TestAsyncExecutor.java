@@ -42,7 +42,6 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
-import com.google.cloud.bigtable.grpc.async.OperationAccountant;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 
@@ -60,14 +59,11 @@ public class TestAsyncExecutor {
   private SettableFuture future;
 
   private AsyncExecutor underTest;
-  private OperationAccountant operationAccountant;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    operationAccountant = new OperationAccountant(new ResourceLimiter(1000, 10));
-
-    underTest = new AsyncExecutor(client, operationAccountant);
+    underTest = new AsyncExecutor(client, new ResourceLimiter(1000, 10));
     future = SettableFuture.create();
   }
 

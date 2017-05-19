@@ -72,10 +72,9 @@ public class TestOperationAccountant {
 
   @Test
   public void testOnOperationCompletion() throws InterruptedException {
-    ResourceLimiter resourceLimiter = new ResourceLimiter(10l, 1000);
-    OperationAccountant underTest = new OperationAccountant(resourceLimiter);
+    OperationAccountant underTest = new OperationAccountant();
     int size = (int) (100 * Math.random());
-    long id = underTest.registerOperationWithHeapSize(size);
+    long id = underTest.registerOperation(size);
     assertTrue(underTest.hasInflightOperations());
     underTest.onOperationCompletion(id);
     assertFalse(underTest.hasInflightOperations());
@@ -122,14 +121,14 @@ public class TestOperationAccountant {
     final int registerCount = 1000;
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      final ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
-      final OperationAccountant underTest = new OperationAccountant(resourceLimiter);
+      final OperationAccountant underTest = new OperationAccountant();
       final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
       Future<Boolean> writeFuture = pool.submit(new Callable<Boolean>() {
         @Override
         public Boolean call() throws InterruptedException {
-          for (int i = 0; i < registerCount; i++) {
-            registeredEvents.offer(underTest.registerOperationWithHeapSize(i));
+          for (long i = 0; i < registerCount; i++) {
+            underTest.registerOperation(i);
+            registeredEvents.offer(i);
           }
           underTest.awaitCompletion();
           return true;
@@ -161,8 +160,7 @@ public class TestOperationAccountant {
     final int registerCount = 1000;
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
-      final OperationAccountant underTest = new OperationAccountant(resourceLimiter);
+      final OperationAccountant underTest = new OperationAccountant();
       final AtomicBoolean allOperationsDone = new AtomicBoolean();
       final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
       final List<SettableFuture<Boolean>> retryFutures = new ArrayList<>();
@@ -173,10 +171,11 @@ public class TestOperationAccountant {
         public void run() {
           try {
             for (int i = 0; i < registerCount; i++) {
-              registeredEvents.offer(underTest.registerOperationWithHeapSize(1));
+              registeredEvents.offer(underTest.registerOperation(1));
 
               // Add a retry for each rpc
-              final long id = underTest.registerComplexOperation(handler);
+              final long id = i + 10000;
+              underTest.registerComplexOperation(id, handler);
               SettableFuture<Boolean> future = SettableFuture.create();
               Futures.addCallback(future, new FutureCallback<Boolean>(){
 
@@ -207,22 +206,18 @@ public class TestOperationAccountant {
           }
         }
       });
-      Future<?> readFuture = pool.submit(new Runnable() {
+      Future<?> readFuture = pool.submit(new Callable<Void>() {
         @Override
-        public void run() {
-          try {
-            for (int i = 0; i < registerCount; i++) {
-              Long registeredId = registeredEvents.poll(1, TimeUnit.SECONDS);
-              if (registeredId == null){
-                i--;
-              } else {
-                underTest.onOperationCompletion(registeredId);
-              }
+        public Void call() throws InterruptedException {
+          for (int i = 0; i < registerCount; i++) {
+            Long registeredId = registeredEvents.poll(1, TimeUnit.SECONDS);
+            if (registeredId == null){
+              i--;
+            } else {
+              underTest.onOperationCompletion(registeredId);
             }
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
           }
+          return null;
         }
       });
 
@@ -261,24 +256,19 @@ public class TestOperationAccountant {
     });
 
     long finishWaitTime = 100;
-    ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
-    final OperationAccountant underTest =
-        new OperationAccountant(resourceLimiter, clock, finishWaitTime);
+    final OperationAccountant underTest = new OperationAccountant(clock, finishWaitTime);
 
-    long complexOpId = underTest.registerComplexOperation(handler);
+    long complexOpId = 1000;
+    underTest.registerComplexOperation(complexOpId, handler);
     final int iterations = 4;
 
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      pool.submit(new Runnable() {
+      pool.submit(new Callable<Void>() {
         @Override
-        public void run() {
-          try {
-            underTest.awaitCompletion();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-          }
+        public Void call() throws Exception {
+          underTest.awaitCompletion();
+          return null;
         }
       });
       // Sleep a multiple of the finish wait time to force a few iterations
