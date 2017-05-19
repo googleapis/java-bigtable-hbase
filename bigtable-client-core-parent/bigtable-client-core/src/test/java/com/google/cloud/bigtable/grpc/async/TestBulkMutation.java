@@ -60,7 +60,6 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.BulkMutation.Batch;
 import com.google.cloud.bigtable.grpc.async.BulkMutation.RequestManager;
-import com.google.cloud.bigtable.grpc.async.BulkMutationsStats.StatsSnapshot;
 import com.google.cloud.bigtable.grpc.async.OperationAccountant.ComplexOperationStalenessHandler;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
@@ -142,7 +141,7 @@ public class TestBulkMutation {
 
   @Test
   public void testAdd() {
-    BulkMutationsStats.getInstance().reset();
+    BulkMutationsStats.reset();
     MutateRowRequest mutateRowRequest = createRequest();
     BulkMutation.RequestManager requestManager = createTestRequestManager();
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
@@ -155,8 +154,9 @@ public class TestBulkMutation {
         .addEntries(entry)
         .build();
     Assert.assertEquals(expected, requestManager.build());
-    Assert
-        .assertNull(BulkMutationsStats.getInstance().getSnapshot().getMutationRatePerSecond());
+    Assert.assertEquals(0, BulkMutationsStats.getInstance().getMutationTimer().getCount());
+    Assert.assertEquals(0, BulkMutationsStats.getInstance().getMutationMeter().getCount());
+    Assert.assertEquals(0, BulkMutationsStats.getInstance().getThrottlingTimer().getCount());
   }
 
   private RequestManager createTestRequestManager() {
@@ -180,7 +180,7 @@ public class TestBulkMutation {
   @Test
   public void testCallableSuccess()
       throws InterruptedException, ExecutionException, TimeoutException {
-    BulkMutationsStats.getInstance().reset();
+    BulkMutationsStats.reset();
     long preRunId = retryIdGenerator.get();
     underTest.clock = mockNanoClock;
 
@@ -192,10 +192,9 @@ public class TestBulkMutation {
     Assert.assertTrue(rowFuture.isDone());
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), result);
     verify(operationAccountant, times(1)).onComplexOperationCompletion(eq(retryIdGenerator.get()));
-    StatsSnapshot snap = BulkMutationsStats.getInstance().getSnapshot();
-    Assert.assertNotNull(snap.getMutationRatePerSecond());
-    Assert.assertNotNull(snap.getMutationRpcLatencyInMillis());
-    Assert.assertNotNull(snap.getThrottlingPerRpcInMicros());
+    Assert.assertNotEquals(0, BulkMutationsStats.getInstance().getMutationTimer().getCount());
+    Assert.assertNotEquals(0, BulkMutationsStats.getInstance().getMutationMeter().getCount());
+    Assert.assertNotEquals(0, BulkMutationsStats.getInstance().getThrottlingTimer().getCount());
   }
 
   @Test
@@ -203,7 +202,7 @@ public class TestBulkMutation {
       throws InterruptedException, ExecutionException, TimeoutException {
     long preRunId = retryIdGenerator.get();
     ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
-    ListenableFuture<List<MutateRowsResponse>> rowsFuture = SettableFuture.<List<MutateRowsResponse>>create();
+    ListenableFuture<List<MutateRowsResponse>> rowsFuture = SettableFuture.create();
     when(mockNanoClock.nanoTime()).thenReturn(1l);
     underTest.currentBatch.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture.isDone());
