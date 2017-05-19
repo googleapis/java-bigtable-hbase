@@ -35,7 +35,6 @@ public class IntegrationBigtableSessionTest {
   @Test
   public void connectivityTest() {
     String property = System.getProperty("bigtableSession-int-test");
-    System.out.println(property);
     if (!"true".equals(property)) {
       return;
     }

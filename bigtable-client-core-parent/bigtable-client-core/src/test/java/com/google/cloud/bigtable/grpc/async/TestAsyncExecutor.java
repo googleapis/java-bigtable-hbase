@@ -86,43 +86,43 @@ public class TestAsyncExecutor {
 
   @Test
   public void testNoMutation() {
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   @Test
   public void testMutation() throws InterruptedException {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
     underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
+    Assert.assertTrue(underTest.hasInflightRequests());
     completeCall();
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   @Test
   public void testCheckAndMutate() throws InterruptedException {
     when(client.checkAndMutateRowAsync(any(CheckAndMutateRowRequest.class))).thenReturn(future);
     underTest.checkAndMutateRowAsync(CheckAndMutateRowRequest.getDefaultInstance());
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
+    Assert.assertTrue(underTest.hasInflightRequests());
     completeCall();
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   @Test
   public void testReadWriteModify() throws InterruptedException {
     when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(future);
     underTest.readModifyWriteRowAsync(ReadModifyWriteRowRequest.getDefaultInstance());
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
+    Assert.assertTrue(underTest.hasInflightRequests());
     completeCall();
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   @Test
   public void testReadRowsAsync() throws InterruptedException {
     when(client.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(future);
     underTest.readRowsAsync(ReadRowsRequest.getDefaultInstance());
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
+    Assert.assertTrue(underTest.hasInflightRequests());
     completeCall();
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   @Test
@@ -133,7 +133,7 @@ public class TestAsyncExecutor {
     } catch(Exception ignored) {
     }
     completeCall();
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   @Test

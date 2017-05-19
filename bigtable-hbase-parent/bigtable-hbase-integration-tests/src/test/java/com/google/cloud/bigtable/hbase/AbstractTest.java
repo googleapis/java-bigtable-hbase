@@ -29,17 +29,16 @@ public abstract class AbstractTest {
 
   @ClassRule
   public static SharedTestEnvRule sharedTestEnv = new SharedTestEnvRule();
+  protected DataGenerationHelper dataHelper = new DataGenerationHelper();
+  protected Logger logger = new Logger(this.getClass());
   @Rule
   public TestRule loggingRule = new TestRule() {
     @Override
     public Statement apply(Statement base, Description description) {
-      System.out.println(String.format("Running: %s", description.getDisplayName()));
-
+      logger.info("Running: %s", description.getDisplayName());
       return base;
     }
   };
-  protected DataGenerationHelper dataHelper = new DataGenerationHelper();
-  protected Logger logger = new Logger(this.getClass());
 
   // This is for when we need to look at the results outside of the current connection
   public Connection createNewConnection() throws IOException {

@@ -22,7 +22,6 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-@SuppressWarnings("deprecation")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
     TestAppend.class,
