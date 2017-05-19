@@ -70,15 +70,14 @@ public class TestOperationAccountant {
   }
 
   @Test
-  public void testCallback() throws InterruptedException {
+  public void testOnOperationCompletion() throws InterruptedException {
     ResourceLimiter resourceLimiter = new ResourceLimiter(10l, 1000);
     OperationAccountant underTest = new OperationAccountant(resourceLimiter);
     long id = underTest.registerOperationWithHeapSize(5l);
     assertTrue(underTest.hasInflightOperations());
 
-    FutureCallback<?> callback = underTest.addCallback(future, id);
     assertTrue(underTest.hasInflightOperations());
-    callback.onSuccess(null);
+    underTest.onOperationCompletion(id);
     assertFalse(underTest.hasInflightOperations());
   }
 

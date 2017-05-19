@@ -20,9 +20,6 @@ import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,9 +88,8 @@ public class OperationAccountant {
   }
 
   /**
-   * Register a new RPC operation. Blocks until the requested resources are available.
-   * This method must be paired with a call to {@code addCallback}.
-   *
+   * Register a new RPC operation. Blocks until the requested resources are available. This method
+   * must be paired with a call to {@link #onOperationCompletion(long)}.
    * @param heapSize The serialized size of the RPC
    * @return An operation id
    * @throws java.lang.InterruptedException if any.
@@ -109,31 +105,6 @@ public class OperationAccountant {
       lock.unlock();
     }
     return id;
-  }
-
-  /**
-   * Add a callback to a Future representing an RPC call with the given operation id that will clean
-   * upon completion and reclaim any utilized resources. This method must be paired with every call
-   * to {@code registerOperationWithHeapSize}.
-   * @param future a {@link com.google.common.util.concurrent.ListenableFuture} object.
-   * @param id a long.
-   * @param <T> a T object.
-   * @return a {@link com.google.common.util.concurrent.FutureCallback} object.
-   */
-  public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, final long id) {
-    FutureCallback<T> callback = new FutureCallback<T>() {
-      @Override
-      public void onSuccess(T result) {
-        onOperationCompletion(id);
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        onOperationCompletion(id);
-      }
-    };
-    Futures.addCallback(future, callback);
-    return callback;
   }
 
   /**
