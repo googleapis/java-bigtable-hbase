@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.concurrent.GuardedBy;
@@ -54,10 +53,8 @@ public class OperationAccountant {
   // will still wait to complete.
   private static final long INTERVAL_NO_SUCCESS_WARNING_NANOS = TimeUnit.SECONDS.toNanos(30);
 
-  private final ResourceLimiter resourceLimiter;
   private final NanoClock clock;
   private final long finishWaitMillis;
-  private final AtomicLong complexOperationIdGenerator = new AtomicLong();
 
   private ReentrantLock lock = new ReentrantLock();
   private Condition flushedCondition = lock.newCondition();
@@ -75,13 +72,12 @@ public class OperationAccountant {
    *
    * @param resourceLimiter a {@link com.google.cloud.bigtable.grpc.async.ResourceLimiter} object.
    */
-  public OperationAccountant(ResourceLimiter resourceLimiter) {
-    this(resourceLimiter, NanoClock.SYSTEM, DEFAULT_FINISH_WAIT_MILLIS);
+  public OperationAccountant() {
+    this(NanoClock.SYSTEM, DEFAULT_FINISH_WAIT_MILLIS);
   }
 
   @VisibleForTesting
-  OperationAccountant(ResourceLimiter resourceLimiter, NanoClock clock, long finishWaitMillis) {
-    this.resourceLimiter = resourceLimiter;
+  OperationAccountant(NanoClock clock, long finishWaitMillis) {
     this.clock = clock;
     this.finishWaitMillis = finishWaitMillis;
     resetNoSuccessWarningDeadline();
@@ -90,14 +86,12 @@ public class OperationAccountant {
   /**
    * Register a new RPC operation. Blocks until the requested resources are available. This method
    * must be paired with a call to {@link #onOperationCompletion(long)}.
-   * @param heapSize The serialized size of the RPC
+   * @param id The id of the RPC
    * @return An operation id
    * @throws java.lang.InterruptedException if any.
    */
-  public long registerOperationWithHeapSize(long heapSize)
+  public long registerOperation(long id)
       throws InterruptedException {
-    long id = resourceLimiter.registerOperationWithHeapSize(heapSize);
-
     lock.lock();
     try {
       operations.add(id);
@@ -117,16 +111,13 @@ public class OperationAccountant {
    */
   // TODO: This functionality should be moved to BulkMutation where the functionality is used. The
   // abstraction.
-  public <T> long registerComplexOperation(ComplexOperationStalenessHandler handler) {
-    final long id = complexOperationIdGenerator.incrementAndGet();
-
+  public <T> void registerComplexOperation(long id, ComplexOperationStalenessHandler handler) {
     lock.lock();
     try {
       complexOperations.put(id, handler);
     } finally {
       lock.unlock();
     }
-    return id;
   }
 
   /**
@@ -185,16 +176,6 @@ public class OperationAccountant {
   }
 
   /**
-   * <p>getMaxHeapSize.</p>
-   *
-   * @return The maximum allowed number of bytes across all across all outstanding RPCs
-   */
-  public long getMaxHeapSize() {
-    return resourceLimiter.getMaxHeapSize();
-  }
-
-
-  /**
    * <p>
    * hasInflightRequests.
    * </p>
@@ -232,8 +213,6 @@ public class OperationAccountant {
 
   @VisibleForTesting
   void onOperationCompletion(long id) {
-    resourceLimiter.markCanBeCompleted(id);
-
     lock.lock();
     try {
       operations.remove(id);

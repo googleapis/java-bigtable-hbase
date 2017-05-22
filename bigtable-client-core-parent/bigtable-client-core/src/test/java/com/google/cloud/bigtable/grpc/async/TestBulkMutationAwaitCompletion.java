@@ -96,7 +96,7 @@ public class TestBulkMutationAwaitCompletion {
   private ResourceLimiter resourceLimiter;
   private List<Runnable> opCompletionRunnables;
   private ExecutorService testExecutor;
-  private List<OperationAccountant> accountants;
+  private List<AsyncExecutor> executors;
   private List<ListenableFuture<MutateRowResponse>> singleMutationFutures;
   private Logger originalBulkMutatorLog;
   private Logger originalOperationAccountantLog;
@@ -109,7 +109,7 @@ public class TestBulkMutationAwaitCompletion {
     retryOptions = RetryOptionsUtil.createTestRetryOptions(clock);
     resourceLimiter = new ResourceLimiter(1000000, OPERATIONS_PER_MUTATOR * 10);
     opCompletionRunnables = Collections.synchronizedList(new LinkedList<Runnable>());
-    accountants = Collections.synchronizedList(new ArrayList<OperationAccountant>());
+    executors = Collections.synchronizedList(new ArrayList<AsyncExecutor>());
     singleMutationFutures =
         Collections.synchronizedList(new ArrayList<ListenableFuture<MutateRowResponse>>());
 
@@ -249,16 +249,17 @@ public class TestBulkMutationAwaitCompletion {
     }
     bulkMutation.flush();
     testExecutor.execute(flushRunnable(bulkMutation.getAsyncExecutor()));
-    accountants.add(bulkMutation.getAsyncExecutor().getOperationAccountant());
+    executors.add(bulkMutation.getAsyncExecutor());
   }
 
   /**
    * Creates a fully formed {@link BulkMutation}
    */
   private BulkMutation createBulkMutation() {
-    OperationAccountant operationAccountant = new OperationAccountant(
-        resourceLimiter, clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
-    AsyncExecutor asyncExecutor = new AsyncExecutor(mockClient, operationAccountant);
+    OperationAccountant operationAccountant =
+        new OperationAccountant(clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
+    AsyncExecutor asyncExecutor =
+        new AsyncExecutor(mockClient, resourceLimiter, operationAccountant);
     BulkMutation bulkMutation =
         new BulkMutation(
             TestBulkMutation.TABLE_NAME,
@@ -297,14 +298,14 @@ public class TestBulkMutationAwaitCompletion {
   protected void performTimeout() throws InterruptedException {
     for (int i = 0; i < 100; i++) {
       currentTime.addAndGet(TimeUnit.MINUTES.toNanos(1));
-      for (OperationAccountant accountant : accountants) {
-        accountant.awaitCompletionPing();
+      for (AsyncExecutor executor : executors) {
+        executor.getOperationAccountant().awaitCompletionPing();
       }
       // Let the other thread catch up.
       Thread.sleep(10);
       boolean hasInflight = false;
-      for (OperationAccountant accountant : accountants) {
-        if (accountant.hasInflightOperations()) {
+      for (AsyncExecutor executor : executors) {
+        if (executor.hasInflightRequests()) {
           hasInflight = true;
           break;
         }
@@ -318,12 +319,12 @@ public class TestBulkMutationAwaitCompletion {
 
   /**
    * Checks to make sure that for all accountants that
-   * !{@link OperationAccountant#hasInflightOperations()} and that for all futures that
+   * !{@link AsyncExecutor#hasInflightRequests()} and that for all futures that
    * {@link Future#isDone()}.
    */
   protected void confirmCompletion() {
-    for (OperationAccountant accountant : accountants) {
-      Assert.assertFalse(accountant.hasInflightOperations());
+    for (AsyncExecutor accountant : executors) {
+      Assert.assertFalse(accountant.hasInflightRequests());
     }
     for (ListenableFuture<MutateRowResponse> future : singleMutationFutures) {
       Assert.assertTrue(future.isDone());

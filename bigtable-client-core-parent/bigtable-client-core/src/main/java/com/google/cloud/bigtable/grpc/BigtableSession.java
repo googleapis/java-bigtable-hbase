@@ -42,7 +42,6 @@ import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
-import com.google.cloud.bigtable.grpc.async.OperationAccountant;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
@@ -60,8 +59,6 @@ import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NettyChannelBuilder;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.Recycler;
 
 /**
@@ -83,7 +80,6 @@ public class BigtableSession implements Closeable {
   private static ChannelPool cachedDataChannelPool = null;
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static ResourceLimiter resourceLimiter;
-  private static SslContextBuilder sslBuilder;
 
   // 256 MB, server has 256 MB limit.
   private final static int MAX_MESSAGE_SIZE = 1 << 28;
@@ -119,13 +115,6 @@ public class BigtableSession implements Closeable {
     }
   }
 
-  private synchronized static SslContext createSslContext() throws SSLException {
-    if (sslBuilder == null) {
-      sslBuilder = GrpcSslContexts.forClient().ciphers(null);
-    }
-    return sslBuilder.build();
-  }
-
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
     ExecutorService connectionStartupExecutor = Executors
@@ -148,7 +137,7 @@ public class BigtableSession implements Closeable {
         try {
           // We create multiple channels via refreshing and pooling channel implementation.
           // Each one needs its own SslContext.
-          createSslContext();
+          GrpcSslContexts.forClient().build();
         } catch (SSLException e) {
           // ignore.  This doesn't happen frequently, but even if it does, it's inconsequential.
         }
@@ -333,7 +322,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
    */
   public AsyncExecutor createAsyncExecutor() {
-    return new AsyncExecutor(dataClient, new OperationAccountant(resourceLimiter));
+    return new AsyncExecutor(dataClient, resourceLimiter);
   }
 
   /**
@@ -477,10 +466,7 @@ public class BigtableSession implements Closeable {
 
     // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
     // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
-    ManagedChannelBuilder<?> builder = NettyChannelBuilder
-        .forAddress(host, options.getPort())
-        .sslContext(createSslContext())
-        ;
+    ManagedChannelBuilder<?> builder = NettyChannelBuilder.forAddress(host, options.getPort());
 
     if (options.usePlaintextNegotiation()) {
       builder.usePlaintext(true);
