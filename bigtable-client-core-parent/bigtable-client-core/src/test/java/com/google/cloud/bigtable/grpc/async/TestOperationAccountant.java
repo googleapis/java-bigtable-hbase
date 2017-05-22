@@ -79,43 +79,6 @@ public class TestOperationAccountant {
     underTest.onOperationCompletion(id);
     assertFalse(underTest.hasInflightOperations());
   }
-
-  @Test
-  /**
-   * Test to make sure that {@link ResourceLimiter} does not register an operation if the @link
-   * ResourceLimiter} size limit was reached.
-   */
-  public void testSizeLimitReachWaits() throws InterruptedException {
-    ExecutorService pool = Executors.newCachedThreadPool();
-    try {
-      final ResourceLimiter underTest = new ResourceLimiter(1l, 1);
-      long id = underTest.registerOperationWithHeapSize(1l);
-      assertTrue(underTest.isFull());
-      final CountDownLatch secondRequestRegisteredLatch = new CountDownLatch(1);
-      pool.submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            underTest.registerOperationWithHeapSize(5l);
-            secondRequestRegisteredLatch.countDown();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-          }
-        }
-      });
-      // Give some time for the Runnable to be executed.
-      Thread.sleep(10);
-      assertEquals(1, secondRequestRegisteredLatch.getCount());
-      underTest.markCanBeCompleted(id);
-
-      // Now wait for the second request to be registered
-      assertTrue(secondRequestRegisteredLatch.await(1, TimeUnit.MINUTES));
-    } finally {
-      pool.shutdownNow();
-    }
-  }
-
   @Test
   public void testFlush() throws Exception {
     final int registerCount = 1000;

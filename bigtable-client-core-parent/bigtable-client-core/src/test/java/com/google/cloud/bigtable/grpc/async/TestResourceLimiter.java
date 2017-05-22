@@ -19,6 +19,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -75,4 +80,42 @@ public class TestResourceLimiter {
     underTest.markCanBeCompleted(id3);
     assertFalse(underTest.hasInflightRequests());
   }
+
+  /**
+   * Test to make sure that {@link ResourceLimiter} does not register an operation if the @link
+   * ResourceLimiter} size limit was reached.
+   */
+  @Test
+  public void testSizeLimitReachWaits() throws InterruptedException {
+    ExecutorService pool = Executors.newCachedThreadPool();
+    try {
+      final ResourceLimiter underTest = new ResourceLimiter(1l, 1);
+      long id = underTest.registerOperationWithHeapSize(1l);
+      assertTrue(underTest.isFull());
+      final CountDownLatch secondRequestRegisteredLatch = new CountDownLatch(1);
+      pool.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            underTest.registerOperationWithHeapSize(5l);
+            secondRequestRegisteredLatch.countDown();
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+          }
+        }
+      });
+      // Give some time for the Runnable to be executed.
+      Thread.sleep(10);
+      assertEquals(1, secondRequestRegisteredLatch.getCount());
+      underTest.markCanBeCompleted(id);
+
+      // Now wait for the second request to be registered
+      assertTrue(secondRequestRegisteredLatch.await(1, TimeUnit.MINUTES));
+    } finally {
+      pool.shutdownNow();
+    }
+  }
+
+
 }
