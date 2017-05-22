@@ -94,7 +94,7 @@ public class OperationAccountant {
    * @return An operation id
    * @throws java.lang.InterruptedException if any.
    */
-  public long registerOperationWithHeapSize(long heapSize)
+  long registerOperationWithHeapSize(long heapSize)
       throws InterruptedException {
     long id = resourceLimiter.registerOperationWithHeapSize(heapSize);
 
@@ -117,7 +117,7 @@ public class OperationAccountant {
    */
   // TODO: This functionality should be moved to BulkMutation where the functionality is used. The
   // abstraction.
-  public <T> long registerComplexOperation(ComplexOperationStalenessHandler handler) {
+  <T> long registerComplexOperation(ComplexOperationStalenessHandler handler) {
     final long id = complexOperationIdGenerator.incrementAndGet();
 
     lock.lock();
