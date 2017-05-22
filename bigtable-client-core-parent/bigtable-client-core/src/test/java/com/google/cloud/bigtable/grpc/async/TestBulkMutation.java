@@ -84,7 +84,6 @@ public class TestBulkMutation {
 
   private AsyncExecutor asyncExecutor;
   private SettableFuture<List<MutateRowsResponse>> future;
-  private OperationAccountant operationAccountant;
   private RetryOptions retryOptions;
   private BulkMutation underTest;
 
@@ -95,9 +94,7 @@ public class TestBulkMutation {
 
     future = SettableFuture.create();
     when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
-    ResourceLimiter resourceLimiter = new ResourceLimiter(1000, 10);
-    operationAccountant = new OperationAccountant();
-    asyncExecutor = new AsyncExecutor(client, resourceLimiter, operationAccountant);
+    asyncExecutor = new AsyncExecutor(client, new ResourceLimiter(1000, 10));
     underTest = createBulkMutation();
   }
 
@@ -148,7 +145,7 @@ public class TestBulkMutation {
     MutateRowResponse result = rowFuture.get(10, TimeUnit.MILLISECONDS);
     Assert.assertTrue(rowFuture.isDone());
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), result);
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(asyncExecutor.hasInflightRequests());
   }
 
   @Test
@@ -164,7 +161,7 @@ public class TestBulkMutation {
       rowFuture.get(100, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
       Assert.assertEquals(Status.NOT_FOUND.getCode(), Status.fromThrowable(e).getCode());
-      Assert.assertFalse(operationAccountant.hasInflightOperations());
+      Assert.assertFalse(asyncExecutor.hasInflightRequests());
     }
   }
 
@@ -181,12 +178,12 @@ public class TestBulkMutation {
     Assert.assertFalse(rowFuture.isDone());
     verify(retryExecutorService, times(1)).schedule(any(Runnable.class), anyLong(),
       same(TimeUnit.MILLISECONDS));
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
+    Assert.assertTrue(asyncExecutor.hasInflightRequests());
 
     // Make sure that a second try works.
     future.set(createResponse(Status.OK));
     Assert.assertTrue(rowFuture.isDone());
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(asyncExecutor.hasInflightRequests());
   }
 
   @Test
@@ -209,13 +206,13 @@ public class TestBulkMutation {
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), rowFuture1.get());
     verify(retryExecutorService, times(1)).schedule(any(Runnable.class), anyLong(),
       same(TimeUnit.MILLISECONDS));
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
+    Assert.assertTrue(asyncExecutor.hasInflightRequests());
 
     // Make sure that only the second request was sent.
     batch.run();
     Assert.assertNull(underTest.currentBatch);
     Assert.assertTrue(rowFuture2.isDone());
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(asyncExecutor.hasInflightRequests());
   }
 
   @Test
@@ -230,7 +227,7 @@ public class TestBulkMutation {
       Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(),
         Status.fromThrowable(e).getCode());
     }
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(asyncExecutor.hasInflightRequests());
     Assert.assertTrue(
         waitedNanos.get()
             > TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
@@ -245,7 +242,7 @@ public class TestBulkMutation {
     MutateRowResponse result = rowFuture.get(10, TimeUnit.MILLISECONDS);
     Assert.assertTrue(rowFuture.isDone());
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), result);
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(asyncExecutor.hasInflightRequests());
   }
 
   @Test
@@ -304,7 +301,7 @@ public class TestBulkMutation {
     }
     pool.shutdownNow();
 
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
+    Assert.assertFalse(asyncExecutor.hasInflightRequests());
   }
 
   @Test
