@@ -96,8 +96,8 @@ public class TestBulkMutation {
     future = SettableFuture.create();
     when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
     ResourceLimiter resourceLimiter = new ResourceLimiter(1000, 10);
-    operationAccountant = new OperationAccountant(resourceLimiter);
-    asyncExecutor = new AsyncExecutor(client, operationAccountant);
+    operationAccountant = new OperationAccountant();
+    asyncExecutor = new AsyncExecutor(client, resourceLimiter, operationAccountant);
     underTest = createBulkMutation();
   }
 

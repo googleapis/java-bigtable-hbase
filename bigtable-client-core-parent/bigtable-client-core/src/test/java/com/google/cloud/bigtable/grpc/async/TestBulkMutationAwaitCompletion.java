@@ -256,9 +256,10 @@ public class TestBulkMutationAwaitCompletion {
    * Creates a fully formed {@link BulkMutation}
    */
   private BulkMutation createBulkMutation() {
-    OperationAccountant operationAccountant = new OperationAccountant(
-        resourceLimiter, clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
-    AsyncExecutor asyncExecutor = new AsyncExecutor(mockClient, operationAccountant);
+    OperationAccountant operationAccountant =
+        new OperationAccountant(clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
+    AsyncExecutor asyncExecutor =
+        new AsyncExecutor(mockClient, resourceLimiter, operationAccountant);
     BulkMutation bulkMutation =
         new BulkMutation(
             TestBulkMutation.TABLE_NAME,
