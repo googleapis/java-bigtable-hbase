@@ -918,28 +918,18 @@ public class CloudBigtableIO {
   }
 
   private static transient AggregatorWithState mutationRateAggregator;
-  private static transient AggregatorWithState mutationLatencyAggregator;
-  private static transient AggregatorWithState throttlingRateAggregator;
 
   private static synchronized void initializeMutationRateAggregator(
-      Aggregator<Long, Long> mutationRate, Aggregator<Long, Long> mutationLatency,
-      Aggregator<Long, Long> throttlingRate) {
+      Aggregator<Long, Long> mutationRate) {
     if (mutationRateAggregator == null) {
       mutationRateAggregator = new AggregatorWithState(mutationRate);
-      mutationLatencyAggregator = new AggregatorWithState(mutationLatency);
-      throttlingRateAggregator = new AggregatorWithState(throttlingRate);
       Runnable r = new Runnable() {
 
         @Override
         public void run() {
           BulkMutationsStats mutationStats = BulkMutationsStats.getInstance();
           double mutationRate = mutationStats.getMutationMeter().getOneMinuteRate();
-          double throttlingLatency = mutationStats.getThrottlingTimer().getSnapshot().getMean();
-          double mutationLatency = mutationStats.getMutationTimer().getSnapshot().getMean();
           mutationRateAggregator.set((long) mutationRate);
-          throttlingRateAggregator.set((long) throttlingLatency);
-          mutationLatencyAggregator.set(TimeUnit.NANOSECONDS.toMillis((long) mutationLatency));
-          throttlingRateAggregator.set(TimeUnit.NANOSECONDS.toMillis((long) throttlingLatency));
         }
       };
       BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().scheduleAtFixedRate(r, 5, 5,
@@ -962,8 +952,6 @@ public class CloudBigtableIO {
     private final Aggregator<Long, Long> mutationsCounter;
     private final Aggregator<Long, Long> exceptionsCounter;
     private final Aggregator<Long, Long> mutationsPerSecond;
-    private final Aggregator<Long, Long> mutationsRpcLatency;
-    private final Aggregator<Long, Long> throttlingRate;
 
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
@@ -971,14 +959,12 @@ public class CloudBigtableIO {
       mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
       exceptionsCounter = createAggregator("exceptions", new Sum.SumLongFn());
       mutationsPerSecond = createAggregator("mutationsPerSecond", new Sum.SumLongFn());
-      mutationsRpcLatency = createAggregator("mutationsRpcLatencyMillis", new Sum.SumLongFn());
-      throttlingRate = createAggregator("mutationThrottlingMillis", new Sum.SumLongFn());
     }
 
     private synchronized BufferedMutator getBufferedMutator(Context context)
         throws IOException {
       if (mutator == null) {
-        initializeMutationRateAggregator(mutationsPerSecond, mutationsRpcLatency, throttlingRate);
+        initializeMutationRateAggregator(mutationsPerSecond);
         ExceptionListener listener = createExceptionListener(context);
         BufferedMutatorParams params = new BufferedMutatorParams(TableName.valueOf(tableName))
             .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT).listener(listener);
@@ -1064,7 +1050,7 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Performs an asynchronous mutation via {@link BufferedMutator#mutate(Mutation)}.
+     * Performs an asynchronous mutation via {@link Table#put(Put)}.
      */
     @Override
     public void processElement(ProcessContext context) throws Exception {
@@ -1120,17 +1106,20 @@ public class CloudBigtableIO {
     // Stats
     private final Aggregator<Long, Long> mutationsCounter;
     private transient Map<String, BufferedMutator> mutators;
+    private final Aggregator<Long, Long> mutationsPerSecond;
 
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
 
       mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
+      mutationsPerSecond = createAggregator("mutationsPerSecond", new Sum.SumLongFn());
     }
 
     @Override
     public void startBundle(DoFn<KV<String, Iterable<Mutation>>, Void>.Context c) throws Exception {
       super.startBundle(c);
       mutators = new HashMap<>();
+      initializeMutationRateAggregator(mutationsPerSecond);
     }
 
     /**
