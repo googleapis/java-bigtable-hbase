@@ -90,7 +90,7 @@ public class OperationAccountant {
    * @return An operation id
    * @throws java.lang.InterruptedException if any.
    */
-  public long registerOperation(long id)
+  public void registerOperation(long id)
       throws InterruptedException {
     lock.lock();
     try {
@@ -98,7 +98,6 @@ public class OperationAccountant {
     } finally {
       lock.unlock();
     }
-    return id;
   }
 
   /**
@@ -212,10 +211,11 @@ public class OperationAccountant {
   }
 
   @VisibleForTesting
-  void onOperationCompletion(long id) {
+  boolean onOperationCompletion(long id) {
+    boolean response = false;
     lock.lock();
     try {
-      operations.remove(id);
+      response = operations.remove(id);
       if (isFlushed()) {
         flushedCondition.signal();
       }
@@ -223,6 +223,7 @@ public class OperationAccountant {
       lock.unlock();
     }
     resetNoSuccessWarningDeadline();
+    return response;
   }
 
   /**
@@ -230,10 +231,11 @@ public class OperationAccountant {
    *
    * @param id a long.
    */
-  public void onComplexOperationCompletion(long id) {
+  boolean onComplexOperationCompletion(long id) {
+    boolean response = false;
     lock.lock();
     try {
-      complexOperations.remove(id);
+      response = (complexOperations.remove(id) != null);
       if (isFlushed()) {
         flushedCondition.signal();
       }
@@ -241,6 +243,7 @@ public class OperationAccountant {
       lock.unlock();
     }
     resetNoSuccessWarningDeadline();
+    return response;
   }
 
   @VisibleForTesting
