@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -51,6 +52,8 @@ import com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSessionSharedThreadPools;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.async.BulkMutationsStats;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
@@ -914,7 +917,25 @@ public class CloudBigtableIO {
     return p;
   }
 
+  private static transient AggregatorWithState mutationRateAggregator;
 
+  private static synchronized void initializeMutationRateAggregator(
+      Aggregator<Long, Long> mutationRate) {
+    if (mutationRateAggregator == null) {
+      mutationRateAggregator = new AggregatorWithState(mutationRate);
+      Runnable r = new Runnable() {
+
+        @Override
+        public void run() {
+          BulkMutationsStats mutationStats = BulkMutationsStats.getInstance();
+          double mutationRate = mutationStats.getMutationMeter().getOneMinuteRate();
+          mutationRateAggregator.set((long) mutationRate);
+        }
+      };
+      BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().scheduleAtFixedRate(r, 5, 5,
+        TimeUnit.MILLISECONDS);
+    }
+  }
 
   /**
    * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of
@@ -930,17 +951,20 @@ public class CloudBigtableIO {
     // Stats
     private final Aggregator<Long, Long> mutationsCounter;
     private final Aggregator<Long, Long> exceptionsCounter;
+    private final Aggregator<Long, Long> mutationsPerSecond;
 
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
       tableName = config.getTableId();
       mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
       exceptionsCounter = createAggregator("exceptions", new Sum.SumLongFn());
+      mutationsPerSecond = createAggregator("mutationsPerSecond", new Sum.SumLongFn());
     }
 
     private synchronized BufferedMutator getBufferedMutator(Context context)
         throws IOException {
       if (mutator == null) {
+        initializeMutationRateAggregator(mutationsPerSecond);
         ExceptionListener listener = createExceptionListener(context);
         BufferedMutatorParams params = new BufferedMutatorParams(TableName.valueOf(tableName))
             .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT).listener(listener);
@@ -1026,7 +1050,7 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Performs an asynchronous mutation via {@link BufferedMutator#mutate(Mutation)}.
+     * Performs an asynchronous mutation via {@link Table#put(Put)}.
      */
     @Override
     public void processElement(ProcessContext context) throws Exception {
@@ -1082,17 +1106,20 @@ public class CloudBigtableIO {
     // Stats
     private final Aggregator<Long, Long> mutationsCounter;
     private transient Map<String, BufferedMutator> mutators;
+    private final Aggregator<Long, Long> mutationsPerSecond;
 
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
 
       mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
+      mutationsPerSecond = createAggregator("mutationsPerSecond", new Sum.SumLongFn());
     }
 
     @Override
     public void startBundle(DoFn<KV<String, Iterable<Mutation>>, Void>.Context c) throws Exception {
       super.startBundle(c);
       mutators = new HashMap<>();
+      initializeMutationRateAggregator(mutationsPerSecond);
     }
 
     /**
