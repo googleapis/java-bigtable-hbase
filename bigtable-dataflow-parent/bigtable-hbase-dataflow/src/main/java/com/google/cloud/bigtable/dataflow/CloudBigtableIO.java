@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -51,6 +52,8 @@ import com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSessionSharedThreadPools;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.async.BulkMutationsStats;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
@@ -914,7 +917,35 @@ public class CloudBigtableIO {
     return p;
   }
 
+  private static transient AggregatorWithState mutationRateAggregator;
+  private static transient AggregatorWithState mutationLatencyAggregator;
+  private static transient AggregatorWithState throttlingRateAggregator;
 
+  private static synchronized void initializeMutationRateAggregator(
+      Aggregator<Long, Long> mutationRate, Aggregator<Long, Long> mutationLatency,
+      Aggregator<Long, Long> throttlingRate) {
+    if (mutationRateAggregator == null) {
+      mutationRateAggregator = new AggregatorWithState(mutationRate);
+      mutationLatencyAggregator = new AggregatorWithState(mutationLatency);
+      throttlingRateAggregator = new AggregatorWithState(throttlingRate);
+      Runnable r = new Runnable() {
+
+        @Override
+        public void run() {
+          BulkMutationsStats mutationStats = BulkMutationsStats.getInstance();
+          double mutationRate = mutationStats.getMutationMeter().getOneMinuteRate();
+          double throttlingLatency = mutationStats.getThrottlingTimer().getSnapshot().getMean();
+          double mutationLatency = mutationStats.getMutationTimer().getSnapshot().getMean();
+          mutationRateAggregator.set((long) mutationRate);
+          throttlingRateAggregator.set((long) throttlingLatency);
+          mutationLatencyAggregator.set(TimeUnit.NANOSECONDS.toMillis((long) mutationLatency));
+          throttlingRateAggregator.set(TimeUnit.NANOSECONDS.toMillis((long) throttlingLatency));
+        }
+      };
+      BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().scheduleAtFixedRate(r, 5, 5,
+        TimeUnit.MILLISECONDS);
+    }
+  }
 
   /**
    * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of
@@ -930,17 +961,24 @@ public class CloudBigtableIO {
     // Stats
     private final Aggregator<Long, Long> mutationsCounter;
     private final Aggregator<Long, Long> exceptionsCounter;
+    private final Aggregator<Long, Long> mutationsPerSecond;
+    private final Aggregator<Long, Long> mutationsRpcLatency;
+    private final Aggregator<Long, Long> throttlingRate;
 
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
       tableName = config.getTableId();
       mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
       exceptionsCounter = createAggregator("exceptions", new Sum.SumLongFn());
+      mutationsPerSecond = createAggregator("mutationsPerSecond", new Sum.SumLongFn());
+      mutationsRpcLatency = createAggregator("mutationsRpcLatencyMillis", new Sum.SumLongFn());
+      throttlingRate = createAggregator("mutationThrottlingMillis", new Sum.SumLongFn());
     }
 
     private synchronized BufferedMutator getBufferedMutator(Context context)
         throws IOException {
       if (mutator == null) {
+        initializeMutationRateAggregator(mutationsPerSecond, mutationsRpcLatency, throttlingRate);
         ExceptionListener listener = createExceptionListener(context);
         BufferedMutatorParams params = new BufferedMutatorParams(TableName.valueOf(tableName))
             .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT).listener(listener);
