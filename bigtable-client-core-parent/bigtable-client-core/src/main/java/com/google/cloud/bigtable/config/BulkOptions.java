@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.config;
 
 import java.io.Serializable;
 
+import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -153,6 +154,13 @@ public class BulkOptions implements Serializable {
       return this;
     }
 
+    /**
+     * Enable an experimental feature that will throttle requests from {@link BulkMutation} if
+     * request latency surpasses a latency threshold. The default is
+     * {@link BulkOptions#BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT}.
+     *
+     * @return this, for convenience.
+     */
     public Builder enableBulkMutationThrottling() {
       this.enableBulkMutationThrottling = true;
       return this;
