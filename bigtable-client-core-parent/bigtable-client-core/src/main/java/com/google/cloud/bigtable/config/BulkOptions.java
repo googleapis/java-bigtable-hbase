@@ -68,11 +68,14 @@ public class BulkOptions implements Serializable {
 
   // Default rpc count per channel.
   /** Constant <code>BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT=50</code> */
-  public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 10;
+  public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 50;
 
   // This is the maximum accumulated size of uncompleted requests that we allow before throttling.
   // Default to 10% of available memory with a max of 1GB.
-  /** Constant <code>BIGTABLE_MAX_MEMORY_DEFAULT=(long) Math.min(1 &lt;&lt; 30, (Runtime.getRuntime().maxMemory() * 0.1d))</code> */
+  /**
+   * Constant
+   * <code>BIGTABLE_MAX_MEMORY_DEFAULT=(long) Math.min(1 &lt;&lt; 30, (Runtime.getRuntime().maxMemory() * 0.1d))</code>
+   */
   public static final long BIGTABLE_MAX_MEMORY_DEFAULT =
       (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
 

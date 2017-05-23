@@ -61,10 +61,10 @@ public class BigtableOptions implements Serializable {
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
   private static int getDefaultDataChannelCount() {
-    // 10 Channels seemed to work well on a 4 CPU machine, and this seems to scale well for higher
-    // CPU machines. Use no more than 250 Channels by default.
+    // 20 Channels seemed to work well on a 4 CPU machine, and this ratio seems to scale well for
+    // higher CPU machines. Use no more than 250 Channels by default.
     int availableProcessors = Runtime.getRuntime().availableProcessors();
-    return (int) Math.min(250, Math.max(1, Math.ceil(availableProcessors * 5d)));
+    return (int) Math.min(250, Math.max(1, Math.ceil(availableProcessors * 2.5d)));
   }
 
   /**
