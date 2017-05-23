@@ -56,8 +56,10 @@ public class BulkOptions implements Serializable {
   public static final boolean BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT = false;
 
   /**
-   * The target rpc response time for a MutateRows request. This value is meaningful if bulk
-   * mutation
+   * The target RPC response time for a MutateRows request. This value is meaningful if bulk
+   * mutation throttling is enabled. 40 ms. is a generally ok latency for MutateRows rpcs, but it
+   * could go higher (for example 200 ms) for less latency sensitive applications that need more
+   * throughput, or lower (10 ms) for latency sensitive applications.
    */
   public static final int BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT = 40;
 
@@ -66,15 +68,12 @@ public class BulkOptions implements Serializable {
    */
   public static long BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT = 0;
 
-  // Default rpc count per channel.
-  /** Constant <code>BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT=50</code> */
+  /** Default rpc count per channel. */
   public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 50;
 
-  // This is the maximum accumulated size of uncompleted requests that we allow before throttling.
-  // Default to 10% of available memory with a max of 1GB.
   /**
-   * Constant
-   * <code>BIGTABLE_MAX_MEMORY_DEFAULT=(long) Math.min(1 &lt;&lt; 30, (Runtime.getRuntime().maxMemory() * 0.1d))</code>
+    * This is the maximum accumulated size of uncompleted requests that we allow before throttling.
+    * Default to 10% of available memory with a max of 1GB.
    */
   public static final long BIGTABLE_MAX_MEMORY_DEFAULT =
       (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
