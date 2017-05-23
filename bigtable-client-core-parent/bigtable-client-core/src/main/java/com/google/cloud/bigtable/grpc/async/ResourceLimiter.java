@@ -1,6 +1,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,11 +24,12 @@ public class ResourceLimiter {
 
   private final long maxHeapSize;
   private final int maxInFlightRpcs;
-  private int currentInFlightRpcs;
+  private int currentInFlightMaxRpcs;
   private final AtomicLong operationSequenceGenerator = new AtomicLong();
   private final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
   private final LinkedBlockingDeque<Long> completedOperationIds = new LinkedBlockingDeque<>();
   private long currentWriteBufferSize;
+  private boolean isThrottling = false;
 
   /**
    * <p>Constructor for ResourceLimiter.</p>
@@ -38,7 +40,7 @@ public class ResourceLimiter {
   public ResourceLimiter(long maxHeapSize, int maxInFlightRpcs) {
     this.maxHeapSize = maxHeapSize;
     this.maxInFlightRpcs = maxInFlightRpcs;
-    this.currentInFlightRpcs = maxInFlightRpcs;
+    this.currentInFlightMaxRpcs = maxInFlightRpcs;
   }
 
   /**
@@ -86,24 +88,24 @@ public class ResourceLimiter {
    *
    * @return The maximum allowed number of in-flight RPCs
    */
-  public int getMaxInFlightRpcs() {
+  public int getAbsoluteMaxInFlightRpcs() {
     return maxInFlightRpcs;
   }
 
   /**
-   * <p>Getter for the field <code>currentInFlightRpcs</code>.</p>
+   * <p>Getter for the field <code>currentInFlightMaxRpcs</code>.</p>
    *
-   * @return The current number of allowed in-flight RPCs
+   * @return The current maximum number of allowed in-flight RPCs
    */
-  public int getCurrentInFlightRpcs() {
-    return currentInFlightRpcs;
+  public int getCurrentInFlightMaxRpcs() {
+    return currentInFlightMaxRpcs;
   }
 
   /**
-   * <p>Setter for the field <code>currentInFlightRpcs</code>.</p>
+   * <p>Setter for the field <code>currentInFlightMaxRpcs</code>.</p>
    */
-  public void setCurrentInFlightRpcs(int currentInFlightRpcs) {
-    this.currentInFlightRpcs = currentInFlightRpcs;
+  public void setCurrentInFlightMaxRpcs(int currentInFlightMaxRpcs) {
+    this.currentInFlightMaxRpcs = currentInFlightMaxRpcs;
   }
 
   /**
@@ -126,7 +128,7 @@ public class ResourceLimiter {
 
   private boolean isFullInternal() {
     return currentWriteBufferSize >= maxHeapSize
-        || pendingOperationsWithSize.size() >= currentInFlightRpcs;
+        || pendingOperationsWithSize.size() >= currentInFlightMaxRpcs;
   }
 
   private boolean unsynchronizedIsFull() {
@@ -182,5 +184,42 @@ public class ResourceLimiter {
       LOG.warn("An operation completed successfully but provided multiple completion notifications."
           + " Please notify Google that this occurred.");
     }
+  }
+
+  public synchronized void throttle(final int bulkMutationRpcTargetMs) {
+    if (isThrottling) {
+      // Throttling was already turned on.  No need to do it again.
+      return;
+    }
+    final long highTargetNanos =
+        TimeUnit.MILLISECONDS.toNanos((long) (bulkMutationRpcTargetMs * 1.2));
+    final long lowTargetNanos =
+        TimeUnit.MILLISECONDS.toNanos((long) (bulkMutationRpcTargetMs * 0.8));
+    // Change at 5% increments
+    final int throttlingChangeStep = getAbsoluteMaxInFlightRpcs() / 20;
+    int current = getCurrentInFlightMaxRpcs();
+    setCurrentInFlightMaxRpcs(current / 2);
+    Runnable r = new Runnable() {
+      @Override
+      public void run() {
+        BulkMutationsStats stats = BulkMutationsStats.getInstance();
+        long meanLatencyNanos = (long) stats.getMutationTimer().getSnapshot().getMean();
+        if (meanLatencyNanos >= highTargetNanos) {
+          int current = getCurrentInFlightMaxRpcs();
+
+          // decrease at 10% rather than 5%
+          int newValue = current - (throttlingChangeStep * 2);
+          setCurrentInFlightMaxRpcs(Math.max(newValue, throttlingChangeStep));
+        } else if (meanLatencyNanos <= lowTargetNanos && (stats.getThrottlingTimer().getSnapshot()
+            .getMean() > TimeUnit.MILLISECONDS.toNanos(1))) {
+          int current = getCurrentInFlightMaxRpcs();
+          int newValue = current + throttlingChangeStep;
+          setCurrentInFlightMaxRpcs(Math.min(newValue, getAbsoluteMaxInFlightRpcs()));
+        }
+      }
+    };
+    BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().scheduleAtFixedRate(r, 20, 20,
+      TimeUnit.SECONDS);
+    isThrottling = true;
   }
 }

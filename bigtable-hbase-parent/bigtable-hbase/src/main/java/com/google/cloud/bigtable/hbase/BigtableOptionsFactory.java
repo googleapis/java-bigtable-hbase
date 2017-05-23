@@ -221,7 +221,7 @@ public class BigtableOptionsFactory {
    * Bigtable cluster.
    */
   public static final String BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING =
-      "google.bigtable.buffered.mutator.enable.throttling";
+      "google.bigtable.buffered.mutator.throttling.enable";
 
   /**
    * Tweak the throttling
