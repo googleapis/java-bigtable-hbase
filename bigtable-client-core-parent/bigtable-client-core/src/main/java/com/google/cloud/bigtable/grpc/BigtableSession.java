@@ -35,11 +35,13 @@ import com.google.api.client.util.Strings;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.BulkMutationThrottling;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
@@ -333,14 +335,18 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
    */
   public BulkMutation createBulkMutation(BigtableTableName tableName, AsyncExecutor asyncExecutor) {
+    BulkOptions bulkOptions = options.getBulkOptions();
+    if (bulkOptions.isEnableBulkMutationThrottling()) {
+      BulkMutationThrottling.throttle(resourceLimiter, bulkOptions.getBulkMutationRpcTargetMs());
+    }
     return new BulkMutation(
         tableName,
         asyncExecutor,
         options.getRetryOptions(),
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-        options.getBulkOptions().getBulkMaxRowKeyCount(),
-        options.getBulkOptions().getBulkMaxRequestSize(),
-        options.getBulkOptions().getAutoflushMs());
+        bulkOptions.getBulkMaxRowKeyCount(),
+        bulkOptions.getBulkMaxRequestSize(),
+        bulkOptions.getAutoflushMs());
   }
 
   /**

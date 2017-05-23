@@ -23,6 +23,7 @@ public class ResourceLimiter {
 
   private final long maxHeapSize;
   private final int maxInFlightRpcs;
+  private int currentInFlightRpcs;
   private final AtomicLong operationSequenceGenerator = new AtomicLong();
   private final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
   private final LinkedBlockingDeque<Long> completedOperationIds = new LinkedBlockingDeque<>();
@@ -37,6 +38,7 @@ public class ResourceLimiter {
   public ResourceLimiter(long maxHeapSize, int maxInFlightRpcs) {
     this.maxHeapSize = maxHeapSize;
     this.maxInFlightRpcs = maxInFlightRpcs;
+    this.currentInFlightRpcs = maxInFlightRpcs;
   }
 
   /**
@@ -89,6 +91,22 @@ public class ResourceLimiter {
   }
 
   /**
+   * <p>Getter for the field <code>currentInFlightRpcs</code>.</p>
+   *
+   * @return The current number of allowed in-flight RPCs
+   */
+  public int getCurrentInFlightRpcs() {
+    return currentInFlightRpcs;
+  }
+
+  /**
+   * <p>Setter for the field <code>currentInFlightRpcs</code>.</p>
+   */
+  public void setCurrentInFlightRpcs(int currentInFlightRpcs) {
+    this.currentInFlightRpcs = currentInFlightRpcs;
+  }
+
+  /**
    * <p>getHeapSize.</p>
    *
    * @return The total size of all currently outstanding RPCs
@@ -108,7 +126,7 @@ public class ResourceLimiter {
 
   private boolean isFullInternal() {
     return currentWriteBufferSize >= maxHeapSize
-        || pendingOperationsWithSize.size() >= maxInFlightRpcs;
+        || pendingOperationsWithSize.size() >= currentInFlightRpcs;
   }
 
   private boolean unsynchronizedIsFull() {
