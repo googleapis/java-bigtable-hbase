@@ -187,8 +187,25 @@ public class ResourceLimiter {
   }
 
   /**
-   * Enable an experimental feature that will throttle requests made from {@link BulkMutation}.
-   *
+   * Enable an experimental feature that will throttle requests made from {@link BulkMutation}. The
+   * logic is as follows:
+   * <p>
+   * <ul>
+   * <li>To start: <ul>
+   *   <li>reduce parallelism by 50% -- The parallelism is high to begin with. This reduction should
+   *       reduce the impacts of a bursty job, such as those found in Dataflow.
+   *   </ul>
+   * <li>every 20 seconds:
+   *   <pre>
+   *   if (rpc_latency &gt; threshold) {
+   *      decrease parallelism by 10% of original maximum.
+   *   } else if (rpc_latency &lt; threshold && rpcsWereThrottled()) {
+   *      increase parallelism by 5% of original maximum.
+   *   }
+   * </pre>
+   * NOTE: increases are capped by the initial maximum.  Decreases are floored at 2.5% of the
+   * original maximum so that there is some level of throughput.
+   * </ul>
    * @param bulkMutationRpcTargetMs the target for latency of MutateRows requests in milliseconds.
    */
   public synchronized void throttle(final int bulkMutationRpcTargetMs) {
