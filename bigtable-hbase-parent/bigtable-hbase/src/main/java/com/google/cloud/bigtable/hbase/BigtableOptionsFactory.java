@@ -216,6 +216,19 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY =
       "google.bigtable.buffered.mutator.max.memory";
 
+  /**
+   * Turn on a feature that will reduce the likelihood of BufferedMutator overloading a Cloud
+   * Bigtable cluster.
+   */
+  public static final String BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING =
+      "google.bigtable.buffered.mutator.throttling.enable";
+
+  /**
+   * Tweak the throttling
+   */
+  public static final String BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS =
+      "google.bigtable.buffered.mutator.throttling.threshold.ms";
+
 
   /**
    * Constant
@@ -375,6 +388,14 @@ public class BigtableOptionsFactory {
         BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
         BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT);
     bulkOptionsBuilder.setMaxMemory(maxMemory);
+
+    if (configuration.getBoolean(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING,
+      BulkOptions.BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT)) {
+      bulkOptionsBuilder.enableBulkMutationThrottling();
+      bulkOptionsBuilder.setBulkMutationRpcTargetMs(
+        configuration.getInt(BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+          BulkOptions.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT));
+    }
 
     bigtableOptionsBuilder.setBulkOptions(bulkOptionsBuilder.build());
   }
