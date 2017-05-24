@@ -23,7 +23,7 @@ public class ResourceLimiter {
   private static final long REGISTER_WAIT_MILLIS = 5;
 
   private final long maxHeapSize;
-  private final int maxInFlightRpcs;
+  private final int absoluteMaxInFlightRpcs;
   private int currentInFlightMaxRpcs;
   private final AtomicLong operationSequenceGenerator = new AtomicLong();
   private final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
@@ -39,7 +39,7 @@ public class ResourceLimiter {
    */
   public ResourceLimiter(long maxHeapSize, int maxInFlightRpcs) {
     this.maxHeapSize = maxHeapSize;
-    this.maxInFlightRpcs = maxInFlightRpcs;
+    this.absoluteMaxInFlightRpcs = maxInFlightRpcs;
     this.currentInFlightMaxRpcs = maxInFlightRpcs;
   }
 
@@ -89,7 +89,7 @@ public class ResourceLimiter {
    * @return The maximum allowed number of in-flight RPCs
    */
   public int getAbsoluteMaxInFlightRpcs() {
-    return maxInFlightRpcs;
+    return absoluteMaxInFlightRpcs;
   }
 
   /**
@@ -186,19 +186,38 @@ public class ResourceLimiter {
     }
   }
 
+  /**
+   * Enable an experimental feature that will throttle requests made from {@link BulkMutation}.
+   *
+   * @param bulkMutationRpcTargetMs the target for latency of MutateRows requests in milliseconds.
+   */
   public synchronized void throttle(final int bulkMutationRpcTargetMs) {
     if (isThrottling) {
       // Throttling was already turned on.  No need to do it again.
       return;
     }
+    LOG.info(
+      "Initializing BulkMutation throttling.  "
+          + "Once latency is higher than %d ms, parallelism will be reduced.",
+      bulkMutationRpcTargetMs);
+
+    // target roughly 20% within the the target so that there isn't too much churn
     final long highTargetNanos =
         TimeUnit.MILLISECONDS.toNanos((long) (bulkMutationRpcTargetMs * 1.2));
     final long lowTargetNanos =
         TimeUnit.MILLISECONDS.toNanos((long) (bulkMutationRpcTargetMs * 0.8));
-    // Change at 5% increments
+
+    // Increase at 5% of the maximum RPC count increments, and reduce at 10%. The basic assumption
+    // is that the throttling should be aggressive, and caution should be taken to not go over the
+    // latency cap. The assumption is that maximizing throughput is less important than system
+    // stability.
     final int throttlingChangeStep = getAbsoluteMaxInFlightRpcs() / 20;
-    int current = getCurrentInFlightMaxRpcs();
-    setCurrentInFlightMaxRpcs(current / 2);
+    final int minimumRpcCount = Math.max(throttlingChangeStep / 2, 1);
+
+    // The maximum in flight RPCs is pretty high. Start with a significantly reduced number, and
+    // then work up or down.
+    setCurrentInFlightMaxRpcs(getCurrentInFlightMaxRpcs() / 2);
+
     Runnable r = new Runnable() {
       @Override
       public void run() {
@@ -207,17 +226,35 @@ public class ResourceLimiter {
         if (meanLatencyNanos >= highTargetNanos) {
           int current = getCurrentInFlightMaxRpcs();
 
-          // decrease at 10% rather than 5%
-          int newValue = current - (throttlingChangeStep * 2);
-          setCurrentInFlightMaxRpcs(Math.max(newValue, throttlingChangeStep));
+          // decrease at 10% of the maximum RPCs, with a minimum of 2.5%
+          int newValue =  Math.max(current - throttlingChangeStep, minimumRpcCount);
+          if (newValue != current) {
+            setCurrentInFlightMaxRpcs(newValue);
+            LOG.debug(
+              "Latency is at %d ms.  Reducing paralellelism from %d to %d.",
+              TimeUnit.NANOSECONDS.toMillis(meanLatencyNanos), current, newValue);
+          }
         } else if (meanLatencyNanos <= lowTargetNanos && (stats.getThrottlingTimer().getSnapshot()
             .getMean() > TimeUnit.MILLISECONDS.toNanos(1))) {
+          // if latency is low, and there was throttling of at least one millisecond, then increase
+          // the parallelism so that new calls will not be throttled.
+
           int current = getCurrentInFlightMaxRpcs();
-          int newValue = current + throttlingChangeStep;
-          setCurrentInFlightMaxRpcs(Math.min(newValue, getAbsoluteMaxInFlightRpcs()));
+
+          // Increase parallelism at a slower than we decrease. The lower rate should help the
+          // system maintain stability.
+          int newValue = Math.max(current + throttlingChangeStep, absoluteMaxInFlightRpcs);
+          if (newValue != current) {
+            setCurrentInFlightMaxRpcs(newValue);
+            LOG.debug("Latency is at %d ms.  Increasing paralellelism from %d to %d.",
+              TimeUnit.NANOSECONDS.toMillis(meanLatencyNanos), current, newValue);
+          }
         }
       }
     };
+
+    // 20 seconds is an assumption that seems to work. In bad situations, the throttling will start
+    // at 50%, and then 5 cycles, or 100 seconds later.
     BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().scheduleAtFixedRate(r, 20, 20,
       TimeUnit.SECONDS);
     isThrottling = true;
