@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.MessageLite;
 
 import org.apache.hadoop.hbase.client.Row;
 
@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.client.Row;
  * @author sduskis
  * @version $Id: $Id
  */
-public interface OperationAdapter<T extends Row, U extends GeneratedMessageV3.Builder<?>> {
+public interface OperationAdapter<T extends Row, U extends MessageLite.Builder> {
 
   /**
    * Adapt a single HBase Operation to a single Bigtable generated message.
