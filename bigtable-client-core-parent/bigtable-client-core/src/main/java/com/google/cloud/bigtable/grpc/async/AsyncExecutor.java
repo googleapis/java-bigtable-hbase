@@ -35,7 +35,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.MessageLite;
 
 /**
  * This class provides management of asynchronous Bigtable RPCs. It ensures that there aren't too
@@ -322,14 +322,14 @@ public class AsyncExecutor {
     return call(READ_FLAT_ROWS_ASYNC, request);
   }
 
-  private <RequestT extends GeneratedMessageV3, ResponseT> ListenableFuture<ResponseT> call(
+  private <RequestT extends MessageLite, ResponseT> ListenableFuture<ResponseT> call(
       AsyncCall<RequestT, ResponseT> rpc, RequestT request) throws InterruptedException {
     // Wait until both the memory and rpc count maximum requirements are achieved before getting a
     // unique id used to track this request.
     return call(rpc, request, registerOperation(request));
   }
 
-  public long registerOperation(GeneratedMessageV3 request) throws InterruptedException {
+  public long registerOperation(MessageLite request) throws InterruptedException {
     return registerOperation(request.getSerializedSize());
   }
 
