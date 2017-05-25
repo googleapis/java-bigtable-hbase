@@ -260,7 +260,7 @@ public class ResourceLimiter {
 
           // Increase parallelism at a slower than we decrease. The lower rate should help the
           // system maintain stability.
-          int newValue = Math.max(current + throttlingChangeStep, absoluteMaxInFlightRpcs);
+          int newValue = Math.min(current + throttlingChangeStep, absoluteMaxInFlightRpcs);
           if (newValue != current) {
             setCurrentInFlightMaxRpcs(newValue);
             LOG.debug("Latency is at %d ms.  Increasing paralellelism from %d to %d.",
