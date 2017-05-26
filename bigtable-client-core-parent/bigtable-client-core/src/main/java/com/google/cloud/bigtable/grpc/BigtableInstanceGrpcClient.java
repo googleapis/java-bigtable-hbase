@@ -49,8 +49,12 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
    * @param channel a {@link io.grpc.Channel} object.
    */
   public BigtableInstanceGrpcClient(Channel channel) {
-    this.instanceClient = BigtableInstanceAdminGrpc.newBlockingStub(channel);
-    operationsStub = OperationsGrpc.newBlockingStub(channel);
+    this.instanceClient = BigtableInstanceAdminGrpc
+        .newBlockingStub(channel)
+        .withWaitForReady();
+    this.operationsStub = OperationsGrpc
+        .newBlockingStub(channel)
+        .withWaitForReady();
   }
 
   /** {@inheritDoc} */
