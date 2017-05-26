@@ -917,6 +917,91 @@ public class CloudBigtableIO {
     return p;
   }
 
+  private static MutationStatsExporter mutationStatsExporter;
+
+  private static synchronized void initializeMutationStatsExporter(BufferedMutatorDoFn<?> doFn) {
+    if (mutationStatsExporter == null) {
+      mutationStatsExporter = new MutationStatsExporter(doFn);
+      mutationStatsExporter.startExport();
+    }
+  }
+
+  private static class MutationStatsExporter {
+    protected static final Logger STATS_LOG = LoggerFactory.getLogger(AbstractSource.class);
+
+    private final AggregatorWithState mutationsPerSecond;
+    private final AggregatorWithState cumulativeThrottlingSeconds;
+
+    MutationStatsExporter(BufferedMutatorDoFn<?> doFn) {
+      mutationsPerSecond = new AggregatorWithState(doFn.mutationsPerSecond);
+      cumulativeThrottlingSeconds = new AggregatorWithState(doFn.cumulativeThrottlingSeconds);
+    }
+
+    protected void startExport() {
+      Runnable r = new Runnable() {
+
+        @Override
+        public void run() {
+          try {
+            BulkMutationsStats mutationStats = BulkMutationsStats.getInstance();
+            cumulativeThrottlingSeconds.set(
+              TimeUnit.NANOSECONDS.toSeconds(mutationStats.getCumulativeThrottlingTimeNanos()));
+            long mutationsPerSecondCount = (long) mutationStats.getMutationMeter().getMeanRate();
+            mutationsPerSecond.set(mutationsPerSecondCount);
+          } catch (Exception e) {
+            STATS_LOG.warn("Something bad happened in export stats", e);
+          }
+        }
+      };
+      BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().scheduleAtFixedRate(r, 5, 5,
+        TimeUnit.MILLISECONDS);
+    }
+  }
+
+  private static abstract class BufferedMutatorDoFn<T> extends AbstractCloudBigtableTableDoFn<T, Void> {
+
+    // Stats
+    protected final Aggregator<Long, Long> mutationsCounter;
+    protected final Aggregator<Long, Long> exceptionsCounter;
+
+    protected final Aggregator<Long, Long> mutationsPerSecond;
+    protected final Aggregator<Long, Long> cumulativeThrottlingSeconds;
+
+    private static final long serialVersionUID = 1L;
+    public BufferedMutatorDoFn(CloudBigtableConfiguration config) {
+      super(config);
+      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
+      exceptionsCounter = createAggregator("exceptions", new Sum.SumLongFn());
+      mutationsPerSecond = createAggregator("mutationsPerSecond", new Sum.SumLongFn());
+      cumulativeThrottlingSeconds =
+          createAggregator("cumulativeThrottlingSeconds", new Sum.SumLongFn());
+    }
+
+    protected BufferedMutator createBufferedMutator(Context context, String tableName)
+        throws IOException {
+      BufferedMutator bufferedMutator =
+          getConnection().getBufferedMutator(
+              new BufferedMutatorParams(TableName.valueOf(tableName))
+                  .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT)
+                  .listener(createExceptionListener(context)));
+
+      initializeMutationStatsExporter(this);
+
+      return bufferedMutator;
+    }
+
+    protected ExceptionListener createExceptionListener(final Context context) {
+      return new ExceptionListener() {
+        @Override
+        public void onException(RetriesExhaustedWithDetailsException exception,
+            BufferedMutator mutator) throws RetriesExhaustedWithDetailsException {
+          logExceptions(context, exception);
+          throw exception;
+        }
+      };
+    }
+  }
+
   private static transient AggregatorWithState mutationRateAggregator;
 
   private static synchronized void initializeMutationRateAggregator(
@@ -943,32 +1028,20 @@ public class CloudBigtableIO {
    * BufferedMutator.
    */
   public static class CloudBigtableSingleTableBufferedWriteFn
-      extends AbstractCloudBigtableTableDoFn<Mutation, Void> {
+      extends BufferedMutatorDoFn<Mutation> {
     private static final long serialVersionUID = 2L;
     private transient BufferedMutator mutator;
     private final String tableName;
 
-    // Stats
-    private final Aggregator<Long, Long> mutationsCounter;
-    private final Aggregator<Long, Long> exceptionsCounter;
-    private final Aggregator<Long, Long> mutationsPerSecond;
-
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
       tableName = config.getTableId();
-      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
-      exceptionsCounter = createAggregator("exceptions", new Sum.SumLongFn());
-      mutationsPerSecond = createAggregator("mutationsPerSecond", new Sum.SumLongFn());
     }
 
     private synchronized BufferedMutator getBufferedMutator(Context context)
         throws IOException {
       if (mutator == null) {
-        initializeMutationRateAggregator(mutationsPerSecond);
-        ExceptionListener listener = createExceptionListener(context);
-        BufferedMutatorParams params = new BufferedMutatorParams(TableName.valueOf(tableName))
-            .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT).listener(listener);
-        mutator = getConnection().getBufferedMutator(params);
+        mutator = createBufferedMutator(context, tableName);
       }
       return mutator;
     }
@@ -1099,20 +1172,15 @@ public class CloudBigtableIO {
    * family is greater than one.  In a case where multiple versions could be a problem, it's best to
    * add a timestamp to the {@link Put}.
    */
-  public static class CloudBigtableMultiTableWriteFn extends
-  AbstractCloudBigtableTableDoFn<KV<String, Iterable<Mutation>>, Void> {
+  public static class CloudBigtableMultiTableWriteFn
+      extends BufferedMutatorDoFn<KV<String, Iterable<Mutation>>> {
     private static final long serialVersionUID = 2L;
 
     // Stats
-    private final Aggregator<Long, Long> mutationsCounter;
     private transient Map<String, BufferedMutator> mutators;
-    private final Aggregator<Long, Long> mutationsPerSecond;
 
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
-
-      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
-      mutationsPerSecond = createAggregator("mutationsPerSecond", new Sum.SumLongFn());
     }
 
     @Override
@@ -1133,7 +1201,7 @@ public class CloudBigtableIO {
     @Override
     public void processElement(ProcessContext context) throws Exception {
       KV<String, Iterable<Mutation>> element = context.element();
-      BufferedMutator mutator = getMutator(element.getKey());
+      BufferedMutator mutator = getMutator(context, element.getKey());
       try {
         for (Mutation mutation : element.getValue()) {
           mutator.mutate(mutation);
@@ -1145,10 +1213,10 @@ public class CloudBigtableIO {
       }
     }
 
-    private BufferedMutator getMutator(String tableName) throws IOException {
+    private BufferedMutator getMutator(Context context, String tableName) throws IOException {
       BufferedMutator mutator = mutators.get(tableName);
       if (mutator == null) {
-        mutator = getConnection().getBufferedMutator(TableName.valueOf(tableName));
+        mutator = createBufferedMutator(context, tableName);
         mutators.put(tableName, mutator);
       }
       return mutator;
