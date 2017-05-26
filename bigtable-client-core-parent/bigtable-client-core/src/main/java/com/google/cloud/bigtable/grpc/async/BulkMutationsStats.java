@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
@@ -44,6 +45,7 @@ public class BulkMutationsStats {
   private final Timer mutationTimer = registry.timer("MutationStats.mutation.timer");
   private final Meter mutationMeter = registry.meter("MutationStats.mutation.meter");
   private final Timer throttlingTimer = registry.timer("MutationStats.throttling.timer");
+  private final AtomicLong cumulativeThrottlingTimeNanos = new AtomicLong();
 
   /**
    * This method updates rpc time statistics statistics.
@@ -68,6 +70,7 @@ public class BulkMutationsStats {
    */
   void markThrottling(long throttlingDurationInNanos) {
     throttlingTimer.update(throttlingDurationInNanos, TimeUnit.NANOSECONDS);
+    cumulativeThrottlingTimeNanos.addAndGet(throttlingDurationInNanos);
   }
 
   public Timer getMutationTimer() {
@@ -80,5 +83,9 @@ public class BulkMutationsStats {
 
   public Timer getThrottlingTimer() {
     return throttlingTimer;
+  }
+
+  public long getCumulativeThrottlingTimeNanos() {
+    return cumulativeThrottlingTimeNanos.get();
   }
 }
