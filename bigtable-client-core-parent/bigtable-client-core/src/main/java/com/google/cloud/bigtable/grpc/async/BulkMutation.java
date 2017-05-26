@@ -197,21 +197,25 @@ public class BulkMutation {
           new FutureCallback<List<MutateRowsResponse>>() {
             @Override
             public void onSuccess(List<MutateRowsResponse> result) {
+              markCompletion();
               handleResult(result);
             }
 
             @Override
             public void onFailure(Throwable t) {
+              markCompletion();
               performFullRetry(new AtomicReference<Long>(), t);
+            }
+
+            protected void markCompletion() {
+              BulkMutationsStats.getInstance().markMutationsRpcCompletion(
+                clock.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
             }
           });
     }
 
     @VisibleForTesting
     synchronized void handleResult(List<MutateRowsResponse> results) {
-      BulkMutationsStats.getInstance().markMutationsRpcCompletion(
-        clock.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
-
       mutateRowsFuture = null;
       AtomicReference<Long> backoffTime = new AtomicReference<>();
       try {
