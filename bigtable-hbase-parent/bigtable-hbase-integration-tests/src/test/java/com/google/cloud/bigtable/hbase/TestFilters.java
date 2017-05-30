@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 
@@ -1535,6 +1536,42 @@ public class TestFilters extends AbstractTest {
         25 <= results.length && results.length <= 75);
   }
 
+
+  @Test
+  public void testSingleValueLongCompares() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rowKeyNumeric-");
+    byte[] qualToCheck = dataHelper.randomData("toCheckNumeric-");
+
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+
+    table.put(new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      Bytes.toBytes(2000l)));
+
+    Scan rootScan = new Scan()
+        .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck)
+        .setStartRow(rowKey).setStopRow(rowKey);
+
+    Assert.assertNull("< 1000 should fail",
+      getFirst(table, rootScan, CompareOp.LESS, 1000l));
+    Assert.assertNotNull("> 1000 should succeed",
+      getFirst(table, rootScan, CompareOp.GREATER, 1000l));
+    Assert.assertNull("<= 1000 should fail",
+      getFirst(table, rootScan, CompareOp.LESS_OR_EQUAL, 1000l));
+    Assert.assertNotNull(">= 1000 should succeed",
+      getFirst(table, rootScan, CompareOp.GREATER_OR_EQUAL, 1000l));
+    Assert.assertNotNull("<= 2000 should succeed",
+      getFirst(table, rootScan, CompareOp.LESS_OR_EQUAL, 2000l));
+    Assert.assertNotNull(">= 2000 should succeed",
+      getFirst(table, rootScan, CompareOp.GREATER_OR_EQUAL, 2000l));
+  }
+
+  protected Result getFirst(Table table, Scan rootScan, CompareOp comparitor, long value)
+      throws IOException {
+    try (ResultScanner results = table.getScanner(new Scan(rootScan)
+        .setFilter(new ValueFilter(comparitor, new BinaryComparator(Bytes.toBytes(value)))))) {
+      return results.next();
+    }
+  }
   @Test
   public void testSingleColumnValueExcludeFilter() throws IOException {
     byte[] rowKey1 = dataHelper.randomData("scvfrk1");

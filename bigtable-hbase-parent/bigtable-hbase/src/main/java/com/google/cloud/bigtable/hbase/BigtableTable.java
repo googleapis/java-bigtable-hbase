@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.ValueFilter;
@@ -692,13 +693,39 @@ public class BigtableTable implements Table {
       }
     } else {
       ValueFilter valueFilter =
-          new ValueFilter(compareOp, new BinaryComparator(value));
+          new ValueFilter(reverseCompareOp(compareOp), new BinaryComparator(value));
       scan.setFilter(valueFilter);
       requestBuilder.addAllTrueMutations(mutations);
     }
     requestBuilder.setPredicateFilter(Adapters.SCAN_ADAPTER.buildFilter(scan,
       UNSUPPORTED_READ_HOOKS));
     return requestBuilder;
+  }
+
+  /**
+   * For some reason, the ordering of CheckAndMutate operations is the inverse order of normal
+   * {@link ValueFilter} operations.
+   *
+   * @param compareOp
+   * @return the inverse of compareOp
+   */
+  private static CompareOp reverseCompareOp(CompareOp compareOp) {
+    switch (compareOp) {
+    case EQUAL:
+    case NOT_EQUAL:
+    case NO_OP:
+      return compareOp;
+    case LESS:
+      return CompareOp.GREATER;
+    case LESS_OR_EQUAL:
+      return CompareOp.GREATER_OR_EQUAL;
+    case GREATER:
+      return CompareOp.LESS;
+    case GREATER_OR_EQUAL:
+      return CompareOp.LESS_OR_EQUAL;
+    default:
+      return CompareOp.NO_OP;
+    }
   }
 
   static String makeGenericExceptionMessage(String operation, String projectId, String tableName) {

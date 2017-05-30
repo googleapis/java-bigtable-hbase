@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,10 +31,13 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.util.List;
 
+@RunWith(JUnit4.class)
 public class TestCheckAndMutate extends AbstractTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -284,5 +287,53 @@ public class TestCheckAndMutate extends AbstractTest {
         "QualPut should exist",
         row.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qualPut));
     table.close();
+  }
+
+  @Test
+  public void testCompareOps() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] qualToCheck = dataHelper.randomData("toCheck-");
+    byte[] otherQual = dataHelper.randomData("other-");
+    boolean success;
+
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+
+    table.put(new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      Bytes.toBytes(2000l)));
+
+    Put someRandomPut =
+        new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.LESS, Bytes.toBytes(1000l), someRandomPut);
+    Assert.assertTrue("1000 < 2000 should succeed", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.LESS, Bytes.toBytes(4000l), someRandomPut);
+    Assert.assertFalse("4000 < 2000 should fail", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.GREATER, Bytes.toBytes(1000l), someRandomPut);
+    Assert.assertFalse("1000 > 2000 should fail", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.GREATER, Bytes.toBytes(4000l), someRandomPut);
+    Assert.assertTrue("4000 > 2000 should succeed", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.LESS_OR_EQUAL, Bytes.toBytes(1000l), someRandomPut);
+    Assert.assertTrue("1000 <= 2000 should succeed", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.LESS_OR_EQUAL, Bytes.toBytes(4000l), someRandomPut);
+    Assert.assertFalse("4000 <= 2000 should fail", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.GREATER_OR_EQUAL, Bytes.toBytes(1000l), someRandomPut);
+    Assert.assertFalse("1000 >= 2000 should fail", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.GREATER_OR_EQUAL, Bytes.toBytes(4000l), someRandomPut);
+    Assert.assertTrue("4000 >= 2000 should succeed", success);
   }
 }
