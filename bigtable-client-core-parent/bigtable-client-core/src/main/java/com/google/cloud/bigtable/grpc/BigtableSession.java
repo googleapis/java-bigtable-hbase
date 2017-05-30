@@ -121,7 +121,7 @@ public class BigtableSession implements Closeable {
 
   private synchronized static SslContext createSslContext() throws SSLException {
     if (sslBuilder == null) {
-      sslBuilder = GrpcSslContexts.forClient().ciphers(null);
+      sslBuilder = GrpcSslContexts.forClient();
     }
     return sslBuilder.build();
   }
