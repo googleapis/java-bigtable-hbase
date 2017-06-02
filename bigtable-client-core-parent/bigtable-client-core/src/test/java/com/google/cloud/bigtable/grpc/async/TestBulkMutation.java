@@ -18,6 +18,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.grpc.Status.Code;
+import io.grpc.StatusRuntimeException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -86,6 +88,7 @@ public class TestBulkMutation {
   private SettableFuture<List<MutateRowsResponse>> future;
   private RetryOptions retryOptions;
   private BulkMutation underTest;
+  private OperationAccountant operationAccountant;
 
   @Before
   public void setup() throws InterruptedException {
@@ -94,7 +97,8 @@ public class TestBulkMutation {
 
     future = SettableFuture.create();
     when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
-    asyncExecutor = new AsyncExecutor(client, new ResourceLimiter(1000, 10));
+    operationAccountant = new OperationAccountant(nanoClock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
+    asyncExecutor = new AsyncExecutor(client, new ResourceLimiter(1000, 10), operationAccountant);
     underTest = createBulkMutation();
   }
 
@@ -341,6 +345,46 @@ public class TestBulkMutation {
 
     // Verify that the request was sent
     verify(client, times(1)).mutateRowsAsync(any(MutateRowsRequest.class));
+  }
+
+  @Test
+  public void testMissingResponse() throws Exception {
+    underTest.clock = nanoClock;
+    ListenableFuture<MutateRowResponse> addFuture = underTest.add(createRequest());
+
+    // TODO(igorbernstein2): this should either block & throw or return a failing future
+    // force the batch to be sent
+    underTest.flush();
+
+    // since we don't mock the response from the client, this rpc will just hang
+
+    // Fast forward time
+    doAnswer(new Answer<Long>() {
+      @Override
+      public Long answer(InvocationOnMock invocation) throws Throwable {
+        return BulkMutation.MAX_RPC_WAIT_TIME_NANOS + 1;
+      }
+    }).when(nanoClock).nanoTime();
+
+    // TODO(igorbernstein2): Should this throw as well?
+    // force the executor to checking for stale requests
+    asyncExecutor.flush();
+
+    try {
+      addFuture.get();
+      Assert.fail("Expected an exception");
+    } catch(ExecutionException executionException) {
+      // Unwrap the exception
+      if (!(executionException.getCause() instanceof StatusRuntimeException)) {
+        throw executionException;
+      }
+      StatusRuntimeException e = (StatusRuntimeException) executionException.getCause();
+
+      // Make sure that we caught a Stale request exception
+      if (!(e.getStatus().getCode() == Code.UNKNOWN && e.getMessage().contains("Stale"))) {
+        throw e;
+      }
+    }
   }
 
   private BulkMutation createBulkMutation() {
