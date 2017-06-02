@@ -121,7 +121,10 @@ public class BigtableSession implements Closeable {
 
   private synchronized static SslContext createSslContext() throws SSLException {
     if (sslBuilder == null) {
-      sslBuilder = GrpcSslContexts.forClient();
+      // TODO(igorbernstein2): figure out why .ciphers(null) is necessary
+      // Without it, the dataflow-reimport test fails with:
+      // "javax.net.ssl.SSLHandshakeException: No appropriate protocol (protocol is disabled or cipher suites are inappropriate)"
+      sslBuilder = GrpcSslContexts.forClient().ciphers(null);
     }
     return sslBuilder.build();
   }
