@@ -72,7 +72,7 @@ public class BulkMutation {
   @VisibleForTesting
   static Logger LOG = new Logger(BulkMutation.class);
 
-  public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(5);
+  public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(7);
   private final AtomicLong batchIdGenerator = new AtomicLong();
 
   private static StatusRuntimeException toException(Status status) {
