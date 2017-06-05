@@ -335,5 +335,21 @@ public class TestCheckAndMutate extends AbstractTest {
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
       CompareOp.GREATER_OR_EQUAL, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertTrue("4000 >= 2000 should succeed", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.EQUAL, Bytes.toBytes(1000l), someRandomPut);
+    Assert.assertFalse("1000 == 2000 should fail", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.EQUAL, Bytes.toBytes(2000l), someRandomPut);
+    Assert.assertTrue("2000 == 2000 should succeed", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.NOT_EQUAL, Bytes.toBytes(2000l), someRandomPut);
+    Assert.assertFalse("2000 != 2000 should fail", success);
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.NOT_EQUAL, Bytes.toBytes(4000l), someRandomPut);
+    Assert.assertTrue("4000 != 2000 should succeed", success);
   }
 }
