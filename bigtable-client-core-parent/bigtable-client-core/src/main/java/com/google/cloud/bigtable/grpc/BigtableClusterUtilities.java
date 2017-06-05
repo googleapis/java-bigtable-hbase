@@ -200,19 +200,19 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
    *           received
    */
-  public Cluster setClusterSize(String clusterId, String zoneId, int newSize)
+  public void setClusterSize(String clusterId, String zoneId, int newSize)
       throws InterruptedException {
-    return setClusterSize(getCluster(clusterId, zoneId), newSize);
+    setClusterSize(instanceName.toClusterName(clusterId).getClusterName(), newSize);
   }
 
   /**
-   * Sets a cluster size to a specific size in an instance with a single clustr
+   * Sets a cluster size to a specific size in an instance with a single cluster
    * @param newSize
    * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
    *           received
    */
   public void setClusterSize(int newSize) throws InterruptedException {
-    setClusterSize(getSingleCluster(), newSize);
+    setClusterSize(getSingleCluster().getName(), newSize);
   }
 
   /**
@@ -221,24 +221,16 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @param newSize
    * @throws InterruptedException
    */
-  private Cluster setClusterSize(Cluster cluster, int newSize)
+  private void setClusterSize(String clusterName, int newSize)
       throws InterruptedException {
     Preconditions.checkArgument(newSize > 0, "Cluster size must be > 0");
-    int currentSize = cluster.getServeNodes();
-    if (currentSize == newSize) {
-      logger.info("Cluster %s already has %d nodes.", getClusterId(cluster), newSize);
-      return cluster;
-    } else {
-      String clusterName = cluster.getName();
-      logger.info("Updating cluster %s to size %d", clusterName, newSize);
-      Cluster updatedCluster = cluster.toBuilder()
-          .setServeNodes(newSize)
-          .build();
-      Operation operation = client.updateCluster(updatedCluster);
-      waitForOperation(operation.getName(), 60);
-      logger.info("Done updating cluster %s.", clusterName);
-      return updatedCluster;
-    }
+    logger.info("Updating cluster %s to size %d", clusterName, newSize);
+    Operation operation = client.updateCluster(Cluster.newBuilder()
+        .setName(clusterName)
+        .setServeNodes(newSize)
+        .build());
+    waitForOperation(operation.getName(), 60);
+    logger.info("Done updating cluster %s.", clusterName);
   }
 
   /**
@@ -252,16 +244,6 @@ public class BigtableClusterUtilities implements AutoCloseable {
     Preconditions.checkState(response.getClustersCount() == 1,
       "There can only be one cluster for this method to work.");
     return response.getClusters(0);
-  }
-
-  /**
-   * Extract the cluster id from the cluster. See {@link BigtableClusterName#getClusterId()} for
-   * more information.
-   * @param cluster A {@link Cluster} with a fully qualified cluster name
-   * @return the id portion of the {@link Cluster#getName()};
-   */
-  private String getClusterId(Cluster cluster) {
-    return new BigtableClusterName(cluster.getName()).getClusterId();
   }
 
   /**
