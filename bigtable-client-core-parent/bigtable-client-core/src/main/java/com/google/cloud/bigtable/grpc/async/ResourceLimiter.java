@@ -1,5 +1,6 @@
 package com.google.cloud.bigtable.grpc.async;
 
+import com.codahale.metrics.Timer;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 
@@ -219,18 +220,13 @@ public class ResourceLimiter {
       bulkMutationRpcTargetMs);
 
     // target roughly 20% within the the target so that there isn't too much churn
-    final long highTargetNanos =
-        TimeUnit.MILLISECONDS.toNanos((long) (bulkMutationRpcTargetMs * 1.2));
-    final long lowTargetNanos =
-        TimeUnit.MILLISECONDS.toNanos((long) (bulkMutationRpcTargetMs * 0.8));
+    final long highTargetMs = (long) (bulkMutationRpcTargetMs * 1.2);
+    final long lowTargetMs = (long) (bulkMutationRpcTargetMs * 0.8);
 
     // Increase at 5% of the maximum RPC count increments, and reduce at 10%. The basic assumption
     // is that the throttling should be aggressive, and caution should be taken to not go over the
     // latency cap. The assumption is that maximizing throughput is less important than system
     // stability.
-    final int throttlingChangeStep = getAbsoluteMaxInFlightRpcs() / 20;
-    final int minimumRpcCount = Math.max(getAbsoluteMaxInFlightRpcs() / 100, 1);
-
     // The maximum in flight RPCs is pretty high. Start with a significantly reduced number, and
     // then work up or down.
     setCurrentInFlightMaxRpcs(getCurrentInFlightMaxRpcs() / 4);
@@ -239,32 +235,45 @@ public class ResourceLimiter {
       @Override
       public void run() {
         BulkMutationsStats stats = BulkMutationsStats.getInstance();
-        long meanLatencyNanos = (long) stats.getMutationTimer().getSnapshot().getMean();
-        if (meanLatencyNanos >= highTargetNanos) {
+        long meanLatencyMs = getMeanMs(stats.getMutationTimer());
+        if (meanLatencyMs >= bulkMutationRpcTargetMs * 3) {
+          // decrease at 30% of the maximum RPCs, with a minimum of 2.5%
+          reduceParallelism(meanLatencyMs, absoluteMaxInFlightRpcs * 3 / 10);
+
+        } else if (meanLatencyMs >= highTargetMs) {
           // decrease at 10% of the maximum RPCs, with a minimum of 2.5%
-          reduceParallelism(minimumRpcCount, meanLatencyNanos, throttlingChangeStep * 2);
+          reduceParallelism(meanLatencyMs, absoluteMaxInFlightRpcs / 10);
 
-        } else if (meanLatencyNanos <= lowTargetNanos && (stats.getThrottlingTimer().getSnapshot()
-            .getMean() > TimeUnit.MILLISECONDS.toNanos(1))) {
-          // if latency is low, and there was throttling of at least one millisecond, then increase
-          // the parallelism so that new calls will not be throttled.
+        } else if (getMeanMs(stats.getThrottlingTimer()) > 1) {
+          if (meanLatencyMs <= lowTargetMs) {
+            // if latency is low, and there was throttling of at least one millisecond, then
+            // increase the parallelism so that new calls will not be throttled.
 
-          // Increase parallelism at a slower than we decrease. The lower rate should help the
-          // system maintain stability.
-          increaseParallelism(meanLatencyNanos, throttlingChangeStep);
+            // Increase parallelism at a slower than we decrease. The lower rate should help the
+            // system maintain stability.
+            increaseParallelism(meanLatencyMs, absoluteMaxInFlightRpcs / 20);
+
+          } else if (currentInFlightMaxRpcs < absoluteMaxInFlightRpcs / 20
+              && meanLatencyMs <= (bulkMutationRpcTargetMs * 2)) {
+            // For some reason, when parallelism is reduced latency tends to be artificially higher.
+            // Increase slowly to ensure that the system restabilizes.
+            increaseParallelism(meanLatencyMs, absoluteMaxInFlightRpcs / 50);
+          }
         }
       }
 
-      private void reduceParallelism(int minimumRpcCount, long meanLatencyNanos,
-          int step) {
-        int current = getCurrentInFlightMaxRpcs();
-        int newValue =  Math.max(current - step, minimumRpcCount);
+      private long getMeanMs(Timer timer) {
+        return TimeUnit.NANOSECONDS.toMillis((long) timer.getSnapshot().getMean());
+      }
+
+      private void reduceParallelism(long meanLatencyNanos, int step) {
+        int minimumRpcCount = Math.max(absoluteMaxInFlightRpcs / 100, 1);
+        int newValue = Math.max(currentInFlightMaxRpcs - step, minimumRpcCount);
         setParallelism(meanLatencyNanos, "Reducing", newValue);
       }
 
       private void increaseParallelism(long meanLatencyNanos, int incrementStep) {
-        int current = getCurrentInFlightMaxRpcs();
-        int newValue = Math.min(current + incrementStep, absoluteMaxInFlightRpcs);
+        int newValue = Math.min(currentInFlightMaxRpcs + incrementStep, absoluteMaxInFlightRpcs);
         setParallelism(meanLatencyNanos, "Increasing", newValue);
       }
 
