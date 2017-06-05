@@ -243,7 +243,7 @@ public class ResourceLimiter {
 
         if (meanLatencyNanos >= highTargetNanos) {
           // decrease at 10% of the maximum RPCs, with a minimum of 2.5%
-          reduceParallelism(minimumRpcCount, meanLatencyNanos, throttlingChangeStep);
+          reduceParallelism(minimumRpcCount, meanLatencyNanos, throttlingChangeStep * 2);
 
         } else if (meanLatencyNanos <= lowTargetNanos && (stats.getThrottlingTimer().getSnapshot()
             .getMean() > TimeUnit.MILLISECONDS.toNanos(1))) {
@@ -252,33 +252,32 @@ public class ResourceLimiter {
 
           // Increase parallelism at a slower than we decrease. The lower rate should help the
           // system maintain stability.
-          increaseParallelism(minimumRpcCount, meanLatencyNanos, throttlingChangeStep / 2);
+          increaseParallelism(meanLatencyNanos, throttlingChangeStep);
         }
       }
 
-      protected void reduceParallelism(final int minimumRpcCount, long meanLatencyNanos,
-          int decrementStep) {
+      private void reduceParallelism(int minimumRpcCount, long meanLatencyNanos,
+          int step) {
         int current = getCurrentInFlightMaxRpcs();
-        int newValue =  Math.max(current - decrementStep, minimumRpcCount);
-        setParallelism(meanLatencyNanos, current, "Reducing", newValue);
+        int newValue =  Math.max(current - step, minimumRpcCount);
+        setParallelism(meanLatencyNanos, "Reducing", newValue);
       }
 
-      protected void increaseParallelism(final int minimumRpcCount, long meanLatencyNanos,
-          int incrementStep) {
+      private void increaseParallelism(long meanLatencyNanos, int incrementStep) {
         int current = getCurrentInFlightMaxRpcs();
         int newValue = Math.min(current + incrementStep, absoluteMaxInFlightRpcs);
-        setParallelism(meanLatencyNanos, current, "Increasing", newValue);
+        setParallelism(meanLatencyNanos, "Increasing", newValue);
       }
 
-      protected void setParallelism(long meanLatencyNanos, int current, String type, int newValue) {
-        if (newValue != current) {
+      private void setParallelism(long meanLatencyNanos, String type, int newValue) {
+        int currentValue = getCurrentInFlightMaxRpcs();
+        if (newValue != currentValue) {
           setCurrentInFlightMaxRpcs(newValue);
-          LOG.debug(
-            "Latency is at %d ms. %s paralellelism from %d to %d.",
-            TimeUnit.NANOSECONDS.toMillis(meanLatencyNanos), type, current, newValue);
+          LOG.debug("Latency is at %d ms. %s paralellelism from %d to %d.",
+            TimeUnit.NANOSECONDS.toMillis(meanLatencyNanos), type, currentValue,
+            newValue);
         }
       }
-
     };
 
     // 20 seconds is an assumption that seems to work. In bad situations, the throttling will start
