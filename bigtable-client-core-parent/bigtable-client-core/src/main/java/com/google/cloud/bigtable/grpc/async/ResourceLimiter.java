@@ -240,32 +240,42 @@ public class ResourceLimiter {
       public void run() {
         BulkMutationsStats stats = BulkMutationsStats.getInstance();
         long meanLatencyNanos = (long) stats.getMutationTimer().getSnapshot().getMean();
-        if (meanLatencyNanos >= highTargetNanos) {
-          int current = getCurrentInFlightMaxRpcs();
 
+        if (meanLatencyNanos >= highTargetNanos) {
           // decrease at 10% of the maximum RPCs, with a minimum of 2.5%
-          int newValue =  Math.max(current - throttlingChangeStep, minimumRpcCount);
-          if (newValue != current) {
-            setCurrentInFlightMaxRpcs(newValue);
-            LOG.debug(
-              "Latency is at %d ms.  Reducing paralellelism from %d to %d.",
-              TimeUnit.NANOSECONDS.toMillis(meanLatencyNanos), current, newValue);
-          }
+          reduceParallelism(minimumRpcCount, meanLatencyNanos, throttlingChangeStep * 2);
+
         } else if (meanLatencyNanos <= lowTargetNanos && (stats.getThrottlingTimer().getSnapshot()
             .getMean() > TimeUnit.MILLISECONDS.toNanos(1))) {
           // if latency is low, and there was throttling of at least one millisecond, then increase
           // the parallelism so that new calls will not be throttled.
 
-          int current = getCurrentInFlightMaxRpcs();
-
           // Increase parallelism at a slower than we decrease. The lower rate should help the
           // system maintain stability.
-          int newValue = Math.min(current + throttlingChangeStep, absoluteMaxInFlightRpcs);
-          if (newValue != current) {
-            setCurrentInFlightMaxRpcs(newValue);
-            LOG.debug("Latency is at %d ms.  Increasing paralellelism from %d to %d.",
-              TimeUnit.NANOSECONDS.toMillis(meanLatencyNanos), current, newValue);
-          }
+          increaseParallelism(meanLatencyNanos, throttlingChangeStep);
+        }
+      }
+
+      private void reduceParallelism(int minimumRpcCount, long meanLatencyNanos,
+          int step) {
+        int current = getCurrentInFlightMaxRpcs();
+        int newValue =  Math.max(current - step, minimumRpcCount);
+        setParallelism(meanLatencyNanos, "Reducing", newValue);
+      }
+
+      private void increaseParallelism(long meanLatencyNanos, int incrementStep) {
+        int current = getCurrentInFlightMaxRpcs();
+        int newValue = Math.min(current + incrementStep, absoluteMaxInFlightRpcs);
+        setParallelism(meanLatencyNanos, "Increasing", newValue);
+      }
+
+      private void setParallelism(long meanLatencyNanos, String type, int newValue) {
+        int currentValue = getCurrentInFlightMaxRpcs();
+        if (newValue != currentValue) {
+          setCurrentInFlightMaxRpcs(newValue);
+          LOG.debug("Latency is at %d ms. %s paralellelism from %d to %d.",
+            TimeUnit.NANOSECONDS.toMillis(meanLatencyNanos), type, currentValue,
+            newValue);
         }
       }
     };
