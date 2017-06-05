@@ -192,7 +192,7 @@ public class ResourceLimiter {
    * <p>
    * <ul>
    * <li>To start: <ul>
-   *   <li>reduce parallelism by 50% -- The parallelism is high to begin with. This reduction should
+   *   <li>reduce parallelism to 25% -- The parallelism is high to begin with. This reduction should
    *       reduce the impacts of a bursty job, such as those found in Dataflow.
    *   </ul>
    * <li>every 20 seconds:
@@ -203,7 +203,7 @@ public class ResourceLimiter {
    *      increase parallelism by 5% of original maximum.
    *   }
    * </pre>
-   * NOTE: increases are capped by the initial maximum.  Decreases are floored at 2.5% of the
+   * NOTE: increases are capped by the initial maximum.  Decreases are floored at 1% of the
    * original maximum so that there is some level of throughput.
    * </ul>
    * @param bulkMutationRpcTargetMs the target for latency of MutateRows requests in milliseconds.
@@ -229,11 +229,11 @@ public class ResourceLimiter {
     // latency cap. The assumption is that maximizing throughput is less important than system
     // stability.
     final int throttlingChangeStep = getAbsoluteMaxInFlightRpcs() / 20;
-    final int minimumRpcCount = Math.max(throttlingChangeStep / 2, 1);
+    final int minimumRpcCount = Math.max(getAbsoluteMaxInFlightRpcs() / 100, 1);
 
     // The maximum in flight RPCs is pretty high. Start with a significantly reduced number, and
     // then work up or down.
-    setCurrentInFlightMaxRpcs(getCurrentInFlightMaxRpcs() / 2);
+    setCurrentInFlightMaxRpcs(getCurrentInFlightMaxRpcs() / 4);
 
     Runnable r = new Runnable() {
       @Override
@@ -243,8 +243,8 @@ public class ResourceLimiter {
         if (meanLatencyNanos >= highTargetNanos) {
           int current = getCurrentInFlightMaxRpcs();
 
-          // decrease at 10% of the maximum RPCs, with a minimum of 2.5%
-          int newValue =  Math.max(current - throttlingChangeStep, minimumRpcCount);
+          // decrease at 10% of the maximum RPCs, with a minimum of 1%
+          int newValue = Math.max(current - (throttlingChangeStep * 2), minimumRpcCount);
           if (newValue != current) {
             setCurrentInFlightMaxRpcs(newValue);
             LOG.debug(
