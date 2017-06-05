@@ -416,4 +416,8 @@ public class AsyncExecutor {
   OperationAccountant getOperationAccountant() {
     return operationsAccountant;
   }
+
+  public ResourceLimiter getResourceLimiter() {
+    return resourceLimiter;
+  }
 }
