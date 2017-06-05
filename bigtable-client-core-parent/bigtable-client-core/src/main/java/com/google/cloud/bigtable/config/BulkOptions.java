@@ -58,11 +58,11 @@ public class BulkOptions implements Serializable {
 
   /**
    * The target RPC response time for a MutateRows request. This value is meaningful if bulk
-   * mutation throttling is enabled. 40 ms. is a generally ok latency for MutateRows rpcs, but it
-   * could go higher (for example 200 ms) for less latency sensitive applications that need more
+   * mutation throttling is enabled. 100 ms. is a generally ok latency for MutateRows RPCs, but it
+   * could go higher (for example 300 ms) for less latency sensitive applications that need more
    * throughput, or lower (10 ms) for latency sensitive applications.
    */
-  public static final int BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT = 40;
+  public static final int BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT = 100;
 
   /**
    * The maximum amount of time a row will be buffered for. By default 0: indefinitely.
