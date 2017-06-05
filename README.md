@@ -35,13 +35,13 @@ which makes it easy for development teams to get started.
   <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.2</artifactId>
-      <version>0.9.5.1</version>
+      <version>0.9.6.2</version>
   </dependency>
 
   <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-tcnative-boringssl-static</artifactId>
-      <version>1.1.33.Fork19</version>
+      <version>1.1.33.Fork26</version>
   </dependency>
 ```
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
