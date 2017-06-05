@@ -16,7 +16,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-dataflow-parent</artifactId>
-        <version>0.9.7-SNAPSHOT</version>
+        <version>0.9.7</version>
     </parent>
 
     <artifactId>bigtable-dataflow-import</artifactId>
