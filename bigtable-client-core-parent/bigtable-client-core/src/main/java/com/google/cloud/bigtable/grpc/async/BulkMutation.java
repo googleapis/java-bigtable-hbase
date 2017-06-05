@@ -24,6 +24,7 @@ import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -493,58 +494,29 @@ public class BulkMutation {
 
   /**
    * Constructor for BulkMutation.
-   *
-   * @param tableName a {@link BigtableTableName} object for the table to which all {@link
-   *     MutateRowRequest}s will be sent.
-   * @param asyncExecutor a {@link AsyncExecutor} object that asynchronously sends {@link
-   *     MutateRowsRequest}.
+   * @param tableName a {@link BigtableTableName} object for the table to which all
+   *          {@link MutateRowRequest}s will be sent.
+   * @param asyncExecutor a {@link AsyncExecutor} object that asynchronously sends
+   *          {@link MutateRowsRequest}.
    * @param retryOptions a {@link RetryOptions} object that describes how to perform retries.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
-   *     retries.
-   * @param maxRowKeyCount describes the maximum number of {@link MutateRowRequest}s to send in a
-   *     single {@link MutateRowsRequest}.
-   * @param maxRequestSize describes the maximum cumulative size of a {@link MutateRowsRequest}.
+   *          retries.
+   * @param bulkOptions a {@link BulkOptions} with the user specified options for the behavior of
+   *          this instance.
    */
   public BulkMutation(
       BigtableTableName tableName,
       AsyncExecutor asyncExecutor,
       RetryOptions retryOptions,
       ScheduledExecutorService retryExecutorService,
-      int maxRowKeyCount,
-      long maxRequestSize) {
-    this(tableName, asyncExecutor, retryOptions, retryExecutorService, maxRowKeyCount, maxRequestSize, 0);
-  }
-
-  /**
-   * Constructor for BulkMutation.
-   *
-   * @param tableName a {@link BigtableTableName} object for the table to which all {@link
-   *     MutateRowRequest}s will be sent.
-   * @param asyncExecutor a {@link AsyncExecutor} object that asynchronously sends {@link
-   *     MutateRowsRequest}.
-   * @param retryOptions a {@link RetryOptions} object that describes how to perform retries.
-   * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
-   *     retries.
-   * @param maxRowKeyCount describes the maximum number of {@link MutateRowRequest}s to send in a
-   *     single {@link MutateRowsRequest}.
-   * @param maxRequestSize describes the maximum cumulative size of a {@link MutateRowsRequest}.
-   * @param autoflushMs the maximum number of milliseconds that items can linger before being flush. 0 to disable.
-   */
-  public BulkMutation(
-      BigtableTableName tableName,
-      AsyncExecutor asyncExecutor,
-      RetryOptions retryOptions,
-      ScheduledExecutorService retryExecutorService,
-      int maxRowKeyCount,
-      long maxRequestSize,
-      long autoflushMs) {
+      BulkOptions bulkOptions) {
     this.tableName = tableName.toString();
     this.asyncExecutor = asyncExecutor;
     this.retryOptions = retryOptions;
     this.retryExecutorService = retryExecutorService;
-    this.maxRowKeyCount = maxRowKeyCount;
-    this.maxRequestSize = maxRequestSize;
-    this.autoflushMs = autoflushMs;
+    this.maxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();
+    this.maxRequestSize = bulkOptions.getBulkMaxRequestSize();
+    this.autoflushMs = bulkOptions.getAutoflushMs();
   }
 
   public ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {

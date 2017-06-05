@@ -53,6 +53,7 @@ import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
@@ -260,15 +261,17 @@ public class TestBulkMutationAwaitCompletion {
         new OperationAccountant(clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
     AsyncExecutor asyncExecutor =
         new AsyncExecutor(mockClient, resourceLimiter, operationAccountant);
+    BulkOptions options = new BulkOptions.Builder()
+        .setBulkMaxRowKeyCount(MUTATIONS_PER_RPC)
+        .setBulkMaxRequestSize(1000000000)
+        .build();
     BulkMutation bulkMutation =
         new BulkMutation(
             TestBulkMutation.TABLE_NAME,
             asyncExecutor,
             retryOptions,
             mockScheduler,
-            MUTATIONS_PER_RPC,
-            1000000000,
-            0);
+            options);
     bulkMutation.clock = clock;
     return bulkMutation;
   }

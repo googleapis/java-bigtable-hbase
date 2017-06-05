@@ -117,8 +117,7 @@ public class TestBigtableBufferedMutator {
                 invocation.getArgumentAt(1, AsyncExecutor.class),
                 options.getRetryOptions(),
                 BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-                options.getBulkOptions().getBulkMaxRowKeyCount(),
-                options.getBulkOptions().getBulkMaxRequestSize());
+                options.getBulkOptions());
           }
         });
   }

@@ -160,8 +160,7 @@ public class TestBatchExecutor {
             invocation.getArgumentAt(1, AsyncExecutor.class),
             options.getRetryOptions(),
             BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-            bulkOptions.getBulkMaxRowKeyCount(),
-            bulkOptions.getBulkMaxRequestSize());
+            bulkOptions);
         }
       });
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).
