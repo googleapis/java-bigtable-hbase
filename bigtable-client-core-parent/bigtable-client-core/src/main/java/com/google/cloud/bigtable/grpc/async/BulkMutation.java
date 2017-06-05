@@ -170,8 +170,8 @@ public class BulkMutation {
      *
      * @param entry The {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to add
      * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}
-     *     returns from the server. See {@link #addCallback(ListenableFuture)} for more information
-     *     about how the SettableFuture is set.
+     *     returns from the server. See {@link #addCallback(ListenableFuture, Long)} for more 
+     *     information about how the SettableFuture is set.
      */
     private ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
       Preconditions.checkNotNull(entry);
@@ -191,7 +191,8 @@ public class BulkMutation {
      * {@link BulkMutation#add(MutateRowRequest)} when the provided {@link ListenableFuture} for the
      * {@link MutateRowsResponse} is complete.
      */
-    private void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture) {
+    private void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture,
+        final Long rpcId) {
       Futures.addCallback(
           bulkFuture,
           new FutureCallback<List<MutateRowsResponse>>() {
@@ -208,6 +209,9 @@ public class BulkMutation {
             }
 
             protected void markCompletion() {
+              if (rpcId != null) {
+                asyncExecutor.getResourceLimiter().markCanBeCompleted(rpcId);
+              }
               BulkMutationsStats.getInstance().markMutationsRpcCompletion(
                 clock.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
             }
@@ -387,6 +391,7 @@ public class BulkMutation {
         setRetryComplete();
         return;
       }
+      Long operationId = null;
       try {
         if (batchId == null) {
           batchId = batchIdGenerator.incrementAndGet();
@@ -395,10 +400,11 @@ public class BulkMutation {
         }
         MutateRowsRequest request = currentRequestManager.build();
         long start = clock.nanoTime();
-        long operationId = asyncExecutor.registerOperation(request);
+        operationId = asyncExecutor.getResourceLimiter()
+            .registerOperationWithHeapSize(request.getSerializedSize());
         long now = clock.nanoTime();
         BulkMutationsStats.getInstance().markThrottling(now - start);
-        mutateRowsFuture = asyncExecutor.mutateRowsAsync(request, operationId);
+        mutateRowsFuture = asyncExecutor.getClient().mutateRowsAsync(request);
         currentRequestManager.lastRpcSentTimeNanos = now;
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -406,7 +412,7 @@ public class BulkMutation {
       } catch (Throwable e) {
         mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
-        addCallback(mutateRowsFuture);
+        addCallback(mutateRowsFuture, operationId);
       }
     }
 
@@ -558,7 +564,7 @@ public class BulkMutation {
    * @param entry The {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to add
    * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when
    *     the {@link MutateRowsResponse} returns from the server. See {@link
-   *     BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how the
+   *     BulkMutation.Batch#addCallback(ListenableFuture, Long)} for more information about how the
    *     SettableFuture is set.
    */
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
