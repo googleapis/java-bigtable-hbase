@@ -54,6 +54,7 @@ import com.google.bigtable.v2.MutateRowsRequest.Entry;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
@@ -322,7 +323,7 @@ public class TestBulkMutation {
   public void testAutoflush() throws InterruptedException, ExecutionException {
     // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the scheduled executor mock
     underTest = new BulkMutation(TABLE_NAME, asyncExecutor, retryOptions,
-        retryExecutorService, 1000, 1000000L, 1000L);
+        retryExecutorService, new BulkOptions.Builder().setAutoflushMs(1000L).build());
 
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
     ScheduledFuture f = Mockito.mock(ScheduledFuture.class);
@@ -388,8 +389,9 @@ public class TestBulkMutation {
   }
 
   private BulkMutation createBulkMutation() {
-    return new BulkMutation(TABLE_NAME, asyncExecutor, retryOptions,
-        retryExecutorService, MAX_ROW_COUNT, 1000000L, 0);
+    BulkOptions options = new BulkOptions.Builder().setBulkMaxRequestSize(1000000L)
+        .setBulkMaxRowKeyCount(MAX_ROW_COUNT).build();
+    return new BulkMutation(TABLE_NAME, asyncExecutor, retryOptions, retryExecutorService, options);
   }
 
   private AtomicLong setupScheduler() {
