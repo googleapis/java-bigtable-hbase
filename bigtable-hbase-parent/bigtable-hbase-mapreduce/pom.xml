@@ -69,6 +69,7 @@ limitations under the License.
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -76,6 +77,7 @@ limitations under the License.
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
+            <version>${hbase.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
@@ -87,6 +89,7 @@ limitations under the License.
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>
+            <version>${netty-tcnative-boringssl-static.version}</version>
             <scope>compile</scope>
         </dependency>
 
