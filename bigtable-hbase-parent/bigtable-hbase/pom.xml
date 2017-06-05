@@ -51,6 +51,8 @@ limitations under the License.
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
+
+        <!-- TODO: remove this is direct dep, its only used for its Clock interface -->
         <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client</artifactId>
