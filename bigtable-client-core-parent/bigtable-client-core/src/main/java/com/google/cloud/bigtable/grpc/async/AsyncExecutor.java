@@ -161,38 +161,6 @@ public class AsyncExecutor {
   }
 
   /**
-   * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#mutateRowAsync(MutateRowRequest)} on the
-   * {@link com.google.bigtable.v2.MutateRowRequest} given an operationId generated from
-   * {@link #registerOperation(long)}.
-   *
-   * @param request The {@link com.google.bigtable.v2.MutateRowRequest} to send.
-   * @param operationId The Id generated from
-   *          {@link #registerOperation(int)} that will be released when
-   *          the mutate operation is completed.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
-   */
-  public ListenableFuture<MutateRowResponse> mutateRowAsync(MutateRowRequest request,
-      long operationId) {
-    return call(MUTATE_ROW_ASYNC, request, operationId);
-  }
-
-  /**
-   * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#mutateRowsAsync(MutateRowsRequest)} on the
-   * {@link com.google.bigtable.v2.MutateRowsRequest} given an operationId generated from
-   * {@link #registerOperation(long)}.
-   *
-   * @param request The {@link com.google.bigtable.v2.MutateRowsRequest} to send.
-   * @param operationId The Id generated from
-   *          {@link #registerOperation(long)} that will be released when
-   *          the mutate operation is completed.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
-   */
-  public ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request,
-      long operationId) {
-    return call(MUTATE_ROWS_ASYNC, request, operationId);
-  }
-
-  /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)} on the
    * {@link com.google.bigtable.v2.CheckAndMutateRowRequest} given an operationId generated from
    * {@link #registerOperation(long)}.
@@ -206,35 +174,6 @@ public class AsyncExecutor {
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request, long operationId) {
     return call(CHECK_AND_MUTATE_ASYNC, request, operationId);
-  }
-
-  /**
-   * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRowRequest)} on the
-   * {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} given an operationId generated from
-   * {@link #registerOperation(long)}.
-   *
-   * @param request The {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} to send.
-   * @param operationId The Id generated from
-   *          {@link #registerOperation(long)} that will be released when
-   *          the readModifyWriteRowAsync operation is completed.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
-   */
-  public ListenableFuture<ReadModifyWriteRowResponse>
-      readModifyWriteRowAsync(ReadModifyWriteRowRequest request, long operationId) {
-    return call(READ_MODIFY_WRITE_ASYNC, request, operationId);
-  }
-
-  /**
-   * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
-   * {@link com.google.bigtable.v2.ReadRowsRequest} given an operationId generated from
-   * {@link #registerOperation(long)}.
-   *
-   * @param request The {@link com.google.bigtable.v2.ReadRowsRequest} to send.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
-   * @param operationId a long.
-   */
-  public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request, long operationId) {
-    return call(READ_ROWS_ASYNC, request, operationId);
   }
 
   /**
@@ -329,12 +268,8 @@ public class AsyncExecutor {
     return call(rpc, request, registerOperation(request));
   }
 
-  public long registerOperation(MessageLite request) throws InterruptedException {
-    return registerOperation(request.getSerializedSize());
-  }
-
-  public long registerOperation(long size) throws InterruptedException {
-    long id = resourceLimiter.registerOperationWithHeapSize(size);
+  private long registerOperation(MessageLite request) throws InterruptedException {
+    long id = resourceLimiter.registerOperationWithHeapSize((long) request.getSerializedSize());
     operationsAccountant.registerOperation(id);
     return id;
   }
