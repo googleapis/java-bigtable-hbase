@@ -353,7 +353,9 @@ public class BigtableSession implements Closeable {
     }
     return new BulkMutation(
         tableName,
-        asyncExecutor,
+        dataClient,
+        resourceLimiter,
+        asyncExecutor.getOperationAccountant(),
         options.getRetryOptions(),
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
         bulkOptions);

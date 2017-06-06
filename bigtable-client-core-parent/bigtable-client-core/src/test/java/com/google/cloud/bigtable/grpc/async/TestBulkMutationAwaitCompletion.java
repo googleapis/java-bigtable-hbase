@@ -20,7 +20,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,7 +96,7 @@ public class TestBulkMutationAwaitCompletion {
   private ResourceLimiter resourceLimiter;
   private List<Runnable> opCompletionRunnables;
   private ExecutorService testExecutor;
-  private List<AsyncExecutor> executors;
+  private List<OperationAccountant> accountants;
   private List<ListenableFuture<MutateRowResponse>> singleMutationFutures;
   private Logger originalBulkMutatorLog;
   private Logger originalOperationAccountantLog;
@@ -110,7 +109,7 @@ public class TestBulkMutationAwaitCompletion {
     retryOptions = RetryOptionsUtil.createTestRetryOptions(clock);
     resourceLimiter = new ResourceLimiter(1000000, OPERATIONS_PER_MUTATOR * 10);
     opCompletionRunnables = Collections.synchronizedList(new LinkedList<Runnable>());
-    executors = Collections.synchronizedList(new ArrayList<AsyncExecutor>());
+    accountants = Collections.synchronizedList(new ArrayList<OperationAccountant>());
     singleMutationFutures =
         Collections.synchronizedList(new ArrayList<ListenableFuture<MutateRowResponse>>());
 
@@ -244,23 +243,21 @@ public class TestBulkMutationAwaitCompletion {
    */
   private void runOneBulkMutation() {
     MutateRowRequest request = TestBulkMutation.createRequest();
-    BulkMutation bulkMutation = createBulkMutation();
+    OperationAccountant accountant = createOperationAccountant();
+    BulkMutation bulkMutation = createBulkMutation(accountant);
     for (int i = 0; i < OPERATIONS_PER_MUTATOR; i++) {
       singleMutationFutures.add(bulkMutation.add(request));
     }
     bulkMutation.flush();
-    testExecutor.execute(flushRunnable(bulkMutation.getAsyncExecutor()));
-    executors.add(bulkMutation.getAsyncExecutor());
+    testExecutor.execute(flushRunnable(accountant));
+    accountants.add(accountant);
   }
 
-  /**
-   * Creates a fully formed {@link BulkMutation}
-   */
-  private BulkMutation createBulkMutation() {
-    OperationAccountant operationAccountant =
-        new OperationAccountant(clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
-    AsyncExecutor asyncExecutor =
-        new AsyncExecutor(mockClient, resourceLimiter, operationAccountant);
+  private OperationAccountant createOperationAccountant() {
+    return new OperationAccountant(clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
+  }
+
+  protected BulkMutation createBulkMutation(OperationAccountant operationAccountant) {
     BulkOptions options = new BulkOptions.Builder()
         .setBulkMaxRowKeyCount(MUTATIONS_PER_RPC)
         .setBulkMaxRequestSize(1000000000)
@@ -268,7 +265,9 @@ public class TestBulkMutationAwaitCompletion {
     BulkMutation bulkMutation =
         new BulkMutation(
             TestBulkMutation.TABLE_NAME,
-            asyncExecutor,
+            mockClient,
+            resourceLimiter,
+            operationAccountant,
             retryOptions,
             mockScheduler,
             options);
@@ -276,13 +275,13 @@ public class TestBulkMutationAwaitCompletion {
     return bulkMutation;
   }
 
-  protected Runnable flushRunnable(final AsyncExecutor executor) {
+  protected Runnable flushRunnable(final OperationAccountant accountant) {
     return new Runnable() {
       @Override
       public void run() {
           try {
-            executor.flush();
-          } catch (IOException e) {
+            accountant.awaitCompletion();
+          } catch (InterruptedException e) {
             e.printStackTrace();
           }
       }
@@ -301,14 +300,14 @@ public class TestBulkMutationAwaitCompletion {
   protected void performTimeout() throws InterruptedException {
     for (int i = 0; i < 100; i++) {
       currentTime.addAndGet(TimeUnit.MINUTES.toNanos(1));
-      for (AsyncExecutor executor : executors) {
-        executor.getOperationAccountant().awaitCompletionPing();
+      for (OperationAccountant accountant : accountants) {
+        accountant.awaitCompletionPing();
       }
       // Let the other thread catch up.
       Thread.sleep(10);
       boolean hasInflight = false;
-      for (AsyncExecutor executor : executors) {
-        if (executor.hasInflightRequests()) {
+      for (OperationAccountant accountant : accountants) {
+        if (accountant.hasInflightOperations()) {
           hasInflight = true;
           break;
         }
@@ -326,8 +325,8 @@ public class TestBulkMutationAwaitCompletion {
    * {@link Future#isDone()}.
    */
   protected void confirmCompletion() {
-    for (AsyncExecutor accountant : executors) {
-      Assert.assertFalse(accountant.hasInflightRequests());
+    for (OperationAccountant accountant : accountants) {
+      Assert.assertFalse(accountant.hasInflightOperations());
     }
     for (ListenableFuture<MutateRowResponse> future : singleMutationFutures) {
       Assert.assertTrue(future.isDone());
