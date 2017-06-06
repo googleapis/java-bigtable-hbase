@@ -348,7 +348,7 @@ public class AsyncExecutor {
    *
    * @return a {@link com.google.cloud.bigtable.grpc.async.OperationAccountant} object.
    */
-  OperationAccountant getOperationAccountant() {
+  public OperationAccountant getOperationAccountant() {
     return operationsAccountant;
   }
 

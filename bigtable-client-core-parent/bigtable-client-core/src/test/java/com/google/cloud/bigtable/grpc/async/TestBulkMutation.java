@@ -85,11 +85,11 @@ public class TestBulkMutation {
   @Mock private ScheduledExecutorService retryExecutorService;
   @Mock private NanoClock nanoClock;
 
-  private AsyncExecutor asyncExecutor;
   private SettableFuture<List<MutateRowsResponse>> future;
   private RetryOptions retryOptions;
   private BulkMutation underTest;
   private OperationAccountant operationAccountant;
+  private ResourceLimiter resourceLimiter;
 
   @Before
   public void setup() throws InterruptedException {
@@ -99,7 +99,7 @@ public class TestBulkMutation {
     future = SettableFuture.create();
     when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
     operationAccountant = new OperationAccountant(nanoClock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
-    asyncExecutor = new AsyncExecutor(client, new ResourceLimiter(1000, 10), operationAccountant);
+    resourceLimiter = new ResourceLimiter(1000, 10);
     underTest = createBulkMutation();
   }
 
@@ -150,7 +150,7 @@ public class TestBulkMutation {
     MutateRowResponse result = rowFuture.get(10, TimeUnit.MILLISECONDS);
     Assert.assertTrue(rowFuture.isDone());
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), result);
-    Assert.assertFalse(asyncExecutor.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
@@ -166,7 +166,7 @@ public class TestBulkMutation {
       rowFuture.get(100, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
       Assert.assertEquals(Status.NOT_FOUND.getCode(), Status.fromThrowable(e).getCode());
-      Assert.assertFalse(asyncExecutor.hasInflightRequests());
+      Assert.assertFalse(operationAccountant.hasInflightOperations());
     }
   }
 
@@ -183,12 +183,12 @@ public class TestBulkMutation {
     Assert.assertFalse(rowFuture.isDone());
     verify(retryExecutorService, times(1)).schedule(any(Runnable.class), anyLong(),
       same(TimeUnit.MILLISECONDS));
-    Assert.assertTrue(asyncExecutor.hasInflightRequests());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
 
     // Make sure that a second try works.
     future.set(createResponse(Status.OK));
     Assert.assertTrue(rowFuture.isDone());
-    Assert.assertFalse(asyncExecutor.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
@@ -211,13 +211,13 @@ public class TestBulkMutation {
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), rowFuture1.get());
     verify(retryExecutorService, times(1)).schedule(any(Runnable.class), anyLong(),
       same(TimeUnit.MILLISECONDS));
-    Assert.assertTrue(asyncExecutor.hasInflightRequests());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
 
     // Make sure that only the second request was sent.
     batch.run();
     Assert.assertNull(underTest.currentBatch);
     Assert.assertTrue(rowFuture2.isDone());
-    Assert.assertFalse(asyncExecutor.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
@@ -232,7 +232,7 @@ public class TestBulkMutation {
       Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(),
         Status.fromThrowable(e).getCode());
     }
-    Assert.assertFalse(asyncExecutor.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
     Assert.assertTrue(
         waitedNanos.get()
             > TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
@@ -247,7 +247,7 @@ public class TestBulkMutation {
     MutateRowResponse result = rowFuture.get(10, TimeUnit.MILLISECONDS);
     Assert.assertTrue(rowFuture.isDone());
     Assert.assertEquals(MutateRowResponse.getDefaultInstance(), result);
-    Assert.assertFalse(asyncExecutor.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
@@ -306,7 +306,7 @@ public class TestBulkMutation {
     }
     pool.shutdownNow();
 
-    Assert.assertFalse(asyncExecutor.hasInflightRequests());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   @Test
@@ -322,9 +322,9 @@ public class TestBulkMutation {
   @Test
   public void testAutoflush() throws InterruptedException, ExecutionException {
     // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the scheduled executor mock
-    underTest = new BulkMutation(TABLE_NAME, asyncExecutor, retryOptions,
-        retryExecutorService, new BulkOptions.Builder().setAutoflushMs(1000L).build());
-
+    underTest =
+        new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant, retryOptions,
+            retryExecutorService, new BulkOptions.Builder().setAutoflushMs(1000L).build());
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
     ScheduledFuture f = Mockito.mock(ScheduledFuture.class);
     doReturn(f)
@@ -369,7 +369,7 @@ public class TestBulkMutation {
 
     // TODO(igorbernstein2): Should this throw as well?
     // force the executor to checking for stale requests
-    asyncExecutor.flush();
+    operationAccountant.awaitCompletion();
 
     try {
       addFuture.get();
@@ -389,9 +389,10 @@ public class TestBulkMutation {
   }
 
   private BulkMutation createBulkMutation() {
-    BulkOptions options = new BulkOptions.Builder().setBulkMaxRequestSize(1000000L)
+    BulkOptions bulkOptions = new BulkOptions.Builder().setBulkMaxRequestSize(1000000L)
         .setBulkMaxRowKeyCount(MAX_ROW_COUNT).build();
-    return new BulkMutation(TABLE_NAME, asyncExecutor, retryOptions, retryExecutorService, options);
+    return new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant, retryOptions,
+        retryExecutorService, bulkOptions);
   }
 
   private AtomicLong setupScheduler() {

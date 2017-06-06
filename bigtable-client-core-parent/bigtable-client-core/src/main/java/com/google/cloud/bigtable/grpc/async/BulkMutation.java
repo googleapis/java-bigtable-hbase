@@ -27,6 +27,7 @@ import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.OperationAccountant.ComplexOperationStalenessHandler;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
@@ -211,7 +212,7 @@ public class BulkMutation {
 
             protected void markCompletion() {
               if (rpcId != null) {
-                asyncExecutor.getResourceLimiter().markCanBeCompleted(rpcId);
+                resourceLimiter.markCanBeCompleted(rpcId);
               }
               BulkMutationsStats.getInstance().markMutationsRpcCompletion(
                 clock.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
@@ -394,18 +395,18 @@ public class BulkMutation {
       }
       Long operationId = null;
       try {
-        if (batchId == null) {
-          batchId = batchIdGenerator.incrementAndGet();
-          asyncExecutor.getOperationAccountant().registerComplexOperation(batchId,
-            createRetryHandler());
-        }
         MutateRowsRequest request = currentRequestManager.build();
         long start = clock.nanoTime();
-        operationId = asyncExecutor.getResourceLimiter()
+        operationId = resourceLimiter
             .registerOperationWithHeapSize(request.getSerializedSize());
         long now = clock.nanoTime();
         BulkMutationsStats.getInstance().markThrottling(now - start);
-        mutateRowsFuture = asyncExecutor.getClient().mutateRowsAsync(request);
+        if (batchId == null) {
+          batchId = batchIdGenerator.incrementAndGet();
+          operationAccountant.registerComplexOperation(batchId,
+            createRetryHandler());
+        }
+        mutateRowsFuture = client.mutateRowsAsync(request);
         currentRequestManager.lastRpcSentTimeNanos = now;
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -461,7 +462,7 @@ public class BulkMutation {
       }
       mutateRowsFuture = null;
       if (batchId != null) {
-        asyncExecutor.getOperationAccountant().onComplexOperationCompletion(batchId);
+        operationAccountant.onComplexOperationCompletion(batchId);
         if (failedCount > 0) {
           LOG.info("Batch #%d recovered from the failure and completed.", batchId);
         }
@@ -486,8 +487,10 @@ public class BulkMutation {
   private ScheduledFuture<?> scheduledFlush = null;
 
   private final String tableName;
-  private final AsyncExecutor asyncExecutor;
+  private final BigtableDataClient client;
   private final RetryOptions retryOptions;
+  private final ResourceLimiter resourceLimiter;
+  private final OperationAccountant operationAccountant;
   private final ScheduledExecutorService retryExecutorService;
   private final int maxRowKeyCount;
   private final long maxRequestSize;
@@ -502,8 +505,11 @@ public class BulkMutation {
    * Constructor for BulkMutation.
    * @param tableName a {@link BigtableTableName} object for the table to which all
    *          {@link MutateRowRequest}s will be sent.
-   * @param asyncExecutor a {@link AsyncExecutor} object that asynchronously sends
-   *          {@link MutateRowsRequest}.
+   * @param client a {@link BigtableDataClient} object on which to perform RPCs.
+   * @param resourceLimiter a {@link ResourceLimiter} object that curbs the amount of RPCs to
+   *          something sustainable for the entire JVM.
+   * @param operationAccountant a {@link OperationAccountant} object that keeps track of outstanding
+   *          RPCs that this object performed.
    * @param retryOptions a {@link RetryOptions} object that describes how to perform retries.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
    *          retries.
@@ -512,14 +518,18 @@ public class BulkMutation {
    */
   public BulkMutation(
       BigtableTableName tableName,
-      AsyncExecutor asyncExecutor,
+      BigtableDataClient client,
+      ResourceLimiter resourceLimiter,
+      OperationAccountant operationAccountant,
       RetryOptions retryOptions,
       ScheduledExecutorService retryExecutorService,
       BulkOptions bulkOptions) {
     this.tableName = tableName.toString();
-    this.asyncExecutor = asyncExecutor;
+    this.client = client;
+    this.resourceLimiter = resourceLimiter;
     this.retryOptions = retryOptions;
     this.retryExecutorService = retryExecutorService;
+    this.operationAccountant = operationAccountant;
     this.maxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();
     this.maxRequestSize = bulkOptions.getBulkMaxRequestSize();
     this.autoflushMs = bulkOptions.getAutoflushMs();
@@ -582,10 +592,5 @@ public class BulkMutation {
    */
   public boolean isFlushed() {
     return currentBatch == null;
-  }
-
-  @VisibleForTesting
-  AsyncExecutor getAsyncExecutor() {
-    return asyncExecutor;
   }
 }
