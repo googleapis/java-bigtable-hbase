@@ -208,4 +208,8 @@ public class BulkRead {
       }
     }
   }
+
+  public int getBatchSizes() {
+    return batchSizes;
+  }
 }
