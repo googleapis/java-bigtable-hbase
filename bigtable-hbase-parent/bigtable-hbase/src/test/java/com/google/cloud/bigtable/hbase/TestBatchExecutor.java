@@ -144,9 +144,6 @@ public class TestBatchExecutor {
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
 
     MockitoAnnotations.initMocks(this);
-    when(mockAsyncExecutor.readFlatRowsAsync(any(ReadRowsRequest.class))).thenReturn(mockFuture);
-    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
-    when(mockAsyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
     when(mockBigtableSession.createAsyncExecutor()).thenReturn(mockAsyncExecutor);
@@ -229,11 +226,11 @@ public class TestBatchExecutor {
   public void testPartialResults() throws Exception {
     byte[] key1 = randomBytes(8);
     byte[] key2 = randomBytes(8);
-    FlatRow response1 = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key1))
-        .addCell(
-            new Cell("cf", ByteString.EMPTY, 10, ByteString.copyFromUtf8("hi!"), new ArrayList<String>())
-        )
-        .build();
+    FlatRow response1 =
+        FlatRow
+            .newBuilder().withRowKey(ByteString.copyFrom(key1)).addCell(new Cell("cf",
+                ByteString.EMPTY, 10, ByteString.copyFromUtf8("hi!"), new ArrayList<String>()))
+            .build();
 
     RuntimeException exception = new RuntimeException("Something bad happened");
     when(mockBulkRead.add(any(ReadRowsRequest.class)))

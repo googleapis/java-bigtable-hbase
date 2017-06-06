@@ -35,7 +35,6 @@ import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -49,7 +48,6 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -71,18 +69,6 @@ public class BatchExecutor {
    * For callbacks that take a region, this is the region we will use.
    */
   public static final byte[] NO_REGION = new byte[0];
-
-  private static final Function<List<FlatRow>, FlatRow> ROWS_TO_ROW_CONVERTER =
-      new Function<List<FlatRow>, FlatRow>() {
-        @Override
-        public FlatRow apply(List<FlatRow> rows) {
-          if (rows.isEmpty()) {
-            return null;
-          } else {
-            return rows.get(0);
-          }
-        }
-      };
 
   /**
    * A callback for ListenableFutures issued as a result of an RPC
@@ -148,55 +134,15 @@ public class BatchExecutor {
   }
 
   protected static class BulkOperation {
-    private final AsyncExecutor asyncExecutor;
-    private final HBaseRequestAdapter requestAdapter;
-    private final BigtableOptions options;
     private BulkMutation bulkMutation;
     private BulkRead bulkRead;
 
     protected BulkOperation(
         BigtableSession session,
         AsyncExecutor asyncExecutor,
-        HBaseRequestAdapter requestAdapter,
         BigtableTableName tableName) {
-      this.asyncExecutor = asyncExecutor;
-      this.requestAdapter = requestAdapter;
-      this.options = session.getOptions();
       this.bulkRead = session.createBulkRead(tableName);
       this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
-    }
-
-    protected ListenableFuture<?> mutateRowAsync(Put put) throws InterruptedException {
-      if (!options.getBulkOptions().useBulkApi()) {
-        return asyncExecutor.mutateRowAsync(requestAdapter.adapt(put));
-      } else {
-        return bulkMutation.add(requestAdapter.adaptEntry(put));
-      }
-    }
-
-    protected ListenableFuture<?> mutateRowAsync(Delete delete) throws InterruptedException {
-      if (!options.getBulkOptions().useBulkApi()) {
-        return asyncExecutor.mutateRowAsync(requestAdapter.adapt(delete));
-      } else {
-        return bulkMutation.add(requestAdapter.adaptEntry(delete));
-      }
-    }
-
-    protected ListenableFuture<?> mutateRowAsync(RowMutations mutations) throws InterruptedException {
-      if (!options.getBulkOptions().useBulkApi()) {
-        return asyncExecutor.mutateRowAsync(requestAdapter.adapt(mutations));
-      } else {
-        return bulkMutation.add(requestAdapter.adaptEntry(mutations));
-      }
-    }
-
-    protected ListenableFuture<?> readRowsAsync(ReadRowsRequest request)
-        throws InterruptedException {
-      if (!options.getBulkOptions().useBulkApi()) {
-        return Futures.transform(asyncExecutor.readFlatRowsAsync(request), ROWS_TO_ROW_CONVERTER);
-      } else {
-        return bulkRead.add(request);
-      }
     }
 
     protected void flush() {
@@ -254,17 +200,17 @@ public class BatchExecutor {
   private ListenableFuture<?> issueAsyncRequest(BulkOperation bulkOperation, Row row) {
     try {
       if (row instanceof Get) {
-        return bulkOperation.readRowsAsync(requestAdapter.adapt((Get) row));
+        return bulkOperation.bulkRead.add(requestAdapter.adapt((Get) row));
       } else if (row instanceof Put) {
-        return bulkOperation.mutateRowAsync((Put) row);
+        return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((Put) row));
       } else if (row instanceof Delete) {
-        return bulkOperation.mutateRowAsync((Delete) row);
+        return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((Delete) row));
       } else if (row instanceof Append) {
         return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Append) row));
       } else if (row instanceof Increment) {
         return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Increment) row));
       } else if (row instanceof RowMutations) {
-        return bulkOperation.mutateRowAsync((RowMutations) row);
+        return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((RowMutations) row));
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -295,8 +241,8 @@ public class BatchExecutor {
 
   private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) {
-    BulkOperation bulkOperation = new BulkOperation(session, asyncExecutor, requestAdapter,
-        requestAdapter.getBigtableTableName());
+    BulkOperation bulkOperation =
+        new BulkOperation(session, asyncExecutor, requestAdapter.getBigtableTableName());
     try {
       List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
       for (int i = 0; i < actions.size(); i++) {
