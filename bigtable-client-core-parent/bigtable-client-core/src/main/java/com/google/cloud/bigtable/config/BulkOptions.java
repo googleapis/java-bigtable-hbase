@@ -85,7 +85,7 @@ public class BulkOptions implements Serializable {
   public static class Builder {
 
     private int asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
-    private boolean useBulkApi = false;
+    private boolean useBulkApi = true;
     private int bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
     private long bulkMaxRequestSize = BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
     private long autoflushMs = BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
