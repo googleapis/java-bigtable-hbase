@@ -189,10 +189,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.asyncExecutor = session.createAsyncExecutor();
     this.bulkOptions = options.getBulkOptions();
     this.executorService = asyncRpcExecutorService;
-    if (bulkOptions.useBulkApi()) {
-      BigtableTableName tableName = this.adapter.getBigtableTableName();
-      this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
-    }
+    BigtableTableName tableName = this.adapter.getBigtableTableName();
+    this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
   }
 
   private void initializeAsyncMutators() {
@@ -301,7 +299,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private void offer(Mutation mutation) throws IOException {
     try {
       Runnable operation = null;
-      if (bulkOptions.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
+      if (mutation instanceof Put || mutation instanceof Delete) {
         // TODO: Do this logic asynchronously.
         addExceptionCallback(bulkMutation.add(adapt(mutation)), mutation);
       } else {
@@ -360,11 +358,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
         return Futures.immediateFailedFuture(
           new IllegalArgumentException("Cannot perform a mutation on a null object."));
       }
-      if (mutation instanceof Put) {
-        return asyncExecutor.mutateRowAsync(adapter.adapt((Put) mutation), operationId);
-      } else if (mutation instanceof Delete) {
-        return asyncExecutor.mutateRowAsync(adapter.adapt((Delete) mutation), operationId);
-      } else if (mutation instanceof Increment) {
+      if (mutation instanceof Increment) {
         return asyncExecutor.readModifyWriteRowAsync(adapter.adapt((Increment) mutation),
           operationId);
       } else if (mutation instanceof Append) {
