@@ -19,7 +19,6 @@ package org.apache.hadoop.hbase.client;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -176,12 +175,10 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
 
-    ExecutorService pool = batchPool != null ? batchPool
-        : BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
     HBaseRequestAdapter adapter = createAdapter(tableName);
     ExceptionListener listener = params.getListener();
     BigtableBufferedMutator bigtableBufferedMutator =
-        new BigtableBufferedMutator(adapter, conf, session, listener, pool) {
+        new BigtableBufferedMutator(adapter, conf, session, listener) {
           @Override
           public void close() throws IOException {
             try {
