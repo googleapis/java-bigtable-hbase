@@ -124,7 +124,7 @@ public class OperationAccountant {
     long lastUpdated = TimeUnit.NANOSECONDS.toSeconds(lastUpdateNanos);
     LOG.warn(
       "No operations completed within the last %d seconds. "
-          + "There are still %d simple operations in progress.",
+          + "There are still %d operations in progress.",
       lastUpdated, operations.size());
     noSuccessWarningCount++;
   }

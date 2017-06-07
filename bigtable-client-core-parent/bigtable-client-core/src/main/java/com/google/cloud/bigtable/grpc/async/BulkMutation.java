@@ -75,7 +75,6 @@ public class BulkMutation {
 
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(7);
   private final AtomicLong batchIdGenerator = new AtomicLong();
-  public ScheduledFuture<?> stalenessFuture;
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -162,6 +161,7 @@ public class BulkMutation {
     private BackOff currentBackoff;
     private int failedCount;
     private ListenableFuture<List<MutateRowsResponse>> mutateRowsFuture;
+    private ScheduledFuture<?> stalenessFuture;
 
     private Batch() {
       this.currentRequestManager = new RequestManager(tableName, mutationMeter, clock);
@@ -185,7 +185,7 @@ public class BulkMutation {
     }
 
     private boolean isFull() {
-      Preconditions.checkNotNull(currentRequestManager);
+      Preconditions.checkNotNull(operationsAreComplete());
       return getRequestCount() >= maxRowKeyCount
           || (currentRequestManager.approximateByteSize >= maxRequestSize);
     }
@@ -216,9 +216,12 @@ public class BulkMutation {
               if (rpcId != null) {
                 resourceLimiter.markCanBeCompleted(rpcId);
               }
+            if (currentRequestManager != null
+                && currentRequestManager.lastRpcSentTimeNanos != null) {
               BulkMutationsStats.getInstance().markMutationsRpcCompletion(
                 clock.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
             }
+          }
           });
     }
 
@@ -271,7 +274,7 @@ public class BulkMutation {
 
     private synchronized void performFullRetry(AtomicReference<Long> backoff, Throwable t) {
       mutateRowsFuture = null;
-      if (currentRequestManager == null) {
+      if (operationsAreComplete()) {
         setRetryComplete();
         return;
       }
@@ -421,7 +424,7 @@ public class BulkMutation {
     }
 
     private void setupStalenessChecker() {
-      if (currentRequestManager == null){
+      if (operationsAreComplete()){
         setRetryComplete();
         return;
       }
@@ -429,9 +432,7 @@ public class BulkMutation {
         @Override
         public void run() {
           synchronized (Batch.this) {
-            // If the batchId is null, it means that the operation somehow fails partially,
-            // cleanup the retry.
-            if (currentRequestManager == null || currentRequestManager.isEmpty()) {
+            if (operationsAreComplete() || currentRequestManager.isEmpty()) {
               setRetryComplete();
             } else if (currentRequestManager.isStale()) {
               setFailure(
@@ -485,7 +486,7 @@ public class BulkMutation {
 
     @VisibleForTesting
     int getRequestCount() {
-      return currentRequestManager == null ? 0 : currentRequestManager.getRequestCount();
+      return operationsAreComplete() ? 0 : currentRequestManager.getRequestCount();
     }
 
     boolean operationsAreComplete() {
