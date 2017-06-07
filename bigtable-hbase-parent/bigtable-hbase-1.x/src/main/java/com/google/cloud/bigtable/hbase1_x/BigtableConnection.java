@@ -68,18 +68,18 @@ public class BigtableConnection extends AbstractBigtableConnection {
           public void deleteTableSnapshots(String arg0, String arg1) throws IOException {
             throw new UnsupportedOperationException("deleteTableSnapshots");  // TODO
           }
-    
+
           @Override
           public void deleteTableSnapshots(Pattern arg0, Pattern arg1) throws IOException {
             throw new UnsupportedOperationException("deleteTableSnapshots");  // TODO
           }
-    
+
           @Override
           public List<SnapshotDescription> listTableSnapshots(String arg0, String arg1)
               throws IOException {
             throw new UnsupportedOperationException("listTableSnapshots");  // TODO
           }
-    
+
           @Override
           public List<SnapshotDescription> listTableSnapshots(Pattern arg0, Pattern arg1)
               throws IOException {
