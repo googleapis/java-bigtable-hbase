@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,7 +27,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -61,11 +61,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.rpc.Status;
 
+import io.netty.util.concurrent.ScheduledFuture;
+
 /**
  * Tests for {@link BulkMutation} that ensure that RPC failures and highly asynchronous calls work
  * correctly.
  */
 @RunWith(JUnit4.class)
+@SuppressWarnings("rawtypes")
 public class TestBulkMutationAwaitCompletion {
 
   private static final int OPERATIONS_PER_MUTATOR = 103;
@@ -82,6 +85,9 @@ public class TestBulkMutationAwaitCompletion {
   private ScheduledExecutorService mockScheduler;
 
   @Mock
+  private ScheduledFuture mockScheduledFuture;
+
+  @Mock
   private Logger mockLogger;
 
   private AtomicLong currentTime = new AtomicLong(500);
@@ -95,7 +101,8 @@ public class TestBulkMutationAwaitCompletion {
   private RetryOptions retryOptions;
   private ResourceLimiter resourceLimiter;
   private List<Runnable> opCompletionRunnables;
-  private ExecutorService testExecutor;
+  private List<Runnable> timeoutRunnables;
+  private ScheduledExecutorService testExecutor;
   private List<OperationAccountant> accountants;
   private List<ListenableFuture<MutateRowResponse>> singleMutationFutures;
   private Logger originalBulkMutatorLog;
@@ -105,10 +112,11 @@ public class TestBulkMutationAwaitCompletion {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    testExecutor = Executors.newCachedThreadPool();
+    testExecutor = Executors.newScheduledThreadPool(100);
     retryOptions = RetryOptionsUtil.createTestRetryOptions(clock);
     resourceLimiter = new ResourceLimiter(1000000, OPERATIONS_PER_MUTATOR * 10);
     opCompletionRunnables = Collections.synchronizedList(new LinkedList<Runnable>());
+    timeoutRunnables = Collections.synchronizedList(new ArrayList<Runnable>());
     accountants = Collections.synchronizedList(new ArrayList<OperationAccountant>());
     singleMutationFutures =
         Collections.synchronizedList(new ArrayList<ListenableFuture<MutateRowResponse>>());
@@ -118,7 +126,7 @@ public class TestBulkMutationAwaitCompletion {
     when(mockClient.mutateRowsAsync(any(MutateRowsRequest.class)))
         .thenAnswer(new Answer<ListenableFuture<List<MutateRowsResponse>>>() {
           @Override
-          public ListenableFuture<List<MutateRowsResponse>> answer(InvocationOnMock invocation)
+          public ListenableFuture<List<MutateRowsResponse>> answer(final InvocationOnMock invocation)
               throws Throwable {
             final int responseCount =
                 invocation.getArgumentAt(0, MutateRowsRequest.class).getEntriesCount();
@@ -137,10 +145,38 @@ public class TestBulkMutationAwaitCompletion {
             return future;
           }
         });
+    when(mockScheduler.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+        .then(new Answer<ScheduledFuture>() {
+          @Override
+          public ScheduledFuture answer(final InvocationOnMock invocation) throws Throwable {
+            timeoutRunnables.add(new Runnable() {
+              @Override
+              public void run() {
+                long duration = invocation.getArgumentAt(1, Long.class);
+                TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
+                currentTime.addAndGet(timeUnit.toNanos(duration));
+                invocation.getArgumentAt(0, Runnable.class).run();
+              }
+            });
+            return mockScheduledFuture;
+          }
+        });
     originalBulkMutatorLog = BulkMutation.LOG;
     originalOperationAccountantLog = OperationAccountant.LOG;
     BulkMutation.LOG = mockLogger;
     OperationAccountant.LOG = mockLogger;
+    Runnable doTimout = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          performTimeout();
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      }
+    };
+    testExecutor.scheduleAtFixedRate(doTimout, 10, 10, TimeUnit.MILLISECONDS);
   }
 
   @After
@@ -159,11 +195,14 @@ public class TestBulkMutationAwaitCompletion {
    */
   @Test
   public void testBulkMutationNoCompletions() throws InterruptedException, ExecutionException {
-    for (int i = 0; i < 5; i++) {
+    int count = 100;
+
+    for (int i = 0; i < count; i++) {
       runOneBulkMutation();
-      verify(mockClient, times((i+1) * PER_BULK_MUTATION_OPERATIONS))
-          .mutateRowsAsync(any(MutateRowsRequest.class));
     }
+
+    verify(mockClient, times(count * PER_BULK_MUTATION_OPERATIONS))
+        .mutateRowsAsync(any(MutateRowsRequest.class));
 
     performTimeout();
     confirmCompletion();
@@ -182,11 +221,12 @@ public class TestBulkMutationAwaitCompletion {
   @Test
   public void testBulkMutationSlowCompletions()
       throws InterruptedException, ExecutionException, TimeoutException {
-    final AtomicInteger bulkMutationsOutstanding = new AtomicInteger(20);
+    int count = 50;
+    final AtomicInteger bulkMutationsOutstanding = new AtomicInteger(count);
 
     // Use {mutatorThreads} threads to create BulkMutations and submit some mutations per
     // bulkMutation.
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < count; i++) {
       testExecutor.submit(new Runnable() {
         @Override
         public void run() {
@@ -207,7 +247,7 @@ public class TestBulkMutationAwaitCompletion {
         while (!done()) {
           // Sleep for a little bit to allow bulk mutations to submit requests.
           try {
-            Thread.sleep(5);
+            Thread.sleep(10);
           } catch (InterruptedException e) {
             e.printStackTrace();
           }
@@ -230,7 +270,6 @@ public class TestBulkMutationAwaitCompletion {
     // seconds.
     completionFuture.get(10, TimeUnit.SECONDS);
 
-    // Clean up any stale RPCs.
     performTimeout();
 
     // Make sure that all operations completed.
@@ -249,7 +288,6 @@ public class TestBulkMutationAwaitCompletion {
       singleMutationFutures.add(bulkMutation.add(request));
     }
     bulkMutation.flush();
-    testExecutor.execute(flushRunnable(accountant));
     accountants.add(accountant);
   }
 
@@ -275,19 +313,6 @@ public class TestBulkMutationAwaitCompletion {
     return bulkMutation;
   }
 
-  protected Runnable flushRunnable(final OperationAccountant accountant) {
-    return new Runnable() {
-      @Override
-      public void run() {
-          try {
-            accountant.awaitCompletion();
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-          }
-      }
-    };
-  }
-
   // //////////////////////////  Helper methods for finishing up the BulkMutation process.
 
   /**
@@ -298,25 +323,11 @@ public class TestBulkMutationAwaitCompletion {
    * @throws InterruptedException
    */
   protected void performTimeout() throws InterruptedException {
-    for (int i = 0; i < 100; i++) {
-      currentTime.addAndGet(TimeUnit.MINUTES.toNanos(1));
-      for (OperationAccountant accountant : accountants) {
-        accountant.awaitCompletionPing();
-      }
-      // Let the other thread catch up.
-      Thread.sleep(10);
-      boolean hasInflight = false;
-      for (OperationAccountant accountant : accountants) {
-        if (accountant.hasInflightOperations()) {
-          hasInflight = true;
-          break;
-        }
-      }
-
-      if (!hasInflight) {
-        return;
-      }
+    ArrayList<Runnable> copy = new ArrayList<>(timeoutRunnables);
+    for (Runnable runnable : copy) {
+      runnable.run();
     }
+    timeoutRunnables.removeAll(copy);
   }
 
   /**

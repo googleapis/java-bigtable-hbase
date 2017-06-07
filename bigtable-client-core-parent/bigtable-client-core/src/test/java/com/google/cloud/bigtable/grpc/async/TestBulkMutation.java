@@ -76,12 +76,14 @@ public class TestBulkMutation {
       new BigtableInstanceName("project", "instance").toTableName("table");
   private final static ByteString QUALIFIER = ByteString.copyFrom("qual".getBytes());
   private final static int MAX_ROW_COUNT = 10;
+  private final static BulkOptions BULK_OPTIONS = new BulkOptions.Builder()
+      .setBulkMaxRequestSize(1000000L).setBulkMaxRowKeyCount(MAX_ROW_COUNT).build();
 
   @Mock private BigtableDataClient client;
   @Mock private ScheduledExecutorService retryExecutorService;
   @Mock private ScheduledFuture mockScheduledFuture;
 
-  private AtomicLong time = new AtomicLong();
+  private AtomicLong time;
   private SettableFuture<List<MutateRowsResponse>> future;
   private RetryOptions retryOptions;
   private BulkMutation underTest;
@@ -89,7 +91,9 @@ public class TestBulkMutation {
   private ResourceLimiter resourceLimiter;
 
   @Before
-  public void setup() throws Exception {
+
+  public void setup() throws InterruptedException {
+    time = new AtomicLong(System.nanoTime());
     NanoClock clock = new NanoClock() {
       @Override
       public long nanoTime() {
@@ -199,8 +203,11 @@ public class TestBulkMutation {
     Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testCallableTooFewStatuses() throws Exception {
+    when(retryExecutorService.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+        .thenReturn(mockScheduledFuture);
     ListenableFuture<MutateRowResponse> rowFuture1 = underTest.add(createRequest());
     ListenableFuture<MutateRowResponse> rowFuture2 = underTest.add(createRequest());
     Batch batch = underTest.currentBatch;
@@ -241,8 +248,7 @@ public class TestBulkMutation {
     }
     Assert.assertFalse(operationAccountant.hasInflightOperations());
     Assert.assertTrue(
-        time.get()
-            > TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
+      time.get() >= TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
   }
 
   @Test
@@ -349,6 +355,8 @@ public class TestBulkMutation {
 
   @Test
   public void testMissingResponse() throws Exception {
+    setupScheduler();
+
     ListenableFuture<MutateRowResponse> addFuture = underTest.add(createRequest());
 
     // TODO(igorbernstein2): this should either block & throw or return a failing future
@@ -356,9 +364,6 @@ public class TestBulkMutation {
     underTest.flush();
 
     // since we don't mock the response from the client, this rpc will just hang
-
-    // Fast forward time
-    time.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME_NANOS);
 
     // TODO(igorbernstein2): Should this throw as well?
     // force the executor to checking for stale requests
@@ -382,15 +387,13 @@ public class TestBulkMutation {
   }
 
   private BulkMutation createBulkMutation() {
-    BulkOptions bulkOptions = new BulkOptions.Builder().setBulkMaxRequestSize(1000000L)
-        .setBulkMaxRowKeyCount(MAX_ROW_COUNT).build();
     return new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant, retryOptions,
-        retryExecutorService, bulkOptions);
+        retryExecutorService, BULK_OPTIONS);
   }
 
   private void setupScheduler() {
-    when(retryExecutorService.schedule(any(Runnable.class), anyLong(), same(TimeUnit.MILLISECONDS)))
-        .then(new Answer<ScheduledFuture<?>>() {
+    when(retryExecutorService.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+        .then(new Answer<ScheduledFuture>() {
           @Override
           public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
             TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);

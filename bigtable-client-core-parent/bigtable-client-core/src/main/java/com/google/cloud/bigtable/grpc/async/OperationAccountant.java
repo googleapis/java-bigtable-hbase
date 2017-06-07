@@ -19,11 +19,8 @@ package com.google.cloud.bigtable.grpc.async;
 import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -44,9 +41,6 @@ public class OperationAccountant {
   @VisibleForTesting
   static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
 
-  public static interface ComplexOperationStalenessHandler {
-    void performRetryIfStale();
-  }
 
   // In awaitCompletion, wait up to this number of nanoseconds without any operations completing.  If
   // this amount of time goes by without any updates, awaitCompletion will log a warning.  Flush()
@@ -61,8 +55,6 @@ public class OperationAccountant {
 
   @GuardedBy("lock")
   private Set<Long> operations = new HashSet<>();
-  @GuardedBy("lock")
-  private Map<Long, ComplexOperationStalenessHandler> complexOperations = new HashMap<>();
 
   private long noSuccessCheckDeadlineNanos;
   private int noSuccessWarningCount;
@@ -90,30 +82,10 @@ public class OperationAccountant {
    * @return An operation id
    * @throws java.lang.InterruptedException if any.
    */
-  public void registerOperation(long id)
-      throws InterruptedException {
+  public void registerOperation(long id) throws InterruptedException {
     lock.lock();
     try {
       operations.add(id);
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  /**
-   * Registers a complex operation, like bulk mutation operations, that has a more subtle definition
-   * of success than a normal operation. Bulk mutation RPCs can have some mutations succeed and some
-   * fail; the failed mutations have to be retried in a subsequent RPC.
-   * @return a long id of the complex operation.
-   * @param handler a ComplexOperationStalenessHandler that will be periodically checked in
-   *          {@link #awaitCompletion()}
-   */
-  // TODO: This functionality should be moved to BulkMutation where the functionality is used. The
-  // abstraction.
-  public <T> void registerComplexOperation(long id, ComplexOperationStalenessHandler handler) {
-    lock.lock();
-    try {
-      complexOperations.put(id, handler);
     } finally {
       lock.unlock();
     }
@@ -134,23 +106,6 @@ public class OperationAccountant {
 
         long now = clock.nanoTime();
         if (now >= noSuccessCheckDeadlineNanos) {
-          // There are unusual cases where an RPC could be completed, but we don't clean up
-          // the state and the locks.  Try to clean up if there is a timeout.
-          ImmutableList<ComplexOperationStalenessHandler> toCheck =
-              ImmutableList.copyOf(complexOperations.values());
-
-          // The cleanup process can potentially incur deadlocks, so unlock to avoid deadlocking.
-          lock.unlock();
-          try {
-            for (ComplexOperationStalenessHandler stalenessHandler : toCheck) {
-              stalenessHandler.performRetryIfStale();
-            }
-          } finally {
-            lock.lock();
-          }
-          if (isFlushed()) {
-            break;
-          }
           logNoSuccessWarning(now);
           resetNoSuccessWarningDeadline();
           performedWarning = true;
@@ -169,8 +124,8 @@ public class OperationAccountant {
     long lastUpdated = TimeUnit.NANOSECONDS.toSeconds(lastUpdateNanos);
     LOG.warn(
       "No operations completed within the last %d seconds. "
-          + "There are still %d simple operations and %d complex operations in progress.",
-      lastUpdated, operations.size(), complexOperations.size());
+          + "There are still %d simple operations in progress.",
+      lastUpdated, operations.size());
     noSuccessWarningCount++;
   }
 
@@ -198,7 +153,7 @@ public class OperationAccountant {
    *         {@link OperationAccountant}
    */
   private boolean isFlushed() {
-    return operations.isEmpty() && complexOperations.isEmpty();
+    return operations.isEmpty();
   }
 
   private void resetNoSuccessWarningDeadline() {
@@ -216,26 +171,6 @@ public class OperationAccountant {
     lock.lock();
     try {
       response = operations.remove(id);
-      if (isFlushed()) {
-        flushedCondition.signal();
-      }
-    } finally {
-      lock.unlock();
-    }
-    resetNoSuccessWarningDeadline();
-    return response;
-  }
-
-  /**
-   * <p>onComplexOperationCompletion.</p>
-   *
-   * @param id a long.
-   */
-  boolean onComplexOperationCompletion(long id) {
-    boolean response = false;
-    lock.lock();
-    try {
-      response = (complexOperations.remove(id) != null);
       if (isFlushed()) {
         flushedCondition.signal();
       }

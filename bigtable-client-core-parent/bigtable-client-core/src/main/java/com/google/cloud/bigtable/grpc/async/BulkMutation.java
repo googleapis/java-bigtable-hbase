@@ -29,7 +29,6 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.OperationAccountant.ComplexOperationStalenessHandler;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
@@ -76,6 +75,7 @@ public class BulkMutation {
 
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(7);
   private final AtomicLong batchIdGenerator = new AtomicLong();
+  public ScheduledFuture<?> stalenessFuture;
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -138,8 +138,11 @@ public class BulkMutation {
     }
 
     public boolean isStale() {
-      return lastRpcSentTimeNanos != null
-          && lastRpcSentTimeNanos <= (clock.nanoTime() - MAX_RPC_WAIT_TIME_NANOS);
+      return lastRpcSentTimeNanos != null && calculateTimeUntilStaleNanos() <= 0;
+    }
+
+    public long calculateTimeUntilStaleNanos() {
+      return lastRpcSentTimeNanos + MAX_RPC_WAIT_TIME_NANOS - clock.nanoTime();
     }
 
     public boolean wasSent() {
@@ -149,7 +152,6 @@ public class BulkMutation {
 
   @VisibleForTesting
   class Batch implements Runnable {
-    
     private final Meter mutationMeter =
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.added");
     private final Meter mutationRetryMeter =
@@ -403,11 +405,10 @@ public class BulkMutation {
         BulkMutationsStats.getInstance().markThrottling(now - start);
         if (batchId == null) {
           batchId = batchIdGenerator.incrementAndGet();
-          operationAccountant.registerComplexOperation(batchId,
-            createRetryHandler());
+          operationAccountant.registerOperation(batchId);
         }
         mutateRowsFuture = client.mutateRowsAsync(request);
-        currentRequestManager.lastRpcSentTimeNanos = now;
+        currentRequestManager.lastRpcSentTimeNanos = clock.nanoTime();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
@@ -416,17 +417,18 @@ public class BulkMutation {
       } finally {
         addCallback(mutateRowsFuture, operationId);
       }
+      setupStalenessChecker();
     }
 
-    /**
-     * A {@link ComplexOperationStalenessHandler} is a method of last resort in cases where somehow the various
-     * listeners failed to get a response, or had some kind of strange issue.
-     */
-    private ComplexOperationStalenessHandler createRetryHandler() {
-      return new ComplexOperationStalenessHandler() {
+    private void setupStalenessChecker() {
+      if (currentRequestManager == null){
+        setRetryComplete();
+        return;
+      }
+      Runnable runnable = new Runnable() {
         @Override
-        public void performRetryIfStale() {
-          synchronized(Batch.this) {
+        public void run() {
+          synchronized (Batch.this) {
             // If the batchId is null, it means that the operation somehow fails partially,
             // cleanup the retry.
             if (currentRequestManager == null || currentRequestManager.isEmpty()) {
@@ -434,10 +436,16 @@ public class BulkMutation {
             } else if (currentRequestManager.isStale()) {
               setFailure(
                 io.grpc.Status.UNKNOWN.withDescription("Stale requests.").asRuntimeException());
+            } else {
+              setupStalenessChecker();
             }
           }
         }
       };
+      if (currentRequestManager.lastRpcSentTimeNanos != null) {
+        long delay = currentRequestManager.calculateTimeUntilStaleNanos();
+        stalenessFuture = retryExecutorService.schedule(runnable, delay, TimeUnit.NANOSECONDS);
+      }
     }
 
     /**
@@ -462,13 +470,17 @@ public class BulkMutation {
       }
       mutateRowsFuture = null;
       if (batchId != null) {
-        operationAccountant.onComplexOperationCompletion(batchId);
+        operationAccountant.onOperationCompletion(batchId);
         if (failedCount > 0) {
           LOG.info("Batch #%d recovered from the failure and completed.", batchId);
         }
         batchId = null;
       }
       currentRequestManager = null;
+      if (stalenessFuture != null) {
+        stalenessFuture.cancel(true);
+        stalenessFuture = null;
+      }
     }
 
     @VisibleForTesting
