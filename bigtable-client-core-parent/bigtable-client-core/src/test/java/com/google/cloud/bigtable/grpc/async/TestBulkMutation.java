@@ -11,7 +11,6 @@ package com.google.cloud.bigtable.grpc.async;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,7 +38,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -81,6 +79,7 @@ public class TestBulkMutation {
 
   @Mock private BigtableDataClient client;
   @Mock private ScheduledExecutorService retryExecutorService;
+  @Mock private ScheduledFuture mockScheduledFuture;
 
   private AtomicLong time = new AtomicLong();
   private SettableFuture<List<MutateRowsResponse>> future;
@@ -107,6 +106,15 @@ public class TestBulkMutation {
     resourceLimiter = new ResourceLimiter(1000, 10);
     underTest = createBulkMutation();
     underTest.clock = clock;
+  }
+
+  @Test
+  public void testIsStale() {
+    BulkMutation.RequestManager requestManager = createTestRequestManager();
+    requestManager.lastRpcSentTimeNanos = time.get();
+    Assert.assertFalse(requestManager.isStale());
+    time.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME_NANOS);
+    Assert.assertTrue(requestManager.isStale());
   }
 
   @Test
@@ -221,8 +229,8 @@ public class TestBulkMutation {
 
   @Test
   public void testRunOutOfTime() throws Exception {
-    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
     setupScheduler();
+    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
     setResponse(Status.DEADLINE_EXCEEDED);
     try {
       rowFuture.get(3, TimeUnit.SECONDS);
@@ -250,20 +258,13 @@ public class TestBulkMutation {
 
   @Test
   public void testRequestTimer() {
-    final AtomicLong currentTime = new AtomicLong(System.nanoTime());
-    underTest.clock = new NanoClock() {
-      @Override
-      public long nanoTime() {
-        return currentTime.get();
-      }
-    };
     RequestManager requestManager = createTestRequestManager();
     Assert.assertFalse(requestManager.wasSent());
-    requestManager.lastRpcSentTimeNanos = currentTime.get();
+    requestManager.lastRpcSentTimeNanos = time.get();
     Assert.assertFalse(requestManager.isStale());
-    currentTime.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME_NANOS - 1);
+    time.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME_NANOS - 1);
     Assert.assertFalse(requestManager.isStale());
-    currentTime.addAndGet(2);
+    time.addAndGet(1);
     Assert.assertTrue(requestManager.isStale());
   }
 
@@ -325,9 +326,8 @@ public class TestBulkMutation {
         new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant, retryOptions,
             retryExecutorService, new BulkOptions.Builder().setAutoflushMs(1000L).build());
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
-    ScheduledFuture f = Mockito.mock(ScheduledFuture.class);
     when(retryExecutorService.schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class)))
-        .thenReturn(f);
+        .thenReturn(mockScheduledFuture);
 
     // buffer a request, with a mocked success (for never it gets invoked)
     MutateRowRequest mutateRowRequest = createRequest();
@@ -358,7 +358,7 @@ public class TestBulkMutation {
     // since we don't mock the response from the client, this rpc will just hang
 
     // Fast forward time
-    time.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME_NANOS + 1);
+    time.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME_NANOS);
 
     // TODO(igorbernstein2): Should this throw as well?
     // force the executor to checking for stale requests
@@ -393,7 +393,8 @@ public class TestBulkMutation {
         .then(new Answer<ScheduledFuture<?>>() {
           @Override
           public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
-            long nanos = TimeUnit.MILLISECONDS.toNanos(invocation.getArgumentAt(1, Long.class));
+            TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
+            long nanos = timeUnit.toNanos(invocation.getArgumentAt(1, Long.class));
             time.addAndGet(nanos);
             invocation.getArgumentAt(0, Runnable.class).run();
             return null;
@@ -402,8 +403,8 @@ public class TestBulkMutation {
   }
 
   private void setResponse(Status code) {
-    underTest.flush();
     future.set(createResponse(code));
+    underTest.flush();
   }
 
   private void setRpcFailure(Status status) {

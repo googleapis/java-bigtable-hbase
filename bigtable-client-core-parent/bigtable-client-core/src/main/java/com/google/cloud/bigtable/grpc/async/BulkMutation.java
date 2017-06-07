@@ -139,7 +139,7 @@ public class BulkMutation {
 
     public boolean isStale() {
       return lastRpcSentTimeNanos != null
-          && lastRpcSentTimeNanos < (clock.nanoTime() - MAX_RPC_WAIT_TIME_NANOS);
+          && lastRpcSentTimeNanos <= (clock.nanoTime() - MAX_RPC_WAIT_TIME_NANOS);
     }
 
     public boolean wasSent() {
