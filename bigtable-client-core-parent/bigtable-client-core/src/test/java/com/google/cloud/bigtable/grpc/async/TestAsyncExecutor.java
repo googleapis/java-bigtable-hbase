@@ -109,6 +109,15 @@ public class TestAsyncExecutor {
   }
 
   @Test
+  public void testReadFlatRowsAsync() throws InterruptedException {
+    when(client.readFlatRowsAsync(any(ReadRowsRequest.class))).thenReturn(future);
+    underTest.readFlatRowsAsync(ReadRowsRequest.getDefaultInstance());
+    Assert.assertTrue(underTest.hasInflightRequests());
+    future.set("");
+    Assert.assertFalse(underTest.hasInflightRequests());
+  }
+
+  @Test
   public void testInvalidMutation() throws Exception {
     try {
       when(client.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());

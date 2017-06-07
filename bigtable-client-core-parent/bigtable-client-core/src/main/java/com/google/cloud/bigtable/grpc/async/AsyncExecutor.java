@@ -161,22 +161,6 @@ public class AsyncExecutor {
   }
 
   /**
-   * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)} on the
-   * {@link com.google.bigtable.v2.CheckAndMutateRowRequest} given an operationId generated from
-   * {@link #registerOperation(long)}.
-   *
-   * @param request The {@link com.google.bigtable.v2.CheckAndMutateRowRequest} to send.
-   * @param operationId The Id generated from
-   *          {@link #registerOperation(long)} that will be released when
-   *          the checkAndMutateRow operation is completed.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
-   */
-  public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
-      CheckAndMutateRowRequest request, long operationId) {
-    return call(CHECK_AND_MUTATE_ASYNC, request, operationId);
-  }
-
-  /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#mutateRowAsync(MutateRowRequest)} on the
    * {@link com.google.bigtable.v2.MutateRowRequest}. This method may block if
    * {@link #registerOperation(long)} blocks.
@@ -246,7 +230,6 @@ public class AsyncExecutor {
     return call(READ_ROWS_ASYNC, request);
   }
 
-
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
    * {@link com.google.bigtable.v2.ReadRowsRequest}. This method may block if
@@ -265,17 +248,9 @@ public class AsyncExecutor {
       AsyncCall<RequestT, ResponseT> rpc, RequestT request) throws InterruptedException {
     // Wait until both the memory and rpc count maximum requirements are achieved before getting a
     // unique id used to track this request.
-    return call(rpc, request, registerOperation(request));
-  }
-
-  private long registerOperation(MessageLite request) throws InterruptedException {
-    long id = resourceLimiter.registerOperationWithHeapSize((long) request.getSerializedSize());
+    final long id =
+        resourceLimiter.registerOperationWithHeapSize((long) request.getSerializedSize());
     operationsAccountant.registerOperation(id);
-    return id;
-  }
-
-  private <ResponseT, RequestT> ListenableFuture<ResponseT> call(AsyncCall<RequestT, ResponseT> rpc,
-      RequestT request, final long id) {
     ListenableFuture<ResponseT> future;
     try {
       future = rpc.call(client, request);
@@ -317,8 +292,9 @@ public class AsyncExecutor {
   }
 
   /**
-   * <p>hasInflightRequests.</p>
-   *
+   * <p>
+   * hasInflightRequests.
+   * </p>
    * @return a boolean.
    */
   public boolean hasInflightRequests() {
@@ -326,8 +302,9 @@ public class AsyncExecutor {
   }
 
   /**
-   * <p>getMaxHeapSize.</p>
-   *
+   * <p>
+   * getMaxHeapSize.
+   * </p>
    * @return a long.
    */
   public long getMaxHeapSize() {
@@ -335,8 +312,9 @@ public class AsyncExecutor {
   }
 
   /**
-   * <p>Getter for the field <code>client</code>.</p>
-   *
+   * <p>
+   * Getter for the field <code>client</code>.
+   * </p>
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
    */
   public BigtableDataClient getClient() {
@@ -344,8 +322,9 @@ public class AsyncExecutor {
   }
 
   /**
-   * <p>Getter for the field <code>operationsAccountant</code>.</p>
-   *
+   * <p>
+   * Getter for the field <code>operationsAccountant</code>.
+   * </p>
    * @return a {@link com.google.cloud.bigtable.grpc.async.OperationAccountant} object.
    */
   public OperationAccountant getOperationAccountant() {
