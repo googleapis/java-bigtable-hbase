@@ -43,7 +43,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
-import com.google.cloud.bigtable.grpc.async.OperationAccountant.ComplexOperationStalenessHandler;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -63,9 +62,6 @@ public class TestOperationAccountant {
 
   @Mock
   NanoClock clock;
-
-  @Mock
-  ComplexOperationStalenessHandler handler;
 
   @Before
   public void setup(){
@@ -144,19 +140,19 @@ public class TestOperationAccountant {
 
               // Add a retry for each rpc
               final long id = i + 10000;
-              underTest.registerComplexOperation(id, handler);
+              underTest.registerOperation(id);
               SettableFuture<Boolean> future = SettableFuture.create();
               Futures.addCallback(future, new FutureCallback<Boolean>(){
                 @Override
                 public void onSuccess(@Nullable Boolean result) {
-                  if (underTest.onComplexOperationCompletion(id)) {
+                  if (underTest.onOperationCompletion(id)) {
                     completions.incrementAndGet();
                   }
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                  if (underTest.onComplexOperationCompletion(id)) {
+                  if (underTest.onOperationCompletion(id)) {
                     completions.incrementAndGet();
                   }
                 }
@@ -231,8 +227,8 @@ public class TestOperationAccountant {
     long finishWaitTime = 100;
     final OperationAccountant underTest = new OperationAccountant(clock, finishWaitTime);
 
-    long complexOpId = 1000;
-    underTest.registerComplexOperation(complexOpId, handler);
+    long opId = 1000;
+    underTest.registerOperation(opId);
     final int iterations = 4;
 
     ExecutorService pool = Executors.newCachedThreadPool();
@@ -247,7 +243,7 @@ public class TestOperationAccountant {
       // Sleep a multiple of the finish wait time to force a few iterations
       Thread.sleep(finishWaitTime * (iterations + 1));
       // Trigger completion
-      underTest.onComplexOperationCompletion(complexOpId);
+      underTest.onOperationCompletion(opId);
     } finally {
       pool.shutdown();
       pool.awaitTermination(100, TimeUnit.MILLISECONDS);
