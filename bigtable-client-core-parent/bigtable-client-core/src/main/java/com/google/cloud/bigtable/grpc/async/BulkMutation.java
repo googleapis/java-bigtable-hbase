@@ -75,7 +75,6 @@ public class BulkMutation {
   static Logger LOG = new Logger(BulkMutation.class);
 
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(7);
-  private final AtomicLong batchIdGenerator = new AtomicLong();
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -423,9 +422,12 @@ public class BulkMutation {
       setupStalenessChecker();
     }
 
-    private void setupStalenessChecker() {
+    protected void setupStalenessChecker() {
       if (operationsAreComplete()){
         setRetryComplete();
+        return;
+      }
+      if (disableStalenessChecker) {
         return;
       }
       Runnable runnable = new Runnable() {
@@ -466,14 +468,14 @@ public class BulkMutation {
     }
 
     private synchronized void setRetryComplete() {
-      cancel(stalenessFuture);
-      cancel(mutateRowsFuture);
       if (!completionFuture.isDone()) {
         completionFuture.set("");
         if (failedCount > 0) {
           LOG.info("Batch #%d recovered from the failure and completed.", batchId);
         }
       }
+      cancel(stalenessFuture);
+      cancel(mutateRowsFuture);
       currentRequestManager = null;
       mutateRowsFuture = null;
       stalenessFuture = null;
@@ -511,6 +513,9 @@ public class BulkMutation {
   private final long autoflushMs;
   private final Meter batchMeter =
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.batch.meter");
+  private final AtomicLong batchIdGenerator = new AtomicLong();
+  @VisibleForTesting
+  boolean disableStalenessChecker;
 
   @VisibleForTesting
   NanoClock clock = NanoClock.SYSTEM;
