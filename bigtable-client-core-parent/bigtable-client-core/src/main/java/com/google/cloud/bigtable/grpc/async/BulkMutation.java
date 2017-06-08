@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -156,7 +157,9 @@ public class BulkMutation {
     private final Meter mutationRetryMeter =
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.retried");
 
-    private Long batchId;
+    private final Long batchId = batchIdGenerator.incrementAndGet();
+    private final SettableFuture<String> completionFuture = SettableFuture.create();
+
     private RequestManager currentRequestManager;
     private BackOff currentBackoff;
     private int failedCount;
@@ -398,6 +401,7 @@ public class BulkMutation {
         setRetryComplete();
         return;
       }
+      Preconditions.checkState(!completionFuture.isDone());
       Long operationId = null;
       try {
         MutateRowsRequest request = currentRequestManager.build();
@@ -406,10 +410,6 @@ public class BulkMutation {
             .registerOperationWithHeapSize(request.getSerializedSize());
         long now = clock.nanoTime();
         BulkMutationsStats.getInstance().markThrottling(now - start);
-        if (batchId == null) {
-          batchId = batchIdGenerator.incrementAndGet();
-          operationAccountant.registerOperation(batchId);
-        }
         mutateRowsFuture = client.mutateRowsAsync(request);
         currentRequestManager.lastRpcSentTimeNanos = clock.nanoTime();
       } catch (InterruptedException e) {
@@ -466,21 +466,22 @@ public class BulkMutation {
     }
 
     private synchronized void setRetryComplete() {
-      if (mutateRowsFuture != null && !mutateRowsFuture.isDone()) {
-        mutateRowsFuture.cancel(true);
-      }
-      mutateRowsFuture = null;
-      if (batchId != null) {
-        operationAccountant.onOperationCompletion(batchId);
+      cancel(stalenessFuture);
+      cancel(mutateRowsFuture);
+      if (!completionFuture.isDone()) {
+        completionFuture.set("");
         if (failedCount > 0) {
           LOG.info("Batch #%d recovered from the failure and completed.", batchId);
         }
-        batchId = null;
       }
       currentRequestManager = null;
-      if (stalenessFuture != null) {
-        stalenessFuture.cancel(true);
-        stalenessFuture = null;
+      mutateRowsFuture = null;
+      stalenessFuture = null;
+    }
+
+    private void cancel(Future<?> future) {
+      if (future != null && !future.isDone()) {
+        future.cancel(true);
       }
     }
 
@@ -595,7 +596,11 @@ public class BulkMutation {
    */
   public synchronized void flush() {
     if (currentBatch != null) {
-      currentBatch.run();
+      try {
+        currentBatch.run();
+      } finally {
+        operationAccountant.registerOperation(currentBatch.completionFuture);
+      }
       currentBatch = null;
     }
   }

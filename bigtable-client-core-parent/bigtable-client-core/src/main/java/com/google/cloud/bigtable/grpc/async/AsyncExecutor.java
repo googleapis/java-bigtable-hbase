@@ -250,24 +250,22 @@ public class AsyncExecutor {
     // unique id used to track this request.
     final long id =
         resourceLimiter.registerOperationWithHeapSize((long) request.getSerializedSize());
-    operationsAccountant.registerOperation(id);
     ListenableFuture<ResponseT> future;
     try {
       future = rpc.call(client, request);
     } catch (Throwable e) {
       future = Futures.immediateFailedFuture(e);
     }
+    operationsAccountant.registerOperation(future);
     Futures.addCallback(future, new FutureCallback<ResponseT>() {
       @Override
       public void onSuccess(ResponseT result) {
         resourceLimiter.markCanBeCompleted(id);
-        operationsAccountant.onOperationCompletion(id);
       }
 
       @Override
       public void onFailure(Throwable t) {
         resourceLimiter.markCanBeCompleted(id);
-        operationsAccountant.onOperationCompletion(id);
       }
     });
     return future;

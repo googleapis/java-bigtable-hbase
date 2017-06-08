@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import static org.mockito.Mockito.when;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +37,7 @@ import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 /**
  * Tests for {@link OperationAccountant}
@@ -59,10 +60,10 @@ public class TestOperationAccountant {
   @Test
   public void testOnOperationCompletion() throws InterruptedException {
     OperationAccountant underTest = new OperationAccountant();
-    int id = (int) (100 * Math.random());
-    underTest.registerOperation(id);
+    SettableFuture<String> future = SettableFuture.create();
+    underTest.registerOperation(future);
     assertTrue(underTest.hasInflightOperations());
-    underTest.onOperationCompletion(id);
+    future.set("");
     assertFalse(underTest.hasInflightOperations());
   }
 
@@ -72,13 +73,14 @@ public class TestOperationAccountant {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
       final OperationAccountant underTest = new OperationAccountant();
-      final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
+      final LinkedBlockingQueue<SettableFuture<String>> registeredEvents = new LinkedBlockingQueue<>();
       Future<Boolean> writeFuture = pool.submit(new Callable<Boolean>() {
         @Override
         public Boolean call() throws InterruptedException {
           for (long i = 0; i < registerCount; i++) {
-            underTest.registerOperation(i);
-            registeredEvents.offer(i);
+            SettableFuture<String> completionFuture = SettableFuture.create();
+            underTest.registerOperation(completionFuture);
+            registeredEvents.offer(completionFuture);
           }
           underTest.awaitCompletion();
           return true;
@@ -88,8 +90,11 @@ public class TestOperationAccountant {
         @Override
         public Void call() throws Exception{
           for (int i = 0; i < registerCount; i++) {
-            underTest.onOperationCompletion(registeredEvents.poll(1, TimeUnit.SECONDS));
-            if (i % 50 == 0) {
+            SettableFuture<String> future = registeredEvents.poll(1, TimeUnit.SECONDS);
+            if (future != null) {
+              future.set("");
+            }
+            if (i % 10 == 0) {
               // Exercise the .offer and the awaitCompletion() in the writeFuture.
               Thread.sleep(4);
             }
@@ -121,8 +126,8 @@ public class TestOperationAccountant {
     long finishWaitTime = 100;
     final OperationAccountant underTest = new OperationAccountant(clock, finishWaitTime);
 
-    long opId = 1000;
-    underTest.registerOperation(opId);
+    SettableFuture<String> operation = SettableFuture.create();
+    underTest.registerOperation(operation);
     final int iterations = 4;
 
     ExecutorService pool = Executors.newCachedThreadPool();
@@ -137,7 +142,7 @@ public class TestOperationAccountant {
       // Sleep a multiple of the finish wait time to force a few iterations
       Thread.sleep(finishWaitTime * (iterations + 1));
       // Trigger completion
-      underTest.onOperationCompletion(opId);
+      operation.set("");
     } finally {
       pool.shutdown();
       pool.awaitTermination(100, TimeUnit.MILLISECONDS);
