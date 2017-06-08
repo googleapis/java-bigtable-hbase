@@ -234,8 +234,9 @@ public class TestBulkMutation {
   }
 
   @Test
-  public void testRunOutOfTime() throws Exception {
+  public void testDeadlineExceeded() throws Exception {
     setupScheduler();
+    underTest.disableStalenessChecker = true;
     ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
     setResponse(Status.DEADLINE_EXCEEDED);
     try {
