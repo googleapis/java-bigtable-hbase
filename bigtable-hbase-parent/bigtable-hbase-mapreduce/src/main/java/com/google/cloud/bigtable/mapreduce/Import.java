@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.mapreduce;
 
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase1_2.BigtableConnection;
+import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
