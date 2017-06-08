@@ -28,6 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -84,6 +85,7 @@ public class TestBulkMutation {
   @Mock private ScheduledFuture mockScheduledFuture;
 
   private AtomicLong time;
+  private AtomicInteger schedulerTimeIncreaseCount = new AtomicInteger();
   private SettableFuture<List<MutateRowsResponse>> future;
   private RetryOptions retryOptions;
   private BulkMutation underTest;
@@ -247,8 +249,8 @@ public class TestBulkMutation {
         Status.fromThrowable(e).getCode());
     }
     Assert.assertFalse(operationAccountant.hasInflightOperations());
-    Assert.assertTrue(
-      time.get() >= TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
+    // some large number of retries occurred
+    Assert.assertTrue(schedulerTimeIncreaseCount.get() > 5);
   }
 
   @Test
@@ -398,6 +400,7 @@ public class TestBulkMutation {
           public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
             TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
             long nanos = timeUnit.toNanos(invocation.getArgumentAt(1, Long.class));
+            schedulerTimeIncreaseCount.incrementAndGet();
             time.addAndGet(nanos);
             new Thread(invocation.getArgumentAt(0, Runnable.class)).start();
             return null;
