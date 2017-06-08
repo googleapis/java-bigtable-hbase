@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.concurrent.GuardedBy;
@@ -61,7 +62,7 @@ public class OperationAccountant {
 
   private long noSuccessCheckDeadlineNanos;
   private int noSuccessWarningCount;
-  private int idGenerator = 0;
+  private AtomicLong idGenerator = new AtomicLong();
 
   /**
    * <p>Constructor for {@link OperationAccountant}.</p>
@@ -101,14 +102,14 @@ public class OperationAccountant {
   }
 
   private long generateId() {
+    long id = idGenerator.incrementAndGet();
     lock.lock();
     try {
-      long id = idGenerator++;
       operations.add(id);
-      return id;
     } finally {
       lock.unlock();
     }
+    return id;
   }
 
   private boolean onOperationCompletion(long id) {
