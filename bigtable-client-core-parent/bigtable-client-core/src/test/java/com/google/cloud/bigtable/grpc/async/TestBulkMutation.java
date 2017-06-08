@@ -91,7 +91,6 @@ public class TestBulkMutation {
   private ResourceLimiter resourceLimiter;
 
   @Before
-
   public void setup() throws InterruptedException {
     time = new AtomicLong(System.nanoTime());
     NanoClock clock = new NanoClock() {
@@ -399,7 +398,7 @@ public class TestBulkMutation {
             TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
             long nanos = timeUnit.toNanos(invocation.getArgumentAt(1, Long.class));
             time.addAndGet(nanos);
-            invocation.getArgumentAt(0, Runnable.class).run();
+            new Thread(invocation.getArgumentAt(0, Runnable.class)).start();
             return null;
           }
         });

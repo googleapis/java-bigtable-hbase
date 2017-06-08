@@ -19,6 +19,9 @@ package com.google.cloud.bigtable.grpc.async;
 import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -58,6 +61,7 @@ public class OperationAccountant {
 
   private long noSuccessCheckDeadlineNanos;
   private int noSuccessWarningCount;
+  private int idGenerator = 0;
 
   /**
    * <p>Constructor for {@link OperationAccountant}.</p>
@@ -80,19 +84,34 @@ public class OperationAccountant {
    * must be paired with a call to {@link #onOperationCompletion(long)}.
    * @param id The id of the RPC
    * @return An operation id
-   * @throws java.lang.InterruptedException if any.
    */
-  public void registerOperation(long id) {
+  public void registerOperation(ListenableFuture<?> future) {
+    final long id = generateId();
+    Futures.addCallback(future, new FutureCallback<Object>() {
+      @Override
+      public void onSuccess(Object result) {
+        onOperationCompletion(id);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        onOperationCompletion(id);
+      }
+    });
+  }
+
+  private long generateId() {
     lock.lock();
     try {
+      long id = idGenerator++;
       operations.add(id);
+      return id;
     } finally {
       lock.unlock();
     }
   }
 
-  @VisibleForTesting
-  boolean onOperationCompletion(long id) {
+  private boolean onOperationCompletion(long id) {
     boolean response = false;
     lock.lock();
     try {
