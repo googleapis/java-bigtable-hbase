@@ -74,10 +74,6 @@ public class OperationAccountantPerf {
                 underTest.registerOperation(id);
                 registeredEvents.add(id);
               }
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              e.printStackTrace();
-              throw new RuntimeException(e);
             } finally {
               long totalTime = System.nanoTime() - startReg;
               System.out.println(
