@@ -359,7 +359,12 @@ public class CloudBigtableIO {
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         splits.add(createSourceWithKeys(startKey, endKey, 0));
       }
-      return reduceSplits(splits);
+      List<SourceWithKeys<ResultOutputType>> result = reduceSplits(splits);
+
+      // Randomize the list, since the default behavior would lead to multiple workers hitting the
+      // same tablet.
+      Collections.shuffle(result);
+      return result;
     }
 
     private List<SourceWithKeys<ResultOutputType>>
