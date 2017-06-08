@@ -30,6 +30,7 @@ import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -130,8 +131,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
     // OK
     if (code == Status.Code.OK) {
-      operationTimerContext.close();
-      onOK();
+      if (onOK()) {
+        operationTimerContext.close();
+      }
       return;
     }
 
@@ -174,6 +176,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s",
         status.getCause(), failedCount, status, channelId);
 
+    performRetry(nextBackOff);
+  }
+
+  protected void performRetry(long nextBackOff) {
     rpc.getRpcMetrics().markRetry();
     retryExecutorService.schedule(getRunnable(), nextBackOff, TimeUnit.MILLISECONDS);
   }
@@ -198,10 +204,12 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   /**
    * A subclass has the opportunity to perform the final operations it needs now that the RPC is
    * successfully complete.
+   *  
+   * @return true if the operation is complete.  This method could force a retry in some cases.
    */
-  protected abstract void onOK();
+  protected abstract boolean onOK();
 
-  private long getNextBackoff() {
+  protected long getNextBackoff() {
     if (currentBackoff == null) {
       currentBackoff = retryOptions.createBackoff();
     }
@@ -230,10 +238,15 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     return request;
   }
 
+  protected RequestT getOriginalRequest() {
+    return request;
+  }
+
   /**
    * Initial execution of the RPC.
    */
   public ListenableFuture<ResultT> getAsyncResult() {
+    Preconditions.checkState(operationTimerContext == null);
     operationTimerContext = rpc.getRpcMetrics().timeOperation();
     run();
     return completionFuture;

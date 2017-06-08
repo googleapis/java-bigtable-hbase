@@ -158,8 +158,9 @@ public class RetryingReadRowsOperation extends
   }
 
   @Override
-  protected void onOK() {
+  protected boolean onOK() {
     rowMerger.onCompleted();
+    return true;
   }
 
   /**
