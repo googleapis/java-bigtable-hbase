@@ -19,19 +19,12 @@ import static org.mockito.Mockito.when;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.annotation.Nullable;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -43,12 +36,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-
-import org.junit.Assert;
 
 /**
  * Tests for {@link OperationAccountant}
@@ -77,6 +65,7 @@ public class TestOperationAccountant {
     underTest.onOperationCompletion(id);
     assertFalse(underTest.hasInflightOperations());
   }
+
   @Test
   public void testFlush() throws Exception {
     final int registerCount = 1000;
@@ -111,101 +100,6 @@ public class TestOperationAccountant {
 
       readFuture.get(3, TimeUnit.SECONDS);
       assertTrue(writeFuture.get(3, TimeUnit.SECONDS));
-    } finally {
-      pool.shutdownNow();
-    }
-  }
-
-  @Test
-  public void testFlushWithRetries() throws Exception {
-    final int registerCount = 1000;
-    ExecutorService pool = Executors.newCachedThreadPool();
-    try {
-      final OperationAccountant underTest = new OperationAccountant();
-      final AtomicBoolean allOperationsDone = new AtomicBoolean();
-      final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
-      final List<SettableFuture<Boolean>> retryFutures = new ArrayList<>();
-      final CountDownLatch retryFuturesLatch = new CountDownLatch(registerCount);
-      final AtomicInteger registrations = new AtomicInteger();
-      final AtomicInteger completions = new AtomicInteger();
-
-      Future<?> writeFuture = pool.submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            for (int i = 0; i < registerCount; i++) {
-              underTest.registerOperation(i);
-              registeredEvents.offer((long) i);
-              registrations.incrementAndGet();
-
-              // Add a retry for each rpc
-              final long id = i + 10000;
-              underTest.registerOperation(id);
-              SettableFuture<Boolean> future = SettableFuture.create();
-              Futures.addCallback(future, new FutureCallback<Boolean>(){
-                @Override
-                public void onSuccess(@Nullable Boolean result) {
-                  if (underTest.onOperationCompletion(id)) {
-                    completions.incrementAndGet();
-                  }
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                  if (underTest.onOperationCompletion(id)) {
-                    completions.incrementAndGet();
-                  }
-                }
-              });
-              retryFutures.add(future);
-              retryFuturesLatch.countDown();
-            }
-
-            // This should block until all RPCs and retries have finished.
-            underTest.awaitCompletion();
-            allOperationsDone.set(true);
-            synchronized (allOperationsDone) {
-              allOperationsDone.notify();
-            }
-            Assert.assertEquals(registrations.get(), completions.get());
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            e.printStackTrace();
-            throw new RuntimeException(e);
-          }
-        }
-      });
-      Future<?> readFuture = pool.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws InterruptedException {
-          for (int i = 0; i < registerCount; i++) {
-            Long registeredId = registeredEvents.poll(1, TimeUnit.SECONDS);
-            if (registeredId == null){
-              i--;
-            } else {
-              underTest.onOperationCompletion(registeredId);
-            }
-          }
-          return null;
-        }
-      });
-
-      // Make sure we read all of the RPCs and complete them.
-      readFuture.get(30, TimeUnit.SECONDS);
-
-      // Wait for all retry futures to be collected
-      retryFuturesLatch.await(5, TimeUnit.SECONDS);
-
-      // Retries are still outstanding so we'd better not be done.
-      assertFalse(allOperationsDone.get());
-
-      // Now complete all retry futures which should trigger completion.
-      for (SettableFuture<Boolean> future : retryFutures) {
-        future.set(true);
-      }
-
-      writeFuture.get(30, TimeUnit.SECONDS);
-      assertTrue(allOperationsDone.get());
     } finally {
       pool.shutdownNow();
     }
