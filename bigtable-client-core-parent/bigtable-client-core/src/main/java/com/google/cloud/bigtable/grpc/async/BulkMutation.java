@@ -220,7 +220,7 @@ public class BulkMutation {
               }
             if (currentRequestManager != null
                 && currentRequestManager.lastRpcSentTimeNanos != null) {
-              BulkMutationsStats.getInstance().markMutationsRpcCompletion(
+              ResourceLimiterStats.getInstance().markRpcComplete(
                 clock.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
             }
           }
@@ -373,9 +373,6 @@ public class BulkMutation {
 
     private void completeOrRetry(
         AtomicReference<Long> backoffTime, RequestManager retryRequestManager) {
-      BulkMutationsStats.getInstance().markMutationsSuccess(
-        currentRequestManager.futures.size() - retryRequestManager.futures.size());
-
       if (retryRequestManager == null || retryRequestManager.isEmpty()) {
         setRetryComplete();
       } else {
@@ -408,7 +405,7 @@ public class BulkMutation {
         operationId = resourceLimiter
             .registerOperationWithHeapSize(request.getSerializedSize());
         long now = clock.nanoTime();
-        BulkMutationsStats.getInstance().markThrottling(now - start);
+        ResourceLimiterStats.getInstance().markThrottling(now - start);
         mutateRowsFuture = client.mutateRowsAsync(request);
         currentRequestManager.lastRpcSentTimeNanos = clock.nanoTime();
       } catch (InterruptedException e) {

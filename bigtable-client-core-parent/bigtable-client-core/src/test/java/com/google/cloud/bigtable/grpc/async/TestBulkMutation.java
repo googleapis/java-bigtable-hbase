@@ -28,6 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -84,6 +85,7 @@ public class TestBulkMutation {
   @Mock private ScheduledFuture mockScheduledFuture;
 
   private AtomicLong time;
+  private AtomicInteger timeIncrementCount = new AtomicInteger();
   private SettableFuture<List<MutateRowsResponse>> future;
   private RetryOptions retryOptions;
   private BulkMutation underTest;
@@ -96,6 +98,7 @@ public class TestBulkMutation {
     NanoClock clock = new NanoClock() {
       @Override
       public long nanoTime() {
+        timeIncrementCount.incrementAndGet();
         return time.get();
       }
     };
@@ -122,7 +125,7 @@ public class TestBulkMutation {
 
   @Test
   public void testAdd() {
-    BulkMutationsStats.reset();
+    ResourceLimiterStats.reset();
     MutateRowRequest mutateRowRequest = createRequest();
     BulkMutation.RequestManager requestManager = createTestRequestManager();
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
@@ -135,9 +138,8 @@ public class TestBulkMutation {
         .addEntries(entry)
         .build();
     Assert.assertEquals(expected, requestManager.build());
-    Assert.assertEquals(0, BulkMutationsStats.getInstance().getMutationTimer().getCount());
-    Assert.assertEquals(0, BulkMutationsStats.getInstance().getMutationMeter().getCount());
-    Assert.assertEquals(0, BulkMutationsStats.getInstance().getThrottlingTimer().getCount());
+    Assert.assertEquals(0, ResourceLimiterStats.getInstance().getMutationTimer().getCount());
+    Assert.assertEquals(0, ResourceLimiterStats.getInstance().getThrottlingTimer().getCount());
   }
 
   private RequestManager createTestRequestManager() {
