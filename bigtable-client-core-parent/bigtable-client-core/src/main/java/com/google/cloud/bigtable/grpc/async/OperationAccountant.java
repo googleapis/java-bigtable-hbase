@@ -91,6 +91,22 @@ public class OperationAccountant {
     }
   }
 
+  @VisibleForTesting
+  boolean onOperationCompletion(long id) {
+    boolean response = false;
+    lock.lock();
+    try {
+      response = operations.remove(id);
+      if (isFlushed()) {
+        flushedCondition.signal();
+      }
+    } finally {
+      lock.unlock();
+    }
+    resetNoSuccessWarningDeadline();
+    return response;
+  }
+
   /**
    * Blocks until all outstanding RPCs and retries have completed
    *
@@ -163,22 +179,6 @@ public class OperationAccountant {
   @VisibleForTesting
   int getNoSuccessWarningCount() {
     return noSuccessWarningCount;
-  }
-
-  @VisibleForTesting
-  boolean onOperationCompletion(long id) {
-    boolean response = false;
-    lock.lock();
-    try {
-      response = operations.remove(id);
-      if (isFlushed()) {
-        flushedCondition.signal();
-      }
-    } finally {
-      lock.unlock();
-    }
-    resetNoSuccessWarningDeadline();
-    return response;
   }
 
   @VisibleForTesting
