@@ -82,7 +82,7 @@ public class OperationAccountant {
    * @return An operation id
    * @throws java.lang.InterruptedException if any.
    */
-  public void registerOperation(long id) throws InterruptedException {
+  public void registerOperation(long id) {
     lock.lock();
     try {
       operations.add(id);
