@@ -72,7 +72,6 @@ import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
-import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRangeTracker;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.transforms.Aggregator;
@@ -793,11 +792,10 @@ public class CloudBigtableIO {
         return null;
       }
       ByteKey splitKey;
-      final ByteKeyRange range = source.getConfiguration().toByteKeyRange();
       try {
-        splitKey = range.interpolateKey(fraction);
+        splitKey = rangeTracker.getRange().interpolateKey(fraction);
       } catch (IllegalArgumentException e) {
-        READER_LOG.info("{}: Failed to interpolate key for fraction {}.", range, fraction);
+        READER_LOG.info("{}: Failed to interpolate key for fraction {}.", rangeTracker.getRange(), fraction);
         return null;
       }
 
@@ -808,7 +806,7 @@ public class CloudBigtableIO {
       try {
         estimatedSizeBytes = source.getEstimatedSizeBytes(null);
       } catch (IOException e) {
-        READER_LOG.info("{}: Failed to get estimated size for key for fraction {}.", range, fraction);
+        READER_LOG.info("{}: Failed to get estimated size for key for fraction {}.", rangeTracker.getRange(), fraction);
         return null;
       }
       SourceWithKeys<ResultOutputType> residual = null;
@@ -817,28 +815,29 @@ public class CloudBigtableIO {
         long newPrimarySize = (long) (fraction * estimatedSizeBytes);
         long residualSize = estimatedSizeBytes - newPrimarySize;
 
-        byte[] currentStartKey = source.getConfiguration().getZeroCopyStartRow();
+        byte[] currentStartKey = rangeTracker.getRange().getStartKey().getBytes();
         byte[] splitKeyBytes = splitKey.getBytes();
-        byte[] currentStopKey = source.getConfiguration().getZeroCopyStopRow();
-
-        primary = source.createSourceWithKeys(currentStartKey, splitKeyBytes, newPrimarySize);
-        residual = source.createSourceWithKeys(splitKeyBytes, currentStopKey, residualSize);
+        byte[] currentStopKey = rangeTracker.getRange().getEndKey().getBytes();
 
         if (!rangeTracker.trySplitAtPosition(splitKey)) {
           return null;
         }
+
+        primary = source.createSourceWithKeys(currentStartKey, splitKeyBytes, newPrimarySize);
+        residual = source.createSourceWithKeys(splitKeyBytes, currentStopKey, residualSize);
+
+        this.source = primary;
+        return residual;
       } catch (Throwable t) {
         try {
           String msg = String.format("%d Failed to get estimated size for key for fraction %f.",
-            range, fraction);
+            rangeTracker.getRange(), fraction);
           READER_LOG.warn(msg, t);
         } catch (Throwable t1) {
           // ignore.
         }
         return null;
       }
-      this.source = primary;
-      return residual;
     }
 
     @VisibleForTesting
@@ -849,6 +848,11 @@ public class CloudBigtableIO {
     @VisibleForTesting
     protected void setScanner(ResultScanner<FlatRow> scanner) {
       this.scanner = scanner;
+    }
+
+    @VisibleForTesting
+    public ByteKeyRangeTracker getRangeTracker() {
+      return rangeTracker;
     }
 
     /**
@@ -885,10 +889,9 @@ public class CloudBigtableIO {
 
     @Override
     public String toString() {
-      CloudBigtableScanConfiguration configuration = source.getConfiguration();
       return String.format("Reader for: ['%s' - '%s']",
-        Bytes.toStringBinary(configuration.getZeroCopyStartRow()),
-        Bytes.toStringBinary(configuration.getZeroCopyStopRow()));
+        Bytes.toStringBinary(rangeTracker.getStartPosition().getBytes()),
+        Bytes.toStringBinary(rangeTracker.getStopPosition().getBytes()));
     }
   }
 
