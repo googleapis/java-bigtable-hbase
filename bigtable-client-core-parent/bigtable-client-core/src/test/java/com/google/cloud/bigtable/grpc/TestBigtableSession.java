@@ -80,7 +80,7 @@ public class TestBigtableSession {
   }
 
   @Test
-  public void testOpelSSL() throws Throwable{
+  public void testOpenSSL() throws Throwable{
     if(!OpenSsl.isAvailable()){
       throw OpenSsl.unavailabilityCause();
     }
