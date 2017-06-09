@@ -65,6 +65,7 @@ limitations under the License.
         <instrumentation-java.version>0.4.2</instrumentation-java.version>
         <netty.version>4.1.8.Final</netty.version>
         <protobuff-java.version>3.2.0</protobuff-java.version>
+        <protoc.version>3.2.0</protoc.version>
         <google.api.client.version>1.22.0</google.api.client.version>
         <google.http.client.version>1.22.0</google.http.client.version>
         <guava.version>19.0</guava.version>
