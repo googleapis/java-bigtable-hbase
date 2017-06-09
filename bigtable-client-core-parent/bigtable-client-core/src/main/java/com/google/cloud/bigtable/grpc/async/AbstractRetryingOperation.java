@@ -130,8 +130,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
     // OK
     if (code == Status.Code.OK) {
-      operationTimerContext.close();
-      onOK();
+      if (onOK()) {
+        operationTimerContext.close();
+      }
       return;
     }
 
@@ -167,13 +168,16 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       StatusRuntimeException cause = status.asRuntimeException();
       setException(new BigtableRetriesExhaustedException(message, cause));
       return;
+    } else {
+      String channelId = ChannelPool.extractIdentifier(trailers);
+      LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s",
+          status.getCause(), failedCount, status, channelId);
     }
 
-    // Perform Retry
-    String channelId = ChannelPool.extractIdentifier(trailers);
-    LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s",
-        status.getCause(), failedCount, status, channelId);
+    performRetry(nextBackOff);
+  }
 
+  protected void performRetry(long nextBackOff) {
     rpc.getRpcMetrics().markRetry();
     retryExecutorService.schedule(getRunnable(), nextBackOff, TimeUnit.MILLISECONDS);
   }
@@ -197,9 +201,11 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   /**
    * A subclass has the opportunity to perform the final operations it needs now that the RPC is
-   * successfully complete.
+   * successfully complete. If a subclass has to retry, due to the message, this method will return
+   * false
+   * @return true if the operation was really completed.
    */
-  protected abstract void onOK();
+  protected abstract boolean onOK();
 
   private long getNextBackoff() {
     if (currentBackoff == null) {
@@ -227,6 +233,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   protected RequestT getRetryRequest() {
+    return request;
+  }
+
+  public final RequestT getOriginalRequest() {
     return request;
   }
 

@@ -68,7 +68,8 @@ public class RetryingStreamOperation<RequestT, ResponseT>
 
   /** {@inheritDoc} */
   @Override
-  protected void onOK() {
+  protected boolean onOK() {
     completionFuture.set(buffer.build());
+    return true;
   }
 }
