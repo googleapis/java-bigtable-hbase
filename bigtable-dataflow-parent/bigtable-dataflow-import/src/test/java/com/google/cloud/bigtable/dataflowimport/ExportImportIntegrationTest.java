@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.dataflowimport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
 import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.dataflowimport.testing.BigtableTableUtils;

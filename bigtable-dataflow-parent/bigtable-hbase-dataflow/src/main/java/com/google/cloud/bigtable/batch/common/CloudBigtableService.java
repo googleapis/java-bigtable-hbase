@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.batch.common;
 
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
 import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
 import java.io.IOException;

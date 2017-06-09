@@ -27,10 +27,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Reader;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;

@@ -46,9 +46,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.bigtable.repackaged.com.google.cloud.config.Logger;
-import com.google.bigtable.repackaged.com.google.cloud.hbase1_0.BigtableConnection;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase1_0.BigtableConnection;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;

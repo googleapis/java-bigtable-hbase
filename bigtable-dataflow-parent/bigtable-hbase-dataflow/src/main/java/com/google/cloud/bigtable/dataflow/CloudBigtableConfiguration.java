@@ -26,9 +26,9 @@ import java.util.Map.Entry;
 import org.apache.hadoop.conf.Configuration;
 
 import com.google.bigtable.repackaged.com.google.api.client.repackaged.com.google.common.base.Preconditions;
-import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableClusterUtilities;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableClusterUtilities;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.collect.ImmutableMap;
 
 /**

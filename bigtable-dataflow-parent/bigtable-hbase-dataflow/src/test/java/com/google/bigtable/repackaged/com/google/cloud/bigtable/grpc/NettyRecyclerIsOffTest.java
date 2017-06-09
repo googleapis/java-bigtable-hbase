@@ -13,14 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.bigtable.repackaged.com.google.cloud.grpc;
+package com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc;
 
 import java.lang.reflect.Field;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.bigtable.repackaged.io.netty.util.Recycler;
 
 /**

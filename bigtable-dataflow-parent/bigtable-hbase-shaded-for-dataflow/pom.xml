@@ -57,34 +57,30 @@ limitations under the License.
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.cloud.bigtable</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.cloud</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.cloud.bigtable</shadedPattern>
                                     <excludes>
                                         <exclude>com.google.cloud.bigtable.dataflow.*</exclude>
                                     </excludes>
                                 </relocation>
                                 <relocation>
-                                    <pattern>com.google.bigtable.v1</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.bigtable.v1</shadedPattern>
-                                </relocation>
-                                <relocation>
                                     <pattern>com.google.bigtable.v2</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.bigtable.v2</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.bigtable.v2</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>com.google.bigtable.admin</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.bigtable.admin</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.bigtable.admin</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>com.google.type</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.type</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.type</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>com.google.longrunning</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.longrunning</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.longrunning</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>com.google.rpc</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.rpc</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.rpc</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>
