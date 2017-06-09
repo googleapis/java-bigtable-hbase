@@ -48,7 +48,7 @@ limitations under the License.
             </exclusions>
         </dependency>
 
-        <!-- minimal hbase deps -->
+        <!-- Backwards compat: minimal hbase + newer grpc deps deps. This exists only to help transition to 1.x artifacts. -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
@@ -144,8 +144,8 @@ limitations under the License.
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
