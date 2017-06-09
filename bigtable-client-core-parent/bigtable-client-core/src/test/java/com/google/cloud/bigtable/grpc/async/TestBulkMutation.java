@@ -237,10 +237,11 @@ public class TestBulkMutation {
 
   @Test
   public void testDeadlineExceeded() throws Exception {
-    setupScheduler();
+    setupScheduler(false);
     underTest.disableStalenessChecker = true;
     ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
     setResponse(Status.DEADLINE_EXCEEDED);
+
     try {
       rowFuture.get(3, TimeUnit.SECONDS);
       Assert.fail("Expected exception");
@@ -248,6 +249,7 @@ public class TestBulkMutation {
       Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(),
         Status.fromThrowable(e).getCode());
     }
+
     Assert.assertFalse(operationAccountant.hasInflightOperations());
     Assert.assertTrue(
       time.get() >= TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
@@ -357,7 +359,7 @@ public class TestBulkMutation {
 
   @Test
   public void testMissingResponse() throws Exception {
-    setupScheduler();
+    setupScheduler(true);
 
     ListenableFuture<MutateRowResponse> addFuture = underTest.add(createRequest());
 
@@ -393,7 +395,7 @@ public class TestBulkMutation {
         retryExecutorService, BULK_OPTIONS);
   }
 
-  private void setupScheduler() {
+  private void setupScheduler(final boolean inNewThread) {
     when(retryExecutorService.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
         .then(new Answer<ScheduledFuture>() {
           @Override
@@ -401,7 +403,12 @@ public class TestBulkMutation {
             TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
             long nanos = timeUnit.toNanos(invocation.getArgumentAt(1, Long.class));
             time.addAndGet(nanos);
-            new Thread(invocation.getArgumentAt(0, Runnable.class)).start();
+            Runnable runnable = invocation.getArgumentAt(0, Runnable.class);
+            if (inNewThread) {
+              new Thread(runnable).start();
+            } else {
+              runnable.run();
+            }
             return null;
           }
         });
