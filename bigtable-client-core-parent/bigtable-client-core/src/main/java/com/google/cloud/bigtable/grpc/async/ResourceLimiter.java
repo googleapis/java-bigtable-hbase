@@ -1,13 +1,16 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.codahale.metrics.Timer;
+import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.common.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,15 +25,20 @@ public class ResourceLimiter {
   private static final Logger LOG = new Logger(ResourceLimiter.class);
 
   private static final long REGISTER_WAIT_MILLIS = 5;
+  private static final ResourceLimiterStats stats = ResourceLimiterStats.getInstance();
 
   private final long maxHeapSize;
   private final int absoluteMaxInFlightRpcs;
   private int currentInFlightMaxRpcs;
   private final AtomicLong operationSequenceGenerator = new AtomicLong();
   private final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
+  private final ConcurrentHashMap<Long, Long> starTimes = new ConcurrentHashMap<>();
   private final LinkedBlockingDeque<Long> completedOperationIds = new LinkedBlockingDeque<>();
   private long currentWriteBufferSize;
   private boolean isThrottling = false;
+
+  @VisibleForTesting
+  NanoClock clock = NanoClock.SYSTEM;
 
   /**
    * <p>Constructor for ResourceLimiter.</p>
@@ -54,16 +62,21 @@ public class ResourceLimiter {
    * @return A unique operation id
    * @throws java.lang.InterruptedException if any.
    */
-  public synchronized long registerOperationWithHeapSize(long heapSize)
+  public long registerOperationWithHeapSize(long heapSize)
       throws InterruptedException {
-    long operationId = operationSequenceGenerator.incrementAndGet();
-    while (unsynchronizedIsFull()) {
-      waitForCompletions(REGISTER_WAIT_MILLIS);
+    long start = clock.nanoTime();
+    synchronized (this) {
+      while (unsynchronizedIsFull()) {
+        waitForCompletions(REGISTER_WAIT_MILLIS);
+      }
+      long waitComplete = clock.nanoTime();
+      stats.markThrottling(waitComplete - start);
+      long operationId = operationSequenceGenerator.incrementAndGet();
+      pendingOperationsWithSize.put(operationId, heapSize);
+      currentWriteBufferSize += heapSize;
+      starTimes.put(operationId, waitComplete);
+      return operationId;
     }
-
-    pendingOperationsWithSize.put(operationId, heapSize);
-    currentWriteBufferSize += heapSize;
-    return operationId;
   }
 
   /**
@@ -72,7 +85,12 @@ public class ResourceLimiter {
    * @param id a long.
    */
   public void markCanBeCompleted(long id) {
-    completedOperationIds.offerLast(id);
+    Long opId = id;
+    completedOperationIds.offerLast(opId);
+    Long start = starTimes.remove(opId);
+    if (start != null) {
+      stats.markRpcComplete(clock.nanoTime() - start);
+    }
   }
 
   /**
@@ -234,7 +252,6 @@ public class ResourceLimiter {
     Runnable r = new Runnable() {
       @Override
       public void run() {
-        ResourceLimiterStats stats = ResourceLimiterStats.getInstance();
         long meanLatencyMs = getMeanMs(stats.getMutationTimer());
         if (meanLatencyMs >= bulkMutationRpcTargetMs * 3) {
           // decrease at 30% of the maximum RPCs, with a minimum of 2.5%
