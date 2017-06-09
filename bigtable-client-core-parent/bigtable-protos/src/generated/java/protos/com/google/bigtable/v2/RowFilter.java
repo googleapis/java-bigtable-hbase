@@ -513,6 +513,17 @@ public  final class RowFilter extends
     }
 
     public static com.google.bigtable.v2.RowFilter.Chain parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.google.bigtable.v2.RowFilter.Chain parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.google.bigtable.v2.RowFilter.Chain parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
@@ -1624,6 +1635,17 @@ public  final class RowFilter extends
       return hash;
     }
 
+    public static com.google.bigtable.v2.RowFilter.Interleave parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.google.bigtable.v2.RowFilter.Interleave parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static com.google.bigtable.v2.RowFilter.Interleave parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -3041,6 +3063,17 @@ public  final class RowFilter extends
       return hash;
     }
 
+    public static com.google.bigtable.v2.RowFilter.Condition parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.google.bigtable.v2.RowFilter.Condition parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static com.google.bigtable.v2.RowFilter.Condition parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -4483,14 +4516,14 @@ public  final class RowFilter extends
     }
     if (filterCase_ == 4) {
       output.writeBytes(
-          4, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) filter_));
+          4, (com.google.protobuf.ByteString) filter_);
     }
     if (filterCase_ == 5) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, filter_);
     }
     if (filterCase_ == 6) {
       output.writeBytes(
-          6, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) filter_));
+          6, (com.google.protobuf.ByteString) filter_);
     }
     if (filterCase_ == 7) {
       output.writeMessage(7, (com.google.bigtable.v2.ColumnRange) filter_);
@@ -4500,7 +4533,7 @@ public  final class RowFilter extends
     }
     if (filterCase_ == 9) {
       output.writeBytes(
-          9, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) filter_));
+          9, (com.google.protobuf.ByteString) filter_);
     }
     if (filterCase_ == 10) {
       output.writeInt32(
@@ -4562,7 +4595,7 @@ public  final class RowFilter extends
     if (filterCase_ == 4) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(
-            4, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) filter_));
+            4, (com.google.protobuf.ByteString) filter_);
     }
     if (filterCase_ == 5) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, filter_);
@@ -4570,7 +4603,7 @@ public  final class RowFilter extends
     if (filterCase_ == 6) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(
-            6, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) filter_));
+            6, (com.google.protobuf.ByteString) filter_);
     }
     if (filterCase_ == 7) {
       size += com.google.protobuf.CodedOutputStream
@@ -4583,7 +4616,7 @@ public  final class RowFilter extends
     if (filterCase_ == 9) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(
-            9, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) filter_));
+            9, (com.google.protobuf.ByteString) filter_);
     }
     if (filterCase_ == 10) {
       size += com.google.protobuf.CodedOutputStream
@@ -4833,6 +4866,17 @@ public  final class RowFilter extends
     return hash;
   }
 
+  public static com.google.bigtable.v2.RowFilter parseFrom(
+      java.nio.ByteBuffer data)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data);
+  }
+  public static com.google.bigtable.v2.RowFilter parseFrom(
+      java.nio.ByteBuffer data,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data, extensionRegistry);
+  }
   public static com.google.bigtable.v2.RowFilter parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {

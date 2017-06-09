@@ -21,7 +21,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.3.0)",
+    value = "by gRPC proto compiler (version 1.4.0)",
     comments = "Source: google/bigtable/v2/bigtable.proto")
 public final class BigtableGrpc {
 
@@ -33,57 +33,75 @@ public final class BigtableGrpc {
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.v2.ReadRowsRequest,
       com.google.bigtable.v2.ReadRowsResponse> METHOD_READ_ROWS =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING,
-          generateFullMethodName(
-              "google.bigtable.v2.Bigtable", "ReadRows"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.ReadRowsRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.ReadRowsResponse.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.v2.ReadRowsRequest, com.google.bigtable.v2.ReadRowsResponse>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.v2.Bigtable", "ReadRows"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.ReadRowsRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.ReadRowsResponse.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.v2.SampleRowKeysRequest,
       com.google.bigtable.v2.SampleRowKeysResponse> METHOD_SAMPLE_ROW_KEYS =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING,
-          generateFullMethodName(
-              "google.bigtable.v2.Bigtable", "SampleRowKeys"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.SampleRowKeysRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.SampleRowKeysResponse.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.v2.SampleRowKeysRequest, com.google.bigtable.v2.SampleRowKeysResponse>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.v2.Bigtable", "SampleRowKeys"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.SampleRowKeysRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.SampleRowKeysResponse.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.v2.MutateRowRequest,
       com.google.bigtable.v2.MutateRowResponse> METHOD_MUTATE_ROW =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.v2.Bigtable", "MutateRow"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.MutateRowRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.MutateRowResponse.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.v2.MutateRowRequest, com.google.bigtable.v2.MutateRowResponse>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.v2.Bigtable", "MutateRow"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.MutateRowRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.MutateRowResponse.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.v2.MutateRowsRequest,
       com.google.bigtable.v2.MutateRowsResponse> METHOD_MUTATE_ROWS =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING,
-          generateFullMethodName(
-              "google.bigtable.v2.Bigtable", "MutateRows"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.MutateRowsRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.MutateRowsResponse.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.v2.MutateRowsRequest, com.google.bigtable.v2.MutateRowsResponse>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.v2.Bigtable", "MutateRows"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.MutateRowsRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.MutateRowsResponse.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.v2.CheckAndMutateRowRequest,
       com.google.bigtable.v2.CheckAndMutateRowResponse> METHOD_CHECK_AND_MUTATE_ROW =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.v2.Bigtable", "CheckAndMutateRow"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.CheckAndMutateRowRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.CheckAndMutateRowResponse.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.v2.CheckAndMutateRowRequest, com.google.bigtable.v2.CheckAndMutateRowResponse>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.v2.Bigtable", "CheckAndMutateRow"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.CheckAndMutateRowRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.CheckAndMutateRowResponse.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.v2.ReadModifyWriteRowRequest,
       com.google.bigtable.v2.ReadModifyWriteRowResponse> METHOD_READ_MODIFY_WRITE_ROW =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.v2.Bigtable", "ReadModifyWriteRow"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.ReadModifyWriteRowRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v2.ReadModifyWriteRowResponse.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.v2.ReadModifyWriteRowRequest, com.google.bigtable.v2.ReadModifyWriteRowResponse>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.v2.Bigtable", "ReadModifyWriteRow"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.ReadModifyWriteRowRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.v2.ReadModifyWriteRowResponse.getDefaultInstance()))
+          .build();
 
   /**
    * Creates a new async stub that supports all call types for the service
@@ -101,7 +119,7 @@ public final class BigtableGrpc {
   }
 
   /**
-   * Creates a new ListenableFuture-style stub that supports unary and streaming output calls on the service
+   * Creates a new ListenableFuture-style stub that supports unary calls on the service
    */
   public static BigtableFutureStub newFutureStub(
       io.grpc.Channel channel) {

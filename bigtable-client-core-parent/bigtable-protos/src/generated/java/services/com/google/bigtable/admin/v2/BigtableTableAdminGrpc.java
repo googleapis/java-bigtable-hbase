@@ -23,7 +23,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.3.0)",
+    value = "by gRPC proto compiler (version 1.4.0)",
     comments = "Source: google/bigtable/admin/v2/bigtable_table_admin.proto")
 public final class BigtableTableAdminGrpc {
 
@@ -35,57 +35,75 @@ public final class BigtableTableAdminGrpc {
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.CreateTableRequest,
       com.google.bigtable.admin.v2.Table> METHOD_CREATE_TABLE =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableTableAdmin", "CreateTable"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.CreateTableRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.CreateTableRequest, com.google.bigtable.admin.v2.Table>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableTableAdmin", "CreateTable"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.CreateTableRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.Table.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.ListTablesRequest,
       com.google.bigtable.admin.v2.ListTablesResponse> METHOD_LIST_TABLES =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableTableAdmin", "ListTables"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListTablesRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListTablesResponse.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.ListTablesRequest, com.google.bigtable.admin.v2.ListTablesResponse>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableTableAdmin", "ListTables"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.ListTablesRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.ListTablesResponse.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.GetTableRequest,
       com.google.bigtable.admin.v2.Table> METHOD_GET_TABLE =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableTableAdmin", "GetTable"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.GetTableRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.GetTableRequest, com.google.bigtable.admin.v2.Table>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableTableAdmin", "GetTable"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.GetTableRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.Table.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DeleteTableRequest,
       com.google.protobuf.Empty> METHOD_DELETE_TABLE =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableTableAdmin", "DeleteTable"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.DeleteTableRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.DeleteTableRequest, com.google.protobuf.Empty>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableTableAdmin", "DeleteTable"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.DeleteTableRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.protobuf.Empty.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest,
       com.google.bigtable.admin.v2.Table> METHOD_MODIFY_COLUMN_FAMILIES =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableTableAdmin", "ModifyColumnFamilies"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest, com.google.bigtable.admin.v2.Table>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableTableAdmin", "ModifyColumnFamilies"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.Table.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DropRowRangeRequest,
       com.google.protobuf.Empty> METHOD_DROP_ROW_RANGE =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableTableAdmin", "DropRowRange"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.DropRowRangeRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.DropRowRangeRequest, com.google.protobuf.Empty>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableTableAdmin", "DropRowRange"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.DropRowRangeRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.protobuf.Empty.getDefaultInstance()))
+          .build();
 
   /**
    * Creates a new async stub that supports all call types for the service
@@ -103,7 +121,7 @@ public final class BigtableTableAdminGrpc {
   }
 
   /**
-   * Creates a new ListenableFuture-style stub that supports unary and streaming output calls on the service
+   * Creates a new ListenableFuture-style stub that supports unary calls on the service
    */
   public static BigtableTableAdminFutureStub newFutureStub(
       io.grpc.Channel channel) {

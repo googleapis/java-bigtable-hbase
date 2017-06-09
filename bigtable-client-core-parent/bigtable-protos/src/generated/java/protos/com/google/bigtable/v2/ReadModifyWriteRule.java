@@ -245,7 +245,7 @@ public  final class ReadModifyWriteRule extends
     }
     if (ruleCase_ == 3) {
       output.writeBytes(
-          3, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) rule_));
+          3, (com.google.protobuf.ByteString) rule_);
     }
     if (ruleCase_ == 4) {
       output.writeInt64(
@@ -268,7 +268,7 @@ public  final class ReadModifyWriteRule extends
     if (ruleCase_ == 3) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(
-            3, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) rule_));
+            3, (com.google.protobuf.ByteString) rule_);
     }
     if (ruleCase_ == 4) {
       size += com.google.protobuf.CodedOutputStream
@@ -342,6 +342,17 @@ public  final class ReadModifyWriteRule extends
     return hash;
   }
 
+  public static com.google.bigtable.v2.ReadModifyWriteRule parseFrom(
+      java.nio.ByteBuffer data)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data);
+  }
+  public static com.google.bigtable.v2.ReadModifyWriteRule parseFrom(
+      java.nio.ByteBuffer data,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data, extensionRegistry);
+  }
   public static com.google.bigtable.v2.ReadModifyWriteRule parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {

@@ -216,7 +216,7 @@ public  final class DropRowRangeRequest extends
     }
     if (targetCase_ == 2) {
       output.writeBytes(
-          2, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) target_));
+          2, (com.google.protobuf.ByteString) target_);
     }
     if (targetCase_ == 3) {
       output.writeBool(
@@ -235,7 +235,7 @@ public  final class DropRowRangeRequest extends
     if (targetCase_ == 2) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(
-            2, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) target_));
+            2, (com.google.protobuf.ByteString) target_);
     }
     if (targetCase_ == 3) {
       size += com.google.protobuf.CodedOutputStream
@@ -305,6 +305,17 @@ public  final class DropRowRangeRequest extends
     return hash;
   }
 
+  public static com.google.bigtable.admin.v2.DropRowRangeRequest parseFrom(
+      java.nio.ByteBuffer data)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data);
+  }
+  public static com.google.bigtable.admin.v2.DropRowRangeRequest parseFrom(
+      java.nio.ByteBuffer data,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data, extensionRegistry);
+  }
   public static com.google.bigtable.admin.v2.DropRowRangeRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {

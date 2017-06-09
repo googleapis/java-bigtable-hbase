@@ -23,7 +23,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.3.0)",
+    value = "by gRPC proto compiler (version 1.4.0)",
     comments = "Source: google/bigtable/admin/v2/bigtable_instance_admin.proto")
 public final class BigtableInstanceAdminGrpc {
 
@@ -35,93 +35,123 @@ public final class BigtableInstanceAdminGrpc {
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.CreateInstanceRequest,
       com.google.longrunning.Operation> METHOD_CREATE_INSTANCE =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "CreateInstance"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.CreateInstanceRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.Operation.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.CreateInstanceRequest, com.google.longrunning.Operation>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "CreateInstance"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.CreateInstanceRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.longrunning.Operation.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.GetInstanceRequest,
       com.google.bigtable.admin.v2.Instance> METHOD_GET_INSTANCE =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "GetInstance"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.GetInstanceRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Instance.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.GetInstanceRequest, com.google.bigtable.admin.v2.Instance>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "GetInstance"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.GetInstanceRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.Instance.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.ListInstancesRequest,
       com.google.bigtable.admin.v2.ListInstancesResponse> METHOD_LIST_INSTANCES =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "ListInstances"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListInstancesRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListInstancesResponse.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.ListInstancesRequest, com.google.bigtable.admin.v2.ListInstancesResponse>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "ListInstances"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.ListInstancesRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.ListInstancesResponse.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.Instance,
       com.google.bigtable.admin.v2.Instance> METHOD_UPDATE_INSTANCE =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "UpdateInstance"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Instance.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Instance.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.Instance, com.google.bigtable.admin.v2.Instance>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "UpdateInstance"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.Instance.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.Instance.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DeleteInstanceRequest,
       com.google.protobuf.Empty> METHOD_DELETE_INSTANCE =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "DeleteInstance"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.DeleteInstanceRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.DeleteInstanceRequest, com.google.protobuf.Empty>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "DeleteInstance"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.DeleteInstanceRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.protobuf.Empty.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.CreateClusterRequest,
       com.google.longrunning.Operation> METHOD_CREATE_CLUSTER =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "CreateCluster"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.CreateClusterRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.Operation.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.CreateClusterRequest, com.google.longrunning.Operation>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "CreateCluster"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.CreateClusterRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.longrunning.Operation.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.GetClusterRequest,
       com.google.bigtable.admin.v2.Cluster> METHOD_GET_CLUSTER =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "GetCluster"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.GetClusterRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Cluster.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.GetClusterRequest, com.google.bigtable.admin.v2.Cluster>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "GetCluster"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.GetClusterRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.Cluster.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.ListClustersRequest,
       com.google.bigtable.admin.v2.ListClustersResponse> METHOD_LIST_CLUSTERS =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "ListClusters"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListClustersRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListClustersResponse.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.ListClustersRequest, com.google.bigtable.admin.v2.ListClustersResponse>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "ListClusters"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.ListClustersRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.ListClustersResponse.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.Cluster,
       com.google.longrunning.Operation> METHOD_UPDATE_CLUSTER =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "UpdateCluster"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Cluster.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.Operation.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.Cluster, com.google.longrunning.Operation>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "UpdateCluster"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.Cluster.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.longrunning.Operation.getDefaultInstance()))
+          .build();
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DeleteClusterRequest,
       com.google.protobuf.Empty> METHOD_DELETE_CLUSTER =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableInstanceAdmin", "DeleteCluster"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.DeleteClusterRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
+      io.grpc.MethodDescriptor.<com.google.bigtable.admin.v2.DeleteClusterRequest, com.google.protobuf.Empty>newBuilder()
+          .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName(
+              "google.bigtable.admin.v2.BigtableInstanceAdmin", "DeleteCluster"))
+          .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.bigtable.admin.v2.DeleteClusterRequest.getDefaultInstance()))
+          .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+              com.google.protobuf.Empty.getDefaultInstance()))
+          .build();
 
   /**
    * Creates a new async stub that supports all call types for the service
@@ -139,7 +169,7 @@ public final class BigtableInstanceAdminGrpc {
   }
 
   /**
-   * Creates a new ListenableFuture-style stub that supports unary and streaming output calls on the service
+   * Creates a new ListenableFuture-style stub that supports unary calls on the service
    */
   public static BigtableInstanceAdminFutureStub newFutureStub(
       io.grpc.Channel channel) {
