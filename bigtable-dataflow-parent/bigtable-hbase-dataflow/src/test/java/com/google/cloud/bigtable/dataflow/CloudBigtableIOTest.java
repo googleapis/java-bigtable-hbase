@@ -21,6 +21,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -39,6 +41,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.google.bigtable.repackaged.com.google.cloud.util.ByteStringComparator;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.AbstractSource;
@@ -150,6 +153,13 @@ public class CloudBigtableIOTest {
     CloudBigtableIO.Source source = (Source) CloudBigtableIO.read(config);
     source.setSampleRowKeys(sampleRowKeys);
     List<CloudBigtableIO.SourceWithKeys> splits = source.getSplits(20000);
+    Collections.sort(splits, new Comparator<CloudBigtableIO.SourceWithKeys>() {
+      @Override
+      public int compare(SourceWithKeys o1, SourceWithKeys o2) {
+        return ByteStringComparator.INSTANCE.compare(o1.getConfiguration().getStartRowByteString(),
+          o2.getConfiguration().getStartRowByteString());
+      }
+    });
     Assert.assertTrue(splits.size() <= CloudBigtableIO.AbstractSource.COUNT_MAX_SPLIT_COUNT);
     Iterator<SourceWithKeys> iter = splits.iterator();
     SourceWithKeys last = iter.next();
