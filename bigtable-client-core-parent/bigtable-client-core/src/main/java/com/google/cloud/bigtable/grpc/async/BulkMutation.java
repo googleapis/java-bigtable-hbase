@@ -199,32 +199,25 @@ public class BulkMutation {
      */
     private void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture,
         final Long rpcId) {
-      Futures.addCallback(
-          bulkFuture,
-          new FutureCallback<List<MutateRowsResponse>>() {
-            @Override
-            public void onSuccess(List<MutateRowsResponse> result) {
-              markCompletion();
-              handleResult(result);
-            }
+      Futures.addCallback(bulkFuture, new FutureCallback<List<MutateRowsResponse>>() {
+        @Override
+        public void onSuccess(List<MutateRowsResponse> result) {
+          markCompletion();
+          handleResult(result);
+        }
 
-            @Override
-            public void onFailure(Throwable t) {
-              markCompletion();
-              performFullRetry(new AtomicReference<Long>(), t);
-            }
+        @Override
+        public void onFailure(Throwable t) {
+          markCompletion();
+          performFullRetry(new AtomicReference<Long>(), t);
+        }
 
-            protected void markCompletion() {
-              if (rpcId != null) {
-                resourceLimiter.markCanBeCompleted(rpcId);
-              }
-            if (currentRequestManager != null
-                && currentRequestManager.lastRpcSentTimeNanos != null) {
-              ResourceLimiterStats.getInstance().markRpcComplete(
-                clock.nanoTime() - currentRequestManager.lastRpcSentTimeNanos);
-            }
+        protected void markCompletion() {
+          if (rpcId != null) {
+            resourceLimiter.markCanBeCompleted(rpcId);
           }
-          });
+        }
+      });
     }
 
     @VisibleForTesting
@@ -401,11 +394,8 @@ public class BulkMutation {
       Long operationId = null;
       try {
         MutateRowsRequest request = currentRequestManager.build();
-        long start = clock.nanoTime();
         operationId = resourceLimiter
             .registerOperationWithHeapSize(request.getSerializedSize());
-        long now = clock.nanoTime();
-        ResourceLimiterStats.getInstance().markThrottling(now - start);
         mutateRowsFuture = client.mutateRowsAsync(request);
         currentRequestManager.lastRpcSentTimeNanos = clock.nanoTime();
       } catch (InterruptedException e) {
