@@ -125,12 +125,13 @@ public class RetryingReadRowsOperation extends
     }
   }
 
-  protected void updateLastFoundKey(ByteString lastProcessedKey) {
+  private void updateLastFoundKey(ByteString lastProcessedKey) {
     if (lastProcessedKey != null && !lastProcessedKey.isEmpty()) {
       requestManager.updateLastFoundKey(lastProcessedKey);
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
     if (status.getCode() == Status.Code.CANCELLED
@@ -141,6 +142,7 @@ public class RetryingReadRowsOperation extends
     super.onClose(status, trailers);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setException(Exception exception) {
     rowObserver.onError(exception);
@@ -157,6 +159,7 @@ public class RetryingReadRowsOperation extends
     return true;
   }
 
+  /** {@inheritDoc} */
   @Override
   protected boolean onOK() {
     rowMerger.onCompleted();

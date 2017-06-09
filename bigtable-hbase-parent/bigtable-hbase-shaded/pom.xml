@@ -123,8 +123,10 @@ limitations under the License.
                                     <include>io.netty:*</include>
                                     <include>io.grpc:*</include>
                                     <include>io.dropwizard.metrics:metrics-core</include>
-
                                 </includes>
+                                <excludes>
+                                    <exclude>io.netty:netty-tcnative-boringssl-static</exclude>
+                                </excludes>
                             </artifactSet>
                             <relocations>
                                 <relocation>
@@ -186,6 +188,10 @@ limitations under the License.
                                 <relocation>
                                     <pattern>io.netty</pattern>
                                     <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
+                                    <!-- Don't relocate jni jar references -->
+                                    <excludes>
+                                      <exclude>io.netty.internal.tcnative.*</exclude>
+                                    </excludes>
                                 </relocation>
                             </relocations>
                         </configuration>
