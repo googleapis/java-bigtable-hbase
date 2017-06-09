@@ -18,11 +18,11 @@ package com.google.cloud.bigtable.dataflow;
 
 import org.apache.hadoop.hbase.client.Scan;
 
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableInstanceName;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.DefaultReadHooks;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadHooks;
-import com.google.bigtable.repackaged.com.google.cloud.util.ByteStringer;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ByteStringer;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;

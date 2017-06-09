@@ -57,7 +57,7 @@ limitations under the License.
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.cloud.bigtable</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.cloud</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.cloud.bigtable</shadedPattern>
                                     <excludes>
                                         <exclude>com.google.cloud.bigtable.dataflow.*</exclude>
                                     </excludes>

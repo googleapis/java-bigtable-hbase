@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.batch.common;
 
-import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;

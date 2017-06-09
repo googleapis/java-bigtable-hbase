@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.batch.common;
 
-import com.google.bigtable.repackaged.com.google.cloud.util.ByteStringer;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ByteStringer;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
 

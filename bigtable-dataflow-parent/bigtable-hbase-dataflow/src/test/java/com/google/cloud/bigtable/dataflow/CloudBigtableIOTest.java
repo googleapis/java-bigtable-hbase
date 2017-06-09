@@ -41,7 +41,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.bigtable.repackaged.com.google.cloud.util.ByteStringComparator;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ByteStringComparator;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.AbstractSource;
