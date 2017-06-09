@@ -20,7 +20,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.google.bigtable.repackaged.io.netty.handler.ssl.OpenSsl;
 import com.google.cloud.bigtable.hbase1_2.BigtableConnection;
+
 
 /**
  * This is a test to ensure that BigtableConnection can find {@link BigtableConnection}
@@ -33,4 +35,13 @@ public class TestBigtableConnection {
   public void testBigtableConnectionExists() {
     Assert.assertEquals(BigtableConnection.class, BigtableConfiguration.getConnectionClass());
   }
+
+
+  @Test
+  public void testOpelSSL() throws Throwable{
+    if(!OpenSsl.isAvailable()){
+      throw OpenSsl.unavailabilityCause();
+    }
+  }
+
 }
