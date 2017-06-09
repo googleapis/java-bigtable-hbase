@@ -66,6 +66,10 @@ limitations under the License.
                     <groupId>io.grpc</groupId>
                     <artifactId>grpc-all</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.google.api</groupId>
+                    <artifactId>api-common</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
