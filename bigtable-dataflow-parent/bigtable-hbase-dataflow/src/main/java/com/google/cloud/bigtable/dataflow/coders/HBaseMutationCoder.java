@@ -25,8 +25,8 @@ import org.apache.hadoop.hbase.client.Put;
 
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.PutAdapter;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Mutation.MutationCase;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
