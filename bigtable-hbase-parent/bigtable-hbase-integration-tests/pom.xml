@@ -32,7 +32,7 @@ limitations under the License.
 
     <properties>
         <hbase.version>1.3.0</hbase.version>
-        <google.bigtable.project.under.test>bigtable-hbase-1.x</google.bigtable.project.under.test>
+        <google.bigtable.project.under.test>bigtable-hbase-1.x-hadoop</google.bigtable.project.under.test>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
         <protobuff-java.version>2.5.0</protobuff-java.version>
     </properties>
