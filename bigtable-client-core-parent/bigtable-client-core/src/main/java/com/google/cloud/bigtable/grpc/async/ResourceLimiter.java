@@ -234,7 +234,7 @@ public class ResourceLimiter {
     Runnable r = new Runnable() {
       @Override
       public void run() {
-        BulkMutationsStats stats = BulkMutationsStats.getInstance();
+        ResourceLimiterStats stats = ResourceLimiterStats.getInstance();
         long meanLatencyMs = getMeanMs(stats.getMutationTimer());
         if (meanLatencyMs >= bulkMutationRpcTargetMs * 3) {
           // decrease at 30% of the maximum RPCs, with a minimum of 2.5%

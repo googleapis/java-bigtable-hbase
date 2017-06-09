@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.grpc.async;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
@@ -27,23 +26,22 @@ import com.google.common.annotations.VisibleForTesting;
  * This class tracks timing and counts of mutations performed by {@link BulkMutation} and throttling
  * performed by {@link ResourceLimiter}.
  */
-public class BulkMutationsStats {
+public class ResourceLimiterStats {
 
-  private static BulkMutationsStats instance = new BulkMutationsStats();
+  private static ResourceLimiterStats instance = new ResourceLimiterStats();
 
-  public static BulkMutationsStats getInstance() {
+  public static ResourceLimiterStats getInstance() {
     return instance;
   }
 
   @VisibleForTesting
   static void reset(){
-    instance = new BulkMutationsStats();
+    instance = new ResourceLimiterStats();
   }
 
   private final MetricRegistry registry = new MetricRegistry();
 
-  private final Timer mutationTimer = registry.timer("MutationStats.mutation.timer");
-  private final Meter mutationMeter = registry.meter("MutationStats.mutation.meter");
+  private final Timer rpcTimer = registry.timer("MutationStats.mutation.timer");
   private final Timer throttlingTimer = registry.timer("MutationStats.throttling.timer");
   private final AtomicLong cumulativeThrottlingTimeNanos = new AtomicLong();
 
@@ -51,17 +49,8 @@ public class BulkMutationsStats {
    * This method updates rpc time statistics statistics.
    * @param rpcDurationInNanos
    */
-  void markMutationsRpcCompletion(long rpcDurationInNanos) {
-    mutationTimer.update(rpcDurationInNanos, TimeUnit.NANOSECONDS);
-  }
-
-  /**
-   * This method updates mutations per second statistics.
-   * @param mutationCount
-   * @param rpcTimeInNanos
-   */
-  void markMutationsSuccess(long mutationCount) {
-    mutationMeter.mark(mutationCount);
+  void markRpcComplete(long rpcDurationInNanos) {
+    rpcTimer.update(rpcDurationInNanos, TimeUnit.NANOSECONDS);
   }
 
   /**
@@ -74,11 +63,7 @@ public class BulkMutationsStats {
   }
 
   public Timer getMutationTimer() {
-    return mutationTimer;
-  }
-
-  public Meter getMutationMeter() {
-    return mutationMeter;
+    return rpcTimer;
   }
 
   public Timer getThrottlingTimer() {

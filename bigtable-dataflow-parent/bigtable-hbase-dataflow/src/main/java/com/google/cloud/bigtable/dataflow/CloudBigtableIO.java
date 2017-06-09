@@ -53,7 +53,7 @@ import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSessionSharedThreadPools;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.async.BulkMutationsStats;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.async.ResourceLimiterStats;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
@@ -359,7 +359,12 @@ public class CloudBigtableIO {
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         splits.add(createSourceWithKeys(startKey, endKey, 0));
       }
-      return reduceSplits(splits);
+      List<SourceWithKeys<ResultOutputType>> result = reduceSplits(splits);
+
+      // Randomize the list, since the default behavior would lead to multiple workers hitting the
+      // same tablet.
+      Collections.shuffle(result);
+      return result;
     }
 
     private List<SourceWithKeys<ResultOutputType>>
@@ -944,7 +949,7 @@ public class CloudBigtableIO {
         public void run() {
           try {
             cumulativeThrottlingSeconds.set(TimeUnit.NANOSECONDS
-                .toSeconds(BulkMutationsStats.getInstance().getCumulativeThrottlingTimeNanos()));
+                .toSeconds(ResourceLimiterStats.getInstance().getCumulativeThrottlingTimeNanos()));
           } catch (Exception e) {
             STATS_LOG.warn("Something bad happened in export stats", e);
           }

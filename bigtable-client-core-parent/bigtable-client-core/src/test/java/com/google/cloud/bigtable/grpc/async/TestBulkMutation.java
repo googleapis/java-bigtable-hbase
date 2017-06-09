@@ -86,6 +86,7 @@ public class TestBulkMutation {
 
   private AtomicLong time;
   private AtomicInteger schedulerTimeIncreaseCount = new AtomicInteger();
+
   private SettableFuture<List<MutateRowsResponse>> future;
   private RetryOptions retryOptions;
   private BulkMutation underTest;
@@ -124,7 +125,7 @@ public class TestBulkMutation {
 
   @Test
   public void testAdd() {
-    BulkMutationsStats.reset();
+    ResourceLimiterStats.reset();
     MutateRowRequest mutateRowRequest = createRequest();
     BulkMutation.RequestManager requestManager = createTestRequestManager();
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
@@ -137,9 +138,8 @@ public class TestBulkMutation {
         .addEntries(entry)
         .build();
     Assert.assertEquals(expected, requestManager.build());
-    Assert.assertEquals(0, BulkMutationsStats.getInstance().getMutationTimer().getCount());
-    Assert.assertEquals(0, BulkMutationsStats.getInstance().getMutationMeter().getCount());
-    Assert.assertEquals(0, BulkMutationsStats.getInstance().getThrottlingTimer().getCount());
+    Assert.assertEquals(0, ResourceLimiterStats.getInstance().getMutationTimer().getCount());
+    Assert.assertEquals(0, ResourceLimiterStats.getInstance().getThrottlingTimer().getCount());
   }
 
   private RequestManager createTestRequestManager() {
