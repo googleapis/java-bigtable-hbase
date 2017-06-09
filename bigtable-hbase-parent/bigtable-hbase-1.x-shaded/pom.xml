@@ -32,7 +32,7 @@ limitations under the License.
 <dependencies>
   <dependency>
     <groupId>${project.groupId}</groupId>
-    <artifactId>bigtable-hbase</artifactId>
+    <artifactId>bigtable-hbase-1.x</artifactId>
     <version>${project.version}</version>
   </dependency>
 </dependencies>
