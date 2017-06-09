@@ -62,10 +62,11 @@ public class RetryingUnaryOperation<RequestT, ResponseT>
 
   /** {@inheritDoc} */
   @Override
-  protected void onOK() {
+  protected boolean onOK() {
     if (value == null) {
       // No value received so mark the future as an error
       completionFuture.setException(NO_VALUE_SET_EXCEPTION);
     }
+    return true;
   }
 }
