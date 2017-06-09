@@ -239,19 +239,19 @@ public  final class ValueRange extends
                       throws java.io.IOException {
     if (startValueCase_ == 1) {
       output.writeBytes(
-          1, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) startValue_));
+          1, (com.google.protobuf.ByteString) startValue_);
     }
     if (startValueCase_ == 2) {
       output.writeBytes(
-          2, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) startValue_));
+          2, (com.google.protobuf.ByteString) startValue_);
     }
     if (endValueCase_ == 3) {
       output.writeBytes(
-          3, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) endValue_));
+          3, (com.google.protobuf.ByteString) endValue_);
     }
     if (endValueCase_ == 4) {
       output.writeBytes(
-          4, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) endValue_));
+          4, (com.google.protobuf.ByteString) endValue_);
     }
   }
 
@@ -263,22 +263,22 @@ public  final class ValueRange extends
     if (startValueCase_ == 1) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(
-            1, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) startValue_));
+            1, (com.google.protobuf.ByteString) startValue_);
     }
     if (startValueCase_ == 2) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(
-            2, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) startValue_));
+            2, (com.google.protobuf.ByteString) startValue_);
     }
     if (endValueCase_ == 3) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(
-            3, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) endValue_));
+            3, (com.google.protobuf.ByteString) endValue_);
     }
     if (endValueCase_ == 4) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(
-            4, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) endValue_));
+            4, (com.google.protobuf.ByteString) endValue_);
     }
     memoizedSize = size;
     return size;
@@ -365,6 +365,17 @@ public  final class ValueRange extends
     return hash;
   }
 
+  public static com.google.bigtable.v2.ValueRange parseFrom(
+      java.nio.ByteBuffer data)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data);
+  }
+  public static com.google.bigtable.v2.ValueRange parseFrom(
+      java.nio.ByteBuffer data,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data, extensionRegistry);
+  }
   public static com.google.bigtable.v2.ValueRange parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
