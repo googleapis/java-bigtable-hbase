@@ -26,6 +26,7 @@ import org.junit.rules.ExpectedException;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 
+import io.netty.handler.ssl.OpenSsl;
 import io.netty.util.Recycler;
 
 @SuppressWarnings({"resource","unused"})
@@ -76,5 +77,12 @@ public class TestBigtableSession {
     Field field = Recycler.class.getDeclaredField("DEFAULT_MAX_CAPACITY_PER_THREAD");
     field.setAccessible(true);
     Assert.assertEquals(0, field.getInt(null));
+  }
+
+  @Test
+  public void testOpenSSL() throws Throwable{
+    if(!OpenSsl.isAvailable()){
+      throw OpenSsl.unavailabilityCause();
+    }
   }
 }
