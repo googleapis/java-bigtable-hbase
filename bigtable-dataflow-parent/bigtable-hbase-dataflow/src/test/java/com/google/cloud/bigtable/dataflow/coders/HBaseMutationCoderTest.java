@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.dataflow.coders;
 import static org.apache.hadoop.hbase.util.Bytes.toBytes;
 
 import com.google.bigtable.repackaged.com.google.api.client.util.Clock;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.adapters.PutAdapterUtil;
+import com.google.cloud.bigtable.hbase.adapters.PutAdapterUtil;
 import com.google.cloud.dataflow.sdk.util.MutationDetector;
 import com.google.cloud.dataflow.sdk.util.MutationDetectors;
 import java.io.IOException;

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.repackaged.com.google.api.client.util.Clock;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoderTest;

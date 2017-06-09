@@ -20,7 +20,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.adapters.read.RowCell;
+import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
+
 
 /**
  * Tests for {@link HBaseResultCoder}
