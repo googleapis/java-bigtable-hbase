@@ -27,6 +27,7 @@ limitations under the License.
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
+       DEPRECATED: Please use hbase-1.x-hadoop artifact.
        This project contains hbase 1.3 specific implementation of bigtable hbase.
     </description>
 
@@ -37,9 +38,23 @@ limitations under the License.
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>bigtable-hbase-shaded</artifactId>
+            <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
             <version>${project.version}</version>
+
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+            <version>${hbase.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -52,53 +67,4 @@ limitations under the License.
         </dependency>
 
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadeTestJar>true</shadeTestJar>
-                            <!--
-                                KEEP shadedArtifactAttached=false.  DO NOTE CHANGE shadedArtifactAttached to true!
-
-                                Dependencies get messed up if shadedArtifactAttached=true.  The relocations
-                                are vital to get around dependency mismatches between hbase and cloud bigtable.
-                                Specifically, CBT and hbase use different versions of guava and netty.  Relocations
-                                are a way to get around those types of incompatibilities.
-
-                                Using shadedArtifactAttached=true causes some tricky issues.  If =true is on,
-                                then the main artifact isn't usable, because of the incompatibility issues in the artifacts found
-                                in the relocations section.  If HBase updates its dependencies to compatible versions, then
-                                this project will not need to relocate and include those dependencies in a shaded jar.
-
-                                As an example, the start up of hbase requires guava, and using a newer version of guava causes
-                                startup issues.  If an older version of guava is in the classpath, then HBase classes will load
-                                fine, but CBT will have runtime issues.
-
-                                Additionally, if shadedArtifactAttached=true there are even ssues using the shaded classifier.
-                                Using the shaded classifier will pull in the right bigtable-hbase-1.2-shaded-${project.version}.jar,
-                                but it will also pull in bigtable-hbase and bigtable-protos as dependencies, which might
-                                cause classloading issues in some cases like web apps.
-                            -->
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-                            <artifactSet>
-                                <includes>
-                                    <include>com.google.cloud.bigtable:bigtable-hbase-shaded</include>
-                                </includes>
-                            </artifactSet>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

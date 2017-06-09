@@ -29,7 +29,7 @@ limitations under the License.
     <dependencies>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
-            <artifactId>bigtable-hbase-1.0</artifactId>
+            <artifactId>bigtable-hbase-1.x-shaded</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
@@ -51,7 +51,7 @@ limitations under the License.
                             <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                             <artifactSet>
                                 <includes>
-                                    <include>${project.groupId}:bigtable-hbase-1.0</include>
+                                    <include>${project.groupId}:bigtable-hbase-1.x-shaded</include>
                                 </includes>
                             </artifactSet>
                             <relocations>

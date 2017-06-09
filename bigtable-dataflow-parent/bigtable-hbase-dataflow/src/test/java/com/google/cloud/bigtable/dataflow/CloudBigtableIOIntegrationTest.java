@@ -15,6 +15,7 @@
  */
  package com.google.cloud.bigtable.dataflow;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +48,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase1_0.BigtableConnection;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
@@ -107,7 +107,7 @@ public class CloudBigtableIOIntegrationTest {
               .withZoneId(zoneId)
               .build();
     }
-    connection = new BigtableConnection(config.toHBaseConfig());
+    connection = BigtableConfiguration.connect(config.toHBaseConfig());
   }
 
   @AfterClass

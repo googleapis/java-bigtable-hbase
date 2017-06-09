@@ -27,6 +27,7 @@ limitations under the License.
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
+       DEPRECATED: Please use hbase-1.x-hadoop artifact.
        This project shaded bigtable-hbase for used in other projects.
     </description>
 
