@@ -138,7 +138,7 @@ limitations under the License.
                             <!-- The version of protoc must match protobuf-java. If you don't depend
                                 on protobuf-java directly, you will be transitively depending on the protobuf-java
                                 version that grpc depends on. -->
-                            <protocArtifact>com.google.protobuf:protoc:${protobuff-java.version}:exe:${os.detected.classifier}</protocArtifact>
+                            <protocArtifact>com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}</protocArtifact>
                             <outputDirectory>${basedir}/src/generated/java/protos</outputDirectory>
                         </configuration>
                         <executions>
@@ -164,7 +164,7 @@ limitations under the License.
                             <!-- The version of protoc must match protobuf-java. If you don't depend
                                 on protobuf-java directly, you will be transitively depending on the protobuf-java
                                 version that grpc depends on. -->
-                            <protocArtifact>com.google.protobuf:protoc:${protobuff-java.version}:exe:${os.detected.classifier}</protocArtifact>
+                            <protocArtifact>com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}</protocArtifact>
                             <pluginId>grpc-java</pluginId>
                             <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
                             <outputDirectory>${basedir}/src/generated/java/services</outputDirectory>
