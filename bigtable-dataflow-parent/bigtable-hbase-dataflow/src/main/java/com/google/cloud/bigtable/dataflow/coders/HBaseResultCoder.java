@@ -22,7 +22,7 @@ import java.io.OutputStream;
 import org.apache.hadoop.hbase.client.Result;
 
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.SerializableCoder;

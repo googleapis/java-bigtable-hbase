@@ -35,21 +35,6 @@ limitations under the License.
         <module>bigtable-dataflow-import</module>
     </modules>
 
-    <profiles>
-        <profile>
-            <!-- Shading workaround for IDEs:
-                resolve these modules from the local maven repo -->
-            <id>with-shaded</id>
-            <activation>
-                <property>
-                    <name>!skip-shaded</name>
-                </property>
-            </activation>
-            <modules>
-                <module>bigtable-hbase-shaded-for-dataflow</module>
-            </modules>
-        </profile>
-    </profiles>
     <build>
         <pluginManagement>
             <plugins>

@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Assert;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration;
 import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration.Builder;
 import org.apache.hadoop.conf.Configuration;

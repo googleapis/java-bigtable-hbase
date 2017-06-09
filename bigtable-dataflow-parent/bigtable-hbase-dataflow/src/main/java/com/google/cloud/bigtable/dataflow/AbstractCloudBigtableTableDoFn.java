@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
