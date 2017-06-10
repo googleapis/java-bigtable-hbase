@@ -68,17 +68,6 @@ limitations under the License.
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <!-- hbase-server jar provides Deserializer for the Result class. -->
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
