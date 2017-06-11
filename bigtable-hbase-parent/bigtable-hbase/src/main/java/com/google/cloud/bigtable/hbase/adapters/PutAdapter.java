@@ -22,6 +22,7 @@ import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 
@@ -109,8 +110,7 @@ public class PutAdapter extends MutationAdapter<Put> {
 
         long timestampMicros = currentTimestampMicros;
         if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
-          timestampMicros = BigtableConstants.BIGTABLE_TIMEUNIT.convert(cell.getTimestamp(),
-            BigtableConstants.HBASE_TIMEUNIT);
+          timestampMicros = TimestampConverter.hbase2bigtable(cell.getTimestamp());
         }
 
         mutations.add(Mutation.newBuilder()

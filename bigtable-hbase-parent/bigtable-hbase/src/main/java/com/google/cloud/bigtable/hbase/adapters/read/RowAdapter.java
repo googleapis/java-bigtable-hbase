@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -37,11 +38,6 @@ import com.google.cloud.bigtable.util.ByteStringer;
  * @version $Id: $Id
  */
 public class RowAdapter implements ResponseAdapter<Row, Result> {
-  // This only works because BIGTABLE_TIMEUNIT is smaller than HBASE_TIMEUNIT, otherwise we will get
-  // 0.
-  static final long TIME_CONVERSION_UNIT = BigtableConstants.BIGTABLE_TIMEUNIT.convert(1,
-    BigtableConstants.HBASE_TIMEUNIT);
-
   /**
    * {@inheritDoc}
    *
@@ -72,7 +68,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
           // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
           // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
           // HBase will treat them as duplicates.
-          long hbaseTimestamp = cell.getTimestampMicros() / TIME_CONVERSION_UNIT;
+          long hbaseTimestamp = TimestampConverter.bigtable2hbase(cell.getTimestampMicros());
           RowCell keyValue = new RowCell(
               rowKey,
               familyNameBytes,
