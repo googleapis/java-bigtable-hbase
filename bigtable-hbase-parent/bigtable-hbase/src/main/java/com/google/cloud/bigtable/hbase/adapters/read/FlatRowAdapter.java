@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Objects;
 
@@ -76,8 +77,7 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
         // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
         // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
         // HBase will treat them as duplicates.
-        cell.getTimestamp() == HConstants.LATEST_TIMESTAMP ?
-            HConstants.LATEST_TIMESTAMP : cell.getTimestamp() / TIME_CONVERSION_UNIT,
+        TimestampConverter.bigtable2hbase(cell.getTimestamp()),
         ByteStringer.extract(cell.getValue()));
   }
 
@@ -106,8 +106,7 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
           ByteStringer.wrap(rawCell.getQualifierArray(),
               rawCell.getQualifierOffset(), rawCell.getQualifierLength()
           ),
-          rawCell.getTimestamp() == HConstants.LATEST_TIMESTAMP ?
-              HConstants.LATEST_TIMESTAMP : rawCell.getTimestamp() * TIME_CONVERSION_UNIT,
+          TimestampConverter.hbase2bigtable(rawCell.getTimestamp()),
           ByteStringer.wrap(rawCell.getValueArray(),
               rawCell.getValueOffset(), rawCell.getValueLength()
           )
