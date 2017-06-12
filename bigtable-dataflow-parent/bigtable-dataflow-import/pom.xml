@@ -34,6 +34,17 @@ limitations under the License.
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>15.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${protobuff-java.version}</version>
+        </dependency>
+
         <!-- hadoop-client has to take precedence to the bigtable-hbase client.
             This is necessary because bigtable-hbase client cherry-picks just the bare minimum,
             but in the importer, we need a fuller set of dependencies to support gcs-connector writes
