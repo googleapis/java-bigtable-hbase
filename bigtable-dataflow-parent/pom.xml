@@ -31,6 +31,7 @@ limitations under the License.
     </description>
 
     <modules>
+        <module>bigtable-hbase-beam</module>
         <module>bigtable-hbase-dataflow</module>
         <module>bigtable-dataflow-import</module>
     </modules>
