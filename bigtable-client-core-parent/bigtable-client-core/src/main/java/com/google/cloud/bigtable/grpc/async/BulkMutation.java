@@ -211,11 +211,6 @@ public class BulkMutation {
     @VisibleForTesting
     synchronized void handleResult(List<MutateRowsResponse> results) {
       mutateRowsFuture = null;
-      if (results.size() != 1) {
-        setFailure(io.grpc.Status.INTERNAL.withDescription("Expected only a single response.")
-            .asRuntimeException());
-        return;
-      }
       List<MutateRowsResponse.Entry> entries = new ArrayList<>();
       for (MutateRowsResponse response : results) {
         entries.addAll(response.getEntriesList());
