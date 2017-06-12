@@ -356,7 +356,6 @@ public class BigtableSession implements Closeable {
         dataClient,
         resourceLimiter,
         asyncExecutor.getOperationAccountant(),
-        options.getRetryOptions(),
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
         bulkOptions);
   }

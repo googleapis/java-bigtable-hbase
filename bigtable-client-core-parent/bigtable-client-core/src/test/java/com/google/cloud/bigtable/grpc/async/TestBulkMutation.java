@@ -10,14 +10,11 @@ package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,7 +27,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,8 +48,6 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.BulkOptions;
-import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -87,7 +81,6 @@ public class TestBulkMutation {
   private AtomicLong time;
   private AtomicInteger timeIncrementCount = new AtomicInteger();
   private SettableFuture<List<MutateRowsResponse>> future;
-  private RetryOptions retryOptions;
   private BulkMutation underTest;
   private OperationAccountant operationAccountant;
   private ResourceLimiter resourceLimiter;
@@ -103,7 +96,6 @@ public class TestBulkMutation {
       }
     };
     MockitoAnnotations.initMocks(this);
-    retryOptions = RetryOptionsUtil.createTestRetryOptions(clock);
 
     future = SettableFuture.create();
     when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
@@ -172,78 +164,54 @@ public class TestBulkMutation {
   }
 
   @Test
-  public void testCallableNotRetriedStatus() throws Exception {
+  public void testCallableFail() throws Exception {
     ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
     Assert.assertFalse(rowFuture.isDone());
 
     setResponse(Status.NOT_FOUND);
 
+    Assert.assertTrue(rowFuture.isDone());
+
     try {
-      rowFuture.get(100, TimeUnit.MILLISECONDS);
+      rowFuture.get();
     } catch (ExecutionException e) {
       Assert.assertEquals(Status.NOT_FOUND.getCode(), Status.fromThrowable(e).getCode());
       Assert.assertFalse(operationAccountant.hasInflightOperations());
     }
   }
 
-  @Test
-  public void testRetriedStatus() throws Exception {
-    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
-    Assert.assertFalse(rowFuture.isDone());
-    setRpcFailure(Status.DEADLINE_EXCEEDED);
-
-    // Make sure that the request is scheduled
-    Assert.assertFalse(rowFuture.isDone());
-    verify(retryExecutorService, times(1)).schedule(any(Runnable.class), anyLong(),
-      same(TimeUnit.MILLISECONDS));
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
-
-    // Make sure that a second try works.
-    future.set(createResponse(Status.OK));
-    Assert.assertTrue(rowFuture.isDone());
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
-  }
-
-  @SuppressWarnings("unchecked")
-  @Test
   public void testCallableTooFewStatuses() throws Exception {
-    when(retryExecutorService.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
-        .thenReturn(mockScheduledFuture);
     ListenableFuture<MutateRowResponse> rowFuture1 = underTest.add(createRequest());
     ListenableFuture<MutateRowResponse> rowFuture2 = underTest.add(createRequest());
     Batch batch = underTest.currentBatch;
     Assert.assertFalse(rowFuture1.isDone());
     Assert.assertFalse(rowFuture2.isDone());
     Assert.assertEquals(2, batch.getRequestCount());
-    setResponse(Status.OK);
+
     // Send only one response - this is poor server behavior.
+    setResponse(Status.OK);
 
-    Assert.assertEquals(1, batch.getRequestCount());
-
-    // Make sure that the first request completes, but the second does not.
     Assert.assertTrue(rowFuture1.isDone());
-    Assert.assertFalse(rowFuture2.isDone());
-    Assert.assertEquals(MutateRowResponse.getDefaultInstance(), rowFuture1.get());
-    verify(retryExecutorService, times(1)).schedule(any(Runnable.class), anyLong(),
-      same(TimeUnit.MILLISECONDS));
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
-
-    // Make sure that only the second request was sent.
-    batch.run();
-    Assert.assertNull(underTest.currentBatch);
     Assert.assertTrue(rowFuture2.isDone());
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
-  }
+    Assert.assertEquals(MutateRowResponse.getDefaultInstance(), rowFuture1.get());
 
-  @Test
-  public void testDeadlineExceeded() throws Exception {
-    setupScheduler(false);
-    underTest.disableStalenessChecker = true;
-    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
-    setResponse(Status.DEADLINE_EXCEEDED);
+    // This should not throw an exception
+    rowFuture1.get();
 
     try {
-      rowFuture.get(3, TimeUnit.SECONDS);
+      rowFuture2.get();
+      Assert.fail("Expected exception");
+    } catch (Exception e) {
+      Assert.assertEquals(Status.Code.INTERNAL, Status.fromThrowable(e).getCode());
+    }
+  }
+
+  public void testRunOutOfTime() throws Exception {
+    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
+    setResponse(Status.DEADLINE_EXCEEDED);
+    Assert.assertTrue(rowFuture.isDone());
+    try {
+      rowFuture.get();
       Assert.fail("Expected exception");
     } catch (ExecutionException e) {
       Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(),
@@ -251,8 +219,6 @@ public class TestBulkMutation {
     }
 
     Assert.assertFalse(operationAccountant.hasInflightOperations());
-    Assert.assertTrue(
-      time.get() >= TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
   }
 
   @Test
@@ -332,9 +298,8 @@ public class TestBulkMutation {
   public void testAutoflush() throws Exception {
     // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the
     // scheduled executor mock
-    underTest =
-        new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant, retryOptions,
-            retryExecutorService, new BulkOptions.Builder().setAutoflushMs(1000L).build());
+    underTest = new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant,
+        retryExecutorService, new BulkOptions.Builder().setAutoflushMs(1000L).build());
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
     when(retryExecutorService.schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class)))
         .thenReturn(mockScheduledFuture);
@@ -367,31 +332,23 @@ public class TestBulkMutation {
     // force the batch to be sent
     underTest.flush();
 
-    // since we don't mock the response from the client, this rpc will just hang
-
     // TODO(igorbernstein2): Should this throw as well?
     // force the executor to checking for stale requests
     operationAccountant.awaitCompletion();
 
+    Assert.assertTrue(addFuture.isDone());
     try {
       addFuture.get();
       Assert.fail("Expected an exception");
-    } catch(ExecutionException executionException) {
-      // Unwrap the exception
-      if (!(executionException.getCause() instanceof StatusRuntimeException)) {
-        throw executionException;
-      }
-      StatusRuntimeException e = (StatusRuntimeException) executionException.getCause();
-
-      // Make sure that we caught a Stale request exception
-      if (!(e.getStatus().getCode() == Code.UNKNOWN && e.getMessage().contains("Stale"))) {
-        throw e;
-      }
+    } catch (Exception e) {
+      Status fromThrowable = Status.fromThrowable(e);
+      Assert.assertEquals(Status.Code.INTERNAL, fromThrowable.getCode());
+      Assert.assertTrue(fromThrowable.getDescription().toLowerCase().contains("stale"));
     }
   }
 
   private BulkMutation createBulkMutation() {
-    return new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant, retryOptions,
+    return new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant,
         retryExecutorService, BULK_OPTIONS);
   }
 
@@ -415,22 +372,22 @@ public class TestBulkMutation {
   }
 
   private void setResponse(Status code) {
-    future.set(createResponse(code));
+    future.set(Arrays.asList(createResponse(code)));
     underTest.flush();
   }
 
   private void setRpcFailure(Status status) {
     Batch batch = underTest.currentBatch;
     underTest.flush();
-    batch.performFullRetry(new AtomicReference<Long>(), status);
+    batch.setFailure(status.asRuntimeException());
   }
 
-  private List<MutateRowsResponse> createResponse(Status code) {
+  private MutateRowsResponse createResponse(Status code) {
     MutateRowsResponse.Builder responseBuilder = MutateRowsResponse.newBuilder();
     responseBuilder.addEntriesBuilder()
         .setIndex(0)
         .getStatusBuilder()
             .setCode(code.getCode().value());
-    return Arrays.asList(responseBuilder.build());
+    return responseBuilder.build();
   }
 }
