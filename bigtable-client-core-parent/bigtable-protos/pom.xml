@@ -60,7 +60,7 @@ limitations under the License.
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>grpc-google-common-protos</artifactId>
-            <version>0.1.6</version>
+            <version>0.1.9</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.grpc</groupId>
