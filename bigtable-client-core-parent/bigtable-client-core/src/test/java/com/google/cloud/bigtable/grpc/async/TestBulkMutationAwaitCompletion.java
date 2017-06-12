@@ -54,8 +54,6 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -98,7 +96,6 @@ public class TestBulkMutationAwaitCompletion {
     }
   };
 
-  private RetryOptions retryOptions;
   private ResourceLimiter resourceLimiter;
   private List<Runnable> opCompletionRunnables;
   private List<Runnable> timeoutRunnables;
@@ -113,7 +110,6 @@ public class TestBulkMutationAwaitCompletion {
     MockitoAnnotations.initMocks(this);
 
     testExecutor = Executors.newScheduledThreadPool(100);
-    retryOptions = RetryOptionsUtil.createTestRetryOptions(clock);
     resourceLimiter = new ResourceLimiter(1000000, OPERATIONS_PER_MUTATOR * 10);
     opCompletionRunnables = Collections.synchronizedList(new LinkedList<Runnable>());
     timeoutRunnables = Collections.synchronizedList(new ArrayList<Runnable>());
@@ -121,7 +117,7 @@ public class TestBulkMutationAwaitCompletion {
     singleMutationFutures =
         Collections.synchronizedList(new ArrayList<ListenableFuture<MutateRowResponse>>());
 
-    // Keep track of methods of completing mutateRowsAsync calls.  This methdo will add a Runnable
+    // Keep track of methods of completing mutateRowsAsync calls.  This method will add a Runnable
     // that can set the correct value of the MutateRowsResponse future.
     when(mockClient.mutateRowsAsync(any(MutateRowsRequest.class)))
         .thenAnswer(new Answer<ListenableFuture<List<MutateRowsResponse>>>() {
@@ -305,7 +301,6 @@ public class TestBulkMutationAwaitCompletion {
             mockClient,
             resourceLimiter,
             operationAccountant,
-            retryOptions,
             mockScheduler,
             options);
     bulkMutation.clock = clock;

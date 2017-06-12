@@ -45,6 +45,7 @@ import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
+import com.google.cloud.bigtable.grpc.async.RetryingMutateRowsOperation;
 import com.google.cloud.bigtable.grpc.async.RetryingStreamOperation;
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryOperation;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
@@ -243,14 +244,19 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public List<MutateRowsResponse> mutateRows(MutateRowsRequest request) {
-    return createStreamingListener(request, mutateRowsRpc, request.getTableName())
-        .getBlockingResult();
+    CallOptions callOptions = getCallOptions(mutateRowsRpc.getMethodDescriptor(), request);
+    Metadata metadata = createMetadata(request.getTableName());
+    return new RetryingMutateRowsOperation(retryOptions, request, mutateRowsRpc, callOptions,
+        retryExecutorService, metadata).getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request) {
-    return createStreamingListener(request, mutateRowsRpc, request.getTableName()).getAsyncResult();
+    CallOptions callOptions = getCallOptions(mutateRowsRpc.getMethodDescriptor(), request);
+    Metadata metadata = createMetadata(request.getTableName());
+    return new RetryingMutateRowsOperation(retryOptions, request, mutateRowsRpc, callOptions,
+        retryExecutorService, metadata).getAsyncResult();
   }
 
   /** {@inheritDoc} */

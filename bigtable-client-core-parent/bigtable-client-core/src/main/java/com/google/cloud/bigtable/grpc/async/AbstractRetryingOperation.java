@@ -30,6 +30,7 @@ import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -207,7 +208,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    */
   protected abstract boolean onOK();
 
-  private long getNextBackoff() {
+  protected long getNextBackoff() {
     if (currentBackoff == null) {
       currentBackoff = retryOptions.createBackoff();
     }
@@ -244,6 +245,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * Initial execution of the RPC.
    */
   public ListenableFuture<ResultT> getAsyncResult() {
+    Preconditions.checkState(operationTimerContext == null);
     operationTimerContext = rpc.getRpcMetrics().timeOperation();
     run();
     return completionFuture;
