@@ -43,6 +43,7 @@ import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
+import com.google.cloud.bigtable.grpc.async.ThrottlingClientInterceptor;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
@@ -198,6 +199,9 @@ public class BigtableSession implements Closeable {
    */
   private BigtableClusterName clusterName;
 
+  private ThrottlingClientInterceptor throttlingClientInterceptor =
+      new ThrottlingClientInterceptor();
+
   /**
    * <p>Constructor for BigtableSession.</p>
    *
@@ -252,7 +256,6 @@ public class BigtableSession implements Closeable {
       new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig()));
 
     // Defer the creation of both the tableAdminClient until we need them.
-
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
     initializeResourceLimiter(options);
   }
@@ -336,7 +339,8 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
    */
   public AsyncExecutor createAsyncExecutor() {
-    return new AsyncExecutor(dataClient, resourceLimiter);
+    throttlingClientInterceptor.enable(resourceLimiter);
+    return new AsyncExecutor(dataClient);
   }
 
   /**
@@ -347,6 +351,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
    */
   public BulkMutation createBulkMutation(BigtableTableName tableName, AsyncExecutor asyncExecutor) {
+    throttlingClientInterceptor.enable(resourceLimiter);
     BulkOptions bulkOptions = options.getBulkOptions();
     if (bulkOptions.isEnableBulkMutationThrottling()) {
       resourceLimiter.throttle(bulkOptions.getBulkMutationRpcTargetMs());
@@ -354,7 +359,6 @@ public class BigtableSession implements Closeable {
     return new BulkMutation(
         tableName,
         dataClient,
-        resourceLimiter,
         asyncExecutor.getOperationAccountant(),
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
         bulkOptions);

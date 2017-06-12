@@ -24,7 +24,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,15 +32,19 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 
@@ -59,11 +62,13 @@ public class TestAsyncExecutor {
   private SettableFuture future;
 
   private AsyncExecutor underTest;
+  private ResourceLimiter resourceLimiter;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    underTest = new AsyncExecutor(client, new ResourceLimiter(1000, 10));
+    resourceLimiter = new ResourceLimiter(1000, 10);
+    underTest = new AsyncExecutor(client);
     future = SettableFuture.create();
   }
 
@@ -136,25 +141,23 @@ public class TestAsyncExecutor {
   public void testRegisterWaitsAfterCountLimit() throws Exception {
     ExecutorService testExecutor = Executors.newCachedThreadPool();
     try {
-      when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
+      setupResourceLimiter();
       // Fill up the Queue
       for (int i = 0; i < 10; i++) {
         underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
       }
-      final AtomicBoolean eleventhRpcInvoked = new AtomicBoolean(false);
-      testExecutor.submit(new Callable<Void>() {
+      Future<Void> eleventh = testExecutor.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-          eleventhRpcInvoked.set(true);
           return null;
         }
       });
       Thread.sleep(50);
-      Assert.assertFalse(eleventhRpcInvoked.get());
-      future.set("");
+      Assert.assertFalse(eleventh.isDone());
+      future.set(MutateRowResponse.getDefaultInstance());
       Thread.sleep(50);
-      Assert.assertTrue(eleventhRpcInvoked.get());
+      Assert.assertTrue(eleventh.isDone());
     } finally {
       testExecutor.shutdownNow();
     }
@@ -168,16 +171,14 @@ public class TestAsyncExecutor {
   public void testRegisterWaitsAfterSizeLimit() throws Exception {
     ExecutorService testExecutor = Executors.newCachedThreadPool();
     try {
-      when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
+      setupResourceLimiter();
       // Send a huge request to block further RPCs.
       underTest.mutateRowAsync(MutateRowRequest.newBuilder()
           .setRowKey(ByteString.copyFrom(new byte[1000])).build());
-      final AtomicBoolean newRpcInvoked = new AtomicBoolean(false);
       Future<Void> future1 = testExecutor.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-          newRpcInvoked.set(true);
           return null;
         }
       });
@@ -187,11 +188,34 @@ public class TestAsyncExecutor {
       } catch(TimeoutException expected) {
         // Expected Exception.
       }
-      future.set("");
+      future.set(MutateRowResponse.getDefaultInstance());
       future1.get(50, TimeUnit.MILLISECONDS);
-      Assert.assertTrue(newRpcInvoked.get());
+      Assert.assertTrue(future1.isDone());
     } finally {
       testExecutor.shutdownNow();
     }
+  }
+
+  private void setupResourceLimiter() {
+    when(client.mutateRowAsync(any(MutateRowRequest.class)))
+        .then(new Answer<ListenableFuture<MutateRowResponse>>() {
+          @Override
+          public ListenableFuture<MutateRowResponse> answer(InvocationOnMock invocation)
+              throws Throwable {
+            final long id = resourceLimiter.registerOperationWithHeapSize(
+              invocation.getArgumentAt(0, MutateRowRequest.class).getSerializedSize());
+            Futures.addCallback(future, new FutureCallback<MutateRowResponse>() {
+              @Override
+              public void onSuccess(MutateRowResponse result) {
+                resourceLimiter.markCanBeCompleted(id);
+              }
+              @Override
+              public void onFailure(Throwable t) {
+                resourceLimiter.markCanBeCompleted(id);
+              }
+            });
+            return future;
+          }
+        });
   }
 }
