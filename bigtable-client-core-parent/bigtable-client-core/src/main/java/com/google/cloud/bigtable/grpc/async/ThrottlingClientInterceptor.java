@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc.async;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.MessageLite;
 
 import io.grpc.CallOptions;
@@ -39,6 +40,9 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
   private ResourceLimiter resourceLimiter;
 
   public void enable(ResourceLimiter resourceLimiter) {
+    Preconditions.checkNotNull(resourceLimiter);
+    Preconditions
+        .checkArgument(this.resourceLimiter == null || this.resourceLimiter == resourceLimiter);
     this.resourceLimiter = resourceLimiter;
   }
 
