@@ -40,6 +40,12 @@ limitations under the License.
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-shaded</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- minimal hbase deps -->
