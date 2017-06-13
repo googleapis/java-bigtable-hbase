@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.beam;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -49,10 +49,12 @@ import org.mockito.MockitoAnnotations;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ByteStringComparator;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.AbstractSource;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.SourceWithKeys;
-import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
+import com.google.cloud.bigtable.beam.CloudBigtableIO;
+import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableIO.AbstractSource;
+import com.google.cloud.bigtable.beam.CloudBigtableIO.Source;
+import com.google.cloud.bigtable.beam.CloudBigtableIO.SourceWithKeys;
+import com.google.cloud.bigtable.beam.coders.HBaseMutationCoder;
 
 /**
  * Tests for {@link CloudBigtableIO}.

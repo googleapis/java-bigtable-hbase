@@ -14,14 +14,14 @@
  * the License.
  */
 
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.beam;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Assert;
 
-import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration;
-import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration.Builder;
+import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableConfiguration.Builder;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 import org.apache.hadoop.conf.Configuration;

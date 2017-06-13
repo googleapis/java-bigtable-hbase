@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.beam;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.bigtable.repackaged.io.grpc.Status;
+import com.google.cloud.bigtable.beam.AbstractCloudBigtableTableDoFn;
 
 
 @RunWith(JUnit4.class)

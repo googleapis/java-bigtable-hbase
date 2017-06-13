@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.beam;
 
 import static org.mockito.Mockito.when;
 
@@ -36,9 +36,11 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.Fla
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Reader;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
-import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration.Builder;
+import com.google.cloud.bigtable.beam.CloudBigtableIO;
+import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableIO.Reader;
+import com.google.cloud.bigtable.beam.CloudBigtableIO.Source;
+import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.Builder;
 
 /**
  * Tests for {@link CloudBigtableIO.Reader}.

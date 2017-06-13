@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.beam;
 
 import java.util.Arrays;
 
@@ -23,9 +23,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
-import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
-import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
+import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
+import com.google.cloud.bigtable.beam.coders.HBaseMutationCoder;
+import com.google.cloud.bigtable.beam.coders.HBaseResultArrayCoder;
+import com.google.cloud.bigtable.beam.coders.HBaseResultCoder;
 
 /**
  * Tests to make sure that various artifacts are serializable

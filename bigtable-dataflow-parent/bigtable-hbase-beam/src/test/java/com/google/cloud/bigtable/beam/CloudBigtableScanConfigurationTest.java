@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.beam;
 
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 
 /**
  * Tests for {@link CloudBigtableScanConfiguration}.

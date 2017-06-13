@@ -20,7 +20,8 @@ import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRespon
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
+
 import java.io.IOException;
 import java.util.List;
 

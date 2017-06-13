@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.cloud.bigtable.dataflow.coders;
+package com.google.cloud.bigtable.beam.coders;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

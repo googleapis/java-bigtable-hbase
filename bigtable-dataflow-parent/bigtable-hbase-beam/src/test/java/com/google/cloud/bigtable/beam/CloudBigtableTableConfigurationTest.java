@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.beam;
 
 import static org.junit.Assert.assertEquals;
 
@@ -24,6 +24,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 /**

@@ -28,4 +28,4 @@
  * as Google Analytics and Gmail.
  * </p>
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.beam;

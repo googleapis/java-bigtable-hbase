@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.beam;
 
 import static com.google.bigtable.repackaged.com.google.api.client.repackaged.com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -78,9 +78,9 @@ import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysReques
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.batch.common.ByteStringUtil;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
-import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
-import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
-import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
+import com.google.cloud.bigtable.beam.coders.HBaseMutationCoder;
+import com.google.cloud.bigtable.beam.coders.HBaseResultArrayCoder;
+import com.google.cloud.bigtable.beam.coders.HBaseResultCoder;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
 import com.google.common.annotations.VisibleForTesting;

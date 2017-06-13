@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- package com.google.cloud.bigtable.dataflow;
+ package com.google.cloud.bigtable.beam;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,7 +53,11 @@ import org.junit.rules.ExpectedException;
 
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
+import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableIO;
+import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableIO.Source;
 import com.google.cloud.bigtable.hbase1_3.BigtableConnection;
 
 public class CloudBigtableIOIntegrationTest {

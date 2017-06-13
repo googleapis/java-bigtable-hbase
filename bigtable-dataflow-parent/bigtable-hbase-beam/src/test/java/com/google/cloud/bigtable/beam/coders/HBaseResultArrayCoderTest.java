@@ -13,11 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.cloud.bigtable.dataflow.coders;
+package com.google.cloud.bigtable.beam.coders;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.google.cloud.bigtable.beam.coders.HBaseResultArrayCoder;
 
 /**
  * Tests for {@link HBaseResultArrayCoder}
