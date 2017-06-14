@@ -26,6 +26,7 @@ limitations under the License.
 
   <artifactId>bigtable-hbase-1.x-shaded</artifactId>
   <description>
+    DEPRECATED: Please use bigtable-hbase-1.x or bigtable-hbase-1.x-hadoop.
     Bigtable connector compatible with HBase 1.x. It exposes the minimal set of dependencies. Its mainly intended to
     be used by dataflow 1.x to avoid version conflicts with grpc &amp; protobuf. Prefer to use bigtable-hbase-1.x in
     general and bigtable-hbase-1.x-hadoop for hadoop classpath compatible applications.
