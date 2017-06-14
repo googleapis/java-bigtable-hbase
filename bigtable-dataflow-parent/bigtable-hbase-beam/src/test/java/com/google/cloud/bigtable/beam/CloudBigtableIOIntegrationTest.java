@@ -57,8 +57,7 @@ import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
-import com.google.cloud.bigtable.beam.CloudBigtableIO.Source;
-import com.google.cloud.bigtable.hbase1_3.BigtableConnection;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 
 public class CloudBigtableIOIntegrationTest {
   private static final String BIGTABLE_PROJECT_KEY = "google.bigtable.project.id";
@@ -93,12 +92,7 @@ public class CloudBigtableIOIntegrationTest {
 
   @BeforeClass
   public static void setup() throws IOException {
-    config =
-        new CloudBigtableConfiguration.Builder()
-            .withProjectId(projectId)
-            .withInstanceId(instanceId)
-            .build();
-    connection = new BigtableConnection(config.toHBaseConfig());
+    connection = BigtableConfiguration.connect(projectId, instanceId);
   }
 
   @AfterClass
@@ -116,23 +110,6 @@ public class CloudBigtableIOIntegrationTest {
     CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
     config.copyConfig(builder);
     return builder.withTableId(tableName.getNameAsString()).build();
-  }
-
-  @Test
-  public void testWriteToTable_dataWrittenSerial() throws Exception {
-    final int INSERT_COUNT = 50;
-    try (Admin admin = connection.getAdmin()) {
-      TableName tableName = createNewTable(admin);
-      DoFn<Mutation, Void> writer =
-          new CloudBigtableIO.CloudBigtableSingleTableSerialWriteFn(createTableConfig(tableName));
-
-      try {
-        writeThroughDataflow(writer, INSERT_COUNT);
-        checkTableRowCount(tableName, INSERT_COUNT);
-      } finally {
-        admin.deleteTable(tableName);
-      }
-    }
   }
 
   @Test
@@ -252,40 +229,6 @@ public class CloudBigtableIOIntegrationTest {
     Assert.assertEquals(rowCount, count);
   }
 
-  @Test
-  public void testReadFromTable_resultArrayDataflowReader() throws Exception {
-    int INSERT_COUNT = 50;
-    try (Admin admin = connection.getAdmin()) {
-      TableName tableName = createNewTable(admin);
-      try {
-        writeViaTable(tableName, INSERT_COUNT);
-        checkTableRowCountViaDataflowResultArrayReader(tableName, INSERT_COUNT);
-      } finally {
-        admin.deleteTable(tableName);
-      }
-    }
-  }
-
-  private void checkTableRowCountViaDataflowResultArrayReader(TableName tableName, int rowCount) throws Exception {
-    int batchCount = 10;
-    BoundedSource<Result[]> source = CloudBigtableIO.readBulk(createScanConfig(tableName), batchCount);
-     List<? extends BoundedSource<Result[]>> splits = source.split(1 << 20, null);
-    int count = 0;
-    int maxBatch = 0;
-    for (BoundedSource<Result[]> sourceWithKeys : splits) {
-      try (BoundedReader<Result[]> reader = sourceWithKeys.createReader(null)) {
-        reader.start();
-        while (reader.getCurrent().length != 0) {
-          int length = reader.getCurrent().length;
-          count += length;
-          maxBatch = Math.max(maxBatch, length);
-          reader.advance();
-        }
-      }
-    }
-    Assert.assertEquals(rowCount, count);
-    Assert.assertEquals(batchCount, maxBatch);
-  }
 
   @Test
   public void testEstimatedAndSplitForSmallTable() throws Exception {
@@ -301,8 +244,8 @@ public class CloudBigtableIOIntegrationTest {
       LOG.info("getSampleKeys() in testEstimatedAndSplitForSmallTable()");
 
       try {
-        CloudBigtableIO.Source<Result> source =
-            (Source<Result>) CloudBigtableIO.read(createScanConfig(tableName));
+        CloudBigtableIO.Source source =
+            (CloudBigtableIO.Source) CloudBigtableIO.read(createScanConfig(tableName));
         List<SampleRowKeysResponse> sampleRowKeys = source.getSampleRowKeys();
         LOG.info("Creating BoundedSource in testEstimatedAndSplitForSmallTable()");
         long estimatedSizeBytes = source.getEstimatedSizeBytes(null);
@@ -343,8 +286,8 @@ public class CloudBigtableIOIntegrationTest {
 
       try {
         LOG.info("Getting Source in testEstimatedAndSplitForLargeTable()");
-        CloudBigtableIO.Source<Result> source =
-            (Source<Result>) CloudBigtableIO.read(createScanConfig(tableName));
+        CloudBigtableIO.Source source =
+            (CloudBigtableIO.Source) CloudBigtableIO.read(createScanConfig(tableName));
         List<SampleRowKeysResponse> sampleRowKeys = source.getSampleRowKeys();
         LOG.info("Getting estimated size in testEstimatedAndSplitForLargeTable()");
         long estimatedSizeBytes = source.getEstimatedSizeBytes(null);
