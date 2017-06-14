@@ -27,8 +27,8 @@ limitations under the License.
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-        DEPRECATED: Please use bigtable-hbase-1.x or bigtable-hbase-1.x-hadoop.
-        This project contains hbase 1.1 specific implementation of bigtable hbase.
+       DEPRECATED: Please use bigtable-hbase-1.x or bigtable-hbase-1.x-hadoop.
+       This project contains hbase 1.1 specific implementation of bigtable hbase.
     </description>
 
     <properties>
@@ -38,12 +38,12 @@ limitations under the License.
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>bigtable-hbase-shaded</artifactId>
+            <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
             <version>${project.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-shaded-client</artifactId>
+                    <artifactId>hbase-client</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -144,17 +144,10 @@ limitations under the License.
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
+
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-eclipse-plugin</artifactId>
-                <configuration>
-                    <useProjectReferences>false</useProjectReferences>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -165,13 +158,12 @@ limitations under the License.
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <shadeTestJar>true</shadeTestJar>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                             <artifactSet>
                                 <includes>
-                                    <include>com.google.cloud.bigtable:bigtable-hbase-shaded</include>
+                                    <include>${project.groupId}:bigtable-hbase-1.x-hadoop</include>
+                                    <include>io.dropwizard.metrics:metrics-core</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
