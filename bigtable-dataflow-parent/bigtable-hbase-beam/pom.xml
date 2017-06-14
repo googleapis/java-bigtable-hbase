@@ -99,15 +99,15 @@ limitations under the License.
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <configuration>
-                            <windowtitle>Google Cloud Dataflow + Cloud Bigtable Connector ${project.version} API</windowtitle>
-                            <doctitle>Google Cloud Dataflow + Cloud Bigtable Connector ${project.version} API</doctitle>
+                            <windowtitle>Apache Beam + Cloud Bigtable Connector ${project.version} API</windowtitle>
+                            <doctitle>Apache Beam + Cloud Bigtable Connector ${project.version} API</doctitle>
                             <overview>../overview.html</overview>
                             <bottom><![CDATA[<br>]]></bottom>
 
                             <offlineLinks>
                                 <offlineLink>
-                                    <url>https://cloud.google.com/dataflow/java-sdk/JavaDoc/</url>
-                                    <location>${basedir}/javadoc/dataflow-docs</location>
+                                    <url>https://beam.apache.org/documentation/sdks/javadoc/2.0.0/</url>
+                                    <location>${basedir}/javadoc/beam-docs</location>
                                 </offlineLink>
                                 <offlineLink>
                                     <url>https://hbase.apache.org/apidocs/</url>

@@ -1,0 +1,12 @@
+com.google.cloud.beam.sdk
+com.google.cloud.beam.sdk.annotations
+com.google.cloud.beam.sdk.coders
+com.google.cloud.beam.sdk.io
+com.google.cloud.beam.sdk.io.range
+com.google.cloud.beam.sdk.options
+com.google.cloud.beam.sdk.runners
+com.google.cloud.beam.sdk.testing
+com.google.cloud.beam.sdk.transforms
+com.google.cloud.beam.sdk.transforms.join
+com.google.cloud.beam.sdk.transforms.windowing
+com.google.cloud.beam.sdk.values
