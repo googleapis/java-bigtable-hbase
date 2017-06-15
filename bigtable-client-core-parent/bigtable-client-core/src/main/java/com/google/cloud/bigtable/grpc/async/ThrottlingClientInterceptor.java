@@ -15,9 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.google.common.base.Preconditions;
 import com.google.protobuf.MessageLite;
 
@@ -25,7 +22,7 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ForwardingClientCall;
 import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
@@ -48,43 +45,64 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
 
   @Override
   public <ReqT , RespT> ClientCall<ReqT, RespT> interceptCall(
-      MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+      final MethodDescriptor<ReqT, RespT> method, final CallOptions callOptions, final Channel delegateChannel) {
     if (resourceLimiter == null) {
-      return next.newCall(method, callOptions);
+      return delegateChannel.newCall(method, callOptions);
     }
 
-    final AtomicLong id = new AtomicLong(-1);
-    final AtomicBoolean interrupted = new AtomicBoolean(false);
-    return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+    return new ForwardingClientCall<ReqT, RespT>() {
+      private ClientCall.Listener<RespT> delegateListener = null;
+      private ClientCall<ReqT, RespT> delegateCall;
+      private Metadata headers;
+      private int requested;
+      private Long id = null;
+
       @Override
-      public void start(Listener<RespT> delegate, Metadata headers) {
-        if (interrupted.get()) {
-          if (id.get() != -1) {
-            resourceLimiter.markCanBeCompleted(id.get());
-          }
-          delegate.onClose(Status.INTERNAL.withDescription("Operation was interrupted"),
-            new Metadata());
+      public void start(ClientCall.Listener<RespT> listener, Metadata headers) {
+        this.delegateListener = listener;
+        this.headers = headers;
+      }
+
+      @Override
+      public void request(int numMessages) {
+        if (id == null) {
+          requested += numMessages;
         } else {
-          SimpleForwardingClientCallListener<RespT> listener =
-              new SimpleForwardingClientCallListener<RespT>(delegate) {
-                public void onClose(io.grpc.Status status, Metadata trailers) {
-                  resourceLimiter.markCanBeCompleted(id.get());
-                }
-              };
-          delegate().start(listener, headers);
+          delegate().request(numMessages);
         }
       }
 
       @Override
       public void sendMessage(ReqT message) {
+        Preconditions.checkState(delegateCall == null);
+        Preconditions.checkState(delegateListener != null);
+        Preconditions.checkState(headers != null);
+        Preconditions.checkState(id == null);
         try {
-          id.set(resourceLimiter.registerOperationWithHeapSize(((MessageLite)message).getSerializedSize()));
-          super.sendMessage(message);
+          id = resourceLimiter
+              .registerOperationWithHeapSize(((MessageLite) message).getSerializedSize());
         } catch (InterruptedException e) {
-          interrupted.set(true);
+          delegateListener.onClose(Status.INTERNAL.withDescription("Operation was interrupted"),
+            new Metadata());
+          return;
         }
+        delegateCall = delegateChannel.newCall(method, callOptions);
+        SimpleForwardingClientCallListener<RespT> markCompletionListener =
+            new SimpleForwardingClientCallListener<RespT>(this.delegateListener) {
+              public void onClose(io.grpc.Status status, Metadata trailers) {
+                resourceLimiter.markCanBeCompleted(id);
+                delegate().onClose(status, trailers);
+              }
+            };
+        delegate().start(markCompletionListener, headers);
+        delegate().request(requested);
+        delegate().sendMessage(message);
+      }
+
+      @Override
+      protected ClientCall<ReqT, RespT> delegate() {
+        return delegateCall;
       }
     };
   }
-
 }
