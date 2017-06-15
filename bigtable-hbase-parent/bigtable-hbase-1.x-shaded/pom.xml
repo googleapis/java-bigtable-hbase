@@ -109,6 +109,7 @@ limitations under the License.
                      and references to com.google.cloud.bigtable.hbase1_x in the version specific jars.
                     -->
                     <exclude>com.google.cloud.bigtable.hbase*.**</exclude>
+                    <exclude>com.google.cloud.bigtable.metrics.**</exclude>
                   </excludes>
                 </relocation>
 
