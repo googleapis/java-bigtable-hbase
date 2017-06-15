@@ -191,7 +191,7 @@ public class BigtableSession implements Closeable {
   private final BigtableOptions options;
   private final List<ManagedChannel> managedChannels = Collections
       .synchronizedList(new ArrayList<ManagedChannel>());
-  private final ClientInterceptor[] headerInterceptors;
+  private final ClientInterceptor[] clientInterceptors;
 
   /**
    * This cluster name is either configured via BigtableOptions' clusterId, or via a lookup of the
@@ -224,8 +224,8 @@ public class BigtableSession implements Closeable {
         options.getTableAdminHost());
     LOG.info("Bigtable options: %s.", options);
 
-    Builder<ClientInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
-    headerInterceptorBuilder.add(
+    List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
+    clientInterceptorsList.add(
         new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
     // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
     // take as long, but still take time. Get the credentials on one thread, and start up the elg
@@ -234,16 +234,19 @@ public class BigtableSession implements Closeable {
     RetryOptions retryOptions = options.getRetryOptions();
     CredentialOptions credentialOptions = options.getCredentialOptions();
     try {
-      ClientInterceptor headerInterceptor =
+      ClientInterceptor credentialsInterceptor =
           credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
-      if (headerInterceptor != null) {
-        headerInterceptorBuilder.add(headerInterceptor);
+      if (credentialsInterceptor != null) {
+        clientInterceptorsList.add(credentialsInterceptor);
       }
     } catch (GeneralSecurityException e) {
       throw new IOException("Could not initialize credentials.", e);
     }
 
-    headerInterceptors = headerInterceptorBuilder.build().toArray(new ClientInterceptor[0]);
+    clientInterceptorsList.add(throttlingClientInterceptor);
+
+    clientInterceptors =
+        clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
 
     ChannelPool dataChannel = getDataChannelPool();
 
@@ -415,7 +418,7 @@ public class BigtableSession implements Closeable {
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
-        return createNettyChannel(hostString, options, headerInterceptors);
+        return createNettyChannel(hostString, options, clientInterceptors);
       }
     };
     return new ChannelPool(channelFactory, count);
