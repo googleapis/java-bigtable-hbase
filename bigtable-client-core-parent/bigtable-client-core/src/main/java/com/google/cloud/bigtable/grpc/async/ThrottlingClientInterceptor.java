@@ -74,10 +74,13 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
 
       @Override
       public void sendMessage(ReqT message) {
-        Preconditions.checkState(delegateCall == null);
-        Preconditions.checkState(delegateListener != null);
-        Preconditions.checkState(headers != null);
-        Preconditions.checkState(id == null);
+        Preconditions.checkState(delegateCall == null,
+          "ThrottlingClientInterceptor only supports unary operations");
+        Preconditions.checkState(id == null,
+          "ThrottlingClientInterceptor only supports unary operations");
+        Preconditions.checkState(delegateListener != null,
+          "start() has to be called before sendMessage().");
+        Preconditions.checkState(headers != null, "start() has to be called before sendMessage().");
         try {
           id = resourceLimiter
               .registerOperationWithHeapSize(((MessageLite) message).getSerializedSize());
