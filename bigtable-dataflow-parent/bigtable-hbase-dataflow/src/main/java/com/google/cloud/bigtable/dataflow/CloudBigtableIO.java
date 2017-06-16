@@ -29,8 +29,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
@@ -47,24 +45,26 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSessionSharedThreadPools;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.async.BulkMutationsStats;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.batch.common.ByteStringUtil;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -72,7 +72,6 @@ import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
-import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRangeTracker;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.transforms.Aggregator;
@@ -360,7 +359,12 @@ public class CloudBigtableIO {
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         splits.add(createSourceWithKeys(startKey, endKey, 0));
       }
-      return reduceSplits(splits);
+      List<SourceWithKeys<ResultOutputType>> result = reduceSplits(splits);
+
+      // Randomize the list, since the default behavior would lead to multiple workers hitting the
+      // same tablet.
+      Collections.shuffle(result);
+      return result;
     }
 
     private List<SourceWithKeys<ResultOutputType>>
@@ -793,11 +797,10 @@ public class CloudBigtableIO {
         return null;
       }
       ByteKey splitKey;
-      final ByteKeyRange range = source.getConfiguration().toByteKeyRange();
       try {
-        splitKey = range.interpolateKey(fraction);
+        splitKey = rangeTracker.getRange().interpolateKey(fraction);
       } catch (IllegalArgumentException e) {
-        READER_LOG.info("{}: Failed to interpolate key for fraction {}.", range, fraction);
+        READER_LOG.info("{}: Failed to interpolate key for fraction {}.", rangeTracker.getRange(), fraction);
         return null;
       }
 
@@ -808,7 +811,7 @@ public class CloudBigtableIO {
       try {
         estimatedSizeBytes = source.getEstimatedSizeBytes(null);
       } catch (IOException e) {
-        READER_LOG.info("{}: Failed to get estimated size for key for fraction {}.", range, fraction);
+        READER_LOG.info("{}: Failed to get estimated size for key for fraction {}.", rangeTracker.getRange(), fraction);
         return null;
       }
       SourceWithKeys<ResultOutputType> residual = null;
@@ -817,28 +820,29 @@ public class CloudBigtableIO {
         long newPrimarySize = (long) (fraction * estimatedSizeBytes);
         long residualSize = estimatedSizeBytes - newPrimarySize;
 
-        byte[] currentStartKey = source.getConfiguration().getZeroCopyStartRow();
+        byte[] currentStartKey = rangeTracker.getRange().getStartKey().getBytes();
         byte[] splitKeyBytes = splitKey.getBytes();
-        byte[] currentStopKey = source.getConfiguration().getZeroCopyStopRow();
-
-        primary = source.createSourceWithKeys(currentStartKey, splitKeyBytes, newPrimarySize);
-        residual = source.createSourceWithKeys(splitKeyBytes, currentStopKey, residualSize);
+        byte[] currentStopKey = rangeTracker.getRange().getEndKey().getBytes();
 
         if (!rangeTracker.trySplitAtPosition(splitKey)) {
           return null;
         }
+
+        primary = source.createSourceWithKeys(currentStartKey, splitKeyBytes, newPrimarySize);
+        residual = source.createSourceWithKeys(splitKeyBytes, currentStopKey, residualSize);
+
+        this.source = primary;
+        return residual;
       } catch (Throwable t) {
         try {
           String msg = String.format("%d Failed to get estimated size for key for fraction %f.",
-            range, fraction);
+            rangeTracker.getRange(), fraction);
           READER_LOG.warn(msg, t);
         } catch (Throwable t1) {
           // ignore.
         }
         return null;
       }
-      this.source = primary;
-      return residual;
     }
 
     @VisibleForTesting
@@ -849,6 +853,11 @@ public class CloudBigtableIO {
     @VisibleForTesting
     protected void setScanner(ResultScanner<FlatRow> scanner) {
       this.scanner = scanner;
+    }
+
+    @VisibleForTesting
+    public ByteKeyRangeTracker getRangeTracker() {
+      return rangeTracker;
     }
 
     /**
@@ -885,10 +894,9 @@ public class CloudBigtableIO {
 
     @Override
     public String toString() {
-      CloudBigtableScanConfiguration configuration = source.getConfiguration();
       return String.format("Reader for: ['%s' - '%s']",
-        Bytes.toStringBinary(configuration.getZeroCopyStartRow()),
-        Bytes.toStringBinary(configuration.getZeroCopyStopRow()));
+        Bytes.toStringBinary(rangeTracker.getStartPosition().getBytes()),
+        Bytes.toStringBinary(rangeTracker.getStopPosition().getBytes()));
     }
   }
 
@@ -941,7 +949,7 @@ public class CloudBigtableIO {
         public void run() {
           try {
             cumulativeThrottlingSeconds.set(TimeUnit.NANOSECONDS
-                .toSeconds(BulkMutationsStats.getInstance().getCumulativeThrottlingTimeNanos()));
+                .toSeconds(ResourceLimiterStats.getInstance().getCumulativeThrottlingTimeNanos()));
           } catch (Exception e) {
             STATS_LOG.warn("Something bad happened in export stats", e);
           }
