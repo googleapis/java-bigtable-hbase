@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.google.cloud.bigtable.config.RetryOptions;
 
@@ -68,5 +69,14 @@ public class RetryingUnaryOperation<RequestT, ResponseT>
       completionFuture.setException(NO_VALUE_SET_EXCEPTION);
     }
     return true;
+  }
+
+  @Override
+  protected CallOptions getCallOptions() {
+    CallOptions originalCallOptions = super.getCallOptions();
+    if (originalCallOptions.getDeadline() != null) {
+      return originalCallOptions;
+    }
+    return originalCallOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
   }
 }
