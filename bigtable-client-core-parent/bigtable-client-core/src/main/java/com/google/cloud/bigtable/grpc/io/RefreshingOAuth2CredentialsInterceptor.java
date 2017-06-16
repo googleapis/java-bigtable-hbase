@@ -73,7 +73,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   @VisibleForTesting
   enum CacheState {
-    Good, Stale, Expired, Exception
+    Uninitialized, Good, Stale, Expired, Exception
   }
   
   private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
@@ -125,10 +125,17 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       this.actualExpirationTimeMs = 0;
     }
 
+    HeaderCacheElement() {
+      this.status = null;
+      this.header = null;
+      this.actualExpirationTimeMs = 0;
+    }
+
     CacheState getCacheState() {
       long now = clock.currentTimeMillis();
-
-      if (!status.isOk()) {
+      if (status == null) {
+        return CacheState.Uninitialized;
+      } else if (!status.isOk()) {
         return CacheState.Exception;
       } else if (actualExpirationTimeMs - TOKEN_EXPIRES_MS <= now) {
         return CacheState.Expired;
@@ -140,7 +147,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
   }
 
-  private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
+  private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement();
 
   private final ExecutorService executor;
 
@@ -190,7 +197,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       public void start(Listener<RespT> responseListener, Metadata headers) {
         HeaderCacheElement headerCache = getHeaderSafe();
 
-        if (!headerCache.status.isOk()) {
+        if (headerCache.getCacheState() != CacheState.Good) {
           responseListener.onClose(headerCache.status, new Metadata());
           return;
         }
@@ -238,6 +245,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         case Stale:
           asyncRefresh();
           return headerCache;
+        case Uninitialized:
         case Expired:
         case Exception:
           // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
@@ -250,7 +258,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
           );
       }
     }
-    return deferredResult.get(250, TimeUnit.MILLISECONDS);
+    return getResult(deferredResult);
   }
 
   /**
@@ -260,13 +268,18 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   HeaderCacheElement syncRefresh() {
     try {
-      return asyncRefresh().get(250, TimeUnit.MILLISECONDS);
+      return getResult(asyncRefresh());
     } catch (Exception e) {
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
               .withCause(e)
       );
     }
+  }
+
+  private static HeaderCacheElement getResult(final Future<HeaderCacheElement> deferredResult)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    return deferredResult.get(5, TimeUnit.SECONDS);
   }
 
   /**
