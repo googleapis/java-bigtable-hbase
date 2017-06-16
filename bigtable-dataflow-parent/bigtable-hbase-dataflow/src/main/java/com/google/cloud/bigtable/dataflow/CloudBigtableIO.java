@@ -29,6 +29,8 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
@@ -45,26 +47,24 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSessionSharedThreadPools;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.async.BulkMutationsStats;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.FlatRowAdapter;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.batch.common.ByteStringUtil;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -359,12 +359,7 @@ public class CloudBigtableIO {
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         splits.add(createSourceWithKeys(startKey, endKey, 0));
       }
-      List<SourceWithKeys<ResultOutputType>> result = reduceSplits(splits);
-
-      // Randomize the list, since the default behavior would lead to multiple workers hitting the
-      // same tablet.
-      Collections.shuffle(result);
-      return result;
+      return reduceSplits(splits);
     }
 
     private List<SourceWithKeys<ResultOutputType>>
@@ -949,7 +944,7 @@ public class CloudBigtableIO {
         public void run() {
           try {
             cumulativeThrottlingSeconds.set(TimeUnit.NANOSECONDS
-                .toSeconds(ResourceLimiterStats.getInstance().getCumulativeThrottlingTimeNanos()));
+                .toSeconds(BulkMutationsStats.getInstance().getCumulativeThrottlingTimeNanos()));
           } catch (Exception e) {
             STATS_LOG.warn("Something bad happened in export stats", e);
           }
