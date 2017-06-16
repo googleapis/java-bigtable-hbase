@@ -54,7 +54,7 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
       private ClientCall.Listener<RespT> delegateListener = null;
       private ClientCall<ReqT, RespT> delegateCall;
       private Metadata headers;
-      private int requested;
+      private int numMessagesRequested = 0;
       private Long id = null;
 
       @Override
@@ -66,7 +66,9 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
       @Override
       public void request(int numMessages) {
         if (id == null) {
-          requested += numMessages;
+          // request() might be called multiple times before sendMessage(), so add up all of the
+          // requested sendMessages.
+          numMessagesRequested += numMessages;
         } else {
           delegate().request(numMessages);
         }
@@ -98,7 +100,7 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
               }
             };
         delegate().start(markCompletionListener, headers);
-        delegate().request(requested);
+        delegate().request(numMessagesRequested);
         delegate().sendMessage(message);
       }
 
