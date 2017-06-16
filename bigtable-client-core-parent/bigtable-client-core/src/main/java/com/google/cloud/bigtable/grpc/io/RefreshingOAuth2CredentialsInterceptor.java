@@ -197,7 +197,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       public void start(Listener<RespT> responseListener, Metadata headers) {
         HeaderCacheElement headerCache = getHeaderSafe();
 
-        if (!headerCache.status.isOk()) {
+        if (headerCache.getCacheState() != CacheState.Good) {
           responseListener.onClose(headerCache.status, new Metadata());
           return;
         }
@@ -258,7 +258,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
           );
       }
     }
-    return deferredResult.get(250, TimeUnit.MILLISECONDS);
+    return getResult(deferredResult);
   }
 
   /**
@@ -268,13 +268,18 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   HeaderCacheElement syncRefresh() {
     try {
-      return asyncRefresh().get(250, TimeUnit.MILLISECONDS);
+      return getResult(asyncRefresh());
     } catch (Exception e) {
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
               .withCause(e)
       );
     }
+  }
+
+  private static HeaderCacheElement getResult(final Future<HeaderCacheElement> deferredResult)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    return deferredResult.get(5, TimeUnit.SECONDS);
   }
 
   /**
