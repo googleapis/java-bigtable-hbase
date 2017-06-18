@@ -185,25 +185,16 @@ public class BulkMutation {
      * {@link BulkMutation#add(MutateRowRequest)} when the provided {@link ListenableFuture} for the
      * {@link MutateRowsResponse} is complete.
      */
-    private void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture,
-        final Long rpcId) {
+    private void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture) {
       Futures.addCallback(bulkFuture, new FutureCallback<List<MutateRowsResponse>>() {
         @Override
         public void onSuccess(List<MutateRowsResponse> result) {
-          markCompletion();
           handleResult(result);
         }
 
         @Override
         public void onFailure(Throwable t) {
-          markCompletion();
           setFailure(t);
-        }
-
-        private void markCompletion() {
-          if (rpcId != null) {
-            resourceLimiter.markCanBeCompleted(rpcId);
-          }
         }
       });
     }
@@ -297,20 +288,14 @@ public class BulkMutation {
         return;
       }
       Preconditions.checkState(!completionFuture.isDone());
-      Long operationId = null;
       try {
         MutateRowsRequest request = currentRequestManager.build();
-        operationId = resourceLimiter
-            .registerOperationWithHeapSize(request.getSerializedSize());
         mutateRowsFuture = client.mutateRowsAsync(request);
         currentRequestManager.lastRpcSentTimeNanos = clock.nanoTime();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } catch (Throwable e) {
         mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
-        addCallback(mutateRowsFuture, operationId);
+        addCallback(mutateRowsFuture);
       }
       setupStalenessChecker();
     }
@@ -394,7 +379,6 @@ public class BulkMutation {
 
   private final String tableName;
   private final BigtableDataClient client;
-  private final ResourceLimiter resourceLimiter;
   private final OperationAccountant operationAccountant;
   private final ScheduledExecutorService retryExecutorService;
   private final int maxRowKeyCount;
@@ -411,8 +395,6 @@ public class BulkMutation {
    * @param tableName a {@link BigtableTableName} object for the table to which all
    *          {@link MutateRowRequest}s will be sent.
    * @param client a {@link BigtableDataClient} object on which to perform RPCs.
-   * @param resourceLimiter a {@link ResourceLimiter} object that curbs the amount of RPCs to
-   *          something sustainable for the entire JVM.
    * @param operationAccountant a {@link OperationAccountant} object that keeps track of outstanding
    *          RPCs that this object performed.
    * @param retryOptions a {@link RetryOptions} object that describes how to perform retries.
@@ -424,13 +406,11 @@ public class BulkMutation {
   public BulkMutation(
       BigtableTableName tableName,
       BigtableDataClient client,
-      ResourceLimiter resourceLimiter,
       OperationAccountant operationAccountant,
       ScheduledExecutorService retryExecutorService,
       BulkOptions bulkOptions) {
     this.tableName = tableName.toString();
     this.client = client;
-    this.resourceLimiter = resourceLimiter;
     this.retryExecutorService = retryExecutorService;
     this.operationAccountant = operationAccountant;
     this.maxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();

@@ -96,7 +96,6 @@ public class TestBulkMutationAwaitCompletion {
     }
   };
 
-  private ResourceLimiter resourceLimiter;
   private List<Runnable> opCompletionRunnables;
   private List<Runnable> timeoutRunnables;
   private ScheduledExecutorService testExecutor;
@@ -110,7 +109,6 @@ public class TestBulkMutationAwaitCompletion {
     MockitoAnnotations.initMocks(this);
 
     testExecutor = Executors.newScheduledThreadPool(100);
-    resourceLimiter = new ResourceLimiter(1000000, OPERATIONS_PER_MUTATOR * 10);
     opCompletionRunnables = Collections.synchronizedList(new LinkedList<Runnable>());
     timeoutRunnables = Collections.synchronizedList(new ArrayList<Runnable>());
     accountants = Collections.synchronizedList(new ArrayList<OperationAccountant>());
@@ -299,7 +297,6 @@ public class TestBulkMutationAwaitCompletion {
         new BulkMutation(
             TestBulkMutation.TABLE_NAME,
             mockClient,
-            resourceLimiter,
             operationAccountant,
             mockScheduler,
             options);

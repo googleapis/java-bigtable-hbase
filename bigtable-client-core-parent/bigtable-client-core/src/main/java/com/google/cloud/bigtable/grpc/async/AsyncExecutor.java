@@ -32,7 +32,6 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.MessageLite;
@@ -126,7 +125,6 @@ public class AsyncExecutor {
 
   private final BigtableDataClient client;
   private final OperationAccountant operationsAccountant;
-  private final ResourceLimiter resourceLimiter;
 
   /**
    * <p>
@@ -134,11 +132,9 @@ public class AsyncExecutor {
    * </p>
    * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object for executing
    *          RPCs.
-   * @param resourceLimiter a {@link ResourceLimiter} for ensuring that we don't run too many RPCs
-   *          globally.
    */
-  public AsyncExecutor(BigtableDataClient client, ResourceLimiter resourceLimiter) {
-    this(client, resourceLimiter, new OperationAccountant());
+  public AsyncExecutor(BigtableDataClient client) {
+    this(client, new OperationAccountant());
   }
 
   /**
@@ -147,16 +143,12 @@ public class AsyncExecutor {
    * </p>
    * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object for executing
    *          RPCs.
-   * @param resourceLimiter a {@link ResourceLimiter} for ensuring that we don't run too many RPCs
-   *          globally.
    * @param operationAccountant a {@link com.google.cloud.bigtable.grpc.async.OperationAccountant}
    *          object for tracking the RPCs initiated by this instance.
    */
   @VisibleForTesting
-  AsyncExecutor(BigtableDataClient client, ResourceLimiter resourceLimiter,
-      OperationAccountant operationAccountant) {
+  AsyncExecutor(BigtableDataClient client, OperationAccountant operationAccountant) {
     this.client = client;
-    this.resourceLimiter = resourceLimiter;
     this.operationsAccountant = operationAccountant;
   }
 
@@ -248,8 +240,6 @@ public class AsyncExecutor {
       AsyncCall<RequestT, ResponseT> rpc, RequestT request) throws InterruptedException {
     // Wait until both the memory and rpc count maximum requirements are achieved before getting a
     // unique id used to track this request.
-    final long id =
-        resourceLimiter.registerOperationWithHeapSize((long) request.getSerializedSize());
     ListenableFuture<ResponseT> future;
     try {
       future = rpc.call(client, request);
@@ -257,17 +247,6 @@ public class AsyncExecutor {
       future = Futures.immediateFailedFuture(e);
     }
     operationsAccountant.registerOperation(future);
-    Futures.addCallback(future, new FutureCallback<ResponseT>() {
-      @Override
-      public void onSuccess(ResponseT result) {
-        resourceLimiter.markCanBeCompleted(id);
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        resourceLimiter.markCanBeCompleted(id);
-      }
-    });
     return future;
   }
 
@@ -301,16 +280,6 @@ public class AsyncExecutor {
 
   /**
    * <p>
-   * getMaxHeapSize.
-   * </p>
-   * @return a long.
-   */
-  public long getMaxHeapSize() {
-    return resourceLimiter.getMaxHeapSize();
-  }
-
-  /**
-   * <p>
    * Getter for the field <code>client</code>.
    * </p>
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
@@ -327,9 +296,5 @@ public class AsyncExecutor {
    */
   public OperationAccountant getOperationAccountant() {
     return operationsAccountant;
-  }
-
-  public ResourceLimiter getResourceLimiter() {
-    return resourceLimiter;
   }
 }

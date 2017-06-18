@@ -83,7 +83,6 @@ public class TestBulkMutation {
   private SettableFuture<List<MutateRowsResponse>> future;
   private BulkMutation underTest;
   private OperationAccountant operationAccountant;
-  private ResourceLimiter resourceLimiter;
 
   @Before
   public void setup() throws InterruptedException {
@@ -101,7 +100,6 @@ public class TestBulkMutation {
     when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
     operationAccountant =
         new OperationAccountant(clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
-    resourceLimiter = new ResourceLimiter(1000, 10);
     underTest = createBulkMutation();
     underTest.clock = clock;
   }
@@ -298,7 +296,7 @@ public class TestBulkMutation {
   public void testAutoflush() throws Exception {
     // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the
     // scheduled executor mock
-    underTest = new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant,
+    underTest = new BulkMutation(TABLE_NAME, client, operationAccountant,
         retryExecutorService, new BulkOptions.Builder().setAutoflushMs(1000L).build());
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
     when(retryExecutorService.schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class)))
@@ -348,8 +346,8 @@ public class TestBulkMutation {
   }
 
   private BulkMutation createBulkMutation() {
-    return new BulkMutation(TABLE_NAME, client, resourceLimiter, operationAccountant,
-        retryExecutorService, BULK_OPTIONS);
+    return new BulkMutation(TABLE_NAME, client, operationAccountant, retryExecutorService,
+        BULK_OPTIONS);
   }
 
   private void setupScheduler(final boolean inNewThread) {
@@ -374,12 +372,6 @@ public class TestBulkMutation {
   private void setResponse(Status code) {
     future.set(Arrays.asList(createResponse(code)));
     underTest.flush();
-  }
-
-  private void setRpcFailure(Status status) {
-    Batch batch = underTest.currentBatch;
-    underTest.flush();
-    batch.setFailure(status.asRuntimeException());
   }
 
   private MutateRowsResponse createResponse(Status code) {
