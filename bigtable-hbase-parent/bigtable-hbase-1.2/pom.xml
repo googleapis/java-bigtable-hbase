@@ -27,7 +27,8 @@ limitations under the License.
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project contains hbase 1.2 specific implementation of bigtable hbase.
+        DEPRECATED: Please use bigtable-hbase-1.x or bigtable-hbase-1.x-hadoop.
+        This project contains hbase 1.2 specific implementation of bigtable hbase.
     </description>
 
     <properties>
