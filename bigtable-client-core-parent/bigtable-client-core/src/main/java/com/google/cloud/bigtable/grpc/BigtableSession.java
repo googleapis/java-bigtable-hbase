@@ -223,8 +223,9 @@ public class BigtableSession implements Closeable {
     LOG.info("Bigtable options: %s.", options);
 
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
-    clientInterceptorsList.add(
-        new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
+    clientInterceptorsList.add(throttlingClientInterceptor);
+    clientInterceptorsList
+        .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
     // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
     // take as long, but still take time. Get the credentials on one thread, and start up the elg
     // and scheduledRetries thread pools on another thread.
@@ -240,8 +241,6 @@ public class BigtableSession implements Closeable {
     } catch (GeneralSecurityException e) {
       throw new IOException("Could not initialize credentials.", e);
     }
-
-    clientInterceptorsList.add(throttlingClientInterceptor);
 
     clientInterceptors =
         clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
