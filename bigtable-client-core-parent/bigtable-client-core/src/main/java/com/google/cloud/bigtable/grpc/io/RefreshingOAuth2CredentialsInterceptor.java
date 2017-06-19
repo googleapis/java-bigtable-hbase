@@ -287,7 +287,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
           );
       }
     }
-    return deferredResult.get(250, TimeUnit.MILLISECONDS);
+    return deferredResult.get(5, TimeUnit.SECONDS);
   }
 
   /**
@@ -297,7 +297,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   HeaderCacheElement syncRefresh() {
     try {
-      return asyncRefresh().get(250, TimeUnit.MILLISECONDS);
+      return asyncRefresh().get(5, TimeUnit.SECONDS);
     } catch (Exception e) {
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
