@@ -186,18 +186,55 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
       CallOptions callOptions, Channel next) {
     return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+
+      /**
+       * If the header is invalid, this will be set to true. This flag will indicate that
+       * delegate().start() was not called. If start() is not called, then don't call
+       * delegate().request(), delegate().sendMessage() or delegate().halfClose();
+       */
+      private boolean unauthorized = false;
+
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
         HeaderCacheElement headerCache = getHeaderSafe();
 
         if (!headerCache.status.isOk()) {
           responseListener.onClose(headerCache.status, new Metadata());
+          unauthorized = true;
           return;
         }
 
         headers.put(AUTHORIZATION_HEADER_KEY, headerCache.header);
 
         delegate().start(new UnAuthResponseListener<>(responseListener, headerCache), headers);
+      }
+
+      @Override
+      public void request(int numMessages) {
+        if (!unauthorized) {
+          delegate().request(numMessages);
+        }
+      }
+
+      @Override
+      public void sendMessage(ReqT message) {
+        if (!unauthorized) {
+          delegate().sendMessage(message);
+        }
+      }
+
+      @Override
+      public void halfClose() {
+        if (!unauthorized) {
+          delegate().halfClose();
+        }
+      }
+
+      @Override
+      public void cancel(String message, Throwable cause) {
+        if (!unauthorized) {
+          delegate().cancel(message, cause);
+        }
       }
     };
   }
