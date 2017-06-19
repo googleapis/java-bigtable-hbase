@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import com.google.common.collect.ImmutableList;
@@ -39,6 +40,7 @@ import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.FamilyFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
@@ -1783,6 +1785,44 @@ public class TestFilters extends AbstractTest {
     get.setFilter(regexQualFilter);
     result = table.get(get);
     Assert.assertEquals(1, result.size());
+  }
+
+
+  @Test
+  public void testFamilyFilter() throws IOException {
+    byte[] rowKey = dataHelper.randomData("family-filter-");
+    byte[] qualA = dataHelper.randomData("family-filter-qualA-");
+    byte[] qualAValue = dataHelper.randomData("qualA-value");
+    byte[] qualB = dataHelper.randomData("family-filter-qualB-");
+    byte[] qualBValue = dataHelper.randomData("qualB-value");
+
+    Table table = getTable();
+    Put put = new Put(rowKey);
+    put.addColumn(COLUMN_FAMILY, qualA, qualAValue);
+    put.addColumn(COLUMN_FAMILY2, qualB, qualBValue);
+    table.put(put);
+
+    {
+      Get get = new Get(rowKey)
+          .setFilter(new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(COLUMN_FAMILY)));
+      Result result = table.get(get);
+      Assert.assertEquals(1, result.size());
+      Cell cell = result.rawCells()[0];
+      Assert.assertTrue(CellUtil.matchingFamily(cell, COLUMN_FAMILY));
+      Assert.assertTrue(CellUtil.matchingQualifier(cell, qualA));
+      Assert.assertTrue(CellUtil.matchingValue(cell, qualAValue));
+    }
+
+    {
+      Get get = new Get(rowKey)
+          .setFilter(new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(COLUMN_FAMILY2)));
+      Result result = table.get(get);
+      Assert.assertEquals(1, result.size());
+      Cell cell = result.rawCells()[0];
+      Assert.assertTrue(CellUtil.matchingFamily(cell, COLUMN_FAMILY2));
+      Assert.assertTrue(CellUtil.matchingQualifier(cell, qualB));
+      Assert.assertTrue(CellUtil.matchingValue(cell, qualBValue));
+    }
   }
 
   @Test
