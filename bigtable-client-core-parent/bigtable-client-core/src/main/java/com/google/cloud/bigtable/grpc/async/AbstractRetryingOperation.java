@@ -52,6 +52,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   /** Constant <code>LOG</code> */
   protected final static Logger LOG = new Logger(AbstractRetryingOperation.class);
 
+  // The server-side has a 5 minute timeout. Unary operations should be timed-out on the client side
+  // after 6 minutes.
+  protected final static long UNARY_DEADLINE_MINUTES = 6l;
+
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
     @Override
     protected void interruptTask() {
@@ -229,8 +233,12 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     Metadata metadata = new Metadata();
     metadata.merge(originalMetadata);
     synchronized (callLock) {
-      call = rpc.startNewCall(callOptions, getRetryRequest(), this, metadata);
+      call = rpc.startNewCall(getCallOptions(), getRetryRequest(), this, metadata);
     }
+  }
+
+  protected CallOptions getCallOptions() {
+    return callOptions;
   }
 
   protected RequestT getRetryRequest() {
