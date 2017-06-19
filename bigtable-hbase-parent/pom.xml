@@ -36,7 +36,6 @@ limitations under the License.
         <module>bigtable-hbase-mapreduce</module>
         <module>bigtable-hbase-1.x</module>
 
-        <module>bigtable-hbase-shaded</module>
         <module>bigtable-hbase-1.0</module>
         <module>bigtable-hbase-1.1</module>
         <module>bigtable-hbase-1.2</module>
