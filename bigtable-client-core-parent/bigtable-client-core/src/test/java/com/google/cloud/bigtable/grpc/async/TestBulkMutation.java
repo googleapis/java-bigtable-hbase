@@ -136,11 +136,6 @@ public class TestBulkMutation {
     Assert.assertEquals(0, ResourceLimiterStats.getInstance().getThrottlingTimer().getCount());
   }
 
-  private RequestManager createTestRequestManager() {
-    return new BulkMutation.RequestManager(TABLE_NAME.toString(),
-        BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"), underTest.clock);
-  }
-
   public static MutateRowsRequest.Entry createRequestEntry() {
     SetCell setCell = SetCell.newBuilder()
         .setFamilyName("cf1")
@@ -248,7 +243,6 @@ public class TestBulkMutation {
   public void testConcurrentBatches() throws Exception {
     final List<ListenableFuture<MutateRowResponse>> futures =
         Collections.synchronizedList(new ArrayList<ListenableFuture<MutateRowResponse>>());
-    final MutateRowsRequest.Entry mutateRowRequest = createRequestEntry();
     final int batchCount = 10;
     final int concurrentBulkMutationCount = 50;
 
@@ -263,7 +257,7 @@ public class TestBulkMutation {
       public void run() {
         BulkMutation bulkMutation = createBulkMutation();
         for (int i = 0; i < batchCount * MAX_ROW_COUNT; i++) {
-          futures.add(bulkMutation.add(mutateRowRequest));
+          futures.add(bulkMutation.add(createRequestEntry()));
         }
         bulkMutation.flush();
       }
@@ -286,8 +280,7 @@ public class TestBulkMutation {
   @Test
   public void testAutoflushDisabled() {
     // buffer a request, with a mocked success
-    MutateRowsRequest.Entry mutateRowRequest = createRequestEntry();
-    underTest.add(mutateRowRequest);
+    underTest.add(createRequestEntry());
     verify(retryExecutorService, never())
         .schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
   }
@@ -304,8 +297,7 @@ public class TestBulkMutation {
         .thenReturn(mockScheduledFuture);
 
     // buffer a request, with a mocked success (for never it gets invoked)
-    MutateRowsRequest.Entry mutateRowRequest = createRequestEntry();
-    underTest.add(mutateRowRequest);
+    underTest.add(createRequestEntry());
 
     // Verify that the autoflusher was scheduled
     verify(retryExecutorService, times(1))
