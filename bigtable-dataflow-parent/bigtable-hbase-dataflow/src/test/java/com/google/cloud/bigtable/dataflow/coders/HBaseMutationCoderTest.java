@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.hbase.adapters.PutAdapterUtil;
 import com.google.cloud.dataflow.sdk.util.MutationDetector;
 import com.google.cloud.dataflow.sdk.util.MutationDetectors;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.After;
@@ -36,19 +35,10 @@ import org.junit.Test;
 public class HBaseMutationCoderTest {
 
   private HBaseMutationCoder underTest;
-  private AtomicLong time;
 
   @Before
   public void setup() {
     underTest = new HBaseMutationCoder();
-    time = new AtomicLong(System.currentTimeMillis());
-
-    PutAdapterUtil.setClock(HBaseMutationCoder.PUT_ADAPTER, new Clock(){
-      @Override
-      public long currentTimeMillis() {
-        return time.get();
-      }
-    });
   }
 
   @After
@@ -64,7 +54,6 @@ public class HBaseMutationCoderTest {
     for (int i = 0; i < 5; i++) {
       Assert.assertEquals(
           0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
-      time.set(time.get() + 10_000);
       Assert.assertEquals(
           0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
 
@@ -80,7 +69,6 @@ public class HBaseMutationCoderTest {
     for (int i = 0; i < 5; i++) {
       Assert.assertEquals(
           0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
-      time.set(time.get() + 10_000);
 
       // Make sure that the clock change didn't modify the serialized value.
       mutationDetector.verifyUnmodified();
