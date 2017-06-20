@@ -97,6 +97,53 @@ public class BulkMutation {
     return indexes;
   }
 
+  @VisibleForTesting
+  static class RequestManager {
+    private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
+    private final MutateRowsRequest.Builder builder;
+    private final Meter addMeter;
+
+    private long approximateByteSize = 0l;
+
+    @VisibleForTesting
+    Long lastRpcSentTimeNanos;
+    private NanoClock clock;
+
+    RequestManager(String tableName, Meter addMeter, NanoClock clock) {
+      this.builder = MutateRowsRequest.newBuilder().setTableName(tableName);
+      this.approximateByteSize = tableName.length() + 2;
+      this.addMeter = addMeter;
+      this.clock = clock;
+    }
+
+    void add(SettableFuture<MutateRowResponse> future, MutateRowsRequest.Entry entry) {
+      addMeter.mark();
+      futures.add(future);
+      builder.addEntries(entry);
+      approximateByteSize += entry.getSerializedSize();
+    }
+
+    MutateRowsRequest build() {
+      return builder.build();
+    }
+
+    public boolean isEmpty() {
+      return futures.isEmpty();
+    }
+
+    public int getRequestCount() {
+      return futures.size();
+    }
+
+    public boolean isStale() {
+      return lastRpcSentTimeNanos != null && calculateTimeUntilStaleNanos() <= 0;
+    }
+
+    public long calculateTimeUntilStaleNanos() {
+      return lastRpcSentTimeNanos + MAX_RPC_WAIT_TIME_NANOS - clock.nanoTime();
+    }
+  }
+
   private static void cancelIfNotDone(Future<?> future) {
     if (future != null && !future.isDone()) {
       future.cancel(true);

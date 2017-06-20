@@ -50,7 +50,6 @@ import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
-import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
@@ -130,7 +129,8 @@ public class TestBulkMutationAwaitCompletion {
               public void run() {
                 MutateRowsResponse.Builder responses = MutateRowsResponse.newBuilder();
                 for (int i = 0; i < responseCount; i++) {
-                  responses.addEntries(Entry.newBuilder().setIndex(i).setStatus(OK_STATUS));
+                  responses.addEntries(
+                    MutateRowsResponse.Entry.newBuilder().setIndex(i).setStatus(OK_STATUS));
                 }
                 future.set(Arrays.asList(responses.build()));
               }
@@ -273,11 +273,11 @@ public class TestBulkMutationAwaitCompletion {
    * it.
    */
   private void runOneBulkMutation() {
-    MutateRowsRequest.Entry request = TestBulkMutation.createEntry();
+    MutateRowsRequest.Entry entry = TestBulkMutation.createRequestEntry();
     OperationAccountant accountant = createOperationAccountant();
     BulkMutation bulkMutation = createBulkMutation(accountant);
     for (int i = 0; i < OPERATIONS_PER_MUTATOR; i++) {
-      singleMutationFutures.add(bulkMutation.add(request));
+      singleMutationFutures.add(bulkMutation.add(entry));
     }
     bulkMutation.flush();
     accountants.add(accountant);
