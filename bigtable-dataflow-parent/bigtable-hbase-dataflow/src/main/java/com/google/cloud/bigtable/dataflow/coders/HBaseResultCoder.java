@@ -20,12 +20,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
-import com.google.cloud.dataflow.sdk.coders.SerializableCoder;
 
 /**
  * An {@link AtomicCoder} that serializes and deserializes the {@link Result}.
@@ -35,7 +34,6 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
   private static final long serialVersionUID = -4975428837770254686L;
 
   private static final HBaseResultCoder INSTANCE = new HBaseResultCoder();
-  private static final SerializableCoder<FlatRow> FLAT_ROW_CODER = SerializableCoder.of(FlatRow.class);
 
   public static HBaseResultCoder getInstance() {
     return INSTANCE;
@@ -43,12 +41,14 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
 
   @Override
   public Result decode(InputStream inputStream, Coder.Context context) throws IOException {
-    return Adapters.FLAT_ROW_ADAPTER.adaptResponse(FLAT_ROW_CODER.decode(inputStream, context));
+    ClientProtos.Result protoResult = ClientProtos.Result.parseDelimitedFrom(inputStream);
+    return ProtobufUtil.toResult(protoResult);
   }
 
   @Override
   public void encode(Result value, OutputStream outputStream, Coder.Context context)
       throws IOException {
-    FLAT_ROW_CODER.encode(Adapters.FLAT_ROW_ADAPTER.adaptToRow(value), outputStream, context);
+    ClientProtos.Result protoResult = ProtobufUtil.toResult(value);
+    protoResult.writeDelimitedTo(outputStream);
   }
 }
