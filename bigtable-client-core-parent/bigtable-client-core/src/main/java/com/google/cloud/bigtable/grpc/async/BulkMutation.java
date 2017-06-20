@@ -80,8 +80,7 @@ public class BulkMutation {
     return grpcStatus.asRuntimeException();
   }
 
-  @VisibleForTesting
-  static MutateRowsRequest.Entry convert(MutateRowRequest request) {
+  private static MutateRowsRequest.Entry convert(MutateRowRequest request) {
     if (request == null) {
       return null;
     } else {
@@ -90,13 +89,20 @@ public class BulkMutation {
     }
   }
 
+  private static Set<Integer> getIndexes(List<Entry> entries) {
+    Set<Integer> indexes = new HashSet<>(entries.size());
+    for (Entry entry : entries) {
+      indexes.add((int) entry.getIndex());
+    }
+    return indexes;
+  }
+
   @VisibleForTesting
   static class RequestManager {
     private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
     private final MutateRowsRequest.Builder builder;
     private final Meter addMeter;
 
-    private MutateRowsRequest request;
     private long approximateByteSize = 0l;
 
     @VisibleForTesting
@@ -118,8 +124,7 @@ public class BulkMutation {
     }
 
     MutateRowsRequest build() {
-      request = builder.build();
-      return request;
+      return builder.build();
     }
 
     public boolean isEmpty() {
@@ -202,6 +207,11 @@ public class BulkMutation {
     @VisibleForTesting
     synchronized void handleResult(List<MutateRowsResponse> results) {
       mutateRowsFuture = null;
+      if (operationsAreComplete()) {
+        LOG.warn("Got duplicate responses for bulk mutation.");
+        setComplete();
+        return;
+      }
       List<MutateRowsResponse.Entry> entries = new ArrayList<>();
       for (MutateRowsResponse response : results) {
         entries.addAll(response.getEntriesList());
@@ -213,16 +223,6 @@ public class BulkMutation {
         return;
       }
       try {
-        if (operationsAreComplete()) {
-          LOG.warn("Got duplicate responses for bulk mutation.");
-          setComplete();
-          return;
-        }
-        if (entries.isEmpty()) {
-          setFailure(io.grpc.Status.INTERNAL.withDescription("No MutateRowResponses were found.")
-              .asRuntimeException());
-          return;
-        }
 
         handleResponses(entries);
         handleExtraFutures(entries);
@@ -271,14 +271,6 @@ public class BulkMutation {
         LOG.error("Missing %d responses for bulkWrite. Setting exceptions on the futures.",
           missingEntriesCount);
       }
-    }
-
-    private Set<Integer> getIndexes(List<Entry> entries) {
-      Set<Integer> indexes = new HashSet<>(entries.size());
-      for (Entry entry : entries) {
-        indexes.add((int) entry.getIndex());
-      }
-      return indexes;
     }
 
     @Override
@@ -344,9 +336,6 @@ public class BulkMutation {
     }
  
     private synchronized void setComplete() {
-      if (mutateRowsFuture != null && !mutateRowsFuture.isDone()) {
-        mutateRowsFuture.cancel(true);
-      }
       cancelIfNotDone(mutateRowsFuture);
       cancelIfNotDone(stalenessFuture);
       if (!completionFuture.isDone()) {

@@ -10,6 +10,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -40,10 +41,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.bigtable.v2.MutateRowsRequest.Entry;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
@@ -116,18 +115,15 @@ public class TestBulkMutation {
   @Test
   public void testAdd() {
     ResourceLimiterStats.reset();
-    MutateRowRequest mutateRowRequest = createRequest();
-    BulkMutation.RequestManager requestManager = createTestRequestManager();
-    requestManager.add(null, BulkMutation.convert(mutateRowRequest));
-    Entry entry = Entry.newBuilder()
-        .setRowKey(mutateRowRequest.getRowKey())
-        .addMutations(mutateRowRequest.getMutations(0))
-        .build();
+    MutateRowsRequest.Entry entry = createRequestEntry();
+    underTest.add(entry);
+    underTest.flush();
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
         .setTableName(TABLE_NAME.toString())
         .addEntries(entry)
         .build();
-    Assert.assertEquals(expected, requestManager.build());
+
+    verify(client, times(1)).mutateRowsAsync(eq(expected));
     Assert.assertEquals(0, ResourceLimiterStats.getInstance().getMutationTimer().getCount());
     Assert.assertEquals(0, ResourceLimiterStats.getInstance().getThrottlingTimer().getCount());
   }
@@ -137,13 +133,13 @@ public class TestBulkMutation {
         BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"), underTest.clock);
   }
 
-  public static MutateRowRequest createRequest() {
+  public static MutateRowsRequest.Entry createRequestEntry() {
     SetCell setCell = SetCell.newBuilder()
         .setFamilyName("cf1")
         .setColumnQualifier(QUALIFIER)
         .build();
     ByteString rowKey = ByteString.copyFrom("SomeKey".getBytes());
-    return MutateRowRequest.newBuilder()
+    return MutateRowsRequest.Entry.newBuilder()
         .setRowKey(rowKey)
         .addMutations(Mutation.newBuilder()
           .setSetCell(setCell))
@@ -152,7 +148,7 @@ public class TestBulkMutation {
 
   @Test
   public void testCallableSuccess() throws Exception {
-    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
+    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequestEntry());
     setResponse(Status.OK);
 
     MutateRowResponse result = rowFuture.get(10, TimeUnit.MILLISECONDS);
@@ -163,7 +159,7 @@ public class TestBulkMutation {
 
   @Test
   public void testCallableFail() throws Exception {
-    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
+    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequestEntry());
     Assert.assertFalse(rowFuture.isDone());
 
     setResponse(Status.NOT_FOUND);
@@ -179,8 +175,8 @@ public class TestBulkMutation {
   }
 
   public void testCallableTooFewStatuses() throws Exception {
-    ListenableFuture<MutateRowResponse> rowFuture1 = underTest.add(createRequest());
-    ListenableFuture<MutateRowResponse> rowFuture2 = underTest.add(createRequest());
+    ListenableFuture<MutateRowResponse> rowFuture1 = underTest.add(createRequestEntry());
+    ListenableFuture<MutateRowResponse> rowFuture2 = underTest.add(createRequestEntry());
     Batch batch = underTest.currentBatch;
     Assert.assertFalse(rowFuture1.isDone());
     Assert.assertFalse(rowFuture2.isDone());
@@ -205,7 +201,7 @@ public class TestBulkMutation {
   }
 
   public void testRunOutOfTime() throws Exception {
-    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
+    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequestEntry());
     setResponse(Status.DEADLINE_EXCEEDED);
     Assert.assertTrue(rowFuture.isDone());
     try {
@@ -221,7 +217,7 @@ public class TestBulkMutation {
 
   @Test
   public void testCallableStale() throws Exception {
-    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
+    ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequestEntry());
     setResponse(Status.OK);
 
     MutateRowResponse result = rowFuture.get(10, TimeUnit.MILLISECONDS);
@@ -246,7 +242,7 @@ public class TestBulkMutation {
   public void testConcurrentBatches() throws Exception {
     final List<ListenableFuture<MutateRowResponse>> futures =
         Collections.synchronizedList(new ArrayList<ListenableFuture<MutateRowResponse>>());
-    final MutateRowRequest mutateRowRequest = createRequest();
+    final MutateRowsRequest.Entry mutateRowRequest = createRequestEntry();
     final int batchCount = 10;
     final int concurrentBulkMutationCount = 50;
 
@@ -284,7 +280,7 @@ public class TestBulkMutation {
   @Test
   public void testAutoflushDisabled() {
     // buffer a request, with a mocked success
-    MutateRowRequest mutateRowRequest = createRequest();
+    MutateRowsRequest.Entry mutateRowRequest = createRequestEntry();
     underTest.add(mutateRowRequest);
 
     verify(retryExecutorService, never())
@@ -303,7 +299,7 @@ public class TestBulkMutation {
         .thenReturn(mockScheduledFuture);
 
     // buffer a request, with a mocked success (for never it gets invoked)
-    MutateRowRequest mutateRowRequest = createRequest();
+    MutateRowsRequest.Entry mutateRowRequest = createRequestEntry();
     underTest.add(mutateRowRequest);
 
     // Verify that the autoflusher was scheduled
@@ -324,7 +320,7 @@ public class TestBulkMutation {
   public void testMissingResponse() throws Exception {
     setupScheduler(true);
 
-    ListenableFuture<MutateRowResponse> addFuture = underTest.add(createRequest());
+    ListenableFuture<MutateRowResponse> addFuture = underTest.add(createRequestEntry());
 
     // TODO(igorbernstein2): this should either block & throw or return a failing future
     // force the batch to be sent
