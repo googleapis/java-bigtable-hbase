@@ -22,10 +22,10 @@ import java.io.OutputStream;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto.MutationType;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.Mutation.MutationCase;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -50,30 +50,26 @@ public class HBaseMutationCoder extends AtomicCoder<Mutation> {
   @Override
   public void encode(Mutation mutation, OutputStream outStream, Coder.Context context)
       throws CoderException, IOException {
-    MutateRowRequest request;
+    MutationType type = getType(mutation);
+    MutationProto proto = ProtobufUtil.toMutation(type, mutation);
+    proto.writeDelimitedTo(outStream);
+  }
+
+  private static MutationType getType(Mutation mutation) {
     if (mutation instanceof Put) {
-      request = PUT_ADAPTER.adapt((Put) mutation).build();
+      return MutationType.PUT;
     } else if (mutation instanceof Delete) {
-      request = Adapters.DELETE_ADAPTER.adapt((Delete) mutation).build();
+      return MutationType.DELETE;
     } else {
-      // Increment and Append are not idempotent. They should not be used in distributed jobs.
+      // Increment and Append are not idempotent.  They should not be used in distributed jobs.
       throw new IllegalArgumentException("Only Put and Delete are supported");
     }
-    request.writeDelimitedTo(outStream);
   }
 
   @Override
-  public Mutation decode(InputStream inStream, Coder.Context context)
+  public Mutation decode(InputStream inStream,
+      com.google.cloud.dataflow.sdk.coders.Coder.Context context)
       throws CoderException, IOException {
-    MutateRowRequest request = MutateRowRequest.parseDelimitedFrom(inStream);
-    if (request.getMutationsCount() == 0) {
-      // Increment and Append are not idempotent. They should not be used in distributed jobs.
-      throw new IllegalArgumentException("Invalid MutateRowRequest");
-    }
-    if (request.getMutations(0).getMutationCase() == MutationCase.SET_CELL) {
-      return PUT_ADAPTER.adapt(request);
-    } else {
-      return Adapters.DELETE_ADAPTER.adapt(request);
-    }
+    return ProtobufUtil.toMutation(MutationProto.parseDelimitedFrom(inStream));
   }
 }
