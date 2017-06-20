@@ -35,7 +35,6 @@ public class CoderTestUtil {
   public static <T> byte[] encode(AtomicCoder<T> coder, T original) throws IOException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     coder.encode(original, bos, null);
-    bos.flush();
     return bos.toByteArray();
   }
 }

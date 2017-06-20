@@ -67,8 +67,7 @@ public class HBaseMutationCoder extends AtomicCoder<Mutation> {
   }
 
   @Override
-  public Mutation decode(InputStream inStream,
-      com.google.cloud.dataflow.sdk.coders.Coder.Context context)
+  public Mutation decode(InputStream inStream, Coder.Context context)
       throws CoderException, IOException {
     return ProtobufUtil.toMutation(MutationProto.parseDelimitedFrom(inStream));
   }
