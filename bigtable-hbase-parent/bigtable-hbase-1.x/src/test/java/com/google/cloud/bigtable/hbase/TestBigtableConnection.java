@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,22 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
+
 /**
- * This class is here to force generation of source javadoc jars so that the maven release process
- * doesn't complain. The shading plugin generated a shaded jar of bigtable-hbase, but it doesn't
- * generate javadoc or source files; this class is here as a hack and better methods should be
- * employed.
+ * This is a test to ensure that BigtableConnection can find {@link BigtableConnection}
  *
- * @author sduskis
- * @version $Id: $Id
  */
-public final class MavenPlaceholder {
+@RunWith(JUnit4.class)
+public class TestBigtableConnection {
 
-  private MavenPlaceholder() {
-
+  @Test
+  public void testBigtableConnectionExists() {
+    Assert.assertEquals(BigtableConnection.class, BigtableConfiguration.getConnectionClass());
   }
 }

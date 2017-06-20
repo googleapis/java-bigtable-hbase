@@ -43,6 +43,7 @@ import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
+import com.google.cloud.bigtable.grpc.async.ThrottlingClientInterceptor;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
@@ -50,8 +51,6 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
@@ -190,13 +189,16 @@ public class BigtableSession implements Closeable {
   private final BigtableOptions options;
   private final List<ManagedChannel> managedChannels = Collections
       .synchronizedList(new ArrayList<ManagedChannel>());
-  private final ClientInterceptor[] headerInterceptors;
+  private final ClientInterceptor[] clientInterceptors;
 
   /**
    * This cluster name is either configured via BigtableOptions' clusterId, or via a lookup of the
    * clusterID based on BigtableOptions projectId and instanceId.  See {@link BigtableClusterUtilities}
    */
   private BigtableClusterName clusterName;
+
+  private ThrottlingClientInterceptor throttlingClientInterceptor =
+      new ThrottlingClientInterceptor();
 
   /**
    * <p>Constructor for BigtableSession.</p>
@@ -220,9 +222,10 @@ public class BigtableSession implements Closeable {
         options.getTableAdminHost());
     LOG.info("Bigtable options: %s.", options);
 
-    Builder<ClientInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
-    headerInterceptorBuilder.add(
-        new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
+    List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
+    clientInterceptorsList.add(throttlingClientInterceptor);
+    clientInterceptorsList
+        .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
     // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
     // take as long, but still take time. Get the credentials on one thread, and start up the elg
     // and scheduledRetries thread pools on another thread.
@@ -230,16 +233,17 @@ public class BigtableSession implements Closeable {
     RetryOptions retryOptions = options.getRetryOptions();
     CredentialOptions credentialOptions = options.getCredentialOptions();
     try {
-      ClientInterceptor headerInterceptor =
+      ClientInterceptor credentialsInterceptor =
           credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
-      if (headerInterceptor != null) {
-        headerInterceptorBuilder.add(headerInterceptor);
+      if (credentialsInterceptor != null) {
+        clientInterceptorsList.add(credentialsInterceptor);
       }
     } catch (GeneralSecurityException e) {
       throw new IOException("Could not initialize credentials.", e);
     }
 
-    headerInterceptors = headerInterceptorBuilder.build().toArray(new ClientInterceptor[0]);
+    clientInterceptors =
+        clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
 
     ChannelPool dataChannel = getDataChannelPool();
 
@@ -252,7 +256,6 @@ public class BigtableSession implements Closeable {
       new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig()));
 
     // Defer the creation of both the tableAdminClient until we need them.
-
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
     initializeResourceLimiter(options);
   }
@@ -336,7 +339,8 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
    */
   public AsyncExecutor createAsyncExecutor() {
-    return new AsyncExecutor(dataClient, resourceLimiter);
+    throttlingClientInterceptor.enable(resourceLimiter);
+    return new AsyncExecutor(dataClient);
   }
 
   /**
@@ -347,6 +351,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
    */
   public BulkMutation createBulkMutation(BigtableTableName tableName, AsyncExecutor asyncExecutor) {
+    throttlingClientInterceptor.enable(resourceLimiter);
     BulkOptions bulkOptions = options.getBulkOptions();
     if (bulkOptions.isEnableBulkMutationThrottling()) {
       resourceLimiter.throttle(bulkOptions.getBulkMutationRpcTargetMs());
@@ -354,7 +359,6 @@ public class BigtableSession implements Closeable {
     return new BulkMutation(
         tableName,
         dataClient,
-        resourceLimiter,
         asyncExecutor.getOperationAccountant(),
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
         bulkOptions);
@@ -411,7 +415,7 @@ public class BigtableSession implements Closeable {
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
-        return createNettyChannel(hostString, options, headerInterceptors);
+        return createNettyChannel(hostString, options, clientInterceptors);
       }
     };
     return new ChannelPool(channelFactory, count);

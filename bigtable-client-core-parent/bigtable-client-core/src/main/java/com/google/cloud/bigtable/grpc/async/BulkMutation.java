@@ -80,8 +80,7 @@ public class BulkMutation {
     return grpcStatus.asRuntimeException();
   }
 
-  @VisibleForTesting
-  static MutateRowsRequest.Entry convert(MutateRowRequest request) {
+  private static MutateRowsRequest.Entry convert(MutateRowRequest request) {
     if (request == null) {
       return null;
     } else {
@@ -90,13 +89,20 @@ public class BulkMutation {
     }
   }
 
+  private static Set<Integer> getIndexes(List<Entry> entries) {
+    Set<Integer> indexes = new HashSet<>(entries.size());
+    for (Entry entry : entries) {
+      indexes.add((int) entry.getIndex());
+    }
+    return indexes;
+  }
+
   @VisibleForTesting
   static class RequestManager {
     private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
     private final MutateRowsRequest.Builder builder;
     private final Meter addMeter;
 
-    private MutateRowsRequest request;
     private long approximateByteSize = 0l;
 
     @VisibleForTesting
@@ -118,8 +124,7 @@ public class BulkMutation {
     }
 
     MutateRowsRequest build() {
-      request = builder.build();
-      return request;
+      return builder.build();
     }
 
     public boolean isEmpty() {
@@ -137,25 +142,30 @@ public class BulkMutation {
     public long calculateTimeUntilStaleNanos() {
       return lastRpcSentTimeNanos + MAX_RPC_WAIT_TIME_NANOS - clock.nanoTime();
     }
+  }
 
-    public boolean wasSent() {
-      return lastRpcSentTimeNanos != null;
+  private static void cancelIfNotDone(Future<?> future) {
+    if (future != null && !future.isDone()) {
+      future.cancel(true);
     }
   }
 
   @VisibleForTesting
-  class Batch implements Runnable {
+  class Batch {
     private final Meter mutationMeter =
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.added");
 
     private final SettableFuture<String> completionFuture = SettableFuture.create();
-    private RequestManager currentRequestManager;
+    private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
+    private final MutateRowsRequest.Builder builder =
+        MutateRowsRequest.newBuilder().setTableName(tableName);
+
     private ListenableFuture<List<MutateRowsResponse>> mutateRowsFuture;
     private ScheduledFuture<?> stalenessFuture;
+    private long approximateByteSize = 0l;
 
-    private Batch() {
-      this.currentRequestManager = new RequestManager(tableName, mutationMeter, clock);
-    }
+    @VisibleForTesting
+    Long lastRpcSentTimeNanos = null;
 
     /**
      * Adds a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to the {@link
@@ -170,14 +180,16 @@ public class BulkMutation {
     private ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
       Preconditions.checkNotNull(entry);
       SettableFuture<MutateRowResponse> future = SettableFuture.create();
-      currentRequestManager.add(future, entry);
+      mutationMeter.mark();
+      futures.add(future);
+      builder.addEntries(entry);
+      approximateByteSize += entry.getSerializedSize();
       return future;
     }
 
     private boolean isFull() {
-      Preconditions.checkNotNull(operationsAreComplete());
-      return getRequestCount() >= maxRowKeyCount
-          || (currentRequestManager.approximateByteSize >= maxRequestSize);
+      Preconditions.checkNotNull(futures.isEmpty());
+      return getRequestCount() >= maxRowKeyCount || (approximateByteSize >= maxRequestSize);
     }
 
     /**
@@ -185,25 +197,16 @@ public class BulkMutation {
      * {@link BulkMutation#add(MutateRowRequest)} when the provided {@link ListenableFuture} for the
      * {@link MutateRowsResponse} is complete.
      */
-    private void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture,
-        final Long rpcId) {
+    private void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture) {
       Futures.addCallback(bulkFuture, new FutureCallback<List<MutateRowsResponse>>() {
         @Override
         public void onSuccess(List<MutateRowsResponse> result) {
-          markCompletion();
           handleResult(result);
         }
 
         @Override
         public void onFailure(Throwable t) {
-          markCompletion();
           setFailure(t);
-        }
-
-        private void markCompletion() {
-          if (rpcId != null) {
-            resourceLimiter.markCanBeCompleted(rpcId);
-          }
         }
       });
     }
@@ -211,29 +214,22 @@ public class BulkMutation {
     @VisibleForTesting
     synchronized void handleResult(List<MutateRowsResponse> results) {
       mutateRowsFuture = null;
+      if (futures.isEmpty()) {
+        LOG.warn("Got duplicate responses for bulk mutation.");
+        setComplete();
+        return;
+      }
       List<MutateRowsResponse.Entry> entries = new ArrayList<>();
       for (MutateRowsResponse response : results) {
         entries.addAll(response.getEntriesList());
       }
-
       if (entries.isEmpty()) {
         setFailure(io.grpc.Status.INTERNAL
             .withDescription("No MutateRowsResponses entries were found.").asRuntimeException());
         return;
       }
       try {
-        if (operationsAreComplete()) {
-          LOG.warn("Got duplicate responses for bulk mutation.");
-          setComplete();
-          return;
-        }
-        if (entries.isEmpty()) {
-          setFailure(io.grpc.Status.INTERNAL.withDescription("No MutateRowResponses were found.")
-              .asRuntimeException());
-          return;
-        }
-
-        handleResponses(entries);
+        handleEntries(entries);
         handleExtraFutures(entries);
         setComplete();
       } catch (Throwable e) {
@@ -241,7 +237,7 @@ public class BulkMutation {
       }
     }
 
-    private void handleResponses(Iterable<MutateRowsResponse.Entry> entries) {
+    private void handleEntries(Iterable<MutateRowsResponse.Entry> entries) {
       for (MutateRowsResponse.Entry entry : entries) {
         int index = (int) entry.getIndex();
         if (index >= getRequestCount()) {
@@ -249,7 +245,7 @@ public class BulkMutation {
           continue;
         }
 
-        SettableFuture<MutateRowResponse> future = currentRequestManager.futures.get(index);
+        SettableFuture<MutateRowResponse> future = futures.get(index);
 
         if (future == null) {
           LOG.warn("Could not find a future for index %d.", index);
@@ -257,8 +253,7 @@ public class BulkMutation {
         }
 
         Status status = entry.getStatus();
-        int statusCode = status.getCode();
-        if (statusCode == io.grpc.Status.Code.OK.value()) {
+        if (status.getCode() == io.grpc.Status.Code.OK.value()) {
           future.set(MutateRowResponse.getDefaultInstance());
         } else {
           future.setException(toException(status));
@@ -273,7 +268,7 @@ public class BulkMutation {
         // If the indexes do not contain this future, then there's a problem.
         if (!indexes.remove(i)) {
           missingEntriesCount++;
-          currentRequestManager.futures.get(i).setException(MISSING_ENTRY_EXCEPTION);
+          futures.get(i).setException(MISSING_ENTRY_EXCEPTION);
         }
       }
       if (missingEntriesCount > 0) {
@@ -282,41 +277,26 @@ public class BulkMutation {
       }
     }
 
-    private Set<Integer> getIndexes(List<Entry> entries) {
-      Set<Integer> indexes = new HashSet<>(entries.size());
-      for (Entry entry : entries) {
-        indexes.add((int) entry.getIndex());
-      }
-      return indexes;
-    }
-
-    @Override
-    public synchronized void run() {
-      if (operationsAreComplete()) {
+    private void run() {
+      if (futures.isEmpty()) {
         setComplete();
         return;
       }
-      Preconditions.checkState(!completionFuture.isDone());
-      Long operationId = null;
+      Preconditions.checkState(!completionFuture.isDone(), "The Batch was already run");
       try {
-        MutateRowsRequest request = currentRequestManager.build();
-        operationId = resourceLimiter
-            .registerOperationWithHeapSize(request.getSerializedSize());
+        MutateRowsRequest request = builder.build();
         mutateRowsFuture = client.mutateRowsAsync(request);
-        currentRequestManager.lastRpcSentTimeNanos = clock.nanoTime();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
+        lastRpcSentTimeNanos = clock.nanoTime();
       } catch (Throwable e) {
         mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
-        addCallback(mutateRowsFuture, operationId);
+        addCallback(mutateRowsFuture);
       }
       setupStalenessChecker();
     }
 
-    protected void setupStalenessChecker() {
-      if (operationsAreComplete()){
+    private void setupStalenessChecker() {
+      if (futures.isEmpty()){
         setComplete();
         return;
       }
@@ -324,9 +304,9 @@ public class BulkMutation {
         @Override
         public void run() {
           synchronized (Batch.this) {
-            if (operationsAreComplete()) {
+            if (futures.isEmpty()) {
               setComplete();
-            } else if (currentRequestManager.isStale()) {
+            } else if (isStale()) {
               setFailure(
                 io.grpc.Status.INTERNAL.withDescription("Stale requests.").asRuntimeException());
             } else {
@@ -335,23 +315,34 @@ public class BulkMutation {
           }
         }
       };
-      if (currentRequestManager.lastRpcSentTimeNanos != null) {
-        long delay = currentRequestManager.calculateTimeUntilStaleNanos();
+      if (lastRpcSentTimeNanos != null) {
+        long delay = calculateTimeUntilStaleNanos();
         stalenessFuture = retryExecutorService.schedule(runnable, delay, TimeUnit.NANOSECONDS);
       }
+    }
+
+    private long calculateTimeUntilStaleNanos() {
+      return lastRpcSentTimeNanos + MAX_RPC_WAIT_TIME_NANOS - clock.nanoTime();
+    }
+
+    @VisibleForTesting
+    boolean isStale() {
+      return lastRpcSentTimeNanos != null && calculateTimeUntilStaleNanos() <= 0;
+    }
+
+    @VisibleForTesting
+    boolean wasSent() {
+      return lastRpcSentTimeNanos != null;
     }
 
     /**
      * This would have happened after all retries are exhausted on the MutateRowsRequest. Don't
      * retry individual mutations.
      */
-    @VisibleForTesting
-    void setFailure(Throwable t) {
+    private void setFailure(Throwable t) {
       try {
-        if (currentRequestManager != null) {
-          for (SettableFuture<MutateRowResponse> future : currentRequestManager.futures) {
-            future.setException(t);
-          }
+        for (SettableFuture<MutateRowResponse> future : futures) {
+          future.setException(t);
         }
       } finally {
         setComplete();
@@ -359,31 +350,18 @@ public class BulkMutation {
     }
  
     private synchronized void setComplete() {
-      if (mutateRowsFuture != null && !mutateRowsFuture.isDone()) {
-        mutateRowsFuture.cancel(true);
-      }
       cancelIfNotDone(mutateRowsFuture);
       cancelIfNotDone(stalenessFuture);
       if (!completionFuture.isDone()) {
         completionFuture.set("");
       }
-      currentRequestManager = null;
       mutateRowsFuture = null;
-    }
-
-    private void cancelIfNotDone(Future<?> future) {
-      if (future != null && !future.isDone()) {
-        future.cancel(true);
-      }
+      futures.clear();
     }
 
     @VisibleForTesting
     int getRequestCount() {
-      return operationsAreComplete() ? 0 : currentRequestManager.getRequestCount();
-    }
-
-    boolean operationsAreComplete() {
-      return currentRequestManager == null || currentRequestManager.isEmpty();
+      return futures.size();
     }
   }
 
@@ -394,7 +372,6 @@ public class BulkMutation {
 
   private final String tableName;
   private final BigtableDataClient client;
-  private final ResourceLimiter resourceLimiter;
   private final OperationAccountant operationAccountant;
   private final ScheduledExecutorService retryExecutorService;
   private final int maxRowKeyCount;
@@ -411,8 +388,6 @@ public class BulkMutation {
    * @param tableName a {@link BigtableTableName} object for the table to which all
    *          {@link MutateRowRequest}s will be sent.
    * @param client a {@link BigtableDataClient} object on which to perform RPCs.
-   * @param resourceLimiter a {@link ResourceLimiter} object that curbs the amount of RPCs to
-   *          something sustainable for the entire JVM.
    * @param operationAccountant a {@link OperationAccountant} object that keeps track of outstanding
    *          RPCs that this object performed.
    * @param retryOptions a {@link RetryOptions} object that describes how to perform retries.
@@ -424,13 +399,11 @@ public class BulkMutation {
   public BulkMutation(
       BigtableTableName tableName,
       BigtableDataClient client,
-      ResourceLimiter resourceLimiter,
       OperationAccountant operationAccountant,
       ScheduledExecutorService retryExecutorService,
       BulkOptions bulkOptions) {
     this.tableName = tableName.toString();
     this.client = client;
-    this.resourceLimiter = resourceLimiter;
     this.retryExecutorService = retryExecutorService;
     this.operationAccountant = operationAccountant;
     this.maxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();

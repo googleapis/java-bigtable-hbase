@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
+import org.apache.hadoop.hbase.filter.FamilyFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
@@ -102,6 +103,7 @@ public class FilterAdapter {
     adapter.addFilterAdapter(
         org.apache.hadoop.hbase.filter.RowFilter.class, new RowFilterAdapter());
     adapter.addFilterAdapter(FuzzyRowFilter.class, new FuzzyRowFilterAdapter());
+    adapter.addFilterAdapter(FamilyFilter.class, new FamilyFilterAdapter());
 
     // MultiRowRangeFilter only exists in hbase >= 1.1
     try {

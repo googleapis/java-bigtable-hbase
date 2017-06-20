@@ -55,6 +55,10 @@ import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.Descriptors;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.Message;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
@@ -78,10 +82,6 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.Message;
-import com.google.protobuf.Service;
-import com.google.protobuf.ServiceException;
 
 /**
  * <p>BigtableTable class.</p>

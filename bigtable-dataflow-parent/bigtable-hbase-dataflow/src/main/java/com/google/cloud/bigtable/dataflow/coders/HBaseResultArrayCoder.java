@@ -55,9 +55,9 @@ public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
       throws IOException {
     ObjectOutputStream oos = new ObjectOutputStream(outputStream);
     oos.writeInt(results.length);
-    oos.flush();
     for (Result result : results) {
       HBaseResultCoder.getInstance().encode(result, oos, context);
     }
+    oos.flush();
   }
 }

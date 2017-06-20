@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.google.api.client.util.BackOff;
 import com.google.bigtable.v2.MutateRowsRequest;
@@ -212,4 +213,14 @@ public class RetryingMutateRowsOperation extends
     }
     return MutateRowsResponse.newBuilder().addAllEntries(entries).build();
   }
+
+  @Override
+  protected CallOptions getCallOptions() {
+    CallOptions originalCallOptions = super.getCallOptions();
+    if (originalCallOptions.getDeadline() != null) {
+      return originalCallOptions;
+    }
+    return originalCallOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
+  }
+
 }

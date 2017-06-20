@@ -18,14 +18,6 @@ package com.google.cloud.bigtable.grpc.async;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,10 +32,7 @@ import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.ByteString;
 
 /**
  * Tests for {@link AsyncExecutor}
@@ -60,10 +49,11 @@ public class TestAsyncExecutor {
 
   private AsyncExecutor underTest;
 
+
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    underTest = new AsyncExecutor(client, new ResourceLimiter(1000, 10));
+    underTest = new AsyncExecutor(client);
     future = SettableFuture.create();
   }
 
@@ -126,72 +116,5 @@ public class TestAsyncExecutor {
     }
     future.set(ReadRowsResponse.getDefaultInstance());
     Assert.assertFalse(underTest.hasInflightRequests());
-  }
-
-  @Test
-  /**
-   * Tests to make sure that mutateRowAsync will perform a wait() if there is a bigger count of RPCs
-   * than the maximum of the RpcThrottler.
-   */
-  public void testRegisterWaitsAfterCountLimit() throws Exception {
-    ExecutorService testExecutor = Executors.newCachedThreadPool();
-    try {
-      when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
-      // Fill up the Queue
-      for (int i = 0; i < 10; i++) {
-        underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-      }
-      final AtomicBoolean eleventhRpcInvoked = new AtomicBoolean(false);
-      testExecutor.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-          eleventhRpcInvoked.set(true);
-          return null;
-        }
-      });
-      Thread.sleep(50);
-      Assert.assertFalse(eleventhRpcInvoked.get());
-      future.set("");
-      Thread.sleep(50);
-      Assert.assertTrue(eleventhRpcInvoked.get());
-    } finally {
-      testExecutor.shutdownNow();
-    }
-  }
-
-  @Test
-  /**
-   * Tests to make sure that mutateRowAsync will perform a wait() if there is a bigger accumulated
-   * serialized size of RPCs than the maximum of the RpcThrottler.
-   */
-  public void testRegisterWaitsAfterSizeLimit() throws Exception {
-    ExecutorService testExecutor = Executors.newCachedThreadPool();
-    try {
-      when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
-      // Send a huge request to block further RPCs.
-      underTest.mutateRowAsync(MutateRowRequest.newBuilder()
-          .setRowKey(ByteString.copyFrom(new byte[1000])).build());
-      final AtomicBoolean newRpcInvoked = new AtomicBoolean(false);
-      Future<Void> future1 = testExecutor.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-          newRpcInvoked.set(true);
-          return null;
-        }
-      });
-      try {
-        future1.get(50, TimeUnit.MILLISECONDS);
-        Assert.fail("The future.get() call should timeout.");
-      } catch(TimeoutException expected) {
-        // Expected Exception.
-      }
-      future.set("");
-      future1.get(50, TimeUnit.MILLISECONDS);
-      Assert.assertTrue(newRpcInvoked.get());
-    } finally {
-      testExecutor.shutdownNow();
-    }
   }
 }

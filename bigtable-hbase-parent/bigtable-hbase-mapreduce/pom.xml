@@ -33,39 +33,17 @@ limitations under the License.
     </description>
 
     <properties>
-        <hbase.version>${hbase.version.1.2}</hbase.version>
         <hadoop.version>2.7.3</hadoop.version>
         <hadoop.scope>provided</hadoop.scope>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-common</artifactId>
-                <version>${hadoop.version}</version>
-                <scope>${hadoop.scope}</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>2.5.0</version>
-                <scope>${hadoop.scope}</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>11.0.2</version>
-                <scope>${hadoop.scope}</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
-        <!-- hadoop-client has to take precedence to the bigtable-hbase client.
-            This is necessary because bigtable-hbase client cherry-picks just the bare minimum,
-            but in an actual hadoop environment we want the full set of provided dependencies
-        -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
@@ -73,17 +51,10 @@ limitations under the License.
             <scope>provided</scope>
         </dependency>
 
-        <!-- Grab the mapreduce apis from hbase-server -->
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
             <version>${hbase.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
@@ -92,20 +63,6 @@ limitations under the License.
             <version>${netty-tcnative-boringssl-static.version}</version>
             <scope>compile</scope>
         </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>bigtable-hbase-1.2</artifactId>
-            <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.appengine</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-
     </dependencies>
 
     <build>

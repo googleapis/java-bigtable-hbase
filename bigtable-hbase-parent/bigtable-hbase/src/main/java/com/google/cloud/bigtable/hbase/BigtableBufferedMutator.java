@@ -90,6 +90,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private BulkMutation bulkMutation = null;
 
+  private BigtableOptions options;
+
   /**
    * <p>Constructor for BigtableBufferedMutator.</p>
    *
@@ -109,7 +111,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.adapter = adapter;
     this.configuration = configuration;
     this.exceptionListener = listener;
-    BigtableOptions options = session.getOptions();
+    this.options = session.getOptions();
     this.host = options.getDataHost().toString();
     this.asyncExecutor = session.createAsyncExecutor();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
@@ -155,7 +157,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   /** {@inheritDoc} */
   @Override
   public long getWriteBufferSize() {
-    return this.asyncExecutor.getMaxHeapSize();
+    return this.options.getBulkOptions().getMaxMemory();
   }
 
   /** {@inheritDoc} */
