@@ -42,10 +42,10 @@ public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
   public void encode(Result[] results, OutputStream outputStream) throws CoderException, IOException {
     ObjectOutputStream oos = new ObjectOutputStream(outputStream);
     oos.writeInt(results.length);
-    oos.flush();
     for (Result result : results) {
       HBaseResultCoder.getInstance().encode(result, oos);
     }
+    oos.flush();
   }
 
   @Override

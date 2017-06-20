@@ -17,20 +17,13 @@ package com.google.cloud.bigtable.beam.coders;
 
 import static org.apache.hadoop.hbase.util.Bytes.toBytes;
 
-import com.google.bigtable.repackaged.com.google.api.client.util.Clock;
-import com.google.cloud.bigtable.beam.coders.HBaseMutationCoder;
-import com.google.cloud.bigtable.hbase.adapters.PutAdapterUtil;
-
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.beam.sdk.util.MutationDetector;
 import org.apache.beam.sdk.util.MutationDetectors;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -38,26 +31,7 @@ import org.junit.Test;
  */
 public class HBaseMutationCoderTest {
 
-  private HBaseMutationCoder underTest;
-  private AtomicLong time;
-
-  @Before
-  public void setup() {
-    underTest = new HBaseMutationCoder();
-    time = new AtomicLong(System.currentTimeMillis());
-
-    PutAdapterUtil.setClock(HBaseMutationCoder.PUT_ADAPTER, new Clock(){
-      @Override
-      public long currentTimeMillis() {
-        return time.get();
-      }
-    });
-  }
-
-  @After
-  public void tearDown() {
-    PutAdapterUtil.setClock(HBaseMutationCoder.PUT_ADAPTER, Clock.SYSTEM);
-  }
+  private HBaseMutationCoder underTest = new HBaseMutationCoder();
 
   @Test
   public void testPut() throws IOException {
@@ -67,11 +41,9 @@ public class HBaseMutationCoderTest {
     for (int i = 0; i < 5; i++) {
       Assert.assertEquals(
           0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
-      time.set(time.get() + 10_000);
       Assert.assertEquals(
           0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
 
-      // Make sure that the clock change didn't modify the serialized value.
       mutationDetector.verifyUnmodified();
     }
   }
@@ -83,7 +55,6 @@ public class HBaseMutationCoderTest {
     for (int i = 0; i < 5; i++) {
       Assert.assertEquals(
           0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
-      time.set(time.get() + 10_000);
 
       // Make sure that the clock change didn't modify the serialized value.
       mutationDetector.verifyUnmodified();

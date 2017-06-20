@@ -51,8 +51,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;

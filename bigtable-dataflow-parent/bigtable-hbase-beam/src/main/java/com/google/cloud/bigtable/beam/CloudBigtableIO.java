@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import static com.google.bigtable.repackaged.com.google.api.client.repackaged.com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.io.IOException;
@@ -66,22 +66,20 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.cloud.bigtable.batch.common.ByteStringUtil;
+import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.beam.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.beam.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.beam.coders.HBaseResultCoder;
+import com.google.cloud.bigtable.config.BulkOptions;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
+import com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
 import com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -638,8 +636,8 @@ public class CloudBigtableIO {
     @Override
     public boolean advance() throws IOException {
       FlatRow row = scanner.next();
-      if (row != null
-          && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getRowKey()))) {
+      if (row != null && rangeTracker.tryReturnRecordAt(true,
+        ByteKey.copyFrom(ZeroCopyByteStringUtil.get(row.getRowKey())))) {
         current = FLAT_ROW_ADAPTER.adaptResponse(row);
         rowsRead.addAndGet(1l);
         return true;

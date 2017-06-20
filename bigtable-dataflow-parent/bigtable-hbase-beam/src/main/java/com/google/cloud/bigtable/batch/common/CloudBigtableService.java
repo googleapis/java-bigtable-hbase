@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.batch.common;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 

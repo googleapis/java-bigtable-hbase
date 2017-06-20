@@ -21,11 +21,9 @@ import java.io.OutputStream;
 
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CoderException;
-import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.hadoop.hbase.client.Result;
-
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 
 /**
  * An {@link AtomicCoder} that serializes and deserializes the {@link Result}.
@@ -35,7 +33,6 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
   private static final long serialVersionUID = -4975428837770254686L;
 
   private static final HBaseResultCoder INSTANCE = new HBaseResultCoder();
-  private static final SerializableCoder<FlatRow> FLAT_ROW_CODER = SerializableCoder.of(FlatRow.class);
 
   public static HBaseResultCoder getInstance() {
     return INSTANCE;
@@ -43,11 +40,13 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
 
   @Override
   public Result decode(InputStream inputStream) throws CoderException, IOException {
-    return Adapters.FLAT_ROW_ADAPTER.adaptResponse(FLAT_ROW_CODER.decode(inputStream));
+    ClientProtos.Result protoResult = ClientProtos.Result.parseDelimitedFrom(inputStream);
+    return ProtobufUtil.toResult(protoResult);
   }
 
   @Override
   public void encode(Result value, OutputStream outputStream) throws CoderException, IOException {
-    FLAT_ROW_CODER.encode(Adapters.FLAT_ROW_ADAPTER.adaptToRow(value), outputStream);
+    ClientProtos.Result protoResult = ProtobufUtil.toResult(value);
+    protoResult.writeDelimitedTo(outputStream);
   }
 }

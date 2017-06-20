@@ -26,10 +26,9 @@ import java.util.Map.Entry;
 import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.collect.ImmutableMap;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableClusterUtilities;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a Cloud
@@ -132,14 +131,6 @@ public class CloudBigtableConfiguration implements Serializable {
     Preconditions.checkArgument(!configuration.containsKey(key), "%s was set twice", key);
     Preconditions.checkArgument(value != null, "%s must be set.", type);
     configuration.put(key, value);
-  }
-
-  protected static String lookupInstanceId(String projectId, String zoneId, String clusterId) {
-    try {
-      return BigtableClusterUtilities.lookupInstanceId(projectId, clusterId, zoneId);
-    } catch (IOException e) {
-      throw new RuntimeException("Error looking up instance id", e);
-    }
   }
 
   /**
