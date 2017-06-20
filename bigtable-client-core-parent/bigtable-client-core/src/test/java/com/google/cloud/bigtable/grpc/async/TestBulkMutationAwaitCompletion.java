@@ -47,7 +47,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
@@ -274,7 +273,7 @@ public class TestBulkMutationAwaitCompletion {
    * it.
    */
   private void runOneBulkMutation() {
-    MutateRowRequest request = TestBulkMutation.createRequest();
+    MutateRowsRequest.Entry request = TestBulkMutation.createEntry();
     OperationAccountant accountant = createOperationAccountant();
     BulkMutation bulkMutation = createBulkMutation(accountant);
     for (int i = 0; i < OPERATIONS_PER_MUTATOR; i++) {
