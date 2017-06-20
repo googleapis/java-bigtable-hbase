@@ -19,6 +19,9 @@ import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.cloud.dataflow.sdk.util.MutationDetector;
+import com.google.cloud.dataflow.sdk.util.MutationDetectors;
+
 /**
  * Tests for {@link HBaseResultArrayCoder}
  */
@@ -34,6 +37,12 @@ public class HBaseResultArrayCoderTest {
     Result[] copy = CoderTestUtil.encodeAndDecode(underTest, original);
     // This method throws an exception if the values are not equal.
     Result.compareResults(original[0], copy[0]);
+
+    MutationDetector mutationDetector = MutationDetectors.forValueWithCoder(original, underTest);
+
+    mutationDetector.verifyUnmodified();
+    Thread.sleep(10);
+    mutationDetector.verifyUnmodified();
   }
 
   @Test
