@@ -28,12 +28,8 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.Coder;
-import org.apache.beam.sdk.coders.CoderRegistry;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.io.range.ByteKey;
@@ -65,13 +61,15 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
-import com.google.cloud.bigtable.beam.coders.HBaseMutationCoder;
-import com.google.cloud.bigtable.beam.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.beam.coders.HBaseResultCoder;
 import com.google.cloud.bigtable.config.BulkOptions;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
@@ -84,9 +82,9 @@ import com.google.common.annotations.VisibleForTesting;
 
 /**
  * <p>
- * Utilities to create {@link com.google.cloud.dataflow.sdk.transforms.PTransform}s for reading and
+ * Utilities to create {@link PTransform}s for reading and
  * writing <a href="https://cloud.google.com/bigtable/">Google Cloud Bigtable</a> entities in a
- * Cloud Dataflow pipeline.
+ * Beam pipeline.
  * </p>
  *
  * <p>
@@ -154,25 +152,7 @@ public class CloudBigtableIO {
   }
 
   private static AtomicCoder<Result> RESULT_CODER = new HBaseResultCoder();
-  private static AtomicCoder<Result[]> RESULT_ARRAY_CODER = new HBaseResultArrayCoder();
   private static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
-
-  @SuppressWarnings("rawtypes")
-  private static AtomicCoder HBASE_MUTATION_CODER = new HBaseMutationCoder();
-
-  @SuppressWarnings("rawtypes")
-  public static Coder getCoder(CoderType type) {
-    switch (type) {
-      case RESULT:
-        return RESULT_CODER;
-
-      case RESULT_ARRAY:
-        return RESULT_ARRAY_CODER;
-
-      default:
-        throw new IllegalArgumentException("Can't get a coder for type: " + type.name());
-    }
-  }
 
   /**
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
@@ -200,7 +180,7 @@ public class CloudBigtableIO {
       return RESULT_CODER;
     }
 
-    // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between dataflow needs
+    // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between beam needs
     // and Cloud Bigtable logic.
     protected List<SourceWithKeys> getSplits(long desiredBundleSizeBytes) throws Exception {
       desiredBundleSizeBytes = Math.max(getEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
@@ -445,7 +425,7 @@ public class CloudBigtableIO {
      * assumption may not be correct for any specific start/stop key combination.
      * </p>
      * <p>
-     * This method is called internally by Cloud Dataflow. Do not call it directly.
+     * This method is called internally by Beam. Do not call it directly.
      * </p>
      * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.
      * @param options The pipeline options.
@@ -501,6 +481,12 @@ public class CloudBigtableIO {
       SOURCE_LOG.info("Estimated size in bytes: " + totalEstimatedSizeBytes);
 
       return totalEstimatedSizeBytes;
+    }
+
+    @Override
+    public Coder<Result> getDefaultOutputCoder() {
+      // TODO Auto-generated method stub
+      return super.getDefaultOutputCoder();
     }
   }
 
@@ -564,7 +550,7 @@ public class CloudBigtableIO {
      * startKey and stopKey. That assumption may not be correct for any specific
      * start/stop key combination.
      *
-     * <p>This method is called internally by Cloud Dataflow. Do not call it directly.
+     * <p>This method is called internally by Beam. Do not call it directly.
      *
      * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.
      * @param options The pipeline options.
@@ -767,28 +753,6 @@ public class CloudBigtableIO {
   }
 
   ///////////////////// Write Class /////////////////////////////////
-
-  /**
-   * Initializes the coders for the Cloud Bigtable Write {@link PTransform}. Sets up {@link Coder}s
-   * required to serialize HBase {@link Put}, {@link Delete}, and {@link Mutation} objects. See
-   * {@link HBaseMutationCoder} for additional implementation details.
-   *
-   * @return The {@link Pipeline} for chaining convenience.
-   */
-  public static Pipeline initializeForWrite(Pipeline p) {
-    // This enables the serialization of various Mutation types in the pipeline.
-    CoderRegistry registry = p.getCoderRegistry();
-
-    // MutationCoder only supports Puts and Deletes. It will throw exceptions for Increment
-    // and Append since they are not idempotent. Put is logically idempotent if the column family
-    // has a single version(); multiple versions are fine for most cases.  If it's not, add
-    // a timestamp to the Put to make it fully idempotent.
-    registry.registerCoderForClass(Put.class, HBASE_MUTATION_CODER);
-    registry.registerCoderForClass(Delete.class, HBASE_MUTATION_CODER);
-    registry.registerCoderForClass(Mutation.class, HBASE_MUTATION_CODER);
-
-    return p;
-  }
 
 
   private static class MutationStatsExporter {

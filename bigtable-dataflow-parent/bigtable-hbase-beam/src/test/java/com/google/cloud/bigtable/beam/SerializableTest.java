@@ -25,7 +25,6 @@ import org.junit.runners.JUnit4;
 
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import com.google.cloud.bigtable.beam.coders.HBaseMutationCoder;
-import com.google.cloud.bigtable.beam.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.beam.coders.HBaseResultCoder;
 
 /**
@@ -39,8 +38,7 @@ public class SerializableTest {
   public void testHBaseConvertersAreSerializable() {
     for (AtomicCoder<? extends Object> coder : Arrays.asList(
           new HBaseMutationCoder(),
-          new HBaseResultCoder(),
-          new HBaseResultArrayCoder())) {
+          new HBaseResultCoder())) {
       SerializableUtils.ensureSerializable(coder);
     }
   }

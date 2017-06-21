@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.beam.sdk.coders.AtomicCoder;
+import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
@@ -38,6 +39,10 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto.Mut
 public class HBaseMutationCoder extends AtomicCoder<Mutation> {
 
   private static final long serialVersionUID = -3853654063196018580L;
+
+  public static Coder<?> of() {
+    return new HBaseMutationCoder();
+  }
 
   @Override
   public void encode(Mutation mutation, OutputStream outStream) throws CoderException, IOException {
@@ -61,5 +66,4 @@ public class HBaseMutationCoder extends AtomicCoder<Mutation> {
   public Mutation decode(InputStream inStream) throws CoderException, IOException {
     return ProtobufUtil.toMutation(MutationProto.parseDelimitedFrom(inStream));
   }
-
 }

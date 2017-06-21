@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.beam.sdk.coders.AtomicCoder;
+import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -32,10 +33,8 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
 
   private static final long serialVersionUID = -4975428837770254686L;
 
-  private static final HBaseResultCoder INSTANCE = new HBaseResultCoder();
-
-  public static HBaseResultCoder getInstance() {
-    return INSTANCE;
+  public static Coder<?> of() {
+    return new HBaseResultCoder();
   }
 
   @Override
@@ -49,4 +48,5 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
     ClientProtos.Result protoResult = ProtobufUtil.toResult(value);
     protoResult.writeDelimitedTo(outputStream);
   }
+
 }

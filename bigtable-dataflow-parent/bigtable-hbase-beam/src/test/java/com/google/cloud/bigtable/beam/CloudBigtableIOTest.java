@@ -76,7 +76,6 @@ public class CloudBigtableIOTest {
   public void setup(){
     MockitoAnnotations.initMocks(this);
     when(underTest.getCoderRegistry()).thenReturn(registry);
-    CloudBigtableIO.initializeForWrite(underTest);
   }
 
   private void checkRegistry(Class<? extends Mutation> mutationClass)
@@ -91,18 +90,6 @@ public class CloudBigtableIOTest {
     checkRegistry(Put.class);
     checkRegistry(Delete.class);
     checkRegistry(Mutation.class);
-  }
-
-  @Test
-  public void testAppendThrowsCannotProvideCoderException() throws Exception {
-    expectedException.expect(CannotProvideCoderException.class);
-    registry.getCoder(TypeDescriptor.of(Append.class));
-  }
-
-  @Test
-  public void testIncrementThrowsCannotProvideCoderException() throws Exception {
-    expectedException.expect(CannotProvideCoderException.class);
-    registry.getCoder(TypeDescriptor.of(Increment.class));
   }
 
   @Test

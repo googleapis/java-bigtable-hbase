@@ -190,11 +190,11 @@ public class CloudBigtableConfiguration implements Serializable {
   }
 
   private void setUserAgent(Configuration config) {
-    String dataflowUserAgent = "HBaseDataflow";
+    String beamUserAgent = "HBaseBeam";
     if (configuration.containsKey(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY)) {
-      dataflowUserAgent += "," + configuration.get(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY);
+      beamUserAgent += "," + configuration.get(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY);
     }
-    config.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, dataflowUserAgent);
+    config.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, beamUserAgent);
   }
 
   /**
