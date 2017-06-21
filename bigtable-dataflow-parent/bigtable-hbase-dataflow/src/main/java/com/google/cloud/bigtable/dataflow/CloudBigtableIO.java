@@ -1244,6 +1244,12 @@ public class CloudBigtableIO {
       input.apply(ParDo.of(function));
       return PDone.in(input.getPipeline());
     }
+
+    @Override
+    public void populateDisplayData(DisplayData.Builder builder) {
+      super.populateDisplayData(builder);
+      function.populateDisplayData(builder);
+    }
   }
 
   /**
