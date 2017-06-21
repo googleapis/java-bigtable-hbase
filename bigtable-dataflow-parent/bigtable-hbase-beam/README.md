@@ -1,14 +1,9 @@
-# Cloud Bigtable + Cloud Dataflow
+# Cloud Bigtable + Beam 
 
-This project integrates Cloud Bigtable with Cloud Dataflow using the HBase API.
-
-See the [Cloud Bigtable Dataflow Examples Project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/tree/master/java/dataflow-connector-examples) for more information about how to use Dataflow and run the examples.
+This project integrates Cloud Bigtable with Beam using the HBase API.
 
 ## Writing
-A [PTransform](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/transforms/PTransform)
-is a Dataflow construct that operates on distributed input - a [PCollection](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/values/PCollection).  See the [Reading and Writing Data](https://cloud.google.com/dataflow/model/reading-and-writing-data) section in the Google Cloud Dataflow documentation.
-
-Here's [an example](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/blob/master/java/dataflow-connector-examples/src/main/java/com/google/cloud/bigtable/dataflow/example/HelloWorldWrite.java) of the `CloudBigtableIO.writeToTable()` that writes the words `"Hello"` and `"World"` to a Bigtable table:
+This connector allows you to write data to Bigtable through Beam.
 
 ```java
 // Create a DoFn that creates a Put or Delete.  MUTATION_TRANSFORM is a simplistic example.
@@ -44,7 +39,7 @@ public static void main(String[] args) {
 
 ## Reading
 
-A [Source](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/io/Source) is a Dataflow construct that can read data for use as part of a Pipeline.  The Bigtable Source is not fully optimized for use in Dataflow, but is (or at least should be) functional for your use.  It will be improved when issue #400 is resolved.
+A [Source](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/sdk/io/Source.html) is a Beam construct that can read data for use as part of a Pipeline.
 
 Here's an example that uses the [Source to count the rows](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/blob/master/java/dataflow-connector-examples/src/main/java/com/google/cloud/bigtable/dataflow/example/SourceRowCount.java) of a Table:
 
@@ -82,6 +77,3 @@ p.run();
 // Once this is done, you can get the result file via "gsutil cp <resultLocation>-00000-of-00001"
 ```
 
-## More Information
-
-See the [Cloud Bigtable Dataflow Examples Project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/tree/master/java/dataflow-connector-examples) for more information about how to use Dataflow and run the examples.
