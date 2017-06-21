@@ -89,6 +89,7 @@ public class RetryingMutateRowsOperation extends
   /**
    * Adds the content of the message to the {@link #results}.
    */
+  @Override
   public void onMessage(MutateRowsResponse message) {
     for (Entry entry : message.getEntriesList()) {
       int index = (int) entry.getIndex();
@@ -110,8 +111,8 @@ public class RetryingMutateRowsOperation extends
   }
 
   @Override
-  public void onClose(io.grpc.Status status, Metadata trailers) {
-    // Sanity check to make sure that every mutation recieved a response.
+  protected boolean onOK(Metadata trailers) {
+    // Sanity check to make sure that every mutation received a response.
     for (int i = 0; i < results.length; i++) {
       if (results[i] == null) {
         messageIsInvalid = true;
@@ -121,16 +122,10 @@ public class RetryingMutateRowsOperation extends
 
     // There was a problem in the data found in onMessage(), so fail the RPC.
     if (messageIsInvalid) {
-      super.onClose(INVALID_RESPONSE, trailers);
-      return;
+      onError(INVALID_RESPONSE, trailers);
+      return false;
     }
 
-    // The message was structurally ok.
-    super.onClose(status, trailers);
-  }
-
-  @Override
-  protected boolean onOK() {
     boolean fail = false;
     List<Integer> toRetry = new ArrayList<>();
 
@@ -146,6 +141,7 @@ public class RetryingMutateRowsOperation extends
         // An individual mutation failed with a retryable code, usually DEADLINE_EXCEEDED.
         toRetry.add(i);
       } else {
+        // Don't retry if even a single response is not retryable.
         fail = true;
       }
     }

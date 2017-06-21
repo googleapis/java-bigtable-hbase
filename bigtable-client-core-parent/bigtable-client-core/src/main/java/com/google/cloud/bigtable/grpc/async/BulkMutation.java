@@ -68,7 +68,7 @@ public class BulkMutation {
   @VisibleForTesting
   static Logger LOG = new Logger(BulkMutation.class);
 
-  public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(7);
+  public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -95,53 +95,6 @@ public class BulkMutation {
       indexes.add((int) entry.getIndex());
     }
     return indexes;
-  }
-
-  @VisibleForTesting
-  static class RequestManager {
-    private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
-    private final MutateRowsRequest.Builder builder;
-    private final Meter addMeter;
-
-    private long approximateByteSize = 0l;
-
-    @VisibleForTesting
-    Long lastRpcSentTimeNanos;
-    private NanoClock clock;
-
-    RequestManager(String tableName, Meter addMeter, NanoClock clock) {
-      this.builder = MutateRowsRequest.newBuilder().setTableName(tableName);
-      this.approximateByteSize = tableName.length() + 2;
-      this.addMeter = addMeter;
-      this.clock = clock;
-    }
-
-    void add(SettableFuture<MutateRowResponse> future, MutateRowsRequest.Entry entry) {
-      addMeter.mark();
-      futures.add(future);
-      builder.addEntries(entry);
-      approximateByteSize += entry.getSerializedSize();
-    }
-
-    MutateRowsRequest build() {
-      return builder.build();
-    }
-
-    public boolean isEmpty() {
-      return futures.isEmpty();
-    }
-
-    public int getRequestCount() {
-      return futures.size();
-    }
-
-    public boolean isStale() {
-      return lastRpcSentTimeNanos != null && calculateTimeUntilStaleNanos() <= 0;
-    }
-
-    public long calculateTimeUntilStaleNanos() {
-      return lastRpcSentTimeNanos + MAX_RPC_WAIT_TIME_NANOS - clock.nanoTime();
-    }
   }
 
   private static void cancelIfNotDone(Future<?> future) {
@@ -174,7 +127,7 @@ public class BulkMutation {
      *
      * @param entry The {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to add
      * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}
-     *     returns from the server. See {@link #addCallback(ListenableFuture, Long)} for more 
+     *     returns from the server. See {@link #addCallback(ListenableFuture)} for more 
      *     information about how the SettableFuture is set.
      */
     private ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
@@ -213,7 +166,6 @@ public class BulkMutation {
 
     @VisibleForTesting
     synchronized void handleResult(List<MutateRowsResponse> results) {
-      mutateRowsFuture = null;
       if (futures.isEmpty()) {
         LOG.warn("Got duplicate responses for bulk mutation.");
         setComplete();
@@ -296,10 +248,6 @@ public class BulkMutation {
     }
 
     private void setupStalenessChecker() {
-      if (futures.isEmpty()){
-        setComplete();
-        return;
-      }
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -352,11 +300,16 @@ public class BulkMutation {
     private synchronized void setComplete() {
       cancelIfNotDone(mutateRowsFuture);
       cancelIfNotDone(stalenessFuture);
+      mutateRowsFuture = null;
+      for(Future<?> future: futures) {
+        if (!future.isDone()) {
+          future.cancel(true);
+        }
+      }
+      futures.clear();
       if (!completionFuture.isDone()) {
         completionFuture.set("");
       }
-      mutateRowsFuture = null;
-      futures.clear();
     }
 
     @VisibleForTesting
@@ -390,7 +343,6 @@ public class BulkMutation {
    * @param client a {@link BigtableDataClient} object on which to perform RPCs.
    * @param operationAccountant a {@link OperationAccountant} object that keeps track of outstanding
    *          RPCs that this object performed.
-   * @param retryOptions a {@link RetryOptions} object that describes how to perform retries.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
    *          retries.
    * @param bulkOptions a {@link BulkOptions} with the user specified options for the behavior of
@@ -422,7 +374,7 @@ public class BulkMutation {
    * @param entry The {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to add
    * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when
    *     the {@link MutateRowsResponse} returns from the server. See {@link
-   *     BulkMutation.Batch#addCallback(ListenableFuture, Long)} for more information about how the
+   *     BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how the
    *     SettableFuture is set.
    */
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
@@ -436,18 +388,23 @@ public class BulkMutation {
     ListenableFuture<MutateRowResponse> future = currentBatch.add(entry);
     if (currentBatch.isFull()) {
       flush();
-    }
-
-    // If autoflushing is enabled and there is pending data then schedule a flush if one hasn't been scheduled
-    // NOTE: this is optimized for adding minimal overhead to per item adds, at the expense of periodic partial batches
-    if (this.autoflushMs > 0 && currentBatch != null && scheduledFlush == null) {
-      scheduledFlush = retryExecutorService.schedule(new Runnable() {
-        @Override
-        public void run() {
-          scheduledFlush = null;
-          flush();
-        }
-      }, autoflushMs, TimeUnit.MILLISECONDS);
+      if (scheduledFlush != null) {
+        scheduledFlush.cancel(true);
+        scheduledFlush = null;
+      }
+    } else {
+      // TODO (sduskis): enable flush by default.
+      // If autoflushing is enabled and there is pending data then schedule a flush if one hasn't been scheduled
+      // NOTE: this is optimized for adding minimal overhead to per item adds, at the expense of periodic partial batches
+      if (this.autoflushMs > 0 && currentBatch != null && scheduledFlush == null) {
+        scheduledFlush = retryExecutorService.schedule(new Runnable() {
+          @Override
+          public void run() {
+            scheduledFlush = null;
+            flush();
+          }
+        }, autoflushMs, TimeUnit.MILLISECONDS);
+      }
     }
 
     return future;
