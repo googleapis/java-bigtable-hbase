@@ -40,7 +40,7 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 
 /**
- * Tests for {@link CloudBigtableIO.Reader}.
+ * Tests for {@link CloudBigtableIO.Read}.
  * @author sduskis
  *
  */
@@ -72,7 +72,7 @@ public class CloudBigtableIOReaderTest {
   @Test
   public void testBasic() throws IOException {
 
-    CloudBigtableIO.Reader underTest = initializeReader(createDefaultConfig().build());
+    CloudBigtableIO.Read underTest = initializeReader(createDefaultConfig().build());
 
     setRowKey("a");
     Assert.assertTrue(underTest.start());
@@ -91,9 +91,9 @@ public class CloudBigtableIOReaderTest {
     when(mockScanner.next()).thenReturn(row);
   }
 
-  private CloudBigtableIO.Reader initializeReader(CloudBigtableScanConfiguration config) {
+  private CloudBigtableIO.Read initializeReader(CloudBigtableScanConfiguration config) {
     when(mockSource.getConfiguration()).thenReturn(config);
-    return new CloudBigtableIO.Reader(mockSource) {
+    return new CloudBigtableIO.Read(mockSource) {
       @Override
       void initializeScanner() throws IOException {
         setSession(mockSession);
@@ -107,7 +107,7 @@ public class CloudBigtableIOReaderTest {
     byte[] start = "aa".getBytes();
     byte[] end = "zz".getBytes();
     CloudBigtableScanConfiguration config = createDefaultConfig().withKeys(start, end).build();
-    CloudBigtableIO.Reader underTest = initializeReader(config);
+    CloudBigtableIO.Read underTest = initializeReader(config);
     ByteKeyRangeTracker tracker =
         ByteKeyRangeTracker.of(ByteKeyRange.of(ByteKey.copyFrom(start), ByteKey.copyFrom(end)));
 
@@ -124,7 +124,7 @@ public class CloudBigtableIOReaderTest {
     Assert.assertEquals(tracker.getFractionConsumed(), underTest.getFractionConsumed(), 0.0001d);
   }
 
-  private void testTrackerAtKey(CloudBigtableIO.Reader underTest, ByteKeyRangeTracker tracker,
+  private void testTrackerAtKey(CloudBigtableIO.Read underTest, ByteKeyRangeTracker tracker,
       final String key, final int count) throws IOException {
     setRowKey(key);
     tracker.tryReturnRecordAt(true, ByteKey.copyFrom(key.getBytes()));
@@ -142,7 +142,7 @@ public class CloudBigtableIOReaderTest {
     CloudBigtableIO.Source source = (CloudBigtableIO.Source) CloudBigtableIO.read(config);
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
 
-    CloudBigtableIO.Reader reader = (CloudBigtableIO.Reader) sourceWithKeys.createReader(null);
+    CloudBigtableIO.Read reader = (CloudBigtableIO.Read) sourceWithKeys.createReader(null);
     ByteKey startByteKey = ByteKey.copyFrom(startKey);
     ByteKey stopByteKey = ByteKey.copyFrom(stopKey);
     ByteKeyRangeTracker baseRangeTracker =
@@ -157,7 +157,7 @@ public class CloudBigtableIOReaderTest {
     }
   }
 
-  private void split(CloudBigtableIO.Reader reader, ByteKeyRangeTracker baseRangeTracker) {
+  private void split(CloudBigtableIO.Read reader, ByteKeyRangeTracker baseRangeTracker) {
     double halfway = bisectPercentage(baseRangeTracker);
     reader.splitAtFraction(halfway);
     ByteKey bisectedKey = baseRangeTracker.getRange().interpolateKey(halfway);
@@ -165,19 +165,19 @@ public class CloudBigtableIOReaderTest {
     compare(reader, baseRangeTracker);
   }
 
-  private static void compare(CloudBigtableIO.Reader reader,
+  private static void compare(CloudBigtableIO.Read reader,
       ByteKeyRangeTracker baseRangeTracker) {
     Assert.assertEquals(baseRangeTracker.getFractionConsumed(), reader.getFractionConsumed(), 0.01);
   }
 
-  private static void bisect(CloudBigtableIO.Reader reader, ByteKeyRangeTracker baseRangeTracker) {
+  private static void bisect(CloudBigtableIO.Read reader, ByteKeyRangeTracker baseRangeTracker) {
     double halfway = bisectPercentage(baseRangeTracker);
     ByteKey bisectedKey = baseRangeTracker.getRange().interpolateKey(halfway);
     setKey(reader, baseRangeTracker, bisectedKey);
     compare(reader, baseRangeTracker);
   }
 
-  private static void setKey(CloudBigtableIO.Reader reader, ByteKeyRangeTracker baseRangeTracker,
+  private static void setKey(CloudBigtableIO.Read reader, ByteKeyRangeTracker baseRangeTracker,
       ByteKey key) {
     reader.getRangeTracker().tryReturnRecordAt(true, key);
     baseRangeTracker.tryReturnRecordAt(true, key);

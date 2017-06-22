@@ -30,18 +30,29 @@ limitations under the License.
         <beam.version>2.0.0</beam.version>
         <commons-lang.version>2.6</commons-lang.version>
         <google-auto-service.version>1.0-rc2</google-auto-service.version>
+        <google-auto-value.version>1.4.1</google-auto-value.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.beam</groupId>
-            <artifactId>beam-sdks-java-core</artifactId>
+            <artifactId>beam-sdks-java-io-google-cloud-platform</artifactId>
+            <version>${beam.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.beam</groupId>
+            <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
             <version>${beam.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
             <version>${google-auto-service.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auto.value</groupId>
+            <artifactId>auto-value</artifactId>
+            <version>${google-auto-value.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
