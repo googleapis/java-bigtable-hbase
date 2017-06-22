@@ -1035,17 +1035,6 @@ public class CloudBigtableIO {
       return mutator;
     }
 
-    protected ExceptionListener createExceptionListener(final Context context) {
-      return new ExceptionListener() {
-        @Override
-        public void onException(RetriesExhaustedWithDetailsException exception,
-            BufferedMutator mutator) throws RetriesExhaustedWithDetailsException {
-          logExceptions(context, exception);
-          throw exception;
-        }
-      };
-    }
-
     /**
      * Performs an asynchronous mutation via {@link BufferedMutator#mutate(Mutation)}.
      */

@@ -207,7 +207,6 @@ public class BigtableClusterUtilities implements AutoCloseable {
 
   /**
    * Sets a cluster size to a specific size in an instance with a single cluster
-   * @param newSize
    * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
    *           received
    */
@@ -217,9 +216,6 @@ public class BigtableClusterUtilities implements AutoCloseable {
 
   /**
    * Update a specific cluster's server node count to the number specified
-   * @param cluster
-   * @param newSize
-   * @throws InterruptedException
    */
   private void setClusterSize(String clusterName, int newSize)
       throws InterruptedException {
