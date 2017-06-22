@@ -100,7 +100,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * @param listener Handles exceptions. By default, it just throws the exception.
    * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} to get {@link com.google.cloud.bigtable.config.BigtableOptions}, {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor}
    * and {@link com.google.cloud.bigtable.grpc.async.BulkMutation} objects from
-   * @param asyncRpcExecutorService Optional performance improvement for adapting hbase objects and
    * starting the async operations on the BigtableDataClient.
    */
   public BigtableBufferedMutator(
@@ -204,7 +203,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * could be parallelized, or at least removed from the user's thread.
    */
   @SuppressWarnings("unchecked")
-  private void offer(Mutation mutation) throws IOException {
+  private void offer(Mutation mutation) {
     ListenableFuture<?> future = null;
     try {
       if (mutation == null) {

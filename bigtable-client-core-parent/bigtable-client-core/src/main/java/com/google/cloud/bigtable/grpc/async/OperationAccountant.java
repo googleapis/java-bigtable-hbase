@@ -66,8 +66,6 @@ public class OperationAccountant {
 
   /**
    * <p>Constructor for {@link OperationAccountant}.</p>
-   *
-   * @param resourceLimiter a {@link com.google.cloud.bigtable.grpc.async.ResourceLimiter} object.
    */
   public OperationAccountant() {
     this(NanoClock.SYSTEM, DEFAULT_FINISH_WAIT_MILLIS);
@@ -83,8 +81,6 @@ public class OperationAccountant {
   /**
    * Register a new RPC operation. Blocks until the requested resources are available. This method
    * must be paired with a call to {@link #onOperationCompletion(long)}.
-   * @param id The id of the RPC
-   * @return An operation id
    */
   public void registerOperation(ListenableFuture<?> future) {
     final long id = generateId();

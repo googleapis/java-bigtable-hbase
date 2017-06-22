@@ -89,6 +89,7 @@ public class RetryingMutateRowsOperation extends
   /**
    * Adds the content of the message to the {@link #results}.
    */
+  @Override
   public void onMessage(MutateRowsResponse message) {
     for (Entry entry : message.getEntriesList()) {
       int index = (int) entry.getIndex();
@@ -111,7 +112,7 @@ public class RetryingMutateRowsOperation extends
 
   @Override
   public void onClose(io.grpc.Status status, Metadata trailers) {
-    // Sanity check to make sure that every mutation recieved a response.
+    // Sanity check to make sure that every mutation received a response.
     for (int i = 0; i < results.length; i++) {
       if (results[i] == null) {
         messageIsInvalid = true;

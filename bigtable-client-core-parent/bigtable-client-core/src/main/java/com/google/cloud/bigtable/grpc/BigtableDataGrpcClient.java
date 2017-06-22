@@ -244,19 +244,20 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public List<MutateRowsResponse> mutateRows(MutateRowsRequest request) {
-    CallOptions callOptions = getCallOptions(mutateRowsRpc.getMethodDescriptor(), request);
-    Metadata metadata = createMetadata(request.getTableName());
-    return new RetryingMutateRowsOperation(retryOptions, request, mutateRowsRpc, callOptions,
-        retryExecutorService, metadata).getBlockingResult();
+    return createMutateRowsOperation(request).getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request) {
+    return createMutateRowsOperation(request).getAsyncResult();
+  }
+
+  private RetryingMutateRowsOperation createMutateRowsOperation(MutateRowsRequest request) {
     CallOptions callOptions = getCallOptions(mutateRowsRpc.getMethodDescriptor(), request);
     Metadata metadata = createMetadata(request.getTableName());
-    return new RetryingMutateRowsOperation(retryOptions, request, mutateRowsRpc, callOptions,
-        retryExecutorService, metadata).getAsyncResult();
+    return new RetryingMutateRowsOperation(
+        retryOptions, request, mutateRowsRpc, callOptions, retryExecutorService, metadata);
   }
 
   /** {@inheritDoc} */
