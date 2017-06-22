@@ -86,6 +86,8 @@ import com.google.protobuf.ByteString;
 /**
  * <p>BigtableTable class.</p>
  *
+ * Scan methods return rows in key order.
+ *
  * @author sduskis
  * @version $Id: $Id
  */
