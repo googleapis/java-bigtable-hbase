@@ -340,7 +340,6 @@ public class BulkMutation {
    * @param tableName a {@link BigtableTableName} object for the table to which all
    *          {@link MutateRowRequest}s will be sent.
    * @param client a {@link BigtableDataClient} object on which to perform RPCs.
-   * @param operationAccountant a {@link OperationAccountant} object that keeps track of outstanding
    *          RPCs that this object performed.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
    *          retries.
@@ -348,6 +347,14 @@ public class BulkMutation {
    *          this instance.
    */
   public BulkMutation(
+      BigtableTableName tableName,
+      BigtableDataClient client,
+      ScheduledExecutorService retryExecutorService,
+      BulkOptions bulkOptions) {
+    this(tableName, client, new OperationAccountant(), retryExecutorService, bulkOptions);
+  }
+
+  BulkMutation(
       BigtableTableName tableName,
       BigtableDataClient client,
       OperationAccountant operationAccountant,
@@ -386,7 +393,7 @@ public class BulkMutation {
 
     ListenableFuture<MutateRowResponse> future = currentBatch.add(entry);
     if (currentBatch.isFull()) {
-      flush();
+      send();
       if (scheduledFlush != null) {
         scheduledFlush.cancel(true);
         scheduledFlush = null;
@@ -400,7 +407,7 @@ public class BulkMutation {
           @Override
           public void run() {
             scheduledFlush = null;
-            flush();
+            send();
           }
         }, autoflushMs, TimeUnit.MILLISECONDS);
       }
@@ -410,9 +417,15 @@ public class BulkMutation {
   }
 
   /**
-   * Send any outstanding {@link MutateRowRequest}s.
+   * Send any outstanding {@link MutateRowRequest}s and wait until all requests are complete.
    */
-  public synchronized void flush() {
+  public void flush() throws InterruptedException {
+    send();
+    operationAccountant.awaitCompletion();
+  }
+
+  @VisibleForTesting
+  synchronized void send() {
     if (currentBatch != null) {
       try {
         currentBatch.run();

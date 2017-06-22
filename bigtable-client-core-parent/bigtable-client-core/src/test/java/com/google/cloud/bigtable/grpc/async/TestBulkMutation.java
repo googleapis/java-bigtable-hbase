@@ -125,7 +125,7 @@ public class TestBulkMutation {
     ResourceLimiterStats.reset();
     MutateRowsRequest.Entry entry = createRequestEntry();
     underTest.add(entry);
-    underTest.flush();
+    underTest.send();
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
         .setTableName(TABLE_NAME.toString())
         .addEntries(entry)
@@ -259,7 +259,7 @@ public class TestBulkMutation {
         for (int i = 0; i < batchCount * MAX_ROW_COUNT; i++) {
           futures.add(bulkMutation.add(createRequestEntry()));
         }
-        bulkMutation.flush();
+        bulkMutation.send();
       }
     };
     ExecutorService pool = Executors.newFixedThreadPool(100);
@@ -369,6 +369,6 @@ public class TestBulkMutation {
         .getStatusBuilder()
             .setCode(code.getCode().value());
     future.set(Arrays.asList(responseBuilder.build()));
-    underTest.flush();
+    underTest.send();
   }
 }
