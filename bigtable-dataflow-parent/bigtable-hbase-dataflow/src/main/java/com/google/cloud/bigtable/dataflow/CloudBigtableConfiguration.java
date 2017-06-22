@@ -29,6 +29,7 @@ import com.google.bigtable.repackaged.com.google.api.client.repackaged.com.googl
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableClusterUtilities;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
 import com.google.common.collect.ImmutableMap;
 
 /**
@@ -321,4 +322,18 @@ public class CloudBigtableConfiguration implements Serializable {
   public void copyConfig(Builder builder) {
     builder.copyFrom(configuration);
   }
+
+  public void populateDisplayData(DisplayData.Builder builder) {
+    builder.add(DisplayData.item("projectId", getProjectId())
+      .withLabel("Project ID"));
+    builder.add(DisplayData.item("instanceId", getInstanceId())
+      .withLabel("Instance ID"));
+    Map<String, String> hashMap = new HashMap<String, String>(configuration);
+    hashMap.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
+    hashMap.remove(BigtableOptionsFactory.INSTANCE_ID_KEY);
+    for (Entry<String, String> entry : configuration.entrySet()) {
+      builder.add(DisplayData.item(entry.getKey(), entry.getValue()).withLabel(entry.getKey()));
+    }
+  }
+
 }
