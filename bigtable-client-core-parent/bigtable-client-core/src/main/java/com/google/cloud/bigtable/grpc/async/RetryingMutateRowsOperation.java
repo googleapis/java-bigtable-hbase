@@ -111,7 +111,7 @@ public class RetryingMutateRowsOperation extends
   }
 
   @Override
-  public void onClose(io.grpc.Status status, Metadata trailers) {
+  protected boolean onOK(Metadata trailers) {
     // Sanity check to make sure that every mutation received a response.
     for (int i = 0; i < results.length; i++) {
       if (results[i] == null) {
@@ -123,15 +123,9 @@ public class RetryingMutateRowsOperation extends
     // There was a problem in the data found in onMessage(), so fail the RPC.
     if (messageIsInvalid) {
       super.onClose(INVALID_RESPONSE, trailers);
-      return;
+      return false;
     }
 
-    // The message was structurally ok.
-    super.onClose(status, trailers);
-  }
-
-  @Override
-  protected boolean onOK() {
     boolean fail = false;
     List<Integer> toRetry = new ArrayList<>();
 
