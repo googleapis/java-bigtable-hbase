@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.dataflow;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
+import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
+
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.slf4j.Logger;
@@ -103,5 +105,12 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
    */
   protected void logExceptions(Context context, RetriesExhaustedWithDetailsException exception) {
     logRetriesExhaustedWithDetailsException(DOFN_LOG, context.toString(), exception);
+  }
+
+
+  @Override
+  public void populateDisplayData(DisplayData.Builder builder) {
+    super.populateDisplayData(builder);
+    config.populateDisplayData(builder);
   }
 }

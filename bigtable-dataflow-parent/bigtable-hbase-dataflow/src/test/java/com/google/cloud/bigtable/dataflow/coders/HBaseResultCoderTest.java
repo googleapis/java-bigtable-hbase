@@ -40,7 +40,7 @@ public class HBaseResultCoderTest {
     Result copy = CoderTestUtil.encodeAndDecode(underTest, TEST_RESULT);
     // This method throws an exception if the values are not equal.
     Result.compareResults(TEST_RESULT, copy);
-    MutationDetectors.forValueWithCoder(TEST_RESULT, underTest).verifyUnmodified();;
+    MutationDetectors.forValueWithCoder(TEST_RESULT, underTest).verifyUnmodified();
   }
 
   @Test

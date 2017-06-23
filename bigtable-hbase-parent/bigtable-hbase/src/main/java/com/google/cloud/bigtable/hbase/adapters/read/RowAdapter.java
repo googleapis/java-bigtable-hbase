@@ -15,21 +15,18 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.cloud.bigtable.hbase.util.TimestampConverter;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.cloud.bigtable.util.ByteStringer;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Adapt between a {@link com.google.bigtable.v2.Row} and an hbase client {@link org.apache.hadoop.hbase.client.Result}.

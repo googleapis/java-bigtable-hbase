@@ -92,7 +92,7 @@ public class TestBulkMutation {
   private OperationAccountant operationAccountant;
 
   @Before
-  public void setup() throws InterruptedException {
+  public void setup() {
     time = new AtomicLong(System.nanoTime());
     NanoClock clock = new NanoClock() {
       @Override
