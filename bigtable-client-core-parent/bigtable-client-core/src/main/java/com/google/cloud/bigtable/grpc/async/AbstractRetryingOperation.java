@@ -131,15 +131,18 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
     rpcTimerContext.close();
 
-    Status.Code code = status.getCode();
-
     // OK
-    if (code == Status.Code.OK) {
-      if (onOK()) {
+    if (status.isOk()) {
+      if (onOK(trailers)) {
         operationTimerContext.close();
       }
-      return;
+    } else {
+      onError(status, trailers);
     }
+  }
+
+  protected void onError(Status status, Metadata trailers) {
+    Code code = status.getCode();
 
     // CANCELLED
     if (code == Status.Code.CANCELLED) {
@@ -210,7 +213,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * false
    * @return true if the operation was really completed.
    */
-  protected abstract boolean onOK();
+  protected abstract boolean onOK(Metadata trailers);
 
   protected long getNextBackoff() {
     if (currentBackoff == null) {
