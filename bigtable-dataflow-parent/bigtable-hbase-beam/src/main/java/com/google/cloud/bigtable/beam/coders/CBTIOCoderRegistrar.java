@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.client.Result;
 /**
  * A {@link CoderProviderRegistrar} for standard types used with {@link BigtableIOHBase}.
  */
+// TODO: remove this once HBaseIO's versions of these coders are public rather than package private.
 @AutoService(CoderProviderRegistrar.class)
 public class CBTIOCoderRegistrar implements CoderProviderRegistrar  {
 
