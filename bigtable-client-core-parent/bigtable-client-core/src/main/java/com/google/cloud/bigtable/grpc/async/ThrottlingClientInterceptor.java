@@ -94,6 +94,7 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
         delegateCall = delegateChannel.newCall(method, callOptions);
         SimpleForwardingClientCallListener<RespT> markCompletionListener =
             new SimpleForwardingClientCallListener<RespT>(this.delegateListener) {
+              @Override
               public void onClose(io.grpc.Status status, Metadata trailers) {
                 resourceLimiter.markCanBeCompleted(id);
                 delegate().onClose(status, trailers);

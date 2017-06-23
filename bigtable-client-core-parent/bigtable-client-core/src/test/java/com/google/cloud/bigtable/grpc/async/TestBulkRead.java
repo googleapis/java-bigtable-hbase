@@ -173,15 +173,16 @@ public class TestBulkRead {
   // /////////////// HELPERS ////////////////
 
   /**
-   * Converts the rowKeys input into {@link MutateRowsRequest}s, calls
-   * {@link BulkMutation#add(MutateRowRequest)} and collects the resulting
+   * Converts the rowKeys input into {@link MutateRowsRequest}s, calls {@link
+   * BulkMutation#add(com.google.bigtable.v2.MutateRowsRequest.Entry)} and collects the resulting
    * {@link ListenableFuture}s.
+   *
    * @param rowKeys The row keys to retrieve.
    * @param scannerGenerator Generates {@link ResultScanner}s that will generate FlatRows to be
-   *          processed by {@link BulkRead}.
+   *     processed by {@link BulkRead}.
    */
-  private List<ListenableFuture<FlatRow>> addRows(List<ByteString> rowKeys,
-      Answer<ResultScanner<FlatRow>> scannerGenerator) {
+  private List<ListenableFuture<FlatRow>> addRows(
+      List<ByteString> rowKeys, Answer<ResultScanner<FlatRow>> scannerGenerator) {
     when(mockClient.readFlatRows(any(ReadRowsRequest.class)))
         .thenAnswer(scannerGenerator);
 
@@ -228,7 +229,6 @@ public class TestBulkRead {
   /**
    * Helper to generate a {@link FlatRow} for a row key.
    * @param key
-   * @return
    */
   private static ReadRowsRequest createRequest(ByteString key) {
     return ReadRowsRequest.newBuilder().setRows(RowSet.newBuilder().addRowKeys(key)).build();

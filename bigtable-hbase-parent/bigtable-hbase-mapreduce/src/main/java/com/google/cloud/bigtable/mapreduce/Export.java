@@ -18,8 +18,8 @@
 */
 package com.google.cloud.bigtable.mapreduce;
 
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
 import java.io.IOException;
 
 import org.apache.commons.logging.Log;
@@ -76,7 +76,8 @@ public class Export {
    */
   public static Job createSubmittableJob(Configuration conf, String[] args)
   throws IOException {
-    conf.setIfUnset("hbase.client.connection.impl", BigtableConnection.class.getName());
+    conf.setIfUnset("hbase.client.connection.impl",
+      BigtableConfiguration.getConnectionClass().getName());
     conf.setIfUnset(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, "60000");
     conf.setBoolean(TableInputFormat.SHUFFLE_MAPS, true);
 

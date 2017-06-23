@@ -155,7 +155,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#mutateRowAsync(MutateRowRequest)} on the
    * {@link com.google.bigtable.v2.MutateRowRequest}. This method may block if
-   * {@link #registerOperation(long)} blocks.
+   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.MutateRowRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -169,7 +169,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#mutateRowsAsync(MutateRowsRequest)} on the
    * {@link com.google.bigtable.v2.MutateRowsRequest}. This method may block if
-   * {@link #registerOperation(long)} blocks.
+   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.MutateRowRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -183,7 +183,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)} on the
    * {@link com.google.bigtable.v2.CheckAndMutateRowRequest}. This method may block if
-   * {@link #registerOperation(long)} blocks.
+   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.CheckAndMutateRowRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -197,7 +197,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readModifyWriteRow(ReadModifyWriteRowRequest)} on the
    * {@link com.google.bigtable.v2.ReadModifyWriteRowRequest}. This method may block if
-   * {@link #registerOperation(long)} blocks.
+   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -211,7 +211,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
    * {@link com.google.bigtable.v2.ReadRowsRequest}. This method may block if
-   * {@link #registerOperation(long)} blocks.
+   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.ReadRowsRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -225,7 +225,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
    * {@link com.google.bigtable.v2.ReadRowsRequest}. This method may block if
-   * {@link #registerOperation(long)} blocks.
+   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
    *
    * @param request The {@link com.google.bigtable.v2.ReadRowsRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
@@ -237,7 +237,7 @@ public class AsyncExecutor {
   }
 
   private <RequestT extends MessageLite, ResponseT> ListenableFuture<ResponseT> call(
-      AsyncCall<RequestT, ResponseT> rpc, RequestT request) throws InterruptedException {
+      AsyncCall<RequestT, ResponseT> rpc, RequestT request) {
     // Wait until both the memory and rpc count maximum requirements are achieved before getting a
     // unique id used to track this request.
     ListenableFuture<ResponseT> future;

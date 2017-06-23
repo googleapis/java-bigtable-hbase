@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.mapreduce;
 
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -405,7 +405,8 @@ public class Import extends Configured implements Tool {
    */
   public static Job createSubmittableJob(Configuration conf, String[] args)
   throws IOException {
-    conf.setIfUnset("hbase.client.connection.impl", BigtableConnection.class.getName());
+    conf.setIfUnset("hbase.client.connection.impl",
+      BigtableConfiguration.getConnectionClass().getName());
     conf.setIfUnset(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, "60000");
 
     TableName tableName = TableName.valueOf(args[0]);

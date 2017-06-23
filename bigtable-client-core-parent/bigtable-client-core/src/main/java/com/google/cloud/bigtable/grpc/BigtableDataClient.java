@@ -132,7 +132,7 @@ public interface BigtableDataClient {
   ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(SampleRowKeysRequest request);
 
   /**
-   * Perform a scan over {@link Row}s.
+   * Perform a scan over {@link Row}s, in key order.
    *
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
@@ -140,7 +140,7 @@ public interface BigtableDataClient {
   ResultScanner<Row> readRows(ReadRowsRequest request);
 
   /**
-   * Read multiple {@link Row}s into an in-memory list.
+   * Read multiple {@link Row}s into an in-memory list, in key order.
    *
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
    * all reads have completed.
@@ -149,7 +149,7 @@ public interface BigtableDataClient {
   ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request);
 
   /**
-   * Perform a scan over {@link FlatRow}s.
+   * Perform a scan over {@link FlatRow}s, in key order.
    *
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
@@ -157,9 +157,9 @@ public interface BigtableDataClient {
   ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request);
 
   /**
-   * Perform a streaming read of {@link FlatRow}s. It would be a good idea to turn on client side
-   * timeouts via
-   * {@link com.google.cloud.bigtable.config.CallOptionsConfig.Builder#setUseTimeout(boolean)}.
+   * Perform a streaming read of {@link FlatRow}s in key order. It would be a good idea to turn on
+   * client side timeouts via {@link
+   * com.google.cloud.bigtable.config.CallOptionsConfig.Builder#setUseTimeout(boolean)}.
    * @param request a {@link ReadRowsRequest} object.
    * @param observer a {@link StreamObserver} object
    * @return a {@link ScanHandler} which can be used to either cancel or timeout the request.
@@ -167,7 +167,7 @@ public interface BigtableDataClient {
   ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> observer);
 
   /**
-   * Read multiple {@link FlatRow}s into an in-memory list.
+   * Read multiple {@link FlatRow}s into an in-memory list, in key order.
    *
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
    * all reads have completed.

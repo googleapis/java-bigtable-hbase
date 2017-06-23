@@ -58,7 +58,7 @@ public class TestOperationAccountant {
   }
 
   @Test
-  public void testOnOperationCompletion() throws InterruptedException {
+  public void testOnOperationCompletion() {
     OperationAccountant underTest = new OperationAccountant();
     SettableFuture<String> future = SettableFuture.create();
     underTest.registerOperation(future);

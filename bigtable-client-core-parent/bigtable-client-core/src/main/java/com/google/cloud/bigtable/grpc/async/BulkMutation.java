@@ -25,7 +25,6 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
@@ -97,53 +96,6 @@ public class BulkMutation {
     return indexes;
   }
 
-  @VisibleForTesting
-  static class RequestManager {
-    private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
-    private final MutateRowsRequest.Builder builder;
-    private final Meter addMeter;
-
-    private long approximateByteSize = 0l;
-
-    @VisibleForTesting
-    Long lastRpcSentTimeNanos;
-    private NanoClock clock;
-
-    RequestManager(String tableName, Meter addMeter, NanoClock clock) {
-      this.builder = MutateRowsRequest.newBuilder().setTableName(tableName);
-      this.approximateByteSize = tableName.length() + 2;
-      this.addMeter = addMeter;
-      this.clock = clock;
-    }
-
-    void add(SettableFuture<MutateRowResponse> future, MutateRowsRequest.Entry entry) {
-      addMeter.mark();
-      futures.add(future);
-      builder.addEntries(entry);
-      approximateByteSize += entry.getSerializedSize();
-    }
-
-    MutateRowsRequest build() {
-      return builder.build();
-    }
-
-    public boolean isEmpty() {
-      return futures.isEmpty();
-    }
-
-    public int getRequestCount() {
-      return futures.size();
-    }
-
-    public boolean isStale() {
-      return lastRpcSentTimeNanos != null && calculateTimeUntilStaleNanos() <= 0;
-    }
-
-    public long calculateTimeUntilStaleNanos() {
-      return lastRpcSentTimeNanos + MAX_RPC_WAIT_TIME_NANOS - clock.nanoTime();
-    }
-  }
-
   private static void cancelIfNotDone(Future<?> future) {
     if (future != null && !future.isDone()) {
       future.cancel(true);
@@ -174,7 +126,7 @@ public class BulkMutation {
      *
      * @param entry The {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to add
      * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}
-     *     returns from the server. See {@link #addCallback(ListenableFuture, Long)} for more 
+     *     returns from the server. See {@link #addCallback(ListenableFuture)} for more 
      *     information about how the SettableFuture is set.
      */
     private ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
@@ -390,7 +342,6 @@ public class BulkMutation {
    * @param client a {@link BigtableDataClient} object on which to perform RPCs.
    * @param operationAccountant a {@link OperationAccountant} object that keeps track of outstanding
    *          RPCs that this object performed.
-   * @param retryOptions a {@link RetryOptions} object that describes how to perform retries.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
    *          retries.
    * @param bulkOptions a {@link BulkOptions} with the user specified options for the behavior of
@@ -422,7 +373,7 @@ public class BulkMutation {
    * @param entry The {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to add
    * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when
    *     the {@link MutateRowsResponse} returns from the server. See {@link
-   *     BulkMutation.Batch#addCallback(ListenableFuture, Long)} for more information about how the
+   *     BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how the
    *     SettableFuture is set.
    */
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {

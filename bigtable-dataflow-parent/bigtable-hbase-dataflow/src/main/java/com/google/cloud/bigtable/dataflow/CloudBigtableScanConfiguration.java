@@ -31,6 +31,7 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
+import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -303,4 +304,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     return ByteKeyRange.of(ByteStringUtil.toByteKey(getStartRowByteString()),
       ByteStringUtil.toByteKey(getStopRowByteString()));
   }
+
+  @Override
+  public void populateDisplayData(DisplayData.Builder builder) {
+    super.populateDisplayData(builder);
+    builder
+        .add(DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+  }
+
 }

@@ -55,7 +55,7 @@ public class ResourceLimiterStats {
 
   /**
    * This method updates throttling statistics.
-   * @param throttlingTimeinNanos
+   * @param throttlingDurationInNanos
    */
   void markThrottling(long throttlingDurationInNanos) {
     throttlingTimer.update(throttlingDurationInNanos, TimeUnit.NANOSECONDS);

@@ -92,7 +92,7 @@ public class CloudBigtableIOIntegrationTest {
   private static CloudBigtableConfiguration config;
 
   @BeforeClass
-  public static void setup() throws IOException {
+  public static void setup() {
     if (instanceId != null) {
       config =
           new CloudBigtableConfiguration.Builder()
