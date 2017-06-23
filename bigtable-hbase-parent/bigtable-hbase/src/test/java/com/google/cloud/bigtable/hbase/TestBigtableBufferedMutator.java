@@ -177,7 +177,7 @@ public class TestBigtableBufferedMutator {
   }
 
   @Test
-  public void testBulkMultipleRequests() throws IOException {
+  public void testBulkMultipleRequests() throws IOException, InterruptedException {
     Configuration config = new Configuration(false);
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(config);
