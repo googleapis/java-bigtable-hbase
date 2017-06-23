@@ -136,8 +136,13 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       if (onOK(trailers)) {
         operationTimerContext.close();
       }
-      return;
+    } else {
+      onError(status, trailers);
     }
+  }
+
+  protected void onError(Status status, Metadata trailers) {
+    Code code = status.getCode();
 
     onError(status, trailers);
   }
