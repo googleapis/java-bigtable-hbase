@@ -349,8 +349,20 @@ public class BigtableSession implements Closeable {
    * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
    * @param asyncExecutor a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
+   * @deprecated use {@link #createBulkMutation(BigtableTableName)} instead.
    */
+  @Deprecated
   public BulkMutation createBulkMutation(BigtableTableName tableName, AsyncExecutor asyncExecutor) {
+    return createBulkMutation(tableName);
+  }
+
+  /**
+   * <p>createBulkMutation.</p>
+   *
+   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
+   * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
+   */
+  public BulkMutation createBulkMutation(BigtableTableName tableName) {
     throttlingClientInterceptor.enable(resourceLimiter);
     BulkOptions bulkOptions = options.getBulkOptions();
     if (bulkOptions.isEnableBulkMutationThrottling()) {
@@ -359,7 +371,6 @@ public class BigtableSession implements Closeable {
     return new BulkMutation(
         tableName,
         dataClient,
-        asyncExecutor.getOperationAccountant(),
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
         bulkOptions);
   }
