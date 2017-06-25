@@ -162,14 +162,12 @@ public class BigtableIOHBase {
      */
     @Override
     public PDone expand(PCollection<Mutation> input) {
-      Configuration config = serializableConfiguration.get();
-      BigtableOptions options = BigtableOptionsFactory.fromConfiguration(config);
-
       SingleOutput<Mutation, KV<ByteString, Iterable<com.google.bigtable.v2.Mutation>>> transform =
-          ParDo.of(createTransform(config, options));
+          ParDo.of(createTransform());
 
       BigtableIO.Write write = BigtableIO.write()
-          .withBigtableOptions(options)
+          .withBigtableOptions(
+            BigtableOptionsFactory.fromConfiguration(serializableConfiguration.get()))
           .withTableId(tableId);
 
       return input
@@ -177,14 +175,20 @@ public class BigtableIOHBase {
           .apply("BigtableIO Mutation writer", write);
     }
 
-    private
-        DoFn<Mutation, KV<ByteString, Iterable<com.google.bigtable.v2.Mutation>>>
-        createTransform(Configuration config, BigtableOptions options) {
-      final PutAdapter putAdapter = Adapters.createPutAdapter(config, options);
-      final HBaseMutationAdapter mutationsAdapter = Adapters.createMutationsAdapter(putAdapter);
+    private DoFn<Mutation, KV<ByteString, Iterable<com.google.bigtable.v2.Mutation>>>
+        createTransform() {
 
       return new DoFn<Mutation, KV<ByteString, Iterable<com.google.bigtable.v2.Mutation>>>() {
         private static final long serialVersionUID = 1L;
+        private transient HBaseMutationAdapter mutationsAdapter;
+
+        @Setup
+        public void setup() {
+          Configuration config = serializableConfiguration.get();
+          BigtableOptions options = BigtableOptionsFactory.fromConfiguration(config);
+          PutAdapter putAdapter = Adapters.createPutAdapter(config, options);
+          mutationsAdapter = Adapters.createMutationsAdapter(putAdapter);
+        }
 
         @ProcessElement
         public void processElement(ProcessContext c) throws Exception {

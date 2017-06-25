@@ -38,6 +38,12 @@ limitations under the License.
             <groupId>org.apache.beam</groupId>
             <artifactId>beam-sdks-java-io-google-cloud-platform</artifactId>
             <version>${beam.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.cloud.bigtable</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.beam</groupId>
