@@ -161,7 +161,7 @@ public class RetryingReadRowsOperation extends
 
   /** {@inheritDoc} */
   @Override
-  protected boolean onOK() {
+  protected boolean onOK(Metadata trailers) {
     rowMerger.onCompleted();
     return true;
   }

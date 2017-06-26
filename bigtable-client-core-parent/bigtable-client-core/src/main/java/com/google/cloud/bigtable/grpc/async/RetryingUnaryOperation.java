@@ -63,7 +63,7 @@ public class RetryingUnaryOperation<RequestT, ResponseT>
 
   /** {@inheritDoc} */
   @Override
-  protected boolean onOK() {
+  protected boolean onOK(Metadata trailers) {
     if (value == null) {
       // No value received so mark the future as an error
       completionFuture.setException(NO_VALUE_SET_EXCEPTION);

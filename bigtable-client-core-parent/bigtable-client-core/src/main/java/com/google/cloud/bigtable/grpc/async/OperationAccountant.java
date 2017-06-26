@@ -22,14 +22,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
-import javax.annotation.concurrent.GuardedBy;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Throttles the number of operations that are outstanding at any point in time.
@@ -54,15 +48,11 @@ public class OperationAccountant {
   private final NanoClock clock;
   private final long finishWaitMillis;
 
-  private ReentrantLock lock = new ReentrantLock();
-  private Condition flushedCondition = lock.newCondition();
-
-  @GuardedBy("lock")
-  private Set<Long> operations = new HashSet<>();
+  private final Object signal = new String("");
+  private AtomicInteger count = new AtomicInteger();
 
   private long noSuccessCheckDeadlineNanos;
   private int noSuccessWarningCount;
-  private AtomicLong idGenerator = new AtomicLong();
 
   /**
    * <p>Constructor for {@link OperationAccountant}.</p>
@@ -80,47 +70,21 @@ public class OperationAccountant {
 
   /**
    * Register a new RPC operation. Blocks until the requested resources are available. This method
-   * must be paired with a call to {@link #onOperationCompletion(long)}.
+   * must be paired with a call to {@link #onOperationCompletion()}.
    */
-  public void registerOperation(ListenableFuture<?> future) {
-    final long id = generateId();
+  public void registerOperation(final ListenableFuture<?> future) {
+    count.incrementAndGet();
     Futures.addCallback(future, new FutureCallback<Object>() {
       @Override
       public void onSuccess(Object result) {
-        onOperationCompletion(id);
+        onOperationCompletion();
       }
 
       @Override
       public void onFailure(Throwable t) {
-        onOperationCompletion(id);
+        onOperationCompletion();
       }
     });
-  }
-
-  private long generateId() {
-    long id = idGenerator.incrementAndGet();
-    lock.lock();
-    try {
-      operations.add(id);
-    } finally {
-      lock.unlock();
-    }
-    return id;
-  }
-
-  private boolean onOperationCompletion(long id) {
-    boolean response = false;
-    lock.lock();
-    try {
-      response = operations.remove(id);
-      if (isFlushed()) {
-        flushedCondition.signal();
-      }
-    } finally {
-      lock.unlock();
-    }
-    resetNoSuccessWarningDeadline();
-    return response;
   }
 
   /**
@@ -131,25 +95,37 @@ public class OperationAccountant {
   public void awaitCompletion() throws InterruptedException {
     boolean performedWarning = false;
 
-    lock.lock();
-    try {
-      while (!isFlushed()) {
-        flushedCondition.await(finishWaitMillis, TimeUnit.MILLISECONDS);
-
-        long now = clock.nanoTime();
-        if (now >= noSuccessCheckDeadlineNanos) {
-          logNoSuccessWarning(now);
-          resetNoSuccessWarningDeadline();
-          performedWarning = true;
+    while (hasInflightOperations()) {
+      synchronized (signal) {
+        if (hasInflightOperations()) {
+          signal.wait(finishWaitMillis);
         }
       }
-      if (performedWarning) {
-        LOG.info("awaitCompletion() completed");
+
+      long now = clock.nanoTime();
+      if (now >= noSuccessCheckDeadlineNanos) {
+        logNoSuccessWarning(now);
+        resetNoSuccessWarningDeadline();
+        performedWarning = true;
       }
-    } finally {
-      lock.unlock();
+    }
+    if (performedWarning) {
+      LOG.info("awaitCompletion() completed");
     }
   }
+
+  // ////// HELPERS
+
+  private boolean onOperationCompletion() {
+    resetNoSuccessWarningDeadline();
+    if (count.decrementAndGet() == 0) {
+      synchronized (signal) {
+        signal.notifyAll();
+      }
+    }
+    return true;
+  }
+
 
   private void logNoSuccessWarning(long now) {
     long lastUpdateNanos = now - noSuccessCheckDeadlineNanos + INTERVAL_NO_SUCCESS_WARNING_NANOS;
@@ -157,7 +133,7 @@ public class OperationAccountant {
     LOG.warn(
       "No operations completed within the last %d seconds. "
           + "There are still %d operations in progress.",
-      lastUpdated, operations.size());
+      lastUpdated, count.get());
     noSuccessWarningCount++;
   }
 
@@ -169,23 +145,7 @@ public class OperationAccountant {
    *         {@link OperationAccountant}
    */
   public boolean hasInflightOperations() {
-    lock.lock();
-    try {
-      return !isFlushed();
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  /**
-   * <p>
-   * isFlushed.
-   * </p>
-   * @return true if there are no outstanding requests being tracked by this
-   *         {@link OperationAccountant}
-   */
-  private boolean isFlushed() {
-    return operations.isEmpty();
+    return count.get() > 0;
   }
 
   private void resetNoSuccessWarningDeadline() {
@@ -195,15 +155,5 @@ public class OperationAccountant {
   @VisibleForTesting
   int getNoSuccessWarningCount() {
     return noSuccessWarningCount;
-  }
-
-  @VisibleForTesting
-  void awaitCompletionPing(){
-    lock.lock();
-    try {
-      flushedCondition.signal();
-    } finally {
-      lock.unlock();
-    }
   }
 }

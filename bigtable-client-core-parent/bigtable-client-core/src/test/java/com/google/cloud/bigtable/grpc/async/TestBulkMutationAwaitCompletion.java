@@ -223,7 +223,12 @@ public class TestBulkMutationAwaitCompletion {
         @Override
         public void run() {
           for (int i = 0; i < 10; i++) {
-            runOneBulkMutation();
+            try {
+              runOneBulkMutation();
+            } catch (InterruptedException e) {
+              // TODO(sduskis): Auto-generated catch block
+              e.printStackTrace();
+            }
           }
           bulkMutationsOutstanding.decrementAndGet();
         }
@@ -271,8 +276,9 @@ public class TestBulkMutationAwaitCompletion {
   /**
    * Creates a single {@link BulkMutation}, and adds {@link #OPERATIONS_PER_MUTATOR} Mutations to
    * it.
+   * @throws InterruptedException 
    */
-  private void runOneBulkMutation() {
+  private void runOneBulkMutation() throws InterruptedException {
     MutateRowsRequest.Entry entry = TestBulkMutation.createRequestEntry();
     OperationAccountant accountant = createOperationAccountant();
     BulkMutation bulkMutation = createBulkMutation(accountant);

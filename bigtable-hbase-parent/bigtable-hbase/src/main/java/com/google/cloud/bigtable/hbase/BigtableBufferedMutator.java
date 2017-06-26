@@ -114,7 +114,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.host = options.getDataHost().toString();
     this.asyncExecutor = session.createAsyncExecutor();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
-    this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
+    this.bulkMutation = session.createBulkMutation(tableName);
   }
 
   /** {@inheritDoc} */
@@ -135,7 +135,12 @@ public class BigtableBufferedMutator implements BufferedMutator {
   public void flush() throws IOException {
     // If there is a bulk mutation in progress, then send it.
     if (bulkMutation != null) {
-      bulkMutation.flush();
+      try {
+        bulkMutation.flush();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("flush() was interrupted", e);
+      }
     }
     asyncExecutor.flush();
     handleExceptions();

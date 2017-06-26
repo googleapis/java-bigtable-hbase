@@ -68,7 +68,7 @@ public class RetryingStreamOperation<RequestT, ResponseT>
 
   /** {@inheritDoc} */
   @Override
-  protected boolean onOK() {
+  protected boolean onOK(Metadata trailers) {
     completionFuture.set(buffer.build());
     return true;
   }

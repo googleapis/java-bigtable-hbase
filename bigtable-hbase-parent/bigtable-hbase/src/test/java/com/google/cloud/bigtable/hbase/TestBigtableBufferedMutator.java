@@ -87,8 +87,7 @@ public class TestBigtableBufferedMutator {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     when(mockSession.createAsyncExecutor()).thenReturn(mockAsyncExecutor);
-    when(mockSession.createBulkMutation(any(BigtableTableName.class), any(AsyncExecutor.class)))
-        .thenReturn(mockBulkMutation);
+    when(mockSession.createBulkMutation(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
   }
 
   @After
@@ -177,7 +176,7 @@ public class TestBigtableBufferedMutator {
   }
 
   @Test
-  public void testBulkMultipleRequests() throws IOException {
+  public void testBulkMultipleRequests() throws IOException, InterruptedException {
     Configuration config = new Configuration(false);
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(config);
