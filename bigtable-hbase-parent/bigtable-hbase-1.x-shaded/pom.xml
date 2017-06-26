@@ -78,7 +78,9 @@ limitations under the License.
               <shadeTestJar>true</shadeTestJar>
               <shadedArtifactAttached>false</shadedArtifactAttached>
               <createDependencyReducedPom>true</createDependencyReducedPom>
-              <!-- Need to manually promote to dependencies to keep the structure of hbase-shade-client -->
+              <!-- Need to manually promote to dependencies to keep the structure of hbase-shade-client.
+               Also, this is needed to workaround maven reactor not using dependency-reduced-pom.xml
+               files. See note in bigtable-1.x-hadoop .-->
               <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
               <artifactSet>
                 <excludes>
