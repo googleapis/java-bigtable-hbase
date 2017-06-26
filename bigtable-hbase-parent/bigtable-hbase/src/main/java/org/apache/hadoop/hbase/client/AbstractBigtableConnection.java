@@ -130,13 +130,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     }
     this.conf = conf;
 
-    BigtableOptions opts;
-    try {
-      opts = BigtableOptionsFactory.fromConfiguration(conf);
-    } catch (IOException ioe) {
-      LOG.error("Error loading BigtableOptions from Configuration.", ioe);
-      throw ioe;
-    }
+    BigtableOptions opts = BigtableOptionsFactory.fromConfiguration(conf);
 
     this.batchPool = pool;
     this.closed = false;
