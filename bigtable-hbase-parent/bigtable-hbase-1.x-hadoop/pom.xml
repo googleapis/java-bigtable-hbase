@@ -40,6 +40,15 @@ limitations under the License.
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-shaded-client</artifactId>
         </exclusion>
+
+        <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+        pom.xml files when invoking the build from a parent project. So we have to manually exclude
+        the dependencies. Note that this works in conjunction with the manually promoted dependencies
+        in bigtable-hbase-1.x-shaded/pom.xml -->
+        <exclusion>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>bigtable-hbase-1.x</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
