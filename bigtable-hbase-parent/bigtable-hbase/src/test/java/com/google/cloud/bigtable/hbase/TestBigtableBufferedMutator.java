@@ -87,8 +87,7 @@ public class TestBigtableBufferedMutator {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     when(mockSession.createAsyncExecutor()).thenReturn(mockAsyncExecutor);
-    when(mockSession.createBulkMutation(any(BigtableTableName.class), any(AsyncExecutor.class)))
-        .thenReturn(mockBulkMutation);
+    when(mockSession.createBulkMutation(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
   }
 
   @After

@@ -147,8 +147,7 @@ public class TestBatchExecutor {
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
     when(mockBigtableSession.createAsyncExecutor()).thenReturn(mockAsyncExecutor);
-    when(mockBigtableSession.createBulkMutation(any(BigtableTableName.class),
-      any(AsyncExecutor.class))).thenReturn(mockBulkMutation);
+    when(mockBigtableSession.createBulkMutation(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);
     doAnswer(new Answer<Void>() {
       @Override
