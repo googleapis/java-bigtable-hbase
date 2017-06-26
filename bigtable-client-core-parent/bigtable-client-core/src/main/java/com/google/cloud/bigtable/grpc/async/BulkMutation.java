@@ -297,12 +297,12 @@ public class BulkMutation {
     }
  
     private synchronized void setComplete() {
-      cancelIfNotDone(mutateRowsFuture);
       cancelIfNotDone(stalenessFuture);
+      cancelIfNotDone(mutateRowsFuture);
       mutateRowsFuture = null;
-      for(Future<?> future: futures) {
+      for (SettableFuture<?> future : futures) {
         if (!future.isDone()) {
-          future.cancel(true);
+          future.setException(MISSING_ENTRY_EXCEPTION);
         }
       }
       futures.clear();
