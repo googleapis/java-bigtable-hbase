@@ -193,6 +193,16 @@ limitations under the License.
             <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
+
+            <exclusions>
+                <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+                pom.xml files when invoking the build from a parent project. So we have to manually exclude
+                the dependencies. -->
+                <exclusion>
+                    <groupId>${project.groupId}</groupId>
+                    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
