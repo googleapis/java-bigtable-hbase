@@ -36,7 +36,6 @@ import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import io.grpc.Status;
 
@@ -280,17 +279,7 @@ public class BigtableOptionsFactory {
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
-    String zoneId = configuration.get(ZONE_KEY);
-    String clusterId = configuration.get(CLUSTER_KEY);
-    Preconditions.checkArgument((Strings.isNullOrEmpty(clusterId)) == (Strings.isNullOrEmpty(zoneId)),
-        "clusterId and zoneId must be specified as a pair.");
-    bigtableOptionsBuilder.setZoneId(zoneId);
-    bigtableOptionsBuilder.setClusterId(clusterId);
-    if (Strings.isNullOrEmpty(clusterId)) {
-      bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
-    } else {
-      bigtableOptionsBuilder.setInstanceId(configuration.get(INSTANCE_ID_KEY));
-    }
+    bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
 
     bigtableOptionsBuilder.setDataHost(
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));

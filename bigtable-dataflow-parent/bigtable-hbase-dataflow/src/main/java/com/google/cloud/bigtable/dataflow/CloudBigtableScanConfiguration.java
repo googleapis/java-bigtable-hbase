@@ -35,7 +35,7 @@ import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
- * Bigtable cluster; a table to connect to in the cluster; and a filter on the table in the form of
+ * Bigtable instance; a table to connect to in the instance; and a filter on the table in the form of
  * a {@link Scan}.
  */
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
@@ -151,24 +151,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * {@inheritDoc}
      */
     @Override
-    public Builder withZoneId(String zoneId) {
-      super.withZoneId(zoneId);
-      return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Builder withClusterId(String clusterId) {
-      super.withClusterId(clusterId);
-      return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public Builder withConfiguration(String key, String value) {
       super.withConfiguration(key, value);
       return this;
@@ -198,7 +180,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
         ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
         request = readHooks.applyPreSendHook(builder.build());
       }
-      return new CloudBigtableScanConfiguration(projectId, instanceId, zoneId, clusterId, tableId,
+      return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
           request, additionalConfiguration);
     }
   }
@@ -209,17 +191,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
    * table ID, {@link Scan} and additional connection configuration.
    * @param projectId The project ID for the instance.
-   * @param instanceId The instance ID. Nullable if zoneID and clusterID are set.
-   * @param zoneId The zone ID
-   * @param clusterId
-   * @param tableId The table to connect to in the cluster.
+   * @param instanceId The instance ID.
+   * @param tableId The table to connect to in the instance.
    * @param request The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  protected CloudBigtableScanConfiguration(String projectId, String instanceId, String zoneId,
-      String clusterId, String tableId, ReadRowsRequest request,
-      Map<String, String> additionalConfiguration) {
-    super(projectId, instanceId, zoneId, clusterId, tableId, additionalConfiguration);
+  protected CloudBigtableScanConfiguration(String projectId, String instanceId, String tableId,
+      ReadRowsRequest request, Map<String, String> additionalConfiguration) {
+    super(projectId, instanceId,  tableId, additionalConfiguration);
     if (request.getTableName().isEmpty()) {
       BigtableInstanceName bigtableInstanceName =
           new BigtableInstanceName(projectId, this.getInstanceId());
