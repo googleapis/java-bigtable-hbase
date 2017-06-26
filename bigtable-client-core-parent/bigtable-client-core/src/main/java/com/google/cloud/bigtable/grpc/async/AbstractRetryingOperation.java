@@ -143,9 +143,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected void onError(Status status, Metadata trailers) {
     Code code = status.getCode();
-
     // CANCELLED
     if (code == Status.Code.CANCELLED) {
+      completionFuture.cancel(true);
       // An explicit user cancellation is not considered a failure.
       operationTimerContext.close();
       return;

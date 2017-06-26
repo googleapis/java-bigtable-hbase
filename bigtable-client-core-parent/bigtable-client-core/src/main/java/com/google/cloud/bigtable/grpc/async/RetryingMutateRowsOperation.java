@@ -122,7 +122,7 @@ public class RetryingMutateRowsOperation extends
 
     // There was a problem in the data found in onMessage(), so fail the RPC.
     if (messageIsInvalid) {
-      super.onClose(INVALID_RESPONSE, trailers);
+      onError(INVALID_RESPONSE, trailers);
       return false;
     }
 
@@ -141,6 +141,7 @@ public class RetryingMutateRowsOperation extends
         // An individual mutation failed with a retryable code, usually DEADLINE_EXCEEDED.
         toRetry.add(i);
       } else {
+        // Don't retry if even a single response is not retryable.
         fail = true;
       }
     }

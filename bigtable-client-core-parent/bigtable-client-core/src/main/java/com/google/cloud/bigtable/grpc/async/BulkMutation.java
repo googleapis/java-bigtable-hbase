@@ -67,7 +67,7 @@ public class BulkMutation {
   @VisibleForTesting
   static Logger LOG = new Logger(BulkMutation.class);
 
-  public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(7);
+  public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -165,7 +165,6 @@ public class BulkMutation {
 
     @VisibleForTesting
     synchronized void handleResult(List<MutateRowsResponse> results) {
-      mutateRowsFuture = null;
       if (futures.isEmpty()) {
         LOG.warn("Got duplicate responses for bulk mutation.");
         setComplete();
@@ -248,10 +247,6 @@ public class BulkMutation {
     }
 
     private void setupStalenessChecker() {
-      if (futures.isEmpty()){
-        setComplete();
-        return;
-      }
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -302,13 +297,18 @@ public class BulkMutation {
     }
  
     private synchronized void setComplete() {
-      cancelIfNotDone(mutateRowsFuture);
       cancelIfNotDone(stalenessFuture);
+      cancelIfNotDone(mutateRowsFuture);
+      mutateRowsFuture = null;
+      for (SettableFuture<?> future : futures) {
+        if (!future.isDone()) {
+          future.setException(MISSING_ENTRY_EXCEPTION);
+        }
+      }
+      futures.clear();
       if (!completionFuture.isDone()) {
         completionFuture.set("");
       }
-      mutateRowsFuture = null;
-      futures.clear();
     }
 
     @VisibleForTesting
@@ -340,7 +340,6 @@ public class BulkMutation {
    * @param tableName a {@link BigtableTableName} object for the table to which all
    *          {@link MutateRowRequest}s will be sent.
    * @param client a {@link BigtableDataClient} object on which to perform RPCs.
-   * @param operationAccountant a {@link OperationAccountant} object that keeps track of outstanding
    *          RPCs that this object performed.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
    *          retries.
@@ -348,6 +347,14 @@ public class BulkMutation {
    *          this instance.
    */
   public BulkMutation(
+      BigtableTableName tableName,
+      BigtableDataClient client,
+      ScheduledExecutorService retryExecutorService,
+      BulkOptions bulkOptions) {
+    this(tableName, client, new OperationAccountant(), retryExecutorService, bulkOptions);
+  }
+
+  BulkMutation(
       BigtableTableName tableName,
       BigtableDataClient client,
       OperationAccountant operationAccountant,
@@ -386,28 +393,39 @@ public class BulkMutation {
 
     ListenableFuture<MutateRowResponse> future = currentBatch.add(entry);
     if (currentBatch.isFull()) {
-      flush();
-    }
-
-    // If autoflushing is enabled and there is pending data then schedule a flush if one hasn't been scheduled
-    // NOTE: this is optimized for adding minimal overhead to per item adds, at the expense of periodic partial batches
-    if (this.autoflushMs > 0 && currentBatch != null && scheduledFlush == null) {
-      scheduledFlush = retryExecutorService.schedule(new Runnable() {
-        @Override
-        public void run() {
-          scheduledFlush = null;
-          flush();
-        }
-      }, autoflushMs, TimeUnit.MILLISECONDS);
+      send();
+      if (scheduledFlush != null) {
+        scheduledFlush.cancel(true);
+        scheduledFlush = null;
+      }
+    } else {
+      // TODO (sduskis): enable flush by default.
+      // If autoflushing is enabled and there is pending data then schedule a flush if one hasn't been scheduled
+      // NOTE: this is optimized for adding minimal overhead to per item adds, at the expense of periodic partial batches
+      if (this.autoflushMs > 0 && currentBatch != null && scheduledFlush == null) {
+        scheduledFlush = retryExecutorService.schedule(new Runnable() {
+          @Override
+          public void run() {
+            scheduledFlush = null;
+            send();
+          }
+        }, autoflushMs, TimeUnit.MILLISECONDS);
+      }
     }
 
     return future;
   }
 
   /**
-   * Send any outstanding {@link MutateRowRequest}s.
+   * Send any outstanding {@link MutateRowRequest}s and wait until all requests are complete.
    */
-  public synchronized void flush() {
+  public void flush() throws InterruptedException {
+    send();
+    operationAccountant.awaitCompletion();
+  }
+
+  @VisibleForTesting
+  synchronized void send() {
     if (currentBatch != null) {
       try {
         currentBatch.run();

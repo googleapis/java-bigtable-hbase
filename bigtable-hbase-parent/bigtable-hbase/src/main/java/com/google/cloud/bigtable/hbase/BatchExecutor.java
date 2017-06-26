@@ -139,13 +139,12 @@ public class BatchExecutor {
 
     protected BulkOperation(
         BigtableSession session,
-        AsyncExecutor asyncExecutor,
         BigtableTableName tableName) {
       this.bulkRead = session.createBulkRead(tableName);
-      this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
+      this.bulkMutation = session.createBulkMutation(tableName);
     }
 
-    protected void flush() {
+    protected void flush() throws InterruptedException {
       // If there is a bulk mutation in progress, then send it.
       bulkMutation.flush();
       bulkRead.flush();
@@ -240,13 +239,13 @@ public class BatchExecutor {
   }
 
   private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
-      Object[] results, Batch.Callback<R> callback) {
-    BulkOperation bulkOperation =
-        new BulkOperation(session, asyncExecutor, requestAdapter.getBigtableTableName());
+      Object[] results, Batch.Callback<R> callback) throws InterruptedException {
+    BulkOperation bulkOperation = new BulkOperation(session, requestAdapter.getBigtableTableName());
     try {
       List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
       for (int i = 0; i < actions.size(); i++) {
-        resultFutures.add(issueAsyncRowRequest(bulkOperation, actions.get(i), callback, results, i));
+        resultFutures
+            .add(issueAsyncRowRequest(bulkOperation, actions.get(i), callback, results, i));
       }
       return resultFutures;
     } finally {
