@@ -101,16 +101,6 @@ public class TestBigtableOptionsFactory {
   }
 
   @Test
-  public void testLegacyOptions() throws IOException {
-    configuration.set(BigtableOptionsFactory.ZONE_KEY, "z");
-    configuration.set(BigtableOptionsFactory.CLUSTER_KEY, "c");
-    configuration.unset(BigtableOptionsFactory.INSTANCE_ID_KEY);
-    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals("z", options.getZoneId());
-    Assert.assertEquals("c", options.getClusterId());
-  }
-
-  @Test
   public void testDefaultRetryOptions() throws IOException {
     RetryOptions retryOptions =
         BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();

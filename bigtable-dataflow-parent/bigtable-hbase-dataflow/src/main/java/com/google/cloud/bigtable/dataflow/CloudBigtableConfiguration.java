@@ -25,16 +25,15 @@ import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 
-import com.google.bigtable.repackaged.com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableClusterUtilities;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
 import com.google.common.collect.ImmutableMap;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a Cloud
- * Bigtable cluster.
+ * Bigtable instance.
  */
 public class CloudBigtableConfiguration implements Serializable {
 
@@ -46,8 +45,6 @@ public class CloudBigtableConfiguration implements Serializable {
   public static class Builder {
     protected String projectId;
     protected String instanceId;
-    protected String zoneId;
-    protected String clusterId;
     protected Map<String, String> additionalConfiguration = new HashMap<>();
 
     public Builder() {
@@ -58,13 +55,11 @@ public class CloudBigtableConfiguration implements Serializable {
 
       this.projectId = this.additionalConfiguration.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
       this.instanceId = this.additionalConfiguration.remove(BigtableOptionsFactory.INSTANCE_ID_KEY);
-      this.zoneId = this.additionalConfiguration.remove(BigtableOptionsFactory.ZONE_KEY);
-      this.clusterId = this.additionalConfiguration.remove(BigtableOptionsFactory.CLUSTER_KEY);
     }
 
     /**
-     * Specifies the project ID for the Cloud Bigtable cluster.
-     * @param projectId The project ID for the cluster.
+     * Specifies the project ID for the Cloud Bigtable instance.
+     * @param projectId The project ID for the instance.
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
     public Builder withProjectId(String projectId) {
@@ -79,26 +74,6 @@ public class CloudBigtableConfiguration implements Serializable {
      */
     public Builder withInstanceId(String instanceId) {
       this.instanceId = instanceId;
-      return this;
-    }
-
-    /**
-     * Specifies the zone where the Cloud Bigtable cluster is located.
-     * @param zoneId The zone where the cluster is located.
-     * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
-     */
-    public Builder withZoneId(String zoneId) {
-      this.zoneId = zoneId;
-      return this;
-    }
-
-    /**
-     * Specifies the cluster ID for the Cloud Bigtable cluster.
-     * @param clusterId The cluster ID for the cluster.
-     * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
-     */
-    public Builder withClusterId(String clusterId) {
-      this.clusterId = clusterId;
       return this;
     }
 
@@ -123,7 +98,7 @@ public class CloudBigtableConfiguration implements Serializable {
       // Keeping the legacy constructor for backwards compatibility.
       // Choose the new one if instance is specified.
       return new CloudBigtableConfiguration(
-          projectId, instanceId, zoneId, clusterId, additionalConfiguration);
+          projectId, instanceId, additionalConfiguration);
     }
   }
 
@@ -135,62 +110,18 @@ public class CloudBigtableConfiguration implements Serializable {
   }
 
   /**
-   * Creates a {@link CloudBigtableConfiguration} using the specified project ID, zone, and cluster
-   * ID.
+   * Creates a {@link CloudBigtableConfiguration} using the specified project ID and instance ID.
    *
-   * @deprecated use the {@link Builder} instead.
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
-   * @param additionalConfiguration A {@link Map} with additional connection configuration.
-   *          See {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more
-   *          information about configuration options.
+   * @param additionalConfiguration A {@link Map} with additional connection configuration. See
+   *          {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information
+   *          about configuration options.
    */
-  @Deprecated
-  public CloudBigtableConfiguration(String projectId, String instanceId,
-      Map<String, String> additionalConfiguration) {
-    this(projectId, instanceId, null, null, additionalConfiguration);
-  }
-
-  /**
-   * Creates a {@link CloudBigtableConfiguration} using the specified project ID, zone, and cluster
-   * ID.
-   *
-   * @deprecated use the {@link Builder} instead.
-   * @param projectId The project ID for the cluster.
-   * @param zoneId The zone where the cluster is located.
-   * @param clusterId The cluster ID for the cluster.
-   * @param additionalConfiguration A {@link Map} with additional connection configuration.
-   *          See {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more
-   *          information about configuration options.
-   */
-  @Deprecated
-  public CloudBigtableConfiguration(String projectId, String zoneId, String clusterId,
-      Map<String, String> additionalConfiguration) {
-    this(projectId, null, zoneId, clusterId, additionalConfiguration);
-  }
-
-  protected CloudBigtableConfiguration(
-      String projectId,
-      String instanceId,
-      String zoneId,
-      String clusterId,
+  protected CloudBigtableConfiguration(String projectId, String instanceId,
       Map<String, String> additionalConfiguration) {
     this.configuration = new HashMap<>(additionalConfiguration);
     setValue(BigtableOptionsFactory.PROJECT_ID_KEY, projectId, "Project ID");
-    if (instanceId == null) {
-      if (zoneId == null || clusterId == null) {
-        throw new IllegalArgumentException("instanceId must be set.");
-      }
-      instanceId = lookupInstanceId(projectId, zoneId, clusterId);
-    } else if (zoneId != null || clusterId != null) {
-      String lookupInstanceId = lookupInstanceId(projectId, zoneId, clusterId);
-      if (!instanceId.equals(lookupInstanceId)) {
-        throw new IllegalArgumentException(
-            String.format(
-                "InstanceId %s does not match the instance for zone '%s' and cluster '%s.",
-                instanceId, zoneId, clusterId));
-      }
-    }
     setValue(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId, "Instance ID");
   }
 
@@ -200,17 +131,9 @@ public class CloudBigtableConfiguration implements Serializable {
     configuration.put(key, value);
   }
 
-  protected static String lookupInstanceId(String projectId, String zoneId, String clusterId) {
-    try {
-      return BigtableClusterUtilities.lookupInstanceId(projectId, clusterId, zoneId);
-    } catch (IOException e) {
-      throw new RuntimeException("Error looking up instance id", e);
-    }
-  }
-
   /**
-   * Gets the project ID for the Cloud Bigtable cluster.
-   * @return The project ID for the cluster.
+   * Gets the project ID for the Cloud Bigtable instance.
+   * @return The project ID for the instance.
    */
   public String getProjectId() {
     return configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY);
@@ -222,22 +145,6 @@ public class CloudBigtableConfiguration implements Serializable {
    */
   public String getInstanceId() {
     return configuration.get(BigtableOptionsFactory.INSTANCE_ID_KEY);
-  }
-
-  /**
-   * Gets the zone where the Cloud Bigtable cluster is located.
-   * @return The zone where the cluster is located.
-   */
-  public String getZoneId() {
-    return configuration.get(BigtableOptionsFactory.ZONE_KEY);
-  }
-
-  /**
-   * Gets the cluster ID for the Cloud Bigtable cluster.
-   * @return The cluster ID for the cluster.
-   */
-  public String getClusterId() {
-    return configuration.get(BigtableOptionsFactory.CLUSTER_KEY);
   }
 
   /**
