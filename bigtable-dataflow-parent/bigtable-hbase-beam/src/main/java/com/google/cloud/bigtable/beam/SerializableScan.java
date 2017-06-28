@@ -35,16 +35,12 @@ public class SerializableScan implements Serializable {
   }
 
   public SerializableScan(Scan scan) {
-    set(scan);
+    Preconditions.checkNotNull(scan, "Scan must not be null.");
+    this.scan = scan;
   }
 
   public Scan get() {
     return scan;
-  }
-
-  public void set(Scan scan) {
-    Preconditions.checkNotNull(scan, "Scan must not be null.");
-    this.scan = scan;
   }
 
   private void writeObject(ObjectOutputStream out) throws IOException {

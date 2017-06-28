@@ -83,7 +83,7 @@ public class BigtableIOHBase {
 
     private final SerializableConfiguration serializableConfiguration;
     private final String tableId;
-    private final SerializableScan scan = new SerializableScan(new Scan());
+    private SerializableScan scan = new SerializableScan(new Scan());
 
     private Read(String projectId, String instanceId, String tableId) {
       Preconditions.checkNotNull(projectId, "Please configure a projectId.");
@@ -106,7 +106,7 @@ public class BigtableIOHBase {
      * Attach a {@link RowFilter} and potentially a {@link ByteKeyRange} to a {@link Read}.
      */
     public Read withScan(Scan scan) {
-      this.scan.set(scan);
+      this.scan = new SerializableScan(scan);
       return this;
     }
 
