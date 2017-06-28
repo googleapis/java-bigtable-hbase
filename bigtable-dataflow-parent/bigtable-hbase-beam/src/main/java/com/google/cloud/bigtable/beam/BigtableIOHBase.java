@@ -68,7 +68,12 @@ public class BigtableIOHBase {
   }
 
   public static Write write(String projectId, String instanceId, String tableId) {
-    return new Write(projectId, instanceId, tableId);
+    return new AutoValue_BigtableIOHBase_Write.Builder()
+        .setProjectId(projectId)
+        .setInstanceId(instanceId)
+        .setTableId(tableId)
+        .setConfiguration(new Configuration(false))
+        .build();
   }
 
   private BigtableIOHBase() {}
@@ -175,26 +180,41 @@ public class BigtableIOHBase {
     }
   }
 
-  public static class Write extends PTransform<PCollection<Mutation>, PDone> {
+  @AutoValue
+  public static abstract class Write extends PTransform<PCollection<Mutation>, PDone> {
     private static final long serialVersionUID = 1L;
-    private final String tableId;
-    private final SerializableConfiguration serializableConfiguration;
 
-    public Write(String projectId, String instanceId, String tableId) {
-      Preconditions.checkNotNull(projectId, "Please configure a projectId.");
-      Preconditions.checkNotNull(instanceId, "Please configure a instanceId.");
-      Preconditions.checkNotNull(tableId, "Please configure a tableId.");
+    abstract SerializableConfiguration getSerializableConfiguration();
+    abstract String getProjectId();
+    abstract String getInstanceId();
+    abstract String getTableId();
 
-      this.serializableConfiguration =
-          new SerializableConfiguration(BigtableConfiguration.configure(projectId, instanceId));
-      this.tableId = tableId;
+    @Override
+    public abstract String toString();
+
+    abstract Builder toBuilder();
+
+    private transient HBaseMutationAdapter mutationsAdapter;
+
+    @AutoValue.Builder
+    abstract static class Builder {
+      abstract Builder setSerializableConfiguration(SerializableConfiguration configuration);
+      Builder setConfiguration(Configuration configuration) {
+        return setSerializableConfiguration(new SerializableConfiguration(new Configuration(configuration)));
+      }
+
+      abstract Builder setProjectId(String projectId);
+      abstract Builder setInstanceId(String instanceId);
+      abstract Builder setTableId(String tableId);
+
+      abstract Read build();
     }
 
     /**
      * Add an extended configuration option.  See {@link BigtableOptionsFactory} for more details.
      */
     public Write withConfiguration(String key, String value) {
-      serializableConfiguration.get().set(key, value);
+      getSerializableConfiguration().get().set(key, value);
       return this;
     }
 
@@ -211,8 +231,8 @@ public class BigtableIOHBase {
 
       BigtableIO.Write write = BigtableIO.write()
           .withBigtableOptions(
-            BigtableOptionsFactory.fromConfiguration(serializableConfiguration.get()))
-          .withTableId(tableId);
+            BigtableOptionsFactory.fromConfiguration(getSerializableConfiguration().get()))
+          .withTableId(getTableId());
 
       return input
           .apply("Convert HBase to Bigtable Mutation",  transform)
@@ -224,14 +244,15 @@ public class BigtableIOHBase {
 
       return new DoFn<Mutation, KV<ByteString, Iterable<com.google.bigtable.v2.Mutation>>>() {
         private static final long serialVersionUID = 1L;
-        private transient HBaseMutationAdapter mutationsAdapter;
 
         @Setup
         public void setup() {
-          Configuration config = serializableConfiguration.get();
-          BigtableOptions options = BigtableOptionsFactory.fromConfiguration(config);
-          PutAdapter putAdapter = Adapters.createPutAdapter(config, options);
-          mutationsAdapter = Adapters.createMutationsAdapter(putAdapter);
+          if (mutationsAdapter == null) {
+            Configuration config = getSerializableConfiguration().get();
+            BigtableOptions options = BigtableOptionsFactory.fromConfiguration(config);
+            PutAdapter putAdapter = Adapters.createPutAdapter(config, options);
+            mutationsAdapter = Adapters.createMutationsAdapter(putAdapter);
+          }
         }
 
         @ProcessElement
