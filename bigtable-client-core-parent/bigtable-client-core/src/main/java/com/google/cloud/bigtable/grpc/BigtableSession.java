@@ -207,8 +207,7 @@ public class BigtableSession implements Closeable {
    * @throws java.io.IOException if any.
    */
   public BigtableSession(BigtableOptions opts) throws IOException {
-    this.options = resolveLegacyOptions(opts);
-
+    this.options = opts;
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(options.getProjectId()), PROJECT_ID_EMPTY_OR_NULL);
     Preconditions.checkArgument(
@@ -274,33 +273,6 @@ public class BigtableSession implements Closeable {
     }
     return createManagedPool(host, channelCount);
   }
-
-  /**
-   * Return options with legacy input options, if any, resolved into currently supported options.
-   */
-  private BigtableOptions resolveLegacyOptions(BigtableOptions options) throws IOException {
-    if (options.getClusterId() != null && options.getZoneId() != null) {
-      String instanceId =
-          BigtableClusterUtilities.lookupInstanceId(
-              options.getProjectId(),
-              options.getClusterId(),
-              options.getZoneId()
-          );
-      if (options.getInstanceId() != null) {
-        Preconditions.checkArgument(
-            options.getInstanceId().equals(instanceId),
-            "Supplied instanceId: '%s', zoneId: '%s' and clusterId: '%s'. They do not match."
-                + "\nFound instanceId '%s' that corresponds to the zoneId/clusterId",
-            options.getInstanceId(),
-            options.getZoneId(),
-            options.getClusterId(),
-            instanceId);
-      }
-      return options.toBuilder().setInstanceId(instanceId).build();
-    }
-    return options;
-  }
-
 
   /**
    * Snapshot operations need various aspects of a {@link BigtableClusterName}. This method gets a
