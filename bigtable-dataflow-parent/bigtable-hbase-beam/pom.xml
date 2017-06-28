@@ -59,6 +59,7 @@ limitations under the License.
             <groupId>com.google.auto.value</groupId>
             <artifactId>auto-value</artifactId>
             <version>${google-auto-value.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>

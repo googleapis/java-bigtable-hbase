@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.auto.value.AutoValue;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO;
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
@@ -57,7 +58,13 @@ import com.google.protobuf.ByteString;
 public class BigtableIOHBase {
 
   public static Read read(String projectId, String instanceId, String tableId) {
-    return new Read(projectId, instanceId, tableId);
+    return new AutoValue_BigtableIOHBase_Read.Builder()
+        .setProjectId(projectId)
+        .setInstanceId(instanceId)
+        .setTableId(tableId)
+        .setConfiguration(new Configuration(false))
+        .setScan(new Scan())
+        .build();
   }
 
   public static Write write(String projectId, String instanceId, String tableId) {
@@ -70,7 +77,8 @@ public class BigtableIOHBase {
    * This is a wrapper around {@link org.apache.beam.sdk.io.gcp.bigtable.BigtableIO.Read} that adds
    * HBase semantics
    */
-  public static class Read extends PTransform<PBegin, PCollection<Result>> {
+  @AutoValue
+  public static abstract class Read extends PTransform<PBegin, PCollection<Result>> {
     private static final long serialVersionUID = 1L;
 
     private static final DoFn<Row, Result> ROW_TO_RESULT_TRANSFORM = new DoFn<Row, Result>() {
@@ -81,49 +89,67 @@ public class BigtableIOHBase {
       }
     };
 
-    private final SerializableConfiguration serializableConfiguration;
-    private final String tableId;
-    private SerializableScan scan = new SerializableScan(new Scan());
+    abstract SerializableConfiguration getSerializableConfiguration();
+    abstract String getProjectId();
+    abstract String getInstanceId();
+    abstract String getTableId();
+    abstract SerializableScan getSerializableScan();
 
-    private Read(String projectId, String instanceId, String tableId) {
-      Preconditions.checkNotNull(projectId, "Please configure a projectId.");
-      Preconditions.checkNotNull(instanceId, "Please configure a instanceId.");
-      Preconditions.checkNotNull(tableId, "Please configure a tableId.");
-      this.serializableConfiguration =
-          new SerializableConfiguration(BigtableConfiguration.configure(projectId, instanceId));
-      this.tableId = tableId;
+    @Override
+    public abstract String toString();
+
+    abstract Builder toBuilder();
+
+    @AutoValue.Builder
+    abstract static class Builder {
+      abstract Builder setSerializableConfiguration(SerializableConfiguration configuration);
+      Builder setConfiguration(Configuration configuration) {
+        return setSerializableConfiguration(new SerializableConfiguration(new Configuration(configuration)));
+      }
+
+      abstract Builder setProjectId(String projectId);
+      abstract Builder setInstanceId(String instanceId);
+      abstract Builder setTableId(String tableId);
+      abstract Builder setSerializableScan(SerializableScan serializableScan);
+
+      Builder setScan(Scan scan) {
+        return setSerializableScan(new SerializableScan(scan));
+      }
+
+      abstract Read build();
     }
 
     /**
      * Add an extended configuration option.  See {@link BigtableOptionsFactory} for more details.
      */
     public Read withConfiguration(String key, String value) {
-      serializableConfiguration.get().set(key, value);
-      return this;
+      Configuration newConfig = new Configuration(getSerializableConfiguration().get());
+      newConfig.set(key, value);
+      return toBuilder().setConfiguration(newConfig).build();
     }
 
     /**
      * Attach a {@link RowFilter} and potentially a {@link ByteKeyRange} to a {@link Read}.
      */
     public Read withScan(Scan scan) {
-      this.scan = new SerializableScan(scan);
-      return this;
+      return toBuilder().setScan(scan).build();
     }
 
     @Override
     public void populateDisplayData(DisplayData.Builder builder) {
         super.populateDisplayData(builder);
         builder.add(DisplayData.item("configuration",
-                serializableConfiguration.get().toString()));
-        builder.add(DisplayData.item("tableId", tableId));
-        builder.addIfNotNull(DisplayData.item("scan", scan.get().toString()));
+                getSerializableConfiguration().get().toString()));
+        builder.add(DisplayData.item("tableId", getTableId()));
+        builder.addIfNotNull(DisplayData.item("scan", getSerializableScan().get().toString()));
     }
 
     @Override
     public PCollection<Result> expand(PBegin input) {
-      RowFilter filter = Adapters.SCAN_ADAPTER.adapt(scan.get(), new DefaultReadHooks()).getFilter();
-      byte[] startRow = scan.get().getStartRow();
-      byte[] stopRow = scan.get().getStopRow();
+      Scan scan = getSerializableScan().get();
+      RowFilter filter = Adapters.SCAN_ADAPTER.adapt(scan, new DefaultReadHooks()).getFilter();
+      byte[] startRow = scan.getStartRow();
+      byte[] stopRow = scan.getStopRow();
       ByteKeyRange keyRange = ByteKeyRange.ALL_KEYS;
       if (startRow.length > 0){
         keyRange   = keyRange.withStartKey(ByteKey.copyFrom(startRow));
@@ -133,13 +159,16 @@ public class BigtableIOHBase {
       }
 
       BigtableOptions options =
-          BigtableOptionsFactory.fromConfiguration(serializableConfiguration.get());
+          BigtableOptionsFactory.fromConfiguration(getSerializableConfiguration().get()).toBuilder()
+            .setProjectId(getProjectId())
+            .setInstanceId(getInstanceId())
+            .build();
       BigtableIO.Read bigtableRead =
           BigtableIO.read()
               .withBigtableOptions(options)
               .withKeyRange(keyRange)
               .withRowFilter(filter)
-              .withTableId(tableId);
+              .withTableId(getTableId());
       return input.getPipeline()
           .apply("BigtableIO.Read", bigtableRead)
           .apply("HBase Result transformer", ParDo.of(ROW_TO_RESULT_TRANSFORM));
