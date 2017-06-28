@@ -115,7 +115,7 @@ limitations under the License.
 
                     <!-- in case maven is called with overlapping goals (ie. mvn install verify),
                     avoid double relocation -->
-                    <exclude>com.google.bigtable.repackaged.com.google.**</exclude>
+                    <exclude>com.google.bigtable.repackaged.**</exclude>
                   </excludes>
                 </relocation>
 
