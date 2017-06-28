@@ -55,7 +55,7 @@ import com.google.protobuf.ByteString;
  * Utilities to configure {@link BigtableIO} with HBase artifacts
  */
 @Experimental
-public class BigtableIOHBase {
+public class BigtableHBaseIO {
 
   public static Read read(String projectId, String instanceId, String tableId) {
     return new AutoValue_BigtableIOHBase_Read.Builder()
@@ -76,7 +76,7 @@ public class BigtableIOHBase {
         .build();
   }
 
-  private BigtableIOHBase() {}
+  private BigtableHBaseIO() {}
 
   /**
    * This is a wrapper around {@link org.apache.beam.sdk.io.gcp.bigtable.BigtableIO.Read} that adds

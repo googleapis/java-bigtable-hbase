@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.beam.coders;
 
 import com.google.auto.service.AutoService;
-import com.google.cloud.bigtable.beam.BigtableIOHBase;
+import com.google.cloud.bigtable.beam.BigtableHBaseIO;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import org.apache.beam.sdk.coders.CoderProvider;
@@ -29,7 +29,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 
 /**
- * A {@link CoderProviderRegistrar} for standard types used with {@link BigtableIOHBase}.
+ * A {@link CoderProviderRegistrar} for standard types used with {@link BigtableHBaseIO}.
  */
 // TODO: remove this once HBaseIO's infrastructure uses AutoService.
 @AutoService(CoderProviderRegistrar.class)
