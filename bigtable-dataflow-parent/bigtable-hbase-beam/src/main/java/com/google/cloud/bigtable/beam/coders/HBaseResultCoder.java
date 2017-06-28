@@ -33,7 +33,7 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
 
   private static final long serialVersionUID = -4975428837770254686L;
 
-  public static Coder<?> of() {
+  public static Coder<Result> of() {
     return new HBaseResultCoder();
   }
 

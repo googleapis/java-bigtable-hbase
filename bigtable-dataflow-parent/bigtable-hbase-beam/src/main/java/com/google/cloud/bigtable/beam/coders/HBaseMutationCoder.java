@@ -40,7 +40,7 @@ public class HBaseMutationCoder extends AtomicCoder<Mutation> {
 
   private static final long serialVersionUID = -3853654063196018580L;
 
-  public static Coder<?> of() {
+  public static Coder<Mutation> of() {
     return new HBaseMutationCoder();
   }
 
