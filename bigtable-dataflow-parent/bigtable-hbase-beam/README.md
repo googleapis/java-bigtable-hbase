@@ -3,7 +3,13 @@
 This project integrates Cloud Bigtable with Beam using the HBase API.
 
 ## Writing
-This connector allows you to write data to Bigtable through Beam.
+This connector allows you to write data to Cloud Bigtable through Beam with the HBase API.
+
+### Example
+Here's an example of a simple pipeline that writes to Cloud Bigtable.  Here are the steps for the pipeline:
+1. Add the words "Hello" and "World" to the pipeline.
+2. Converts the words to HBase Put objects.
+3. Sends the Puts to Cloud Bigtable.
 
 ```java
 // Create a DoFn that creates a Put or Delete.  MUTATION_TRANSFORM is a simplistic example.
@@ -15,25 +21,32 @@ static final DoFn<String, Mutation> MUTATION_TRANSFORM = new DoFn<String, Mutati
 };
 
 public static void main(String[] args) {
-  // CloudBigtableOptions is one way to retrieve the options.  It's not required to use this
-  // specific PipelineOptions extension; CloudBigtableOptions is there as a convenience.
-  CloudBigtableOptions options =
-      PipelineOptionsFactory.fromArgs(args).withValidation().as(CloudBigtableOptions.class);
+  // Common properties
+  String projectId = "Enter a project Id";
 
-  // CloudBigtableTableConfiguration contains the project, zone, cluster and table to connect to.
-  CloudBigtableTableConfiguration config = CloudBigtableTableConfiguration.fromCBTOptions(options);
+ // Cloud Bigtable properties
+  String instanceId = "Enter an instance Id";
+  String tableId = "Enter a table Id";
+
+  // Dataflow properties
+  String zoneId = "Enter a zone Id, preferably the zone of your Cloud Bigtable cluster";
+  String dataflowGcsBucket = "gs://enter-your-bucket/and-optional-directory";
+
+  DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
+  options.setProject(projectId);
+  options.setZone(zoneId);
+  options.setStagingLocation(dataflowGcsBucket + "/stage");
+  options.setTempLocation(dataflowGcsBucket + "/temp");
+  options.setRunner(DataflowRunner.class);
 
   Pipeline p = Pipeline.create(options);
-  // This sets up serialization for Puts and Deletes so that Dataflow can potentially move them through
-  // the network.
-  CloudBigtableIO.initializeForWrite(p);
-
+ 
   p
      .apply(Create.of("Hello", "World"))
      .apply(ParDo.of(MUTATION_TRANSFORM))
-     .apply(CloudBigtableIO.writeToTable(config));
+     .apply(BigtableHBaseIO.write(projectId, instanceId, tableId));
 
-  p.run();
+  p.run().waitUntilFinish();
 }
 ```
 
@@ -51,8 +64,12 @@ DoFn<Long, String> stringifier = new DoFn<Long, String>() {
   }
 };
 
-CountOptions options =
-    PipelineOptionsFactory.fromArgs(args).withValidation().as(CountOptions.class);
+// Common properties
+String projectId = "Enter a project Id";
+
+ // Cloud Bigtable properties
+String instanceId = "Enter an instance Id";
+String tableId = "Enter a table Id";
 
 // See the hbase hadoop job at
 // https://github.com/apache/hbase/blob/master/hbase-server/src/main/java/org/apache/hadoop/hbase/mapreduce/RowCounter.java#L151
@@ -60,19 +77,26 @@ CountOptions options =
 Scan scan = new Scan();
 scan.setFilter(new FirstKeyOnlyFilter());
 
-// CloudBigtableTableConfiguration contains the project, zone, cluster and table to connect to.
-// You can supply an optional Scan() to filter the rows that will be read.
-CloudBigtableScanConfiguration config = CloudBigtableScanConfiguration.fromCBTOptions(options, scan);
+// Dataflow properties
+String zoneId = "Enter a zone Id, preferably the zone of your Cloud Bigtable cluster";
+String dataflowGcsBucket = "gs://enter-your-bucket/and-optional-directory";
+
+DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
+options.setProject(projectId);
+options.setZone(zoneId);
+options.setStagingLocation(dataflowGcsBucket + "/stage");
+options.setTempLocation(dataflowGcsBucket + "/temp");
+options.setRunner(DataflowRunner.class);
 
 Pipeline p = Pipeline.create(options);
 
 p
-   .apply(Read.from(CloudBigtableIO.read(config)))
+   .apply(BigtableHBaseIO.read(projectId, instanceId, tableId).withScan(scan))
    .apply(Count.<Result>globally())
    .apply(ParDo.of(stringifier))
-   .apply(TextIO.Write.to(options.getResultLocation()));
+   .apply(TextIO.Write.to(dataflowGcsBucket + "/output"));
 
-p.run();
+p.run().waitUntilFinish();
 
 // Once this is done, you can get the result file via "gsutil cp <resultLocation>-00000-of-00001"
 ```
