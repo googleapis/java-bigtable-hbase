@@ -2,8 +2,25 @@
 
 This project integrates Cloud Bigtable with Beam using the HBase API.
 
+## Maven
+To use the connector, add the following configuraiton to your maven pom.xml file:
+
+```xml
+ <dependency>
+     <groupId>com.google.cloud.bigtable</groupId>
+     <artifactId>bigtable-hbase-beam</artifactId>
+     <version>0.9.8-SNAPSHOT/version>
+ </dependency>
+
+ <dependency>
+     <groupId>io.netty</groupId>
+     <artifactId>netty-tcnative-boringssl-static</artifactId>
+     <version>1.1.33.Fork26</version>
+ </dependency>
+```
+
 ## Writing
-This connector allows you to write data to Cloud Bigtable through Beam with the HBase API.
+BigtableHBaseIO.write(...) allows you to write data to Cloud Bigtable through Beam with the HBase API.
 
 ### Example
 Here's an example of a simple pipeline that writes to Cloud Bigtable.  Here are the steps for the pipeline:
@@ -51,10 +68,10 @@ public static void main(String[] args) {
 ```
 
 ## Reading
+BigtableHBaseIO.read(...) allows you to read data from Cloud Bigtable.
 
-A [Source](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/sdk/io/Source.html) is a Beam construct that can read data for use as part of a Pipeline.
-
-Here's an example that uses the [Source to count the rows](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/blob/master/java/dataflow-connector-examples/src/main/java/com/google/cloud/bigtable/dataflow/example/SourceRowCount.java) of a Table:
+### Example
+This example reads all the records from Cloud Bigtable and returns a count of the rows.
 
 ```java
 DoFn<Long, String> stringifier = new DoFn<Long, String>() {
@@ -98,6 +115,6 @@ p
 
 p.run().waitUntilFinish();
 
-// Once this is done, you can get the result file via "gsutil cp <resultLocation>-00000-of-00001"
+// Once this is done, you can get the result file via "gsutil cp ${dataflowGcsBucket}/oputput-00000-of-00001"
 ```
 
