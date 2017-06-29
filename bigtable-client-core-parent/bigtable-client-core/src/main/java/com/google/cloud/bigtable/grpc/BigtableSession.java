@@ -470,14 +470,15 @@ public class BigtableSession implements Closeable {
 
     // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
     // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
-    ManagedChannelBuilder<?> builder = NettyChannelBuilder
-        .forAddress(host, options.getPort())
-        .sslContext(createSslContext())
-        ;
+    NettyChannelBuilder builder = NettyChannelBuilder
+        .forAddress(host, options.getPort());
 
     if (options.usePlaintextNegotiation()) {
       builder.usePlaintext(true);
+    } else {
+      builder.sslContext(createSslContext());
     }
+
     return builder
         .nameResolverFactory(new DnsNameResolverProvider())
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
