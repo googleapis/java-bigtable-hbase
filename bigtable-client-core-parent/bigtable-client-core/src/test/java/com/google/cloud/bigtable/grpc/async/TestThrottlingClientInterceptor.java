@@ -65,11 +65,13 @@ public class TestThrottlingClientInterceptor {
 
   @Test
   public void testThrottled() throws Exception {
+    final SettableFuture registerInvoked = SettableFuture.create();
     final SettableFuture registerWaiter = SettableFuture.create();
     final long id = 1l;
     when(mockResourceLimiter.registerOperationWithHeapSize(anyLong())).then(new Answer<Long>() {
       @Override
       public Long answer(InvocationOnMock invocation) throws Throwable {
+        registerInvoked.set("");
         registerWaiter.get(1, TimeUnit.SECONDS);
         return id;
       }
@@ -88,13 +90,13 @@ public class TestThrottlingClientInterceptor {
         call.sendMessage(request);
       }
     });
-    Thread.sleep(50);
+    registerInvoked.get(1, TimeUnit.SECONDS);
     verify(mockResourceLimiter, times(1))
         .registerOperationWithHeapSize(eq((long) request.getSerializedSize()));
     verify(mockChannel, times(0)).newCall(any(MethodDescriptor.class), any(CallOptions.class));
 
     registerWaiter.set("");
-    future.get(50, TimeUnit.MILLISECONDS);
+    future.get(1, TimeUnit.SECONDS);
     verify(mockChannel, times(1)).newCall(any(MethodDescriptor.class), any(CallOptions.class));
     verify(mockClientCall, times(1)).request(eq(numMessages));
 
