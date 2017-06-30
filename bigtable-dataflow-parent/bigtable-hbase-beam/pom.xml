@@ -66,6 +66,24 @@ limitations under the License.
             <artifactId>bigtable-hbase-1.x</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <!--
+            Explicit cbt dependencies to force maven to pull in ${project.version} versions
+            of the artifacts.  Generally users will also depend on
+            org.apache.beam:beam-runners-google-cloud-dataflow-java which has transitive dependencies
+            on cbt artifacts.
+        -->
+
+        <dependency>
+            <groupId>com.google.cloud.bigtable</groupId>
+            <artifactId>bigtable-client-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.bigtable</groupId>
+            <artifactId>bigtable-protos</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

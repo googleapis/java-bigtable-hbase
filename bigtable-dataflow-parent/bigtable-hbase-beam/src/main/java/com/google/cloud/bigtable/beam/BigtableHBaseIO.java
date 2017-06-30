@@ -58,7 +58,7 @@ import com.google.protobuf.ByteString;
 public class BigtableHBaseIO {
 
   public static Read read(String projectId, String instanceId, String tableId) {
-    return new AutoValue_BigtableIOHBase_Read.Builder()
+    return new AutoValue_BigtableHBaseIO_Read.Builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
         .setTableId(tableId)
@@ -68,7 +68,7 @@ public class BigtableHBaseIO {
   }
 
   public static Write write(String projectId, String instanceId, String tableId) {
-    return new AutoValue_BigtableIOHBase_Write.Builder()
+    return new AutoValue_BigtableHBaseIO_Write.Builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
         .setTableId(tableId)
@@ -78,12 +78,32 @@ public class BigtableHBaseIO {
 
   private BigtableHBaseIO() {}
 
+  interface CloudBigtableConfigurable {
+    abstract SerializableConfiguration getSerializableConfiguration();
+    abstract String getProjectId();
+    abstract String getInstanceId();
+    abstract String getTableId();
+  }
+
+  private static BigtableOptions getOptions(CloudBigtableConfigurable cbtConfigurable) {
+    Configuration originalConfiguration = cbtConfigurable.getSerializableConfiguration().get();
+    Configuration config = new Configuration(originalConfiguration);
+    if (config.get(BigtableOptionsFactory.PROJECT_ID_KEY) == null) {
+      config.set(BigtableOptionsFactory.PROJECT_ID_KEY, cbtConfigurable.getProjectId());
+    }
+    if (config.get(BigtableOptionsFactory.INSTANCE_ID_KEY) == null) {
+      config.set(BigtableOptionsFactory.INSTANCE_ID_KEY, cbtConfigurable.getInstanceId());
+    }
+    return BigtableOptionsFactory.fromConfiguration(config);
+  }
+
   /**
    * This is a wrapper around {@link org.apache.beam.sdk.io.gcp.bigtable.BigtableIO.Read} that adds
    * HBase semantics
    */
   @AutoValue
-  public static abstract class Read extends PTransform<PBegin, PCollection<Result>> {
+  public static abstract class Read extends PTransform<PBegin, PCollection<Result>>
+      implements CloudBigtableConfigurable {
     private static final long serialVersionUID = 1L;
 
     private static final DoFn<Row, Result> ROW_TO_RESULT_TRANSFORM = new DoFn<Row, Result>() {
@@ -94,10 +114,6 @@ public class BigtableHBaseIO {
       }
     };
 
-    abstract SerializableConfiguration getSerializableConfiguration();
-    abstract String getProjectId();
-    abstract String getInstanceId();
-    abstract String getTableId();
     abstract SerializableScan getSerializableScan();
 
     @Override
@@ -163,14 +179,9 @@ public class BigtableHBaseIO {
         keyRange = keyRange.withEndKey(ByteKey.copyFrom(stopRow));
       }
 
-      BigtableOptions options =
-          BigtableOptionsFactory.fromConfiguration(getSerializableConfiguration().get()).toBuilder()
-            .setProjectId(getProjectId())
-            .setInstanceId(getInstanceId())
-            .build();
       BigtableIO.Read bigtableRead =
           BigtableIO.read()
-              .withBigtableOptions(options)
+              .withBigtableOptions(getOptions(this))
               .withKeyRange(keyRange)
               .withRowFilter(filter)
               .withTableId(getTableId());
@@ -181,13 +192,9 @@ public class BigtableHBaseIO {
   }
 
   @AutoValue
-  public static abstract class Write extends PTransform<PCollection<Mutation>, PDone> {
+  public static abstract class Write extends PTransform<PCollection<Mutation>, PDone>
+      implements CloudBigtableConfigurable {
     private static final long serialVersionUID = 1L;
-
-    abstract SerializableConfiguration getSerializableConfiguration();
-    abstract String getProjectId();
-    abstract String getInstanceId();
-    abstract String getTableId();
 
     @Override
     public abstract String toString();
@@ -207,15 +214,16 @@ public class BigtableHBaseIO {
       abstract Builder setInstanceId(String instanceId);
       abstract Builder setTableId(String tableId);
 
-      abstract Read build();
+      abstract Write build();
     }
 
     /**
      * Add an extended configuration option.  See {@link BigtableOptionsFactory} for more details.
      */
     public Write withConfiguration(String key, String value) {
-      getSerializableConfiguration().get().set(key, value);
-      return this;
+      Configuration newConfig = new Configuration(getSerializableConfiguration().get());
+      newConfig.set(key, value);
+      return toBuilder().setConfiguration(newConfig).build();
     }
 
     /**
@@ -226,17 +234,11 @@ public class BigtableHBaseIO {
      */
     @Override
     public PDone expand(PCollection<Mutation> input) {
-      SingleOutput<Mutation, KV<ByteString, Iterable<com.google.bigtable.v2.Mutation>>> transform =
-          ParDo.of(createTransform());
-
-      BigtableIO.Write write = BigtableIO.write()
-          .withBigtableOptions(
-            BigtableOptionsFactory.fromConfiguration(getSerializableConfiguration().get()))
-          .withTableId(getTableId());
-
       return input
-          .apply("Convert HBase to Bigtable Mutation",  transform)
-          .apply("BigtableIO Mutation writer", write);
+          .apply("Convert HBase to Bigtable Mutation",  ParDo.of(createTransform()))
+          .apply("BigtableIO Mutation writer", BigtableIO.write()
+              .withBigtableOptions(getOptions(this))
+              .withTableId(getTableId()));
     }
 
     private DoFn<Mutation, KV<ByteString, Iterable<com.google.bigtable.v2.Mutation>>>
@@ -249,7 +251,7 @@ public class BigtableHBaseIO {
         public void setup() {
           if (mutationsAdapter == null) {
             Configuration config = getSerializableConfiguration().get();
-            BigtableOptions options = BigtableOptionsFactory.fromConfiguration(config);
+            BigtableOptions options = getOptions(Write.this);
             PutAdapter putAdapter = Adapters.createPutAdapter(config, options);
             mutationsAdapter = Adapters.createMutationsAdapter(putAdapter);
           }
