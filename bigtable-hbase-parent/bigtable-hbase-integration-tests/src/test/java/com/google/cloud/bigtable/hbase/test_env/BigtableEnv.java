@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.Map.Entry;
@@ -29,16 +31,14 @@ class BigtableEnv extends SharedTestEnv {
 
   private static final Set<String> KEYS = Sets.newHashSet(
       "hbase.client.connection.impl",
-      "google.bigtable.endpoint.host",
-      "google.bigtable.endpoint.port",
-      "google.bigtable.admin.endpoint.host",
-      "google.bigtable.cluster.admin.endpoint.host",
-      "google.bigtable.project.id",
-      "google.bigtable.instance.id",
-      "google.bigtable.zone.name",
-      "google.bigtable.cluster.name",
-      "google.bigtable.use.bulk.api",
-      "google.bigtable.use.plaintext.negotiation"
+      BigtableOptionsFactory.BIGTABLE_PORT_KEY,
+      BigtableOptionsFactory.BIGTABLE_HOST_KEY,
+      BigtableOptionsFactory.BIGTABLE_INSTANCE_ADMIN_HOST_KEY,
+      BigtableOptionsFactory.BIGTABLE_TABLE_ADMIN_HOST_KEY,
+      BigtableOptionsFactory.PROJECT_ID_KEY,
+      BigtableOptionsFactory.INSTANCE_ID_KEY,
+      BigtableOptionsFactory.BIGTABLE_USE_BULK_API,
+      BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION
   );
   private Configuration configuration;
 

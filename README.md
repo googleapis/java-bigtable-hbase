@@ -30,20 +30,26 @@ which makes it easy for development teams to get started.
 
 ### Using the Java client
 
-* Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven), e.g.:
- ```xml
-  <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-1.2</artifactId>
-      <version>0.9.7.1</version>
-  </dependency>
+* Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven).
+  * bigtable-hbase-1.x: use for standalone applications where you are in control your dependencies.
+  * bigtable-hbase-1.x-hadoop: use in hadoop environments
+  * bigtable-hbase-1.x-shaded: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
 
-  <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-tcnative-boringssl-static</artifactId>
-      <version>1.1.33.Fork26</version>
-  </dependency>
-```
+* Example:
+   ```xml
+    <dependency>
+        <groupId>com.google.cloud.bigtable</groupId>
+        <artifactId>bigtable-hbase-1.x</artifactId>
+        <version>1.0.0-pre1</version>
+    </dependency>
+  
+    <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-tcnative-boringssl-static</artifactId>
+        <version>1.1.33.Fork26</version>
+    </dependency>
+  ```
+
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
 
 ## Questions and discussions

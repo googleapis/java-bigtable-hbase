@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-hbase-parent</artifactId>
-        <version>0.9.8-SNAPSHOT</version>
+        <version>1.0.0-pre2-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-hbase-integration-tests</artifactId>
@@ -29,6 +29,10 @@ limitations under the License.
     <description>
        This project contains test cases that ought to work for either bigtable-hbase or hbase proper.
     </description>
+
+    <properties>
+        <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
+    </properties>
 
     <profiles>
        <profile>
