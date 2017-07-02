@@ -51,6 +51,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
@@ -165,21 +166,28 @@ public class BigtableTable implements Table {
   @Override
   public boolean exists(Get get) throws IOException {
     LOG.trace("exists(Get)");
-    // TODO: make use of strip_value() or count to hopefully return no extra data
-    Result result = get(get);
-    return !result.isEmpty();
+    return !convertToResult(getResults(addKeyOnlyFilter(get), "exists")).isEmpty();
+  }
+
+  protected Get addKeyOnlyFilter(Get get) {
+    Get existsGet = new Get(get);
+    if (get.getFilter() == null) {
+      existsGet.setFilter(new KeyOnlyFilter());
+    } else {
+      existsGet.setFilter(new FilterList(get.getFilter(), new KeyOnlyFilter()));
+    }
+    return existsGet;
   }
 
   /** {@inheritDoc} */
   @Override
   public boolean[] existsAll(List<Get> gets) throws IOException {
     LOG.trace("existsAll(Get)");
-    Boolean[] existsObjects = getBatchExecutor().exists(gets);
-    boolean[] exists = new boolean[existsObjects.length];
-    for (int i = 0; i < existsObjects.length; i++) {
-      exists[i] = existsObjects[i];
+    List<Get> existGets = new ArrayList<>(gets.size());
+    for(Get get : gets ){
+      existGets.add(addKeyOnlyFilter(get));
     }
-    return exists;
+    return getBatchExecutor().exists(existGets);
   }
 
   /** {@inheritDoc} */
@@ -244,26 +252,31 @@ public class BigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
+    return convertToResult(getResults(get, "get"));
+  }
 
-    final int maxWaitMs = bigtableConnection.getSession().getOptions().getRetryOptions()
-        .getMaxElaspedBackoffMillis() + 1;
+  private List<FlatRow> getResults(Get get, String method) throws IOException {
+    final int maxWaitMs =
+        bigtableConnection.getSession().getOptions().getRetryOptions().getMaxElaspedBackoffMillis()
+            + 1;
 
     try (Timer.Context ignored = metrics.getTimer.time()) {
-      List<FlatRow> results = client.readFlatRowsAsync(hbaseAdapter.adapt(get))
-          .get(maxWaitMs, TimeUnit.MILLISECONDS);
-
-      if (results == null || results.isEmpty()) {
-        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(null);
-      } else if (results.size() == 1) {
-        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(results.get(0));
-      } else {
-        throw new IllegalStateException("Multiple responses found for Get");
-      }
+      return client.readFlatRowsAsync(hbaseAdapter.adapt(get)).get(maxWaitMs, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw logAndCreateIOException("get", get.getRow(), e);
+      throw logAndCreateIOException(method, get.getRow(), e);
     } catch (ExecutionException | TimeoutException | RuntimeException e) {
-      throw logAndCreateIOException("get", get.getRow(), e);
+      throw logAndCreateIOException(method, get.getRow(), e);
+    }
+  }
+
+  protected Result convertToResult(List<FlatRow> results) {
+    if (results == null || results.isEmpty()) {
+      return Adapters.FLAT_ROW_ADAPTER.adaptResponse(null);
+    } else if (results.size() == 1) {
+      return Adapters.FLAT_ROW_ADAPTER.adaptResponse(results.get(0));
+    } else {
+      throw new IllegalStateException("Multiple responses found for Get");
     }
   }
 
