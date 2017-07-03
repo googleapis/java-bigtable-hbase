@@ -145,7 +145,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     Code code = status.getCode();
     // CANCELLED
     if (code == Status.Code.CANCELLED) {
-      completionFuture.cancel(true);
+      if (completionFuture != null && !completionFuture.isDone()) {
+        completionFuture.cancel(true);
+      }
       // An explicit user cancellation is not considered a failure.
       operationTimerContext.close();
       return;
