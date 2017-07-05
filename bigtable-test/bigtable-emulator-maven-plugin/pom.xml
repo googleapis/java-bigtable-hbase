@@ -30,7 +30,7 @@ limitations under the License.
     <packaging>maven-plugin</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-        This project is a parent project for the bigtable test utilities
+        Maven integration for the cloud bigtable emulator.
     </description>
 
     <properties>
