@@ -352,4 +352,27 @@ public class TestCheckAndMutate extends AbstractTest {
       CompareOp.NOT_EQUAL, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertTrue("4000 != 2000 should succeed", success);
   }
+
+  @Test
+  public void testCompareOpsVersions() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] qualToCheck = dataHelper.randomData("toCheck-");
+    byte[] otherQual = dataHelper.randomData("other-");
+    boolean success;
+
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Put someRandomPut =
+        new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
+
+    table.put(new Put(rowKey, System.currentTimeMillis() - 10000)
+        .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck, Bytes.toBytes(2000l)));
+
+    table.put(new Put(rowKey, System.currentTimeMillis()).addColumn(SharedTestEnvRule.COLUMN_FAMILY,
+      qualToCheck, Bytes.toBytes(4000l)));
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.GREATER, Bytes.toBytes(3000l), someRandomPut);
+    Assert.assertFalse("3000 > 4000 should fail", success);
+
+  }
 }

@@ -96,6 +96,8 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       chainBuilder.addFilters(createTimeRangeFilter(scan.getTimeRange()));
     }
 
+    chainBuilder.addFilters(createColumnLimitFilter(scan.getMaxVersions()));
+
     if (scan.getFilter() != null) {
       Optional<RowFilter> userFilter = createUserFilter(scan, hooks);
       if (userFilter.isPresent()) {
@@ -103,7 +105,6 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       }
     }
 
-    chainBuilder.addFilters(createColumnLimitFilter(scan.getMaxVersions()));
 
     if (chainBuilder.getFiltersCount() == 1) {
       return chainBuilder.getFilters(0);
