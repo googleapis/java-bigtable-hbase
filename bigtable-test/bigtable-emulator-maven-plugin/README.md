@@ -69,3 +69,17 @@ Usage:
           .setInstanceId(System.getProperty("google.bigtable.instance.id"))
           .build();
   ```
+  Or, for hbase:
+  ```java
+      Configuration config = HBaseConfiguration.create();
+      Properties properties = new Properties();
+
+      try (InputStream in = Moo.class.getResourceAsStream("bigtable-emulator.properties")) {
+        properties.load(in);
+      }
+
+      for (Entry<Object, Object> entry : properties.entrySet()) {
+        config.set((String)entry.getKey(), (String)entry.getValue());
+      }
+      Connection connection = BigtableConfiguration.connect(config);
+   ```
