@@ -158,7 +158,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         || !retryOptions.isRetryable(code)
         // Unauthenticated is special because the request never made it to
         // to the server, so all requests are retryable
-        || !(isRequestRetryable() || code == Code.UNAUTHENTICATED)) {
+        || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
       rpc.getRpcMetrics().markFailure();
       operationTimerContext.close();
       setException(status.asRuntimeException());
