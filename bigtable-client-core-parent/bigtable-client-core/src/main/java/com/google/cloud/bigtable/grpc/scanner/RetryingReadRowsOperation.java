@@ -43,7 +43,7 @@ import io.grpc.stub.StreamObserver;
  */
 @NotThreadSafe
 public class RetryingReadRowsOperation extends
-    AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, Void> implements ScanHandler {
+    AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, String> implements ScanHandler {
 
   private static final String TIMEOUT_CANCEL_MSG = "Client side timeout induced cancellation";
 
@@ -68,19 +68,6 @@ public class RetryingReadRowsOperation extends
     super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata);
     this.rowObserver = observer;
     this.requestManager = new ReadRowsRequestManager(request);
-  }
-
-  /**
-   * The stream observer handles responses. Return null here, since a Future is not needed.
-   *
-   * <p>TODO(sduskis): Move {@link
-   * com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation.GrpcFuture} functionality into
-   * a {@link StreamObserver}, and use {@link StreamObserver} in {@link
-   * AbstractRetryingOperation}.
-   */
-  @Override
-  protected GrpcFuture<Void> createCompletionFuture() {
-    return null;
   }
 
   /**
@@ -136,7 +123,8 @@ public class RetryingReadRowsOperation extends
   public void onClose(Status status, Metadata trailers) {
     if (status.getCode() == Status.Code.CANCELLED
         && status.getDescription().contains(TIMEOUT_CANCEL_MSG)) {
-      // If this was canceled because of handleTimeout().  The cancel is immediately
+      // If this was canceled because of handleTimeout(). The cancel is immediately retried or
+      // completed in another fashion.
       return;
     }
     super.onClose(status, trailers);
@@ -163,6 +151,7 @@ public class RetryingReadRowsOperation extends
   @Override
   protected boolean onOK(Metadata trailers) {
     rowMerger.onCompleted();
+    completionFuture.set("");
     return true;
   }
 
@@ -185,7 +174,7 @@ public class RetryingReadRowsOperation extends
    */
   @Override
   public void handleTimeout(ScanTimeoutException rte) throws BigtableRetriesExhaustedException {
-    if ((clock.currentTimeMillis() - lastResponseMs) < retryOptions
+    if ((clock.currentTimeMillis() - lastResponseMs) >= retryOptions
         .getReadPartialRowTimeoutMillis()) {
       // This gets called from ResumingStreamingResultScanner which does not have knowledge
       // about neither partial cellChunks nor responses with a lastScannedRowKey set. In either
@@ -193,8 +182,6 @@ public class RetryingReadRowsOperation extends
       // continue on.
       //
       // In other words, the timeout has not occurred.  Proceed as normal, and wait for the RPC to proceed.
-      return;
-    } else {
       retryOnTimeout(rte);
     }
   }
@@ -215,7 +202,9 @@ public class RetryingReadRowsOperation extends
       // run the rpc asynchronously.
       retryExecutorService.execute(getRunnable());
     } else {
-      // terminate
+      // terminate.
+      // TODO(sduskis): This should invoke the same logic as onError(), including logging, operation
+      // completion metrics and completionFuture.set(..).
       this.rpc.getRpcMetrics().markRetriesExhasted();
       throw new BigtableRetriesExhaustedException(
           "Exhausted streaming retries after too many timeouts", rte);
