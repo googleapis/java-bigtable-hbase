@@ -63,12 +63,12 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
 
     @Override
-    protected boolean set(@Nullable RespT resp) {
+    public boolean set(@Nullable RespT resp) {
       return super.set(resp);
     }
 
     @Override
-    protected boolean setException(Throwable throwable) {
+    public boolean setException(Throwable throwable) {
       return super.setException(throwable);
     }
   }
@@ -116,11 +116,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.callOptions = callOptions;
     this.retryExecutorService = retryExecutorService;
     this.originalMetadata = originalMetadata;
-    this.completionFuture = createCompletionFuture();
-  }
-
-  protected GrpcFuture<ResultT> createCompletionFuture() {
-    return new GrpcFuture<>();
+    this.completionFuture = new GrpcFuture<>();
   }
 
   /** {@inheritDoc} */
