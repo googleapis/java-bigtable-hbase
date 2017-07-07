@@ -88,7 +88,9 @@ limitations under the License.
                         </goals>
                         <configuration>
                             <systemPropertiesFile>${bigtable.emulator.properties.path}</systemPropertiesFile>
-                            <includes>**/*IT.java</includes>
+                            <includes>
+                                <include>**/*IT.java</include>
+                            </includes>
                         </configuration>
                     </execution>
                 </executions>

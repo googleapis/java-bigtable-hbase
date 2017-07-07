@@ -80,7 +80,7 @@ limitations under the License.
 
     <profiles>
         <profile>
-            <id>run-its</id>
+            <id>bigtableEmulatorIts</id>
             <build>
 
                 <plugins>

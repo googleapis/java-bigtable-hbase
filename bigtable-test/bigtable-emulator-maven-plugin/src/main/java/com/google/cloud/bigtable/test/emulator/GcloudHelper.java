@@ -30,7 +30,7 @@ import java.util.concurrent.FutureTask;
 
 class GcloudHelper {
 
-  private static final String BIGTABLE_EMULATOR_ID = "cbt";
+  private static final String BIGTABLE_EMULATOR_ID = "bigtable";
 
   private final ExecutorService executor;
 
@@ -49,7 +49,8 @@ class GcloudHelper {
 
     if (!Arrays.asList(components).contains(BIGTABLE_EMULATOR_ID)) {
       throw new RuntimeException(
-          "Bigtable emulator is not installed, please install via `gcloud components install cbt`");
+          String.format(
+              "Bigtable emulator is not installed, please install via `gcloud components install %s`", BIGTABLE_EMULATOR_ID));
     }
 
     final File sdkRoot;
