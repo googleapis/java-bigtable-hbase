@@ -31,13 +31,15 @@ class EmulatorController {
 
   private final File emulatorPath;
   private final File portFile;
+  private final File logFile;
   private Process process;
   private int port;
   private boolean isStarted;
 
-  EmulatorController(File emulatorPath, File portFile) {
+  EmulatorController(File emulatorPath, File portFile, File logFile) {
     this.emulatorPath = emulatorPath;
     this.portFile = portFile;
+    this.logFile = logFile;
   }
 
   void start() throws IOException {
@@ -52,7 +54,11 @@ class EmulatorController {
     // so we have to invoke the emulator directly
 
     try {
-      process = Runtime.getRuntime().exec(emulatorPath.toString() + " --host=localhost --port=" + port);
+      process = new ProcessBuilder(emulatorPath.toString(), "--host=localhost", "--port=" + port)
+          .redirectErrorStream(true)
+          .redirectOutput(logFile)
+          .start();
+      //process = Runtime.getRuntime().exec(emulatorPath.toString() + " --host=localhost --port=" + port);
     } catch (FileNotFoundException e) {
       throw new RuntimeException("cbtemulator could not be found");
     }
@@ -105,11 +111,8 @@ class EmulatorController {
   }
 
   private int getFreePort() throws IOException {
-    try {
-      ServerSocket s = new ServerSocket(0);
-      int port = s.getLocalPort();
-      s.close();
-      return port;
+    try(ServerSocket s = new ServerSocket(0)) {
+      return s.getLocalPort();
     } catch (IOException e) {
       throw new IOException("Failed to find a free port", e);
     }
@@ -119,6 +122,7 @@ class EmulatorController {
 
     private File emulatorPath = null;
     private File portFilePath = null;
+    private File logPath = null;
 
     Builder setEmulatorPath(File path) {
       this.emulatorPath = path;
@@ -130,11 +134,23 @@ class EmulatorController {
       return this;
     }
 
+    Builder setLogPath(File path) {
+      this.logPath = path;
+      return this;
+    }
+
     EmulatorController build() {
       Preconditions.checkNotNull(emulatorPath, "emulatorPath can't be null");
       Preconditions.checkNotNull(portFilePath, "portFilePath can't be null");
 
-      return new EmulatorController(emulatorPath, portFilePath);
+      File effectiveLogPath = logPath;
+
+      if (effectiveLogPath== null) {
+        effectiveLogPath = new File(portFilePath.toString().replaceFirst("\\.[^\\\\/]+$", ".log"));
+      }
+
+
+      return new EmulatorController(emulatorPath, portFilePath, effectiveLogPath);
     }
 
   }

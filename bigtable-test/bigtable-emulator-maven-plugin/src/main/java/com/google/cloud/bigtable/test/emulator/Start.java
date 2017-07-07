@@ -34,6 +34,9 @@ public class Start extends AbstractMojo {
   @Parameter(readonly = true, defaultValue = "${project.build.testOutputDirectory}/bigtable-emulator.properties")
   private File propertiesPath;
 
+  @Parameter(readonly = true)
+  private File logPath;
+
   public void execute() throws MojoExecutionException {
     if (emulatorPath == null) {
       GcloudHelper helper = new GcloudHelper(Executors.newCachedThreadPool());
@@ -43,6 +46,7 @@ public class Start extends AbstractMojo {
     EmulatorController controller = new EmulatorController.Builder()
         .setEmulatorPath(emulatorPath)
         .setPortFilePath(propertiesPath)
+        .setLogPath(logPath)
         .build();
 
     getLog().debug("Starting bigtable emulator");

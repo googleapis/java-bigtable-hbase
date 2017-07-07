@@ -45,6 +45,8 @@ public class SimpleIT {
     String instanceId = System.getProperty("google.bigtable.instance.id");
     String tableId = "myTable";
     String family = "cf";
+    String key = "key";
+    String value = "value";
 
     String instanceName = "projects/" + projectId + "/instances/" + instanceId;
     String tableName = instanceName + "/tables/" + tableId;
@@ -78,13 +80,13 @@ public class SimpleIT {
       dataClient.mutateRow(
           MutateRowRequest.newBuilder()
               .setTableName(tableName)
-              .setRowKey(ByteString.copyFromUtf8("key"))
+              .setRowKey(ByteString.copyFromUtf8(key))
               .addMutations(
                   Mutation.newBuilder()
                       .setSetCell(
                           SetCell.newBuilder()
                               .setFamilyName(family)
-                              .setValue(ByteString.copyFromUtf8("value"))
+                              .setValue(ByteString.copyFromUtf8(value))
                       )
               )
               .build()
@@ -94,12 +96,12 @@ public class SimpleIT {
           .setTableName(tableName)
           .setRows(
               RowSet.newBuilder()
-                  .addRowKeys(ByteString.copyFromUtf8("key"))
+                  .addRowKeys(ByteString.copyFromUtf8(key))
           )
           .build()
       ).get();
 
-      Assert.assertEquals(ByteString.copyFromUtf8("value"), results.get(0).getFamilies(0).getColumns(0).getCells(0).getValue());
+      Assert.assertEquals(ByteString.copyFromUtf8(value), results.get(0).getFamilies(0).getColumns(0).getCells(0).getValue());
     }
   }
 }

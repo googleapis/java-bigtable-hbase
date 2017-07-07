@@ -34,6 +34,10 @@ public class Run extends AbstractMojo {
   @Parameter(readonly = true, defaultValue = "${project.build.testOutputDirectory}/bigtable-emulator.properties")
   private File propertiesPath;
 
+  @Parameter(readonly = true)
+  private File logPath;
+
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     if (emulatorPath == null) {
@@ -44,6 +48,7 @@ public class Run extends AbstractMojo {
     EmulatorController controller = new EmulatorController.Builder()
         .setEmulatorPath(emulatorPath)
         .setPortFilePath(propertiesPath)
+        .setLogPath(logPath)
         .build();
 
     getLog().debug("Starting bigtable emulator");
