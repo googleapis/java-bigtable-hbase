@@ -147,6 +147,9 @@ class EmulatorController {
 
       if (effectiveLogPath== null) {
         effectiveLogPath = new File(portFilePath.toString().replaceFirst("\\.[^\\\\/]+$", ".log"));
+        if (effectiveLogPath.equals(portFilePath)) {
+          effectiveLogPath = new File(effectiveLogPath.toString() + ".log");
+        }
       }
 
 
