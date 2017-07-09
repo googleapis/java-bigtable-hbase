@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -187,8 +188,8 @@ public class TestScanAdapter {
     );
   }
 
-  // Make sure that the scan rowSet is unaffected when the filter is not set
   @Test
+  /** Make sure that the scan rowSet is unaffected when the filter is not set */
   public void testNarrowedScanWithoutFilter() {
     Scan scan = new Scan();
     scan.setStartRow("a".getBytes());
@@ -204,6 +205,24 @@ public class TestScanAdapter {
         .build();
 
     Assert.assertEquals(expected, result);
+  }
 
+  @Test
+  public void testEmptyFilterList(){
+    Scan scan = new Scan();
+    scan.setFilter(new FilterList());
+    scan.setStartRow("a".getBytes());
+    scan.setStopRow("z".getBytes());
+
+    RowSet result = scanAdapter.adapt(scan, throwingReadHooks).build().getRows();
+    RowSet expected = RowSet.newBuilder()
+        .addRowRanges(
+            RowRange.newBuilder()
+                .setStartKeyClosed(ByteString.copyFromUtf8("a"))
+                .setEndKeyOpen(ByteString.copyFromUtf8("z"))
+        )
+        .build();
+
+    Assert.assertEquals(expected, result);
   }
 }

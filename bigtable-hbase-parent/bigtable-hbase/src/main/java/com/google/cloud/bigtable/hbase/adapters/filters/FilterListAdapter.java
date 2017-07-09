@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.Con
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
 import java.io.IOException;
@@ -123,7 +124,7 @@ public class FilterListAdapter
     final List<RangeSet<RowKeyWrapper>> childHints = collectChildHints(filter);
 
     if (childHints.isEmpty()) {
-      return ImmutableRangeSet.of();
+      return ImmutableRangeSet.of(Range.<RowKeyWrapper>all());
     }
     // Optimization
     else if (childHints.size() == 1) {
