@@ -28,9 +28,9 @@ public class RowKeyUtil {
    * simply increment the last byte of the array.
    * But if your application uses real binary rowids you may run into the scenario that your
    * prefix is something like:</p>
-   * &nbsp;&nbsp;&nbsp;<b>{ 0x12, 0x23, 0xFF, 0xFF }</b><br/>
-   * Then this stopRow needs to be fed into the actual scan<br/>
-   * &nbsp;&nbsp;&nbsp;<b>{ 0x12, 0x24 }</b> (Notice that it is shorter now)<br/>
+   * &nbsp;&nbsp;&nbsp;<b>{ 0x12, 0x23, 0xFF, 0xFF }</b><br>
+   * Then this stopRow needs to be fed into the actual scan<br>
+   * &nbsp;&nbsp;&nbsp;<b>{ 0x12, 0x24 }</b> (Notice that it is shorter now)<br>
    * This method calculates the correct stop row value for this usecase.
    *
    * @param rowKeyPrefix the rowKey<u>Prefix</u>.

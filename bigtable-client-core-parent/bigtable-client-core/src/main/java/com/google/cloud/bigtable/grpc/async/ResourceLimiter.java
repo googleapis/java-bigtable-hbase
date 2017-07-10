@@ -218,7 +218,7 @@ public class ResourceLimiter {
    *   <pre>
    *   if (rpc_latency &gt; threshold) {
    *      decrease parallelism by 10% of original maximum.
-   *   } else if (rpc_latency &lt; threshold && rpcsWereThrottled()) {
+   *   } else if (rpc_latency &lt; threshold &amp;&amp; rpcsWereThrottled()) {
    *      increase parallelism by 5% of original maximum.
    *   }
    * </pre>
