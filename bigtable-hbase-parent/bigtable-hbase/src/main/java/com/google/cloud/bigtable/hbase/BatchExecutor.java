@@ -263,7 +263,7 @@ public class BatchExecutor {
   public Result[] batch(List<? extends Row> actions) throws IOException {
     try {
       Object[] resultsOrErrors = new Object[actions.size()];
-      batch(actions, resultsOrErrors);
+      batchCallback(actions, resultsOrErrors, null);
       // At this point we are guaranteed that the array only contains results,
       // if it had any errors, batch would've thrown an exception
       Result[] results = new Result[resultsOrErrors.length];
@@ -327,11 +327,11 @@ public class BatchExecutor {
    * @return an array of {@link java.lang.Boolean} objects.
    * @throws java.io.IOException if any.
    */
-  public Boolean[] exists(List<Get> gets) throws IOException {
+  public boolean[] exists(List<Get> gets) throws IOException {
     // get(gets) will throw if there are any errors:
     Result[] getResults = batch(gets);
 
-    Boolean[] exists = new Boolean[getResults.length];
+    boolean[] exists = new boolean[getResults.length];
     for (int index = 0; index < getResults.length; index++) {
       exists[index] = !getResults[index].isEmpty();
     }
