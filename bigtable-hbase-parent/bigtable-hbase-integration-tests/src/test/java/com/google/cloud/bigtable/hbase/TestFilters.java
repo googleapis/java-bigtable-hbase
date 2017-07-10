@@ -1288,11 +1288,13 @@ public class TestFilters extends AbstractTest {
     try (ResultScanner scanner = table.getScanner(scan)) {
       for (Result r : scanner) {
         List<Cell> cells = r.getColumnCells(COLUMN_FAMILY, qualA);
-        Assert.assertEquals("Expected 1 result, but got " + cells.size(), 1, cells.size());
-        if (i < expected.length) {
-          actual[i] = Integer.parseInt(Bytes.toString(CellUtil.cloneValue(cells.get(0))));
+        if (!cells.isEmpty()) {
+          Assert.assertEquals("Expected 1 result, but got " + cells.size(), 1, cells.size());
+          if (i < expected.length) {
+            actual[i] = Integer.parseInt(Bytes.toString(CellUtil.cloneValue(cells.get(0))));
+          }
+          i++;
         }
-        i++;
       }
     }
     Assert.assertEquals(expected.length, i);
