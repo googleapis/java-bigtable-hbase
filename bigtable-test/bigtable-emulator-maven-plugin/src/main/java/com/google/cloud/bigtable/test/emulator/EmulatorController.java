@@ -83,6 +83,7 @@ class EmulatorController {
     process.destroy();
     //noinspection ResultOfMethodCallIgnored
     portFile.delete();
+    isStarted = false;
   }
 
   void waitForTermination() throws InterruptedException {

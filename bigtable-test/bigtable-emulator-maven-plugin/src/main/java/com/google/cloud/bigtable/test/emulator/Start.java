@@ -55,6 +55,10 @@ public class Start extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoExecutionException("Failed to start emulator", e);
     }
+
+    // In case the user kills maven using ctrl-c & stop doesn't get to run, make sure to kill the process
+    Runtime.getRuntime().addShutdownHook(new EmulatorKiller(controller));
+
     getLog().info("Bigtable emulator is running on port: " + controller.getPort());
     getLog().info("Connection properties written to: " + propertiesPath);
 
@@ -64,5 +68,22 @@ public class Start extends AbstractMojo {
   @SuppressWarnings("unchecked")
   private void setController(EmulatorController controller) {
     getPluginContext().put(EmulatorController.class, controller);
+  }
+
+
+  private static class EmulatorKiller extends Thread {
+
+    private final EmulatorController controller;
+
+    public EmulatorKiller(EmulatorController controller) {
+      this.controller = controller;
+    }
+
+    @Override
+    public void run() {
+      if (controller.isStarted()) {
+        controller.stop();
+      }
+    }
   }
 }
