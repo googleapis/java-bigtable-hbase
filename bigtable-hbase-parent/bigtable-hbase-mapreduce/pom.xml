@@ -66,13 +66,6 @@ limitations under the License.
             <artifactId>hbase-server</artifactId>
             <version>${hbase.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <version>${netty-tcnative-boringssl-static.version}</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>

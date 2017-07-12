@@ -60,12 +60,6 @@ limitations under the License.
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-       <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative-boringssl-static</artifactId>
-           <version>${netty-tcnative-boringssl-static.version}</version>
-           <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
