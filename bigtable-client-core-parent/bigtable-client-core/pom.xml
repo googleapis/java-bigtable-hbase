@@ -49,6 +49,11 @@ limitations under the License.
             <artifactId>commons-logging</artifactId>
             <version>${commons-logging.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
 
         <!-- Auth -->
         <dependency>
@@ -78,12 +83,21 @@ limitations under the License.
                 </exclusion>
             </exclusions>
         </dependency>
-
-        <!-- TODO: group with other general deps -->
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client</artifactId>
+            <version>${google.http.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>${google.api.client.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava-jdk5</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- GRPC -->
@@ -91,13 +105,6 @@ limitations under the License.
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${protobuff-java.version}</version>
-        </dependency>
-
-        <!-- TODO: group with other metrics deps -->
-        <dependency>
-            <groupId>com.google.instrumentation</groupId>
-            <artifactId>instrumentation-api</artifactId>
-            <version>${instrumentation-java.version}</version>
         </dependency>
 
         <dependency>
@@ -150,30 +157,18 @@ limitations under the License.
             <version>${grpc.version}</version>
         </dependency>
 
-        <!-- TODO: group with auth -->
-        <dependency>
-            <groupId>com.google.http-client</groupId>
-            <artifactId>google-http-client</artifactId>
-            <version>${google.http.client.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.api-client</groupId>
-            <artifactId>google-api-client</artifactId>
-            <version>${google.api.client.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava-jdk5</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <!-- Metrics -->
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
             <version>${dropwizard.metrics.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.instrumentation</groupId>
+            <artifactId>instrumentation-api</artifactId>
+            <version>${instrumentation-java.version}</version>
+        </dependency>
+
 
         <!-- Test -->
         <dependency>
