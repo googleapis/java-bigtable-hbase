@@ -26,7 +26,6 @@ limitations under the License.
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <bigtable.emulator.properties.path>${project.build.testOutputDirectory}/bigtable-emulator.properties</bigtable.emulator.properties.path>
     </properties>
 
     <dependencies>
@@ -71,7 +70,7 @@ limitations under the License.
                             <goal>stop</goal>
                         </goals>
                         <configuration>
-                            <propertiesPath>${bigtable.emulator.properties.path}</propertiesPath>
+                            <propertyName>bigtable.emulator.endpoint</propertyName>
                         </configuration>
                     </execution>
                 </executions>
@@ -91,6 +90,9 @@ limitations under the License.
                             <includes>
                                 <include>**/*IT.java</include>
                             </includes>
+                            <environmentVariables>
+                                <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
+                            </environmentVariables>
                         </configuration>
                     </execution>
                 </executions>

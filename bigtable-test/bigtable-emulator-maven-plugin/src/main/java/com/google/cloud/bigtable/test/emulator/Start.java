@@ -24,18 +24,22 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 
-@Mojo(name = "start", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST)
+@Mojo(name = "start", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = true)
 public class Start extends AbstractMojo {
+  @Parameter( defaultValue = "${project}", readonly = true, required = true )
+  private MavenProject project;
+
+  @Parameter( defaultValue = "${project.build.directory}/bigtable-emulator.log", readonly = true, required = true )
+  private File logFile;
 
   @Parameter(readonly = true)
   private File emulatorPath;
 
-  @Parameter(readonly = true, defaultValue = "${project.build.testOutputDirectory}/bigtable-emulator.properties")
-  private File propertiesPath;
+  @Parameter(readonly = true, defaultValue = "bigtable.emulator.endpoint")
+  private String propertyName;
 
-  @Parameter(readonly = true)
-  private File logPath;
 
   public void execute() throws MojoExecutionException {
     if (emulatorPath == null) {
@@ -45,8 +49,7 @@ public class Start extends AbstractMojo {
 
     EmulatorController controller = new EmulatorController.Builder()
         .setEmulatorPath(emulatorPath)
-        .setPortFilePath(propertiesPath)
-        .setLogPath(logPath)
+        .setLogFile(logFile)
         .build();
 
     getLog().debug("Starting bigtable emulator");
@@ -59,8 +62,8 @@ public class Start extends AbstractMojo {
     // In case the user kills maven using ctrl-c & stop doesn't get to run, make sure to kill the process
     Runtime.getRuntime().addShutdownHook(new EmulatorKiller(controller));
 
-    getLog().info("Bigtable emulator is running on port: " + controller.getPort());
-    getLog().info("Connection properties written to: " + propertiesPath);
+    project.getProperties().setProperty(propertyName, "localhost:" + controller.getPort());
+    getLog().info("BIGTABLE_EMULATOR_HOST=localhost:" + controller.getPort());
 
     setController(controller);
   }
