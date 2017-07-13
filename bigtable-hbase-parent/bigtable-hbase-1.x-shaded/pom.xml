@@ -39,6 +39,12 @@ limitations under the License.
 
   <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
   <dependency>
+    <groupId>io.netty</groupId>
+    <artifactId>netty-tcnative-boringssl-static</artifactId>
+    <version>${netty-tcnative-boringssl-static.version}</version>
+  </dependency>
+
+  <dependency>
     <groupId>org.apache.hbase</groupId>
     <artifactId>hbase-shaded-client</artifactId>
     <version>${hbase.version}</version>
@@ -82,6 +88,8 @@ limitations under the License.
               <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
               <artifactSet>
                 <excludes>
+                  <!-- exclude jni deps -->
+                  <exclude>io.netty:netty-tcnative-boringssl-static</exclude>
                   <!-- exclude user visible deps -->
                   <exclude>io.dropwizard.metrics:metrics-core</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
