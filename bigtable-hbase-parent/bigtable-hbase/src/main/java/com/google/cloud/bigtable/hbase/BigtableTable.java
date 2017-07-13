@@ -257,7 +257,7 @@ public class BigtableTable implements Table {
 
   private List<FlatRow> getResults(Get get, String method) throws IOException {
     final int maxWaitMs =
-        bigtableConnection.getSession().getOptions().getRetryOptions().getMaxElaspedBackoffMillis()
+        bigtableConnection.getSession().getOptions().getRetryOptions().getMaxElapsedBackoffMillis()
             + 1;
 
     try (Timer.Context ignored = metrics.getTimer.time()) {
