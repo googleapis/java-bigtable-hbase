@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import com.google.cloud.bigtable.hbase.categories.KnownEmulatorGap;
 import com.google.common.base.Stopwatch;
 
 import org.apache.hadoop.hbase.Cell;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import org.junit.experimental.categories.Category;
 
 public class TestBasicOps extends AbstractTest {
   /**
@@ -127,6 +129,7 @@ public class TestBasicOps extends AbstractTest {
    * Cell size includes value and key info, so the value needs to a bit less than the max to work.
    */
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testPutGetBigValue() throws IOException {
     testPutGetDeleteExists((10 << 20) - 1024, false, true);  // 10 MB - 1kB
   }
@@ -138,6 +141,7 @@ public class TestBasicOps extends AbstractTest {
    * (downloading).  We need a way to see where the issue is.
    */
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testPutBigValue() throws IOException {
     testPutGetDeleteExists((10 << 20) - 1024, false, false);  // 10 MB - 1kB
   }
@@ -149,16 +153,19 @@ public class TestBasicOps extends AbstractTest {
    * Ensure the failure case.
    */
   @Test(expected = IllegalArgumentException.class)
+  @Category(KnownEmulatorGap.class)
   public void testPutTooBigValue() throws IOException {
     testPutGetDeleteExists((10 << 20) + 1, true, true); // 10 MB + 1
   }
 
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testPutAlmostTooBigValue() throws IOException {
     testPutGetDeleteExists(10 << 20, true, true); // 10 MB
   }
 
   @Test
+  @Category(KnownEmulatorGap.class)
   /** Run a large value ten times for performance logging purposes */
   public void testPutAlmostTooBigValueTenTimes() throws IOException {
     for (int i = 0; i < 10; i++) {
