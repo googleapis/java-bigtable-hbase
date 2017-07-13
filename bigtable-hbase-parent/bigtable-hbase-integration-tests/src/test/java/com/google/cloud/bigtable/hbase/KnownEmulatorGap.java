@@ -1,5 +1,3 @@
-package com.google.cloud.bigtable.hbase;
-
 /*
  * Copyright 2017 Google Inc. All Rights Reserved.
  *
@@ -15,5 +13,6 @@ package com.google.cloud.bigtable.hbase;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public interface KnownEmulatorGap {
-}
+package com.google.cloud.bigtable.hbase;
+
+public interface KnownEmulatorGap { }
