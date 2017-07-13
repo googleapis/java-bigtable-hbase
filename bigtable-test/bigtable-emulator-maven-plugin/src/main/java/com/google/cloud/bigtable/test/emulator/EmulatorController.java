@@ -97,6 +97,10 @@ class EmulatorController {
     props.setProperty("google.bigtable.admin.endpoint.host", "localhost");
     props.setProperty("google.bigtable.endpoint.host", "localhost");
 
+    // emulator supports only a single unencrypted connection
+    props.setProperty("google.bigtable.grpc.channel.count", "1");
+    props.setProperty("google.bigtable.use.plaintext.negotiation", "true");
+
     // emulator doesn't care about projects & instances
     props.setProperty("google.bigtable.project.id", "fakeproject");
     props.setProperty("google.bigtable.instance.id", "fakeinstance");
