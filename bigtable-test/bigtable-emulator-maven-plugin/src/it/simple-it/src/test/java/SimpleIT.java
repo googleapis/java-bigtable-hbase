@@ -41,8 +41,8 @@ import org.junit.runners.JUnit4;
 public class SimpleIT {
   @Test
   public void testConnection() throws Exception {
-    String projectId = System.getProperty("google.bigtable.project.id");
-    String instanceId = System.getProperty("google.bigtable.instance.id");
+    String projectId = "fake-project";
+    String instanceId = "fake-instance";
     String tableId = "myTable";
     String family = "cf";
     String key = "key";
@@ -53,12 +53,6 @@ public class SimpleIT {
 
     BigtableOptions opts = new BigtableOptions.Builder()
         .setUserAgent("fake")
-        .setCredentialOptions(CredentialOptions.nullCredential())
-        .setUsePlaintextNegotiation(true)
-        .setPort(Integer.parseInt(System.getProperty("google.bigtable.endpoint.port")))
-        .setDataHost(System.getProperty("google.bigtable.endpoint.host"))
-        .setInstanceAdminHost(System.getProperty("google.bigtable.instance.admin.endpoint.host"))
-        .setTableAdminHost(System.getProperty("google.bigtable.admin.endpoint.host"))
         .setProjectId(projectId)
         .setInstanceId(instanceId)
         .build();

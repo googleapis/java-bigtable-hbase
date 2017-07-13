@@ -19,35 +19,24 @@ package com.google.cloud.bigtable.test.emulator;
 import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.util.Properties;
 
 
 class EmulatorController {
 
   private final File emulatorPath;
-  private final File portFile;
   private final File logFile;
   private Process process;
   private int port;
   private boolean isStarted;
 
-  EmulatorController(File emulatorPath, File portFile, File logFile) {
+  EmulatorController(File emulatorPath, File logFile) {
     this.emulatorPath = emulatorPath;
-    this.portFile = portFile;
     this.logFile = logFile;
   }
 
   void start() throws IOException {
-    if (portFile.exists()) {
-      throw new FileAlreadyExistsException(portFile.toString(), null,
-          "Port file already exists. If the emulator crashed, please delete it");
-    }
-
     port = getFreePort();
 
     // `gcloud beta emulators bigtable start` creates subprocesses and java doesn't kill process trees
@@ -62,8 +51,6 @@ class EmulatorController {
     } catch (FileNotFoundException e) {
       throw new RuntimeException("cbtemulator could not be found");
     }
-
-    writeProps();
 
     isStarted = true;
   }
@@ -81,38 +68,11 @@ class EmulatorController {
 
   void stop() {
     process.destroy();
-    //noinspection ResultOfMethodCallIgnored
-    portFile.delete();
     isStarted = false;
   }
 
-  void waitForTermination() throws InterruptedException {
-    process.waitFor();
-  }
-
-  private void writeProps() throws IOException {
-    Properties props = new Properties();
-    props.setProperty("google.bigtable.endpoint.port", Integer.toString(port));
-    props.setProperty("google.bigtable.instance.admin.endpoint.host", "localhost");
-    props.setProperty("google.bigtable.admin.endpoint.host", "localhost");
-    props.setProperty("google.bigtable.endpoint.host", "localhost");
-
-    // emulator doesn't care about projects & instances
-    props.setProperty("google.bigtable.project.id", "fakeproject");
-    props.setProperty("google.bigtable.instance.id", "fakeinstance");
-    // disable authentication
-    props.setProperty("google.bigtable.auth.service.account.enable", "false");
-    props.setProperty("google.bigtable.auth.null.credential.enable", "true");
-
-    Files.createDirectories(portFile.toPath().getParent());
-
-    try (FileOutputStream fout = new FileOutputStream(portFile, false)) {
-      props.store(fout, "Bigtable emulator parameters");
-    }
-  }
-
   private int getFreePort() throws IOException {
-    try(ServerSocket s = new ServerSocket(0)) {
+    try (ServerSocket s = new ServerSocket(0)) {
       return s.getLocalPort();
     } catch (IOException e) {
       throw new IOException("Failed to find a free port", e);
@@ -122,39 +82,23 @@ class EmulatorController {
   static class Builder {
 
     private File emulatorPath = null;
-    private File portFilePath = null;
-    private File logPath = null;
+    private File logFile = null;
 
     Builder setEmulatorPath(File path) {
       this.emulatorPath = path;
       return this;
     }
 
-    Builder setPortFilePath(File path) {
-      this.portFilePath = path;
-      return this;
-    }
-
-    Builder setLogPath(File path) {
-      this.logPath = path;
+    Builder setLogFile(File path) {
+      this.logFile = path;
       return this;
     }
 
     EmulatorController build() {
       Preconditions.checkNotNull(emulatorPath, "emulatorPath can't be null");
-      Preconditions.checkNotNull(portFilePath, "portFilePath can't be null");
+      Preconditions.checkNotNull(logFile, "logFile can't be null");
 
-      File effectiveLogPath = logPath;
-
-      if (effectiveLogPath== null) {
-        effectiveLogPath = new File(portFilePath.toString().replaceFirst("\\.[^\\\\/]+$", ".log"));
-        if (effectiveLogPath.equals(portFilePath)) {
-          effectiveLogPath = new File(effectiveLogPath.toString() + ".log");
-        }
-      }
-
-
-      return new EmulatorController(emulatorPath, portFilePath, effectiveLogPath);
+      return new EmulatorController(emulatorPath, logFile);
     }
 
   }
