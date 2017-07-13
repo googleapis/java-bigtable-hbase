@@ -17,9 +17,6 @@ Usage:
   ```gcloud components install cbt```
 - Add the plugin to your pom.xml and configure the maven failsafe plugin:
   ```xml
-  <properties>
-    <bigtable.emulator.properties.path>${project.build.testOutputDirectory}/bigtable-emulator.properties</bigtable.emulator.properties.path>
-  </properties>
   <build>
       <plugin>
           <groupId>com.google.cloud.bigtable</groupId>
@@ -32,7 +29,7 @@ Usage:
                       <goal>stop</goal>
                   </goals>
                   <configuration>
-                      <propertiesPath>${bigtable.emulator.properties.path}</propertiesPath>
+                      <propertyName>bigtable.emulator.endpoint</propertyName>
                   </configuration>
               </execution>
           </executions>
@@ -47,39 +44,24 @@ Usage:
                     <goal>verify</goal>
                 </goals>
                 <configuration>
-                    <systemPropertiesFile>${bigtable.emulator.properties.path}</systemPropertiesFile>
-                    <includes>**/*IT.java</includes>
+                    <environmentVariables>
+                        <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
+                    </environmentVariables>
                 </configuration>
             </execution>
         </executions>
     </plugin>
   </build>
   ```
-- In your integration test, connect to the emulator:
+- Your integration tests will read the `BIGTABLE_EMULATOR_HOST` environment variable and connect to the emulator:
   ```java
       BigtableOptions opts = new BigtableOptions.Builder()
           .setUserAgent("fake")
-          .setCredentialOptions(CredentialOptions.nullCredential())
-          .setUsePlaintextNegotiation(true)
-          .setPort(Integer.parseInt(System.getProperty("google.bigtable.endpoint.port")))
-          .setDataHost(System.getProperty("google.bigtable.endpoint.host"))
-          .setInstanceAdminHost(System.getProperty("google.bigtable.instance.admin.endpoint.host"))
-          .setTableAdminHost(System.getProperty("google.bigtable.admin.endpoint.host"))
-          .setProjectId(System.getProperty("google.bigtable.project.id"))
-          .setInstanceId(System.getProperty("google.bigtable.instance.id"))
+          .setProjectId("fakeproject")
+          .setInstanceId("fakeinstance")
           .build();
   ```
   Or, for hbase:
   ```java
-      Configuration config = HBaseConfiguration.create();
-      Properties properties = new Properties();
-
-      try (InputStream in = Moo.class.getResourceAsStream("bigtable-emulator.properties")) {
-        properties.load(in);
-      }
-
-      for (Entry<Object, Object> entry : properties.entrySet()) {
-        config.set((String)entry.getKey(), (String)entry.getValue());
-      }
-      Connection connection = BigtableConfiguration.connect(config);
+      Connection connection = BigtableConfiguration.connect("fakeproject", "fakeinstace");
    ```
