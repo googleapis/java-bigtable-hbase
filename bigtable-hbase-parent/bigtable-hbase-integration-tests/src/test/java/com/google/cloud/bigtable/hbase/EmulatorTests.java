@@ -1,8 +1,8 @@
-package com.google.cloud.bigtable.hbase.suites;
+package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.IntegrationTests;
 import com.google.cloud.bigtable.hbase.KnownGap;
-import com.google.cloud.bigtable.hbase.categories.KnownEmulatorGap;
+import com.google.cloud.bigtable.hbase.KnownEmulatorGap;
 import org.junit.experimental.categories.Categories;
 import org.junit.experimental.categories.Categories.ExcludeCategory;
 import org.junit.runner.RunWith;

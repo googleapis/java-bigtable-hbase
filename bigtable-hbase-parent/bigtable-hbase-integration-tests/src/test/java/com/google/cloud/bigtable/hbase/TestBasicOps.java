@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-import com.google.cloud.bigtable.hbase.categories.KnownEmulatorGap;
 import com.google.common.base.Stopwatch;
 
 import org.apache.hadoop.hbase.Cell;

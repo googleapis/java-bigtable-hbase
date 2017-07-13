@@ -1,4 +1,4 @@
-package com.google.cloud.bigtable.hbase.categories;
+package com.google.cloud.bigtable.hbase;
 
 /*
  * Copyright 2017 Google Inc. All Rights Reserved.
