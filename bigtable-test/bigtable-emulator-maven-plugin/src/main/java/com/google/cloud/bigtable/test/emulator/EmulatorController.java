@@ -19,12 +19,8 @@ package com.google.cloud.bigtable.test.emulator;
 import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.util.Properties;
 
 
 class EmulatorController {
@@ -76,7 +72,7 @@ class EmulatorController {
   }
 
   private int getFreePort() throws IOException {
-    try(ServerSocket s = new ServerSocket(0)) {
+    try (ServerSocket s = new ServerSocket(0)) {
       return s.getLocalPort();
     } catch (IOException e) {
       throw new IOException("Failed to find a free port", e);
