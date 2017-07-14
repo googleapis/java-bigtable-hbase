@@ -21,9 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -169,7 +166,7 @@ public class BigtableTable implements Table {
     return !convertToResult(getResults(addKeyOnlyFilter(get), "exists")).isEmpty();
   }
 
-  protected Get addKeyOnlyFilter(Get get) {
+  private Get addKeyOnlyFilter(Get get) {
     Get existsGet = new Get(get);
     if (get.getFilter() == null) {
       existsGet.setFilter(new KeyOnlyFilter());
@@ -255,28 +252,23 @@ public class BigtableTable implements Table {
     return convertToResult(getResults(get, "get"));
   }
 
-  private List<FlatRow> getResults(Get get, String method) throws IOException {
-    final int maxWaitMs =
-        bigtableConnection.getSession().getOptions().getRetryOptions().getMaxElapsedBackoffMillis()
-            + 1;
-
-    try (Timer.Context ignored = metrics.getTimer.time()) {
-      return client.readFlatRowsAsync(hbaseAdapter.adapt(get)).get(maxWaitMs, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw logAndCreateIOException(method, get.getRow(), e);
-    } catch (ExecutionException | TimeoutException | RuntimeException e) {
-      throw logAndCreateIOException(method, get.getRow(), e);
+  private FlatRow getResults(Get get, String method) throws IOException {
+    try (Timer.Context ignored = metrics.getTimer.time();
+        com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
+            client.readFlatRows(hbaseAdapter.adapt(get))) {
+      FlatRow row = scanner.next();
+      if (scanner.next() != null) {
+        throw new IllegalStateException("Multiple responses found for " + method);
+      }
+      return row;
     }
   }
 
-  protected Result convertToResult(List<FlatRow> results) {
-    if (results == null || results.isEmpty()) {
+  protected Result convertToResult(FlatRow row) {
+    if (row == null) {
       return Adapters.FLAT_ROW_ADAPTER.adaptResponse(null);
-    } else if (results.size() == 1) {
-      return Adapters.FLAT_ROW_ADAPTER.adaptResponse(results.get(0));
     } else {
-      throw new IllegalStateException("Multiple responses found for Get");
+      return Adapters.FLAT_ROW_ADAPTER.adaptResponse(row);
     }
   }
 

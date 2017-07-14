@@ -34,8 +34,6 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.conf.Configuration;
@@ -59,7 +57,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
@@ -110,10 +107,11 @@ public class TestBigtableTable {
     TableName tableName = TableName.valueOf(TEST_TABLE);
     HBaseRequestAdapter hbaseAdapter =
         new HBaseRequestAdapter(options, tableName, config);
-    Mockito.when(mockConnection.getConfiguration()).thenReturn(config);
-    Mockito.when(mockConnection.getSession()).thenReturn(mockSession);
-    Mockito.when(mockSession.getOptions()).thenReturn(options);
-    Mockito.when(mockSession.getDataClient()).thenReturn(mockClient);
+    when(mockConnection.getConfiguration()).thenReturn(config);
+    when(mockConnection.getSession()).thenReturn(mockSession);
+    when(mockSession.getOptions()).thenReturn(options);
+    when(mockSession.getDataClient()).thenReturn(mockClient);
+    when(mockClient.readFlatRows(isA(ReadRowsRequest.class))).thenReturn(mockResultScanner);
     table = new BigtableTable(mockConnection, hbaseAdapter);
   }
 
@@ -123,7 +121,7 @@ public class TestBigtableTable {
 
     ArgumentCaptor<MutateRowRequest> argument =
         ArgumentCaptor.forClass(MutateRowRequest.class);
-    Mockito.verify(mockClient).mutateRow(argument.capture());
+    verify(mockClient).mutateRow(argument.capture());
 
     Assert.assertEquals(
         "projects/testproject/instances/testinstance/tables/testtable",
@@ -132,12 +130,6 @@ public class TestBigtableTable {
 
   @Test
   public void getRequestsAreFullyPopulated() throws IOException {
-    SettableFuture<List<FlatRow>> result = SettableFuture.create();
-    result.set(Lists.<FlatRow>newArrayList());
-
-    Mockito.when(mockClient.readFlatRowsAsync(Mockito.any(ReadRowsRequest.class)))
-        .thenReturn(result);
-
     table.get(
         new Get(Bytes.toBytes("rowKey1"))
             .addColumn(
@@ -147,7 +139,7 @@ public class TestBigtableTable {
     ArgumentCaptor<ReadRowsRequest> argument =
         ArgumentCaptor.forClass(ReadRowsRequest.class);
 
-    Mockito.verify(mockClient).readFlatRowsAsync(argument.capture());
+    verify(mockClient).readFlatRows(argument.capture());
 
     Assert.assertEquals(
         "projects/testproject/instances/testinstance/tables/testtable",
@@ -236,7 +228,6 @@ public class TestBigtableTable {
 
   @Test
   public void getScanner_withBigtableWhileMatchResultScannerAdapter() throws IOException {
-    when(mockClient.readFlatRows(isA(ReadRowsRequest.class))).thenReturn(mockResultScanner);
     // A row with no matching label. In case of {@link BigtableWhileMatchResultScannerAdapter} the
     // result is null.
     FlatRow row = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("row_key"))
