@@ -195,7 +195,7 @@ public class TestRetryingUnaryOperation {
           (BigtableRetriesExhaustedException) e.getCause();
       StatusRuntimeException sre = (StatusRuntimeException) retriesExhaustedException.getCause();
       Assert.assertEquals(errorStatus.getCode(), sre.getStatus().getCode());
-      long maxSleep = TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis());
+      long maxSleep = TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElapsedBackoffMillis());
       Assert.assertTrue(
         String.format("Slept only %d seconds", TimeUnit.NANOSECONDS.toSeconds(totalSleep.get())),
         totalSleep.get() >= maxSleep);

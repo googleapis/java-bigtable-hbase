@@ -27,7 +27,7 @@ limitations under the License.
     </description>
 
     <properties>
-        <gcsconnector.version>1.4.5-hadoop2</gcsconnector.version>
+        <gcsconnector.version>1.6.1-hadoop2</gcsconnector.version>
         <!-- A guava version that is compatible with both gcs-connector and hadoop2. This overrides
             guava version specification in parent project. -->
         <guava.version>15.0</guava.version>
@@ -58,12 +58,6 @@ limitations under the License.
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <version>${netty-tcnative-boringssl-static.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

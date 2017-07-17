@@ -39,16 +39,17 @@ public class KeyOnlyFilterAdapter extends TypedFilterAdapterBase<KeyOnlyFilter> 
       1L,
       Bytes.toBytes('v'));
 
+  protected static RowFilter KEY_ONLY_FILTER =
+      RowFilter.newBuilder()
+          .setChain(Chain.newBuilder()
+              .addFilters(RowFilter.newBuilder().setCellsPerRowLimitFilter(1).build())
+              .addFilters(RowFilter.newBuilder().setStripValueTransformer(true).build()).build())
+          .build();
+
   /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, KeyOnlyFilter filter) throws IOException {
-    return RowFilter.newBuilder()
-        .setChain(
-            Chain.newBuilder()
-                .addFilters(RowFilter.newBuilder().setCellsPerRowLimitFilter(1).build())
-                .addFilters(RowFilter.newBuilder().setStripValueTransformer(true).build())
-                .build())
-        .build();
+    return KEY_ONLY_FILTER;
   }
 
   /** {@inheritDoc} */

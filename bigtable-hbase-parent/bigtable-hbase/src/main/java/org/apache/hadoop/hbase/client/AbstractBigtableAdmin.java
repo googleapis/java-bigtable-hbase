@@ -611,7 +611,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
-              "Failed to %d column '%s' in table '%s'",
+              "Failed to %s column '%s' in table '%s'",
               modificationType,
               columnName,
               tableName.getNameAsString()),

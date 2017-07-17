@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -48,6 +49,7 @@ public interface BigtableAsyncUtilities {
       MethodDescriptor<RequestT, ResponseT> method, Predicate<RequestT> isRetryable);
 
   public static class Default implements BigtableAsyncUtilities {
+    private static final Logger LOG = new Logger(BigtableAsyncUtilities.class);
     private final Channel channel;
 
     public Default(Channel channel) {
@@ -83,12 +85,14 @@ public interface BigtableAsyncUtilities {
           try {
             call.sendMessage(request);
           } catch (Throwable t) {
+            LOG.error("Could not sendMessage()", t);
             call.cancel("Exception in sendMessage.", t);
             throw Throwables.propagate(t);
           }
           try {
             call.halfClose();
           } catch (Throwable t) {
+            LOG.error("Could not halfClose()", t);
             call.cancel("Exception in halfClose.", t);
             throw Throwables.propagate(t);
           }

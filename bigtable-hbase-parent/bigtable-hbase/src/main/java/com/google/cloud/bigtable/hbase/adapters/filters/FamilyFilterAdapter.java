@@ -30,7 +30,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import java.io.IOException;
 
 /**
- * Adapter for a single {@lnk FamilyFilter} to a Cloud Bigtable RowFilter.
+ * Adapter for a single {@link FamilyFilter} to a Cloud Bigtable RowFilter.
  */
 public class FamilyFilterAdapter extends TypedFilterAdapterBase<FamilyFilter> {
   ReaderExpressionHelper readerExpressionHelper = new ReaderExpressionHelper();

@@ -189,6 +189,58 @@ limitations under the License.
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>emulatorTests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>${project.groupId}</groupId>
+                        <artifactId>bigtable-emulator-maven-plugin</artifactId>
+                        <version>${project.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>start</goal>
+                                    <goal>stop</goal>
+                                </goals>
+                                <configuration>
+                                    <propertyName>bigtable.emulator.endpoint</propertyName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>emulator-integration-test</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>**/EmulatorTests.java</include>
+                                    </includes>
+                                    <reportNameSuffix>emulator</reportNameSuffix>
+                                    <systemPropertyVariables>
+                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
+                                        <google.bigtable.project.id>fake-project</google.bigtable.project.id>
+                                        <google.bigtable.instance.id>fake-instance</google.bigtable.instance.id>
+                                    </systemPropertyVariables>
+                                    <environmentVariables>
+                                        <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
+                                    </environmentVariables>
+                                    <trimStackTrace>false</trimStackTrace>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <dependencies>
@@ -218,12 +270,6 @@ limitations under the License.
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-testing-util</artifactId>
             <version>${hbase.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <version>${netty-tcnative-boringssl-static.version}</version>
             <scope>test</scope>
         </dependency>
 

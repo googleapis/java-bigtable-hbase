@@ -54,7 +54,6 @@ import com.google.common.base.Preconditions;
 
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.GrpcSslContexts;
@@ -277,7 +276,7 @@ public class BigtableSession implements Closeable {
   /**
    * Snapshot operations need various aspects of a {@link BigtableClusterName}. This method gets a
    * clusterId from either a lookup (projectId and instanceId translate to a single clusterId when
-   * an instance has only one cluster) or from {@link BigtableOptions#getClusterId()}.
+   * an instance has only one cluster).
    */
   public synchronized BigtableClusterName getClusterName() throws IOException {
     if (this.clusterName == null) {
@@ -368,7 +367,8 @@ public class BigtableSession implements Closeable {
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
       ManagedChannel channel = createChannelPool(options.getTableAdminHost(), 1);
-      tableAdminClient = new BigtableTableAdminGrpcClient(channel);
+      tableAdminClient = new BigtableTableAdminGrpcClient(channel,
+          BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
     }
     return tableAdminClient;
   }

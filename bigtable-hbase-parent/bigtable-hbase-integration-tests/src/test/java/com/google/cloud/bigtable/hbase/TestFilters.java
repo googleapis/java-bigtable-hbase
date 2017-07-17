@@ -73,7 +73,6 @@ import org.junit.experimental.categories.Category;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -1123,6 +1122,24 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
+  public void testWhileMatchFilter_withUpdate() throws IOException {
+    String rowKeyPrefix = dataHelper.randomString("wmf-wu-");
+    byte[] qualA = dataHelper.randomData("qualA");
+    Table table = addDataForTesting(rowKeyPrefix, qualA);
+
+    table.put(new Put(Bytes.toBytes(rowKeyPrefix + "14")).addColumn(COLUMN_FAMILY, qualA,
+      Bytes.toBytes(String.valueOf(2))));
+
+    ByteArrayComparable valueComparable = new BinaryComparator(String.valueOf(2).getBytes());
+    SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
+        COLUMN_FAMILY, qualA, CompareFilter.CompareOp.NOT_EQUAL, valueComparable);
+    Scan scan = new Scan().setFilter(new WhileMatchFilter(valueFilter));
+
+    int[] expected = {0, 1, 10, 11, 12, 13};
+    assertWhileMatchFilterResult(qualA, table, scan, expected);
+  }
+
+  @Test
   public void testSingleValueFilterAscii() throws IOException {
     byte[] qual = dataHelper.randomData("testSingleValueFilterCompOps");
     // Add {, }, and @ to make sure that they do not need to be encoded
@@ -1269,14 +1286,18 @@ public class TestFilters extends AbstractTest {
     int[] actual = new int[expected.length];
     int i = 0;
     try (ResultScanner scanner = table.getScanner(scan)) {
-      Iterator<Result> iterator = scanner.iterator();
-      while (iterator.hasNext()) {
-        for (Cell cell : iterator.next().getColumnCells(COLUMN_FAMILY, qualA)) {
-          int cellIntValue = Integer.parseInt(Bytes.toString(CellUtil.cloneValue(cell)));
-          actual[i++] = cellIntValue;
+      for (Result r : scanner) {
+        List<Cell> cells = r.getColumnCells(COLUMN_FAMILY, qualA);
+        if (!cells.isEmpty()) {
+          Assert.assertEquals("Expected 1 result, but got " + cells.size(), 1, cells.size());
+          if (i < expected.length) {
+            actual[i] = Integer.parseInt(Bytes.toString(CellUtil.cloneValue(cells.get(0))));
+          }
+          i++;
         }
       }
     }
+    Assert.assertEquals(expected.length, i);
     Assert.assertArrayEquals(expected, actual);
   }
 

@@ -109,7 +109,7 @@ public class TestBigtableOptionsFactory {
       retryOptions.enableRetries());
     assertEquals(
         RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS,
-        retryOptions.getMaxElaspedBackoffMillis());
+        retryOptions.getMaxElapsedBackoffMillis());
     assertEquals(
         RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS,
         retryOptions.getReadPartialRowTimeoutMillis());
@@ -128,7 +128,7 @@ public class TestBigtableOptionsFactory {
         BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
     assertEquals(false, retryOptions.enableRetries());
     assertEquals(false, retryOptions.retryOnDeadlineExceeded());
-    assertEquals(111, retryOptions.getMaxElaspedBackoffMillis());
+    assertEquals(111, retryOptions.getMaxElapsedBackoffMillis());
     assertEquals(123, retryOptions.getReadPartialRowTimeoutMillis());
   }
 }
