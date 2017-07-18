@@ -58,8 +58,7 @@ limitations under the License.
         <compat.module>hbase-hadoop2-compat</compat.module>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
-        <grpc.version>1.4.0</grpc.version>
-        <instrumentation-java.version>0.4.3</instrumentation-java.version>
+        <grpc.version>1.5.0</grpc.version>
         <netty.version>4.1.8.Final</netty.version>
         <protobuff-java.version>3.3.1</protobuff-java.version>
         <protoc.version>3.3.0</protoc.version>
