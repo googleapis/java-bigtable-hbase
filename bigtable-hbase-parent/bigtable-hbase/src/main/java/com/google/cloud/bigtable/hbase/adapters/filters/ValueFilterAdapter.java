@@ -75,8 +75,14 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
       case LESS_OR_EQUAL:
         return createRowFilter(ValueRange.newBuilder().setEndValueClosed(value));
       case EQUAL:
-      return createRowFilter(
-        ValueRange.newBuilder().setStartValueClosed(value).setEndValueClosed(value));
+        if (comparator.getValue().length == 0) {
+          // The empty case does needs to use valueRegexFilter, since "end value closed" of empty
+          // is not allowed by the server.
+          return RowFilter.newBuilder().setValueRegexFilter(value).build();
+        } else {
+          return createRowFilter(
+            ValueRange.newBuilder().setStartValueClosed(value).setEndValueClosed(value));
+        }
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
         return RowFilter.newBuilder()

@@ -1185,6 +1185,18 @@ public class TestFilters extends AbstractTest {
     }
   }
 
+  @Test
+  public void testSingleValueFilterEmpty() throws IOException {
+    byte[] qual = dataHelper.randomData("testSingleValueFilterEmpty");
+    // Add {, }, and @ to make sure that they do not need to be encoded
+    byte[] rowKey = dataHelper.randomData("Empty");
+    byte[] empty = new byte[0];
+    try (Table table = getTable()) {
+      table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, empty));
+      assertKeysReturnedForSCVF(table, qual, CompareOp.EQUAL, empty, rowKey);
+    }
+  }
+
   private void assertKeysReturnedForSCVF(Table table, byte[] qualifier, CompareOp operator,
       byte[] value, byte[]... expectedKeys) throws IOException {
     SingleColumnValueFilter filter =
