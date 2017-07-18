@@ -168,12 +168,6 @@ limitations under the License.
             <artifactId>metrics-core</artifactId>
             <version>${dropwizard.metrics.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.google.instrumentation</groupId>
-            <artifactId>instrumentation-api</artifactId>
-            <version>${instrumentation-java.version}</version>
-        </dependency>
-
 
         <!-- Test -->
         <dependency>
