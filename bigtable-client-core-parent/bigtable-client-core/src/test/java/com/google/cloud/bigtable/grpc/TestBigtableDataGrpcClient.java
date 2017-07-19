@@ -44,6 +44,7 @@ import com.google.bigtable.v2.MutateRowsRequest.Entry;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.RowRange;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -192,11 +193,19 @@ public class TestBigtableDataGrpcClient {
     verifyRequestCalled(requestBuilder.build());
   }
 
+  @Test
+  public void testListReadRows() {
+    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
+    setResponse(ReadRowsResponse.getDefaultInstance());
+    defaultClient.readFlatRowsList(requestBuilder.build());
+    verifyRequestCalled(requestBuilder.build());
+  }
+
   private void setResponse(final Object response) {
     Answer<Void> answer = new Answer<Void>(){
-
       @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
+      public Void answer(final InvocationOnMock invocation) throws Throwable {
         checkHeader(invocation.getArgumentAt(1, Metadata.class));
         ClientCall.Listener listener = invocation.getArgumentAt(0, ClientCall.Listener.class);
         listener.onMessage(response);

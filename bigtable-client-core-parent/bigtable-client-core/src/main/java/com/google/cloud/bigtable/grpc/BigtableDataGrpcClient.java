@@ -320,6 +320,13 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         FLAT_ROW_LIST_TRANSFORMER);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public List<FlatRow> readFlatRowsList(ReadRowsRequest request) {
+    return FLAT_ROW_LIST_TRANSFORMER.apply(
+      createStreamingListener(request, readRowsAsync, request.getTableName()).getBlockingResult());
+  }
+
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
     CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);

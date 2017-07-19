@@ -139,7 +139,7 @@ public class TestBigtableTable {
     ArgumentCaptor<ReadRowsRequest> argument =
         ArgumentCaptor.forClass(ReadRowsRequest.class);
 
-    verify(mockClient).readFlatRows(argument.capture());
+    verify(mockClient).readFlatRowsList(argument.capture());
 
     Assert.assertEquals(
         "projects/testproject/instances/testinstance/tables/testtable",

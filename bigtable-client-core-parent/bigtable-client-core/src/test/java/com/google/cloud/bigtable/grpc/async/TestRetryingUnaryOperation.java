@@ -91,6 +91,7 @@ public class TestRetryingUnaryOperation {
     retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
 
     when(readAsync.getRpcMetrics()).thenReturn(metrics);
+    when(readAsync.getMethodDescriptor()).thenReturn(BigtableGrpc.METHOD_READ_ROWS);
 
     underTest = new RetryingUnaryOperation<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
         readAsync, CallOptions.DEFAULT, executorService, new Metadata());
@@ -130,7 +131,7 @@ public class TestRetryingUnaryOperation {
     Answer<Void> answer = new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        Listener listener = invocation.getArgumentAt(2, ClientCall.Listener.class);
+        Listener listener = invocation.getArgumentAt(1, ClientCall.Listener.class);
         listener.onMessage(result);
         listener.onClose(Status.OK, null);
         return null;
@@ -138,11 +139,11 @@ public class TestRetryingUnaryOperation {
     };
     doAnswer(answer)
         .when(readAsync)
-        .startNewCall(
-            any(CallOptions.class),
+        .start(
             any(ReadRowsRequest.class),
             any(ClientCall.Listener.class),
-            any(Metadata.class));
+            any(Metadata.class),
+            any(ClientCall.class));
     ListenableFuture future = underTest.getAsyncResult();
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
     verify(nanoClock, times(0)).nanoTime();
@@ -156,7 +157,7 @@ public class TestRetryingUnaryOperation {
     Answer<Void> answer = new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        Listener listener = invocation.getArgumentAt(2, ClientCall.Listener.class);
+        Listener listener = invocation.getArgumentAt(1, ClientCall.Listener.class);
         if (counter.incrementAndGet() < 5) {
           listener.onClose(errorStatus, null);
         } else {
@@ -166,8 +167,8 @@ public class TestRetryingUnaryOperation {
         return null;
       }
     };
-    doAnswer(answer).when(readAsync).startNewCall(any(CallOptions.class),
-      any(ReadRowsRequest.class), any(ClientCall.Listener.class), any(Metadata.class));
+    doAnswer(answer).when(readAsync).start(any(ReadRowsRequest.class),
+      any(ClientCall.Listener.class), any(Metadata.class), any(ClientCall.class));
     ListenableFuture future = underTest.getAsyncResult();
 
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
@@ -180,12 +181,12 @@ public class TestRetryingUnaryOperation {
     Answer<Void> answer = new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgumentAt(2, ClientCall.Listener.class).onClose(errorStatus, null);
+        invocation.getArgumentAt(1, ClientCall.Listener.class).onClose(errorStatus, null);
         return null;
       }
     };
-    doAnswer(answer).when(readAsync).startNewCall(any(CallOptions.class),
-      any(ReadRowsRequest.class), any(ClientCall.Listener.class), any(Metadata.class));
+    doAnswer(answer).when(readAsync).start(any(ReadRowsRequest.class),
+      any(ClientCall.Listener.class), any(Metadata.class), any(ClientCall.class));
     try {
       underTest.getAsyncResult().get(1, TimeUnit.SECONDS);
       Assert.fail();

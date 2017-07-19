@@ -128,6 +128,7 @@ public class TestRetryingMutateRowsOperation {
   public void setup() {
     MockitoAnnotations.initMocks(this);
     when(mutateRows.getRpcMetrics()).thenReturn(metrics);
+    when(mutateRows.getMethodDescriptor()).thenReturn(BigtableGrpc.METHOD_MUTATE_ROWS);
     retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
   }
 
