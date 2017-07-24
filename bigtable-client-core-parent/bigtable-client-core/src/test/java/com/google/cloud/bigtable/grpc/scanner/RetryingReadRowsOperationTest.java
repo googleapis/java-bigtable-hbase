@@ -39,6 +39,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.StringValue;
 import com.google.api.client.util.Clock;
+import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.RowRange;
@@ -111,15 +112,15 @@ public class RetryingReadRowsOperationTest {
 
   private RetryingReadRowsOperation underTest;
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({ "rawtypes" })
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     metaData = new Metadata();
 
-    when(mockRetryableRpc.startNewCall(any(CallOptions.class), any(ReadRowsRequest.class),
-      any(ClientCall.Listener.class), any(Metadata.class))).thenReturn(mockClientCall);
+    when(mockRetryableRpc.newCall(any(CallOptions.class))).thenReturn(mockClientCall);
     when(mockRetryableRpc.getRpcMetrics()).thenReturn(mockRpcMetrics);
+    when(mockRetryableRpc.getMethodDescriptor()).thenReturn(BigtableGrpc.METHOD_READ_ROWS);
     when(mockRpcMetrics.timeOperation()).thenReturn(mockOperationTimerContext);
     when(mockRpcMetrics.timeRpc()).thenReturn(mockRpcTimerContext);
 
@@ -312,11 +313,12 @@ public class RetryingReadRowsOperationTest {
     underTest.getAsyncResult();
     verify(mockRpcMetrics, times(1)).timeOperation();
     verify(mockRpcMetrics, times(1)).timeRpc();
-    verify(mockRetryableRpc, times(1)).startNewCall(
-      eq(CallOptions.DEFAULT),
+    verify(mockRetryableRpc, times(1)).newCall(eq(CallOptions.DEFAULT));
+    verify(mockRetryableRpc, times(1)).start(
       eq(READ_ENTIRE_TABLE_REQUEST),
       same(underTest),
-      any(Metadata.class));
+      any(Metadata.class),
+      same(mockClientCall));
   }
 
   private void finishOK(int expectedRetryCount) {

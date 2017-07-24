@@ -77,9 +77,13 @@ public interface BigtableAsyncUtilities {
         }
 
         @Override
-        public ClientCall<RequestT, ResponseT> startNewCall(CallOptions callOptions,
-            RequestT request, Listener<ResponseT> listener, Metadata metadata) {
-          ClientCall<RequestT, ResponseT> call = channel.newCall(method, callOptions);
+        public ClientCall<RequestT, ResponseT> newCall(CallOptions callOptions) {
+          return channel.newCall(method, callOptions);
+        }
+
+        @Override
+        public void start(RequestT request, Listener<ResponseT> listener, Metadata metadata,
+            ClientCall<RequestT, ResponseT> call) {
           call.start(listener, metadata);
           call.request(1);
           try {
@@ -96,7 +100,6 @@ public interface BigtableAsyncUtilities {
             call.cancel("Exception in halfClose.", t);
             throw Throwables.propagate(t);
           }
-          return call;
         }
       };
     }

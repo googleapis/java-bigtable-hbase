@@ -253,14 +253,16 @@ public class BigtableTable implements Table {
   }
 
   private FlatRow getResults(Get get, String method) throws IOException {
-    try (Timer.Context ignored = metrics.getTimer.time();
-        com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
-            client.readFlatRows(hbaseAdapter.adapt(get))) {
-      FlatRow row = scanner.next();
-      if (scanner.next() != null) {
+    try (Timer.Context ignored = metrics.getTimer.time()) {
+      List<FlatRow> list = client.readFlatRowsList(hbaseAdapter.adapt(get));
+      switch(list.size()) {
+      case 0:
+        return null;
+      case 1:
+        return list.get(0);
+      default:
         throw new IllegalStateException("Multiple responses found for " + method);
       }
-      return row;
     }
   }
 

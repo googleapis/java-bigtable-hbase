@@ -24,8 +24,10 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
+import com.google.bigtable.v2.BigtableGrpc;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.CallOptionsFactory;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.Timer;
@@ -37,6 +39,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
@@ -231,12 +235,28 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     Metadata metadata = new Metadata();
     metadata.merge(originalMetadata);
     synchronized (callLock) {
-      call = rpc.startNewCall(getCallOptions(), getRetryRequest(), this, metadata);
+      // There's a subtle race condition in RetryingStreamOperation which requires a separate
+      // newCall/start split. The call variable needs to be set before onMessage() happens; that
+      // usually will occur, but some unit tests broke with a merged newCall and start.
+      call = rpc.newCall(getCallOptions());
+      rpc.start(getRetryRequest(), this, metadata, call);
     }
   }
 
   protected CallOptions getCallOptions() {
-    return callOptions;
+    if (callOptions.getDeadline() != null) {
+      return callOptions;
+    }
+    MethodDescriptor<RequestT, ResponseT> methodDescriptor = rpc.getMethodDescriptor();
+    if (methodDescriptor.getType() != MethodType.UNARY) {
+      if (methodDescriptor == BigtableGrpc.METHOD_READ_ROWS
+          && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet(request)) {
+        // This is a streaming read.
+        return callOptions;
+      } // else this is a 1) mutateRows or 2) SampleRowKeys or 3) a get, all of which can benefit
+        // from a timeout equal to a unary operation.
+    }
+    return callOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
   }
 
   protected RequestT getRetryRequest() {

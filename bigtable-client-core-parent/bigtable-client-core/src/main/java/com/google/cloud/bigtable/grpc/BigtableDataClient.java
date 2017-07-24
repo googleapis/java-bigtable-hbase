@@ -149,6 +149,14 @@ public interface BigtableDataClient {
   ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request);
 
   /**
+   * Returns a list of {@link FlatRow}s, in key order.
+   *
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   * @return a List with {@link FlatRow}s.
+   */
+  List<FlatRow> readFlatRowsList(ReadRowsRequest request);
+
+  /**
    * Perform a scan over {@link FlatRow}s, in key order.
    *
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
