@@ -144,10 +144,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     Code code = status.getCode();
     // CANCELLED
     if (code == Status.Code.CANCELLED) {
-      if (!completionFuture.isDone()) {
-        // cancel(true) would trigger GrpcFuture.interuptTask().  We don't want that to happen.
-        completionFuture.cancel(false);
-      }
+      completionFuture.setException(status.asRuntimeException());
       // An explicit user cancellation is not considered a failure.
       operationTimerContext.close();
       return;
