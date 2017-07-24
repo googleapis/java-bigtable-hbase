@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc.async;
 import io.grpc.Status.Code;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -42,28 +43,30 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 
 /**
- * A {@link com.google.common.util.concurrent.AsyncFunction} that retries a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} request.
- *
- * @author sduskis
- * @version $Id: $Id
+ * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
  */
 public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT>  {
 
   /** Constant <code>LOG</code> */
-  protected final static Logger LOG = new Logger(AbstractRetryingOperation.class);
+  protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
 
   // The server-side has a 5 minute timeout. Unary operations should be timed-out on the client side
   // after 6 minutes.
-  protected final static long UNARY_DEADLINE_MINUTES = 6l;
+  protected static final long UNARY_DEADLINE_MINUTES = 6l;
 
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
+    /**
+     * This gets called from {@link Future#cancel(boolean)} for cancel(true). If a user explicitly
+     * cancels the Future, that should trigger a cancellation of the RPC.
+     */
     @Override
     protected void interruptTask() {
-      AbstractRetryingOperation.this.cancel("Request interrupted.");
+      if (!isDone()) {
+        AbstractRetryingOperation.this.cancel("Request interrupted.");
+      }
     }
 
     @Override
@@ -94,7 +97,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected final GrpcFuture<ResultT> completionFuture;
   protected Object callLock = new String("");
   protected ClientCall<RequestT, ResponseT> call;
-  private Timer.Context operationTimerContext;
+  protected Timer.Context operationTimerContext;
   protected Timer.Context rpcTimerContext;
 
   /**
@@ -145,7 +148,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     Code code = status.getCode();
     // CANCELLED
     if (code == Status.Code.CANCELLED) {
-      completionFuture.cancel(true);
+      completionFuture.setException(status.asRuntimeException());
       // An explicit user cancellation is not considered a failure.
       operationTimerContext.close();
       return;
@@ -169,20 +172,20 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
     // Backoffs timed out.
     if (nextBackOff == BackOff.STOP) {
-      rpc.getRpcMetrics().markRetriesExhasted();
-      operationTimerContext.close();
-
-      String message = String.format("Exhausted retries after %d failures.", failedCount);
-      StatusRuntimeException cause = status.asRuntimeException();
-      setException(new BigtableRetriesExhaustedException(message, cause));
-      return;
+      setException(getExhaustedRetriesException(status));
     } else {
       String channelId = ChannelPool.extractIdentifier(trailers);
       LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s",
           status.getCause(), failedCount, status, channelId);
+      performRetry(nextBackOff);
     }
+  }
 
-    performRetry(nextBackOff);
+  protected BigtableRetriesExhaustedException getExhaustedRetriesException(Status status) {
+    rpc.getRpcMetrics().markRetriesExhasted();
+    operationTimerContext.close();
+    String message = String.format("Exhausted retries after %d failures.", failedCount);
+    return new BigtableRetriesExhaustedException(message, status.asRuntimeException());
   }
 
   protected void performRetry(long nextBackOff) {

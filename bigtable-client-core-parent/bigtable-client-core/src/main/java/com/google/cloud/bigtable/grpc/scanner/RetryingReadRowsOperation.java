@@ -181,7 +181,8 @@ public class RetryingReadRowsOperation extends
       // case, a streaming response was sent, but the queue was not filled. In that case, just
       // continue on.
       //
-      // In other words, the timeout has not occurred.  Proceed as normal, and wait for the RPC to proceed.
+      // In other words, the timeout has not occurred. Proceed as normal, and wait for the RPC to
+      // proceed.
       retryOnTimeout(rte);
     }
   }
@@ -193,21 +194,16 @@ public class RetryingReadRowsOperation extends
     // Cancel the existing rpc.
     cancel(TIMEOUT_CANCEL_MSG);
     rpcTimerContext.close();
+    failedCount++;
 
     // Can this request be retried
-    if (retryOptions.enableRetries()
-        && ++timeoutRetryCount <= retryOptions.getMaxScanTimeoutRetries()) {
-      this.rpc.getRpcMetrics().markRetry();
+    int maxRetries = retryOptions.getMaxScanTimeoutRetries();
+    if (retryOptions.enableRetries() && ++timeoutRetryCount <= maxRetries) {
+      rpc.getRpcMetrics().markRetry();
       resetStatusBasedBackoff();
-      // run the rpc asynchronously.
-      retryExecutorService.execute(getRunnable());
+      run();
     } else {
-      // terminate.
-      // TODO(sduskis): This should invoke the same logic as onError(), including logging, operation
-      // completion metrics and completionFuture.set(..).
-      this.rpc.getRpcMetrics().markRetriesExhasted();
-      throw new BigtableRetriesExhaustedException(
-          "Exhausted streaming retries after too many timeouts", rte);
+      throw getExhaustedRetriesException(Status.ABORTED);
     }
   }
 
