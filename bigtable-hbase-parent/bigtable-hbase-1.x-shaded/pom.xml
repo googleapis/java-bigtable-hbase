@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.0.0-pre2</version>
+    <version>1.0.0-pre3-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -34,7 +34,7 @@ limitations under the License.
   <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>1.0.0-pre2</version>
+    <version>1.0.0-pre3-SNAPSHOT</version>
   </dependency>
 
   <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
