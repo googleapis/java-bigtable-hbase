@@ -48,20 +48,24 @@ public class ResponseQueueReader implements StreamObserver<FlatRow> {
     return firstResponseTimer;
   }
 
-  protected final BlockingQueue<ResultQueueEntry<FlatRow>> resultQueue;
-  protected AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
+  private final BlockingQueue<ResultQueueEntry<FlatRow>> resultQueue =
+      new LinkedBlockingQueue<>();
+  private AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
   private boolean lastResponseProcessed = false;
   private Long startTime;
+  private ScanHandler scanHandler;
 
   /**
    * <p>Constructor for ResponseQueueReader.</p>
-   * @param capacityCap a int.
    */
-  public ResponseQueueReader(int capacityCap) {
-    this.resultQueue = new LinkedBlockingQueue<>(capacityCap);
+  public ResponseQueueReader() {
     if (BigtableClientMetrics.isEnabled(MetricLevel.Info)) {
       startTime = System.nanoTime();
     }
+  }
+
+  public void setScanHandler(ScanHandler scanHandler) {
+    this.scanHandler = scanHandler;
   }
 
   /**
@@ -89,6 +93,9 @@ public class ResponseQueueReader implements StreamObserver<FlatRow> {
       return queueEntry.getResponseOrThrow();
     case Exception:
       return queueEntry.getResponseOrThrow();
+    case RequestResultMarker:
+      scanHandler.requestResult();
+      return getNextMergedRow();
     default:
       throw new IllegalStateException("Cannot process type: " + queueEntry.getType());
     }
@@ -159,6 +166,21 @@ public class ResponseQueueReader implements StreamObserver<FlatRow> {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
+    }
+  }
+
+  /**
+   * This marker notifies {@link #getNextMergedRow()} to request more results and allows for flow
+   * control based on the state of the {@link #resultQueue}. If rows are removed from the queue
+   * quickly, {@link #getNextMergedRow()} will request more results. If rows are not read fast
+   * enough, 
+   */
+  public void addRequestResultMarker() {
+    try {
+      resultQueue.put(ResultQueueEntry.<FlatRow> requestResultMarker());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while addRetrieveResultMarker a ResultQueueEntry", e);
     }
   }
 }

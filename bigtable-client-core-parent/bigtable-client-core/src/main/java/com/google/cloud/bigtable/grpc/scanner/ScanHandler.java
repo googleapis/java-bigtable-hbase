@@ -32,4 +32,9 @@ public interface ScanHandler {
    * Perform an rpc cancellation given a client-side request.
    */
   public void cancel();
+
+  /**
+   * Requests the next result from the server-side.
+   */
+  public void requestResult();
 }

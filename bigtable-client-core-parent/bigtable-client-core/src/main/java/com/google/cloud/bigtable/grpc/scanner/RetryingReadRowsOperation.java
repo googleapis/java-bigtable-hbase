@@ -83,22 +83,31 @@ public class RetryingReadRowsOperation extends
     // restart the clock.
     lastResponseMs = clock.currentTimeMillis();
     this.rowMerger = new RowMerger(rowObserver);
-    super.run();
+    synchronized (callLock) {
+      super.run();
+      // pre-fetch one more result, for performance reasons.
+      call.request(1);
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public void onMessage(ReadRowsResponse message) {
-    // Pre-fetch the next request
-    call.request(1);
     resetStatusBasedBackoff();
+    if (rowObserver instanceof ResponseQueueReader) {
+      // ResponseQueueReader will only read more results if prior FlatRows were retrieved from the
+      // queue.
+      ((ResponseQueueReader) rowObserver).addRequestResultMarker();
+    } else {
+      call.request(1);
+    }
     lastResponseMs = clock.currentTimeMillis();
     // We've had at least one successful RPC, reset the backoff and retry counter
     timeoutRetryCount = 0;
 
     ByteString previouslyProcessedKey = rowMerger.getLastCompletedRowKey();
 
-    // This may take some time.
+    // This may take some time. This must not block so that gRPC worker threads don't leak.
     rowMerger.onNext(message);
 
     ByteString lastProcessedKey = rowMerger.getLastCompletedRowKey();
@@ -165,6 +174,15 @@ public class RetryingReadRowsOperation extends
     this.lastResponseMs = clock.currentTimeMillis();
   }
 
+  @Override
+  public void requestResult() {
+    synchronized(callLock) {
+      if (call != null) {
+        call.request(1);
+      }
+    }
+  }
+
   /**
    * This gets called by {@link ResumingStreamingResultScanner} when a queue is empty via {@link
    * ResponseQueueReader#getNext()}.
@@ -217,8 +235,8 @@ public class RetryingReadRowsOperation extends
     return currentBackoff;
   }
 
-  /** @return the rowMerger */
-  public RowMerger getRowMerger() {
+  @VisibleForTesting
+  RowMerger getRowMerger() {
     return rowMerger;
   }
 }
