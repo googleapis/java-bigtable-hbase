@@ -97,8 +97,7 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
    * @param request The request to send.
    * @param listener A listener which handles responses.
    * @param metadata A set of predefined headers to use.
-   *
-   * @return A ClientCall that represents a new request.
+   * @param call A {@link ClientCall}.
    */
   void start(REQUEST request, Listener<RESPONSE> listener, Metadata metadata,
       ClientCall<REQUEST, RESPONSE> call);
