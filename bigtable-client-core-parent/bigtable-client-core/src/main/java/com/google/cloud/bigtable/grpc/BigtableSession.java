@@ -52,7 +52,9 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
+import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
+import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
 import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.internal.GrpcUtil;
@@ -178,10 +180,19 @@ public class BigtableSession implements Closeable {
       int maxInflightRpcs = options.getBulkOptions().getMaxInflightRpcs();
       long maxMemory = options.getBulkOptions().getMaxMemory();
       resourceLimiter = new ResourceLimiter(maxMemory, maxInflightRpcs);
+      BulkOptions bulkOptions = options.getBulkOptions();
+      if (bulkOptions.isEnableBulkMutationThrottling()) {
+        resourceLimiter.throttle(bulkOptions.getBulkMutationRpcTargetMs());
+      }
     }
   }
 
   private final BigtableDataClient dataClient;
+
+  // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
+  // synchronous operations.
+  private final BigtableDataClient throttlingDataClient;
+
   private BigtableTableAdminClient tableAdminClient;
   private BigtableInstanceGrpcClient instanceAdminClient;
 
@@ -195,9 +206,6 @@ public class BigtableSession implements Closeable {
    * clusterID based on BigtableOptions projectId and instanceId.  See {@link BigtableClusterUtilities}
    */
   private BigtableClusterName clusterName;
-
-  private ThrottlingClientInterceptor throttlingClientInterceptor =
-      new ThrottlingClientInterceptor();
 
   /**
    * <p>Constructor for BigtableSession.</p>
@@ -221,7 +229,6 @@ public class BigtableSession implements Closeable {
     LOG.info("Bigtable options: %s.", options);
 
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
-    clientInterceptorsList.add(throttlingClientInterceptor);
     clientInterceptorsList
         .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
     // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
@@ -243,20 +250,33 @@ public class BigtableSession implements Closeable {
     clientInterceptors =
         clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
 
-    ChannelPool dataChannel = getDataChannelPool();
+    Channel dataChannel = getDataChannelPool();
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
     // More often than not, users want the dataClient. Create a new one in the constructor.
-    this.dataClient =
+    CallOptionsFactory.ConfiguredCallOptionsFactory callOptionsFactory =
+        new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig());
+    dataClient =
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
-    dataClient.setCallOptionsFactory(
-      new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig()));
+    dataClient.setCallOptionsFactory(callOptionsFactory);
+
+    // Async operations can run amok, so they need to have some throttling. The throttling is
+    // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
+    // and since a new Channel is needed, a new BigtableDataGrpcClient instance is needed as well.
+    //
+    // Throttling should not be used in blocking operations, or streaming reads. We have not tested
+    // the impact of throttling on blocking operations.
+    initializeResourceLimiter(options);
+    Channel asyncDataChannel =
+        ClientInterceptors.intercept(dataChannel, new ThrottlingClientInterceptor(resourceLimiter));
+    throttlingDataClient =
+        new BigtableDataGrpcClient(asyncDataChannel, sharedPools.getRetryExecutor(), options);
+
+    BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
 
     // Defer the creation of both the tableAdminClient until we need them.
-    BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
-    initializeResourceLimiter(options);
-  }
+    }
 
   private ChannelPool getDataChannelPool() throws IOException {
     String host = options.getDataHost();
@@ -310,8 +330,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
    */
   public AsyncExecutor createAsyncExecutor() {
-    throttlingClientInterceptor.enable(resourceLimiter);
-    return new AsyncExecutor(dataClient);
+    return new AsyncExecutor(throttlingDataClient);
   }
 
   /**
@@ -334,16 +353,11 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
    */
   public BulkMutation createBulkMutation(BigtableTableName tableName) {
-    throttlingClientInterceptor.enable(resourceLimiter);
-    BulkOptions bulkOptions = options.getBulkOptions();
-    if (bulkOptions.isEnableBulkMutationThrottling()) {
-      resourceLimiter.throttle(bulkOptions.getBulkMutationRpcTargetMs());
-    }
     return new BulkMutation(
         tableName,
-        dataClient,
+        throttlingDataClient,
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-        bulkOptions);
+        options.getBulkOptions());
   }
 
   /**

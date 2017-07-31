@@ -34,12 +34,10 @@ import io.grpc.Status;
  */
 public class ThrottlingClientInterceptor implements ClientInterceptor {
 
-  private ResourceLimiter resourceLimiter;
+  private final ResourceLimiter resourceLimiter;
 
-  public void enable(ResourceLimiter resourceLimiter) {
+  public ThrottlingClientInterceptor(ResourceLimiter resourceLimiter) {
     Preconditions.checkNotNull(resourceLimiter);
-    Preconditions
-        .checkArgument(this.resourceLimiter == null || this.resourceLimiter == resourceLimiter);
     this.resourceLimiter = resourceLimiter;
   }
 

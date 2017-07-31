@@ -765,7 +765,7 @@ public class BigtableTable implements Table {
    */
   protected synchronized BatchExecutor getBatchExecutor() {
     if (batchExecutor == null) {
-      batchExecutor = new BatchExecutor(this.bigtableConnection.getSession(), hbaseAdapter);
+      batchExecutor = new BatchExecutor(bigtableConnection.getSession(), hbaseAdapter);
     }
     return batchExecutor;
   }
