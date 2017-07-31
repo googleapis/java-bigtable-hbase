@@ -94,13 +94,6 @@ public class RetryingReadRowsOperation extends
   @Override
   public void onMessage(ReadRowsResponse message) {
     resetStatusBasedBackoff();
-    if (rowObserver instanceof ResponseQueueReader) {
-      // ResponseQueueReader will only read more results if prior FlatRows were retrieved from the
-      // queue.
-      ((ResponseQueueReader) rowObserver).addRequestResultMarker();
-    } else {
-      call.request(1);
-    }
     lastResponseMs = clock.currentTimeMillis();
     // We've had at least one successful RPC, reset the backoff and retry counter
     timeoutRetryCount = 0;
@@ -118,6 +111,13 @@ public class RetryingReadRowsOperation extends
       // The service indicates that it processed rows that did not match the filter, and will not
       // need to be reprocessed.
       updateLastFoundKey(message.getLastScannedRowKey());
+    }
+    if (rowObserver instanceof ResponseQueueReader) {
+      // ResponseQueueReader will only read more results if prior FlatRows were retrieved from the
+      // queue.
+      ((ResponseQueueReader) rowObserver).addRequestResultMarker();
+    } else {
+      call.request(1);
     }
   }
 

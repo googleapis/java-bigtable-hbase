@@ -138,49 +138,39 @@ public class ResponseQueueReader implements StreamObserver<FlatRow> {
   /** {@inheritDoc} */
   @Override
   public void onNext(FlatRow row) {
-    try {
-      resultQueue.put(ResultQueueEntry.fromResponse(row));
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
-    }
+    addEntry("adding a data ResultQueueEntry", ResultQueueEntry.fromResponse(row));
   }
 
   /** {@inheritDoc} */
   @Override
   public void onError(Throwable t) {
-    try {
-      resultQueue.put(ResultQueueEntry.<FlatRow> fromThrowable(t));
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
-    }
+    addEntry("adding an error ResultQueueEntry", ResultQueueEntry.<FlatRow> fromThrowable(t));
   }
 
   /** {@inheritDoc} */
   @Override
   public void onCompleted() {
-    try {
-      completionMarkerFound.set(true);
-      resultQueue.put(ResultQueueEntry.<FlatRow> completionMarker());
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
-    }
+    completionMarkerFound.set(true);
+    addEntry("setting completion", ResultQueueEntry.<FlatRow> completionMarker());
   }
 
   /**
    * This marker notifies {@link #getNextMergedRow()} to request more results and allows for flow
    * control based on the state of the {@link #resultQueue}. If rows are removed from the queue
    * quickly, {@link #getNextMergedRow()} will request more results. If rows are not read fast
-   * enough, 
+   * enough, then gRPC will stop fetching rows, and will wait until more rows are requested. This
+   * marker tells {@link #getNextMergedRow()} to read more rows.
    */
   public void addRequestResultMarker() {
+    addEntry("setting request result marker", ResultQueueEntry.<FlatRow> requestResultMarker());
+  }
+
+  private void addEntry(String message, ResultQueueEntry<FlatRow> entry) {
     try {
-      resultQueue.put(ResultQueueEntry.<FlatRow> requestResultMarker());
+      resultQueue.put(entry);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while addRetrieveResultMarker a ResultQueueEntry", e);
+      throw new RuntimeException("Interrupted while " + message, e);
     }
   }
 }
