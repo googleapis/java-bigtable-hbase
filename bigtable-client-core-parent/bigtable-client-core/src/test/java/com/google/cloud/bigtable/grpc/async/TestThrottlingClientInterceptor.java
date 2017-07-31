@@ -76,8 +76,7 @@ public class TestThrottlingClientInterceptor {
         return id;
       }
     });
-    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor();
-    underTest.enable(mockResourceLimiter);
+    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
     final int numMessages = 5;
     Future<?> future = executorService.submit(new Runnable() {
       @Override
