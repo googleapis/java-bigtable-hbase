@@ -230,8 +230,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   /**
-   * Calls {@link BigtableAsyncRpc#startNewCall(CallOptions, Object, io.grpc.ClientCall.Listener,
-   * Metadata)} with this as the listener so that retries happen correctly.
+   * Calls {@link BigtableAsyncRpc#newCall(CallOptions)} and
+   * {@link BigtableAsyncRpc#start(Object, io.grpc.ClientCall.Listener, Metadata, ClientCall)} }
+   * with this as the listener so that retries happen correctly.
    */
   protected void run() {
     rpcTimerContext = rpc.getRpcMetrics().timeRpc();
