@@ -403,32 +403,43 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request) {
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
-    ResponseQueueReader reader = new ResponseQueueReader();
-    ScanHandler scanHandler = createReadRowsRetryListener(request, reader);
-    reader.setScanHandler(scanHandler);
-    return new ResumingStreamingResultScanner(reader, scanHandler);
+    final ResponseQueueReader reader = new ResponseQueueReader();
+    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, reader);
+    operation.setResultObserver(new StreamObserver<ReadRowsResponse>(){
+      @Override
+      public void onNext(ReadRowsResponse value) {
+        reader.addRequestResultMarker();
+      }
+      @Override public void onError(Throwable t) {}
+      @Override public void onCompleted() {}
+    });
+
+    // Start the operation.
+    operation.getAsyncResult();
+
+    return new ResumingStreamingResultScanner(reader, operation);
   }
 
   /** {@inheritDoc} */
   @Override
   public ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> observer) {
-    return createReadRowsRetryListener(request, observer);
+    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, observer);
+
+    // Start the operation.
+    operation.getAsyncResult();
+
+    return operation;
   }
 
   private RetryingReadRowsOperation createReadRowsRetryListener(ReadRowsRequest request,
       StreamObserver<FlatRow> observer) {
-    RetryingReadRowsOperation listener =
-      new RetryingReadRowsOperation(
-          observer,
-          retryOptions,
-          request,
-          readRowsAsync,
-          getCallOptions(readRowsAsync.getMethodDescriptor(), request),
-          retryExecutorService,
-          createMetadata(request.getTableName()));
-
-    // Start the operation.
-    listener.getAsyncResult();
-    return listener;
+    return new RetryingReadRowsOperation(
+        observer,
+        retryOptions,
+        request,
+        readRowsAsync,
+        getCallOptions(readRowsAsync.getMethodDescriptor(), request),
+        retryExecutorService,
+        createMetadata(request.getTableName()));
   }
 }
