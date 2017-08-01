@@ -30,8 +30,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 
 import io.grpc.CallOptions;
+import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.Status;
+import io.grpc.stub.ClientCallStreamObserver;
+import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -47,6 +50,54 @@ public class RetryingReadRowsOperation extends
 
   private static final String TIMEOUT_CANCEL_MSG = "Client side timeout induced cancellation";
 
+  private static class CallToStreamObserverAdapter<T> extends ClientCallStreamObserver<T> {
+    private final ClientCall<T, ?> call;
+    private boolean autoFlowControlEnabled = true;
+
+    public CallToStreamObserverAdapter(ClientCall<T, ?> call) {
+      this.call = call;
+    }
+
+    @Override
+    public void onNext(T value) {
+      call.sendMessage(value);
+    }
+
+    @Override
+    public void onError(Throwable t) {
+      call.cancel("Cancelled by client with StreamObserver.onError()", t);
+    }
+
+    @Override
+    public void onCompleted() {
+      call.halfClose();
+    }
+
+    @Override
+    public boolean isReady() {
+      return call.isReady();
+    }
+
+    @Override
+    public void setOnReadyHandler(Runnable onReadyHandler) {
+    }
+
+    @Override
+    public void disableAutoInboundFlowControl() {
+      autoFlowControlEnabled = false;
+    }
+
+    @Override
+    public void request(int count) {
+      call.request(count);
+    }
+
+    @Override
+    public void setMessageCompression(boolean enable) {
+      call.setMessageCompression(enable);
+    }
+  }
+
   @VisibleForTesting
   Clock clock = Clock.SYSTEM;
   private final ReadRowsRequestManager requestManager;
@@ -56,6 +107,8 @@ public class RetryingReadRowsOperation extends
 
   // The number of times we've retried after a timeout
   private int timeoutRetryCount = 0;
+  private CallToStreamObserverAdapter<ReadRowsRequest> adapter;
+  private StreamObserver<ReadRowsResponse> resultObserver;
 
   public RetryingReadRowsOperation(
       StreamObserver<FlatRow> observer,
@@ -70,6 +123,11 @@ public class RetryingReadRowsOperation extends
     this.requestManager = new ReadRowsRequestManager(request);
   }
 
+  // This observer will be notified after ReadRowsResponse have been fully processed.
+  public void setResultObserver(StreamObserver<ReadRowsResponse> resultObserver) {
+    this.resultObserver = resultObserver;
+  }
+
   /**
    * Updates the original request via {@link ReadRowsRequestManager#buildUpdatedRequest()}.
    */
@@ -78,19 +136,26 @@ public class RetryingReadRowsOperation extends
     return requestManager.buildUpdatedRequest();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void run() {
     // restart the clock.
     lastResponseMs = clock.currentTimeMillis();
     this.rowMerger = new RowMerger(rowObserver);
-    super.run();
+    synchronized (callLock) {
+      super.run();
+      // pre-fetch one more result, for performance reasons.
+      adapter = new CallToStreamObserverAdapter<ReadRowsRequest>(call);
+      adapter.request(1);
+      if (rowObserver instanceof ClientResponseObserver) {
+        ((ClientResponseObserver<ReadRowsRequest, FlatRow>) rowObserver).beforeStart(adapter);
+      }
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public void onMessage(ReadRowsResponse message) {
-    // Pre-fetch the next request
-    call.request(1);
     resetStatusBasedBackoff();
     lastResponseMs = clock.currentTimeMillis();
     // We've had at least one successful RPC, reset the backoff and retry counter
@@ -98,7 +163,7 @@ public class RetryingReadRowsOperation extends
 
     ByteString previouslyProcessedKey = rowMerger.getLastCompletedRowKey();
 
-    // This may take some time.
+    // This may take some time. This must not block so that gRPC worker threads don't leak.
     rowMerger.onNext(message);
 
     ByteString lastProcessedKey = rowMerger.getLastCompletedRowKey();
@@ -109,6 +174,14 @@ public class RetryingReadRowsOperation extends
       // The service indicates that it processed rows that did not match the filter, and will not
       // need to be reprocessed.
       updateLastFoundKey(message.getLastScannedRowKey());
+    }
+
+    if (adapter.autoFlowControlEnabled) {
+      adapter.request(1);
+    }
+
+    if (resultObserver != null) {
+      resultObserver.onNext(message);
     }
   }
 
@@ -217,8 +290,8 @@ public class RetryingReadRowsOperation extends
     return currentBackoff;
   }
 
-  /** @return the rowMerger */
-  public RowMerger getRowMerger() {
+  @VisibleForTesting
+  RowMerger getRowMerger() {
     return rowMerger;
   }
 }

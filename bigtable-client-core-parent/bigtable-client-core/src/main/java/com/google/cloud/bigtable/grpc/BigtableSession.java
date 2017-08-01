@@ -123,7 +123,8 @@ public class BigtableSession implements Closeable {
     if (sslBuilder == null) {
       // TODO(igorbernstein2): figure out why .ciphers(null) is necessary
       // Without it, the dataflow-reimport test fails with:
-      // "javax.net.ssl.SSLHandshakeException: No appropriate protocol (protocol is disabled or cipher suites are inappropriate)"
+      // "javax.net.ssl.SSLHandshakeException: No appropriate protocol (protocol is disabled or
+      // cipher suites are inappropriate)"
       sslBuilder = GrpcSslContexts.forClient().ciphers(null);
     }
     return sslBuilder.build();

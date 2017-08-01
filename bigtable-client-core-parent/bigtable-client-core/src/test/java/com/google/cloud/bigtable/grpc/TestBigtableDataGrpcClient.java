@@ -18,17 +18,26 @@ package com.google.cloud.bigtable.grpc;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
@@ -49,13 +58,16 @@ import com.google.bigtable.v2.RowRange;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
-import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.RetryingReadRowsOperationTest;
 import com.google.protobuf.ByteString;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -200,6 +212,29 @@ public class TestBigtableDataGrpcClient {
     setResponse(ReadRowsResponse.getDefaultInstance());
     defaultClient.readFlatRowsList(requestBuilder.build());
     verifyRequestCalled(requestBuilder.build());
+  }
+
+  @Test
+  public void testScanner() throws IOException {
+    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
+    ResultScanner<FlatRow> scanner = defaultClient.readFlatRows(requestBuilder.build());
+    ArgumentCaptor<ClientCall.Listener> listenerCaptor =
+        ArgumentCaptor.forClass(ClientCall.Listener.class);
+    verify(mockClientCall, times(1)).start(listenerCaptor.capture(), any(Metadata.class));
+    Listener listener = listenerCaptor.getValue();
+    ByteString key1 = ByteString.copyFromUtf8("Key1");
+    ByteString key2 = ByteString.copyFromUtf8("Key2");
+    listener
+        .onMessage(RetryingReadRowsOperationTest.buildResponse(key1));
+    listener
+        .onMessage(RetryingReadRowsOperationTest.buildResponse(key2));
+    
+    Assert.assertEquals(2, scanner.available());
+    Assert.assertEquals(key1, scanner.next().getRowKey());
+    listener.onClose(Status.OK, new Metadata());
+    Assert.assertEquals(key2, scanner.next().getRowKey());
+    Assert.assertNull(scanner.next());
   }
 
   private void setResponse(final Object response) {
