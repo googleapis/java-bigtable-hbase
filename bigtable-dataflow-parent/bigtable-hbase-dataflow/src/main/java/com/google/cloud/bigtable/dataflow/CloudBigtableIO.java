@@ -790,6 +790,9 @@ public class CloudBigtableIO {
 
     @Override
     public final Double getFractionConsumed() {
+      if (rangeTracker.isDone()) {
+        return 1.0;
+      }
       return rangeTracker.getFractionConsumed();
     }
 
