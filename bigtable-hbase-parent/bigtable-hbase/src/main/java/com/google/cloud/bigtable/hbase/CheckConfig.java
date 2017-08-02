@@ -60,7 +60,7 @@ public class CheckConfig {
     BigtableOptions options;
     try {
       options = BigtableOptionsFactory.fromConfiguration(fullConfiguration);
-    } catch (IOException | RuntimeException exc) {
+    } catch (RuntimeException exc) {
       logger.warn("Encountered errors attempting to parse configuration.", exc);
       return;
     }

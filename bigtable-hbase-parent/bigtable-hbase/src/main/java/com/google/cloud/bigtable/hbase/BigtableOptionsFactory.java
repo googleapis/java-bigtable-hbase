@@ -44,7 +44,6 @@ import org.apache.hadoop.hbase.util.VersionInfo;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 
 /**
  * Static methods to convert an instance of {@link org.apache.hadoop.conf.Configuration}
@@ -271,10 +270,8 @@ public class BigtableOptionsFactory {
    *
    * @param configuration a {@link org.apache.hadoop.conf.Configuration} object.
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @throws java.io.IOException if any.
    */
-  public static BigtableOptions fromConfiguration(final Configuration configuration)
-      throws IOException {
+  public static BigtableOptions fromConfiguration(final Configuration configuration) {
 
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
 
@@ -319,10 +316,14 @@ public class BigtableOptionsFactory {
     return hostName;
   }
 
-  private static void
-      setChannelOptions(Configuration configuration, BigtableOptions.Builder builder)
-          throws IOException {
-    setCredentialOptions(builder, configuration);
+  private static void setChannelOptions(
+      Configuration configuration, BigtableOptions.Builder builder) {
+    try {
+      setCredentialOptions(builder, configuration);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(
+          "Could not configure BigtableOptions, since the file was not found.", e);
+    }
 
     builder.setRetryOptions(createRetryOptions(configuration));
 
