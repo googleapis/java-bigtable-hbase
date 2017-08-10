@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import java.util.concurrent.TimeoutException;
+
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
@@ -44,7 +46,7 @@ public interface BigtableTableAdminClient {
   /**
    * Creates a new table asynchronously. The table can be created with a full set of initial column
    * families, specified in the request.
-   * 
+   *
    * @param request a {@link CreateTableRequest} object.
    */
   ListenableFuture<Table> createTableAsync(CreateTableRequest request);
@@ -127,4 +129,21 @@ public interface BigtableTableAdminClient {
    * @return a {@link ListenableFuture} that returns {@link Empty} object.
    */
   ListenableFuture<Empty> dropRowRangeAsync(DropRowRangeRequest request);
+
+  /**
+   * Blocks until replication has caught up to the point this method was called or timeout is
+   * reached.
+   *
+   * <p>This is a private alpha release of Cloud Bigtable replication. This feature
+   * is not currently available to most Cloud Bigtable customers. This feature
+   * might be changed in backward-incompatible ways and is not recommended for
+   * production use. It is not subject to any SLA or deprecation policy.
+   *
+   * @param tableName the name of the table to wait for replication.
+   * @param timeout the maximum time to wait in seconds.
+   * @throws InterruptedException if call is interrupted while waiting to recheck if replication has
+   * caught up.
+   * @throws TimeoutException if timeout is reached.
+   */
+  void waitForReplication(BigtableTableName tableName, long timeout) throws InterruptedException, TimeoutException;
 }

@@ -17,12 +17,22 @@ package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 
+import com.google.common.primitives.Ints;
+import java.io.IOException;
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.bigtable.admin.v2.CheckConsistencyRequest;
+import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeoutException;
 
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
+import com.google.bigtable.admin.v2.CheckConsistencyResponse;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GenerateConsistencyTokenResponse;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
@@ -57,6 +67,8 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   private final BigtableAsyncRpc<ModifyColumnFamiliesRequest, Table> modifyColumnFamilyRpc;
   private final BigtableAsyncRpc<DeleteTableRequest, Empty> deleteTableRpc;
   private final BigtableAsyncRpc<DropRowRangeRequest, Empty> dropRowRangeRpc;
+  private final BigtableAsyncRpc<GenerateConsistencyTokenRequest, GenerateConsistencyTokenResponse> generateConsistencyTokenRpc;
+  private final BigtableAsyncRpc<CheckConsistencyRequest, CheckConsistencyResponse> checkConsistencyRpc;
 
   /**
    * <p>Constructor for BigtableTableAdminGrpcClient.</p>
@@ -83,6 +95,12 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
       Predicates.<DeleteTableRequest> alwaysFalse());
     this.dropRowRangeRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_DROP_ROW_RANGE,
       Predicates.<DropRowRangeRequest> alwaysFalse());
+    this.generateConsistencyTokenRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.METHOD_GENERATE_CONSISTENCY_TOKEN,
+        Predicates.<GenerateConsistencyTokenRequest> alwaysFalse());
+    this.checkConsistencyRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.METHOD_CHECK_CONSISTENCY,
+        Predicates.<CheckConsistencyRequest> alwaysFalse());
 
     this.retryOptions = bigtableOptions.getRetryOptions();
     this.retryExecutorService = retryExecutorService;
@@ -118,7 +136,7 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     createUnaryListener(request, createTableRpc, request.getParent()).getBlockingResult();
   }
 
-  /** {@inheritDoc} 
+  /** {@inheritDoc}
    * @return */
   @Override
   public ListenableFuture<Table> createTableAsync(CreateTableRequest request) {
@@ -132,7 +150,7 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         .getBlockingResult();
   }
 
-  /** {@inheritDoc} 
+  /** {@inheritDoc}
    * @return */
   @Override
   public ListenableFuture<Table> modifyColumnFamilyAsync(ModifyColumnFamiliesRequest request) {
@@ -145,7 +163,7 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     createUnaryListener(request, deleteTableRpc, request.getName()).getBlockingResult();
   }
 
-  /** {@inheritDoc} 
+  /** {@inheritDoc}
    * @return */
   @Override
   public ListenableFuture<Empty> deleteTableAsync(DeleteTableRequest request) {
@@ -158,11 +176,68 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     createUnaryListener(request, dropRowRangeRpc, request.getName()).getBlockingResult();
   }
 
-  /** {@inheritDoc} 
+  /** {@inheritDoc}
    * @return */
   @Override
   public ListenableFuture<Empty> dropRowRangeAsync(DropRowRangeRequest request) {
     return createUnaryListener(request, dropRowRangeRpc, request.getName()).getAsyncResult();
+  }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public void waitForReplication(BigtableTableName tableName, long timeout) throws InterruptedException, TimeoutException {
+    // A backoff that randomizes with an interval of 10s.
+    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
+        .setInitialIntervalMillis(10 * 1000)
+        .setMaxIntervalMillis(10 * 1000)
+        .setMaxElapsedTimeMillis(Ints.checkedCast(timeout * 1000))
+        .build();
+
+    waitForReplication(tableName, backOff);
+  }
+
+  @VisibleForTesting
+  void waitForReplication(BigtableTableName tableName, BackOff backOff) throws InterruptedException, TimeoutException {
+    String token = generateConsistencyToken(tableName);
+
+    while (!checkConsistency(tableName, token)) {
+      long backOffMillis;
+      try {
+        backOffMillis = backOff.nextBackOffMillis();
+      } catch (IOException e) {
+        // Should never happen, we only use ExponentialBackOff which doesn't throw.
+        throw new RuntimeException("Problem getting backoff: " + e);
+      }
+      if (backOffMillis == BackOff.STOP) {
+        throw new TimeoutException(
+            "Table " + tableName.toString() + " is not consistent after timeout.");
+
+      } else {
+        // sleep for backOffMillis milliseconds and retry operation.
+        Thread.sleep(backOffMillis);
+      }
+    }
+  }
+
+  private String generateConsistencyToken(BigtableTableName tableName) {
+    GenerateConsistencyTokenRequest request =
+        GenerateConsistencyTokenRequest.newBuilder().setName(tableName.toString()).build();
+
+    return createUnaryListener(request, generateConsistencyTokenRpc, request.getName())
+        .getBlockingResult()
+        .getConsistencyToken();
+  }
+
+  private boolean checkConsistency(BigtableTableName tableName, String token) {
+    CheckConsistencyRequest request = CheckConsistencyRequest.newBuilder()
+        .setName(tableName.toString())
+        .setConsistencyToken(token)
+        .build();
+
+    return createUnaryListener(request, checkConsistencyRpc, request.getName())
+        .getBlockingResult()
+        .getConsistent();
   }
 
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
