@@ -113,4 +113,8 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
     super.populateDisplayData(builder);
     config.populateDisplayData(builder);
   }
+
+  public CloudBigtableConfiguration getConfig() {
+    return config;
+  }
 }

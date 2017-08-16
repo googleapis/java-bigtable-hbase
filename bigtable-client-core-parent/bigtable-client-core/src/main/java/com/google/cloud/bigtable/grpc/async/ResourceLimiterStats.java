@@ -15,11 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -28,15 +31,21 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public class ResourceLimiterStats {
 
-  private static ResourceLimiterStats instance = new ResourceLimiterStats();
+  private static Map<String, ResourceLimiterStats> stats = new HashMap<>();
 
-  public static ResourceLimiterStats getInstance() {
+  public static synchronized ResourceLimiterStats getInstance(BigtableInstanceName instanceName) {
+    String key = instanceName.getInstanceName();
+    ResourceLimiterStats instance = stats.get(key);
+    if (instance == null) {
+      instance = new ResourceLimiterStats();
+      stats.put(key, instance);
+    }
     return instance;
   }
 
   @VisibleForTesting
   static void reset(){
-    instance = new ResourceLimiterStats();
+    stats.clear();
   }
 
   private final MetricRegistry registry = new MetricRegistry();

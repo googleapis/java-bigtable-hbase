@@ -25,17 +25,18 @@ public class ResourceLimiter {
   private static final Logger LOG = new Logger(ResourceLimiter.class);
 
   private static final long REGISTER_WAIT_MILLIS = 5;
-  private static final ResourceLimiterStats stats = ResourceLimiterStats.getInstance();
 
   private final long maxHeapSize;
   private final int absoluteMaxInFlightRpcs;
-  private int currentInFlightMaxRpcs;
+  private final ResourceLimiterStats stats;
   private final AtomicLong operationSequenceGenerator = new AtomicLong();
   private final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
   private final ConcurrentHashMap<Long, Long> starTimes = new ConcurrentHashMap<>();
   private final LinkedBlockingDeque<Long> completedOperationIds = new LinkedBlockingDeque<>();
+
   private long currentWriteBufferSize;
   private boolean isThrottling = false;
+  private int currentInFlightMaxRpcs;
 
   @VisibleForTesting
   NanoClock clock = NanoClock.SYSTEM;
@@ -46,7 +47,8 @@ public class ResourceLimiter {
    * @param maxHeapSize a long.
    * @param maxInFlightRpcs a int.
    */
-  public ResourceLimiter(long maxHeapSize, int maxInFlightRpcs) {
+  public ResourceLimiter(ResourceLimiterStats stats, long maxHeapSize, int maxInFlightRpcs) {
+    this.stats = stats;
     this.maxHeapSize = maxHeapSize;
     this.absoluteMaxInFlightRpcs = maxInFlightRpcs;
     this.currentInFlightMaxRpcs = maxInFlightRpcs;

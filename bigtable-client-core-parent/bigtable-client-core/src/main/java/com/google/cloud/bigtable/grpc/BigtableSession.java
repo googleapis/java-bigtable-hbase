@@ -24,7 +24,9 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +45,7 @@ import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
+import com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
 import com.google.cloud.bigtable.grpc.async.ThrottlingClientInterceptor;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
@@ -80,9 +83,9 @@ import io.netty.util.Recycler;
  */
 public class BigtableSession implements Closeable {
 
-  private static ChannelPool cachedDataChannelPool = null;
   private static final Logger LOG = new Logger(BigtableSession.class);
-  private static ResourceLimiter resourceLimiter;
+  private static final Map<String, ChannelPool> cachedDataChannelPoolMap = new HashMap<>();
+  private static final Map<String, ResourceLimiter> resourceLimiterMap = new HashMap<>();
   private static SslContextBuilder sslBuilder;
 
   // 256 MB, server has 256 MB limit.
@@ -176,16 +179,22 @@ public class BigtableSession implements Closeable {
     connectionStartupExecutor.shutdown();
   }
 
-  private synchronized static void initializeResourceLimiter(BigtableOptions options) {
+  private synchronized static ResourceLimiter initializeResourceLimiter(BigtableOptions options) {
+    BigtableInstanceName instanceName = options.getInstanceName();
+    String key = instanceName.toString();
+    ResourceLimiter resourceLimiter = resourceLimiterMap.get(key);
     if (resourceLimiter == null) {
       int maxInflightRpcs = options.getBulkOptions().getMaxInflightRpcs();
       long maxMemory = options.getBulkOptions().getMaxMemory();
-      resourceLimiter = new ResourceLimiter(maxMemory, maxInflightRpcs);
+      ResourceLimiterStats stats = ResourceLimiterStats.getInstance(instanceName);
+      resourceLimiter = new ResourceLimiter(stats, maxMemory, maxInflightRpcs);
       BulkOptions bulkOptions = options.getBulkOptions();
       if (bulkOptions.isEnableBulkMutationThrottling()) {
         resourceLimiter.throttle(bulkOptions.getBulkMutationRpcTargetMs());
       }
+      resourceLimiterMap.put(key, resourceLimiter);
     }
+    return resourceLimiter;
   }
 
   private final BigtableDataClient dataClient;
@@ -268,7 +277,7 @@ public class BigtableSession implements Closeable {
     //
     // Throttling should not be used in blocking operations, or streaming reads. We have not tested
     // the impact of throttling on blocking operations.
-    initializeResourceLimiter(options);
+    ResourceLimiter resourceLimiter = initializeResourceLimiter(options);
     Channel asyncDataChannel =
         ClientInterceptors.intercept(dataChannel, new ThrottlingClientInterceptor(resourceLimiter));
     throttlingDataClient =
@@ -284,6 +293,8 @@ public class BigtableSession implements Closeable {
     int channelCount = options.getChannelCount();
     if (options.useCachedChannel()) {
       synchronized (BigtableSession.class) {
+        String key = options.getInstanceName().toString();
+        ChannelPool cachedDataChannelPool = cachedDataChannelPoolMap.get(key);
         // TODO: Ensure that the host and channelCount are the same.
         if (cachedDataChannelPool == null) {
           cachedDataChannelPool = createChannelPool(host, channelCount);
