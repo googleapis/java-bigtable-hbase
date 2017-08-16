@@ -56,7 +56,8 @@ public class ResourceLimiterPerf {
    */
   private static void test(ListeningExecutorService pool)
       throws InterruptedException, ExecutionException, TimeoutException {
-    final ResourceLimiter underTest = new ResourceLimiter(SIZE, (int) SIZE);
+    final ResourceLimiter underTest =
+        new ResourceLimiter(new ResourceLimiterStats(), SIZE, (int) SIZE);
     final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
 
     final int readerCount = 20;

@@ -122,7 +122,6 @@ public class TestBulkMutation {
 
   @Test
   public void testAdd() {
-    ResourceLimiterStats.reset();
     MutateRowsRequest.Entry entry = createRequestEntry();
     underTest.add(entry);
     underTest.send();
@@ -132,8 +131,6 @@ public class TestBulkMutation {
         .build();
 
     verify(client, times(1)).mutateRowsAsync(eq(expected));
-    Assert.assertEquals(0, ResourceLimiterStats.getInstance().getMutationTimer().getCount());
-    Assert.assertEquals(0, ResourceLimiterStats.getInstance().getThrottlingTimer().getCount());
   }
 
   public static MutateRowsRequest.Entry createRequestEntry() {

@@ -32,7 +32,8 @@ import org.junit.runners.JUnit4;
 public class TestResourceLimiter {
   @Test
   public void testRpcCount() throws InterruptedException{
-    ResourceLimiter underTest = new ResourceLimiter(100l, 2);
+    ResourceLimiterStats stats = new ResourceLimiterStats();
+    ResourceLimiter underTest = new ResourceLimiter(stats, 100l, 2);
 
     assertFalse(underTest.isFull());
     assertFalse(underTest.hasInflightRequests());
@@ -52,11 +53,14 @@ public class TestResourceLimiter {
     underTest.markCanBeCompleted(id2);
     assertFalse(underTest.isFull());
     assertFalse(underTest.hasInflightRequests());
+
+    assertEquals(2, stats.getMutationTimer().getCount());
+    assertEquals(2, stats.getThrottlingTimer().getCount());
   }
 
   @Test
   public void testSize() throws InterruptedException{
-    ResourceLimiter underTest = new ResourceLimiter(10l, 1000);
+    ResourceLimiter underTest = new ResourceLimiter(new ResourceLimiterStats(), 10l, 1000);
     long id = underTest.registerOperationWithHeapSize(5l);
     assertTrue(underTest.hasInflightRequests());
     assertFalse(underTest.isFull());
@@ -89,7 +93,7 @@ public class TestResourceLimiter {
   public void testSizeLimitReachWaits() throws InterruptedException {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      final ResourceLimiter underTest = new ResourceLimiter(1l, 1);
+      final ResourceLimiter underTest = new ResourceLimiter(new ResourceLimiterStats(), 1l, 1);
       long id = underTest.registerOperationWithHeapSize(1l);
       assertTrue(underTest.isFull());
       final CountDownLatch secondRequestRegisteredLatch = new CountDownLatch(1);

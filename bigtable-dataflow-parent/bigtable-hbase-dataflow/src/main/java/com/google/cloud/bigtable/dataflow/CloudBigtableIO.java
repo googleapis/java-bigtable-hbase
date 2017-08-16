@@ -53,6 +53,7 @@ import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysReques
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
@@ -937,19 +938,27 @@ public class CloudBigtableIO {
 
 
   private static class MutationStatsExporter {
-    protected static final Logger STATS_LOG = LoggerFactory.getLogger(AbstractSource.class);
-    private static MutationStatsExporter mutationStatsExporter;
+    private static final Logger STATS_LOG = LoggerFactory.getLogger(AbstractSource.class);
+    private static Map<String, MutationStatsExporter> mutationStatsExporters = new HashMap<>();
 
     static synchronized void initializeMutationStatsExporter(BufferedMutatorDoFn<?> doFn) {
+      CloudBigtableConfiguration config = doFn.getConfig();
+      BigtableInstanceName instanceName =
+          new BigtableInstanceName(config.getProjectId(), config.getInstanceId());
+      String key = instanceName.toString();
+      MutationStatsExporter mutationStatsExporter = mutationStatsExporters.get(key);
       if (mutationStatsExporter == null) {
-        mutationStatsExporter = new MutationStatsExporter(doFn);
+        mutationStatsExporter = new MutationStatsExporter(instanceName, doFn);
         mutationStatsExporter.startExport();
+        mutationStatsExporters.put(key, mutationStatsExporter);
       }
     }
 
     private final AggregatorWithState cumulativeThrottlingSeconds;
+    private final BigtableInstanceName instanceName;
 
-    MutationStatsExporter(BufferedMutatorDoFn<?> doFn) {
+    MutationStatsExporter(BigtableInstanceName instanceName, BufferedMutatorDoFn<?> doFn) {
+      this.instanceName = instanceName;
       cumulativeThrottlingSeconds = new AggregatorWithState(doFn.cumulativeThrottlingSeconds);
     }
 
@@ -958,8 +967,8 @@ public class CloudBigtableIO {
         @Override
         public void run() {
           try {
-            cumulativeThrottlingSeconds.set(TimeUnit.NANOSECONDS
-                .toSeconds(ResourceLimiterStats.getInstance().getCumulativeThrottlingTimeNanos()));
+            cumulativeThrottlingSeconds.set(TimeUnit.NANOSECONDS.toSeconds(
+              ResourceLimiterStats.getInstance(instanceName).getCumulativeThrottlingTimeNanos()));
           } catch (Exception e) {
             STATS_LOG.warn("Something bad happened in export stats", e);
           }
