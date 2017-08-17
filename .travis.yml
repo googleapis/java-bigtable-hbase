@@ -24,9 +24,7 @@ branches:
   only:
   - master
 
-# Limit the amount of memory maven can use to avoid hitting the 3GB build limit in travis
-env:
-  - MAVEN_OPTS="-Xmx1024m"
+# Skip the initial dependency install step
+install: true
 
-# use wrapper to build
-script: ./mvnw clean verify
+script: ./travis.sh
