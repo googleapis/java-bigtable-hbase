@@ -5,8 +5,6 @@ set -x  # display all commands
 
 export MAVEN_OPTS="-Xmx1024m"
 
-echo "set MAVEN_OPTS"
-
 MVN="mvn --batch-mode"
 
 # build & run tests
