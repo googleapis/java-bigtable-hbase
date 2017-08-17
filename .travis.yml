@@ -27,3 +27,6 @@ script:
 branches:
   only:
   - master
+
+env:
+  - MAVEN_OPTS="-Xmx1024m"
