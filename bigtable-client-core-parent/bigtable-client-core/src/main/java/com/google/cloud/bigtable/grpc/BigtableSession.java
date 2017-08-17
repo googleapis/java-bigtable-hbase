@@ -84,7 +84,8 @@ import io.netty.util.Recycler;
 public class BigtableSession implements Closeable {
 
   private static final Logger LOG = new Logger(BigtableSession.class);
-  private static final Map<String, ChannelPool> cachedDataChannelPoolMap = new HashMap<>();
+  // TODO: Consider caching channel pools per instance.
+  private static ChannelPool cachedDataChannelPool;
   private static final Map<String, ResourceLimiter> resourceLimiterMap = new HashMap<>();
   private static SslContextBuilder sslBuilder;
 
@@ -293,8 +294,6 @@ public class BigtableSession implements Closeable {
     int channelCount = options.getChannelCount();
     if (options.useCachedChannel()) {
       synchronized (BigtableSession.class) {
-        String key = options.getInstanceName().toString();
-        ChannelPool cachedDataChannelPool = cachedDataChannelPoolMap.get(key);
         // TODO: Ensure that the host and channelCount are the same.
         if (cachedDataChannelPool == null) {
           cachedDataChannelPool = createChannelPool(host, channelCount);
