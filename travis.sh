@@ -8,7 +8,7 @@ export MAVEN_OPTS="-Xmx1024m"
 MVN="mvn --batch-mode"
 
 # build & run tests
-$MVN clean verify \
+/usr/bin/time -v $MVN clean verify \
   | egrep -v "(^\[INFO\] Download|^\[INFO\].*skipping)"
 
 # TODO(igorbernstein2): enable integration tests
