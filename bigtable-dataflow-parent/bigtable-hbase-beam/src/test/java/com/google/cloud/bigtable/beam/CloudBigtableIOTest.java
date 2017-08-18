@@ -28,6 +28,7 @@ import java.util.List;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.coders.CoderProvider;
 import org.apache.beam.sdk.coders.CoderRegistry;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.values.TypeDescriptor;
@@ -41,19 +42,24 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ByteStringComparator;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
-import com.google.cloud.bigtable.beam.CloudBigtableIO;
-import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableIO.AbstractSource;
+import com.google.cloud.bigtable.beam.CloudBigtableIO.Source;
+import com.google.cloud.bigtable.beam.CloudBigtableIO.SourceWithKeys;
+import com.google.cloud.bigtable.beam.coders.CBTIOCoderRegistrar;
 import com.google.cloud.bigtable.beam.coders.HBaseMutationCoder;
 
 /**
  * Tests for {@link CloudBigtableIO}.
  */
+@RunWith(JUnit4.class)
 public class CloudBigtableIOTest {
 
   @Rule
@@ -62,7 +68,15 @@ public class CloudBigtableIOTest {
   @Mock
   Pipeline underTest;
 
-  private CoderRegistry registry = CoderRegistry.createDefault();
+  private static final CoderRegistry registry = CoderRegistry.createDefault();
+
+  static {
+    // This happens automatically with the magic of auto-service once the jar is built.
+    // Since the jar isn't built yet, do this manually.
+    for (CoderProvider provider : new CBTIOCoderRegistrar().getCoderProviders()) {
+      registry.registerCoderProvider(provider);
+    }
+  }
 
   private CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
       .withProjectId("project")
@@ -92,7 +106,7 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSourceToString() throws Exception {
-    CloudBigtableIO.Source source = (CloudBigtableIO.Source) CloudBigtableIO.read(config);
+    Source source = (Source) CloudBigtableIO.read(config);
     byte[] startKey = "abc d".getBytes();
     byte[] stopKey = "def g".getBytes();
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
@@ -108,7 +122,7 @@ public class CloudBigtableIOTest {
   @Test
   public void testSampleRowKeys() throws Exception {
     List<SampleRowKeysResponse> sampleRowKeys = new ArrayList<>();
-    int count = (int) (CloudBigtableIO.AbstractSource.COUNT_MAX_SPLIT_COUNT * 3 - 5);
+    int count = (int) (AbstractSource.COUNT_MAX_SPLIT_COUNT * 3 - 5);
     byte[][] keys = Bytes.split("A".getBytes(), "Z".getBytes(), count-2);
     long tabletSize = 2L * 1024L * 1024L * 1024L;
     long boundary = 0;
@@ -126,21 +140,21 @@ public class CloudBigtableIOTest {
         return;
       }
     }
-    CloudBigtableIO.Source source = (CloudBigtableIO.Source) CloudBigtableIO.read(config);
+    Source source = (Source) CloudBigtableIO.read(config);
     source.setSampleRowKeys(sampleRowKeys);
-    List<CloudBigtableIO.SourceWithKeys> splits = source.getSplits(20000);
-    Collections.sort(splits, new Comparator<CloudBigtableIO.SourceWithKeys>() {
+    List<SourceWithKeys> splits = source.getSplits(20000);
+    Collections.sort(splits, new Comparator<SourceWithKeys>() {
       @Override
-      public int compare(CloudBigtableIO.SourceWithKeys o1, CloudBigtableIO.SourceWithKeys o2) {
+      public int compare(SourceWithKeys o1, SourceWithKeys o2) {
         return ByteStringComparator.INSTANCE.compare(o1.getConfiguration().getStartRowByteString(),
           o2.getConfiguration().getStartRowByteString());
       }
     });
-    Assert.assertTrue(splits.size() <= CloudBigtableIO.AbstractSource.COUNT_MAX_SPLIT_COUNT);
-    Iterator<CloudBigtableIO.SourceWithKeys> iter = splits.iterator();
-    CloudBigtableIO.SourceWithKeys last = iter.next();
+    Assert.assertTrue(splits.size() <= AbstractSource.COUNT_MAX_SPLIT_COUNT);
+    Iterator<SourceWithKeys> iter = splits.iterator();
+    SourceWithKeys last = iter.next();
     while(iter.hasNext()) {
-      CloudBigtableIO.SourceWithKeys current = iter.next();
+      SourceWithKeys current = iter.next();
       Assert.assertTrue(Bytes.equals(current.getConfiguration().getZeroCopyStartRow(),
         last.getConfiguration().getZeroCopyStopRow()));
       // The last source will have a stop key of empty.
