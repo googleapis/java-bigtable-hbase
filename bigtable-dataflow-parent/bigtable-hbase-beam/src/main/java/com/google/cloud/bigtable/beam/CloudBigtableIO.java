@@ -67,6 +67,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
@@ -274,8 +275,9 @@ public class CloudBigtableIO {
 
     /**
      * Performs a call to get sample row keys from
-     * {@link BigtableDataClient#sampleRowKeys(SampleRowKeysRequest)} if they are not yet cached.
-     * The sample row keys give information about tablet key boundaries and estimated sizes.
+     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest)}
+     * if they are not yet cached. The sample row keys give information about tablet key boundaries
+     * and estimated sizes.
      */
     public synchronized List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
       if (sampleRowKeys == null) {
@@ -417,8 +419,9 @@ public class CloudBigtableIO {
     /**
      * Splits the table based on keys that belong to tablets, known as "regions" in the HBase API.
      * The current implementation uses the HBase {@link RegionLocator} interface, which calls
-     * {@link BigtableDataClient#sampleRowKeys(SampleRowKeysRequest)} under the covers. A
-     * {@link SourceWithKeys} may correspond to a single region or a portion of a region.
+     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest)}
+     * under the covers. A {@link SourceWithKeys} may correspond to a single region or a portion of
+     * a region.
      * <p>
      * If a split is smaller than a single region, the split is calculated based on the assumption
      * that the data is distributed evenly between the region's startKey and stopKey. That
@@ -448,11 +451,12 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Gets an estimated size based on data returned from {@link BigtableDataClient#sampleRowKeys}.
-     * The estimate will be high if a {@link Scan} is set on the {@link CloudBigtableScanConfiguration};
-     * in such cases, the estimate will not take the Scan into account, and will return a larger estimate
-     * than what the {@link CloudBigtableIO.Reader} will actually read.
-     *
+     * Gets an estimated size based on data returned from
+     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest)}.
+     * The estimate will be high if a {@link Scan} is set on the
+     * {@link CloudBigtableScanConfiguration}; in such cases, the estimate will not take the Scan
+     * into account, and will return a larger estimate than what the {@link CloudBigtableIO.Reader}
+     * will actually read.
      * @param options The pipeline options.
      * @return The estimated size of the data, in bytes.
      */
@@ -502,7 +506,7 @@ public class CloudBigtableIO {
      * <p>NOTE: This value is a guesstimate. It could be significantly off, especially if there is
      * a {@link Scan} selected in the configuration. It will also be off if the start and stop
      * keys are calculated via
-     * {@link CloudBigtableIO.Source#splitIntoBundles(long, PipelineOptions)}.
+     * {@link CloudBigtableIO.Source#split(long, PipelineOptions)}.
      */
     private final long estimatedSize;
 
@@ -529,7 +533,7 @@ public class CloudBigtableIO {
      *
      * <p>NOTE: This value is a guesstimate. It could be significantly off, especially if there is
      * a{@link Scan} selected in the configuration. It will also be off if the start and stop keys
-     * are calculated via {@link Source#splitIntoBundles(long, PipelineOptions)}.
+     * are calculated via {@link Source#split(long, PipelineOptions)}.
      *
      * @param options The pipeline options.
      * @return The estimated size of the source, in bytes.
