@@ -15,13 +15,14 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 
 import java.util.List;
 import java.util.Map;
@@ -104,5 +105,11 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
    */
   protected void logExceptions(Object context, RetriesExhaustedWithDetailsException exception) {
     logRetriesExhaustedWithDetailsException(DOFN_LOG, String.valueOf(context), exception);
+  }
+
+  @Override
+  public void populateDisplayData(DisplayData.Builder builder) {
+    super.populateDisplayData(builder);
+    config.populateDisplayData(builder);
   }
 }
