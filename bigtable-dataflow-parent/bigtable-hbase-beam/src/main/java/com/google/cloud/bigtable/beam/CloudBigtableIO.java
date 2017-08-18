@@ -41,6 +41,7 @@ import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
@@ -482,8 +483,9 @@ public class CloudBigtableIO {
     }
 
     @Override
+    // TODO: change this to getOutputCoder() when beam 2.1.0 is released.
     public Coder<Result> getDefaultOutputCoder() {
-      HBaseResultCoder.of();
+      return HBaseResultCoder.of();
     }
   }
 
@@ -561,6 +563,11 @@ public class CloudBigtableIO {
         desiredBundleSizeBytes, conf.getZeroCopyStartRow(), conf.getZeroCopyStopRow());
       SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
       return newSplits;
+    }
+
+    @Override
+    public Coder<Result> getDefaultOutputCoder() {
+      return HBaseResultCoder.of();
     }
 
     @Override
