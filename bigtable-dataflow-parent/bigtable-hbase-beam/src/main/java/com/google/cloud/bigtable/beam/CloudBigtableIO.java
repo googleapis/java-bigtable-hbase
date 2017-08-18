@@ -391,6 +391,12 @@ public class CloudBigtableIO {
     protected CloudBigtableScanConfiguration getConfiguration() {
       return configuration;
     }
+
+    @Override
+    public void populateDisplayData(DisplayData.Builder builder) {
+      super.populateDisplayData(builder);
+      configuration.populateDisplayData(builder);
+    }
   }
 
   /**
@@ -477,8 +483,7 @@ public class CloudBigtableIO {
 
     @Override
     public Coder<Result> getDefaultOutputCoder() {
-      // TODO Auto-generated method stub
-      return super.getDefaultOutputCoder();
+      HBaseResultCoder.of();
     }
   }
 
@@ -816,7 +821,6 @@ public class CloudBigtableIO {
         }
       };
     }
-
   }
 
   /**
@@ -964,6 +968,12 @@ public class CloudBigtableIO {
     public PDone expand(PCollection<T> input) {
       input.apply(ParDo.of(function));
       return PDone.in(input.getPipeline());
+    }
+
+    @Override
+    public void populateDisplayData(DisplayData.Builder builder) {
+      super.populateDisplayData(builder);
+      function.populateDisplayData(builder);
     }
   }
 
