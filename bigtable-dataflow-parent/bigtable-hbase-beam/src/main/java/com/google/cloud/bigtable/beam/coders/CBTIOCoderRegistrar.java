@@ -35,7 +35,6 @@ import com.google.common.collect.ImmutableList;
  */
 @AutoService(CoderProviderRegistrar.class)
 public class CBTIOCoderRegistrar implements CoderProviderRegistrar  {
-
   @Override
   public List<CoderProvider> getCoderProviders() {
     return ImmutableList.of(
@@ -44,5 +43,4 @@ public class CBTIOCoderRegistrar implements CoderProviderRegistrar  {
       CoderProviders.forCoder(TypeDescriptor.of(Put.class), HBaseMutationCoder.of()),
       CoderProviders.forCoder(TypeDescriptor.of(Result.class), HBaseResultCoder.of()));
   }
-
 }
