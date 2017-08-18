@@ -15,9 +15,12 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import java.util.Map;
+import java.util.Objects;
 
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
+import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
 
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
@@ -30,12 +33,9 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 
-import java.util.Map;
-import java.util.Objects;
-
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
- * Bigtable cluster; a table to connect to in the cluster; and a filter on the table in the form of
+ * Bigtable instance; a table to connect to in the instance; and a filter on the table in the form of
  * a {@link Scan}.
  */
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
@@ -43,8 +43,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   private static final long serialVersionUID = 2435897354284600685L;
 
   /**
-   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration}
-   * that will perform the specified {@link Scan} on the table.
+   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration} that
+   * will perform the specified {@link Scan} on the table.
    * @param config The {@link CloudBigtableTableConfiguration} object.
    * @param scan The {@link Scan} to add to the configuration.
    * @return The new {@link CloudBigtableScanConfiguration}.
@@ -90,10 +90,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     /**
      * Internal API that allows a Source to configure the request with a new start/stop row range.
-     *
      * @param startKey The first key, inclusive.
      * @param stopKey The last key, exclusive.
-     *
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     Builder withKeys(byte[] startKey, byte[] stopKey) {
@@ -135,10 +133,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withTableId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
+     * {@inheritDoc} Overrides {@link CloudBigtableScanConfiguration.Builder#withTableId(String)} so
+     * that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
     public Builder withTableId(String tableId) {
@@ -160,8 +156,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
         ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
         request = readHooks.applyPreSendHook(builder.build());
       }
-      return new CloudBigtableScanConfiguration(
-          projectId, instanceId, tableId, request, additionalConfiguration);
+      return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
+          request, additionalConfiguration);
     }
   }
 
@@ -170,20 +166,15 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
    * table ID, {@link Scan} and additional connection configuration.
-   *
    * @param projectId The project ID for the instance.
-   * @param instanceId The instance ID. 
-   * @param tableId The table to connect to in the cluster.
+   * @param instanceId The instance ID.
+   * @param tableId The table to connect to in the instance.
    * @param request The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  protected CloudBigtableScanConfiguration(
-      String projectId,
-      String instanceId,
-      String tableId,
-      ReadRowsRequest request,
-      Map<String, String> additionalConfiguration) {
-    super(projectId, instanceId, tableId, additionalConfiguration);
+  protected CloudBigtableScanConfiguration(String projectId, String instanceId, String tableId,
+      ReadRowsRequest request, Map<String, String> additionalConfiguration) {
+    super(projectId, instanceId,  tableId, additionalConfiguration);
     if (request.getTableName().isEmpty()) {
       BigtableInstanceName bigtableInstanceName =
           new BigtableInstanceName(projectId, this.getInstanceId());
@@ -215,7 +206,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public byte[] getStopRow() {
     return getStopRowByteString().toByteArray();
   }
-
 
   /**
    * @return The start row for this configuration.
@@ -263,11 +253,18 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   /**
    * Creates a {@link ByteKeyRange} representing the start and stop keys for this instance.
-   *
    * @return A {@link ByteKeyRange}.
    */
   public ByteKeyRange toByteKeyRange() {
     return ByteKeyRange.of(ByteKey.copyFrom(getZeroCopyStartRow()),
       ByteKey.copyFrom(getZeroCopyStopRow()));
   }
+
+  @Override
+  public void populateDisplayData(DisplayData.Builder builder) {
+    super.populateDisplayData(builder);
+    builder
+        .add(DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+  }
+
 }

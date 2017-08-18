@@ -23,16 +23,17 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.Map.Entry;
 
-import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
+import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.conf.Configuration;
 
+import com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.collect.ImmutableMap;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a Cloud
- * Bigtable cluster.
+ * Bigtable instance.
  */
 public class CloudBigtableConfiguration implements Serializable {
 
@@ -109,18 +110,15 @@ public class CloudBigtableConfiguration implements Serializable {
   }
 
   /**
-   * Creates a {@link CloudBigtableConfiguration} using the specified project ID, zone, and cluster
-   * ID.
+   * Creates a {@link CloudBigtableConfiguration} using the specified project ID and instance ID.
    *
    * @param projectId The project ID for the instance.
-   * @param instanceId The instance ID 
-   * @param additionalConfiguration A {@link Map} with additional connection configuration.
-   *          See {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more
-   *          information about configuration options.
+   * @param instanceId The instance ID.
+   * @param additionalConfiguration A {@link Map} with additional connection configuration. See
+   *          {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information
+   *          about configuration options.
    */
-  public CloudBigtableConfiguration(
-      String projectId,
-      String instanceId,
+  protected CloudBigtableConfiguration(String projectId, String instanceId,
       Map<String, String> additionalConfiguration) {
     this.configuration = new HashMap<>(additionalConfiguration);
     setValue(BigtableOptionsFactory.PROJECT_ID_KEY, projectId, "Project ID");
@@ -134,8 +132,8 @@ public class CloudBigtableConfiguration implements Serializable {
   }
 
   /**
-   * Gets the project ID for the Cloud Bigtable cluster.
-   * @return The project ID for the cluster.
+   * Gets the project ID for the Cloud Bigtable instance.
+   * @return The project ID for the instance.
    */
   public String getProjectId() {
     return configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY);
@@ -166,7 +164,7 @@ public class CloudBigtableConfiguration implements Serializable {
 
     config.set(BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
 
-    // Dataflow should use a different endpoint for data operations than online traffic.
+    // Beam should use a different endpoint for data operations than online traffic.
     config.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY,
       BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT);
 
@@ -231,4 +229,18 @@ public class CloudBigtableConfiguration implements Serializable {
   public void copyConfig(Builder builder) {
     builder.copyFrom(configuration);
   }
+
+  public void populateDisplayData(DisplayData.Builder builder) {
+    builder.add(DisplayData.item("projectId", getProjectId())
+      .withLabel("Project ID"));
+    builder.add(DisplayData.item("instanceId", getInstanceId())
+      .withLabel("Instance ID"));
+    Map<String, String> hashMap = new HashMap<String, String>(configuration);
+    hashMap.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
+    hashMap.remove(BigtableOptionsFactory.INSTANCE_ID_KEY);
+    for (Entry<String, String> entry : configuration.entrySet()) {
+      builder.add(DisplayData.item(entry.getKey(), entry.getValue()).withLabel(entry.getKey()));
+    }
+  }
+
 }
