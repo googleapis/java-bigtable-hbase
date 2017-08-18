@@ -68,6 +68,7 @@ import org.slf4j.LoggerFactory;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
@@ -770,22 +771,25 @@ public class CloudBigtableIO {
 
   private static class MutationStatsExporter {
     protected static final Logger STATS_LOG = LoggerFactory.getLogger(AbstractSource.class);
-    private static MutationStatsExporter mutationStatsExporter;
+    private static Map<String, MutationStatsExporter> mutationStatsExporters = new HashMap<>();
 
-    static synchronized void initializeMutationStatsExporter() {
+    static synchronized void initializeMutationStatsExporter(BigtableInstanceName instanceName) {
+      String key = instanceName.toString();
+      MutationStatsExporter mutationStatsExporter = mutationStatsExporters.get(key);
       if (mutationStatsExporter == null) {
         mutationStatsExporter = new MutationStatsExporter();
-        mutationStatsExporter.startExport();
+        mutationStatsExporter.startExport(instanceName);
+        mutationStatsExporters.put(key, mutationStatsExporter);
       }
     }
 
-    protected void startExport() {
+    protected void startExport(final BigtableInstanceName instanceName) {
       Runnable r = new Runnable() {
         @Override
         public void run() {
           try {
-            BufferedMutatorDoFn.cumulativeThrottlingSeconds.set(TimeUnit.NANOSECONDS
-                .toSeconds(ResourceLimiterStats.getInstance().getCumulativeThrottlingTimeNanos()));
+            BufferedMutatorDoFn.cumulativeThrottlingSeconds.set(TimeUnit.NANOSECONDS.toSeconds(
+              ResourceLimiterStats.getInstance(instanceName).getCumulativeThrottlingTimeNanos()));
           } catch (Exception e) {
             STATS_LOG.warn("Something bad happened in export stats", e);
           }
@@ -812,11 +816,12 @@ public class CloudBigtableIO {
 
     public BufferedMutatorDoFn(CloudBigtableConfiguration config) {
       super(config);
+      MutationStatsExporter.initializeMutationStatsExporter(
+        new BigtableInstanceName(config.getProjectId(), config.getInstanceId()));
     }
 
     protected BufferedMutator createBufferedMutator(Object context, String tableName)
         throws IOException {
-      MutationStatsExporter.initializeMutationStatsExporter();
       return getConnection()
           .getBufferedMutator(new BufferedMutatorParams(TableName.valueOf(tableName))
               .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT)
