@@ -28,6 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
@@ -141,7 +142,7 @@ import com.google.common.annotations.VisibleForTesting;
  * }
  * </pre>
  */
-
+@Experimental
 public class CloudBigtableIO {
 
   private static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
