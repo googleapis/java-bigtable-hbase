@@ -43,8 +43,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   private static final long serialVersionUID = 2435897354284600685L;
 
   /**
-   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration} that
-   * will perform the specified {@link Scan} on the table.
+   * Converts a {@link CloudBigtableTableConfiguration} object to a
+   * {@link CloudBigtableScanConfiguration} that will perform the specified {@link Scan} on the
+   * table.
    * @param config The {@link CloudBigtableTableConfiguration} object.
    * @param scan The {@link Scan} to add to the configuration.
    * @return The new {@link CloudBigtableScanConfiguration}.

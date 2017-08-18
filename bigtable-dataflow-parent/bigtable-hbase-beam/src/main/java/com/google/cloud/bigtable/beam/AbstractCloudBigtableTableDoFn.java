@@ -100,7 +100,7 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
   }
 
   /**
-   * Logs the {@link com.google.cloud.dataflow.sdk.transforms.DoFn.Context} and the exception's
+   * Logs a context and the exception's
    * {@link RetriesExhaustedWithDetailsException#getExhaustiveDescription()}.
    */
   protected void logExceptions(Object context, RetriesExhaustedWithDetailsException exception) {
