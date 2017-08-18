@@ -18,9 +18,11 @@ package com.google.cloud.bigtable.beam;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.beam.sdk.transforms.display.DisplayData;
+
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
- * Bigtable cluster, including a table to connect to in the cluster.
+ * Bigtable instance, including a table to connect to in the instance.
  */
 public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration {
 
@@ -103,10 +105,10 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    *
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID
-   * @param tableId The table to connect to in the cluster.
+   * @param tableId The table to connect to in the instance.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  public CloudBigtableTableConfiguration(
+  protected CloudBigtableTableConfiguration(
       String projectId,
       String instanceId,
       String tableId,
@@ -139,5 +141,11 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   public boolean equals(Object obj) {
     return super.equals(obj)
         && Objects.equals(tableId, ((CloudBigtableTableConfiguration) obj).tableId);
+  }
+
+  @Override
+  public void populateDisplayData(DisplayData.Builder builder) {
+    super.populateDisplayData(builder);
+    builder.add(DisplayData.item("tableId", tableId).withLabel("Table ID"));
   }
 }

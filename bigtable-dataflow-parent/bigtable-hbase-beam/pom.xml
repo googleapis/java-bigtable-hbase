@@ -42,6 +42,7 @@ limitations under the License.
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
             <version>${google-auto-service.version}</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>

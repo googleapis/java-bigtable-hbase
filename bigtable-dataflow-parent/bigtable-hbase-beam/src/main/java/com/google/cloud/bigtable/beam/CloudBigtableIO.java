@@ -28,7 +28,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
@@ -144,12 +143,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 public class CloudBigtableIO {
 
-  enum CoderType {
-    RESULT,
-    RESULT_ARRAY;
-  }
-
-  private static AtomicCoder<Result> RESULT_CODER = new HBaseResultCoder();
   private static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
 
   /**
@@ -174,8 +167,9 @@ public class CloudBigtableIO {
     }
 
     @Override
+    // TODO: change this to getOutputCoder() when beam 2.1.0 is released.
     public Coder<Result> getDefaultOutputCoder() {
-      return RESULT_CODER;
+      return HBaseResultCoder.of();
     }
 
     // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between beam needs
