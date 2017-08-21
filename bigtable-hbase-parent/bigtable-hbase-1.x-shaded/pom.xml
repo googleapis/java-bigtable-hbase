@@ -140,6 +140,9 @@ limitations under the License.
                 <relocation>
                   <pattern>io.netty</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
+                  <excludes>
+                    <exclude>io.netty.internal.tcnative.**</exclude>
+                  </excludes>
                 </relocation>
                 <relocation>
                   <pattern>org.joda</pattern>
