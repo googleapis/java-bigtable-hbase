@@ -59,7 +59,8 @@ limitations under the License.
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
         <grpc.version>1.5.0</grpc.version>
-        <netty.version>4.1.12.Final</netty.version>
+        <!--NOTE: 4.1.14.Final is the first version that support shading -->
+        <netty.version>4.1.14.Final</netty.version>
         <netty-tcnative-boringssl-static.version>2.0.5.Final</netty-tcnative-boringssl-static.version>
         <protobuff-java.version>3.3.1</protobuff-java.version>
         <protoc.version>3.3.0</protoc.version>
