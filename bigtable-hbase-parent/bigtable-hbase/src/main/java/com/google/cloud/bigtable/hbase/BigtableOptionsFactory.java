@@ -267,6 +267,11 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY = "google.bigtable.long.rpc.timeout.ms";
 
   /**
+   * Allow namespace methods to be no-ops
+   */
+  public static final String BIGTABLE_NAMESAPCE_WARNING_KEY = "google.bigtable.namespace.warnings";
+
+  /**
    * <p>fromConfiguration.</p>
    *
    * @param configuration a {@link org.apache.hadoop.conf.Configuration} object.
