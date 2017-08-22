@@ -191,7 +191,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return listTables(pattern);
   }
 
-
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
   /** {@inheritDoc} */
@@ -702,6 +701,16 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public HTableDescriptor[] getTableDescriptorsByTableName(List<TableName> tableNames)
       throws IOException {
     TableName[] tableNameArray = tableNames.toArray(new TableName[tableNames.size()]);
+    return getTableDescriptors(tableNameArray);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
+    TableName[] tableNameArray = new TableName[names.size()];
+    for(int i=0; i< names.size();i++) {
+      tableNameArray[i] = TableName.valueOf(names.get(i));
+    }
     return getTableDescriptors(tableNameArray);
   }
 
@@ -1244,49 +1253,47 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
-    throw new UnsupportedOperationException("createNamespace");  // TODO
+    LOG.warn("createNamespace is a no-op");
   }
 
   /** {@inheritDoc} */
   @Override
   public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
-    throw new UnsupportedOperationException("modifyNamespace");  // TODO
+    LOG.warn("modifyNamespace is a no-op");
   }
 
   /** {@inheritDoc} */
   @Override
   public void deleteNamespace(String name) throws IOException {
-    throw new UnsupportedOperationException("deleteNamespace");  // TODO
+    LOG.warn("deleteNamespace is a no-op");
   }
 
   /** {@inheritDoc} */
   @Override
   public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException {
-    throw new UnsupportedOperationException("getNamespaceDescriptor");  // TODO
+    LOG.warn("getNamespaceDescriptor is a no-op");
+    return null;
   }
 
   /** {@inheritDoc} */
   @Override
   public NamespaceDescriptor[] listNamespaceDescriptors() throws IOException {
-    throw new UnsupportedOperationException("listNamespaceDescriptors");  // TODO
+    LOG.warn("listNamespaceDescriptors is a no-op");
+    return new NamespaceDescriptor[0];
   }
 
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTableDescriptorsByNamespace(String name) throws IOException {
-    throw new UnsupportedOperationException("listDescriptorsByNamespace");  // TODO
+    LOG.warn("listTableDescriptorsByNamespace is a no-op");
+    return new HTableDescriptor[0];
   }
 
   /** {@inheritDoc} */
   @Override
   public TableName[] listTableNamesByNamespace(String name) throws IOException {
-    throw new UnsupportedOperationException("listTableNamesByNamespace");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
-    throw new UnsupportedOperationException("getTableDescriptors");  // TODO
+    LOG.warn("listTableNamesByNamespace is a no-op");
+    return new TableName[0];
   }
 
   /** {@inheritDoc} */
