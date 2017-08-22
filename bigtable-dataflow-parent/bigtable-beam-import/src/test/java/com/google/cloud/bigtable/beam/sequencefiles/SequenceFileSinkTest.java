@@ -1,87 +1,86 @@
 package com.google.cloud.bigtable.beam.sequencefiles;
 
-import java.io.IOException;
+import com.google.common.collect.Lists;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.beam.runners.direct.DirectOptions;
-import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.DefaultFilenamePolicy;
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy;
 import org.apache.beam.sdk.io.LocalResources;
+import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.WriteFiles;
 import org.apache.beam.sdk.io.fs.ResourceId;
-import org.apache.beam.sdk.options.PipelineOptions;
-import org.apache.beam.sdk.options.PipelineOptions.DirectRunner;
-import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.io.hadoop.WritableCoder;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
+import org.apache.beam.sdk.testing.NeedsRunner;
+import org.apache.beam.sdk.testing.PAssert;
+import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.MapElements;
-import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.beam.sdk.values.KV;
-import org.apache.beam.sdk.values.PCollection;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.SequenceFile.Reader;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.WritableSerialization;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
-/**
- * Created by igorbernstein on 6/28/17.
- */
 public class SequenceFileSinkTest {
+  @Rule
+  public TestPipeline writePipeline = TestPipeline.create();
+
+  @Rule
+  public TestPipeline readPipeline = TestPipeline.create();
+
+  @Rule
+  public final TemporaryFolder workDir = new TemporaryFolder();
 
   @Test
-  public void moo() throws IOException {
-    PipelineOptions opts = PipelineOptionsFactory.as(DirectOptions.class);
-    Pipeline pipeline = Pipeline.create();
+  @Category(NeedsRunner.class)
+  public void testSeqFileWriteAndRead() throws Throwable {
+    List<KV<Text, Text>> data = Lists.newArrayList();
+    for(int i=0; i < 100; i++) {
+      data.add(KV.of(new Text("key" + i), new Text("value"+i)));
+    }
 
     ValueProvider<ResourceId> output = StaticValueProvider.of(
-        LocalResources.fromString("/tmp/moo", true)
+        LocalResources.fromFile(workDir.getRoot(), true)
     );
 
     FilenamePolicy filenamePolicy = DefaultFilenamePolicy
-        .constructUsingStandardParameters(output, null, null);
+        .constructUsingStandardParameters(output, "output", null);
 
     List<Class<? extends Serialization<?>>> serializations = Arrays.<Class<? extends Serialization<?>>>asList(
         ResultSerialization.class, WritableSerialization.class
     );
 
-    List<KV<Text, Text>> data = Arrays.asList(
-        KV.of(new Text("one"), new Text("one1")),
-        KV.of(new Text("two"), new Text("two2")),
-        KV.of(new Text("three"), new Text("three3")),
-        KV.of(new Text("three"), new Text("three3")),
-        KV.of(new Text("three"), new Text("three3"))
-    );
-
     SequenceFileSink<Text, Text> sink = new SequenceFileSink<>(output, filenamePolicy, Text.class,
         Text.class, serializations);
 
-    pipeline
+    writePipeline
         .apply(Create.of(data))
-        .apply(WriteFiles.to(sink));
+        .apply(
+            WriteFiles.to(sink)
+                .withNumShards(1)
+        );
 
-    pipeline.run();
+    writePipeline.run().waitUntilFinish();
 
-    Configuration config = new Configuration(false);
-    try (Reader reader = new Reader(config,
-        Reader.file(new Path("/tmp/moo/-00000-of-00001"))
-    )) {
 
-      reader.sync(0);
-      Text key = new Text();
-      Text value = new Text();
+    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
+        StaticValueProvider.of(workDir.getRoot().toString() + "/*"),
+        Text.class,
+        WritableCoder.of(Text.class),
+        Text.class,
+        WritableCoder.of(Text.class),
+        Arrays.<Class<? extends Serialization<?>>>asList(
+            WritableSerialization.class
+        )
+    );
+    PAssert.that(
+      readPipeline.apply(Read.from(source))
+    ).containsInAnyOrder(data);
 
-      while(reader.next(key)) {
-        reader.getCurrentValue(value);
-        System.out.println("key: " + key.toString() + ", value: " + value.toString());
-      }
-    }
-
+    readPipeline.run();
   }
 }

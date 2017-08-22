@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
 import com.google.cloud.bigtable.beam.coders.HBaseResultCoder;
+import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -11,8 +12,12 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.beam.sdk.io.FileBasedSource.FileBasedReader;
 import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.hadoop.WritableCoder;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.testing.NeedsRunner;
+import org.apache.beam.sdk.testing.PAssert;
+import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.values.KV;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
@@ -26,16 +31,27 @@ import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 public class SequenceFileSourceTest {
+  @Rule
+  public TestPipeline readPipeline = TestPipeline.create();
 
   @Rule
   public final TemporaryFolder workDir = new TemporaryFolder();
 
   @Test
+  @Category(NeedsRunner.class)
   public void testReader() throws IOException {
     Configuration config = new Configuration(false);
+
+    List<KV<Text, Text>> data = Lists.newArrayList();
+    for(int i=0; i < 100; i++) {
+      data.add(KV.of(new Text("key" + i), new Text("value"+i)));
+    }
+
+    // Write data to read
     File targetFile = new File(workDir.getRoot(), "file.seq");
 
     try (Writer writer = SequenceFile.createWriter(config,
@@ -43,10 +59,12 @@ public class SequenceFileSourceTest {
         Writer.keyClass(Text.class),
         Writer.valueClass(Text.class)
     )) {
-      writer.append(new Text("key1"), new Text("value1"));
-      writer.append(new Text("key2"), new Text("value2"));
+      for (KV<Text, Text> kv : data) {
+        writer.append(kv.getKey(), kv.getValue());
+      }
     }
 
+    // Setup the source
     SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
         FileSystems.matchSingleFileSpec(targetFile.getAbsolutePath()),
         0, targetFile.length(),
@@ -55,17 +73,11 @@ public class SequenceFileSourceTest {
         Collections.<Class<? extends Serialization<?>>>emptyList()
     );
 
-    try (FileBasedReader<KV<Text,Text>> reader = source
-        .createSingleFileReader(PipelineOptionsFactory.create())) {
+    PAssert
+        .that(readPipeline.apply(Read.from(source)))
+        .containsInAnyOrder(data);
 
-      assertThat(reader.start(), equalTo(true));
-      assertThat(reader.getCurrent(), equalTo(KV.of(new Text("key1"), new Text("value1"))));
-
-      assertThat(reader.advance(), equalTo(true));
-      assertThat(reader.getCurrent(), equalTo(KV.of(new Text("key2"), new Text("value2"))));
-
-      assertThat(reader.advance(), equalTo(false));
-    }
+    readPipeline.run().waitUntilFinish();
   }
 
   @Test
