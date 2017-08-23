@@ -49,12 +49,10 @@ public class SequenceFileSinkTest {
     FilenamePolicy filenamePolicy = DefaultFilenamePolicy
         .constructUsingStandardParameters(output, "output", null);
 
-    List<Class<? extends Serialization<?>>> serializations = Arrays.<Class<? extends Serialization<?>>>asList(
-        ResultSerialization.class, WritableSerialization.class
-    );
-
-    SequenceFileSink<Text, Text> sink = new SequenceFileSink<>(output, filenamePolicy, Text.class,
-        Text.class, serializations);
+    SequenceFileSink<Text, Text> sink = new SequenceFileSink<>(
+        output, filenamePolicy,
+        Text.class, WritableSerialization.class,
+        Text.class, WritableSerialization.class);
 
     writePipeline
         .apply(Create.of(data))

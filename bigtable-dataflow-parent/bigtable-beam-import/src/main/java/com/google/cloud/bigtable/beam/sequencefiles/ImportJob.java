@@ -18,7 +18,6 @@ public class ImportJob {
     ValueProvider<String> getInstanceId();
     ValueProvider<String> getTableId();
     ValueProvider<String> getSourcePath();
-
   }
 
   public static void main(String[] args) {
