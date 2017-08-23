@@ -28,7 +28,6 @@ import java.util.List;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
-import org.apache.beam.sdk.coders.CoderProvider;
 import org.apache.beam.sdk.coders.CoderRegistry;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.values.TypeDescriptor;
@@ -53,8 +52,6 @@ import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.beam.CloudBigtableIO.AbstractSource;
 import com.google.cloud.bigtable.beam.CloudBigtableIO.Source;
 import com.google.cloud.bigtable.beam.CloudBigtableIO.SourceWithKeys;
-import com.google.cloud.bigtable.beam.coders.CBTIOCoderRegistrar;
-import com.google.cloud.bigtable.beam.coders.HBaseMutationCoder;
 
 /**
  * Tests for {@link CloudBigtableIO}.
@@ -69,14 +66,6 @@ public class CloudBigtableIOTest {
   Pipeline underTest;
 
   private static final CoderRegistry registry = CoderRegistry.createDefault();
-
-  static {
-    // This happens automatically with the magic of auto-service once the jar is built.
-    // Since the jar isn't built yet, do this manually.
-    for (CoderProvider provider : new CBTIOCoderRegistrar().getCoderProviders()) {
-      registry.registerCoderProvider(provider);
-    }
-  }
 
   private CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
       .withProjectId("project")
@@ -94,7 +83,6 @@ public class CloudBigtableIOTest {
       throws CannotProvideCoderException {
     Coder<? extends Mutation> coder = registry.getCoder(TypeDescriptor.of(mutationClass));
     assertNotNull(coder);
-    assertEquals(HBaseMutationCoder.class, coder.getClass());
   }
 
   @Test

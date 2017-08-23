@@ -23,13 +23,13 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.Map.Entry;
 
+import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
+import org.apache.beam.sdk.repackaged.com.google.common.collect.ImmutableMap;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.conf.Configuration;
 
-import com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.common.collect.ImmutableMap;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a Cloud
