@@ -69,6 +69,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.common.base.MoreObjects;
@@ -1253,47 +1254,79 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
-    LOG.warn("createNamespace is a no-op");
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("createNamespace is a no-op");
+    } else {
+      throw new UnsupportedOperationException("createNamespace"); // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
-    LOG.warn("modifyNamespace is a no-op");
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("modifyNamespace is a no-op");
+    } else {
+      throw new UnsupportedOperationException("modifyNamespace");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public void deleteNamespace(String name) throws IOException {
-    LOG.warn("deleteNamespace is a no-op");
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("deleteNamespace is a no-op");
+    } else {
+      throw new UnsupportedOperationException("deleteNamespace");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException {
-    LOG.warn("getNamespaceDescriptor is a no-op");
-    return null;
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("getNamespaceDescriptor is a no-op");
+      return null;
+    } else {
+      throw new UnsupportedOperationException("getNamespaceDescriptor");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public NamespaceDescriptor[] listNamespaceDescriptors() throws IOException {
-    LOG.warn("listNamespaceDescriptors is a no-op");
-    return new NamespaceDescriptor[0];
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("listNamespaceDescriptors is a no-op");
+      return new NamespaceDescriptor[0];
+    } else {
+      throw new UnsupportedOperationException("listNamespaceDescriptors");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTableDescriptorsByNamespace(String name) throws IOException {
-    LOG.warn("listTableDescriptorsByNamespace is a no-op");
-    return new HTableDescriptor[0];
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("listTableDescriptorsByNamespace is a no-op");
+      return new HTableDescriptor[0];
+    } else {
+      throw new UnsupportedOperationException("listTableDescriptorsByNamespace");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public TableName[] listTableNamesByNamespace(String name) throws IOException {
-    LOG.warn("listTableNamesByNamespace is a no-op");
-    return new TableName[0];
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("listTableNamesByNamespace is a no-op");
+      return new TableName[0];
+    } else {
+      throw new UnsupportedOperationException("listTableNamesByNamespace");  // TODO
+    }
+  }
+
+  private boolean provideWarningsForNamespaces() {
+    return configuration.getBoolean(BigtableOptionsFactory.BIGTABLE_NAMESAPCE_WARNING_KEY, false);
   }
 
   /** {@inheritDoc} */
