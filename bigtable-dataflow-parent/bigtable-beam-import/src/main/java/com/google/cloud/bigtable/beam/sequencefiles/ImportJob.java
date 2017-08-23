@@ -2,18 +2,14 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
-import com.google.cloud.bigtable.beam.coders.HBaseResultCoder;
-import java.util.Arrays;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.Read;
-import org.apache.beam.sdk.io.hadoop.WritableCoder;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
 public class ImportJob {
@@ -34,14 +30,8 @@ public class ImportJob {
 
     SequenceFileSource<ImmutableBytesWritable, Result> source = new SequenceFileSource<>(
         opts.getSourcePath(),
-        ImmutableBytesWritable.class,
-        WritableCoder.of(ImmutableBytesWritable.class),
-        Result.class,
-        HBaseResultCoder.of(),
-        Arrays.<Class<? extends Serialization<?>>>asList(
-            WritableSerialization.class,
-            ResultSerialization.class
-        )
+        ImmutableBytesWritable.class, WritableSerialization.class,
+        Result.class, ResultSerialization.class
     );
 
     CloudBigtableTableConfiguration config = new CloudBigtableTableConfiguration.Builder()

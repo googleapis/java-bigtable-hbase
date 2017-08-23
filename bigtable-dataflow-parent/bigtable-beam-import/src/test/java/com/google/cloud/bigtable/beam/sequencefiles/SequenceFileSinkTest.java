@@ -9,7 +9,6 @@ import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.WriteFiles;
 import org.apache.beam.sdk.io.fs.ResourceId;
-import org.apache.beam.sdk.io.hadoop.WritableCoder;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.testing.NeedsRunner;
@@ -69,13 +68,8 @@ public class SequenceFileSinkTest {
 
     SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
         StaticValueProvider.of(workDir.getRoot().toString() + "/*"),
-        Text.class,
-        WritableCoder.of(Text.class),
-        Text.class,
-        WritableCoder.of(Text.class),
-        Arrays.<Class<? extends Serialization<?>>>asList(
-            WritableSerialization.class
-        )
+        Text.class, WritableSerialization.class,
+        Text.class, WritableSerialization.class
     );
     PAssert.that(
       readPipeline.apply(Read.from(source))
