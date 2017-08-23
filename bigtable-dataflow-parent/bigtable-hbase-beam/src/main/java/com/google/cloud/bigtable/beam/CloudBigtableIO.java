@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,7 +27,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.beam.sdk.annotations.Experimental;
+import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.coders.CoderRegistry;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.io.range.ByteKey;
@@ -38,7 +38,9 @@ import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Gauge;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.repackaged.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
+import org.apache.beam.sdk.repackaged.com.google.common.base.Strings;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -76,10 +78,8 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.Fla
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
-import com.google.cloud.bigtable.beam.coders.HBaseResultCoder;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * <p>
@@ -171,9 +171,8 @@ public class CloudBigtableIO {
     }
 
     @Override
-    // TODO: change this to getOutputCoder() when beam 2.1.0 is released.
     public Coder<Result> getDefaultOutputCoder() {
-      return HBaseResultCoder.of();
+      return getResultCoder();
     }
 
     // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between beam needs
@@ -489,9 +488,8 @@ public class CloudBigtableIO {
     }
 
     @Override
-    // TODO: change this to getOutputCoder() when beam 2.1.0 is released.
     public Coder<Result> getDefaultOutputCoder() {
-      return HBaseResultCoder.of();
+      return getResultCoder();
     }
   }
 
@@ -573,7 +571,7 @@ public class CloudBigtableIO {
 
     @Override
     public Coder<Result> getDefaultOutputCoder() {
-      return HBaseResultCoder.of();
+      return getResultCoder();
     }
 
     @Override
@@ -1016,7 +1014,16 @@ public class CloudBigtableIO {
     return new CloudBigtableWriteTransform<>(writeFn);
   }
 
-   /**
+  private static Coder<Result> getResultCoder() {
+    try {
+      return CoderRegistry.createDefault().getCoder(Result.class);
+    } catch (CannotProvideCoderException e) {
+      e.printStackTrace();
+      throw new RuntimeException("Please add beam-sdks-java-io-hbase to your dependencies", e);
+    }
+  }
+
+  /**
    * Creates a {@link PTransform} that can write either a bounded or unbounded {@link PCollection}
    * of {@link KV} of (String tableName, List of {@link Mutation}s) to the specified table.
    *
@@ -1044,8 +1051,8 @@ public class CloudBigtableIO {
   }
 
   private static void checkNotNullOrEmpty(String value, String type) {
-    checkArgument(
-        !isNullOrEmpty(value), "A " + type + " must be set to configure Bigtable properly.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(value),
+      "A " + type + " must be set to configure Bigtable properly.");
   }
 
   private static void validateTableConfig(CloudBigtableTableConfiguration configuration) {

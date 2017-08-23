@@ -17,14 +17,11 @@ package com.google.cloud.bigtable.dataflow.coders;
 
 import static org.apache.hadoop.hbase.util.Bytes.toBytes;
 
-import com.google.bigtable.repackaged.com.google.api.client.util.Clock;
-import com.google.cloud.bigtable.hbase.adapters.PutAdapterUtil;
 import com.google.cloud.dataflow.sdk.util.MutationDetector;
 import com.google.cloud.dataflow.sdk.util.MutationDetectors;
 import java.io.IOException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,11 +36,6 @@ public class HBaseMutationCoderTest {
   @Before
   public void setup() {
     underTest = new HBaseMutationCoder();
-  }
-
-  @After
-  public void tearDown() {
-    PutAdapterUtil.setClock(HBaseMutationCoder.PUT_ADAPTER, Clock.SYSTEM);
   }
 
   @Test

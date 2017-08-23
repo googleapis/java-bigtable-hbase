@@ -27,7 +27,7 @@ limitations under the License.
     </description>
 
     <properties>
-        <beam.version>2.0.0</beam.version>
+        <beam.version>2.1.0</beam.version>
         <commons-lang.version>2.6</commons-lang.version>
         <google-auto-service.version>1.0-rc2</google-auto-service.version>
     </properties>
@@ -39,10 +39,9 @@ limitations under the License.
             <version>${beam.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.auto.service</groupId>
-            <artifactId>auto-service</artifactId>
-            <version>${google-auto-service.version}</version>
-            <optional>true</optional>
+            <groupId>org.apache.beam</groupId>
+            <artifactId>beam-sdks-java-io-hbase</artifactId>
+            <version>${beam.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
@@ -135,7 +134,7 @@ limitations under the License.
 
                             <offlineLinks>
                                 <offlineLink>
-                                    <url>https://beam.apache.org/documentation/sdks/javadoc/2.0.0/</url>
+                                    <url>https://beam.apache.org/documentation/sdks/javadoc/2.1.0/</url>
                                     <location>${basedir}/javadoc/beam-docs</location>
                                 </offlineLink>
                                 <offlineLink>
