@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -57,7 +72,7 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
    * @param valueSerialization The {@link Class} of the hadoop {@link
    * org.apache.hadoop.io.serializer.Serialization} to use for the value.
    */
-  public SequenceFileSource(ValueProvider<String> fileOrPatternSpec,
+  SequenceFileSource(ValueProvider<String> fileOrPatternSpec,
       Class<K> keyClass,
       Class<? extends Serialization<? super K>> keySerialization,
       Class<V> valueClass,
@@ -93,7 +108,7 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
    * @param valueSerialization The {@link Class} of the hadoop {@link
    *        org.apache.hadoop.io.serializer.Serialization} to use for the value.
    */
-  SequenceFileSource(Metadata fileMetadata,
+  private SequenceFileSource(Metadata fileMetadata,
       long startOffset, long endOffset,
       Class<K> keyClass,
       Class<? extends Serialization<? super K>> keySerialization,
@@ -171,7 +186,7 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
     private long startOfRecord;
     private KV<K, V> record;
 
-    public SeqFileReader(FileBasedSource<KV<K, V>> source, Class<K> keyClass, Class<V> valueClass,
+    SeqFileReader(FileBasedSource<KV<K, V>> source, Class<K> keyClass, Class<V> valueClass,
         String[] serializationNames) {
       super(source);
       this.keyClass = keyClass;
@@ -306,7 +321,7 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
     private final SeekableByteChannel inner;
     private final ByteBuffer singleByteBuffer = ByteBuffer.allocate(1);
 
-    public FileStream(SeekableByteChannel inner) {
+    FileStream(SeekableByteChannel inner) {
       this.inner = inner;
     }
 

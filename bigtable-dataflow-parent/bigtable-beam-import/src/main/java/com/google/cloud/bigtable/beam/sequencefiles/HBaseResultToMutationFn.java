@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
  * A {@link DoFn} function that converts a {@link Result} in the pipeline input to a
  * {@link Mutation} for output.
  */
-@SuppressWarnings("Duplicates")
 class HBaseResultToMutationFn
     extends DoFn<KV<ImmutableBytesWritable, Result>, Mutation> {
   private static Logger logger = LoggerFactory.getLogger(HBaseResultToMutationFn.class);

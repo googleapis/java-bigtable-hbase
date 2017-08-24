@@ -1,6 +1,22 @@
+/*
+ * Copyright 2017 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.common.collect.Sets;
+import com.sun.istack.internal.NotNull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -36,7 +52,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
   /**
    * Constructs the sink.
    */
-  public SequenceFileSink(
+  SequenceFileSink(
       ValueProvider<ResourceId> baseOutputDirectoryProvider,
       FilenamePolicy filenamePolicy,
       Class<K> keyClass, Class<? extends Serialization<? super K>> keySerializationClass,
@@ -86,7 +102,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
      * @param valueClass The class of the {@link SequenceFile} value.
      * @param serializationNames A list of {@link Serialization} class names.
      */
-    public SeqFileWriteOperation(SequenceFileSink<K, V> sink, Class<K> keyClass,
+    SeqFileWriteOperation(SequenceFileSink<K, V> sink, Class<K> keyClass,
         Class<V> valueClass, String[] serializationNames) {
       super(sink);
       this.keyClass = keyClass;
@@ -121,7 +137,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
      *
      * @param writeOperation The parent operation.
      */
-    public SeqFileWriter(SeqFileWriteOperation<K, V> writeOperation) {
+    SeqFileWriter(SeqFileWriteOperation<K, V> writeOperation) {
       super(writeOperation, MimeTypes.BINARY);
       this.writeOperation = writeOperation;
     }
@@ -180,7 +196,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
      *
      * @param inner An instance of Beam's {@link WritableByteChannel}.
      */
-    public OutputStreamWrapper(WritableByteChannel inner) {
+    OutputStreamWrapper(WritableByteChannel inner) {
       this.inner = inner;
     }
 
