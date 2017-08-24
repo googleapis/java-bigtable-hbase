@@ -16,6 +16,7 @@ import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.values.KV;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.WritableSerialization;
@@ -67,7 +68,8 @@ public class SequenceFileSinkTest {
     SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
         StaticValueProvider.of(workDir.getRoot().toString() + "/*"),
         Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class
+        Text.class, WritableSerialization.class,
+        SequenceFile.SYNC_INTERVAL
     );
     PAssert.that(
       readPipeline.apply(Read.from(source))

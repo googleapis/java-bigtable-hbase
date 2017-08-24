@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.beam.sdk.io.FileBasedSink;
@@ -21,13 +20,22 @@ import org.apache.hadoop.fs.FileSystem.Statistics;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.serializer.Serialization;
 
-public class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
+/**
+ * {@link FileBasedSink} for {@link SequenceFile}s.
+ *
+ * @param <K> The type of the {@link SequenceFile} key.
+ * @param <V> The type of the {@link SequenceFile} value.
+ */
+class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
   private static final Log LOG = LogFactory.getLog(SequenceFileSink.class);
 
   private final Class<K> keyClass;
   private final Class<V> valueClass;
   private final String[] serializationNames;
 
+  /**
+   * Constructs the sink.
+   */
   public SequenceFileSink(
       ValueProvider<ResourceId> baseOutputDirectoryProvider,
       FilenamePolicy filenamePolicy,
@@ -45,17 +53,40 @@ public class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
     serializationNames = serializationNameSet.toArray(new String[serializationNameSet.size()]);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public WriteOperation<KV<K, V>> createWriteOperation() {
     return new SeqFileWriteOperation<>(this, keyClass, valueClass, serializationNames);
   }
 
+
+  /**
+   * Specialized operation that manages the process of writing to {@link SequenceFileSink}.
+   * See {@link WriteOperation} for more details.
+   *
+   * @param <K> The type of the {@link SequenceFile} key.
+   * @param <V> The type of the {@link SequenceFile} value.
+   */
   private static class SeqFileWriteOperation<K,V> extends WriteOperation<KV<K,V>> {
     private final Class<K> keyClass;
     private final Class<V> valueClass;
     private final String[] serializationNames;
 
-    public SeqFileWriteOperation(FileBasedSink<KV<K, V>> sink, Class<K> keyClass,
+    /**
+     * Constructs a SeqFileWriteOperation using the default strategy for generating a temporary
+     * directory from the base output filename.
+     *
+     * <p>Default is a uniquely named sibling of baseOutputFilename, e.g. if baseOutputFilename is
+     * /path/to/foo, the temporary directory will be /path/to/temp-beam-foo-$date.
+     *
+     * @param sink The {@link SequenceFileSink} that will be used to configure this write operation.
+     * @param keyClass The class of the {@link SequenceFile} key.
+     * @param valueClass The class of the {@link SequenceFile} value.
+     * @param serializationNames A list of {@link Serialization} class names.
+     */
+    public SeqFileWriteOperation(SequenceFileSink<K, V> sink, Class<K> keyClass,
         Class<V> valueClass, String[] serializationNames) {
       super(sink);
       this.keyClass = keyClass;
@@ -63,46 +94,61 @@ public class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
       this.serializationNames = serializationNames;
     }
 
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Writer<KV<K, V>> createWriter() throws Exception {
-      return new SeqFileWriter<>(this, keyClass, valueClass, serializationNames);
+      return new SeqFileWriter<>(this);
     }
   }
 
+  /**
+   * Wrapper for {@link SequenceFile.Writer} that adapts hadoop's {@link SequenceFile} api to Beam's
+   * {@link org.apache.beam.sdk.io.FileBasedSink.Writer} api.
+   *
+   * @param <K> The type of the {@link SequenceFile} key.
+   * @param <V> The type of the {@link SequenceFile} value.
+   */
   private static class SeqFileWriter<K,V> extends Writer<KV<K,V>> {
-
-    private final String[] serializationNames;
+    private final SeqFileWriteOperation<K,V> writeOperation;
     private SequenceFile.Writer sequenceFile;
-    private final Class<K> keyClass;
-    private final Class<V> valueClass;
     private final AtomicLong counter = new AtomicLong();
 
-    public SeqFileWriter(WriteOperation<KV<K, V>> writeOperation, Class<K> keyClass, Class<V> valueClass, String[] serializationNames) {
+    /**
+     * Constructs a new {@link SeqFileWriter}.
+     *
+     * @param writeOperation The parent operation.
+     */
+    public SeqFileWriter(SeqFileWriteOperation<K, V> writeOperation) {
       super(writeOperation, MimeTypes.BINARY);
-      this.keyClass = keyClass;
-      this.valueClass = valueClass;
-      this.serializationNames = serializationNames;
+      this.writeOperation = writeOperation;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       LOG.info("Opening new writer");
 
       Configuration configuration = new Configuration(false);
-      if (serializationNames.length > 0) {
-        configuration.setStrings("io.serializations", serializationNames);
-      }
+      configuration.setStrings("io.serializations", writeOperation.serializationNames);
 
       FSDataOutputStream outputStream = new FSDataOutputStream(new OutputStreamWrapper(channel), new Statistics("dataflow"));
       sequenceFile = SequenceFile.createWriter(configuration,
           SequenceFile.Writer.stream(outputStream),
-          SequenceFile.Writer.keyClass(keyClass),
-          SequenceFile.Writer.valueClass(valueClass),
+          SequenceFile.Writer.keyClass(writeOperation.keyClass),
+          SequenceFile.Writer.valueClass(writeOperation.valueClass),
           SequenceFile.Writer.compression(SequenceFile.CompressionType.BLOCK)
       );
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void finishWrite() throws Exception {
       sequenceFile.hflush();
@@ -111,6 +157,9 @@ public class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
       LOG.info("Closing writer with " + counter.get() + " items");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(KV<K, V> value) throws Exception {
       counter.incrementAndGet();
@@ -119,14 +168,25 @@ public class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
   }
 
 
+  /**
+   * Adapter to allow Hadoop's {@link SequenceFile} to write to Beam's {@link WritableByteChannel}.
+   */
   static class OutputStreamWrapper extends OutputStream {
     private final WritableByteChannel inner;
     private final ByteBuffer singleByteBuffer = ByteBuffer.allocate(1);
 
+    /**
+     * Constructs a new {@link OutputStreamWrapper}.
+     *
+     * @param inner An instance of Beam's {@link WritableByteChannel}.
+     */
     public OutputStreamWrapper(WritableByteChannel inner) {
       this.inner = inner;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
       int written = 0;
@@ -139,6 +199,9 @@ public class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(int b) throws IOException {
       singleByteBuffer.clear();

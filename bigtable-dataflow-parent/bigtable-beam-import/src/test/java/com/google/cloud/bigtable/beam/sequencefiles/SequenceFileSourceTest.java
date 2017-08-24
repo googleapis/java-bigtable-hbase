@@ -67,7 +67,8 @@ public class SequenceFileSourceTest {
     SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
         StaticValueProvider.of(targetFile.getAbsolutePath()),
         Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class
+        Text.class, WritableSerialization.class,
+        SequenceFile.SYNC_INTERVAL
     );
 
     PAssert
@@ -125,7 +126,8 @@ public class SequenceFileSourceTest {
     SequenceFileSource<ImmutableBytesWritable, Result> source = new SequenceFileSource<>(
         StaticValueProvider.of(targetFile.getAbsolutePath()),
         ImmutableBytesWritable.class, WritableSerialization.class,
-        Result.class, ResultSerialization.class
+        Result.class, ResultSerialization.class,
+        SequenceFile.SYNC_INTERVAL
     );
 
     PAssert

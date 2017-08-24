@@ -3,6 +3,7 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 import static com.google.common.base.Preconditions.checkState;
 
 import avro.shaded.com.google.common.collect.Sets;
+import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
 import java.io.EOFException;
 import java.io.IOException;
@@ -35,7 +36,7 @@ import org.apache.hadoop.util.ReflectionUtils;
  * @param <K> The type of the {@link SequenceFile} key.
  * @param <V> The type of the {@link SequenceFile} value.
  */
-public final class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
+class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
 
   private static final Log LOG = LogFactory.getLog(SequenceFileSource.class);
 
@@ -44,7 +45,6 @@ public final class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
   private final Class<? extends Serialization<? super K>> keySerializationClass;
   private final Class<? extends Serialization<? super V>> valueSerializationClass;
   private final KvCoder<K, V> coder;
-  private static final long minBundleSize = SequenceFile.SYNC_INTERVAL; // TODO: make this configureable and figure out if it should be higher
 
   /**
    * Constructs a new top level source.
@@ -61,8 +61,12 @@ public final class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
       Class<K> keyClass,
       Class<? extends Serialization<? super K>> keySerialization,
       Class<V> valueClass,
-      Class<? extends Serialization<? super V>> valueSerialization) {
+      Class<? extends Serialization<? super V>> valueSerialization,
+      long minBundleSize) {
     super(fileOrPatternSpec, minBundleSize);
+
+    Preconditions.checkArgument(minBundleSize >= SequenceFile.SYNC_INTERVAL,
+        "minBundleSize must be at least " + SequenceFile.SYNC_INTERVAL);
 
     this.keyClass = keyClass;
     this.valueClass = valueClass;
@@ -95,6 +99,7 @@ public final class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
       Class<? extends Serialization<? super K>> keySerialization,
       Class<V> valueClass,
       Class<? extends Serialization<? super V>> valueSerialization,
+      long minBundleSize,
       KvCoder<K, V> coder) {
     super(fileMetadata, minBundleSize, startOffset, endOffset);
     this.keyClass = keyClass;
@@ -116,6 +121,7 @@ public final class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
         keyClass,
         keySerializationClass, valueClass,
         valueSerializationClass,
+        getMinBundleSize(),
         coder
     );
   }

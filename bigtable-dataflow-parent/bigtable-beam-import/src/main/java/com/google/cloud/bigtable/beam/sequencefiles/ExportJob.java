@@ -1,90 +1,139 @@
 package com.google.cloud.bigtable.beam.sequencefiles;
 
-import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
-import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
-import org.apache.beam.runners.dataflow.DataflowRunner;
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
-import org.apache.beam.runners.direct.DirectOptions;
+import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.io.DefaultFilenamePolicy;
 import org.apache.beam.sdk.io.FileBasedSink;
-import org.apache.beam.sdk.io.FileSystems;
-import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
-import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.io.WriteFiles;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.Default;
+import org.apache.beam.sdk.options.Default.InstanceFactory;
+import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.beam.sdk.values.KV;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.ParseFilter;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
+/**
+ * <p>
+ * Beam job to export a Bigtable table to a set of SequenceFiles.
+ * Afterwards, the files can be either imported into another Bigtable or HBase table.
+ * You can limit the rows and columns exported using the options in {@link ExportOptions}.
+ * Please note that the rows in SequenceFiles will not be sorted.
+ *
+ * Example usage:
+ * </p>
+ *
+ * <pre>
+ * {@code mvn compile exec:java \
+ *    -Dexec.mainClass=com.google.cloud.bigtable.beam.sequencefiles.ExportJob \
+ *    -Dexec.args="--runner=dataflow \
+ *    --project=igorbernstein-dev \
+ *    --tempLocation=gs://igorbernstein-dev/dataflow-temp \
+ *    --zone=us-east1-c \
+ *    --bigtableInstanceId=instance1 \
+ *    --bigtableTableId=table2 \
+ *    --destination=gs://igorbernstein-dev/export55 \
+ *    --maxNumWorkers=200"
+ * }
+ * </pre>
+ *
+ * Furthermore, you can export a subset of the data using a combination of --bigtableStartRow,
+ * --bigtableStopRow and --bigtableFilter.
+ *
+ * @author igorbernstein2
+ */
 public class ExportJob {
+  private static final Log LOG = LogFactory.getLog(ExportJob.class);
+
   interface ExportOptions extends PipelineOptions {
-    @Default.String("igorbernstein-dev")
-    String getProjectId();
-    void setProjectId(String projectId);
+    //TODO: switch to ValueProviders
 
-    @Default.String("instance1")
-    String getInstanceId();
-    void setInstanceId(String instanceId);
+    @Description("The project that contains the table to export. Defaults to --project.")
+    @InstanceFactory(DefaultBigtableProjectFactory.class)
+    String getBigtableProject();
+    void setBigtableProject(String projectId);
 
-    @Default.String("table2")
-    String getTableId();
-    void setTableId(String tableId);
+    @Description("The Bigtable instance id that contains the table to export.")
+    String getBigtableInstanceId();
+    void setBigtableInstanceId(String instanceId);
 
-    @Default.String("/tmp/moo2")
+    @Description("The Bigtable table id to export.")
+    String getBigtableTableId();
+    void setBigtableTableId(String tableId);
+
+    @Description("The row where to start the export from, defaults to the first row.")
+    @Default.String("")
+    String getBigtableStartRow();
+
+    void setBigtableStartRow(String startRow);
+
+    @Description("The row where to stop the export, defaults to last row.")
+    @Default.String("")
+    String getBigtableStopRow();
+
+    void setBigtableStopRow(String stopRow);
+
+    @Description("Maximum number of cell versions.")
+    @Default.Integer(Integer.MAX_VALUE)
+    int getBigtableMaxVersions();
+
+    void setBigtableMaxVersions(int maxVersions);
+
+    @Description("Filter string. See: http://hbase.apache.org/book.html#thrift.")
+    @Default.String("")
+    String getBigtableFilter();
+
+    void setBigtableFilter(String filter);
+
+
+    @Description("The destination path. Can either specify a directory ending with a / or a file prefix.")
     String getDestinationPath();
     void setDestinationPath(String destinationPath);
 
-    @Default.String("part")
-    String getFilenamePrefix();
-    void setFilenamePrefix(String filenamePrefix);
+    @Description("Wait for pipeline to finish.")
+    @Default.Boolean(false)
+    boolean getWait();
+    void setWait(boolean wait);
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws CharacterCodingException {
     ExportOptions opts = PipelineOptionsFactory
         .fromArgs(args).withValidation()
         .as(ExportOptions.class);
 
-    final Pipeline pipeline;
-
-    if (false) {
-      DirectOptions directOptions = opts.as(DirectOptions.class);
-      directOptions.setTargetParallelism(1);
-      pipeline = Pipeline.create(directOptions);
-    } else {
-      DataflowPipelineOptions dataflowPipelineOptions = opts.as(DataflowPipelineOptions.class);
-      dataflowPipelineOptions.setRunner(DataflowRunner.class);
-
-      dataflowPipelineOptions.setProject("igorbernstein-dev");
-      dataflowPipelineOptions.setRegion("us-east1-c");
-      dataflowPipelineOptions.setZone("us-east1-c");
-      dataflowPipelineOptions.setStagingLocation("gs://igorbernstein-dev/dataflow-staging/");
-      dataflowPipelineOptions.setGcpTempLocation("gs://igorbernstein-dev/dataflow-temp/");
-      dataflowPipelineOptions.setMaxNumWorkers(200);
-      dataflowPipelineOptions.setNumWorkers(200);
-
-      pipeline = Pipeline.create(dataflowPipelineOptions);
-
-      opts.setDestinationPath("gs://igorbernstein-dev/moo5/part");
-    }
+    Pipeline pipeline = Pipeline.create(opts);
 
     Scan scan = new Scan();
 
+    if (!opts.getBigtableStartRow().isEmpty()) {
+      scan.setStartRow(opts.getBigtableStartRow().getBytes());
+    }
+    if (!opts.getBigtableStopRow().isEmpty()) {
+      scan.setStopRow(opts.getBigtableStopRow().getBytes());
+    }
+    if (!opts.getBigtableFilter().isEmpty()) {
+      scan.setFilter(new ParseFilter().parseFilterString(opts.getBigtableFilter()));
+    }
+
     CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
-        .withProjectId(opts.getProjectId())
-        .withInstanceId(opts.getInstanceId())
-        .withTableId(opts.getTableId())
+        .withProjectId(opts.getBigtableProject())
+        .withInstanceId(opts.getBigtableInstanceId())
+        .withTableId(opts.getBigtableTableId())
         .withScan(scan)
         .build();
 
@@ -104,10 +153,18 @@ public class ExportJob {
 
     pipeline
         .apply("Read table", Read.from(CloudBigtableIO.read(config)))
-        .apply("Mutate", MapElements.via(new ResultToKV()))
+        .apply("Format results", MapElements.via(new ResultToKV()))
         .apply("Write", WriteFiles.to(sink));
 
-    pipeline.run();
+    PipelineResult result = pipeline.run();
+
+    if (opts.getWait()) {
+      State state = result.waitUntilFinish();
+      LOG.info("Job finished with state: " + state.name());
+      if (state != State.DONE) {
+        System.exit(1);
+      }
+    }
   }
 
   static class ResultToKV extends SimpleFunction<Result, KV<ImmutableBytesWritable, Result>> {

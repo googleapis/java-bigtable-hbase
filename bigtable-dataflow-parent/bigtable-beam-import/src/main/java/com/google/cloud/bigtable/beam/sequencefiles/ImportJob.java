@@ -10,6 +10,7 @@ import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
 public class ImportJob {
@@ -30,7 +31,8 @@ public class ImportJob {
     SequenceFileSource<ImmutableBytesWritable, Result> source = new SequenceFileSource<>(
         opts.getSourcePath(),
         ImmutableBytesWritable.class, WritableSerialization.class,
-        Result.class, ResultSerialization.class
+        Result.class, ResultSerialization.class,
+        100 * 1024 * 1024
     );
 
     CloudBigtableTableConfiguration config = new CloudBigtableTableConfiguration.Builder()
