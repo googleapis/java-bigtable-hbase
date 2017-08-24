@@ -79,25 +79,21 @@ public class ExportJob {
     @Description("The row where to start the export from, defaults to the first row.")
     @Default.String("")
     String getBigtableStartRow();
-
     void setBigtableStartRow(String startRow);
 
     @Description("The row where to stop the export, defaults to last row.")
     @Default.String("")
     String getBigtableStopRow();
-
     void setBigtableStopRow(String stopRow);
 
     @Description("Maximum number of cell versions.")
     @Default.Integer(Integer.MAX_VALUE)
     int getBigtableMaxVersions();
-
     void setBigtableMaxVersions(int maxVersions);
 
     @Description("Filter string. See: http://hbase.apache.org/book.html#thrift.")
     @Default.String("")
     String getBigtableFilter();
-
     void setBigtableFilter(String filter);
 
 
@@ -125,6 +121,9 @@ public class ExportJob {
     }
     if (!opts.getBigtableStopRow().isEmpty()) {
       scan.setStopRow(opts.getBigtableStopRow().getBytes());
+    }
+    if (opts.getBigtableMaxVersions() != Integer.MAX_VALUE) {
+      scan.setMaxVersions(opts.getBigtableMaxVersions());
     }
     if (!opts.getBigtableFilter().isEmpty()) {
       scan.setFilter(new ParseFilter().parseFilterString(opts.getBigtableFilter()));
