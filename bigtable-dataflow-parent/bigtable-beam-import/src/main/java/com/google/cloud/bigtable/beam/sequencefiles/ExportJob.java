@@ -15,6 +15,8 @@ import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.SimpleFunction;
@@ -97,8 +99,8 @@ public class ExportJob {
 
 
     @Description("The destination path. Can either specify a directory ending with a / or a file prefix.")
-    String getDestinationPath();
-    void setDestinationPath(String destinationPath);
+    ValueProvider<String> getDestinationPath();
+    void setDestinationPath(ValueProvider<String> destinationPath);
 
     @Description("Wait for pipeline to finish.")
     @Default.Boolean(false)
@@ -135,8 +137,9 @@ public class ExportJob {
         .withScan(scan)
         .build();
 
-    StaticValueProvider<ResourceId> dest = StaticValueProvider
-        .of(FileBasedSink.convertToFileResourceIfPossible(opts.getDestinationPath()));
+    ValueProvider<ResourceId> dest = NestedValueProvider.of(
+        opts.getDestinationPath(), new StringToResourceId()
+    );
 
     SequenceFileSink<ImmutableBytesWritable, Result> sink = new SequenceFileSink<>(
         dest,
@@ -169,6 +172,13 @@ public class ExportJob {
     @Override
     public KV<ImmutableBytesWritable, Result> apply(Result input) {
       return KV.of(new ImmutableBytesWritable(input.getRow()), input);
+    }
+  }
+
+  static class StringToResourceId extends SimpleFunction<String, ResourceId> {
+    @Override
+    public ResourceId apply(String input) {
+      return FileBasedSink.convertToFileResourceIfPossible(input);
     }
   }
 }
