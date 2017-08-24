@@ -12,7 +12,6 @@ import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.WriteFiles;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.Default;
-import org.apache.beam.sdk.options.Default.InstanceFactory;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
@@ -64,7 +63,7 @@ public class ExportJob {
     //TODO: switch to ValueProviders
 
     @Description("The project that contains the table to export. Defaults to --project.")
-    @InstanceFactory(DefaultBigtableProjectFactory.class)
+    @Default.InstanceFactory(DefaultBigtableProjectFactory.class)
     String getBigtableProject();
     void setBigtableProject(String projectId);
 
