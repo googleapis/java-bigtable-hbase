@@ -40,7 +40,7 @@ public class ImportJob {
     //TODO: switch to ValueProviders
 
     @Description("The project that contains the table to export. Defaults to --project.")
-    @Default.InstanceFactory(DefaultBigtableProjectFactory.class)
+    @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
     String getBigtableProject();
     @SuppressWarnings("unused")
     void setBigtableProject(String projectId);
@@ -68,11 +68,13 @@ public class ImportJob {
   }
 
   public static void main(String[] args) {
+    PipelineOptionsFactory.register(ImportOptions.class);
+
     ImportOptions opts = PipelineOptionsFactory
         .fromArgs(args).withValidation()
         .as(ImportOptions.class);
 
-    Pipeline pipeline = Pipeline.create(opts);
+    Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
     SequenceFileSource<ImmutableBytesWritable, Result> source = new SequenceFileSource<>(
         opts.getSourcePath(),

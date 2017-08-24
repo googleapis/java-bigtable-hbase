@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.common.collect.Sets;
-import com.sun.istack.internal.NotNull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;

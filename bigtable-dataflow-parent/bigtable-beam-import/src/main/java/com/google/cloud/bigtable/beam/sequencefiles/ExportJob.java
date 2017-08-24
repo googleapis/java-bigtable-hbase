@@ -79,7 +79,7 @@ public class ExportJob {
     //TODO: switch to ValueProviders
 
     @Description("The project that contains the table to export. Defaults to --project.")
-    @Default.InstanceFactory(DefaultBigtableProjectFactory.class)
+    @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
     String getBigtableProject();
     @SuppressWarnings("unused")
     void setBigtableProject(String projectId);
@@ -132,11 +132,13 @@ public class ExportJob {
   }
 
   public static void main(String[] args) throws CharacterCodingException {
+    PipelineOptionsFactory.register(ExportOptions.class);
+
     ExportOptions opts = PipelineOptionsFactory
         .fromArgs(args).withValidation()
         .as(ExportOptions.class);
 
-    Pipeline pipeline = Pipeline.create(opts);
+    Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
     Scan scan = new Scan();
 
