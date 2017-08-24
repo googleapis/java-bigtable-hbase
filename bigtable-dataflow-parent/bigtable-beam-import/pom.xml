@@ -121,4 +121,38 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>sequencefileIntegrationTest</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>import-e2e-test</id>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <phase>integration-test</phase>
+                <configuration>
+                  <forkCount>1</forkCount>
+                  <includes>
+                    <include>**/*IT.java</include>
+                  </includes>
+                  <!-- Use Isolated Classloader so that dataflow can find all files
+                       that must be staged.
+                  -->
+                  <useSystemClassLoader>false</useSystemClassLoader>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

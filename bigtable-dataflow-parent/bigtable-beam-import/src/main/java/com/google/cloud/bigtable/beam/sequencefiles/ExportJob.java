@@ -17,12 +17,13 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
+import com.google.cloud.bigtable.beam.sequencefiles.Utils.StringToDirectoryResourceId;
 import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.io.DefaultFilenamePolicy;
-import org.apache.beam.sdk.io.FileBasedSink;
+import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.WriteFiles;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -32,6 +33,7 @@ import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.beam.sdk.values.KV;
@@ -138,8 +140,20 @@ public class ExportJob {
         .fromArgs(args).withValidation()
         .as(ExportOptions.class);
 
-    Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
+    Pipeline pipeline = buildPipeline(opts);
 
+    PipelineResult result = pipeline.run();
+
+    if (opts.getWait()) {
+      State state = result.waitUntilFinish();
+      LOG.info("Job finished with state: " + state.name());
+      if (state != State.DONE) {
+        System.exit(1);
+      }
+    }
+  }
+
+  static Pipeline buildPipeline(ExportOptions opts) throws CharacterCodingException {
     Scan scan = new Scan();
 
     if (!opts.getBigtableStartRow().isEmpty()) {
@@ -163,13 +177,14 @@ public class ExportJob {
         .build();
 
     ValueProvider<ResourceId> dest = NestedValueProvider.of(
-        opts.getDestinationPath(), new StringToResourceId()
+        opts.getDestinationPath(), new StringToDirectoryResourceId()
     );
 
     SequenceFileSink<ImmutableBytesWritable, Result> sink = new SequenceFileSink<>(
         dest,
         DefaultFilenamePolicy.constructUsingStandardParameters(
-            dest,
+            // prefix
+            StaticValueProvider.of(LocalResources.fromString("part", false)),
             DefaultFilenamePolicy.DEFAULT_SHARD_TEMPLATE,
             ""
         ),
@@ -177,20 +192,14 @@ public class ExportJob {
         Result.class, ResultSerialization.class
     );
 
+    Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
+
     pipeline
         .apply("Read table", Read.from(CloudBigtableIO.read(config)))
         .apply("Format results", MapElements.via(new ResultToKV()))
         .apply("Write", WriteFiles.to(sink));
 
-    PipelineResult result = pipeline.run();
-
-    if (opts.getWait()) {
-      State state = result.waitUntilFinish();
-      LOG.info("Job finished with state: " + state.name());
-      if (state != State.DONE) {
-        System.exit(1);
-      }
-    }
+    return pipeline;
   }
 
   static class ResultToKV extends SimpleFunction<Result, KV<ImmutableBytesWritable, Result>> {
@@ -200,10 +209,4 @@ public class ExportJob {
     }
   }
 
-  static class StringToResourceId extends SimpleFunction<String, ResourceId> {
-    @Override
-    public ResourceId apply(String input) {
-      return FileBasedSink.convertToFileResourceIfPossible(input);
-    }
-  }
 }

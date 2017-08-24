@@ -15,9 +15,6 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles.testing;
 
-import com.google.cloud.bigtable.beam.sequencefiles.ExportJob;
-import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
-import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.Arrays;
@@ -45,10 +42,10 @@ public class BigtableTableUtils implements AutoCloseable {
   private final TableName tableName;
   private final String[] columnFamilyNames;
 
-  private BigtableTableUtils(
-      Connection connection, Admin admin, String tableName, String ...columnFamilyNames) {
+  public BigtableTableUtils(
+      Connection connection, String tableName, String ...columnFamilyNames) throws IOException {
     this.connection = connection;
-    this.admin = admin;
+    this.admin = connection.getAdmin();
     this.tableName = TableName.valueOf(tableName);
     this.columnFamilyNames = Arrays.copyOf(columnFamilyNames, columnFamilyNames.length);
   }
@@ -105,38 +102,5 @@ public class BigtableTableUtils implements AutoCloseable {
       cells.addAll(result.listCells());
     }
     return cells;
-  }
-
-  public static class BigtableTableUtilsFactory {
-    private final Connection connection;
-    private final Admin admin;
-
-    private BigtableTableUtilsFactory(Connection connection) throws IOException {
-      this.connection = connection;
-      this.admin = connection.getAdmin();
-    }
-
-    /**
-     * Creates a {@link BigtableTableUtils} instance that manages a table named {@code tableName}.
-     * The {@code columnFamilies} parameter defines the column families in this table.
-     */
-    public BigtableTableUtils createBigtableTableUtils(String tableName, String... columnFamilies) {
-      return new BigtableTableUtils(connection, admin, tableName, columnFamilies);
-    }
-
-    public void close() throws IOException {
-      this.connection.close();
-    }
-
-    public static BigtableTableUtilsFactory from(ExportJob.ExportOptions options) throws IOException {
-      return new BigtableTableUtilsFactory(BigtableConfiguration.connect(
-          options.getBigtableProject(),
-          options.getBigtableInstanceId()));
-    }
-    public static BigtableTableUtilsFactory from(ImportJob.ImportOptions options) throws IOException {
-      return new BigtableTableUtilsFactory(BigtableConfiguration.connect(
-          options.getBigtableProject(),
-          options.getBigtableInstanceId()));
-    }
   }
 }

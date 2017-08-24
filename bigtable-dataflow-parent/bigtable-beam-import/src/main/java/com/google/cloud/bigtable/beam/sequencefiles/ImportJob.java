@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
@@ -74,6 +75,21 @@ public class ImportJob {
         .fromArgs(args).withValidation()
         .as(ImportOptions.class);
 
+    Pipeline pipeline = buildPipeline(opts);
+
+    PipelineResult result = pipeline.run();
+
+    if (opts.getWait()) {
+      State state = result.waitUntilFinish();
+      LOG.info("Job finished with state: " + state.name());
+      if (state != State.DONE) {
+        System.exit(1);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  static Pipeline buildPipeline(ImportOptions opts) {
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
     SequenceFileSource<ImmutableBytesWritable, Result> source = new SequenceFileSource<>(
@@ -94,14 +110,6 @@ public class ImportJob {
         .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
         .apply("Write to Bigtable", CloudBigtableIO.writeToTable(config));
 
-    PipelineResult result = pipeline.run();
-
-    if (opts.getWait()) {
-      State state = result.waitUntilFinish();
-      LOG.info("Job finished with state: " + state.name());
-      if (state != State.DONE) {
-        System.exit(1);
-      }
-    }
+    return pipeline;
   }
 }
