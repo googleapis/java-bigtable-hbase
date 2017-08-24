@@ -36,7 +36,7 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
 public class ImportJob {
   private static final Log LOG = LogFactory.getLog(ImportJob.class);
 
-  interface ImportOptions extends PipelineOptions {
+  public interface ImportOptions extends PipelineOptions {
     //TODO: switch to ValueProviders
 
     @Description("The project that contains the table to export. Defaults to --project.")

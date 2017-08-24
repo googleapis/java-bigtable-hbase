@@ -75,7 +75,7 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
 public class ExportJob {
   private static final Log LOG = LogFactory.getLog(ExportJob.class);
 
-  interface ExportOptions extends PipelineOptions {
+  public interface ExportOptions extends PipelineOptions {
     //TODO: switch to ValueProviders
 
     @Description("The project that contains the table to export. Defaults to --project.")

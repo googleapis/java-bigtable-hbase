@@ -39,7 +39,7 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.Serializer;
 
-class ResultSerialization extends Configured implements Serialization<Result> {
+public class ResultSerialization extends Configured implements Serialization<Result> {
   private static final Log LOG = LogFactory.getLog(ResultSerialization.class);
   // The following configuration property indicates import file format version.
   public static final String IMPORT_FORMAT_VER = "hbase.import.version";
