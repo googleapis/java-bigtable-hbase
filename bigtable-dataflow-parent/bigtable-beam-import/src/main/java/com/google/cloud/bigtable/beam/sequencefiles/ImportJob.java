@@ -106,7 +106,7 @@ public class ImportJob {
         .build();
 
     pipeline
-        .apply("Read Sequence File", Read.from(source))
+        .apply("Read Sequence File", Read.from(new ShuffledSource<>(source)))
         .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
         .apply("Write to Bigtable", CloudBigtableIO.writeToTable(config));
 
