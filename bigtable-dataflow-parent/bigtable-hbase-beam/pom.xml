@@ -26,12 +26,6 @@ limitations under the License.
        This project contains artifacts that provide Cloud Bigtable client readers and writers in Google Cloud Dataflow.
     </description>
 
-    <properties>
-        <beam.version>2.1.0</beam.version>
-        <commons-lang.version>2.6</commons-lang.version>
-        <google-auto-service.version>1.0-rc2</google-auto-service.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.apache.beam</groupId>

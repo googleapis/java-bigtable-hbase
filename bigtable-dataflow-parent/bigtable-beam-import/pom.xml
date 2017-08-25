@@ -5,15 +5,13 @@
   <parent>
     <artifactId>bigtable-dataflow-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.0.0-pre3-SNAPSHOT</version>
+    <version>1.0.0-pre4-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>bigtable-beam-import</artifactId>
 
   <properties>
-    <!-- TODO(igorbernstein2): dedupe with bigtable-hbase-beam -->
-    <beam.version>2.0.0</beam.version>
     <mainClass>com.google.cloud.bigtable.beam.sequencefiles.Main</mainClass>
   </properties>
 
@@ -27,8 +25,7 @@
     <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
-      <!-- TODO: externalize version -->
-      <version>1.1</version>
+      <version>${auto-value.version}</version>
       <scope>provided</scope>
     </dependency>
 
