@@ -49,6 +49,11 @@ class HadoopSerializationCoder<T> extends CustomCoder<T> {
     this.type = type;
     // Force an unchecked cast to workaround covariance issues
     this.serializationClass = (Class<? extends Serialization<T>>) serializationClass;
+    try {
+      this.serialization = (Serialization<T>) serializationClass.newInstance();
+    } catch (InstantiationException|IllegalAccessException e) {
+      throw new RuntimeException("Failed to instantiate the serialization class");
+    }
   }
 
   /**

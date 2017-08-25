@@ -15,19 +15,22 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import org.apache.beam.sdk.io.Read;
+import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
+import org.apache.beam.sdk.io.FileBasedSource;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
-import org.apache.beam.sdk.testing.NeedsRunner;
-import org.apache.beam.sdk.testing.PAssert;
-import org.apache.beam.sdk.testing.TestPipeline;
-import org.apache.beam.sdk.transforms.SimpleFunction;
+import org.apache.beam.sdk.testing.SourceTestUtils;
 import org.apache.beam.sdk.values.KV;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
@@ -36,35 +39,28 @@ import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.SequenceFile.Writer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.serializer.WritableSerialization;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
-
 public class SequenceFileSourceTest {
-
-  @Rule
-  public TestPipeline readPipeline = TestPipeline.create();
-
   @Rule
   public final TemporaryFolder workDir = new TemporaryFolder();
 
   @Test
-  @Category(NeedsRunner.class)
-  public void testReader() throws IOException {
+  public void testSimpleWritable() throws IOException {
     Configuration config = new Configuration(false);
 
     List<KV<Text, Text>> data = Lists.newArrayList();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
       data.add(KV.of(new Text("key" + i), new Text("value" + i)));
     }
 
     // Write data to read
-    File targetFile = new File(workDir.getRoot(), "file.seq");
+    File targetFile = workDir.newFile();
 
     try (Writer writer = SequenceFile.createWriter(config,
         Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
@@ -84,20 +80,17 @@ public class SequenceFileSourceTest {
         SequenceFile.SYNC_INTERVAL
     );
 
-    PAssert
-        .that(readPipeline.apply(Read.from(source)))
-        .containsInAnyOrder(data);
-
-    readPipeline.run().waitUntilFinish();
+    List<KV<Text, Text>> results = SourceTestUtils.readFromSource(source, null);
+    assertThat(results, containsInAnyOrder(data.toArray()));
   }
 
   @Test
-  public void testNonWritable() throws IOException {
-    File targetFile = new File(workDir.getRoot(), "file.seq");
+  public void testHBaseTypes() throws Exception {
+    File targetFile = workDir.newFile();
 
     final List<KV<ImmutableBytesWritable, Result>> data = Lists.newArrayList();
 
-    final int nRows = 100;
+    final int nRows = 10;
     for (int i = 0; i < nRows; i++) {
       String keyStr = String.format("%03d", i);
 
@@ -143,48 +136,139 @@ public class SequenceFileSourceTest {
         SequenceFile.SYNC_INTERVAL
     );
 
-    PAssert
-        .that(readPipeline.apply(Read.from(source)))
-        .satisfies(new ResultVerifier(nRows));
+    // Verify
+    List<KV<ImmutableBytesWritable, Result>> actual = SourceTestUtils.readFromSource(source, null);
+    assertThat(actual, hasSize(data.size()));
 
-    readPipeline.run();
-  }
-
-  static class ResultVerifier extends SimpleFunction<Iterable<KV<ImmutableBytesWritable, Result>>, Void> {
-    final int nRows;
-
-    ResultVerifier(int nRows) {
-      this.nRows = nRows;
-    }
-
-    @Override
-    public Void apply(Iterable<KV<ImmutableBytesWritable, Result>> input) {
-      ArrayList<KV<ImmutableBytesWritable, Result>> results = Lists.newArrayList(input);
-      Collections.sort(results, new Comparator<KV<ImmutableBytesWritable, Result>>() {
-        @Override
-        public int compare(KV<ImmutableBytesWritable, Result> o1, KV<ImmutableBytesWritable, Result> o2) {
-          return o1.getKey().compareTo(o2.getKey());
-        }
-      });
-
-      for(int i=0; i<nRows; i++) {
-        String keyStr = String.format("%03d", i);
-
-        ImmutableBytesWritable key = results.get(i).getKey();
-        Result result = results.get(i).getValue();
-        Cell cell = result.rawCells()[0];
-
-        Assert.assertEquals(keyStr, new String(key.copyBytes()));
-        Assert.assertEquals(keyStr, new String(result.getRow()));
-        Assert.assertEquals(keyStr, new String(CellUtil.cloneRow(cell)));
-        Assert.assertEquals("family"+i, new String(CellUtil.cloneFamily(cell)));
-        Assert.assertEquals("qualifier" +i, new String(CellUtil.cloneQualifier(cell)));
-        Assert.assertEquals(123456, cell.getTimestamp());
-        Assert.assertEquals("value"+i, new String(CellUtil.cloneValue(cell)));
-        Assert.assertEquals(Type.Put.getCode(), cell.getTypeByte());
+    Collections.sort(actual, new Comparator<KV<ImmutableBytesWritable, Result>>() {
+      @Override
+      public int compare(KV<ImmutableBytesWritable, Result> o1,
+          KV<ImmutableBytesWritable, Result> o2) {
+        return o1.getKey().compareTo(o2.getKey());
       }
-      return null;
+    });
+    for(int i=0; i < data.size(); i++) {
+      KV<ImmutableBytesWritable, Result> expectedKv = data.get(i);
+      KV<ImmutableBytesWritable, Result> actualKv = actual.get(i);
+
+      assertEquals(expectedKv.getKey(), actualKv.getKey());
+      assertEquals(actualKv.getValue().rawCells().length, expectedKv.getValue().rawCells().length);
+
+      for(int j=0; j < expectedKv.getValue().rawCells().length; j++) {
+        Cell expectedCell = expectedKv.getValue().rawCells()[j];
+        Cell actualCell = actualKv.getValue().rawCells()[j];
+        assertTrue(CellUtil.equals(expectedCell, actualCell));
+        assertTrue(CellUtil.matchingValue(expectedCell, actualCell));
+      }
     }
   }
+
+  @Test
+  public void testCompression() throws IOException {
+    Configuration config = new Configuration(false);
+
+    List<KV<Text, Text>> data = Lists.newArrayList();
+    for (int i = 0; i < 10; i++) {
+      data.add(KV.of(new Text("key" + i), new Text("value" + i)));
+    }
+
+    for (CompressionType compressionType : CompressionType.values()) {
+
+      // Write data to read
+      File targetFile = workDir.newFile();
+
+      try (Writer writer = SequenceFile.createWriter(config,
+          Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
+          Writer.keyClass(Text.class),
+          Writer.valueClass(Text.class),
+          Writer.compression(compressionType)
+
+          )) {
+        for (KV<Text, Text> kv : data) {
+          writer.append(kv.getKey(), kv.getValue());
+        }
+      }
+
+      // Setup the source
+      SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
+          StaticValueProvider.of(targetFile.getAbsolutePath()),
+          Text.class, WritableSerialization.class,
+          Text.class, WritableSerialization.class,
+          SequenceFile.SYNC_INTERVAL
+      );
+
+      List<KV<Text, Text>> results = SourceTestUtils.readFromSource(source, null);
+      assertThat(results, containsInAnyOrder(data.toArray()));
+    }
+  }
+
+  @Test
+  public void testSplitAtFraction() throws Exception {
+    Configuration config = new Configuration(false);
+
+    int recordCount = 1000;
+
+    List<KV<Text, Text>> data = Lists.newArrayList();
+    for (int i = 0; i < recordCount; i++) {
+      data.add(KV.of(new Text(String.format("key-%03d", i)), new Text(String.format("value-%03d", i))));
+    }
+
+    // Write data to read
+    File targetFile = workDir.newFile();
+
+    try (Writer writer = SequenceFile.createWriter(config,
+        Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
+        Writer.keyClass(Text.class),
+        Writer.valueClass(Text.class),
+        Writer.blockSize(1),
+        Writer.compression(CompressionType.NONE)
+    )) {
+      int syncEvery = 10;
+      int noSyncSince = 0;
+      for (KV<Text, Text> kv : data) {
+        writer.append(kv.getKey(), kv.getValue());
+        writer.sync();
+        noSyncSince++;
+        if (syncEvery >= noSyncSince) {
+          writer.sync();
+          noSyncSince = 0;
+        }
+      }
+    }
+
+    // Setup the source with a single split
+    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
+        StaticValueProvider.of(targetFile.getAbsolutePath()),
+        Text.class, WritableSerialization.class,
+        Text.class, WritableSerialization.class,
+        Long.MAX_VALUE
+    );
+
+    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
+        .split(targetFile.length() / 3, null);
+
+
+//    for (FileBasedSource<KV<Text, Text>> subSource : splits) {
+    FileBasedSource<KV<Text, Text>> subSource = splits.get(0);
+
+      int items = SourceTestUtils.readFromSource(subSource, null).size();
+
+      // Shouldn't split while unstarted.
+      SourceTestUtils.assertSplitAtFractionFails(subSource, 0, 0.0, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, 0, 0.7, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, 1, 0.7, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(
+          subSource, recordCount / 100, 0.7, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(
+          subSource, recordCount / 10, 0.1, null);
+//      SourceTestUtils.assertSplitAtFractionFails(
+//          subSource, (recordCount / 10) + 1, 0.1, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, recordCount / 3, 0.3, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, items, 0.9, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, items, 1.0, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, items, 0.999, null);
+
+    }
+//  }
 }
 

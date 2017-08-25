@@ -61,7 +61,7 @@ public class SequenceFileSinkTest {
     );
 
     FilenamePolicy filenamePolicy = DefaultFilenamePolicy
-        .constructUsingStandardParameters(output, "output", null);
+        .constructUsingStandardParameters(output, null, null, false);
 
     SequenceFileSink<Text, Text> sink = new SequenceFileSink<>(
         output, filenamePolicy,

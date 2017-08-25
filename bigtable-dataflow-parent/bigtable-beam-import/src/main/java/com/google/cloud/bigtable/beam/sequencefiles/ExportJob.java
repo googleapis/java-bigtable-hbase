@@ -183,10 +183,10 @@ public class ExportJob {
     SequenceFileSink<ImmutableBytesWritable, Result> sink = new SequenceFileSink<>(
         dest,
         DefaultFilenamePolicy.constructUsingStandardParameters(
-            // prefix
             StaticValueProvider.of(LocalResources.fromString("part", false)),
-            DefaultFilenamePolicy.DEFAULT_SHARD_TEMPLATE,
-            ""
+            null,
+            "",
+            false
         ),
         ImmutableBytesWritable.class, WritableSerialization.class,
         Result.class, ResultSerialization.class
