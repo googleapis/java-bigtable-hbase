@@ -238,8 +238,10 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
      */
     @Override
     public void close() throws IOException {
+      if (reader != null) {
+        reader.close();
+      }
       super.close();
-      reader.close();
     }
 
     /**

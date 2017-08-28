@@ -17,7 +17,9 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -46,9 +48,17 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+@RunWith(JUnit4.class)
 public class SequenceFileSourceTest {
+
   @Rule
   public final TemporaryFolder workDir = new TemporaryFolder();
+
+  public SequenceFileSourceTest() throws IOException {
+  }
 
   @Test
   public void testSimpleWritable() throws IOException {
@@ -147,14 +157,14 @@ public class SequenceFileSourceTest {
         return o1.getKey().compareTo(o2.getKey());
       }
     });
-    for(int i=0; i < data.size(); i++) {
+    for (int i = 0; i < data.size(); i++) {
       KV<ImmutableBytesWritable, Result> expectedKv = data.get(i);
       KV<ImmutableBytesWritable, Result> actualKv = actual.get(i);
 
       assertEquals(expectedKv.getKey(), actualKv.getKey());
       assertEquals(actualKv.getValue().rawCells().length, expectedKv.getValue().rawCells().length);
 
-      for(int j=0; j < expectedKv.getValue().rawCells().length; j++) {
+      for (int j = 0; j < expectedKv.getValue().rawCells().length; j++) {
         Cell expectedCell = expectedKv.getValue().rawCells()[j];
         Cell actualCell = actualKv.getValue().rawCells()[j];
         assertTrue(CellUtil.equals(expectedCell, actualCell));
@@ -183,7 +193,7 @@ public class SequenceFileSourceTest {
           Writer.valueClass(Text.class),
           Writer.compression(compressionType)
 
-          )) {
+      )) {
         for (KV<Text, Text> kv : data) {
           writer.append(kv.getKey(), kv.getValue());
         }
@@ -204,13 +214,143 @@ public class SequenceFileSourceTest {
 
   @Test
   public void testSplitAtFraction() throws Exception {
-    Configuration config = new Configuration(false);
+    File targetFile = generateTextData(100, 10);
 
-    int recordCount = 1000;
+    // Setup the source with a single split
+    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
+        StaticValueProvider.of(targetFile.getAbsolutePath()),
+        Text.class, WritableSerialization.class,
+        Text.class, WritableSerialization.class,
+        Long.MAX_VALUE
+    );
+
+    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
+        .split(targetFile.length(), null);
+
+    for (FileBasedSource<KV<Text, Text>> subSource : splits) {
+      int items = SourceTestUtils.readFromSource(subSource, null).size();
+
+      // Shouldn't split while unstarted.
+      SourceTestUtils.assertSplitAtFractionFails(subSource, 0, 0.0, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, 0, 0.7, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, 1, 0.7, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(
+          subSource, 10, 0.7, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(
+          subSource, 1, 0.1, null);
+      // The split should fail after reading 11 items, (the start of the 11th item is at 10% of the
+      // file. However because of syncs, 0.1 will put the cursor 20 bytes ahead of the current
+      // position. So we pad the test with an extra item
+      SourceTestUtils.assertSplitAtFractionFails(
+          subSource, 11 + 1, 0.1, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, 33, 0.3, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, items, 0.9, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, items, 1.0, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, items, 0.999, null);
+
+    }
+  }
+
+  @Test
+  public void testSplitAtFractionNonoverlapping() throws Exception {
+    File targetFile = generateTextData(100, 10);
+    // Setup the source with a single split
+    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
+        StaticValueProvider.of(targetFile.getAbsolutePath()),
+        Text.class, WritableSerialization.class,
+        Text.class, WritableSerialization.class,
+        Long.MAX_VALUE
+    );
+
+    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
+        .split(targetFile.length(), null);
+
+    for (FileBasedSource<KV<Text, Text>> subSource : splits) {
+      SourceTestUtils.assertSplitAtFractionFails(
+          subSource, 11 + 1, 0.1, null);
+
+      BoundedReader<KV<Text, Text>> reader = subSource.createReader(null);
+      List<KV<Text, Text>> before = SourceTestUtils.readNItemsFromUnstartedReader(reader, 11);
+      List<KV<Text, Text>> after = SourceTestUtils.readRemainingFromReader(reader, true);
+      assertEquals(100, before.size() + after.size());
+      assertNotEquals(after.get(0), before.get(before.size() - 1));
+    }
+  }
+
+  @Test
+  public void testSplitAtFractionExhaustive() throws Exception {
+    File targetFile = generateTextData(100, 10);
+
+    // Setup the source with a single split
+    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
+        StaticValueProvider.of(targetFile.getAbsolutePath()),
+        Text.class, WritableSerialization.class,
+        Text.class, WritableSerialization.class,
+        Long.MAX_VALUE
+    );
+
+    SourceTestUtils.assertSplitAtFractionExhaustive(source, null);
+  }
+
+  @Test
+  public void testSplitPoints() throws Exception {
+    File targetFile = generateTextData(100, 10);
+
+    // Setup the source with a single split
+    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
+        StaticValueProvider.of(targetFile.getAbsolutePath()),
+        Text.class, WritableSerialization.class,
+        Text.class, WritableSerialization.class,
+        Long.MAX_VALUE
+    );
+
+    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
+        .split(targetFile.length(), null);
+
+    for (FileBasedSource<KV<Text, Text>> subSource : splits) {
+      BoundedReader<KV<Text, Text>> origReader = subSource.createReader(null);
+      assertThat(origReader, instanceOf(SequenceFileSource.SeqFileReader.class));
+
+      SequenceFileSource.SeqFileReader<Text, Text> reader = (SequenceFileSource.SeqFileReader<Text, Text>) origReader;
+
+      reader.start();
+      assertTrue(reader.isAtSplitPoint());
+      SourceTestUtils.readNItemsFromStartedReader(reader, 9);
+
+      for (int i = 0; i < 9; i++) {
+        reader.readNextRecord();
+        assertTrue(reader.isAtSplitPoint());
+
+        SourceTestUtils.readNItemsFromStartedReader(reader, 9);
+      }
+    }
+  }
+
+  @Test
+  public void testAllRead() throws Exception {
+    File targetFile = generateTextData(10, 10);
+    // Setup the source with a single split
+    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
+        StaticValueProvider.of(targetFile.getAbsolutePath()),
+        Text.class, WritableSerialization.class,
+        Text.class, WritableSerialization.class,
+        Long.MAX_VALUE
+    );
+
+    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
+        .split(targetFile.length(), null);
+
+    List<KV<Text, Text>> results = SourceTestUtils.readFromSource(splits.get(0), null);
+    assertThat(results, hasSize(10));
+  }
+
+  private File generateTextData(int recordCount, int syncInterval) throws IOException {
+    Configuration config = new Configuration(false);
 
     List<KV<Text, Text>> data = Lists.newArrayList();
     for (int i = 0; i < recordCount; i++) {
-      data.add(KV.of(new Text(String.format("key-%03d", i)), new Text(String.format("value-%03d", i))));
+      data.add(KV.of(new Text(String.format("key-%010d", i)),
+          new Text(String.format("value-%010d", i))));
     }
 
     // Write data to read
@@ -223,52 +363,18 @@ public class SequenceFileSourceTest {
         Writer.blockSize(1),
         Writer.compression(CompressionType.NONE)
     )) {
-      int syncEvery = 10;
-      int noSyncSince = 0;
+      int noSyncCount = 0;
       for (KV<Text, Text> kv : data) {
         writer.append(kv.getKey(), kv.getValue());
-        writer.sync();
-        noSyncSince++;
-        if (syncEvery >= noSyncSince) {
+        noSyncCount++;
+        if (noSyncCount >= syncInterval) {
           writer.sync();
-          noSyncSince = 0;
+          noSyncCount = 0;
         }
       }
     }
 
-    // Setup the source with a single split
-    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
-        StaticValueProvider.of(targetFile.getAbsolutePath()),
-        Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class,
-        Long.MAX_VALUE
-    );
-
-    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
-        .split(targetFile.length() / 3, null);
-
-
-//    for (FileBasedSource<KV<Text, Text>> subSource : splits) {
-    FileBasedSource<KV<Text, Text>> subSource = splits.get(0);
-
-      int items = SourceTestUtils.readFromSource(subSource, null).size();
-
-      // Shouldn't split while unstarted.
-      SourceTestUtils.assertSplitAtFractionFails(subSource, 0, 0.0, null);
-      SourceTestUtils.assertSplitAtFractionFails(subSource, 0, 0.7, null);
-      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, 1, 0.7, null);
-      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(
-          subSource, recordCount / 100, 0.7, null);
-      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(
-          subSource, recordCount / 10, 0.1, null);
-//      SourceTestUtils.assertSplitAtFractionFails(
-//          subSource, (recordCount / 10) + 1, 0.1, null);
-      SourceTestUtils.assertSplitAtFractionFails(subSource, recordCount / 3, 0.3, null);
-      SourceTestUtils.assertSplitAtFractionFails(subSource, items, 0.9, null);
-      SourceTestUtils.assertSplitAtFractionFails(subSource, items, 1.0, null);
-      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, items, 0.999, null);
-
-    }
-//  }
+    return targetFile;
+  }
 }
 
