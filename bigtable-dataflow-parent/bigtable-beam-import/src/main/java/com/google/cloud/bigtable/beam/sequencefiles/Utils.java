@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2017 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import org.apache.beam.runners.dataflow.DataflowRunner;
@@ -11,6 +26,11 @@ import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 
 class Utils {
+  /**
+   * Helper to tweak default pipelineOptions for import/export jobs
+   * @param opts
+   * @return
+   */
   public static PipelineOptions tweakOptions(PipelineOptions opts) {
     if (!DataflowRunner.class.isAssignableFrom(opts.getRunner())) {
       return opts;
@@ -26,6 +46,9 @@ class Utils {
     return dataflowOpts;
   }
 
+  /**
+   * A default project id provider for bigtable that reads the default {@link GcpOptions}
+   */
   public static class DefaultBigtableProjectFactory implements DefaultValueFactory<String> {
     @Override
     public String create(PipelineOptions options) {
@@ -33,6 +56,9 @@ class Utils {
     }
   }
 
+  /**
+   * A simple converter to adapt strings representing directories to {@link ResourceId}s.
+   */
   static class StringToDirectoryResourceId extends SimpleFunction<String, ResourceId> {
     @Override
     public ResourceId apply(String input) {
