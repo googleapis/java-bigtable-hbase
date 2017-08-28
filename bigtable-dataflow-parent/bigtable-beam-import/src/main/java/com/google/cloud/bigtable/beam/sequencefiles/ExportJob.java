@@ -162,9 +162,9 @@ public class ExportJob {
     if (!opts.getBigtableStopRow().isEmpty()) {
       scan.setStopRow(opts.getBigtableStopRow().getBytes());
     }
-    if (opts.getBigtableMaxVersions() != Integer.MAX_VALUE) {
-      scan.setMaxVersions(opts.getBigtableMaxVersions());
-    }
+
+    scan.setMaxVersions(opts.getBigtableMaxVersions());
+
     if (!opts.getBigtableFilter().isEmpty()) {
       scan.setFilter(new ParseFilter().parseFilterString(opts.getBigtableFilter()));
     }

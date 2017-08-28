@@ -36,7 +36,7 @@ import org.apache.hadoop.hbase.KeyValue;
  * @author sduskis
  * @version $Id: $Id
  */
-public class DataCellPredicateFactory implements Function<Cell, Predicate<Cell>> {
+class DataCellPredicateFactory implements Function<Cell, Predicate<Cell>> {
 
   /** {@inheritDoc} */
   @Override

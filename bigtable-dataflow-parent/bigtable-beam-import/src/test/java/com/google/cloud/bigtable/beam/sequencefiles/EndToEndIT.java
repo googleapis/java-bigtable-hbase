@@ -19,11 +19,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.testing.BigtableTableUtils;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
@@ -34,10 +32,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
-import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.util.GcsUtil;
@@ -59,7 +55,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class EndToEndIT {
-
   // Location of test data hosted on Google Cloud Storage, for on-cloud dataflow tests.
   private static final String CLOUD_TEST_DATA_FOLDER = "cloud.test.data.folder";
 
@@ -125,9 +120,6 @@ public class EndToEndIT {
       for (GcsPath path : paths) {
         pathStrs.add(path.toString());
       }
-      // delete the folder as well
-      pathStrs.add(workDir + "/");
-
       this.gcsUtil.remove(pathStrs);
     }
 

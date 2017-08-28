@@ -221,7 +221,7 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
       try {
         reader.sync(getCurrentSource().getStartOffset());
       } catch (EOFException e) {
-        LOG.warn("Found EOF when starting to read: " + getCurrentSource().getStartOffset());
+        LOG.debug("Found EOF when starting to read: " + getCurrentSource().getStartOffset());
         eof = true;
       }
 
@@ -229,7 +229,7 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
       startOfNextRecord = reader.getPosition();
       isFirstRecord = true;
 
-      LOG.debug("startReading, offset: " + getCurrentSource().getStartOffset() + ", position: "
+      LOG.info("startReading, offset: " + getCurrentSource().getStartOffset() + ", position: "
           + startOfNextRecord);
     }
 
