@@ -195,6 +195,7 @@ public class RetryingReadRowsOperation extends
   @Override
   public void onClose(Status status, Metadata trailers) {
     if (status.getCode() == Status.Code.CANCELLED
+        && status.getDescription() != null
         && status.getDescription().contains(TIMEOUT_CANCEL_MSG)) {
       // If this was canceled because of handleTimeout(). The cancel is immediately retried or
       // completed in another fashion.
