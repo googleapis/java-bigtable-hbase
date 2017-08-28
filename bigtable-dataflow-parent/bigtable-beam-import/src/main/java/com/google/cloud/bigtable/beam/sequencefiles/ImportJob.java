@@ -21,10 +21,10 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -37,7 +37,7 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
 public class ImportJob {
   private static final Log LOG = LogFactory.getLog(ImportJob.class);
 
-  public interface ImportOptions extends PipelineOptions {
+  public interface ImportOptions extends GcpOptions {
     //TODO: switch to ValueProviders
 
     @Description("The project that contains the table to export. Defaults to --project.")
@@ -56,10 +56,10 @@ public class ImportJob {
     @SuppressWarnings("unused")
     void setBigtableTableId(String tableId);
 
-    @Description("The source path of the SequenceFiles to import.")
-    ValueProvider<String> getSourcePath();
+    @Description("The fully qualified file pattern to import. Should of the form '[destinationPath]/part-*'")
+    ValueProvider<String> getSourcePattern();
     @SuppressWarnings("unused")
-    void setSourcePath(ValueProvider<String> sourcePath);
+    void setSourcePattern(ValueProvider<String> sourcePath);
 
     @Description("Wait for pipeline to finish.")
     @Default.Boolean(false)
@@ -93,7 +93,7 @@ public class ImportJob {
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
     SequenceFileSource<ImmutableBytesWritable, Result> source = new SequenceFileSource<>(
-        opts.getSourcePath(),
+        opts.getSourcePattern(),
         ImmutableBytesWritable.class, WritableSerialization.class,
         Result.class, ResultSerialization.class,
         100 * 1024 * 1024

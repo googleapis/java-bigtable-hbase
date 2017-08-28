@@ -22,6 +22,7 @@ import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.DefaultFilenamePolicy;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
@@ -29,11 +30,9 @@ import org.apache.beam.sdk.io.WriteFiles;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.beam.sdk.values.KV;
@@ -77,7 +76,7 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
 public class ExportJob {
   private static final Log LOG = LogFactory.getLog(ExportJob.class);
 
-  public interface ExportOptions extends PipelineOptions {
+  public interface ExportOptions extends GcpOptions {
     //TODO: switch to ValueProviders
 
     @Description("The project that contains the table to export. Defaults to --project.")
@@ -125,6 +124,12 @@ public class ExportJob {
     ValueProvider<String> getDestinationPath();
     @SuppressWarnings("unused")
     void setDestinationPath(ValueProvider<String> destinationPath);
+
+    @Description("The prefix for each shard in destinationPath")
+    @Default.String("part")
+    ValueProvider<String> getFilenamePrefix();
+    @SuppressWarnings("unused")
+    void setFilenamePrefix(ValueProvider<String> filenamePrefix);
 
     @Description("Wait for pipeline to finish.")
     @Default.Boolean(false)
@@ -183,7 +188,7 @@ public class ExportJob {
     SequenceFileSink<ImmutableBytesWritable, Result> sink = new SequenceFileSink<>(
         dest,
         DefaultFilenamePolicy.constructUsingStandardParameters(
-            StaticValueProvider.of(LocalResources.fromString("part", false)),
+            LocalResources.fromString(opts.getFilenamePrefix(), false),
             null,
             "",
             false

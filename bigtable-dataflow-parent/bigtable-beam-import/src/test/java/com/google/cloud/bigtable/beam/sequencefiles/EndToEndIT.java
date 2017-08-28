@@ -186,7 +186,7 @@ public class EndToEndIT {
       ImportJob.ImportOptions importOpts = pipelineOpts.as(ImportJob.ImportOptions.class);
       importOpts.setBigtableInstanceId(instanceId);
       importOpts.setBigtableTableId(destTableId);
-      importOpts.setSourcePath(StaticValueProvider.of(workDir + "/*"));
+      importOpts.setSourcePattern(StaticValueProvider.of(workDir + "/part-*"));
 
       State state = ImportJob.buildPipeline(importOpts).run().waitUntilFinish();
       Assert.assertEquals(State.DONE, state);
