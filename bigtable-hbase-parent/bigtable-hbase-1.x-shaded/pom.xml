@@ -39,12 +39,6 @@ limitations under the License.
 
   <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
   <dependency>
-    <groupId>io.netty</groupId>
-    <artifactId>netty-tcnative-boringssl-static</artifactId>
-    <version>${netty-tcnative-boringssl-static.version}</version>
-  </dependency>
-
-  <dependency>
     <groupId>org.apache.hbase</groupId>
     <artifactId>hbase-shaded-client</artifactId>
     <version>${hbase.version}</version>
@@ -86,10 +80,11 @@ limitations under the License.
                Also, this is needed to workaround maven reactor not using dependency-reduced-pom.xml
                files. See note in bigtable-1.x-hadoop .-->
               <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
               <artifactSet>
                 <excludes>
-                  <!-- exclude jni deps -->
-                  <exclude>io.netty:netty-tcnative-boringssl-static</exclude>
                   <!-- exclude user visible deps -->
                   <exclude>io.dropwizard.metrics:metrics-core</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
@@ -137,10 +132,25 @@ limitations under the License.
                   <pattern>io.grpc</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
                 </relocation>
+
+                <!-- Relocate netty, taking care to keep the prefix consistent for native tcnative
+                  libs. For details see:
+                    https://github.com/netty/netty/pull/6995
+                    https://github.com/grpc/grpc-java/pull/2485
+                -->
                 <relocation>
                   <pattern>io.netty</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>META-INF/native/libnetty</pattern>
+                  <shadedPattern>META-INF/native/libcom-google-bigtable-repackaged-netty</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>META-INF/native/netty</pattern>
+                  <shadedPattern>META-INFO/native/com-google-bigtable-repackaged-netty</shadedPattern>
+                </relocation>
+
                 <relocation>
                   <pattern>org.joda</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.org.joda</shadedPattern>
