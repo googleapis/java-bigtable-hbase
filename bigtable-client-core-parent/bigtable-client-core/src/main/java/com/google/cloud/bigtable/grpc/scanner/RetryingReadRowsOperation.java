@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import java.util.concurrent.ScheduledExecutorService;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 import com.google.api.client.util.BackOff;
@@ -95,6 +96,11 @@ public class RetryingReadRowsOperation extends
     @Override
     public void setMessageCompression(boolean enable) {
       call.setMessageCompression(enable);
+    }
+
+    @Override
+    public void cancel(@Nullable String s, @Nullable Throwable throwable) {
+      call.cancel(s, throwable);
     }
   }
 
