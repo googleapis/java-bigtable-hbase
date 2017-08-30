@@ -208,7 +208,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
 
       ByteBuffer byteBuffer = ByteBuffer.wrap(b, off, len);
 
-      while(written < len) {
+      while (written < len) {
         byteBuffer.position(written + off);
         written += this.inner.write(byteBuffer);
       }
@@ -224,7 +224,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
 
       int written = 0;
 
-      while(written == 0) {
+      while (written == 0) {
         singleByteBuffer.position(0);
         written = this.inner.write(singleByteBuffer);
       }
