@@ -146,7 +146,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
      */
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
-      LOG.info("Opening new writer");
+      LOG.debug("Opening new writer");
 
       Configuration configuration = new Configuration(false);
       configuration.setStrings("io.serializations", writeOperation.serializationNames);
@@ -169,7 +169,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
       sequenceFile.hflush();
       sequenceFile.close();
       super.finishWrite();
-      LOG.info("Closing writer with " + counter.get() + " items");
+      LOG.debug("Closing writer with " + counter.get() + " items");
     }
 
     /**

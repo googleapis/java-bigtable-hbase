@@ -229,7 +229,7 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
       startOfNextRecord = reader.getPosition();
       isFirstRecord = true;
 
-      LOG.info("startReading, offset: " + getCurrentSource().getStartOffset() + ", position: "
+      LOG.debug("startReading, offset: " + getCurrentSource().getStartOffset() + ", position: "
           + startOfNextRecord);
     }
 
