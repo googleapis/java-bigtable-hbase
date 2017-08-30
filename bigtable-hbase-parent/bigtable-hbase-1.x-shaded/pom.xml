@@ -80,6 +80,9 @@ limitations under the License.
                Also, this is needed to workaround maven reactor not using dependency-reduced-pom.xml
                files. See note in bigtable-1.x-hadoop .-->
               <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
               <artifactSet>
                 <excludes>
                   <!-- exclude user visible deps -->
