@@ -62,7 +62,7 @@ public class ImportJob {
     void setSourcePattern(ValueProvider<String> sourcePath);
 
     @Description("Wait for pipeline to finish.")
-    @Default.Boolean(false)
+    @Default.Boolean(true)
     boolean getWait();
     @SuppressWarnings("unused")
     void setWait(boolean wait);

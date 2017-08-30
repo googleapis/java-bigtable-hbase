@@ -58,13 +58,13 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  * {@code mvn compile exec:java \
  *    -Dexec.mainClass=com.google.cloud.bigtable.beam.sequencefiles.ExportJob \
  *    -Dexec.args="--runner=dataflow \
- *    --project=igorbernstein-dev \
- *    --tempLocation=gs://igorbernstein-dev/dataflow-temp \
- *    --zone=us-east1-c \
- *    --bigtableInstanceId=instance1 \
- *    --bigtableTableId=table2 \
- *    --destination=gs://igorbernstein-dev/export55 \
- *    --maxNumWorkers=200"
+ *    --project=[PROJECT_ID] \
+ *    --tempLocation=gs://[BUCKET]/[TEMP_PATH] \
+ *    --zone=[ZONE] \
+ *    --bigtableInstanceId=[INSTANCE] \
+ *    --bigtableTableId=[TABLE] \
+ *    --destination=gs://[BUCLET]/[EXPORT_PATH] \
+ *    --maxNumWorkers=[nodes * 10]"
  * }
  * </pre>
  *
@@ -132,7 +132,7 @@ public class ExportJob {
     void setFilenamePrefix(ValueProvider<String> filenamePrefix);
 
     @Description("Wait for pipeline to finish.")
-    @Default.Boolean(false)
+    @Default.Boolean(true)
     boolean getWait();
     @SuppressWarnings("unused")
     void setWait(boolean wait);

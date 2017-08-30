@@ -21,7 +21,6 @@ import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.testing.BigtableTableUtils;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
@@ -100,14 +99,7 @@ public class EndToEndIT {
   }
 
   private static String getTestProperty(String name) {
-    String val = ImmutableMap.of(
-        BigtableOptionsFactory.PROJECT_ID_KEY, "igorbernstein-dev",
-        BigtableOptionsFactory.INSTANCE_ID_KEY, "instance1",
-        GOOGLE_DATAFLOW_STAGING_LOCATION, "gs://igorbernstein-dev/dataflow-staging",
-        CLOUD_TEST_DATA_FOLDER, "gs://igorbernstein-dev/test-dir"
-    ).get(name);
-    return checkNotNull(val);
-    //return checkNotNull(System.getProperty(name), "Required property missing: " + name);
+    return checkNotNull(System.getProperty(name), "Required property missing: " + name);
   }
 
   @After
