@@ -28,22 +28,6 @@ limitations under the License.
 
     <dependencies>
         <dependency>
-            <groupId>com.google.cloud.bigtable</groupId>
-            <artifactId>bigtable-hbase-1.x</artifactId>
-            <version>${project.version}</version>
-            <exclusions>
-                <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
-                pom.xml files when invoking the build from a parent project. So we have to manually exclude
-                the dependencies. Note that this works in conjunction with the manually promoted dependencies
-                in bigtable-hbase-1.x-shaded/pom.xml -->
-                <!-- <exclusion>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>bigtable-hbase-1.x</artifactId>
-                </exclusion> -->
-            </exclusions>
-
-        </dependency>
-        <dependency>
             <groupId>org.apache.beam</groupId>
             <artifactId>beam-sdks-java-core</artifactId>
             <version>${beam.version}</version>
@@ -53,7 +37,22 @@ limitations under the License.
             <artifactId>beam-sdks-java-io-hbase</artifactId>
             <version>${beam.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.cloud.bigtable</groupId>
+            <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+                pom.xml files when invoking the build from a parent project. So we have to manually exclude
+                the dependencies. Note that this works in conjunction with the manually promoted dependencies
+                in bigtable-hbase-1.x-shaded/pom.xml -->
+                <exclusion>
+                    <groupId>${project.groupId}</groupId>
+                    <artifactId>bigtable-hbase-1.x</artifactId>
+                </exclusion>
+            </exclusions>
 
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

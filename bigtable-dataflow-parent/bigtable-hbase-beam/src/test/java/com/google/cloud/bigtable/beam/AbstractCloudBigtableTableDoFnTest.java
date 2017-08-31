@@ -28,7 +28,7 @@ import org.junit.runners.JUnit4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.grpc.Status;
+import com.google.bigtable.repackaged.io.grpc.Status;
 import com.google.cloud.bigtable.beam.AbstractCloudBigtableTableDoFn;
 
 
