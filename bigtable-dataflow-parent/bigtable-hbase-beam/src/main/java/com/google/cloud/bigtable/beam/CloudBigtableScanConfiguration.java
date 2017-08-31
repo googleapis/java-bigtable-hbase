@@ -23,12 +23,12 @@ import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ByteStringer;
-import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowRange;
+import com.google.bigtable.v2.RowSet;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;

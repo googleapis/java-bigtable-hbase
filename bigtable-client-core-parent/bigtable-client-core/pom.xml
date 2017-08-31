@@ -31,7 +31,29 @@ limitations under the License.
     </description>
 
     <dependencies>
-        <!-- Siblings -->
+
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-impl</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-contrib-zpages</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+<!--         <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-api</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+ -->
+                <!-- Siblings -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-protos</artifactId>
@@ -141,26 +163,6 @@ limitations under the License.
             <version>${dropwizard.metrics.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>io.opencensus</groupId>
-            <artifactId>opencensus-impl</artifactId>
-            <version>${opencensus.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.opencensus</groupId>
-            <artifactId>opencensus-contrib-zpages</artifactId>
-            <version>${opencensus.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.opencensus</groupId>
-            <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
-            <version>${opencensus.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.opencensus</groupId>
-            <artifactId>opencensus-api</artifactId>
-            <version>${opencensus.version}</version>
-        </dependency>
 
         <!-- Test -->
         <dependency>

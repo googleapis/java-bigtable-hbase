@@ -27,9 +27,6 @@ import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 
-import io.opencensus.contrib.zpages.ZPageHandlers;
-import io.opencensus.exporter.trace.stackdriver.StackdriverExporter;
-
 /**
  * Simple connectivity test to test that
  * {@link BigtableSession#createNettyChannel(String, BigtableOptions, io.grpc.ClientInterceptor...)}
@@ -50,36 +47,35 @@ public class IntegrationBigtableSessionTest {
 
   @Test
   public void connectivityTest() {
-    /**
-    try {
-      LOG.info("Initializing StackdriverExporter");
-      StackdriverExporter.createAndRegister("sduskis-hello-shakespear");
-    } catch (Throwable e) {
-      LOG.error("Could int register stackdriver", e);
-      Throwable t = e.getCause();
-      while(t != null) {
-        LOG.error("Could int register stackdriver ##", t);
-        t = t.getCause();
-      }
-    }
-    try {
-      int port = getFreePort();
-      LOG.info("Initializing ZPageHandlers on port: " + port);
-      ZPageHandlers.startHttpServerAndRegisterAll(port);
-    } catch (Throwable e) {
-      LOG.error("Could int initialize ZPageHandlers", e);
-    }
-  */
+//    try {
+//      LOG.info("Initializing StackdriverExporter");
+//      StackdriverExporter.createAndRegister("sduskis-hello-shakespear");
+//    } catch (Throwable e) {
+//      LOG.error("Could int register stackdriver", e);
+//      Throwable t = e.getCause();
+//      while(t != null) {
+//        LOG.error("Could int register stackdriver ##", t);
+//        t = t.getCause();
+//      }
+//    }
+//    try {
+//      int port = getFreePort();
+//      LOG.info("Initializing ZPageHandlers on port: " + port);
+//      ZPageHandlers.startHttpServerAndRegisterAll(port);
+//    } catch (Throwable e) {
+//      LOG.error("Could int initialize ZPageHandlers", e);
+//    }
     String property = System.getProperty("bigtableSession-int-test");
     if (!"true".equals(property)) {
       return;
     }
     
-    String projectId = System.getProperty("google.bigtable.project.id");
+    String projectId = "sduskis-hello-shakespear";
     String instanceId = System.getProperty("google.bigtable.instance.id");
 
     BigtableOptions options = new BigtableOptions.Builder().setProjectId(projectId)
         .setInstanceId(instanceId).setUserAgent("Test").build();
+    
     try (BigtableSession bs = new BigtableSession(options)) {
       ListTablesRequest request = ListTablesRequest.newBuilder()
           .setParent(options.getInstanceName().getInstanceName()).build();

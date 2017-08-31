@@ -67,16 +67,16 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
+import com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.cloud.bigtable.config.BulkOptions;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
@@ -275,7 +275,7 @@ public class CloudBigtableIO {
 
     /**
      * Performs a call to get sample row keys from
-     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest)}
+     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.v2.SampleRowKeysRequest)}
      * if they are not yet cached. The sample row keys give information about tablet key boundaries
      * and estimated sizes.
      */
@@ -419,7 +419,7 @@ public class CloudBigtableIO {
     /**
      * Splits the table based on keys that belong to tablets, known as "regions" in the HBase API.
      * The current implementation uses the HBase {@link RegionLocator} interface, which calls
-     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest)}
+     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.v2.SampleRowKeysRequest)}
      * under the covers. A {@link SourceWithKeys} may correspond to a single region or a portion of
      * a region.
      * <p>
@@ -452,7 +452,7 @@ public class CloudBigtableIO {
 
     /**
      * Gets an estimated size based on data returned from
-     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest)}.
+     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.v2.SampleRowKeysRequest)}.
      * The estimate will be high if a {@link Scan} is set on the
      * {@link CloudBigtableScanConfiguration}; in such cases, the estimate will not take the Scan
      * into account, and will return a larger estimate than what the {@link CloudBigtableIO.Reader}

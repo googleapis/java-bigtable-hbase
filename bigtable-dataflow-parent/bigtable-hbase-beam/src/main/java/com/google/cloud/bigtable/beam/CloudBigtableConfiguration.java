@@ -28,7 +28,7 @@ import org.apache.beam.sdk.repackaged.com.google.common.collect.ImmutableMap;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.conf.Configuration;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 /**
