@@ -16,6 +16,9 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,8 +40,17 @@ import io.opencensus.exporter.trace.stackdriver.StackdriverExporter;
 public class IntegrationBigtableSessionTest {
   protected static final Logger LOG = new Logger(IntegrationBigtableSessionTest.class);
 
+  private int getFreePort() throws IOException {
+    try (ServerSocket s = new ServerSocket(0)) {
+      return s.getLocalPort();
+    } catch (IOException e) {
+      throw new IOException("Failed to find a free port", e);
+    }
+  }
+
   @Test
   public void connectivityTest() {
+    /**
     try {
       LOG.info("Initializing StackdriverExporter");
       StackdriverExporter.createAndRegister("sduskis-hello-shakespear");
@@ -51,13 +63,14 @@ public class IntegrationBigtableSessionTest {
       }
     }
     try {
-      LOG.info("Initializing ZPageHandlers");
-      ZPageHandlers.startHttpServerAndRegisterAll(100010);
+      int port = getFreePort();
+      LOG.info("Initializing ZPageHandlers on port: " + port);
+      ZPageHandlers.startHttpServerAndRegisterAll(port);
     } catch (Throwable e) {
       LOG.error("Could int initialize ZPageHandlers", e);
     }
+  */
     String property = System.getProperty("bigtableSession-int-test");
-
     if (!"true".equals(property)) {
       return;
     }
