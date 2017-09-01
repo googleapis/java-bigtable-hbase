@@ -34,6 +34,12 @@ limitations under the License.
 
         <dependency>
             <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-api</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.opencensus</groupId>
             <artifactId>opencensus-impl</artifactId>
             <version>${opencensus.version}</version>
         </dependency>

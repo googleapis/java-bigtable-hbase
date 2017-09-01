@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import io.grpc.Status.Code;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -23,6 +22,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
+
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v2.BigtableGrpc;
@@ -34,6 +34,7 @@ import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -43,6 +44,12 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status;
+import io.grpc.Status.Code;
+import io.opencensus.common.Scope;
+import io.opencensus.trace.Annotation;
+import io.opencensus.trace.AttributeValue;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
 
 /**
  * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
@@ -52,10 +59,15 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
+  private static final Tracer TRACER = Tracing.getTracer();
 
   // The server-side has a 5 minute timeout. Unary operations should be timed-out on the client side
   // after 6 minutes.
   protected static final long UNARY_DEADLINE_MINUTES = 6l;
+
+  private static String makeSpanName(String prefix, String fullMethodName) {
+    return prefix + "." + fullMethodName.replace('/', '.');
+  }
 
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
     /**
@@ -100,6 +112,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected Timer.Context operationTimerContext;
   protected Timer.Context rpcTimerContext;
 
+  private Scope operationScope;
+
   /**
    * <p>Constructor for AbstractRetryingRpcListener.</p>
    *
@@ -137,11 +151,88 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     // OK
     if (status.isOk()) {
       if (onOK(trailers)) {
-        operationTimerContext.close();
+        finalizeStats(status);
       }
     } else {
       onError(status, trailers);
     }
+  }
+
+  protected void finalizeStats(Status status) {
+    operationTimerContext.close();
+    if (operationScope != null) {
+      String spanName = makeSpanName("Operation", rpc.getMethodDescriptor().getFullMethodName());
+      LOG.info("Closing span/scope: " + spanName + " span: "
+          + TRACER.getCurrentSpan().getContext().getSpanId());
+      // TRACER.getCurrentSpan().end(EndSpanOptions.builder().setStatus(convertStatus(status)).build());
+      operationScope.close();
+      LOG.info("Post Closing span/scope: " + spanName + " span: "
+          + TRACER.getCurrentSpan().getContext().getSpanId());
+    }
+  }
+
+  @VisibleForTesting
+  static io.opencensus.trace.Status convertStatus(io.grpc.Status grpcStatus) {
+    io.opencensus.trace.Status status;
+    switch (grpcStatus.getCode()) {
+      case OK:
+        status = io.opencensus.trace.Status.OK;
+        break;
+      case CANCELLED:
+        status = io.opencensus.trace.Status.CANCELLED;
+        break;
+      case UNKNOWN:
+        status = io.opencensus.trace.Status.UNKNOWN;
+        break;
+      case INVALID_ARGUMENT:
+        status = io.opencensus.trace.Status.INVALID_ARGUMENT;
+        break;
+      case DEADLINE_EXCEEDED:
+        status = io.opencensus.trace.Status.DEADLINE_EXCEEDED;
+        break;
+      case NOT_FOUND:
+        status = io.opencensus.trace.Status.NOT_FOUND;
+        break;
+      case ALREADY_EXISTS:
+        status = io.opencensus.trace.Status.ALREADY_EXISTS;
+        break;
+      case PERMISSION_DENIED:
+        status = io.opencensus.trace.Status.PERMISSION_DENIED;
+        break;
+      case RESOURCE_EXHAUSTED:
+        status = io.opencensus.trace.Status.RESOURCE_EXHAUSTED;
+        break;
+      case FAILED_PRECONDITION:
+        status = io.opencensus.trace.Status.FAILED_PRECONDITION;
+        break;
+      case ABORTED:
+        status = io.opencensus.trace.Status.ABORTED;
+        break;
+      case OUT_OF_RANGE:
+        status = io.opencensus.trace.Status.OUT_OF_RANGE;
+        break;
+      case UNIMPLEMENTED:
+        status = io.opencensus.trace.Status.UNIMPLEMENTED;
+        break;
+      case INTERNAL:
+        status = io.opencensus.trace.Status.INTERNAL;
+        break;
+      case UNAVAILABLE:
+        status = io.opencensus.trace.Status.UNAVAILABLE;
+        break;
+      case DATA_LOSS:
+        status = io.opencensus.trace.Status.DATA_LOSS;
+        break;
+      case UNAUTHENTICATED:
+        status = io.opencensus.trace.Status.UNAUTHENTICATED;
+        break;
+      default:
+        throw new AssertionError("Unhandled status code " + grpcStatus.getCode());
+    }
+    if (grpcStatus.getDescription() != null) {
+      status = status.withDescription(grpcStatus.getDescription());
+    }
+    return status;
   }
 
   protected void onError(Status status, Metadata trailers) {
@@ -150,7 +241,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     if (code == Status.Code.CANCELLED) {
       completionFuture.setException(status.asRuntimeException());
       // An explicit user cancellation is not considered a failure.
-      operationTimerContext.close();
+      finalizeStats(status);
       return;
     }
 
@@ -161,7 +252,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
       rpc.getRpcMetrics().markFailure();
-      operationTimerContext.close();
+      finalizeStats(status);
       setException(status.asRuntimeException());
       return;
     }
@@ -182,13 +273,16 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   protected BigtableRetriesExhaustedException getExhaustedRetriesException(Status status) {
+    TRACER.getCurrentSpan().addAnnotation("exhaustedRetries");
     rpc.getRpcMetrics().markRetriesExhasted();
-    operationTimerContext.close();
+    finalizeStats(status);
     String message = String.format("Exhausted retries after %d failures.", failedCount);
     return new BigtableRetriesExhaustedException(message, status.asRuntimeException());
   }
 
   protected void performRetry(long nextBackOff) {
+    TRACER.getCurrentSpan().addAnnotation("retryWithBackoff", ImmutableMap
+        .<String, AttributeValue> of("backoff", AttributeValue.longAttributeValue(nextBackOff)));
     rpc.getRpcMetrics().markRetry();
     retryExecutorService.schedule(getRunnable(), nextBackOff, TimeUnit.MILLISECONDS);
   }
@@ -236,6 +330,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    */
   protected void run() {
     rpcTimerContext = rpc.getRpcMetrics().timeRpc();
+    TRACER.getCurrentSpan().addAnnotation(
+      Annotation.fromDescriptionAndAttributes("rpcStart", ImmutableMap
+          .<String, AttributeValue> of("attempt", AttributeValue.longAttributeValue(failedCount))));
     Metadata metadata = new Metadata();
     metadata.merge(originalMetadata);
     synchronized (callLock) {
@@ -277,6 +374,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   public ListenableFuture<ResultT> getAsyncResult() {
     Preconditions.checkState(operationTimerContext == null);
     operationTimerContext = rpc.getRpcMetrics().timeOperation();
+    String spanName = makeSpanName("Operation", rpc.getMethodDescriptor().getFullMethodName());
+    LOG.info("creating span / scope: " + spanName);
+    operationScope = TRACER.spanBuilder(spanName).setRecordEvents(true).startScopedSpan();
+    LOG.info("created span / scope: " + TRACER.getCurrentSpan().getContext().getSpanId());
     run();
     return completionFuture;
   }
