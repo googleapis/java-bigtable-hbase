@@ -53,6 +53,11 @@ limitations under the License.
             <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
             <version>${opencensus.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-contrib-grpc-util</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
 <!--         <dependency>
             <groupId>io.opencensus</groupId>
             <artifactId>opencensus-api</artifactId>
