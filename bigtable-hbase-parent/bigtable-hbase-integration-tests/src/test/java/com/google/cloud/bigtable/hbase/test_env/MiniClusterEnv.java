@@ -35,6 +35,7 @@ class MiniClusterEnv extends SharedTestEnv {
   @Override
   protected void teardown() throws IOException {
     helper.shutdownMiniHBaseCluster();
+    helper.cleanupTestDir();
     helper = null;
   }
 
