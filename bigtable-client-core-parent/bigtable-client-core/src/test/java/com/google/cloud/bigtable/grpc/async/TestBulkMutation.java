@@ -335,6 +335,29 @@ public class TestBulkMutation {
     }
   }
 
+  @Test
+  public void testLotsOfMutations() throws Exception {
+    MutateRowsRequest.Entry smallRequest = createRequestEntry();
+    MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry().toBuilder();
+    bigRequest.addAllMutations(
+        Collections.nCopies(20_000, bigRequest.getMutations(0))
+    );
+    MutateRowsRequest.Entry lastRequest = bigRequest.clone().setRowKey(
+        ByteString.copyFrom("SomeOtherKey".getBytes())
+    ).build();
+
+    underTest.add(smallRequest);
+    underTest.add(bigRequest.build());
+    underTest.add(bigRequest.build());
+    underTest.add(lastRequest);
+
+    Assert.assertTrue(underTest.currentBatch.builder.getEntriesList().contains(smallRequest));
+
+    underTest.add(lastRequest);
+    Assert.assertFalse(underTest.currentBatch.builder.getEntriesList().contains(smallRequest));
+    Assert.assertTrue(underTest.currentBatch.builder.getEntriesList().contains(lastRequest));
+  }
+
   private BulkMutation createBulkMutation() {
     return new BulkMutation(TABLE_NAME, client, operationAccountant, retryExecutorService,
         BULK_OPTIONS);
