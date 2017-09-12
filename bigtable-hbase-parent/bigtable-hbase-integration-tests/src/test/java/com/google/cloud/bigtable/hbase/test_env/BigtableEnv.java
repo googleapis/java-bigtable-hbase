@@ -15,16 +15,23 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+
+import com.google.bigtable.repackaged.io.grpc.internal.GrpcUtil;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.common.collect.Sets;
 
 
 class BigtableEnv extends SharedTestEnv {
@@ -58,8 +65,27 @@ class BigtableEnv extends SharedTestEnv {
       }
     }
 
-    try (Connection connection = createConnection() ) {
-      createConnection().getAdmin().deleteTables("test_table-.*");
+    ExecutorService executor = Executors.newCachedThreadPool(GrpcUtil.getThreadFactory("table_deleter", true));
+    try (Connection connection = createConnection();
+        Admin admin = createConnection().getAdmin()) {
+      for (final TableName tableName : admin.listTableNames("(test_table|list_table[12])-.*")) {
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              admin.deleteTable(tableName);
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+        });
+      }
+      executor.shutdown();
+      try {
+        executor.awaitTermination(10, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
   }
 
