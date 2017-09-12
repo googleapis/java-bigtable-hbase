@@ -68,6 +68,7 @@ public class BulkMutation {
   static Logger LOG = new Logger(BulkMutation.class);
 
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
+  private static final long MAX_NUMBER_OF_MUTATIONS = 100_000;
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -109,12 +110,15 @@ public class BulkMutation {
 
     private final SettableFuture<String> completionFuture = SettableFuture.create();
     private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
-    private final MutateRowsRequest.Builder builder =
+
+    @VisibleForTesting
+    final MutateRowsRequest.Builder builder =
         MutateRowsRequest.newBuilder().setTableName(tableName);
 
     private ListenableFuture<List<MutateRowsResponse>> mutateRowsFuture;
     private ScheduledFuture<?> stalenessFuture;
     private long approximateByteSize = 0l;
+    private long numberOfMutations = 0l;
 
     @VisibleForTesting
     Long lastRpcSentTimeNanos = null;
@@ -136,12 +140,22 @@ public class BulkMutation {
       futures.add(future);
       builder.addEntries(entry);
       approximateByteSize += entry.getSerializedSize();
+      numberOfMutations += entry.getMutationsCount();
       return future;
     }
 
-    private boolean isFull() {
-      Preconditions.checkNotNull(futures.isEmpty());
-      return getRequestCount() >= maxRowKeyCount || (approximateByteSize >= maxRequestSize);
+    private boolean wouldBeFull(MutateRowsRequest.Entry entry) {
+      boolean hitMutationMax = numberOfMutations + entry.getMutationsCount() > MAX_NUMBER_OF_MUTATIONS;
+      if (hitMutationMax) {
+        LOG.info(
+            "Would overflow maximum number of mutations, current = %d, adding = %d",
+            numberOfMutations,
+            entry.getMutationsCount());
+      }
+
+      return getRequestCount() + 1 > maxRowKeyCount
+          || (approximateByteSize + entry.getSerializedSize() > maxRequestSize)
+          || hitMutationMax;
     }
 
     /**
@@ -386,19 +400,24 @@ public class BulkMutation {
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
     Preconditions.checkNotNull(entry, "Request null");
     Preconditions.checkArgument(!entry.getRowKey().isEmpty(), "Request has an empty rowkey");
+
+    boolean didSend = false;
+    if (currentBatch != null && currentBatch.wouldBeFull(entry)) {
+      send();
+      if (scheduledFlush != null) {
+        scheduledFlush.cancel(true);
+        scheduledFlush = null;
+      }
+      didSend = true;
+    }
+
     if (currentBatch == null) {
       batchMeter.mark();
       currentBatch = new Batch();
     }
 
     ListenableFuture<MutateRowResponse> future = currentBatch.add(entry);
-    if (currentBatch.isFull()) {
-      send();
-      if (scheduledFlush != null) {
-        scheduledFlush.cancel(true);
-        scheduledFlush = null;
-      }
-    } else {
+    if (!didSend) {
       // TODO (sduskis): enable flush by default.
       // If autoflushing is enabled and there is pending data then schedule a flush if one hasn't been scheduled
       // NOTE: this is optimized for adding minimal overhead to per item adds, at the expense of periodic partial batches
