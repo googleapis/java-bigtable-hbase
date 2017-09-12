@@ -147,7 +147,7 @@ public class BulkMutation {
     private boolean wouldBeFull(MutateRowsRequest.Entry entry) {
       boolean hitMutationMax = numberOfMutations + entry.getMutationsCount() > MAX_NUMBER_OF_MUTATIONS;
       if (hitMutationMax) {
-        LOG.info(
+        LOG.debug(
             "Would overflow maximum number of mutations, current = %d, adding = %d",
             numberOfMutations,
             entry.getMutationsCount());
