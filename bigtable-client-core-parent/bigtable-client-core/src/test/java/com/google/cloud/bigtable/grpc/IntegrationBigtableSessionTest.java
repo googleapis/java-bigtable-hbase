@@ -16,12 +16,16 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
 
 /**
  * Simple connectivity test to test that
@@ -31,18 +35,47 @@ import com.google.cloud.bigtable.config.BigtableOptions;
  */
 @RunWith(JUnit4.class)
 public class IntegrationBigtableSessionTest {
+  protected static final Logger LOG = new Logger(IntegrationBigtableSessionTest.class);
+
+  private int getFreePort() throws IOException {
+    try (ServerSocket s = new ServerSocket(0)) {
+      return s.getLocalPort();
+    } catch (IOException e) {
+      throw new IOException("Failed to find a free port", e);
+    }
+  }
 
   @Test
   public void connectivityTest() {
+//    try {
+//      LOG.info("Initializing StackdriverExporter");
+//      StackdriverExporter.createAndRegister("sduskis-hello-shakespear");
+//    } catch (Throwable e) {
+//      LOG.error("Could int register stackdriver", e);
+//      Throwable t = e.getCause();
+//      while(t != null) {
+//        LOG.error("Could int register stackdriver ##", t);
+//        t = t.getCause();
+//      }
+//    }
+//    try {
+//      int port = getFreePort();
+//      LOG.info("Initializing ZPageHandlers on port: " + port);
+//      ZPageHandlers.startHttpServerAndRegisterAll(port);
+//    } catch (Throwable e) {
+//      LOG.error("Could int initialize ZPageHandlers", e);
+//    }
     String property = System.getProperty("bigtableSession-int-test");
     if (!"true".equals(property)) {
       return;
     }
-    String projectId = System.getProperty("google.bigtable.project.id");
+    
+    String projectId = "sduskis-hello-shakespear";
     String instanceId = System.getProperty("google.bigtable.instance.id");
 
     BigtableOptions options = new BigtableOptions.Builder().setProjectId(projectId)
         .setInstanceId(instanceId).setUserAgent("Test").build();
+    
     try (BigtableSession bs = new BigtableSession(options)) {
       ListTablesRequest request = ListTablesRequest.newBuilder()
           .setParent(options.getInstanceName().getInstanceName()).build();

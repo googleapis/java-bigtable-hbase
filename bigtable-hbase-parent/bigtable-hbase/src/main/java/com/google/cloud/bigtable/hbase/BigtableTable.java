@@ -81,6 +81,10 @@ import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.ByteString;
 
+import io.opencensus.common.Scope;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
+
 /**
  * <p>BigtableTable class.</p>
  *
@@ -92,6 +96,7 @@ import com.google.protobuf.ByteString;
 public class BigtableTable implements Table {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableTable.class);
+  private static final Tracer TRACER = Tracing.getTracer();
 
   private static class TableMetrics {
     Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.put.latency");
@@ -248,8 +253,10 @@ public class BigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public Result get(Get get) throws IOException {
-    LOG.trace("get(Get)");
-    return convertToResult(getResults(get, "get"));
+    try (Scope ss = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
+      LOG.trace("get(Get)");
+      return convertToResult(getResults(get, "get"));
+    }
   }
 
   private FlatRow getResults(Get get, String method) throws IOException {
@@ -331,15 +338,17 @@ public class BigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public void put(Put put) throws IOException {
-    LOG.trace("put(Put)");
-    Timer.Context timerContext = metrics.putTimer.time();
-    MutateRowRequest request = hbaseAdapter.adapt(put);
-    try {
-      client.mutateRow(request);
-    } catch (Throwable t) {
-      throw logAndCreateIOException("put", put.getRow(), t);
-    } finally {
-      timerContext.close();
+    try (Scope ss = TRACER.spanBuilder("BigtableTable.put").startScopedSpan()) {
+      LOG.trace("put(Put)");
+      Timer.Context timerContext = metrics.putTimer.time();
+      MutateRowRequest request = hbaseAdapter.adapt(put);
+      try {
+        client.mutateRow(request);
+      } catch (Throwable t) {
+        throw logAndCreateIOException("put", put.getRow(), t);
+      } finally {
+        timerContext.close();
+      }
     }
   }
 

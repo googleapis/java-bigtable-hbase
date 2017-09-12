@@ -132,7 +132,10 @@ limitations under the License.
                   <pattern>io.grpc</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
                 </relocation>
-
+                <relocation>
+                  <pattern>io.opencensus</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.opencensus</shadedPattern>
+                </relocation>
                 <!-- Relocate netty, taking care to keep the prefix consistent for native tcnative
                   libs. For details see:
                     https://github.com/netty/netty/pull/6995

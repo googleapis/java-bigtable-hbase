@@ -31,7 +31,40 @@ limitations under the License.
     </description>
 
     <dependencies>
-        <!-- Siblings -->
+
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-api</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-impl</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-contrib-zpages</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-contrib-grpc-util</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+<!--         <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-api</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+ -->
+                <!-- Siblings -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-protos</artifactId>
@@ -109,21 +142,6 @@ limitations under the License.
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-handler</artifactId>
-            <version>${netty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-codec-http2</artifactId>
-            <version>${netty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-handler-proxy</artifactId>
-            <version>${netty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>
             <version>${netty-tcnative-boringssl-static.version}</version>
         </dependency>
@@ -142,19 +160,6 @@ limitations under the License.
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty</artifactId>
             <version>${grpc.version}</version>
-            <!-- Override grpc's version on netty.
-                Netty upgraded its version of netty-tcnative to 2.x, and since users are currently responsible for
-                adding their own netty-tcnative dep, its a backward incompatible change. For now, we need to hold back
-                the version of netty.
-                Once we catch up to grpc's netty version, this, netty-codec-http2 &  netty-handler-proxy deps should be
-                removed.
-            -->
-            <exclusions>
-                <exclusion>
-                    <groupId>io.netty</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
@@ -168,6 +173,7 @@ limitations under the License.
             <artifactId>metrics-core</artifactId>
             <version>${dropwizard.metrics.version}</version>
         </dependency>
+
 
         <!-- Test -->
         <dependency>

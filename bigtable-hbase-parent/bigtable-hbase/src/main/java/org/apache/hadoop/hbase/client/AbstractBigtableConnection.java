@@ -16,10 +16,34 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
+import org.apache.hadoop.hbase.security.User;
+
+import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
+import com.google.bigtable.v2.BigtableGrpc;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
@@ -29,22 +53,13 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.common.base.MoreObjects;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
-import org.apache.hadoop.hbase.security.User;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import io.grpc.MethodDescriptor;
+import io.grpc.ServiceDescriptor;
+import io.opencensus.contrib.zpages.ZPageHandlers;
+import io.opencensus.exporter.trace.stackdriver.StackdriverExporter;
+import io.opencensus.trace.Tracing;
+import io.opencensus.trace.config.TraceParams;
+import io.opencensus.trace.samplers.Samplers;
 
 /**
  * <p>Abstract AbstractBigtableConnection class.</p>
@@ -56,6 +71,64 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
   private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
       Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
+
+
+  static  boolean initialized = false;
+
+  static synchronized void initialize(String projectId, Logger LOG) {
+    if (initialized) {
+      LOG.info("NOT Initializing stackdriver for project: %s", projectId);
+      return;
+    }
+    LOG.info("Initializing stackdriver for project: %s", projectId);
+    List<String> descriptors = new ArrayList<>();
+    addDescriptor(descriptors, BigtableTableAdminGrpc.getServiceDescriptor());
+    addDescriptor(descriptors, BigtableGrpc.getServiceDescriptor());
+    descriptors.addAll(Arrays.asList(
+      BulkMutation.BULKMUTATION_SPAN_NAME,
+      BulkMutation.BULKMUTATION_SPAN_NAME + ".Batch",
+      "BigtableTable.get",
+      "BigtableTable.put"));
+
+    Tracing.getExportComponent().getSampledSpanStore().registerSpanNamesForCollection(descriptors);
+    Tracing.getTraceConfig().updateActiveTraceParams(
+      TraceParams.DEFAULT.toBuilder().setSampler(Samplers.probabilitySampler(0.1)).build());
+    try {
+      LOG.info("Initializing StackdriverExporter");
+      StackdriverExporter.createAndRegister(projectId);
+    } catch (Throwable e) {
+      LOG.error("Could not register stackdriver", e);
+      Throwable t = e.getCause();
+      while(t != null) {
+        LOG.error("Could not register stackdriver ##", t);
+        t = t.getCause();
+      }
+    }
+    try {
+      int port = getFreePort();
+      LOG.info("Initializing ZPageHandlers on port: " + port);
+      ZPageHandlers.startHttpServerAndRegisterAll(port);
+    } catch (Throwable e) {
+      LOG.error("Could int initialize ZPageHandlers", e);
+    }
+    initialized = true;
+  }
+
+  protected static void addDescriptor(List<String> descriptors,
+      ServiceDescriptor serviceDescriptor) {
+    for(MethodDescriptor<?, ?> method : serviceDescriptor.getMethods()) {
+      descriptors.add("Sent." + method.getFullMethodName().replace('/', '.'));
+      descriptors.add("Operation." + method.getFullMethodName().replace('/', '.'));
+    }
+  }
+
+  private static int getFreePort() throws IOException {
+    try (ServerSocket s = new ServerSocket(0)) {
+      return s.getLocalPort();
+    } catch (IOException e) {
+      throw new IOException("Failed to find a free port", e);
+    }
+  }
 
   static {
     Runnable shutDownRunnable = new Runnable() {
@@ -128,6 +201,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
+    LOG.info("Creating AbstractBigtableConnection");
     this.conf = conf;
 
     BigtableOptions opts;
@@ -138,6 +212,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       throw ioe;
     }
 
+    LOG.info("Calling initialize");
+    initialize(opts.getProjectId(), LOG);
     this.batchPool = pool;
     this.closed = false;
     this.session = new BigtableSession(opts);

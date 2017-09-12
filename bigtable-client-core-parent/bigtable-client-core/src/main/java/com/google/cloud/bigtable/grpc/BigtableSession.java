@@ -498,6 +498,8 @@ public class BigtableSession implements Closeable {
     NettyChannelBuilder builder = NettyChannelBuilder
         .forAddress(host, options.getPort());
 
+    builder.setEnableTracing(true);
+
     if (options.usePlaintextNegotiation()) {
       builder.usePlaintext(true);
     } else {
