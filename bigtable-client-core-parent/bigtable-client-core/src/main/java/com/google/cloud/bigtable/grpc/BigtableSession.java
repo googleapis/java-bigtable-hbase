@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
@@ -59,6 +60,7 @@ import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
+import io.grpc.internal.AbstractManagedChannelImplBuilder;
 import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.GrpcSslContexts;
@@ -142,6 +144,13 @@ public class BigtableSession implements Closeable {
     connectionStartupExecutor.execute(new Runnable() {
       @Override
       public void run() {
+        // The first invocation of enableTracing does a reflection lookup which may be expensive.
+        enableTracing(null);
+      }
+    });
+    connectionStartupExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
         // The first invocation of BigtableSessionSharedThreadPools.getInstance() is expensive.
         // Reference it so that it gets constructed asynchronously.
         BigtableSessionSharedThreadPools.getInstance();
@@ -178,6 +187,30 @@ public class BigtableSession implements Closeable {
       });
     }
     connectionStartupExecutor.shutdown();
+  }
+
+  private static Boolean setEnableTracingMethodNotFound;
+  private static Method setEnableTracingMethod;
+
+  private static boolean enableTracing(AbstractManagedChannelImplBuilder<?> builder) {
+    if (setEnableTracingMethodNotFound == null) {
+      try {
+        setEnableTracingMethod =
+            AbstractManagedChannelImplBuilder.class.getMethod("setEnableTracing", boolean.class);
+        setEnableTracingMethodNotFound = false;
+      } catch (Exception e) {
+        setEnableTracingMethodNotFound = true;
+      }
+    }
+    if (builder != null && setEnableTracingMethod != null) {
+      try {
+        setEnableTracingMethod.invoke(builder, true);
+        return true;
+      } catch (Exception e) {
+        LOG.warn("Could not enable tracing", e);
+      }
+    }
+    return false;
   }
 
   private synchronized static ResourceLimiter initializeResourceLimiter(BigtableOptions options) {
@@ -497,6 +530,8 @@ public class BigtableSession implements Closeable {
     // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
     NettyChannelBuilder builder = NettyChannelBuilder
         .forAddress(host, options.getPort());
+
+    enableTracing(builder);
 
     if (options.usePlaintextNegotiation()) {
       builder.usePlaintext(true);
