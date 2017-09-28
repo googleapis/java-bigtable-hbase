@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import io.grpc.Status.Code;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -23,6 +22,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
+
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v2.BigtableGrpc;
@@ -34,6 +34,7 @@ import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -43,6 +44,15 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status;
+import io.grpc.Status.Code;
+import io.opencensus.common.NonThrowingCloseable;
+import io.opencensus.contrib.grpc.util.StatusConverter;
+import io.opencensus.trace.Annotation;
+import io.opencensus.trace.AttributeValue;
+import io.opencensus.trace.EndSpanOptions;
+import io.opencensus.trace.Span;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
 
 /**
  * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
@@ -52,10 +62,15 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
+  private static final Tracer TRACER = Tracing.getTracer();
 
   // The server-side has a 5 minute timeout. Unary operations should be timed-out on the client side
   // after 6 minutes.
   protected static final long UNARY_DEADLINE_MINUTES = 6l;
+
+  private static String makeSpanName(String prefix, String fullMethodName) {
+    return prefix + "." + fullMethodName.replace('/', '.');
+  }
 
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
     /**
@@ -100,6 +115,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected Timer.Context operationTimerContext;
   protected Timer.Context rpcTimerContext;
 
+  protected final Span operationSpan;
+
   /**
    * <p>Constructor for AbstractRetryingRpcListener.</p>
    *
@@ -124,23 +141,34 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.retryExecutorService = retryExecutorService;
     this.originalMetadata = originalMetadata;
     this.completionFuture = new GrpcFuture<>();
+    String spanName = makeSpanName("Operation", rpc.getMethodDescriptor().getFullMethodName());
+    operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
   }
 
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
-    synchronized (callLock) {
-      call = null;
-    }
-    rpcTimerContext.close();
-
-    // OK
-    if (status.isOk()) {
-      if (onOK(trailers)) {
-        operationTimerContext.close();
+    try (NonThrowingCloseable s = TRACER.withSpan(operationSpan)) {
+      synchronized (callLock) {
+        call = null;
       }
-    } else {
-      onError(status, trailers);
+      rpcTimerContext.close();
+      // OK
+      if (status.isOk()) {
+        if (onOK(trailers)) {
+          finalizeStats(status);
+        }
+      } else {
+        onError(status, trailers);
+      }
+    }
+  }
+
+  protected void finalizeStats(Status status) {
+    operationTimerContext.close();
+    if (operationSpan != null) {
+      io.opencensus.trace.Status ocensusStatus = StatusConverter.fromGrpcStatus(status);
+      operationSpan.end(EndSpanOptions.builder().setStatus(ocensusStatus).build());
     }
   }
 
@@ -150,18 +178,17 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     if (code == Status.Code.CANCELLED) {
       completionFuture.setException(status.asRuntimeException());
       // An explicit user cancellation is not considered a failure.
-      operationTimerContext.close();
+      finalizeStats(status);
       return;
     }
 
     // Non retry scenario
-    if (!retryOptions.enableRetries()
-        || !retryOptions.isRetryable(code)
-        // Unauthenticated is special because the request never made it to
-        // to the server, so all requests are retryable
+    if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)
+    // Unauthenticated is special because the request never made it to
+    // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
       rpc.getRpcMetrics().markFailure();
-      operationTimerContext.close();
+      finalizeStats(status);
       setException(status.asRuntimeException());
       return;
     }
@@ -175,20 +202,23 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       setException(getExhaustedRetriesException(status));
     } else {
       String channelId = ChannelPool.extractIdentifier(trailers);
-      LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s",
-          status.getCause(), failedCount, status, channelId);
+      LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s", status.getCause(),
+        failedCount, status, channelId);
       performRetry(nextBackOff);
     }
   }
 
   protected BigtableRetriesExhaustedException getExhaustedRetriesException(Status status) {
+    operationSpan.addAnnotation("exhaustedRetries");
     rpc.getRpcMetrics().markRetriesExhasted();
-    operationTimerContext.close();
+    finalizeStats(status);
     String message = String.format("Exhausted retries after %d failures.", failedCount);
     return new BigtableRetriesExhaustedException(message, status.asRuntimeException());
   }
 
   protected void performRetry(long nextBackOff) {
+    operationSpan.addAnnotation("retryWithBackoff",
+      ImmutableMap.of("backoff", AttributeValue.longAttributeValue(nextBackOff)));
     rpc.getRpcMetrics().markRetry();
     retryExecutorService.schedule(getRunnable(), nextBackOff, TimeUnit.MILLISECONDS);
   }
@@ -235,15 +265,19 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * with this as the listener so that retries happen correctly.
    */
   protected void run() {
-    rpcTimerContext = rpc.getRpcMetrics().timeRpc();
-    Metadata metadata = new Metadata();
-    metadata.merge(originalMetadata);
-    synchronized (callLock) {
-      // There's a subtle race condition in RetryingStreamOperation which requires a separate
-      // newCall/start split. The call variable needs to be set before onMessage() happens; that
-      // usually will occur, but some unit tests broke with a merged newCall and start.
-      call = rpc.newCall(getCallOptions());
-      rpc.start(getRetryRequest(), this, metadata, call);
+    try (NonThrowingCloseable s = TRACER.withSpan(operationSpan)) {
+      rpcTimerContext = rpc.getRpcMetrics().timeRpc();
+      operationSpan.addAnnotation(Annotation.fromDescriptionAndAttributes("rpcStart",
+        ImmutableMap.of("attempt", AttributeValue.longAttributeValue(failedCount))));
+      Metadata metadata = new Metadata();
+      metadata.merge(originalMetadata);
+      synchronized (callLock) {
+        // There's a subtle race condition in RetryingStreamOperation which requires a separate
+        // newCall/start split. The call variable needs to be set before onMessage() happens; that
+        // usually will occur, but some unit tests broke with a merged newCall and start.
+        call = rpc.newCall(getCallOptions());
+        rpc.start(getRetryRequest(), this, metadata, call);
+      }
     }
   }
 

@@ -59,6 +59,7 @@ limitations under the License.
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
         <grpc.version>1.6.1</grpc.version>
+        <opencensus.version>0.6.0</opencensus.version>
         <!--NOTE: 4.1.14.Final is the first version that support shading -->
         <netty.version>4.1.14.Final</netty.version>
         <netty-tcnative-boringssl-static.version>2.0.5.Final</netty-tcnative-boringssl-static.version>
@@ -69,6 +70,7 @@ limitations under the License.
         <guava.version>19.0</guava.version>
         <google.auth.library.version>0.7.0</google.auth.library.version>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
+        <opencensus.version>0.7.0</opencensus.version>
 
 
         <beam.version>2.1.0</beam.version>

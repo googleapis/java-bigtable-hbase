@@ -136,6 +136,12 @@ limitations under the License.
 
         <!-- Metrics -->
         <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-contrib-grpc-util</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
             <version>${dropwizard.metrics.version}</version>

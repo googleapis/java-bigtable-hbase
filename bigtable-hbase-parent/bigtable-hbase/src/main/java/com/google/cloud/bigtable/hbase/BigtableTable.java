@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +80,13 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
+
+import io.opencensus.common.NonThrowingCloseable;
+import io.opencensus.trace.AttributeValue;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
 
 /**
  * <p>BigtableTable class.</p>
@@ -92,6 +99,7 @@ import com.google.protobuf.ByteString;
 public class BigtableTable implements Table {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableTable.class);
+  private static final Tracer TRACER = Tracing.getTracer();
 
   private static class TableMetrics {
     Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.put.latency");
@@ -113,6 +121,11 @@ public class BigtableTable implements Table {
           "We built a bad Filter for conditional mutation.");
     }
   };
+
+  private static void addBatchSizeAnnotation(Collection<?> c) {
+    TRACER.getCurrentSpan().addAnnotation("batchSize",
+      ImmutableMap.of("size", AttributeValue.longAttributeValue(c.size())));
+  }
 
   protected final TableName tableName;
   protected final BigtableOptions options;
@@ -154,7 +167,10 @@ public class BigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
-    try (Admin admin = this.bigtableConnection.getAdmin()) {
+    try (
+        NonThrowingCloseable ss =
+            TRACER.spanBuilder("BigtableTable.getTableDescriptor").startScopedSpan();
+        Admin admin = this.bigtableConnection.getAdmin()) {
       return admin.getTableDescriptor(tableName);
     }
   }
@@ -162,8 +178,10 @@ public class BigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public boolean exists(Get get) throws IOException {
-    LOG.trace("exists(Get)");
-    return !convertToResult(getResults(addKeyOnlyFilter(get), "exists")).isEmpty();
+    try (NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.exists").startScopedSpan()) {
+      LOG.trace("exists(Get)");
+      return !convertToResult(getResults(addKeyOnlyFilter(get), "exists")).isEmpty();
+    }
   }
 
   private Get addKeyOnlyFilter(Get get) {
@@ -180,11 +198,15 @@ public class BigtableTable implements Table {
   @Override
   public boolean[] existsAll(List<Get> gets) throws IOException {
     LOG.trace("existsAll(Get)");
-    List<Get> existGets = new ArrayList<>(gets.size());
-    for(Get get : gets ){
-      existGets.add(addKeyOnlyFilter(get));
+    try (
+        NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.existsAll").startScopedSpan()) {
+      addBatchSizeAnnotation(gets);
+      List<Get> existGets = new ArrayList<>(gets.size());
+      for(Get get : gets ){
+        existGets.add(addKeyOnlyFilter(get));
+      }
+      return getBatchExecutor().exists(existGets);
     }
-    return getBatchExecutor().exists(existGets);
   }
 
   /** {@inheritDoc} */
@@ -192,7 +214,10 @@ public class BigtableTable implements Table {
   public void batch(List<? extends Row> actions, Object[] results)
       throws IOException, InterruptedException {
     LOG.trace("batch(List<>, Object[])");
-    getBatchExecutor().batch(actions, results);
+    try (NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
+      addBatchSizeAnnotation(actions);
+      getBatchExecutor().batch(actions, results);
+    }
   }
 
   /** {@inheritDoc} */
@@ -200,7 +225,10 @@ public class BigtableTable implements Table {
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
     LOG.trace("batch(List<>)");
-    return getBatchExecutor().batch(actions);
+    try (NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
+      addBatchSizeAnnotation(actions);
+      return getBatchExecutor().batch(actions);
+    }
   }
 
   /** {@inheritDoc} */
@@ -208,7 +236,11 @@ public class BigtableTable implements Table {
   public <R> void batchCallback(List<? extends Row> actions, Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
-    getBatchExecutor().batchCallback(actions, results, callback);
+    try (NonThrowingCloseable ss =
+        TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
+      addBatchSizeAnnotation(actions);
+      getBatchExecutor().batchCallback(actions, results, callback);
+    }
   }
 
   /** {@inheritDoc} */
@@ -217,9 +249,13 @@ public class BigtableTable implements Table {
   public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback)
       throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Batch.Callback)");
-    Object[] results = new Object[actions.size()];
-    getBatchExecutor().batchCallback(actions, results, callback);
-    return results;
+    try (NonThrowingCloseable ss =
+        TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
+      addBatchSizeAnnotation(actions);
+      Object[] results = new Object[actions.size()];
+      getBatchExecutor().batchCallback(actions, results, callback);
+      return results;
+    }
   }
 
   /** {@inheritDoc} */
@@ -235,7 +271,10 @@ public class BigtableTable implements Table {
         throw createRetriesExhaustedWithDetailsException(e, gets.get(0));
       }
     } else {
-      return getBatchExecutor().batch(gets);
+      try (NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
+        addBatchSizeAnnotation(gets);
+        return getBatchExecutor().batch(gets);
+      }
     }
   }
 
@@ -249,7 +288,9 @@ public class BigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    return convertToResult(getResults(get, "get"));
+    try (NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
+      return convertToResult(getResults(get, "get"));
+    }
   }
 
   private FlatRow getResults(Get get, String method) throws IOException {
@@ -332,14 +373,12 @@ public class BigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
-    Timer.Context timerContext = metrics.putTimer.time();
-    MutateRowRequest request = hbaseAdapter.adapt(put);
-    try {
+    try (NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.put").startScopedSpan();
+        Timer.Context timerContext = metrics.putTimer.time()) {
+      MutateRowRequest request = hbaseAdapter.adapt(put);
       client.mutateRow(request);
     } catch (Throwable t) {
       throw logAndCreateIOException("put", put.getRow(), t);
-    } finally {
-      timerContext.close();
     }
   }
 
@@ -371,18 +410,18 @@ public class BigtableTable implements Table {
   @Override
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
-
-    CheckAndMutateRowRequest.Builder requestBuilder =
-        makeConditionalMutationRequestBuilder(
-            row,
-            family,
-            qualifier,
-            compareOp,
-            value,
-            put.getRow(),
-            hbaseAdapter.adapt(put).getMutationsList());
-
-    try {
+    LOG.trace("checkAndPut(byte[], byte[], byte[], CompareOp, value, Put)");
+    try (NonThrowingCloseable ss =
+        TRACER.spanBuilder("BigtableTable.checkAndPut").startScopedSpan()) {
+      CheckAndMutateRowRequest.Builder requestBuilder =
+          makeConditionalMutationRequestBuilder(
+              row,
+              family,
+              qualifier,
+              compareOp,
+              value,
+              put.getRow(),
+              hbaseAdapter.adapt(put).getMutationsList());
       CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
@@ -395,8 +434,8 @@ public class BigtableTable implements Table {
   @Override
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
-    MutateRowRequest request = hbaseAdapter.adapt(delete);
-    try {
+    try (NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.delete").startScopedSpan()) {
+      MutateRowRequest request = hbaseAdapter.adapt(delete);
       client.mutateRow(request);
     } catch (Throwable t) {
       throw logAndCreateIOException("delete", delete.getRow(), t);
@@ -407,7 +446,9 @@ public class BigtableTable implements Table {
   @Override
   public void delete(List<Delete> deletes) throws IOException {
     LOG.trace("delete(List<Delete>)");
-    getBatchExecutor().batch(deletes);
+    try (NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.delete").startScopedSpan()) {
+      getBatchExecutor().batch(deletes);
+    }
   }
 
   /** {@inheritDoc} */
@@ -420,19 +461,20 @@ public class BigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
-    CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
+      CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
+    LOG.trace("checkAndDelete(byte[], byte[], byte[], CompareOp, byte[], Delete)");
+    try (NonThrowingCloseable ss =
+        TRACER.spanBuilder("BigtableTable.checkAndDelete").startScopedSpan()) {
+      CheckAndMutateRowRequest.Builder requestBuilder =
+          makeConditionalMutationRequestBuilder(
+              row,
+              family,
+              qualifier,
+              compareOp,
+              value,
+              delete.getRow(),
+              hbaseAdapter.adapt(delete).getMutationsList());
 
-    CheckAndMutateRowRequest.Builder requestBuilder =
-        makeConditionalMutationRequestBuilder(
-            row,
-            family,
-            qualifier,
-            compareOp,
-            value,
-            delete.getRow(),
-            hbaseAdapter.adapt(delete).getMutationsList());
-
-    try {
       CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
@@ -447,22 +489,24 @@ public class BigtableTable implements Table {
       final byte [] row, final byte [] family, final byte [] qualifier,
       final CompareFilter.CompareOp compareOp, final byte [] value, final RowMutations rm)
       throws IOException {
-    List<Mutation> adaptedMutations = new ArrayList<>();
-    for (org.apache.hadoop.hbase.client.Mutation mut : rm.getMutations()) {
-      adaptedMutations.addAll(hbaseAdapter.adapt(mut).getMutationsList());
-    }
+    LOG.trace("checkAndMutate(byte[], byte[], byte[], CompareOp, byte[], RowMutations)");
+    try (NonThrowingCloseable ss =
+        TRACER.spanBuilder("BigtableTable.checkAndMutate").startScopedSpan()) {
+      List<Mutation> adaptedMutations = new ArrayList<>();
+      for (org.apache.hadoop.hbase.client.Mutation mut : rm.getMutations()) {
+        adaptedMutations.addAll(hbaseAdapter.adapt(mut).getMutationsList());
+      }
 
-    CheckAndMutateRowRequest.Builder requestBuilder =
-        makeConditionalMutationRequestBuilder(
-            row,
-            family,
-            qualifier,
-            compareOp,
-            value,
-            rm.getRow(),
-            adaptedMutations);
+      CheckAndMutateRowRequest.Builder requestBuilder =
+          makeConditionalMutationRequestBuilder(
+              row,
+              family,
+              qualifier,
+              compareOp,
+              value,
+              rm.getRow(),
+              adaptedMutations);
 
-    try {
       CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
@@ -475,8 +519,9 @@ public class BigtableTable implements Table {
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
-    MutateRowRequest request = hbaseAdapter.adapt(rm);
-    try {
+    try (NonThrowingCloseable ss =
+        TRACER.spanBuilder("BigtableTable.mutateRow").startScopedSpan()) {
+      MutateRowRequest request = hbaseAdapter.adapt(rm);
       client.mutateRow(request);
     } catch (Throwable t) {
       throw logAndCreateIOException("mutateRow", rm.getRow(), t);
@@ -487,9 +532,9 @@ public class BigtableTable implements Table {
   @Override
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
-
-    ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
-    try {
+    try (NonThrowingCloseable ss =
+        TRACER.spanBuilder("BigtableTable.append").startScopedSpan()) {
+      ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
       ReadModifyWriteRowResponse response = client.readModifyWriteRow(request);
       // The bigtable API will always return the mutated results. In order to maintain
       // compatibility, simply return null when results were not requested.
@@ -507,9 +552,9 @@ public class BigtableTable implements Table {
   @Override
   public Result increment(Increment increment) throws IOException {
     LOG.trace("increment(Increment)");
-
-    ReadModifyWriteRowRequest request = hbaseAdapter.adapt(increment);
-    try {
+    try (NonThrowingCloseable ss =
+        TRACER.spanBuilder("BigtableTable.increment").startScopedSpan()) {
+      ReadModifyWriteRowRequest request = hbaseAdapter.adapt(increment);
       return Adapters.ROW_ADAPTER.adaptResponse(client.readModifyWriteRow(request).getRow());
     } catch (Throwable t) {
       throw logAndCreateIOException("increment", increment.getRow(), t);
@@ -532,21 +577,24 @@ public class BigtableTable implements Table {
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
       throws IOException {
     LOG.trace("incrementColumnValue(byte[], byte[], byte[], long)");
-    Increment incr = new Increment(row);
-    incr.addColumn(family, qualifier, amount);
-    Result result = increment(incr);
+    try (NonThrowingCloseable ss =
+        TRACER.spanBuilder("BigtableTable.incrementColumnValue").startScopedSpan()) {
+      Increment incr = new Increment(row);
+      incr.addColumn(family, qualifier, amount);
+      Result result = increment(incr);
 
-    Cell cell = result.getColumnLatestCell(family, qualifier);
-    if (cell == null) {
-      LOG.error("Failed to find a incremented value in result of increment");
-      throw new IOException(
-          makeGenericExceptionMessage(
-              "increment",
-              options.getProjectId(),
-              tableName.getQualifierAsString(),
-              row));
+      Cell cell = result.getColumnLatestCell(family, qualifier);
+      if (cell == null) {
+        LOG.error("Failed to find a incremented value in result of increment");
+        throw new IOException(
+            makeGenericExceptionMessage(
+                "increment",
+                options.getProjectId(),
+                tableName.getQualifierAsString(),
+                row));
+      }
+      return Bytes.toLong(CellUtil.cloneValue(cell));
     }
-    return Bytes.toLong(CellUtil.cloneValue(cell));
   }
 
   /** {@inheritDoc} */
