@@ -70,6 +70,7 @@ limitations under the License.
         <guava.version>19.0</guava.version>
         <google.auth.library.version>0.7.0</google.auth.library.version>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
+        <opencensus.version>0.7.0</opencensus.version>
 
 
         <beam.version>2.1.0</beam.version>

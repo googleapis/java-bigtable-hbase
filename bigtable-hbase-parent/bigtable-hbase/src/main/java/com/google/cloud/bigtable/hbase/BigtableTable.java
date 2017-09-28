@@ -319,9 +319,8 @@ public class BigtableTable implements Table {
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
-    com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner = null;
     try {
-      scanner =
+      com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
           client.readFlatRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner);
@@ -329,9 +328,6 @@ public class BigtableTable implements Table {
       return Adapters.BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner);
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
-      if (scanner != null) {
-        scanner.close();
-      }
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner",

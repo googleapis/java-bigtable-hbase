@@ -46,6 +46,7 @@ import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.opencensus.common.NonThrowingCloseable;
+import io.opencensus.contrib.grpc.util.StatusConverter;
 import io.opencensus.trace.Annotation;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.EndSpanOptions;
@@ -166,53 +167,11 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected void finalizeStats(Status status) {
     operationTimerContext.close();
     if (operationSpan != null) {
-      operationSpan.end(
-        EndSpanOptions.builder().setStatus(opencensusStatusFromGrpcCode(status.getCode())).build());
+      io.opencensus.trace.Status ocensusStatus = StatusConverter.fromGrpcStatus(status);
+      operationSpan.end(EndSpanOptions.builder().setStatus(ocensusStatus).build());
     }
   }
 
-  // TODO: Replace this with StatusConverter.fromGrpcStatus(status) when the opencensus 0.6.0 is
-  // released.
-  private static io.opencensus.trace.Status opencensusStatusFromGrpcCode(io.grpc.Status.Code
-      grpcCanonicaleCode) {
-    switch (grpcCanonicaleCode) {
-      case OK:
-        return io.opencensus.trace.Status.OK;
-      case CANCELLED:
-        return io.opencensus.trace.Status.CANCELLED;
-      case UNKNOWN:
-        return io.opencensus.trace.Status.UNKNOWN;
-      case INVALID_ARGUMENT:
-        return io.opencensus.trace.Status.INVALID_ARGUMENT;
-      case DEADLINE_EXCEEDED:
-        return io.opencensus.trace.Status.DEADLINE_EXCEEDED;
-      case NOT_FOUND:
-        return io.opencensus.trace.Status.NOT_FOUND;
-      case ALREADY_EXISTS:
-        return io.opencensus.trace.Status.ALREADY_EXISTS;
-      case PERMISSION_DENIED:
-        return io.opencensus.trace.Status.PERMISSION_DENIED;
-      case RESOURCE_EXHAUSTED:
-        return io.opencensus.trace.Status.RESOURCE_EXHAUSTED;
-      case FAILED_PRECONDITION:
-        return io.opencensus.trace.Status.FAILED_PRECONDITION;
-      case ABORTED:
-        return io.opencensus.trace.Status.ABORTED;
-      case OUT_OF_RANGE:
-        return io.opencensus.trace.Status.OUT_OF_RANGE;
-      case UNIMPLEMENTED:
-        return io.opencensus.trace.Status.UNIMPLEMENTED;
-      case INTERNAL:
-        return io.opencensus.trace.Status.INTERNAL;
-      case UNAVAILABLE:
-        return io.opencensus.trace.Status.UNAVAILABLE;
-      case DATA_LOSS:
-        return io.opencensus.trace.Status.DATA_LOSS;
-      case UNAUTHENTICATED:
-        return io.opencensus.trace.Status.UNAUTHENTICATED;
-    }
-    throw new AssertionError("Unhandled status code " + grpcCanonicaleCode);
-  }
   protected void onError(Status status, Metadata trailers) {
     Code code = status.getCode();
     // CANCELLED
