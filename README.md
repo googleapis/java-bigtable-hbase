@@ -40,13 +40,7 @@ which makes it easy for development teams to get started.
     <dependency>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-hbase-1.x</artifactId>
-        <version>1.0.0-pre1</version>
-    </dependency>
-  
-    <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-tcnative-boringssl-static</artifactId>
-        <version>1.1.33.Fork26</version>
+        <version>1.0.0-pre3</version>
     </dependency>
   ```
 
