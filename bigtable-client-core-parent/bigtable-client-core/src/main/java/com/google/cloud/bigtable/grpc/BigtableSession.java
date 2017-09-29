@@ -182,21 +182,20 @@ public class BigtableSession implements Closeable {
     connectionStartupExecutor.shutdown();
   }
 
+  // TODO: remove this method once grpc 1.7 is released.
   private static void enableTracing(AbstractManagedChannelImplBuilder<?> builder) {
-    Method setEnableTracingMethod = null;
     try {
-      setEnableTracingMethod =
+      Method setEnableTracingMethod =
           AbstractManagedChannelImplBuilder.class.getMethod("setEnableTracing", boolean.class);
+      if (setEnableTracingMethod != null) {
+        try {
+          setEnableTracingMethod.invoke(builder, true);
+        } catch (Exception e) {
+          LOG.warn("Could not enable tracing", e);
+        }
+      }
     } catch (NoSuchMethodException | SecurityException e1) {
       return;
-    }
-    if (setEnableTracingMethod != null) {
-      try {
-        setEnableTracingMethod.invoke(builder, true);
-        System.out.println("ENABLING TRACING!!!!");
-      } catch (Exception e) {
-        LOG.warn("Could not enable tracing", e);
-      }
     }
   }
 
