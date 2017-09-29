@@ -144,13 +144,6 @@ public class BigtableSession implements Closeable {
     connectionStartupExecutor.execute(new Runnable() {
       @Override
       public void run() {
-        // The first invocation of enableTracing does a reflection lookup which may be expensive.
-        enableTracing(null);
-      }
-    });
-    connectionStartupExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
         // The first invocation of BigtableSessionSharedThreadPools.getInstance() is expensive.
         // Reference it so that it gets constructed asynchronously.
         BigtableSessionSharedThreadPools.getInstance();
@@ -189,28 +182,22 @@ public class BigtableSession implements Closeable {
     connectionStartupExecutor.shutdown();
   }
 
-  private static Boolean setEnableTracingMethodNotFound;
-  private static Method setEnableTracingMethod;
-
-  private static boolean enableTracing(AbstractManagedChannelImplBuilder<?> builder) {
-    if (setEnableTracingMethodNotFound == null) {
-      try {
-        setEnableTracingMethod =
-            AbstractManagedChannelImplBuilder.class.getMethod("setEnableTracing", boolean.class);
-        setEnableTracingMethodNotFound = false;
-      } catch (Exception e) {
-        setEnableTracingMethodNotFound = true;
-      }
+  private static void enableTracing(AbstractManagedChannelImplBuilder<?> builder) {
+    Method setEnableTracingMethod = null;
+    try {
+      setEnableTracingMethod =
+          AbstractManagedChannelImplBuilder.class.getMethod("setEnableTracing", boolean.class);
+    } catch (NoSuchMethodException | SecurityException e1) {
+      return;
     }
-    if (builder != null && setEnableTracingMethod != null) {
+    if (setEnableTracingMethod != null) {
       try {
         setEnableTracingMethod.invoke(builder, true);
-        return true;
+        System.out.println("ENABLING TRACING!!!!");
       } catch (Exception e) {
         LOG.warn("Could not enable tracing", e);
       }
     }
-    return false;
   }
 
   private synchronized static ResourceLimiter initializeResourceLimiter(BigtableOptions options) {
