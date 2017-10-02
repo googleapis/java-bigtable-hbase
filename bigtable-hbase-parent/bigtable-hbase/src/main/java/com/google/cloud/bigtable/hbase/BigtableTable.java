@@ -373,9 +373,9 @@ public class BigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
+    MutateRowRequest request = hbaseAdapter.adapt(put);
     try (NonThrowingCloseable ss = TRACER.spanBuilder("BigtableTable.put").startScopedSpan();
         Timer.Context timerContext = metrics.putTimer.time()) {
-      MutateRowRequest request = hbaseAdapter.adapt(put);
       client.mutateRow(request);
     } catch (Throwable t) {
       throw logAndCreateIOException("put", put.getRow(), t);
@@ -411,17 +411,18 @@ public class BigtableTable implements Table {
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
     LOG.trace("checkAndPut(byte[], byte[], byte[], CompareOp, value, Put)");
+    CheckAndMutateRowRequest.Builder requestBuilder =
+        makeConditionalMutationRequestBuilder(
+            row,
+            family,
+            qualifier,
+            compareOp,
+            value,
+            put.getRow(),
+            hbaseAdapter.adapt(put).getMutationsList());
+
     try (NonThrowingCloseable ss =
         TRACER.spanBuilder("BigtableTable.checkAndPut").startScopedSpan()) {
-      CheckAndMutateRowRequest.Builder requestBuilder =
-          makeConditionalMutationRequestBuilder(
-              row,
-              family,
-              qualifier,
-              compareOp,
-              value,
-              put.getRow(),
-              hbaseAdapter.adapt(put).getMutationsList());
       CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
@@ -463,18 +464,18 @@ public class BigtableTable implements Table {
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
     LOG.trace("checkAndDelete(byte[], byte[], byte[], CompareOp, byte[], Delete)");
+    CheckAndMutateRowRequest.Builder requestBuilder =
+        makeConditionalMutationRequestBuilder(
+            row,
+            family,
+            qualifier,
+            compareOp,
+            value,
+            delete.getRow(),
+            hbaseAdapter.adapt(delete).getMutationsList());
+
     try (NonThrowingCloseable ss =
         TRACER.spanBuilder("BigtableTable.checkAndDelete").startScopedSpan()) {
-      CheckAndMutateRowRequest.Builder requestBuilder =
-          makeConditionalMutationRequestBuilder(
-              row,
-              family,
-              qualifier,
-              compareOp,
-              value,
-              delete.getRow(),
-              hbaseAdapter.adapt(delete).getMutationsList());
-
       CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
@@ -490,23 +491,24 @@ public class BigtableTable implements Table {
       final CompareFilter.CompareOp compareOp, final byte [] value, final RowMutations rm)
       throws IOException {
     LOG.trace("checkAndMutate(byte[], byte[], byte[], CompareOp, byte[], RowMutations)");
+
+    List<Mutation> adaptedMutations = new ArrayList<>();
+    for (org.apache.hadoop.hbase.client.Mutation mut : rm.getMutations()) {
+      adaptedMutations.addAll(hbaseAdapter.adapt(mut).getMutationsList());
+    }
+
+    CheckAndMutateRowRequest.Builder requestBuilder =
+        makeConditionalMutationRequestBuilder(
+            row,
+            family,
+            qualifier,
+            compareOp,
+            value,
+            rm.getRow(),
+            adaptedMutations);
+
     try (NonThrowingCloseable ss =
         TRACER.spanBuilder("BigtableTable.checkAndMutate").startScopedSpan()) {
-      List<Mutation> adaptedMutations = new ArrayList<>();
-      for (org.apache.hadoop.hbase.client.Mutation mut : rm.getMutations()) {
-        adaptedMutations.addAll(hbaseAdapter.adapt(mut).getMutationsList());
-      }
-
-      CheckAndMutateRowRequest.Builder requestBuilder =
-          makeConditionalMutationRequestBuilder(
-              row,
-              family,
-              qualifier,
-              compareOp,
-              value,
-              rm.getRow(),
-              adaptedMutations);
-
       CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
@@ -563,7 +565,7 @@ public class BigtableTable implements Table {
 
   private IOException logAndCreateIOException(String type, byte[] row, Throwable t) {
     LOG.error("Encountered exception when executing " + type + ".", t);
-    return new IOException(
+    return new DoNotRetryIOException(
         makeGenericExceptionMessage(
             type,
             options.getProjectId(),
