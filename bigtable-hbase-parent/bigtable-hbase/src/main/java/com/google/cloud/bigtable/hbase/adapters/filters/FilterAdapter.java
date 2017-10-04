@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -74,6 +75,8 @@ public class FilterAdapter {
         MultipleColumnPrefixFilter.class, new MultipleColumnPrefixFilterAdapter());
     adapter.addFilterAdapter(
         TimestampsFilter.class, new TimestampsFilterAdapter());
+    adapter.addFilterAdapter(
+      TimestampRangeFilter.class, new TimestampRangeFilterAdapter());
     ValueFilterAdapter valueFilterAdapter = new ValueFilterAdapter();
     adapter.addFilterAdapter(
         ValueFilter.class, valueFilterAdapter);
