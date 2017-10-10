@@ -1,0 +1,136 @@
+/*
+ * Copyright 2017 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.cloud.bigtable.util;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
+import com.google.bigtable.v2.BigtableGrpc;
+
+import io.grpc.MethodDescriptor;
+import io.grpc.ServiceDescriptor;
+import io.opencensus.trace.Tracing;
+import io.opencensus.trace.config.TraceParams;
+import io.opencensus.trace.samplers.Samplers;
+
+/**
+ * These utilities are to be used in conjunction with This is to be used in conjunction with the
+ * opencensus-contrib-zpages artifact. After including the artifact, the following code can be used
+ * for enabling grpcz pages:
+ * 
+ * <pre>
+ * try {
+ *   TracingUtlities.setupTracingConfig();
+ *   // This call is optional if you have a port you want to use
+ *   int port = TracingUtilities.getFreePort();
+ *   ZPageHandlers.startHttpServerAndRegisterAll(port);
+ * } catch (Throwable e) {
+ *   LOG.error("Could not initialize ZPageHandlers", e);
+ * }
+ * </pre>
+ * 
+ * This is a method of enabling exports to stackdriver along with the
+ * opencensus-exporter-trace-stackdriver artifact:
+ * 
+ * <pre>
+ * try {
+ *   StackdriverExporter.createAndRegister(projectId);
+ * } catch (Throwable e) {
+ *   LOG.error("Could not register stackdriver", e);
+ * }
+ * </pre>
+ */
+public final class TracingUtilities {
+
+  /**
+   * Finds a free port that can be used as the grpcz page port.
+   *
+   * @return a free port nubmer.
+   * @throws IOException
+   */
+  public static int getFreePort() throws IOException {
+    try (ServerSocket s = new ServerSocket(0)) {
+      return s.getLocalPort();
+    } catch (IOException e) {
+      throw new IOException("Failed to find a free port", e);
+    }
+  }
+
+  /**
+   * This is a one time setup for grpcz pages. This adds all of the methods to the Tracing
+   * environment required to show a consistent set of methods relating to Cloud Bigtable on the
+   * grpcz page.  If HBase artifacts are present, this will add tracing metadata for HBase methods.
+   */
+  public static void setupTracingConfig() {
+    List<String> descriptors = new ArrayList<>();
+    addDescriptor(descriptors, BigtableTableAdminGrpc.getServiceDescriptor());
+    addDescriptor(descriptors, BigtableGrpc.getServiceDescriptor());
+
+    boolean usingBigtableHBase = false;
+    try {
+      Class.forName("com.google.cloud.bigtable.hbase.BigtableTable");
+      usingBigtableHBase = true;
+    } catch (ClassNotFoundException e) {
+    }
+    if (usingBigtableHBase) {
+      descriptors.addAll(Arrays.asList(
+        "BigtableTable.getTableDescriptor",
+        "BigtableTable.exists",
+        "BigtableTable.existsAll",
+        "BigtableTable.batch",
+        "BigtableTable.batchCallback",
+        "BigtableTable.get",
+        "BigtableTable.put",
+        "BigtableTable.checkAndPut",
+        "BigtableTable.delete",
+        "BigtableTable.checkAndDelete",
+        "BigtableTable.checkAndMutate",
+        "BigtableTable.mutateRow",
+        "BigtableTable.append",
+        "BigtableTable.increment",
+        "BigtableTable.incrementColumnValue"
+      ));
+    }
+
+    Tracing.getExportComponent().getSampledSpanStore().registerSpanNamesForCollection(descriptors);
+    Tracing.getTraceConfig().updateActiveTraceParams(
+      TraceParams.DEFAULT.toBuilder().setSampler(Samplers.probabilitySampler(0.1)).build());
+  }
+
+  /**
+   * Reads a list of {@link MethodDescriptor}s from a {@link ServiceDescriptor} and creates a list
+   * of Open Census tags.
+   *
+   * @param descriptors a {@link} of Strings to add Open Census tags to
+   * @param serviceDescriptor A {@link ServiceDescriptor} that contains a list of RPCs that are
+   *          provided by that service
+   */
+  private static void addDescriptor(List<String> descriptors, ServiceDescriptor serviceDescriptor) {
+    for (MethodDescriptor<?, ?> method : serviceDescriptor.getMethods()) {
+      // This is added by a grpc ClientInterceptor
+      descriptors.add("Sent." + method.getFullMethodName().replace('/', '.'));
+      // This is added by Cloud Bigtable's AbstractRetryingOperation
+      descriptors.add("Operation." + method.getFullMethodName().replace('/', '.'));
+    }
+  }
+
+  private TracingUtilities() {
+  }
+}
