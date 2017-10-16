@@ -25,11 +25,9 @@ public class TimestampRangeFilterAdapter extends TypedFilterAdapterBase<Timestam
 
   @Override
   public RowFilter adapt(FilterAdapterContext context, TimestampRangeFilter filter) {
-    RowFilter rangeFilter = TimestampFilterUtil.hbaseToTimestampRangeFilter(
+    return TimestampFilterUtil.hbaseToTimestampRangeFilter(
         filter.getStartTimestampInclusive(),
-        filter.getEndTimestampInclusive());
-    System.out.println(rangeFilter);
-    return rangeFilter;
+        filter.getEndTimestampExclusive());
   }
 
   @Override
@@ -37,5 +35,4 @@ public class TimestampRangeFilterAdapter extends TypedFilterAdapterBase<Timestam
       TimestampRangeFilter filter) {
     return FilterSupportStatus.SUPPORTED;
   }
-
 }

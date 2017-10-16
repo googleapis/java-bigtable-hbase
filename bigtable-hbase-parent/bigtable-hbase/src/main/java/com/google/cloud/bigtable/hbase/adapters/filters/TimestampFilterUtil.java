@@ -24,21 +24,27 @@ import com.google.cloud.bigtable.hbase.BigtableConstants;
  */
 public class TimestampFilterUtil {
 
-
+  /**
+   * Converts an HBase timestamp in milliseconds to a Cloud Bigtable timestamp in Microseconds.
+   */
   public static long hbaseToBigtableTimeUnit(long timestamp) {
     return BigtableConstants.BIGTABLE_TIMEUNIT.convert(
         timestamp, BigtableConstants.HBASE_TIMEUNIT);
   }
 
-  // HBase TimestampsFilters are of the form: [N, M], however; bigtable
-  // uses [N, M) to express timestamp ranges. In order to express an HBase
-  // single point timestamp [M, M], we need to specify [M, M+1) to bigtable.
+  /**
+   * Converts a [startMs, endMs) timestamps to a Cloud Bigtable [startMicros, endMicros) filter.
+   */
   public static RowFilter hbaseToTimestampRangeFilter(long hbaseStartTimestamp,
       long hbaseEndTimestamp) {
     return toTimestampRangeFilter(hbaseToBigtableTimeUnit(hbaseStartTimestamp),
-      hbaseToBigtableTimeUnit(hbaseEndTimestamp + 1));
+      hbaseToBigtableTimeUnit(hbaseEndTimestamp));
   }
 
+  /**
+   * Converts a [startMicros, endNons) timestamps to a Cloud Bigtable [startMicros, endMicros)
+   * filter.
+   */
   public static RowFilter toTimestampRangeFilter(long bigtableStartTimestamp,
       long bigtableEndTimestamp) {
     return RowFilter.newBuilder()

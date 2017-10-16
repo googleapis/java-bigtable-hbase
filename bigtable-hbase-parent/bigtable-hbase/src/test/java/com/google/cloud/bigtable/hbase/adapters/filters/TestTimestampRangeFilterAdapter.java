@@ -36,6 +36,6 @@ public class TestTimestampRangeFilterAdapter {
     TimestampRangeFilter filter = new TimestampRangeFilter(10L, 20L);
     RowFilter rowFilter = filterAdapter.adapt(emptyScanContext, filter);
     Assert.assertEquals(10000L, rowFilter.getTimestampRangeFilter().getStartTimestampMicros());
-    Assert.assertEquals(21000L, rowFilter.getTimestampRangeFilter().getEndTimestampMicros());
+    Assert.assertEquals(20000L, rowFilter.getTimestampRangeFilter().getEndTimestampMicros());
   }
 }

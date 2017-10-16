@@ -1465,9 +1465,6 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
-  @Ignore("This test does not work in HBase mode")
-  // TODO: add a HBaseKnownDifference.class Category so that HBase tests won't run this, but CBT
-  // tests will.
   public void testTimestampRangeFilter() throws IOException {
     // Initialize
     int numCols = 10;
@@ -1486,13 +1483,13 @@ public class TestFilters extends AbstractTest {
     Get get = new Get(rowKey).setFilter(filter);
     Result result = table.get(get);
     Cell[] cells = result.rawCells();
-    Assert.assertEquals("Should have three cells, timestamps 4, 5 and 6.", 3, cells.length);
+    Assert.assertEquals("Should have three cells, timestamps 4 and 5.", 2, cells.length);
 
     // Since the qualifiers are random, ignore the order of the returned cells.
     long[] timestamps =
-        new long[] { cells[0].getTimestamp(), cells[1].getTimestamp(), cells[2].getTimestamp() };
+        new long[] { cells[0].getTimestamp(), cells[1].getTimestamp() };
     Arrays.sort(timestamps);
-    Assert.assertArrayEquals(new long[] { 4L, 5L, 6L }, timestamps);
+    Assert.assertArrayEquals(new long[] { 4L, 5L }, timestamps);
 
     table.close();
   }

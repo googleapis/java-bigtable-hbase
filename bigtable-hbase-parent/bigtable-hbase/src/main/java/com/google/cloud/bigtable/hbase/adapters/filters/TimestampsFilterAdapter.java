@@ -37,7 +37,7 @@ public class TimestampsFilterAdapter
         RowFilter.Interleave.newBuilder();
     for (long timestamp : filter.getTimestamps()) {
       interleaveBuilder
-          .addFilters(TimestampFilterUtil.hbaseToTimestampRangeFilter(timestamp, timestamp));
+          .addFilters(TimestampFilterUtil.hbaseToTimestampRangeFilter(timestamp, timestamp + 1));
     }
     return RowFilter.newBuilder().setInterleave(interleaveBuilder).build();
   }

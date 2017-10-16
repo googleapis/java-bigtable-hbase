@@ -15,31 +15,39 @@
  */
 package com.google.cloud.bigtable.hbase.filter;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.FilterBase;
 
 /**
  * Defines a filter that only returns cells whose version matches a start and end (both are
  * inclusive)
  */
-public class TimestampRangeFilter extends FilterBase {
+public class TimestampRangeFilter extends FilterBase implements Serializable {
 
+  private static final long serialVersionUID = 1L;
   private final long startTimestampInclusive;
-  private final long endTimestampInclusive;
+  private final long endTimestampExclusive;
 
   public TimestampRangeFilter(long startTimestamp, long endTimestamp) {
     this.startTimestampInclusive = startTimestamp;
-    this.endTimestampInclusive = endTimestamp;
+    this.endTimestampExclusive = endTimestamp;
   }
 
   public long getStartTimestampInclusive() {
     return startTimestampInclusive;
   }
 
-  public long getEndTimestampInclusive() {
-    return endTimestampInclusive;
+  public long getEndTimestampExclusive() {
+    return endTimestampExclusive;
   }
 
   @Override
@@ -48,9 +56,28 @@ public class TimestampRangeFilter extends FilterBase {
    */
   public ReturnCode filterKeyValue(Cell cell) throws IOException {
     long timestamp = cell.getTimestamp();
-    if (this.startTimestampInclusive <= timestamp && timestamp <= endTimestampInclusive) {
+    if (this.startTimestampInclusive <= timestamp && timestamp < endTimestampExclusive) {
       return ReturnCode.INCLUDE;
     }
     return ReturnCode.SKIP;
+  }
+
+  @Override
+  public byte[] toByteArray() throws IOException {
+    try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutput out = new ObjectOutputStream(bos)) {
+      out.writeObject(this);
+      out.flush();
+      return bos.toByteArray();
+    }
+  }
+
+  public static TimestampRangeFilter parseFrom(final byte [] bytes)
+  throws DeserializationException {
+    try (ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(bytes))){
+      return (TimestampRangeFilter) is.readObject();
+    } catch (Exception e) {
+      throw new DeserializationException(e);
+    }
   }
 }
