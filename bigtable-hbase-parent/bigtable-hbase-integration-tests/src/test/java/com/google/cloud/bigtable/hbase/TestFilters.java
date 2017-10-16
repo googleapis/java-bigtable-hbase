@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 
+import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -67,6 +68,7 @@ import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -1458,6 +1460,36 @@ public class TestFilters extends AbstractTest {
     long[] timestamps = new long[]{cells[0].getTimestamp(), cells[1].getTimestamp()};
     Arrays.sort(timestamps);
     Assert.assertArrayEquals(new long[]{0L, 1L}, timestamps);
+
+    table.close();
+  }
+
+  @Test
+  public void testTimestampRangeFilter() throws IOException {
+    // Initialize
+    int numCols = 10;
+    String goodValue = "includeThisValue";
+    Table table = getTable();
+    byte[] rowKey = dataHelper.randomData("testRow-TimestampRange-");
+    Put put = new Put(rowKey);
+    for (int i = 0; i < numCols; ++i) {
+      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
+    }
+    table.put(put);
+
+    // Filter for results
+    Filter filter = new TimestampRangeFilter(4, 6);
+
+    Get get = new Get(rowKey).setFilter(filter);
+    Result result = table.get(get);
+    Cell[] cells = result.rawCells();
+    Assert.assertEquals("Should have three cells, timestamps 4 and 5.", 2, cells.length);
+
+    // Since the qualifiers are random, ignore the order of the returned cells.
+    long[] timestamps =
+        new long[] { cells[0].getTimestamp(), cells[1].getTimestamp() };
+    Arrays.sort(timestamps);
+    Assert.assertArrayEquals(new long[] { 4L, 5L }, timestamps);
 
     table.close();
   }
