@@ -59,7 +59,7 @@ limitations under the License.
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
         <grpc.version>1.7.0</grpc.version>
-        <opencensus.version>0.6.0</opencensus.version>
+        <opencensus.version>0.7.0</opencensus.version>
         <!--NOTE: 4.1.14.Final is the first version that support shading -->
         <netty.version>4.1.16.Final</netty.version>
         <netty-tcnative-boringssl-static.version>2.0.6.Final</netty-tcnative-boringssl-static.version>
