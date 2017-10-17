@@ -15,10 +15,7 @@
  */
 package com.google.cloud.bigtable.util;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
@@ -27,28 +24,29 @@ import com.google.bigtable.v2.BigtableGrpc;
 import io.grpc.MethodDescriptor;
 import io.grpc.ServiceDescriptor;
 import io.opencensus.trace.Tracing;
-import io.opencensus.trace.config.TraceParams;
-import io.opencensus.trace.samplers.Samplers;
 
 /**
- * These utilities are to be used in conjunction with This is to be used in conjunction with the
- * opencensus-contrib-zpages artifact. After including the artifact, the following code can be used
- * for enabling grpcz pages:
- * 
+ * These utilities are to be used in conjunction with the opencensus-contrib-zpages artifact to
+ * display a consistent set of Cloud Bigtable RPC methods.<p>
+ *
+ * <b>NOTE: if you are using HBase, use HBaseTracingUtilities instead of TracingUtilities.</b><p>
+ *
+ * <p> After including the artifact, the following code can be
+ * used for enabling grpcz pages:
+ *
  * <pre>
+ * int port = ... ; // Choose a port number
  * try {
- *   TracingUtlities.setupTracingConfig();
- *   // This call is optional if you have a port you want to use
- *   int port = TracingUtilities.getFreePort();
+ *   TracingUtilities.setupTracingConfig();
  *   ZPageHandlers.startHttpServerAndRegisterAll(port);
  * } catch (Throwable e) {
  *   LOG.error("Could not initialize ZPageHandlers", e);
  * }
  * </pre>
- * 
+ *
  * This is a method of enabling exports to stackdriver along with the
  * opencensus-exporter-trace-stackdriver artifact:
- * 
+ *
  * <pre>
  * try {
  *   StackdriverExporter.createAndRegister(projectId);
@@ -60,20 +58,6 @@ import io.opencensus.trace.samplers.Samplers;
 public final class TracingUtilities {
 
   /**
-   * Finds a free port that can be used as the grpcz page port.
-   *
-   * @return a free port nubmer.
-   * @throws IOException
-   */
-  public static int getFreePort() throws IOException {
-    try (ServerSocket s = new ServerSocket(0)) {
-      return s.getLocalPort();
-    } catch (IOException e) {
-      throw new IOException("Failed to find a free port", e);
-    }
-  }
-
-  /**
    * This is a one time setup for grpcz pages. This adds all of the methods to the Tracing
    * environment required to show a consistent set of methods relating to Cloud Bigtable on the
    * grpcz page.  If HBase artifacts are present, this will add tracing metadata for HBase methods.
@@ -83,35 +67,7 @@ public final class TracingUtilities {
     addDescriptor(descriptors, BigtableTableAdminGrpc.getServiceDescriptor());
     addDescriptor(descriptors, BigtableGrpc.getServiceDescriptor());
 
-    boolean usingBigtableHBase = false;
-    try {
-      Class.forName("com.google.cloud.bigtable.hbase.BigtableTable");
-      usingBigtableHBase = true;
-    } catch (ClassNotFoundException e) {
-    }
-    if (usingBigtableHBase) {
-      descriptors.addAll(Arrays.asList(
-        "BigtableTable.getTableDescriptor",
-        "BigtableTable.exists",
-        "BigtableTable.existsAll",
-        "BigtableTable.batch",
-        "BigtableTable.batchCallback",
-        "BigtableTable.get",
-        "BigtableTable.put",
-        "BigtableTable.checkAndPut",
-        "BigtableTable.delete",
-        "BigtableTable.checkAndDelete",
-        "BigtableTable.checkAndMutate",
-        "BigtableTable.mutateRow",
-        "BigtableTable.append",
-        "BigtableTable.increment",
-        "BigtableTable.incrementColumnValue"
-      ));
-    }
-
     Tracing.getExportComponent().getSampledSpanStore().registerSpanNamesForCollection(descriptors);
-    Tracing.getTraceConfig().updateActiveTraceParams(
-      TraceParams.DEFAULT.toBuilder().setSampler(Samplers.probabilitySampler(0.1)).build());
   }
 
   /**
