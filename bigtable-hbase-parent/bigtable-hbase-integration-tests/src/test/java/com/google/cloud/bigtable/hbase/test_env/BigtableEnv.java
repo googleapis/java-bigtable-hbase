@@ -67,7 +67,7 @@ class BigtableEnv extends SharedTestEnv {
 
     ExecutorService executor = Executors.newCachedThreadPool(GrpcUtil.getThreadFactory("table_deleter", true));
     try (Connection connection = createConnection();
-        Admin admin = createConnection().getAdmin()) {
+        Admin admin = connection.getAdmin()) {
       for (final TableName tableName : admin.listTableNames("(test_table|list_table[12])-.*")) {
         executor.execute(new Runnable() {
           @Override
