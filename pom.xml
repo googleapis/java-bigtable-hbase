@@ -68,7 +68,7 @@ limitations under the License.
         <google.api.client.version>1.23.0</google.api.client.version>
         <google.http.client.version>1.23.0</google.http.client.version>
         <guava.version>19.0</guava.version>
-        <google.auth.library.version>0.8.0</google.auth.library.version>
+        <google.auth.library.version>0.7.0</google.auth.library.version>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
         <opencensus.version>0.7.0</opencensus.version>
 
