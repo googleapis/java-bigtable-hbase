@@ -69,9 +69,10 @@ import java.util.Map;
  * }
  * </pre>
  *
- * @author sduskis
- * @version $Id: $Id
+ * @deprecated Please use the bigtable-beam-import version of this class instead.
  */
+
+@Deprecated
 public class HBaseImportIO {
   // Needed for HBase 0.94 format. Copied from ResultSerialization.IMPORT_FORMAT_VER.
   @VisibleForTesting
