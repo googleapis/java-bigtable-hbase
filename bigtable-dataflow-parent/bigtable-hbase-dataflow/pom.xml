@@ -23,7 +23,7 @@ limitations under the License.
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project contains artifacts that provide Cloud Bigtable client readers and writers in Google Cloud Dataflow.
+       NOTE: this artifact is deprecated.  Please use bigtable-hbase-beam instead.  This project contains artifacts that provide Cloud Bigtable client readers and writers in Google Cloud Dataflow.
     </description>
 
     <dependencies>

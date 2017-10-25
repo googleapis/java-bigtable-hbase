@@ -23,9 +23,10 @@ import java.util.Arrays;
 /**
  * Entry point for import/export job submission.
  *
- * @author igorbernstein2
- * @version $Id: $Id
+ * @deprecated Please use the bigtable-beam-import version of this class instead.
  */
+
+@Deprecated
 public class Main {
 
   public static void main(String[] args) throws Exception {

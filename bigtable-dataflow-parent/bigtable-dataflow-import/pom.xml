@@ -23,7 +23,7 @@ limitations under the License.
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project contains artifacts that import HBase Sequence Files into Google Cloud Bigtable using Google Cloud Dataflow.
+       DEPRECATED: use bigtable-beam-import insteam. This project contains artifacts that import HBase Sequence Files into Google Cloud Bigtable using Google Cloud Dataflow.
     </description>
 
     <properties>

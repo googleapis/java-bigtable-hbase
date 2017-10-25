@@ -80,9 +80,10 @@ import org.slf4j.LoggerFactory;
  * }
  * </pre>
  *
- * @author igorbernstein2
- * @version $Id: $Id
+ * @deprecated Please use the bigtable-beam-import version of this class instead.
  */
+
+@Deprecated
 @SuppressWarnings("serial")
 public class HBaseExportJob {
 

@@ -92,7 +92,6 @@ import com.google.common.annotations.VisibleForTesting;
  * writing <a href="https://cloud.google.com/bigtable/">Google Cloud Bigtable</a> entities in a
  * Cloud Dataflow pipeline.
  * </p>
- *
  * <p>
  * Google Cloud Bigtable offers you a fast, fully managed, massively scalable NoSQL database service
  * that's ideal for web, mobile, and Internet of Things applications requiring terabytes to
@@ -101,17 +100,15 @@ import com.google.common.annotations.VisibleForTesting;
  * battle-tested at Google for more than 10 years--it's the database driving major applications such
  * as Google Analytics and Gmail.
  * </p>
- *
  * <p>
  * To use {@link CloudBigtableIO}, users must use gcloud to get a credential for Cloud Bigtable:
  *
  * <pre>
  * $ gcloud auth login
  * </pre>
- *
  * <p>
- * To read a {@link PCollection} from a table, with an optional
- * {@link Scan}, use {@link CloudBigtableIO#read(CloudBigtableScanConfiguration)}:
+ * To read a {@link PCollection} from a table, with an optional {@link Scan}, use
+ * {@link CloudBigtableIO#read(CloudBigtableScanConfiguration)}:
  * </p>
  *
  * <pre>
@@ -127,7 +124,6 @@ import com.google.common.annotations.VisibleForTesting;
  *          .build())));
  * }
  * </pre>
- *
  * <p>
  * To write a {@link PCollection} to a table, use
  * {@link CloudBigtableIO#writeToTable(CloudBigtableTableConfiguration)}:
@@ -148,8 +144,12 @@ import com.google.common.annotations.VisibleForTesting;
  *          .build()));
  * }
  * </pre>
+ *
+ * @deprecated Please use the Beam version of CloudBigtableIO instead. This project will be removed
+ *             in future versions.
  */
 
+@Deprecated
 public class CloudBigtableIO {
 
   enum CoderType {
