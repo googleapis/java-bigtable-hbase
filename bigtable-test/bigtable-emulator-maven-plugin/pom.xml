@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <artifactId>bigtable-test</artifactId>
         <groupId>com.google.cloud.bigtable</groupId>
-        <version>1.0.0-pre5-SNAPSHOT</version>
+        <version>1.0.0-pre4</version>
     </parent>
 
 
