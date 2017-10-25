@@ -1,5 +1,7 @@
 # HBase Sequence Files to Cloud Bigtable Over Dataflow
 
+NOTE: Please use bigtable-beam-import instead.  Instructions can be found [here](https://github.com/GoogleCloudPlatform/cloud-bigtable-client/tree/master/bigtable-dataflow-parent/bigtable-beam-import).
+
 This project supports importing and exporting HBase Sequence Files to Google Cloud Bigtable using
 Cloud Dataflow.
 

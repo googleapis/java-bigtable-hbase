@@ -1,5 +1,7 @@
 # Cloud Bigtable + Cloud Dataflow
 
+NOTE: This project is deprecated.  Plesae use the [Cloud Bigtable + Beam](https://github.com/GoogleCloudPlatform/cloud-bigtable-client/tree/master/bigtable-dataflow-parent/bigtable-hbase-beam) connector instead.
+
 This project integrates Cloud Bigtable with Cloud Dataflow using the HBase API.
 
 See the [Cloud Bigtable Dataflow Examples Project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/tree/master/java/dataflow-connector-examples) for more information about how to use Dataflow and run the examples.
