@@ -729,7 +729,10 @@ public class CloudBigtableIO {
      */
     @Override
     public void close() throws IOException {
-      scanner.close();
+      if (scanner != null) {
+        scanner.close();
+        scanner = null;
+      }
       long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
       long operationsPerSecond = elapsedTimeMs == 0 ? 0 : (totalOps * 1000 / elapsedTimeMs);
