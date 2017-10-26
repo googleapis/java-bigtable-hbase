@@ -410,7 +410,7 @@ public class BigtableSession implements Closeable {
    */
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
-      ManagedChannel channel = createChannelPool(options.getTableAdminHost(), 1);
+      ManagedChannel channel = createManagedPool(options.getTableAdminHost(), 1);
       tableAdminClient = new BigtableTableAdminGrpcClient(channel,
           BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
     }
@@ -425,7 +425,7 @@ public class BigtableSession implements Closeable {
    */
   public synchronized BigtableInstanceClient getInstanceAdminClient() throws IOException {
     if (instanceAdminClient == null) {
-      ManagedChannel channel = createChannelPool(options.getInstanceAdminHost(), 1);
+      ManagedChannel channel = createManagedPool(options.getInstanceAdminHost(), 1);
       instanceAdminClient = new BigtableInstanceGrpcClient(channel);
     }
     return instanceAdminClient;
