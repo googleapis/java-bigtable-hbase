@@ -182,23 +182,6 @@ public class BigtableSession implements Closeable {
     connectionStartupExecutor.shutdown();
   }
 
-  // TODO: remove this method once grpc 1.7 is released.
-  private static void enableTracing(AbstractManagedChannelImplBuilder<?> builder) {
-    try {
-      Method setEnableTracingMethod =
-          AbstractManagedChannelImplBuilder.class.getMethod("setEnableTracing", boolean.class);
-      if (setEnableTracingMethod != null) {
-        try {
-          setEnableTracingMethod.invoke(builder, true);
-        } catch (Exception e) {
-          LOG.warn("Could not enable tracing", e);
-        }
-      }
-    } catch (NoSuchMethodException | SecurityException e1) {
-      return;
-    }
-  }
-
   private synchronized static ResourceLimiter initializeResourceLimiter(BigtableOptions options) {
     BigtableInstanceName instanceName = options.getInstanceName();
     String key = instanceName.toString();
@@ -516,8 +499,6 @@ public class BigtableSession implements Closeable {
     // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
     NettyChannelBuilder builder = NettyChannelBuilder
         .forAddress(host, options.getPort());
-
-    enableTracing(builder);
 
     if (options.usePlaintextNegotiation()) {
       builder.usePlaintext(true);
