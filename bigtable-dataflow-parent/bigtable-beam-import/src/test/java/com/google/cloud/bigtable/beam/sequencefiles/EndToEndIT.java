@@ -150,7 +150,7 @@ public class EndToEndIT {
       // Export the data
       DataflowPipelineOptions pipelineOpts = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
       pipelineOpts.setRunner(DataflowRunner.class);
-      pipelineOpts.setStagingLocation(dataflowStagingLocation);
+      pipelineOpts.setGcpTempLocation(dataflowStagingLocation);
       pipelineOpts.setNumWorkers(1);
       pipelineOpts.setProject(projectId);
 
@@ -171,7 +171,7 @@ public class EndToEndIT {
 
       DataflowPipelineOptions pipelineOpts = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
       pipelineOpts.setRunner(DataflowRunner.class);
-      pipelineOpts.setStagingLocation(dataflowStagingLocation);
+      pipelineOpts.setGcpTempLocation(dataflowStagingLocation);
       pipelineOpts.setNumWorkers(1);
       pipelineOpts.setProject(projectId);
 
