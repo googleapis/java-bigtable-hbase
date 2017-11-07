@@ -44,6 +44,7 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Bigtable's {@link org.apache.hadoop.hbase.client.BufferedMutator} implementation.
@@ -231,7 +232,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       // and inflight rpc count.
       future = Futures.immediateFailedFuture(e);
     }
-    Futures.addCallback(future, new ExceptionCallback(mutation));
+    Futures.addCallback(future, new ExceptionCallback(mutation), MoreExecutors.directExecutor());
   }
 
   private void addGlobalException(Row mutation, Throwable t) {

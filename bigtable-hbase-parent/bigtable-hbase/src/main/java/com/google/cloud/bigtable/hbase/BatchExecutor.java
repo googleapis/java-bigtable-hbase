@@ -51,6 +51,7 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -192,7 +193,8 @@ public class BatchExecutor {
     RpcResultFutureCallback<T> futureCallback =
         new RpcResultFutureCallback<T>(row, callback, index, results, resultFuture);
     results[index] = null;
-    Futures.addCallback(issueAsyncRequest(bulkOperation, row), futureCallback);
+    Futures.addCallback(issueAsyncRequest(bulkOperation, row),
+        futureCallback, MoreExecutors.directExecutor());
     return resultFuture;
   }
 

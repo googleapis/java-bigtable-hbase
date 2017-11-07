@@ -34,6 +34,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Any;
 import com.google.rpc.Status;
@@ -174,7 +175,7 @@ public class BulkMutation {
         public void onFailure(Throwable t) {
           setFailure(t);
         }
-      });
+      }, MoreExecutors.directExecutor());
     }
 
     @VisibleForTesting
