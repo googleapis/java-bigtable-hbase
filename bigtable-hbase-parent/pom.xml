@@ -35,6 +35,7 @@ limitations under the License.
         <module>bigtable-hbase-integration-tests</module>
         <module>bigtable-hbase-mapreduce</module>
         <module>bigtable-hbase-1.x</module>
+        <module>bigtable-hbase-shaded-opencensus</module>
     </modules>
 
     <profiles>
