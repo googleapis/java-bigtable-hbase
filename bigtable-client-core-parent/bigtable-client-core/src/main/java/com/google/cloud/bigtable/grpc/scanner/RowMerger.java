@@ -364,6 +364,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private ByteString lastCompletedRowKey = null;
   private RowInProgress rowInProgress;
   private boolean complete;
+  private int rowCountInLastMessage = -1;
 
   /**
    * <p>Constructor for RowMerger.</p>
@@ -381,6 +382,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       onError(new IllegalStateException("Adding partialRow after completion"));
       return;
     }
+    rowCountInLastMessage = 0;
     for (int i = 0; i < readRowsResponse.getChunksCount(); i++) {
       try {
         CellChunk chunk = readRowsResponse.getChunks(i);
@@ -413,12 +415,17 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           lastCompletedRowKey = rowInProgress.getRowKey();
           rowInProgress = null;
           state = RowMergerState.NewRow;
+          rowCountInLastMessage++;
         }
       } catch (Throwable e) {
         onError(e);
         return;
       }
     }
+  }
+
+  public int getRowCountInLastMessage() {
+    return rowCountInLastMessage;
   }
 
   /** {@inheritDoc} */

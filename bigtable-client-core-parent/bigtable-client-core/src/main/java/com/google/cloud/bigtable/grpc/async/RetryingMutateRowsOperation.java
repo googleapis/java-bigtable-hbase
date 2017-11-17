@@ -26,11 +26,13 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.common.collect.ImmutableMap;
 import com.google.rpc.Status;
 
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.grpc.Status.Code;
+import io.opencensus.trace.AttributeValue;
 
 /**
  * Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations.
@@ -83,6 +85,8 @@ public class RetryingMutateRowsOperation extends
     for (int i = 0; i < mapToOriginalIndex.length; i++) {
       mapToOriginalIndex[i] = i;
     }
+    operationSpan.addAnnotation("MutationCount", ImmutableMap.of("count",
+      AttributeValue.longAttributeValue(originalRquest.getEntriesCount())));
   }
 
   /**
@@ -147,6 +151,11 @@ public class RetryingMutateRowsOperation extends
 
     if (fail) {
       rpc.getRpcMetrics().markFailure();
+    }
+
+    if (!toRetry.isEmpty()) {
+      operationSpan.addAnnotation("MutationCount", ImmutableMap.of("retryCount",
+        AttributeValue.longAttributeValue(toRetry.size())));
     }
 
     // OK or Fail should set the future, and end the operation.

@@ -57,6 +57,7 @@ import io.opencensus.trace.Tracing;
 /**
  * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT>  {
 

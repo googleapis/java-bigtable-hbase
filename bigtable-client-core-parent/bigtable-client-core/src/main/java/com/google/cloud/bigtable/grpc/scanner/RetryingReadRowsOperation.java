@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 
 import io.grpc.CallOptions;
@@ -37,6 +38,7 @@ import io.grpc.Status;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
+import io.opencensus.trace.AttributeValue;
 
 /**
  * An extension of {@link AbstractRetryingOperation} that manages retries for the readRows
@@ -169,8 +171,11 @@ public class RetryingReadRowsOperation extends
 
     ByteString previouslyProcessedKey = rowMerger.getLastCompletedRowKey();
 
+    operationSpan.addAnnotation("Got a response");
     // This may take some time. This must not block so that gRPC worker threads don't leak.
     rowMerger.onNext(message);
+    operationSpan.addAnnotation("Processed Response", ImmutableMap.of("rowCount",
+      AttributeValue.longAttributeValue(rowMerger.getRowCountInLastMessage())));
 
     ByteString lastProcessedKey = rowMerger.getLastCompletedRowKey();
     if (previouslyProcessedKey != lastProcessedKey) {
@@ -279,9 +284,8 @@ public class RetryingReadRowsOperation extends
     // Can this request be retried
     int maxRetries = retryOptions.getMaxScanTimeoutRetries();
     if (retryOptions.enableRetries() && ++timeoutRetryCount <= maxRetries) {
-      rpc.getRpcMetrics().markRetry();
       resetStatusBasedBackoff();
-      run();
+      performRetry(0);
     } else {
       throw getExhaustedRetriesException(Status.ABORTED);
     }

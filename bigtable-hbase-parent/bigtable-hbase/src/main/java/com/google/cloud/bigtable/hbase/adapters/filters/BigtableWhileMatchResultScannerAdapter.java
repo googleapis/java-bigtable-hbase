@@ -16,6 +16,11 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.common.base.Throwables;
+
+import io.opencensus.common.NonThrowingCloseable;
+import io.opencensus.trace.Span;
+import io.opencensus.trace.Tracing;
+
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 
@@ -33,6 +38,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
+@SuppressWarnings("deprecation")
 public class BigtableWhileMatchResultScannerAdapter {
 
   private static final String WHILE_MATCH_FILTER_IN_LABEL_SUFFIX = "-in";
@@ -53,24 +59,34 @@ public class BigtableWhileMatchResultScannerAdapter {
    * <p>adapt.</p>
    *
    * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
+   * @param span A parent span for the scan that needs to be closed when the 
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(
-      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> bigtableResultScanner) {
+      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> bigtableResultScanner,
+      final Span span) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
         FlatRow row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
+          closeSpan();
           return null;
         }
 
         if (!hasMatchingLabels(row)) {
+          close();
           return null;
         }
 
         return rowAdapter.adaptResponse(row);
+      }
+
+      protected void closeSpan() {
+        try (NonThrowingCloseable s = Tracing.getTracer().withSpan(span)) {
+          span.end();
+        }
       }
 
       @Override
@@ -79,6 +95,8 @@ public class BigtableWhileMatchResultScannerAdapter {
           bigtableResultScanner.close();
         } catch (IOException ioe) {
           throw Throwables.propagate(ioe);
+        } finally {
+          closeSpan();
         }
       }
 
