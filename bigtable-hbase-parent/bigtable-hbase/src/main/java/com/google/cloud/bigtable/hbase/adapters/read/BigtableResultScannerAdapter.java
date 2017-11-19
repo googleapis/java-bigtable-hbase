@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 import com.google.common.base.Throwables;
 
 import io.opencensus.trace.Span;
+import io.opencensus.trace.Tracing;
 
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 
@@ -47,9 +48,14 @@ public class BigtableResultScannerAdapter<T> {
   }
 
   /**
-   * <p>adapt.</p>
-   *
-   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
+   * <p>
+   * adapt.
+   * </p>
+   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
+   *          object.
+   * @param span A parent {@link Span} for the scan that needs to be closed when the scanning is
+   *          complete. The span has an HBase specific tag, which needs to be handled by the
+   *          adapter.
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(
@@ -62,7 +68,7 @@ public class BigtableResultScannerAdapter<T> {
         T row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
-          span.end();
+          closeSpan();
           return null;
         }
         rowCount++;
@@ -76,9 +82,19 @@ public class BigtableResultScannerAdapter<T> {
         } catch (IOException ioe) {
           throw Throwables.propagate(ioe);
         } finally {
-          span.end();
+          closeSpan();
         }
       }
+
+      protected void closeSpan() {
+        try (AutoCloseable c = Tracing.getTracer().withSpan(span)) {
+          span.end();
+        } catch (Exception e) {
+          // ignore. withSpan() returns a Closable which can throw exceptions, but no exceptions
+          // will actually be thrown
+        }
+      }
+
 
       /**
        * This is an HBase concept that was added in HBase 1.0.2.  It's not relevant for Cloud

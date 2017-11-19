@@ -59,8 +59,9 @@ public class BigtableWhileMatchResultScannerAdapter {
    * </p>
    * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
    *          object.
-   * @param span A parent span for the scan that needs to be closed when the scanning is complete.
-   *          The span has an HBase specific tag, which needs to be handled by the adapter.
+   * @param span A parent {@link Span} for the scan that needs to be closed when the scanning is
+   *          complete. The span has an HBase specific tag, which needs to be handled by the
+   *          adapter.
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(

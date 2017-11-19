@@ -117,6 +117,7 @@ public class RetryingReadRowsOperation extends
   private int timeoutRetryCount = 0;
   private CallToStreamObserverAdapter<ReadRowsRequest> adapter;
   private StreamObserver<ReadRowsResponse> resultObserver;
+  private int totalRowsProcessed = 0;
 
   public RetryingReadRowsOperation(
       StreamObserver<FlatRow> observer,
@@ -174,8 +175,13 @@ public class RetryingReadRowsOperation extends
     operationSpan.addAnnotation("Got a response");
     // This may take some time. This must not block so that gRPC worker threads don't leak.
     rowMerger.onNext(message);
+
+    // Add an annotation for the number of rows that were returned in the previous response.
+    int rowCountInLastMessage = rowMerger.getRowCountInLastMessage();
     operationSpan.addAnnotation("Processed Response", ImmutableMap.of("rowCount",
-      AttributeValue.longAttributeValue(rowMerger.getRowCountInLastMessage())));
+      AttributeValue.longAttributeValue(rowCountInLastMessage)));
+
+    totalRowsProcessed += rowCountInLastMessage;
 
     ByteString lastProcessedKey = rowMerger.getLastCompletedRowKey();
     if (previouslyProcessedKey != lastProcessedKey) {
@@ -194,6 +200,14 @@ public class RetryingReadRowsOperation extends
     if (resultObserver != null) {
       resultObserver.onNext(message);
     }
+  }
+
+  @Override
+  protected void finalizeStats(Status status) {
+    super.finalizeStats(status);
+    // Add an annotation for the total number of rows that were returned across all responses.
+    operationSpan.addAnnotation("Total Rows Processed",
+      ImmutableMap.of("rowCount", AttributeValue.longAttributeValue(totalRowsProcessed)));
   }
 
   private void updateLastFoundKey(ByteString lastProcessedKey) {
