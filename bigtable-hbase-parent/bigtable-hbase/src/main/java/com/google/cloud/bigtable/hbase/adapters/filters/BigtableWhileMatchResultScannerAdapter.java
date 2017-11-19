@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.common.base.Throwables;
 
-import io.opencensus.common.NonThrowingCloseable;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracing;
 
@@ -38,7 +37,6 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-@SuppressWarnings("deprecation")
 public class BigtableWhileMatchResultScannerAdapter {
 
   private static final String WHILE_MATCH_FILTER_IN_LABEL_SUFFIX = "-in";
@@ -56,10 +54,13 @@ public class BigtableWhileMatchResultScannerAdapter {
   }
 
   /**
-   * <p>adapt.</p>
-   *
-   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
-   * @param span A parent span for the scan that needs to be closed when the 
+   * <p>
+   * adapt.
+   * </p>
+   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
+   *          object.
+   * @param span A parent span for the scan that needs to be closed when the scanning is complete.
+   *          The span has an HBase specific tag, which needs to be handled by the adapter.
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(
@@ -84,8 +85,11 @@ public class BigtableWhileMatchResultScannerAdapter {
       }
 
       protected void closeSpan() {
-        try (NonThrowingCloseable s = Tracing.getTracer().withSpan(span)) {
+        try (AutoCloseable c = Tracing.getTracer().withSpan(span)) {
           span.end();
+        } catch (Exception e) {
+          // ignore. withSpan() returns a Closable which can throw exceptions, but no exceptions
+          // will actually be thrown
         }
       }
 

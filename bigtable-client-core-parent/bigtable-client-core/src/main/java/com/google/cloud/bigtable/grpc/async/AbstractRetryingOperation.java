@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -45,7 +46,6 @@ import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status;
 import io.grpc.Status.Code;
-import io.opencensus.common.NonThrowingCloseable;
 import io.opencensus.contrib.grpc.util.StatusConverter;
 import io.opencensus.trace.Annotation;
 import io.opencensus.trace.AttributeValue;
@@ -57,7 +57,6 @@ import io.opencensus.trace.Tracing;
 /**
  * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
  */
-@SuppressWarnings("deprecation")
 public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT>  {
 
@@ -149,7 +148,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
-    try (NonThrowingCloseable s = TRACER.withSpan(operationSpan)) {
+    try (Closeable s = TRACER.withSpan(operationSpan)) {
       synchronized (callLock) {
         call = null;
       }
@@ -162,6 +161,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       } else {
         onError(status, trailers);
       }
+    } catch (IOException e) {
+      // Ignore. This is thrown Closable.close() from the TRACER.withSpan(), which actually doesn't
+      // throw anything
     }
   }
 
@@ -266,7 +268,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * with this as the listener so that retries happen correctly.
    */
   protected void run() {
-    try (NonThrowingCloseable s = TRACER.withSpan(operationSpan)) {
+    try (Closeable s = TRACER.withSpan(operationSpan)) {
       rpcTimerContext = rpc.getRpcMetrics().timeRpc();
       operationSpan.addAnnotation(Annotation.fromDescriptionAndAttributes("rpcStart",
         ImmutableMap.of("attempt", AttributeValue.longAttributeValue(failedCount))));
@@ -279,6 +281,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         call = rpc.newCall(getCallOptions());
         rpc.start(getRetryRequest(), this, metadata, call);
       }
+    } catch (IOException e) {
+      // Ignore. This is thrown Closable.close() from the TRACER.withSpan(), which actually doesn't
+      // throw anything
     }
   }
 
