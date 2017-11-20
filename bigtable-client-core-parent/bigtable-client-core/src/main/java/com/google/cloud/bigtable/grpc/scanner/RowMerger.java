@@ -37,13 +37,13 @@ import io.grpc.stub.StreamObserver;
 
 /**
  * <p>
- * Builds a complete {@link FlatRow} from {@link com.google.bigtable.v2.ReadRowsResponse} objects. A {@link com.google.bigtable.v2.ReadRowsResponse}
- * may contain a single {@link FlatRow}, multiple {@link FlatRow}s, or even a part of a {@link com.google.bigtable.v2.Cell} if the
- * cell is
+ * Builds a complete {@link FlatRow} from {@link com.google.bigtable.v2.ReadRowsResponse} objects. A
+ * {@link com.google.bigtable.v2.ReadRowsResponse} may contain a single {@link FlatRow}, multiple
+ * {@link FlatRow}s, or even a part of a {@link com.google.bigtable.v2.Cell} if the cell is
  * </p>
  * <p>
- * Each RowMerger object is valid only for building a single FlatRow. Expected usage is along the lines
- * of:
+ * Each RowMerger object is valid only for building a single FlatRow. Expected usage is along the
+ * lines of:
  * </p>
  *
  * <pre>
@@ -58,7 +58,9 @@ import io.grpc.stub.StreamObserver;
  * When a complete row is found, {@link io.grpc.stub.StreamObserver#onNext(Object)} will be called.
  * {@link io.grpc.stub.StreamObserver#onError(Throwable)} will be called for
  * </p>
- *
+ * <p>
+ * <b>NOTE: RowMerger is not threadsafe.</b>
+ * </p>
  * @author sduskis
  * @version $Id: $Id
  */
@@ -364,6 +366,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private ByteString lastCompletedRowKey = null;
   private RowInProgress rowInProgress;
   private boolean complete;
+  private int rowCountInLastMessage = -1;
 
   /**
    * <p>Constructor for RowMerger.</p>
@@ -381,6 +384,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       onError(new IllegalStateException("Adding partialRow after completion"));
       return;
     }
+    rowCountInLastMessage = 0;
     for (int i = 0; i < readRowsResponse.getChunksCount(); i++) {
       try {
         CellChunk chunk = readRowsResponse.getChunks(i);
@@ -413,6 +417,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           lastCompletedRowKey = rowInProgress.getRowKey();
           rowInProgress = null;
           state = RowMergerState.NewRow;
+          rowCountInLastMessage++;
         }
       } catch (Throwable e) {
         onError(e);
@@ -420,6 +425,14 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       }
     }
   }
+
+  /**
+   * @return the number of rows processed in the previous call to {@link #onNext(ReadRowsResponse)}.
+   */
+  public int getRowCountInLastMessage() {
+    return rowCountInLastMessage;
+  }
+
 
   /** {@inheritDoc} */
   @Override

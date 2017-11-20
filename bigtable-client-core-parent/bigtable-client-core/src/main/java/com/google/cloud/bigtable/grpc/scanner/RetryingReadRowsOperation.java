@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 
 import io.grpc.CallOptions;
@@ -37,6 +38,7 @@ import io.grpc.Status;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
+import io.opencensus.trace.AttributeValue;
 
 /**
  * An extension of {@link AbstractRetryingOperation} that manages retries for the readRows
@@ -115,6 +117,7 @@ public class RetryingReadRowsOperation extends
   private int timeoutRetryCount = 0;
   private CallToStreamObserverAdapter<ReadRowsRequest> adapter;
   private StreamObserver<ReadRowsResponse> resultObserver;
+  private int totalRowsProcessed = 0;
 
   public RetryingReadRowsOperation(
       StreamObserver<FlatRow> observer,
@@ -169,8 +172,16 @@ public class RetryingReadRowsOperation extends
 
     ByteString previouslyProcessedKey = rowMerger.getLastCompletedRowKey();
 
+    operationSpan.addAnnotation("Got a response");
     // This may take some time. This must not block so that gRPC worker threads don't leak.
     rowMerger.onNext(message);
+
+    // Add an annotation for the number of rows that were returned in the previous response.
+    int rowCountInLastMessage = rowMerger.getRowCountInLastMessage();
+    operationSpan.addAnnotation("Processed Response", ImmutableMap.of("rowCount",
+      AttributeValue.longAttributeValue(rowCountInLastMessage)));
+
+    totalRowsProcessed += rowCountInLastMessage;
 
     ByteString lastProcessedKey = rowMerger.getLastCompletedRowKey();
     if (previouslyProcessedKey != lastProcessedKey) {
@@ -189,6 +200,14 @@ public class RetryingReadRowsOperation extends
     if (resultObserver != null) {
       resultObserver.onNext(message);
     }
+  }
+
+  @Override
+  protected void finalizeStats(Status status) {
+    super.finalizeStats(status);
+    // Add an annotation for the total number of rows that were returned across all responses.
+    operationSpan.addAnnotation("Total Rows Processed",
+      ImmutableMap.of("rowCount", AttributeValue.longAttributeValue(totalRowsProcessed)));
   }
 
   private void updateLastFoundKey(ByteString lastProcessedKey) {
@@ -279,9 +298,8 @@ public class RetryingReadRowsOperation extends
     // Can this request be retried
     int maxRetries = retryOptions.getMaxScanTimeoutRetries();
     if (retryOptions.enableRetries() && ++timeoutRetryCount <= maxRetries) {
-      rpc.getRpcMetrics().markRetry();
       resetStatusBasedBackoff();
-      run();
+      performRetry(0);
     } else {
       throw getExhaustedRetriesException(Status.ABORTED);
     }

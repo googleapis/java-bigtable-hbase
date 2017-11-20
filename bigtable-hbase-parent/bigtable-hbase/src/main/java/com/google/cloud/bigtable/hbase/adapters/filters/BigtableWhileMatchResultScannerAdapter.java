@@ -16,6 +16,10 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.common.base.Throwables;
+
+import io.opencensus.trace.Span;
+import io.opencensus.trace.Tracing;
+
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 
@@ -50,27 +54,44 @@ public class BigtableWhileMatchResultScannerAdapter {
   }
 
   /**
-   * <p>adapt.</p>
-   *
-   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
+   * <p>
+   * adapt.
+   * </p>
+   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
+   *          object.
+   * @param span A parent {@link Span} for the scan that needs to be closed when the scanning is
+   *          complete. The span has an HBase specific tag, which needs to be handled by the
+   *          adapter.
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(
-      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> bigtableResultScanner) {
+      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> bigtableResultScanner,
+      final Span span) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
         FlatRow row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
+          closeSpan();
           return null;
         }
 
         if (!hasMatchingLabels(row)) {
+          close();
           return null;
         }
 
         return rowAdapter.adaptResponse(row);
+      }
+
+      protected void closeSpan() {
+        try (AutoCloseable c = Tracing.getTracer().withSpan(span)) {
+          span.end();
+        } catch (Exception e) {
+          // ignore. withSpan() returns a Closable which can throw exceptions, but no exceptions
+          // will actually be thrown
+        }
       }
 
       @Override
@@ -79,6 +100,8 @@ public class BigtableWhileMatchResultScannerAdapter {
           bigtableResultScanner.close();
         } catch (IOException ioe) {
           throw Throwables.propagate(ioe);
+        } finally {
+          closeSpan();
         }
       }
 
