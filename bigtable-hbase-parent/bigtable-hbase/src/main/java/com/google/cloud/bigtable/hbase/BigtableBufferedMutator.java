@@ -263,14 +263,19 @@ public class BigtableBufferedMutator implements BufferedMutator {
       ArrayList<String> hostnames = new ArrayList<>(mutationExceptions.size());
       List<Row> failedMutations = new ArrayList<>(mutationExceptions.size());
 
+      if (!mutationExceptions.isEmpty()) {
+        LOG.warn("Exception occurred in BufferedMutator", mutationExceptions.get(0).throwable);
+      }
       for (MutationException mutationException : mutationExceptions) {
         problems.add(mutationException.throwable);
         failedMutations.add(mutationException.mutation);
         hostnames.add(host);
+        LOG.debug("Exception occurred in BufferedMutator", mutationException.throwable);
       }
 
       RetriesExhaustedWithDetailsException exception = new RetriesExhaustedWithDetailsException(
           problems, failedMutations, hostnames);
+
       exceptionListener.onException(exception, this);
     }
   }
