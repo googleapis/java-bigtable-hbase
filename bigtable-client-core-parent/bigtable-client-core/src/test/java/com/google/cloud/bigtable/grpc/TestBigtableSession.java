@@ -71,15 +71,6 @@ public class TestBigtableSession {
   }
 
   @Test
-  public void testRecyclerIsOff() throws NoSuchFieldException, SecurityException,
-      IllegalArgumentException, IllegalAccessException, IOException {
-    BigtableSession.turnOffNettyRecycler();
-    Field field = Recycler.class.getDeclaredField("DEFAULT_MAX_CAPACITY_PER_THREAD");
-    field.setAccessible(true);
-    Assert.assertEquals(0, field.getInt(null));
-  }
-
-  @Test
   public void testOpenSSL() throws Throwable{
     if(!OpenSsl.isAvailable()){
       throw OpenSsl.unavailabilityCause();
