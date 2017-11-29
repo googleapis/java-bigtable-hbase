@@ -58,9 +58,8 @@ limitations under the License.
         <compat.module>hbase-hadoop2-compat</compat.module>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
-        <grpc.version>1.7.0</grpc.version>
-        <opencensus.version>0.7.0</opencensus.version>
-        <!--NOTE: 4.1.14.Final is the first version that support shading -->
+        <grpc.version>1.8.0</grpc.version>
+        <opencensus.version>0.9.0</opencensus.version>
         <netty.version>4.1.16.Final</netty.version>
         <netty-tcnative-boringssl-static.version>2.0.6.Final</netty-tcnative-boringssl-static.version>
         <protobuff-java.version>3.4.0</protobuff-java.version>
@@ -68,9 +67,8 @@ limitations under the License.
         <google.api.client.version>1.23.0</google.api.client.version>
         <google.http.client.version>1.23.0</google.http.client.version>
         <guava.version>19.0</guava.version>
-        <google.auth.library.version>0.7.0</google.auth.library.version>
+        <google.auth.library.version>0.9.0</google.auth.library.version>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
-        <opencensus.version>0.7.0</opencensus.version>
 
 
         <beam.version>2.1.0</beam.version>
