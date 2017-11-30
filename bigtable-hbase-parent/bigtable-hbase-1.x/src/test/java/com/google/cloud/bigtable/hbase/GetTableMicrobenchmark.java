@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.client;
+package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.*;
 import java.io.IOException;
@@ -23,8 +23,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
 
-import com.google.cloud.bigtable.hbase.TestBigtableConnection;
+import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
 
 public class GetTableMicrobenchmark {
 
@@ -35,7 +36,7 @@ public class GetTableMicrobenchmark {
     conf.set(PROJECT_ID_KEY, "projectId");
     conf.set(INSTANCE_ID_KEY, "instanceId");
     int rounds = 100;
-    try (final Connection conn = new TestBigtableConnection(conf)) {
+    try (final Connection conn = new BigtableConnection(conf)) {
       final TableName tableName = TableName.valueOf("foo");
       conn.getTable(tableName);
       {
