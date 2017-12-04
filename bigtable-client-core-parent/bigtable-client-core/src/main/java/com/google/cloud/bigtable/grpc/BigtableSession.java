@@ -62,7 +62,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.internal.GrpcUtil;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.Recycler;
 
 /**
@@ -85,7 +84,6 @@ public class BigtableSession implements Closeable {
   // TODO: Consider caching channel pools per instance.
   private static ChannelPool cachedDataChannelPool;
   private static final Map<String, ResourceLimiter> resourceLimiterMap = new HashMap<>();
-  private static SslContextBuilder sslBuilder;
 
   // 256 MB, server has 256 MB limit.
   private final static int MAX_MESSAGE_SIZE = 1 << 28;
@@ -98,27 +96,7 @@ public class BigtableSession implements Closeable {
   static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
 
   static {
-    turnOffNettyRecycler();
     performWarmup();
-  }
-
-  /**
-   * The netty {@link Recycler} has caused some problems for long running operations in some
-   * versions of netty. As of this comment (10/21/2016), we are using netty 4.1.3.Final. The
-   * Recycler uses a system property, "io.netty.recycler.maxCapacity" which needs to be set to "0"
-   * to turn off potentially problematic behavior. The string gets transformed via the shading
-   * process, and ends up being similar to the Recycler's package name. This method sets the value
-   * to "0" if the value is not set.
-   */
-  @VisibleForTesting
-  static void turnOffNettyRecycler() {
-    String packageName = Recycler.class.getName();
-    String prefix = packageName.substring(0, packageName.indexOf(".util.Recycler"));
-    final String key = prefix + ".recycler.maxCapacity";
-    LOG.debug("Using prefix %s for io.netty.", prefix);
-    if (System.getProperty(key) == null) {
-      System.setProperty(key, "0");
-    }
   }
 
   private static void performWarmup() {
