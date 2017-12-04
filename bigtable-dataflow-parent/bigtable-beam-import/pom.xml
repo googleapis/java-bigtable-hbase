@@ -16,8 +16,8 @@ limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>bigtable-dataflow-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-dataflow-parent</artifactId>
     <version>1.0.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -30,7 +30,7 @@ limitations under the License.
 
   <dependencies>
     <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-beam</artifactId>
       <version>${project.version}</version>
     </dependency>
