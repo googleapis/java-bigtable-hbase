@@ -30,9 +30,9 @@ limitations under the License.
 
   <dependencies>
     <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.apache.hbase</groupId>

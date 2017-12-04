@@ -245,7 +245,7 @@ limitations under the License.
 
     <dependencies>
         <dependency>
-            <groupId>com.google.cloud.bigtable</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
