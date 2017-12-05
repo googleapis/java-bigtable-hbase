@@ -39,7 +39,7 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
  * @author sduskis
  * @version $Id: $Id
  */
-public class BigtableRegionLocator implements RegionLocator {
+public abstract class BigtableRegionLocator implements RegionLocator {
   // Reuse the results from previous calls during this time.
   /** Constant <code>MAX_REGION_AGE_MILLIS=60 * 1000</code> */
   public static long MAX_REGION_AGE_MILLIS = 60 * 1000;
@@ -66,9 +66,12 @@ public class BigtableRegionLocator implements RegionLocator {
     this.client = client;
     this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
-    this.adapter = new SampledRowKeysAdapter(tableName, serverName);
+    this.adapter = getSampledRowKeysAdapter(tableName, serverName);
   }
 
+  public abstract SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
+      ServerName serverName);
+  
   /**
    * The list of regions will be sorted and cover all the possible rows.
    */
