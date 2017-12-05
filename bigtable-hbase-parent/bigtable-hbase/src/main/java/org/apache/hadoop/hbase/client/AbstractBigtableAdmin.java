@@ -42,10 +42,8 @@ import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
 import org.apache.hadoop.hbase.regionserver.wal.FailedLogCloseException;
 import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
@@ -88,7 +86,7 @@ import io.grpc.Status;
 @SuppressWarnings("deprecation")
 public abstract class AbstractBigtableAdmin implements Admin {
 
-  private static final Logger LOG = new Logger(AbstractBigtableAdmin.class);
+  protected static final Logger LOG = new Logger(AbstractBigtableAdmin.class);
 
   /**
    * Bigtable doesn't require disabling tables before deletes or schema changes. Some clients do
@@ -441,12 +439,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
-  public void enableTableAsync(TableName tableName) throws IOException {
-    enableTable(tableName);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public HTableDescriptor[] enableTables(String regex) throws IOException {
     HTableDescriptor[] tableDescriptors = listTables(regex);
     for (HTableDescriptor descriptor : tableDescriptors) {
@@ -463,12 +455,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
       enableTable(descriptor.getTableName());
     }
     return tableDescriptors;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void disableTableAsync(TableName tableName) throws IOException {
-    disableTable(tableName);
   }
 
   /** {@inheritDoc} */
@@ -844,7 +830,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
    *     the long running operation.
    * @throws IOException
    */
-  private Operation snapshotTable(String snapshotName, TableName tableName) throws IOException {
+  protected Operation snapshotTable(String snapshotName, TableName tableName) throws IOException {
     throw new IllegalArgumentException("snapshotTable is not supported");
   }
 
@@ -921,17 +907,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     snapshot(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException {
-    snapshotTable(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
-    LOG.warn("isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-        + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
-    return MasterProtos.SnapshotResponse.newBuilder()
-        .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5)).build();
-  }
-
   /** This is needed for the hbase shell */
   public void cloneSnapshot(byte[] snapshotName, byte[] tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
@@ -950,30 +925,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     throw new IllegalArgumentException("cloneSnapshot is not supported");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
-    throw new IllegalArgumentException("listSnapshots is not supported");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException {
-    return listSnapshots(Pattern.compile(regex));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
-    List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
-    for (HBaseProtos.SnapshotDescription description : listSnapshots()) {
-      if (pattern.matcher(description.getName()).matches()) {
-        response.add(description);
-      }
-    }
-    return response;
   }
 
   /** {@inheritDoc} */
@@ -1333,20 +1284,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public String[] getMasterCoprocessors() {
     throw new UnsupportedOperationException("getMasterCoprocessors");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName)
-      throws IOException {
-    throw new UnsupportedOperationException("getCompactionState");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
-      throws IOException {
-    throw new UnsupportedOperationException("getCompactionStateForRegion");
   }
 
   /** {@inheritDoc} */

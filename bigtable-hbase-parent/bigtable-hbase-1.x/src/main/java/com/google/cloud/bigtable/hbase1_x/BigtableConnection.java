@@ -16,36 +16,32 @@
 package com.google.cloud.bigtable.hbase1_x;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.ProcedureInfo;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.security.SecurityCapability;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
-import org.apache.hadoop.hbase.quotas.QuotaFilter;
-import org.apache.hadoop.hbase.quotas.QuotaRetriever;
-import org.apache.hadoop.hbase.quotas.QuotaSettings;
+import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.security.User;
+
+import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
 /**
  * HBase 1.x specific implementation of {@link AbstractBigtableConnection}.
- *
  * @author sduskis
  * @version $Id: $Id
  */
-@SuppressWarnings("deprecation")
 public class BigtableConnection extends AbstractBigtableConnection {
 
   /**
-   * <p>Constructor for BigtableConnection.</p>
-   *
+   * <p>
+   * Constructor for BigtableConnection.
+   * </p>
    * @param conf a {@link Configuration} object.
    * @throws IOException if any.
    */
@@ -61,109 +57,32 @@ public class BigtableConnection extends AbstractBigtableConnection {
   /** {@inheritDoc} */
   @Override
   public Admin getAdmin() throws IOException {
-    return new AbstractBigtableAdmin(getOptions(), getConfiguration(), this,
-        getBigtableTableAdminClient(), getDisabledTables()) {
+    return new BigtableAdmin(getOptions(), getConfiguration(), this, getBigtableTableAdminClient(),
+        getDisabledTables());
+  }
 
-          @Override
-          public void deleteTableSnapshots(String arg0, String arg1) throws IOException {
-            throw new UnsupportedOperationException("deleteTableSnapshots");  // TODO
-          }
-
-          @Override
-          public void deleteTableSnapshots(Pattern arg0, Pattern arg1) throws IOException {
-            throw new UnsupportedOperationException("deleteTableSnapshots");  // TODO
-          }
-
-          @Override
-          public List<SnapshotDescription> listTableSnapshots(String arg0, String arg1)
-              throws IOException {
-            throw new UnsupportedOperationException("listTableSnapshots");  // TODO
-          }
-
-          @Override
-          public List<SnapshotDescription> listTableSnapshots(Pattern arg0, Pattern arg1)
-              throws IOException {
-            throw new UnsupportedOperationException("listTableSnapshots");  // TODO
-          }
-
-          @Override
-          public boolean isBalancerEnabled() throws IOException {
-            throw new UnsupportedOperationException("isBalancerEnabled");  // TODO
-          }
-
-          @Override
-          public long getLastMajorCompactionTimestamp(TableName tableName) throws IOException {
-            throw new UnsupportedOperationException("getLastMajorCompactionTimestamp");  // TODO
-          }
-
-          @Override
-          public long getLastMajorCompactionTimestampForRegion(byte[] regionName)
-              throws IOException {
-            throw new UnsupportedOperationException("getLastMajorCompactionTimestampForRegion");  // TODO
-          }
-
-          @Override
-          public void setQuota(QuotaSettings quota) throws IOException {
-            throw new UnsupportedOperationException("setQuota");  // TODO
-          }
-
-          @Override
-          public QuotaRetriever getQuotaRetriever(QuotaFilter filter) throws IOException {
-            throw new UnsupportedOperationException("getQuotaRetriever");  // TODO
-          }
-
-          @Override
-          public boolean normalize() throws IOException {
-            throw new UnsupportedOperationException("normalize");  // TODO
-          }
-
-          @Override
-          public boolean isNormalizerEnabled() throws IOException {
-            throw new UnsupportedOperationException("isNormalizerEnabled");  // TODO
-          }
-
-          @Override
-          public boolean setNormalizerRunning(boolean on) throws IOException {
-            throw new UnsupportedOperationException("setNormalizerRunning");  // TODO
-          }
-
-          @Override
-          public boolean abortProcedure(long procId, boolean mayInterruptIfRunning)
-              throws IOException {
-            throw new UnsupportedOperationException("abortProcedure");  // TODO
-          }
-
-          @Override
-          public ProcedureInfo[] listProcedures() throws IOException {
-            throw new UnsupportedOperationException("listProcedures");  // TODO
-          }
-
-          @Override
-          public Future<Boolean> abortProcedureAsync(long procId, boolean mayInterruptIfRunning)
-              throws IOException {
-            throw new UnsupportedOperationException("abortProcedureAsync");  // TODO
-          }
-
-          @Override
-          public List<SecurityCapability> getSecurityCapabilities() throws IOException {
-            throw new UnsupportedOperationException("getSecurityCapabilities");  // TODO
-          }
-
-          @Override
-          public boolean balancer(boolean arg0) throws IOException {
-            throw new UnsupportedOperationException("balancer");  // TODO
-          }
-
-          @Override
-          public boolean isSplitOrMergeEnabled(MasterSwitchType arg0) throws IOException {
-            throw new UnsupportedOperationException("isSplitOrMergeEnabled");  // TODO
-          }
-
-          @Override
-          public boolean[] setSplitOrMergeEnabled(boolean arg0, boolean arg1,
-              MasterSwitchType... arg2) throws IOException {
-            throw new UnsupportedOperationException("setSplitOrMergeEnabled");  // TODO
-          }
-    };
+  /** {@inheritDoc} */
+  @Override
+  public RegionLocator getRegionLocator(TableName tableName) throws IOException {
+    RegionLocator locator = getCachedLocator(tableName);
+    
+    if(locator == null) {
+      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClient()) {
+        
+        @Override
+        public  SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName, ServerName serverName) {
+          return new SampledRowKeysAdapter(tableName, serverName) {
+            
+            @Override
+            public HRegionLocation getHRegionLocation(HRegionInfo hRegionInfo, ServerName serverName) {
+              return new HRegionLocation(hRegionInfo, serverName);
+            }
+          };
+        }
+      };
+      
+      cacheLocator(tableName, locator);
+    }
+    return locator;
   }
 }
