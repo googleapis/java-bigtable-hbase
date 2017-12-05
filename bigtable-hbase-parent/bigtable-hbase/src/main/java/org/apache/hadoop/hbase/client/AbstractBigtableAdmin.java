@@ -108,26 +108,19 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final TableAdapter tableAdapter;
 
   /**
-   * <p>Constructor for AbstractBigtableAdmin.</p>
-   *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param configuration a {@link org.apache.hadoop.conf.Configuration} object.
+   * <p>
+   * Constructor for AbstractBigtableAdmin.
+   * </p>
    * @param connection a {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection} object.
-   * @param bigtableTableAdminClient a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
-   * @param disabledTables a {@link java.util.Set} object.
+   * @throws IOException
    */
-  public AbstractBigtableAdmin(
-      BigtableOptions options,
-      Configuration configuration,
-      AbstractBigtableConnection connection,
-      BigtableTableAdminClient bigtableTableAdminClient,
-      Set<TableName> disabledTables) {
+  public AbstractBigtableAdmin(AbstractBigtableConnection connection) throws IOException {
     LOG.debug("Creating BigtableAdmin");
-    this.configuration = configuration;
-    this.options = options;
+    this.configuration = connection.getConfiguration();
+    this.options = connection.getOptions();
     this.connection = connection;
-    this.bigtableTableAdminClient = bigtableTableAdminClient;
-    this.disabledTables = disabledTables;
+    this.bigtableTableAdminClient = connection.getSession().getTableAdminClient();
+    this.disabledTables = connection.getDisabledTables();
     this.bigtableInstanceName = options.getInstanceName();
     this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
   }
