@@ -18,41 +18,33 @@ package com.google.cloud.bigtable.hbase1_x;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
+import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
-
 /**
- * HBase 1.x specific implementation of {@link AbstractBigtableAdmin}.
- * 
- * @author spollapally
+ * This is an hbase 1.x implementation of {@link AbstractBigtableAdmin}. Most methods in this class
+ * unsupported
  */
 @SuppressWarnings("deprecation")
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
-  public BigtableAdmin(BigtableOptions options, Configuration configuration,
-      AbstractBigtableConnection connection, BigtableTableAdminClient bigtableTableAdminClient,
-      Set<TableName> disabledTables) {
-    super(options, configuration, connection, bigtableTableAdminClient, disabledTables);
+  public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
+    super(connection);
   }
 
   /** {@inheritDoc} */
@@ -213,5 +205,4 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
       throws IOException {
     throw new UnsupportedOperationException("setSplitOrMergeEnabled"); // TODO
   }
-
 }

@@ -54,11 +54,11 @@ public class BigtableConnection extends AbstractBigtableConnection {
     super(conf, managed, pool, user);
   }
 
+
   /** {@inheritDoc} */
   @Override
   public Admin getAdmin() throws IOException {
-    return new BigtableAdmin(getOptions(), getConfiguration(), this, getBigtableTableAdminClient(),
-        getDisabledTables());
+    return new BigtableAdmin(this);
   }
 
   /** {@inheritDoc} */

@@ -30,11 +30,8 @@ import com.google.common.base.Preconditions;
 @SuppressWarnings("deprecation")
 public class BigtableConfiguration {
   private static final String[] CONNECTION_CLASS_NAMES = {
-    "com.google.cloud.bigtable.hbase1_0.BigtableConnection",
-    "com.google.cloud.bigtable.hbase1_1.BigtableConnection",
-    "com.google.cloud.bigtable.hbase1_2.BigtableConnection",
-    "com.google.cloud.bigtable.hbase1_3.BigtableConnection",
     "com.google.cloud.bigtable.hbase1_x.BigtableConnection",
+    "com.google.cloud.bigtable.hbase2_x.BigtableConnection",
   };
 
   private static final Class<? extends Connection> CONNECTION_CLASS = chooseConnectionClass();
