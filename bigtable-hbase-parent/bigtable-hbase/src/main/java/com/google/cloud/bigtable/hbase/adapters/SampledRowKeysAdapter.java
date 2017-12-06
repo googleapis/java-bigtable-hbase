@@ -23,6 +23,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.ArrayList;
@@ -76,19 +77,25 @@ public abstract class SampledRowKeysAdapter {
       HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
       startKey = endKey;
 
-      regions.add(getHRegionLocation(regionInfo, serverName));
+      regions.add(createHRegionLocation(regionInfo, serverName));
     }
 
     // Create one last region if the last region doesn't reach the end or there are no regions.
     byte[] endKey = HConstants.EMPTY_END_ROW;
     if (regions.isEmpty() || !Bytes.equals(startKey, endKey)) {
       HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
-      regions.add(getHRegionLocation(regionInfo, serverName));
+      regions.add(createHRegionLocation(regionInfo, serverName));
     }
     return regions;
   }
-  
-  public abstract HRegionLocation getHRegionLocation(HRegionInfo hRegionInfo,
-      ServerName serverName);
 
+  /**
+   * HBase 1.x and 2.x have non compatible {@link HRegionInfo} classes. HBase 2.x introduces a
+   * RegionInfo interface, which makes the two hbase classes with the same name binary incompatible.
+   * {@link HRegionLocation} uses RegionInfo instead of {@link HRegionInfo}, causing confusion and
+   * delay. {@link AbstractBigtableConnection#getRegionLocator(TableName)} calls an abstract method
+   * which subclasses will construct appropriate {@link SampledRowKeysAdapter} implementations.
+   */
+  protected abstract HRegionLocation createHRegionLocation(HRegionInfo hRegionInfo,
+      ServerName serverName);
 }
