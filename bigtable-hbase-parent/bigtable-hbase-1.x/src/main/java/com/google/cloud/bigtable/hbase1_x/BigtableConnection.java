@@ -25,10 +25,8 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.security.User;
 
-import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
 /**
@@ -61,28 +59,13 @@ public class BigtableConnection extends AbstractBigtableConnection {
     return new BigtableAdmin(this);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public RegionLocator getRegionLocator(TableName tableName) throws IOException {
-    RegionLocator locator = getCachedLocator(tableName);
-    
-    if(locator == null) {
-      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClient()) {
-        
-        @Override
-        public  SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName, ServerName serverName) {
-          return new SampledRowKeysAdapter(tableName, serverName) {
-            
-            @Override
-            public HRegionLocation getHRegionLocation(HRegionInfo hRegionInfo, ServerName serverName) {
-              return new HRegionLocation(hRegionInfo, serverName);
-            }
-          };
-        }
-      };
-      
-      cacheLocator(tableName, locator);
-    }
-    return locator;
+  protected SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
+      ServerName serverName) {
+    return new SampledRowKeysAdapter(tableName, serverName) {
+      @Override
+      public HRegionLocation createHRegionLocation(HRegionInfo hRegionInfo, ServerName serverName) {
+        return new HRegionLocation(hRegionInfo, serverName);
+      }
+    };
   }
 }

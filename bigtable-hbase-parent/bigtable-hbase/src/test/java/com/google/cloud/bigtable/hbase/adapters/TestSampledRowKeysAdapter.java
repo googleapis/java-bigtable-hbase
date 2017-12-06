@@ -38,12 +38,12 @@ public class TestSampledRowKeysAdapter {
       new SampledRowKeysAdapter(TableName.valueOf("test"), ServerName.valueOf("host", 123, 0)) {
 
         @Override
-        public HRegionLocation getHRegionLocation(HRegionInfo hRegionInfo,
+        public HRegionLocation createHRegionLocation(HRegionInfo hRegionInfo,
             ServerName serverName) {
           return new HRegionLocation(hRegionInfo, serverName);
         }
       };
-  
+
   @Test
   public void testEmptyRowList() {
     List<SampleRowKeysResponse> rowKeys = new ArrayList<>();
