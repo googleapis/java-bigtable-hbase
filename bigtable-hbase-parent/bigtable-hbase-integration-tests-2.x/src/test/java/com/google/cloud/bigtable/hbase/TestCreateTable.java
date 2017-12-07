@@ -106,8 +106,8 @@ public class TestCreateTable extends AbstractTest {
       try {
         admin.createTable(new HTableDescriptor(TableName.valueOf(badName))
             .addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
-      } catch (IllegalArgumentException RuntimeException) {
-        //added RuntimeException check as RandomStringUtils seems to be generating a string server side doesn't like 
+      } catch (RuntimeException ex) {
+        //TODO verify - added RuntimeException check as RandomStringUtils seems to be generating a string server side doesn't like 
         failed = true;
       }
       Assert.assertTrue("Should fail as table name: '" + badName + "'", failed);
