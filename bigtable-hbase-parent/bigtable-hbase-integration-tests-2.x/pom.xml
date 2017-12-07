@@ -37,7 +37,7 @@ limitations under the License.
 
     <profiles>
        <profile>
-            <id>bigtableIntegrationTest</id>
+            <id>bigtableIntegrationTestH2</id>
             <build>
                 <plugins>
                     <plugin>
@@ -75,7 +75,7 @@ limitations under the License.
             </build>
         </profile>
         <profile>
-            <id>bigtableGapTest</id>
+            <id>bigtableGapTestH2</id>
             <build>
                 <plugins>
                     <plugin>
@@ -116,7 +116,7 @@ limitations under the License.
             </build>
         </profile>
         <profile>
-            <id>hbaseLocalMiniClusterTest</id>
+            <id>hbaseLocalMiniClusterTestH2</id>
             <build>
                 <plugins>
                     <plugin>
@@ -151,7 +151,7 @@ limitations under the License.
             </build>
         </profile>
         <profile>
-            <id>simpleBigtableIntegrationTest</id>
+            <id>simpleBigtableIntegrationTestH2</id>
             <build>
                 <plugins>
                     <plugin>
@@ -193,7 +193,7 @@ limitations under the License.
         </profile>
 
         <profile>
-            <id>emulatorTests</id>
+            <id>emulatorTestsH2</id>
             <build>
                 <plugins>
                     <plugin>
