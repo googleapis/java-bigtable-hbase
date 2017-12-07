@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2017 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>bigtable-hbase-parent</artifactId>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <version>1.0.1-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>bigtable-hbase-2.x-shaded</artifactId>
+  <description>
+    Please use bigtable-hbase-2.x or bigtable-hbase-2.x-hadoop.
+    Bigtable connector compatible with HBase 2.x. It exposes the minimal set of dependencies. Its mainly intended to
+    be used by dataflow 2.x to avoid version conflicts with grpc &amp; protobuf. Prefer to use bigtable-hbase-2.x in
+    general and bigtable-hbase-2.x-hadoop for hadoop classpath compatible applications.
+  </description>
+
+  <properties>
+     <hbase.version>${hbase.version.2.0}</hbase.version>
+  </properties>
+
+<dependencies>
+  <dependency>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-hbase-2.x</artifactId>
+    <version>${project.version}</version>
+  </dependency>
+
+  <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+  <dependency>
+    <groupId>org.apache.hbase</groupId>
+    <artifactId>hbase-shaded-client</artifactId>
+    <version>${hbase.version}</version>
+  </dependency>
+
+  <dependency>
+    <groupId>com.google.code.findbugs</groupId>
+    <artifactId>jsr305</artifactId>
+    <version>${jsr305.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>commons-logging</groupId>
+    <artifactId>commons-logging</artifactId>
+    <version>${commons-logging.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>io.dropwizard.metrics</groupId>
+    <artifactId>metrics-core</artifactId>
+    <version>${dropwizard.metrics.version}</version>
+  </dependency>
+
+  <dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-impl</artifactId>
+    <version>${opencensus.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-contrib-zpages</artifactId>
+    <version>${opencensus.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+    <version>${opencensus.version}</version>
+    <exclusions>
+        <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>io.grpc</groupId>
+            <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.google.auto.value</groupId>
+            <artifactId>auto-value</artifactId>
+        </exclusion>
+    </exclusions>
+  </dependency>
+ </dependencies>
+
+  <build>
+    <plugins>
+        <plugin>
+             <artifactId>maven-compiler-plugin</artifactId>
+             <version>3.5.1</version>
+             <configuration>
+                <source>${compileSource.1.8}</source>
+                <target>${compileSource.1.8}</target>
+                <showWarnings>true</showWarnings>
+                <showDeprecation>false</showDeprecation>
+                <compilerArgument>-Xlint:-options</compilerArgument>
+              </configuration>
+        </plugin>    
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadeTestJar>true</shadeTestJar>
+              <shadedArtifactAttached>false</shadedArtifactAttached>
+              <createDependencyReducedPom>true</createDependencyReducedPom>
+              <!-- Need to manually promote to dependencies to keep the structure of hbase-shade-client.
+               Also, this is needed to workaround maven reactor not using dependency-reduced-pom.xml
+               files. See note in bigtable-2.x-hadoop .-->
+              <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+              </transformers>
+              <artifactSet>
+                <excludes>
+                  <!-- exclude user visible deps -->
+                  <exclude>io.dropwizard.metrics:metrics-core</exclude>
+                  <exclude>commons-logging:commons-logging</exclude>
+                  <exclude>com.google.code.findbugs:jsr305</exclude>
+                  <!-- exclude hbase-shaded-client & all of its dependencies -->
+                  <exclude>org.apache.hbase:hbase-shaded-client</exclude>
+                  <exclude>org.slf4j:slf4j-api</exclude>
+                  <exclude>org.slf4j:slf4j-log4j12</exclude>
+                  <exclude>org.slf4j:slf4j-api</exclude>
+                  <exclude>log4j:log4j</exclude>
+                  <exclude>org.apache.htrace:htrace-core</exclude>
+                  <exclude>com.github.stephenc.findbugs:findbugs-annotations</exclude>
+                  <exclude>log4j:log4j</exclude>
+                  <exclude>junit:junit</exclude>
+                  <exclude>org.hamcrest:hamcrest-core</exclude>
+                  <exclude>javax.inject:javax.inject</exclude>
+                </excludes>
+              </artifactSet>
+              <relocations>
+                <relocation>
+                  <pattern>com.google</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.com.google</shadedPattern>
+                  <excludes>
+                    <!-- don't shade our public hbase implementation. This includes com.google.cloud.bigtable.hbase.*
+                     and references to com.google.cloud.bigtable.hbase2_x in the version specific jars.
+                    -->
+                    <exclude>com.google.cloud.bigtable.hbase*.**</exclude>
+                    <exclude>com.google.cloud.bigtable.metrics.**</exclude>
+
+                    <!-- in case maven is called with overlapping goals (ie. mvn install verify),
+                    avoid double relocation -->
+                    <exclude>com.google.bigtable.repackaged.**</exclude>
+                  </excludes>
+                </relocation>
+
+                <relocation>
+                  <pattern>com.fasterxml</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.com.faster.xml</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.twitter</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.com.twitter</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>io.grpc</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
+                </relocation>
+
+                <!-- Opencensus related shading -->
+                <relocation>
+                  <pattern>io.opencensus</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.opencensus</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.json</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.json</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.threeten</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.threeten</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.lmax</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.com.lmax</shadedPattern>
+                </relocation>
+
+                <!-- Relocate netty, taking care to keep the prefix consistent for native tcnative
+                  libs. For details see:
+                    https://github.com/netty/netty/pull/6995
+                    https://github.com/grpc/grpc-java/pull/2485
+                -->
+                <relocation>
+                  <pattern>io.netty</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>META-INF/native/libnetty</pattern>
+                  <shadedPattern>META-INF/native/libcom_google_bigtable_repackaged_netty</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>META-INF/native/netty</pattern>
+                  <shadedPattern>META-INFO/native/com_google_bigtable_repackaged_netty</shadedPattern>
+                </relocation>
+
+                <relocation>
+                  <pattern>org.joda</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.joda</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.apache.http</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.commons.codec</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
