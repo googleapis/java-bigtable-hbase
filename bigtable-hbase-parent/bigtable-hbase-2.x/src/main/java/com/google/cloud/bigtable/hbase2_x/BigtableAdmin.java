@@ -95,7 +95,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public Future<Void> createTableAsync(TableDescriptor desc, byte[][] splitKeys)
       throws IOException {
     createTableAsync((HTableDescriptor) desc, splitKeys);
-    // Consider better options after adding support for async hbase2
+    // TODO Consider better options after adding support for async hbase2
     return CompletableFuture.runAsync(() -> {
     });
   }
@@ -124,7 +124,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    * {@inheritDoc}
    * 
    * Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
-   * Copying the same code here, need to find a better way
+   * Copying the same code here. //TODO - need to find a better way
    */
   @Override
   public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamily)
@@ -140,7 +140,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    * {@inheritDoc}
    * 
    * Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
-   * Copying the same code here, need to find a better way
+   * Copying the same code here. //TODO - need to find a better way 
    */
   @Override
   public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamily)
@@ -156,7 +156,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public Future<Void> deleteNamespaceAsync(String name) throws IOException {
     deleteNamespace(name);
-    // Consider better options after adding support for async hbase2
+    // TODO Consider better options after adding support for async hbase2
     return CompletableFuture.runAsync(() -> {});
   }
 
@@ -164,7 +164,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public Future<Void> disableTableAsync(TableName tableName) throws IOException {
     disableTable(tableName);
-    // Consider better options after adding support for async hbase2
+    // TODO Consider better options after adding support for async hbase2
     return CompletableFuture.runAsync(() -> {});
   }
 
@@ -172,7 +172,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public Future<Void> enableTableAsync(TableName tableName) throws IOException {
     enableTable(tableName);
-    // Consider better options after adding support for async hbase2
+    // TODO Consider better options after adding support for async hbase2
     return CompletableFuture.runAsync(() -> {});
   }
 
@@ -524,7 +524,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public Future<Void> modifyColumnFamilyAsync(TableName arg0, ColumnFamilyDescriptor arg1)
       throws IOException {
-    throw new UnsupportedOperationException("modifyColumnFamilyAsync"); // TODO
+    // TODO - implementable with async hbase2
+    throw new UnsupportedOperationException("modifyColumnFamilyAsync"); 
   }
 
   @Override
@@ -544,12 +545,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public Future<Void> modifyTableAsync(TableDescriptor arg0) throws IOException {
-    throw new UnsupportedOperationException("modifyTableAsync"); // TODO
+    // TODO - implementable with async hbase2
+    throw new UnsupportedOperationException("modifyTableAsync");
   }
 
   @Override
   public Future<Void> modifyTableAsync(TableName arg0, TableDescriptor arg1) throws IOException {
-    throw new UnsupportedOperationException("modifyTableAsync"); // TODO
+    // TODO - implementable with async hbase2
+    throw new UnsupportedOperationException("modifyTableAsync");
   }
 
   @Override
@@ -612,7 +615,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public Future<Void> truncateTableAsync(TableName arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("truncateTableAsync"); // TODO
+    // TODO - implementable with async hbase2
+    throw new UnsupportedOperationException("truncateTableAsync");
   }
 
 }

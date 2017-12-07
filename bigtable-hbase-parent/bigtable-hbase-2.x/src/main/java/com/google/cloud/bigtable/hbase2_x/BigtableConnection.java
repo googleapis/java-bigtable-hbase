@@ -52,6 +52,12 @@ public class BigtableConnection extends AbstractBigtableConnection {
     super(conf);
   }
 
+  /**
+   * Due to hbase 1.x to 2.x binary incompatibilities. {@link HRegionLocation(HRegionInfo
+   * hRegionInfo)} will fail with NoSuchMethodException if not recompiled with hbase 2.0
+   * dependencies. Hence the override. See {@link SampledRowKeysAdapter} for more details.
+   */
+  @Override
   protected SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
       ServerName serverName) {
     return new SampledRowKeysAdapter(tableName, serverName) {

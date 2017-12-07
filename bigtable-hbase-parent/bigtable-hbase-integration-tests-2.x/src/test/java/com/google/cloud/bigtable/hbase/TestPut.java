@@ -219,12 +219,15 @@ public class TestPut extends AbstractTest {
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, goodQual, goodValue);
     put.addColumn(badfamily, badQual, badValue);
+    
+    // TODO investigate the changed behavior - hbase 1.x threw RetriesExhaustedWithDetailsException
     NoSuchColumnFamilyException thrownException = null;
     try {
       table.put(put);
     } catch (NoSuchColumnFamilyException e) {
       thrownException = e;
     }
+    
     Assert.assertNotNull("Exception should have been thrown", thrownException);
     //Assert.assertEquals("Expecting one exception", 1, thrownException.getNumExceptions());
     //Assert.assertArrayEquals("Row key", rowKey, thrownException.getRow.getRow());
