@@ -31,7 +31,6 @@ limitations under the License.
     </description>
 
     <modules>
-        <module>bigtable-protos</module>
         <module>bigtable-client-core</module>
     </modules>
 </project>
