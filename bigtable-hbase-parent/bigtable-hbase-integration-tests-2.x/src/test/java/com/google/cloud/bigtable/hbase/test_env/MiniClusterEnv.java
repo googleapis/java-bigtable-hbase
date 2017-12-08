@@ -33,6 +33,9 @@ class MiniClusterEnv extends SharedTestEnv {
   protected void setup() throws Exception {
     LOG.info("Starting hbase minicluster");
 
+    System.setProperty("org.apache.hadoop.hbase.shaded.io.netty.packagePrefix",
+      "org.apache.hadoop.hbase.shaded.");
+
     helper = HBaseTestingUtility.createLocalHTU();
     helper.startMiniCluster();
 
