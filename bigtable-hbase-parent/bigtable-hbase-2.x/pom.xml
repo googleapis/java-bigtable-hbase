@@ -55,6 +55,52 @@ limitations under the License.
        </exclusions>
    </dependency>
 
+    <!-- GRPC and tcnative -->
+    <!-- 
+        These dependencies are copied to bigtable-hbase-1.x and bigtable-hbase-2.x.
+
+        The copy has to happen to ensure consistency of all io.netty and io.grpc versions
+        even if there is a different transitive dependency of grpc from other clients.
+        Specifically this should avoid problems when stackdriver tracing is used in
+        conjunction with Cloud Bigtable.
+    -->
+    <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>${protobuff-java.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-protobuf</artifactId>
+        <version>${grpc.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-auth</artifactId>
+        <version>${grpc.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-core</artifactId>
+        <version>${grpc.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-netty</artifactId>
+        <version>${grpc.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-stub</artifactId>
+        <version>${grpc.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-tcnative-boringssl-static</artifactId>
+        <version>${netty-tcnative-boringssl-static.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-graphite</artifactId>
