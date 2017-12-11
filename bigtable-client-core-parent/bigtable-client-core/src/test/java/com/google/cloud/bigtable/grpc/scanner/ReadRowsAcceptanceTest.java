@@ -184,13 +184,14 @@ public class ReadRowsAcceptanceTest {
   private void addResponses(List<FlatRow> responses, List<Throwable> exceptions)
       throws IOException {
     RowMerger rowMerger = createRowMerger(responses, exceptions);
-    ReadRowsResponse.Builder responseBuilder = ReadRowsResponse.newBuilder();
+
     for (String chunkStr : testCase.chunks) {
+      ReadRowsResponse.Builder responseBuilder = ReadRowsResponse.newBuilder();
       CellChunk.Builder ccBuilder = CellChunk.newBuilder();
       TextFormat.merge(new StringReader(chunkStr), ccBuilder);
       responseBuilder.addChunks(ccBuilder.build());
+      rowMerger.onNext(responseBuilder.build());
     }
-    rowMerger.onNext(responseBuilder.build());
     if (exceptions.isEmpty()) {
       rowMerger.onCompleted();
     }
