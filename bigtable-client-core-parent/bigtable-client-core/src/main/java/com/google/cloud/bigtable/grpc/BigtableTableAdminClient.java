@@ -23,6 +23,8 @@ import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.Empty;
 
 /**
  * A client for the Cloud Bigtable Table Admin API.
@@ -35,25 +37,41 @@ public interface BigtableTableAdminClient {
   /**
    * Creates a new table. The table can be created with a full set of initial column families,
    * specified in the request.
-   * @param request a {@link com.google.bigtable.admin.v2.CreateTableRequest} object.
+   * @param request a {@link CreateTableRequest} object.
    */
   void createTable(CreateTableRequest request);
 
   /**
    * Gets the details of a table.
    *
-   * @param request a {@link com.google.bigtable.admin.v2.GetTableRequest} object.
-   * @return a {@link com.google.bigtable.admin.v2.Table} object.
+   * @param request a {@link GetTableRequest} object.
+   * @return a {@link Table} object.
    */
   Table getTable(GetTableRequest request);
 
   /**
+   * Gets the details of a table asynchronously.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.GetTableRequest} object.
+   * @return a {@link ListenableFuture} that returns a {@link Table} object.
+   */
+  ListenableFuture<Table> getTableAsync(GetTableRequest request);
+
+  /**
    * Lists the names of all tables in an instance.
    *
-   * @param request a {@link com.google.bigtable.admin.v2.ListTablesRequest} object.
-   * @return a {@link com.google.bigtable.admin.v2.ListTablesResponse} object.
+   * @param request a {@link ListTablesRequest} object.
+   * @return a {@link ListTablesResponse} object.
    */
   ListTablesResponse listTables(ListTablesRequest request);
+
+  /**
+   * Lists the names of all tables in an instance asynchronously.
+   *
+   * @param request a {@link ListTablesRequest} object.
+   * @return a {@link ListenableFuture} that returns a {@link ListTablesResponse} object.
+   */
+  ListenableFuture<ListTablesResponse> listTablesAsync(ListTablesRequest request);
 
   /**
    * Permanently deletes a specified table and all of its data.
@@ -63,16 +81,42 @@ public interface BigtableTableAdminClient {
   void deleteTable(DeleteTableRequest request);
 
   /**
+   * Permanently deletes a specified table and all of its data.
+   *
+   * @param request a {@link DeleteTableRequest} object.
+   * @return a {@link ListenableFuture} that returns {@link Empty} object.
+   */
+  ListenableFuture<Empty> deleteTableAsync(DeleteTableRequest request);
+
+  /**
    * Creates, modifies or deletes a new column family within a specified table.
    *
-   * @param request a {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest} object.
+   * @param request a {@link ModifyColumnFamiliesRequest} object.
+   * @return return {@link Table} object  that contains the updated table structure.
    */
-  void modifyColumnFamily(ModifyColumnFamiliesRequest request);
+  Table modifyColumnFamily(ModifyColumnFamiliesRequest request);
+
+  /**
+   * Creates, modifies or deletes a new column family within a specified table.
+   *
+   * @param request a {@link ModifyColumnFamiliesRequest} object.
+   * @return a {@link ListenableFuture} that returns {@link Table} object that contains the updated
+   *         table structure.
+   */
+  ListenableFuture<Table> modifyColumnFamilyAsync(ModifyColumnFamiliesRequest request);
+
+  /**
+   * Permanently deletes all rows in a range.
+   *
+   * @param request a {@link DropRowRangeRequest} object.
+   */
+  void dropRowRange(DropRowRangeRequest request);
 
   /**
    * Permanently deletes all rows in a range.
    *
    * @param request a {@link com.google.bigtable.admin.v2.DropRowRangeRequest} object.
+   * @return a {@link ListenableFuture} that returns {@link Empty} object.
    */
-  void dropRowRange(DropRowRangeRequest request);
+  ListenableFuture<Empty> dropRowRangeAsync(DropRowRangeRequest request);
 }

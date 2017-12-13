@@ -34,6 +34,7 @@ import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryOperation;
 import com.google.common.base.Predicates;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Empty;
 
 import io.grpc.CallOptions;
@@ -95,8 +96,20 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   /** {@inheritDoc} */
   @Override
+  public ListenableFuture<ListTablesResponse> listTablesAsync(ListTablesRequest request) {
+    return createUnaryListener(request, listTablesRpc, request.getParent()).getAsyncResult();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public Table getTable(GetTableRequest request) {
     return createUnaryListener(request, getTableRpc, request.getName()).getBlockingResult();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ListenableFuture<Table> getTableAsync(GetTableRequest request) {
+    return createUnaryListener(request, getTableRpc, request.getName()).getAsyncResult();
   }
 
   /** {@inheritDoc} */
@@ -107,8 +120,16 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   /** {@inheritDoc} */
   @Override
-  public void modifyColumnFamily(ModifyColumnFamiliesRequest request) {
-    createUnaryListener(request, modifyColumnFamilyRpc, request.getName()).getBlockingResult();
+  public Table modifyColumnFamily(ModifyColumnFamiliesRequest request) {
+    return createUnaryListener(request, modifyColumnFamilyRpc, request.getName())
+        .getBlockingResult();
+  }
+
+  /** {@inheritDoc} 
+   * @return */
+  @Override
+  public ListenableFuture<Table> modifyColumnFamilyAsync(ModifyColumnFamiliesRequest request) {
+    return createUnaryListener(request, modifyColumnFamilyRpc, request.getName()).getAsyncResult();
   }
 
   /** {@inheritDoc} */
@@ -117,10 +138,24 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     createUnaryListener(request, deleteTableRpc, request.getName()).getBlockingResult();
   }
 
+  /** {@inheritDoc} 
+   * @return */
+  @Override
+  public ListenableFuture<Empty> deleteTableAsync(DeleteTableRequest request) {
+    return createUnaryListener(request, deleteTableRpc, request.getName()).getAsyncResult();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void dropRowRange(DropRowRangeRequest request) {
     createUnaryListener(request, dropRowRangeRpc, request.getName()).getBlockingResult();
+  }
+
+  /** {@inheritDoc} 
+   * @return */
+  @Override
+  public ListenableFuture<Empty> dropRowRangeAsync(DropRowRangeRequest request) {
+    return createUnaryListener(request, dropRowRangeRpc, request.getName()).getAsyncResult();
   }
 
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
