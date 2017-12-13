@@ -84,6 +84,9 @@ limitations under the License.
         <artifactId>netty-tcnative-boringssl-static</artifactId>
         <version>${netty-tcnative-boringssl-static.version}</version>
     </dependency>
+
+    <!-- END GRPC and tcnative -->
+
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-graphite</artifactId>
