@@ -45,6 +45,7 @@ import com.google.api.client.util.Clock;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.bigtable.v2.ReadRowsResponse.Builder;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
@@ -73,18 +74,21 @@ public class RetryingReadRowsOperationTest {
       ReadRowsRequest.newBuilder()
           .setRows(RowSet.newBuilder().addRowRanges(RowRange.newBuilder()
               .setStartKeyClosed(ByteString.EMPTY).setEndKeyOpen(ByteString.EMPTY).build()))
+          .setRowsLimit(10)
           .build();
 
-  public static ReadRowsResponse buildResponse(ByteString key) throws UnsupportedEncodingException {
-    return ReadRowsResponse.newBuilder()
-        .addChunks(CellChunk.newBuilder()
-          .setRowKey(key)
-          .setFamilyName(StringValue.newBuilder().setValue("Family"))
-          .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFrom("qualifier", "UTF-8")))
-          .setValue(ByteString.copyFrom("value", "UTF-8"))
-          .setCommitRow(true)
-          .build())
-        .build();
+  public static ReadRowsResponse buildResponse(ByteString ... keys) throws UnsupportedEncodingException {
+    Builder builder = ReadRowsResponse.newBuilder();
+    for (ByteString key : keys) {
+      builder.addChunks(CellChunk.newBuilder()
+        .setRowKey(key)
+        .setFamilyName(StringValue.newBuilder().setValue("Family"))
+        .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFrom("qualifier", "UTF-8")))
+        .setValue(ByteString.copyFrom("value", "UTF-8"))
+        .setCommitRow(true)
+        .build());
+    }
+    return builder.build();
   }
 
   @Rule
@@ -165,12 +169,27 @@ public class RetryingReadRowsOperationTest {
     ReadRowsResponse response = buildResponse(key);
     underTest.onMessage(response);
     verify(mockFlatRowObserver, times(1)).onNext(any(FlatRow.class));
-    checkRetryRequest(underTest, key);
+    checkRetryRequest(underTest, key, 9);
     verify(mockClientCall, times(2)).request(eq(1));
 
     finishOK(underTest, 0);
   }
 
+
+  @Test
+  public void testDoubleResponse() throws UnsupportedEncodingException {
+    RetryingReadRowsOperation underTest = createOperation(mockFlatRowObserver);
+    start(underTest);
+    ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
+    ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
+    ReadRowsResponse response = buildResponse(key1, key2);
+    underTest.onMessage(response);
+    verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
+    checkRetryRequest(underTest, key2, 8);
+    verify(mockClientCall, times(2)).request(eq(1));
+
+    finishOK(underTest, 0);
+  }
 
   @Test
   public void testSingleResponseWithQueue() throws UnsupportedEncodingException {
@@ -180,7 +199,7 @@ public class RetryingReadRowsOperationTest {
     ByteString key = ByteString.copyFrom("SomeKey", "UTF-8");
     ReadRowsResponse response = buildResponse(key);
     underTest.onMessage(response);
-    checkRetryRequest(underTest, key);
+    checkRetryRequest(underTest, key, 9);
 
     verify(mockClientCall, times(1)).request(eq(1));
 
@@ -197,7 +216,7 @@ public class RetryingReadRowsOperationTest {
     underTest.onMessage(buildResponse(key1));
     underTest.onMessage(buildResponse(key2));
     verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
-    checkRetryRequest(underTest, key2);
+    checkRetryRequest(underTest, key2, 8);
     verify(mockClientCall, times(3)).request(eq(1));
 
     finishOK(underTest, 0);
@@ -216,7 +235,7 @@ public class RetryingReadRowsOperationTest {
     Assert.assertNotSame(rw1, underTest.getRowMerger());
     underTest.onMessage(buildResponse(key2));
     verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
-    checkRetryRequest(underTest, key2);
+    checkRetryRequest(underTest, key2, 8);
     verify(mockClientCall, times(4)).request(eq(1));
 
     finishOK(underTest, 1);
@@ -237,17 +256,17 @@ public class RetryingReadRowsOperationTest {
     performSuccessfulScanTimeouts(underTest, time);
     Assert.assertNotSame(rw1, underTest.getRowMerger());
     underTest.onClose(Status.ABORTED, new Metadata());
-    checkRetryRequest(underTest, key1);
+    checkRetryRequest(underTest, key1, 9);
 
     // a message gets through
     underTest.onMessage(buildResponse(key2));
     verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
-    checkRetryRequest(underTest, key2);
+    checkRetryRequest(underTest, key2, 8);
 
     // more successful retries
     performSuccessfulScanTimeouts(underTest, time);
 
-    checkRetryRequest(underTest, key2);
+    checkRetryRequest(underTest, key2, 8);
     verify(mockClientCall, times(RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 4)).request(eq(1));
 
     // a succsesful finish.  There were 2 x RETRY_OPTIONS.getMaxScanTimeoutRetries() timeouts,
@@ -268,7 +287,7 @@ public class RetryingReadRowsOperationTest {
     // N successful scan timeout retries
     performSuccessfulScanTimeouts(underTest, time);
 
-    checkRetryRequest(underTest, key);
+    checkRetryRequest(underTest, key, 9);
 
     // one last scan timeout that fails.
     thrown.expect(BigtableRetriesExhaustedException.class);
@@ -290,14 +309,14 @@ public class RetryingReadRowsOperationTest {
     underTest.onClose(Status.ABORTED, new Metadata());
     Assert.assertNotNull(underTest.getCurrentBackoff());
     expectedRetryCount++;
-    checkRetryRequest(underTest, key1);
+    checkRetryRequest(underTest, key1, 9);
 
     // N successful scan timeout retries
     for (int i = 0; i < 2; i++) {
       performTimeout(underTest, time);
       expectedRetryCount++;
     }
-    checkRetryRequest(underTest, key1);
+    checkRetryRequest(underTest, key1, 9);
     Assert.assertNull(underTest.getCurrentBackoff());
     underTest.onMessage(buildResponse(key2));
 
@@ -362,8 +381,9 @@ public class RetryingReadRowsOperationTest {
     verify(mockRpcTimerContext, times(expectedRetryCount + 1)).close();
   }
 
-  private static void checkRetryRequest(RetryingReadRowsOperation underTest, ByteString key) {
-    Assert.assertEquals(key,
-      underTest.getRetryRequest().getRows().getRowRanges(0).getStartKeyOpen());
+  private static void checkRetryRequest(RetryingReadRowsOperation underTest, ByteString key, int rowCount) {
+    ReadRowsRequest request = underTest.getRetryRequest();
+    Assert.assertEquals(key, request.getRows().getRowRanges(0).getStartKeyOpen());
+    Assert.assertEquals(rowCount, request.getRowsLimit());
   }
 }
