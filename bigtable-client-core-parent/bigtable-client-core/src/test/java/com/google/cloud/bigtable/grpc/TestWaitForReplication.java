@@ -39,7 +39,7 @@ import io.grpc.StatusException;
 
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class TestBigtableTableAdminGrpcClient {
+public class TestWaitForReplication {
 
   // Class that implements a consistency service that returns dummy tokens and returns consistent
   // after a configurable number of calls.
@@ -88,7 +88,7 @@ public class TestBigtableTableAdminGrpcClient {
       responseObserver.onNext(response);
       responseObserver.onCompleted();
     }
-  };
+  }
 
   @Rule
   public final GrpcServerRule grpcServerRule = new GrpcServerRule();
