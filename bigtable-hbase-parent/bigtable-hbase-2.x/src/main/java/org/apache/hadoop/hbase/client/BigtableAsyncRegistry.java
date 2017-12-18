@@ -21,8 +21,12 @@ import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 
 /**
- * Bigtable implementation of {@link AsyncRegistry}}. Hard codes required values as corresponding Bigtable
- * components do not exist
+ * Bigtable implementation of {@link AsyncRegistry}. The default Habse 2 implementation provided by
+ * {@link ZKAsyncRegistry} assumes a ZooKeeper environment, which is not the case for Bigtable.
+ * 
+ * This class is injected via the system property: "hbase.client.registry.impl" For further details
+ * See {@link AsyncRegistryFactory#REGISTRY_IMPL_CONF_KEY}, and
+ * {@link ConnectionFactory#createAsyncConnection()}
  * 
  * @author spollapally
  */
@@ -34,7 +38,7 @@ public class BigtableAsyncRegistry implements AsyncRegistry {
   public void close() {}
 
   /**
-   * getClusterId() is required for creating and asyncConnection successfully. see
+   * A non null return value is required for successful creation of asyncConnection. see
    * {@link ConnectionFactory#createAsyncConnection()}
    */
   @Override

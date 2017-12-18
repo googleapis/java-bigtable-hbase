@@ -31,6 +31,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
+/**
+ * Unit tests for {@link FutureUtils}
+ * 
+ * @author spollapally
+ */
 public class FutureUtilsTest {
 
   @Rule

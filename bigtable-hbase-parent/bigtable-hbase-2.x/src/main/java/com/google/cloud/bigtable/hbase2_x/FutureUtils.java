@@ -21,7 +21,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * Utility methods for converting Future types 
+ * Utility methods for converting guava {@link ListenableFuture} Future to
+ * {@link CompletableFuture}. Useful to convert the ListenableFuture types used by
+ * bigtable-client-core component to Java 8 CompletableFuture types used in Hbase 2
+ * 
  * @author spollapally
  */
 public class FutureUtils {
