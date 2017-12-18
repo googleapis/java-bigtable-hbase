@@ -35,8 +35,8 @@ import java.util.Map.Entry;
  * @version $Id: $Id
  */
 public class TableAdapter {
-  private final BigtableInstanceName bigtableInstanceName;
-  private final ColumnDescriptorAdapter columnDescriptorAdapter;
+  protected final BigtableInstanceName bigtableInstanceName;
+  protected final ColumnDescriptorAdapter columnDescriptorAdapter;
 
   /**
    * <p>Constructor for TableAdapter.</p>
