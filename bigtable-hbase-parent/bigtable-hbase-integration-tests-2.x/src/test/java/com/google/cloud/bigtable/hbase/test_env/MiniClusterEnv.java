@@ -16,11 +16,13 @@
 package com.google.cloud.bigtable.hbase.test_env;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 
@@ -67,5 +69,20 @@ class MiniClusterEnv extends SharedTestEnv {
     }
 
     return ConnectionFactory.createConnection(clientConfig);
+  }
+
+  @Override
+  public CompletableFuture<AsyncConnection> createAsyncConnection() throws IOException {
+    Configuration clientConfig = HBaseConfiguration.create();
+    
+    String[] keys = new String[]{
+        "hbase.zookeeper.quorum",
+        "hbase.zookeeper.property.clientPort"
+    };
+    for (String key : keys) {
+      clientConfig.set(key, helper.getConfiguration().get(key));
+    }
+
+    return ConnectionFactory.createAsyncConnection(clientConfig);
   }
 }
