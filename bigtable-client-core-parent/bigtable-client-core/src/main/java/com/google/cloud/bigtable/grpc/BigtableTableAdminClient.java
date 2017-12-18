@@ -42,6 +42,14 @@ public interface BigtableTableAdminClient {
   void createTable(CreateTableRequest request);
 
   /**
+   * Creates a new table asynchronously. The table can be created with a full set of initial column
+   * families, specified in the request.
+   * 
+   * @param request a {@link CreateTableRequest} object.
+   */
+  ListenableFuture<Table> createTableAsync(CreateTableRequest request);
+
+  /**
    * Gets the details of a table.
    *
    * @param request a {@link GetTableRequest} object.

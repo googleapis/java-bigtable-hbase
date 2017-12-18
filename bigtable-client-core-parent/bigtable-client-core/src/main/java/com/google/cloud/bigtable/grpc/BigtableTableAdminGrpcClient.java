@@ -118,6 +118,13 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     createUnaryListener(request, createTableRpc, request.getParent()).getBlockingResult();
   }
 
+  /** {@inheritDoc} 
+   * @return */
+  @Override
+  public ListenableFuture<Table> createTableAsync(CreateTableRequest request) {
+    return createUnaryListener(request, createTableRpc, request.getParent()).getAsyncResult();
+  }
+
   /** {@inheritDoc} */
   @Override
   public Table modifyColumnFamily(ModifyColumnFamiliesRequest request) {
