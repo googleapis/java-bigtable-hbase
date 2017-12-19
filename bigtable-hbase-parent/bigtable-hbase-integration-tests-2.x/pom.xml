@@ -33,6 +33,8 @@ limitations under the License.
     <properties>
         <hbase.version>${hbase.version.2.0}</hbase.version>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase2_x.BigtableConnection</google.bigtable.connection.impl>
+        <google.bigtable.async.connection.impl>org.apache.hadoop.hbase.client.BigtableAsyncConnection</google.bigtable.async.connection.impl>
+        <google.bigtable.registry.impl>org.apache.hadoop.hbase.client.BigtableAsyncRegistry</google.bigtable.registry.impl>
     </properties>
 
     <profiles>
@@ -65,6 +67,8 @@ limitations under the License.
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
+                                        <google.bigtable.async.connection.impl>${google.bigtable.async.connection.impl}</google.bigtable.async.connection.impl>
+                                        <google.bigtable.registry.impl>${google.bigtable.registry.impl}</google.bigtable.registry.impl>
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>

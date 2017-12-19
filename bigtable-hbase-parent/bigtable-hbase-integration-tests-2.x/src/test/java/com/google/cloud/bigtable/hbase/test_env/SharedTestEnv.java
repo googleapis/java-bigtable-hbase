@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.test_env;
 
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.Connection;
 
 /**
@@ -70,4 +71,6 @@ abstract class SharedTestEnv {
   protected abstract void teardown() throws IOException;
 
   public abstract Connection createConnection() throws IOException;
+  
+  public abstract AsyncConnection createAsyncConnection() throws Exception;
 }

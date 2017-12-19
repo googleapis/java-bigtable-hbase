@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 
@@ -38,6 +39,8 @@ class BigtableEnv extends SharedTestEnv {
 
   private static final Set<String> KEYS = Sets.newHashSet(
       "hbase.client.connection.impl",
+      "hbase.client.async.connection.impl",
+      "hbase.client.registry.impl",
       BigtableOptionsFactory.BIGTABLE_PORT_KEY,
       BigtableOptionsFactory.BIGTABLE_HOST_KEY,
       BigtableOptionsFactory.BIGTABLE_INSTANCE_ADMIN_HOST_KEY,
@@ -53,12 +56,21 @@ class BigtableEnv extends SharedTestEnv {
   protected void setup() throws IOException {
     configuration = HBaseConfiguration.create();
 
-
     String connectionClass = System.getProperty("google.bigtable.connection.impl");
     if (connectionClass != null) {
       configuration.set("hbase.client.connection.impl", connectionClass);
     }
 
+    String asyncConnectionClass = System.getProperty("google.bigtable.async.connection.impl");
+    if (asyncConnectionClass != null) {
+      configuration.set("hbase.client.async.connection.impl", asyncConnectionClass);
+    }
+
+    String registryClass = System.getProperty("google.bigtable.registry.impl");
+    if (registryClass != null) {
+      configuration.set("hbase.client.registry.impl", registryClass);
+    }
+    
     for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
       if (KEYS.contains(entry.getKey())) {
         configuration.set(entry.getKey().toString(), entry.getValue().toString());
@@ -98,4 +110,9 @@ class BigtableEnv extends SharedTestEnv {
   public Connection createConnection() throws IOException {
     return ConnectionFactory.createConnection(configuration);
   }
+  
+  public AsyncConnection createAsyncConnection() throws Exception {
+    return ConnectionFactory.createAsyncConnection(configuration).get();
+  }
+
 }
