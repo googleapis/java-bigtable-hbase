@@ -301,10 +301,11 @@ public class TestBulkMutationAwaitCompletion {
     BulkMutation bulkMutation =
         new BulkMutation(
             TestBulkMutation.TABLE_NAME,
-            mockClient,
+            "", mockClient,
             operationAccountant,
             mockScheduler,
-            options);
+            options
+        );
     bulkMutation.clock = clock;
     return bulkMutation;
   }

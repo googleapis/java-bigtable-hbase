@@ -60,7 +60,8 @@ class ReadRowsRequestManager {
   ReadRowsRequest buildUpdatedRequest() {
     ReadRowsRequest.Builder newRequest = ReadRowsRequest.newBuilder()
         .setRows(filterRows())
-        .setTableName(originalRequest.getTableName());
+        .setTableName(originalRequest.getTableName())
+        .setAppProfileId(originalRequest.getAppProfileId());
 
     if (originalRequest.hasFilter()) {
       newRequest.setFilter(originalRequest.getFilter());

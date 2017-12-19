@@ -58,6 +58,9 @@ public class BigtableOptions implements Serializable {
   /** Constant <code>BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT=getDefaultDataChannelCount()</code> */
   public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = getDefaultDataChannelCount();
 
+  /** Constant <code>BIGTABLE_APP_PROFILE_DEFAULT=""</code>, defaults to the server default app profile */
+  public static final String BIGTABLE_APP_PROFILE_DEFAULT = "";
+
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
   private static int getDefaultDataChannelCount() {
@@ -76,6 +79,7 @@ public class BigtableOptions implements Serializable {
     private String userAgent;
 
     private String instanceId;
+    private String appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
 
     // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
     private String dataHost = BIGTABLE_DATA_HOST_DEFAULT;
@@ -102,6 +106,7 @@ public class BigtableOptions implements Serializable {
     private Builder(BigtableOptions original) {
       this.projectId = original.projectId;
       this.instanceId = original.instanceId;
+      this.appProfileId = original.appProfileId;
       this.userAgent = original.userAgent;
       this.dataHost = original.dataHost;
       this.tableAdminHost = original.tableAdminHost;
@@ -142,6 +147,12 @@ public class BigtableOptions implements Serializable {
 
     public Builder setInstanceId(String instanceId) {
       this.instanceId = instanceId;
+      return this;
+    }
+
+    public Builder setAppProfileId(String appProfileId) {
+      Preconditions.checkNotNull(appProfileId);
+      this.appProfileId = appProfileId;
       return this;
     }
 
@@ -246,6 +257,7 @@ public class BigtableOptions implements Serializable {
           port,
           projectId,
           instanceId,
+          appProfileId,
           userAgent,
           usePlaintextNegotiation,
           useCachedDataPool,
@@ -263,6 +275,7 @@ public class BigtableOptions implements Serializable {
   private final int port;
   private final String projectId;
   private final String instanceId;
+  private final String appProfileId;
   private final String userAgent;
   private final int dataChannelCount;
   private final boolean usePlaintextNegotiation;
@@ -283,6 +296,7 @@ public class BigtableOptions implements Serializable {
       port = 0;
       projectId = null;
       instanceId = null;
+      appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
       userAgent = null;
       dataChannelCount = 1;
       instanceName = null;
@@ -302,6 +316,7 @@ public class BigtableOptions implements Serializable {
       int port,
       String projectId,
       String instanceId,
+      String appProfileId,
       String userAgent,
       boolean usePlaintextNegotiation,
       boolean useCachedChannel,
@@ -318,6 +333,7 @@ public class BigtableOptions implements Serializable {
     this.port = port;
     this.projectId = projectId;
     this.instanceId = instanceId;
+    this.appProfileId = appProfileId;
     this.credentialOptions = credentialOptions;
     this.userAgent = userAgent;
     this.retryOptions = retryOptions;
@@ -386,6 +402,15 @@ public class BigtableOptions implements Serializable {
    */
   public String getInstanceId() {
     return instanceId;
+  }
+
+  /**
+   * <p>Getter for the field <code>appProfileId</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
+  public String getAppProfileId() {
+    return appProfileId;
   }
 
   /**
@@ -488,6 +513,7 @@ public class BigtableOptions implements Serializable {
         && Objects.equals(dataHost, other.dataHost)
         && Objects.equals(projectId, other.projectId)
         && Objects.equals(instanceId, other.instanceId)
+        && Objects.equals(appProfileId, other.appProfileId)
         && Objects.equals(userAgent, other.userAgent)
         && Objects.equals(credentialOptions, other.credentialOptions)
         && Objects.equals(retryOptions, other.retryOptions)
@@ -505,6 +531,7 @@ public class BigtableOptions implements Serializable {
         .add("instanceAdminHost", instanceAdminHost)
         .add("projectId", projectId)
         .add("instanceId", instanceId)
+        .add("appProfileId", appProfileId)
         .add("userAgent", userAgent)
         .add("credentialType", credentialOptions.getCredentialType())
         .add("port", port)

@@ -16,6 +16,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -113,8 +114,9 @@ public class BulkMutation {
     private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
 
     @VisibleForTesting
-    final MutateRowsRequest.Builder builder =
-        MutateRowsRequest.newBuilder().setTableName(tableName);
+    final MutateRowsRequest.Builder builder = MutateRowsRequest.newBuilder()
+        .setTableName(tableName)
+        .setAppProfileId(appProfileId);
 
     private ListenableFuture<List<MutateRowsResponse>> mutateRowsFuture;
     private ScheduledFuture<?> stalenessFuture;
@@ -344,6 +346,7 @@ public class BulkMutation {
   private final int maxRowKeyCount;
   private final long maxRequestSize;
   private final long autoflushMs;
+  private final String appProfileId;
   private final Meter batchMeter =
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.batch.meter");
 
@@ -358,20 +361,19 @@ public class BulkMutation {
    *          RPCs that this object performed.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
    *          retries.
-   * @param bulkOptions a {@link BulkOptions} with the user specified options for the behavior of
-   *          this instance.
    */
   public BulkMutation(
       BigtableTableName tableName,
       BigtableDataClient client,
       ScheduledExecutorService retryExecutorService,
-      BulkOptions bulkOptions) {
-    this(tableName, client, new OperationAccountant(), retryExecutorService, bulkOptions);
+      BigtableOptions bigtableOptions) {
+    this(tableName, bigtableOptions.getAppProfileId(), client, new OperationAccountant(), retryExecutorService, bigtableOptions.getBulkOptions());
   }
 
+  @VisibleForTesting
   BulkMutation(
       BigtableTableName tableName,
-      BigtableDataClient client,
+      String appProfileId, BigtableDataClient client,
       OperationAccountant operationAccountant,
       ScheduledExecutorService retryExecutorService,
       BulkOptions bulkOptions) {
@@ -382,6 +384,7 @@ public class BulkMutation {
     this.maxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();
     this.maxRequestSize = bulkOptions.getBulkMaxRequestSize();
     this.autoflushMs = bulkOptions.getAutoflushMs();
+    this.appProfileId = appProfileId;
   }
 
   public ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {

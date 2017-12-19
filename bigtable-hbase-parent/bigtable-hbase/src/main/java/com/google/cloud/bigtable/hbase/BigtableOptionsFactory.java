@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_APP_PROFILE_DEFAULT;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
@@ -72,6 +73,9 @@ public class BigtableOptionsFactory {
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   /** Constant <code>INSTANCE_ID_KEY="google.bigtable.instance.id"</code> */
   public static final String INSTANCE_ID_KEY = "google.bigtable.instance.id";
+  /** Constant <code>INSTANCE_ID_KEY="google.bigtable.instance.id"</code> */
+  public static final String APP_PROFILE_ID_KEY = "google.bigtable.app_profile.id";
+
   /** Constant <code>CLUSTER_KEY="google.bigtable.cluster.name"</code> */
   public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
   /** Constant <code>ZONE_KEY="google.bigtable.zone.name"</code> */
@@ -285,6 +289,7 @@ public class BigtableOptionsFactory {
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
     bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
+    bigtableOptionsBuilder.setAppProfileId(configuration.get(APP_PROFILE_ID_KEY, BIGTABLE_APP_PROFILE_DEFAULT));
 
     bigtableOptionsBuilder.setDataHost(
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));

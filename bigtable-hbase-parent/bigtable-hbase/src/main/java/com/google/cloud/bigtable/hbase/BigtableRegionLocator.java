@@ -51,18 +51,19 @@ public abstract class BigtableRegionLocator implements RegionLocator {
   private final BigtableDataClient client;
   private final SampledRowKeysAdapter adapter;
   private final BigtableTableName bigtableTableName;
+  private final BigtableOptions options;
   private List<HRegionLocation> regions;
   private long regionsFetchTimeMillis;
 
   /**
    * <p>Constructor for BigtableRegionLocator.</p>
-   *
-   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
+   *  @param tableName a {@link TableName} object.
+   * @param options a {@link BigtableOptions} object.
+   * @param client a {@link BigtableDataClient} object.
    */
   public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableDataClient client) {
     this.tableName = tableName;
+    this.options = options;
     this.client = client;
     this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
@@ -82,8 +83,9 @@ public abstract class BigtableRegionLocator implements RegionLocator {
       return regions;
     }
 
-    SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setTableName(bigtableTableName.toString());
+    SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder()
+        .setTableName(bigtableTableName.toString())
+        .setAppProfileId(options.getAppProfileId());
     LOG.debug("Sampling rowkeys for table %s", request.getTableName());
 
     try {

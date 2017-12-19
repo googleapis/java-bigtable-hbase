@@ -153,6 +153,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     };
       
   // Member variables
+  private final String appProfileId;
   private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
 
@@ -180,6 +181,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       Channel channel,
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions) {
+    this.appProfileId = bigtableOptions.getAppProfileId();
     this.retryExecutorService = retryExecutorService;
     this.retryOptions = bigtableOptions.getRetryOptions();
 
@@ -232,28 +234,43 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public MutateRowResponse mutateRow(MutateRowRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
     return createUnaryListener(request, mutateRowRpc, request.getTableName()).getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<MutateRowResponse> mutateRowAsync(MutateRowRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
     return createUnaryListener(request, mutateRowRpc, request.getTableName()).getAsyncResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public List<MutateRowsResponse> mutateRows(MutateRowsRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
     return createMutateRowsOperation(request).getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
     return createMutateRowsOperation(request).getAsyncResult();
   }
 
   private RetryingMutateRowsOperation createMutateRowsOperation(MutateRowsRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
     CallOptions callOptions = getCallOptions(mutateRowsRpc.getMethodDescriptor(), request);
     Metadata metadata = createMetadata(request.getTableName());
     return new RetryingMutateRowsOperation(
@@ -263,6 +280,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     return createUnaryListener(request, checkAndMutateRpc, request.getTableName())
         .getBlockingResult();
   }
@@ -271,12 +292,20 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     return createUnaryListener(request, checkAndMutateRpc, request.getTableName()).getAsyncResult();
   }
 
   /** {@inheritDoc} */
   @Override
   public ReadModifyWriteRowResponse readModifyWriteRow(ReadModifyWriteRowRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     return createUnaryListener(request, readWriteModifyRpc, request.getTableName())
         .getBlockingResult();
   }
@@ -285,6 +314,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<ReadModifyWriteRowResponse> readModifyWriteRowAsync(
       ReadModifyWriteRowRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     return createUnaryListener(request, readWriteModifyRpc, request.getTableName())
         .getAsyncResult();
   }
@@ -292,6 +325,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public List<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     return createStreamingListener(request, sampleRowKeysAsync, request.getTableName())
         .getBlockingResult();
   }
@@ -300,6 +337,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(
       SampleRowKeysRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     return createStreamingListener(request, sampleRowKeysAsync, request.getTableName())
         .getAsyncResult();
   }
@@ -307,6 +348,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     return Futures.transform(
         createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
         ROW_LIST_TRANSFORMER);
@@ -315,6 +360,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     return Futures.transform(
         createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
         FLAT_ROW_LIST_TRANSFORMER);
@@ -323,6 +372,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public List<FlatRow> readFlatRowsList(ReadRowsRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     return FLAT_ROW_LIST_TRANSFORMER.apply(
       createStreamingListener(request, readRowsAsync, request.getTableName()).getBlockingResult());
   }
@@ -364,6 +417,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public ResultScanner<Row> readRows(ReadRowsRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
     // TODO(sduskis): Figure out a way to perform operation level metrics with the
@@ -401,6 +458,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
     final ResponseQueueReader reader = new ResponseQueueReader();
@@ -423,6 +484,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> observer) {
+    if (shouldOverrideAppProfile(request.getAppProfileId())) {
+      request = request.toBuilder().setAppProfileId(appProfileId).build();
+    }
+
     RetryingReadRowsOperation operation = createReadRowsRetryListener(request, observer);
 
     // Start the operation.
@@ -441,5 +506,9 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         getCallOptions(readRowsAsync.getMethodDescriptor(), request),
         retryExecutorService,
         createMetadata(request.getTableName()));
+  }
+
+  private boolean shouldOverrideAppProfile(String requestProfile) {
+    return !this.appProfileId.isEmpty() && requestProfile.isEmpty();
   }
 }
