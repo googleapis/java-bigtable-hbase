@@ -51,7 +51,6 @@ public class RetryOptions implements Serializable {
   /** Constant <code>DEFAULT_ENABLE_GRPC_RETRIES_SET</code> */
   public static final Set<Status.Code> DEFAULT_ENABLE_GRPC_RETRIES_SET = ImmutableSet.of(
       Status.Code.DEADLINE_EXCEEDED,
-      Status.Code.INTERNAL,
       Status.Code.UNAVAILABLE,
       Status.Code.ABORTED,
       Status.Code.UNAUTHENTICATED);
