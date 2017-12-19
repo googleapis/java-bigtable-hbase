@@ -46,18 +46,18 @@ public class MutateRowsRequestManager  {
     /* All responses produced OK */
     SUCCESS,
     /* All responses produced OK or a retryable code */
-    RETYABLE,
+    RETRYABLE,
     /* Some responses a non-retryable code */
     NOT_RETRYABLE,
-    /* Some responses a non-retryable code */
-    INLALID;
+    /* The response was invalid - missing indexes and etc. */
+    INVALID;
   }
 
   /**
    * The current request to send. This starts as the original request. If retries occur, this
    * request will contain the subset of Mutations that need to be retried.
    */
-  private MutateRowsRequest currentRequest;
+  private volatile MutateRowsRequest currentRequest;
 
   /**
    * When doing retries, the retry sends a partial set of the original mutations that failed with a
@@ -124,7 +124,7 @@ public class MutateRowsRequestManager  {
 
     // There was a problem in the data found in onMessage(), so fail the RPC.
     if (messageIsInvalid) {
-      return ProcessingStatus.INLALID;
+      return ProcessingStatus.INVALID;
     }
 
     List<Integer> toRetry = new ArrayList<>();
@@ -150,7 +150,7 @@ public class MutateRowsRequestManager  {
     if (!toRetry.isEmpty()) {
       currentRequest = createRetryRequest(toRetry);
       if (processingStatus == ProcessingStatus.SUCCESS) {
-        processingStatus = ProcessingStatus.RETYABLE;
+        processingStatus = ProcessingStatus.RETRYABLE;
       }
     }
     return processingStatus;

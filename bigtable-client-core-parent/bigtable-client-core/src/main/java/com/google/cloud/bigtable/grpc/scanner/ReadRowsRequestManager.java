@@ -38,9 +38,9 @@ class ReadRowsRequestManager {
   private final ReadRowsRequest originalRequest;
 
   // The number of rows read so far.
-  private long rowCount = 0;
+  private volatile long rowCount = 0;
 
-  private ByteString lastFoundKey;
+  private volatile ByteString lastFoundKey;
 
   /**
    * <p>

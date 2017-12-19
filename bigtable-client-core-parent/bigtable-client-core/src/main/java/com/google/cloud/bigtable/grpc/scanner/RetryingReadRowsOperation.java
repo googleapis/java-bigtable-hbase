@@ -118,6 +118,7 @@ public class RetryingReadRowsOperation extends
   private CallToStreamObserverAdapter<ReadRowsRequest> adapter;
   private StreamObserver<ReadRowsResponse> resultObserver;
   private int totalRowsProcessed = 0;
+  private volatile ReadRowsRequest nextRequest;
 
   public RetryingReadRowsOperation(
       StreamObserver<FlatRow> observer,
@@ -130,6 +131,7 @@ public class RetryingReadRowsOperation extends
     super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata);
     this.rowObserver = observer;
     this.requestManager = new ReadRowsRequestManager(request);
+    this.nextRequest = request;
   }
 
   // This observer will be notified after ReadRowsResponse have been fully processed.
@@ -142,7 +144,7 @@ public class RetryingReadRowsOperation extends
    */
   @Override
   protected ReadRowsRequest getRetryRequest() {
-    return requestManager.buildUpdatedRequest();
+    return nextRequest;
   }
 
   @SuppressWarnings("unchecked")
@@ -303,6 +305,12 @@ public class RetryingReadRowsOperation extends
     } else {
       throw getExhaustedRetriesException(Status.ABORTED);
     }
+  }
+
+  @Override
+  protected void performRetry(long nextBackOff) {
+    nextRequest = requestManager.buildUpdatedRequest();
+    super.performRetry(nextBackOff);
   }
 
   @VisibleForTesting

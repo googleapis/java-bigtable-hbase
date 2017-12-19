@@ -67,7 +67,7 @@ public class RetryingMutateRowsOperation extends
   protected boolean onOK(Metadata trailers) {
     ProcessingStatus status = requestManager.onOK();
 
-    if (status == ProcessingStatus.INLALID) {
+    if (status == ProcessingStatus.INVALID) {
       // Set an exception.
       onError(INVALID_RESPONSE, trailers);
       return true;

@@ -150,7 +150,7 @@ public class TestMutateRowsRequestManager {
       for (int j = 1; j < i; j++) {
         statuses[j] = DEADLINE_EXCEEDED;
       }
-      Assert.assertEquals(ProcessingStatus.RETYABLE, send(underTest, createResponse(statuses)));
+      Assert.assertEquals(ProcessingStatus.RETRYABLE, send(underTest, createResponse(statuses)));
     }
     Assert.assertEquals(createResponse(OK, OK, OK, OK, OK, OK, OK, OK, OK, DEADLINE_EXCEEDED),
       underTest.buildResponse());
@@ -167,7 +167,7 @@ public class TestMutateRowsRequestManager {
   @Test
   public void testInvalid() {
     MutateRowsRequestManager underTest = createRequestManager(createRequest(3));
-    Assert.assertEquals(ProcessingStatus.INLALID, send(underTest, createResponse(OK, OK)));
+    Assert.assertEquals(ProcessingStatus.INVALID, send(underTest, createResponse(OK, OK)));
   }
 
   private MutateRowsRequestManager createRequestManager(MutateRowsRequest request) {
