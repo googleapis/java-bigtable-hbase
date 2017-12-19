@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.test_env;
 import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -112,8 +111,8 @@ class BigtableEnv extends SharedTestEnv {
     return ConnectionFactory.createConnection(configuration);
   }
   
-  public CompletableFuture<AsyncConnection> createAsyncConnection() throws IOException {
-    return ConnectionFactory.createAsyncConnection(configuration);
+  public AsyncConnection createAsyncConnection() throws Exception {
+    return ConnectionFactory.createAsyncConnection(configuration).get();
   }
 
 }

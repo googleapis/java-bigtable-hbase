@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase.test_env;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -72,7 +71,7 @@ class MiniClusterEnv extends SharedTestEnv {
   }
 
   @Override
-  public CompletableFuture<AsyncConnection> createAsyncConnection() throws IOException {
+  public AsyncConnection createAsyncConnection() throws Exception {
     Configuration clientConfig = HBaseConfiguration.create();
     
     String[] keys = new String[]{
@@ -83,6 +82,6 @@ class MiniClusterEnv extends SharedTestEnv {
       clientConfig.set(key, helper.getConfiguration().get(key));
     }
 
-    return ConnectionFactory.createAsyncConnection(clientConfig);
+    return ConnectionFactory.createAsyncConnection(clientConfig).get();
   }
 }

@@ -51,7 +51,7 @@ public abstract class AbstractTest {
   }
 
   protected AsyncConnection getAsyncConnection() throws Exception {
-    return sharedTestEnv.getAsynConnection().get();
+    return sharedTestEnv.getAsynConnection();
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {

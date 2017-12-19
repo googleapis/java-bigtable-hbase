@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.test_env;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Handler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,7 +39,7 @@ public class SharedTestEnvRule extends ExternalResource {
   private TableName defaultTableName;
   private SharedTestEnv sharedTestEnv;
   private Connection connection;
-  private CompletableFuture<AsyncConnection> asyncConnection;
+  private AsyncConnection asyncConnection;
   private java.util.logging.Logger julLogger;
   private java.util.logging.Handler[] savedJulHandlers;
 
@@ -79,7 +78,7 @@ public class SharedTestEnvRule extends ExternalResource {
     connection = null;
 
     try {
-      asyncConnection.get().close();
+      asyncConnection.close();;
     } catch (Exception e) {
       LOG.error("Failed to close asyncConnection after test", e);
     }
@@ -108,11 +107,11 @@ public class SharedTestEnvRule extends ExternalResource {
     return sharedTestEnv.createConnection();
   }
 
-  public CompletableFuture<AsyncConnection> createAsyncConnection() throws IOException {
+  public AsyncConnection createAsyncConnection() throws Exception {
     return sharedTestEnv.createAsyncConnection();
   }
 
-  public  CompletableFuture<AsyncConnection> getAsynConnection() {
+  public AsyncConnection getAsynConnection() {
     return asyncConnection;
   }
 
