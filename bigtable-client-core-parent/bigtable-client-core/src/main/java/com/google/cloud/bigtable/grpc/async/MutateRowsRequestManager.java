@@ -61,8 +61,8 @@ public class MutateRowsRequestManager  {
 
   /**
    * When doing retries, the retry sends a partial set of the original mutations that failed with a
-   * retryable status. This array contains a mapping of indices from the {@link #getRetryRequest()}
-   * to {@link #getOriginalRequest()}.
+   * retryable status. This array contains a mapping of indices from the {@link #currentRequest}
+   * to {@link #originalRequest}.
    */
   private int[] mapToOriginalIndex;
 
@@ -115,10 +115,12 @@ public class MutateRowsRequestManager  {
    */
   public ProcessingStatus onOK() {
     // Sanity check to make sure that every mutation received a response.
-    for (int i = 0; i < results.length; i++) {
-      if (results[i] == null) {
-        messageIsInvalid = true;
-        break;
+    if (!messageIsInvalid) {
+      for (int i = 0; i < results.length; i++) {
+        if (results[i] == null) {
+          messageIsInvalid = true;
+          break;
+        }
       }
     }
 
@@ -136,23 +138,23 @@ public class MutateRowsRequestManager  {
       Status status = results[i];
       if (status.getCode() == io.grpc.Status.Code.OK.value()) {
         continue;
-      }
-
-      if (retryOptions.isRetryable(getGrpcCode(status))) {
+      } else if (retryOptions.isRetryable(getGrpcCode(status))) {
         // An individual mutation failed with a retryable code, usually DEADLINE_EXCEEDED.
         toRetry.add(i);
+        if (processingStatus == ProcessingStatus.SUCCESS) {
+          processingStatus = ProcessingStatus.RETRYABLE;
+        }
       } else {
         // Don't retry if even a single response is not retryable.
         processingStatus = ProcessingStatus.NOT_RETRYABLE;
+        break;
       }
     }
 
     if (!toRetry.isEmpty()) {
       currentRequest = createRetryRequest(toRetry);
-      if (processingStatus == ProcessingStatus.SUCCESS) {
-        processingStatus = ProcessingStatus.RETRYABLE;
-      }
     }
+
     return processingStatus;
   }
 
@@ -170,12 +172,11 @@ public class MutateRowsRequestManager  {
   private MutateRowsRequest createRetryRequest(List<Integer> indiciesToRetry) {
     MutateRowsRequest.Builder updatedRequest = MutateRowsRequest.newBuilder()
         .setTableName(originalRequest.getTableName());
-
-    mapToOriginalIndex = toIntArray(indiciesToRetry);
+    mapToOriginalIndex = new int[indiciesToRetry.size()];
     for (int i = 0; i < indiciesToRetry.size(); i++) {
+      mapToOriginalIndex[i] = indiciesToRetry.get(i);
       updatedRequest.addEntries(originalRequest.getEntries(indiciesToRetry.get(i)));
     }
-
     return updatedRequest.build();
   }
 
@@ -190,16 +191,5 @@ public class MutateRowsRequestManager  {
       entries.add(createEntry(i, status));
     }
     return MutateRowsResponse.newBuilder().addAllEntries(entries).build();
-  }
-
-  /**
-   * Converts the List<Integer> to int[].
-   */
-  private int[] toIntArray(List<Integer> list) {
-    int[] array = new int[list.size()];
-    for (int i = 0; i < list.size(); i++) {
-      array[i] = list.get(i);
-    }
-    return array;
   }
 }

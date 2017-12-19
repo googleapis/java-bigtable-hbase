@@ -57,6 +57,14 @@ public class TestMutateRowsRequestManager {
     return builder.build();
   }
 
+  private static MutateRowsRequest createRequest(MutateRowsRequest original, int ... indices) {
+    MutateRowsRequest.Builder builder = MutateRowsRequest.newBuilder();
+    for (int i : indices) {
+      builder.addEntries(original.getEntries(i));
+    }
+    return builder.build();
+  }
+
   private static MutateRowsResponse createResponse(Status... statuses) {
     MutateRowsResponse.Builder builder = MutateRowsResponse.newBuilder();
     for (int i = 0; i < statuses.length; i++) {
@@ -73,7 +81,8 @@ public class TestMutateRowsRequestManager {
     return Status.newBuilder().setCode(code.value()).build();
   }
 
-  private static ProcessingStatus send(MutateRowsRequestManager underTest, MutateRowsResponse response) {
+  private static ProcessingStatus send(MutateRowsRequestManager underTest,
+      MutateRowsResponse response) {
     underTest.onMessage(response);
     return underTest.onOK();
   }
@@ -99,7 +108,8 @@ public class TestMutateRowsRequestManager {
    * An empty request should return an empty response
    */
   public void testEmptySuccess() {
-    MutateRowsRequestManager underTest = createRequestManager(createRequest(0));
+    MutateRowsRequestManager underTest =
+        new MutateRowsRequestManager(retryOptions, createRequest(0));
     send(underTest, createResponse());
     Assert.assertEquals(createResponse(), underTest.buildResponse());
   }
@@ -109,7 +119,8 @@ public class TestMutateRowsRequestManager {
    * A single successful entry should work.
    */
   public void testSingleSuccess() {
-    MutateRowsRequestManager underTest = createRequestManager(createRequest(1));
+    MutateRowsRequestManager underTest =
+        new MutateRowsRequestManager(retryOptions, createRequest(1));
     send(underTest, createResponse(OK));
     Assert.assertEquals(createResponse(OK), underTest.buildResponse());
   }
@@ -118,11 +129,15 @@ public class TestMutateRowsRequestManager {
   /**
    * Two individual calls with one retry should work.
    */
-  public void testTwoTrySuccess() {
-    MutateRowsRequestManager underTest = createRequestManager(createRequest(2));
-    send(underTest, createResponse(OK, DEADLINE_EXCEEDED));
+  public void testTwoTrySuccessOneFailure() {
+    MutateRowsRequest originalRequest = createRequest(3);
+    MutateRowsRequestManager underTest =
+        new MutateRowsRequestManager(retryOptions, originalRequest);
+    send(underTest, createResponse(OK, DEADLINE_EXCEEDED, OK));
+    Assert.assertEquals(createRequest(originalRequest, 1), underTest.getRetryRequest());
+    Assert.assertEquals(createResponse(OK, DEADLINE_EXCEEDED, OK), underTest.buildResponse());
     send(underTest, createResponse(OK));
-    Assert.assertEquals(createResponse(OK, OK), underTest.buildResponse());
+    Assert.assertEquals(createResponse(OK, OK, OK), underTest.buildResponse());
   }
 
   @Test
@@ -130,10 +145,15 @@ public class TestMutateRowsRequestManager {
    * Two individual calls in a more complicated case with one retry should work.
    */
   public void testMultiSuccess() {
-    MutateRowsRequestManager underTest = createRequestManager(createRequest(10));
+    MutateRowsRequest originalRequest = createRequest(10);
+    MutateRowsRequestManager underTest =
+        new MutateRowsRequestManager(retryOptions, originalRequest);
     send(underTest, createResponse(OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED, OK,
       DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED));
-    send(underTest, createResponse(OK, OK, OK, OK, OK));
+    Assert.assertEquals(createRequest(originalRequest, 1, 3, 5, 7, 9), underTest.getRetryRequest());
+    send(underTest, createResponse(OK, DEADLINE_EXCEEDED, OK, OK, DEADLINE_EXCEEDED));
+    Assert.assertEquals(createRequest(originalRequest, 3, 9), underTest.getRetryRequest());
+    send(underTest, createResponse(OK, OK));
     Assert.assertEquals(createResponse(OK, OK, OK, OK, OK, OK, OK, OK, OK, OK),
       underTest.buildResponse());
   }
@@ -143,14 +163,19 @@ public class TestMutateRowsRequestManager {
    * Multiple attempts at retries should work as expected.
    */
   public void testMultiAttempt() {
-    MutateRowsRequestManager underTest = createRequestManager(createRequest(10));
+    MutateRowsRequest originalRequest = createRequest(10);
+    MutateRowsRequestManager underTest =
+        new MutateRowsRequestManager(retryOptions, originalRequest);
     for (int i = 10; i > 1; i--) {
       Status statuses[] = new Status[i];
+      int indices[] = new int[i-1];
       statuses[0] = OK;
       for (int j = 1; j < i; j++) {
+        indices[j - 1] = j;
         statuses[j] = DEADLINE_EXCEEDED;
       }
       Assert.assertEquals(ProcessingStatus.RETRYABLE, send(underTest, createResponse(statuses)));
+      Assert.assertEquals(createRequest(originalRequest, indices), underTest.getRetryRequest());
     }
     Assert.assertEquals(createResponse(OK, OK, OK, OK, OK, OK, OK, OK, OK, DEADLINE_EXCEEDED),
       underTest.buildResponse());
@@ -158,7 +183,8 @@ public class TestMutateRowsRequestManager {
 
   @Test
   public void testNotRetryable() {
-    MutateRowsRequestManager underTest = createRequestManager(createRequest(3));
+    MutateRowsRequestManager underTest =
+        new MutateRowsRequestManager(retryOptions, createRequest(3));
     Assert.assertEquals(ProcessingStatus.NOT_RETRYABLE,
       send(underTest, createResponse(OK, OK, NOT_FOUND)));
     Assert.assertEquals(createResponse(OK, OK, NOT_FOUND), underTest.buildResponse());
@@ -166,11 +192,7 @@ public class TestMutateRowsRequestManager {
 
   @Test
   public void testInvalid() {
-    MutateRowsRequestManager underTest = createRequestManager(createRequest(3));
+    MutateRowsRequestManager underTest = new MutateRowsRequestManager(retryOptions, createRequest(3));
     Assert.assertEquals(ProcessingStatus.INVALID, send(underTest, createResponse(OK, OK)));
-  }
-
-  private MutateRowsRequestManager createRequestManager(MutateRowsRequest request) {
-    return new MutateRowsRequestManager(retryOptions, request);
   }
 }

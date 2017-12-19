@@ -50,9 +50,6 @@ public class RetryingMutateRowsOperation extends
       AttributeValue.longAttributeValue(originalRquest.getEntriesCount())));
   }
 
-  /**
-   * Adds the content of the message to the {@link #results}.
-   */
   @Override
   public void onMessage(MutateRowsResponse message) {
     requestManager.onMessage(message);
