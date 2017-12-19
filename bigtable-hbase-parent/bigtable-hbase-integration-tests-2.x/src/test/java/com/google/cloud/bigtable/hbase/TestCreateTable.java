@@ -106,7 +106,7 @@ public class TestCreateTable extends AbstractTest {
       try {
         admin.createTable(new HTableDescriptor(TableName.valueOf(badName))
             .addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
-      } catch (RuntimeException ex) {
+      } catch (Exception ex) {
         //TODO verify - added RuntimeException check as RandomStringUtils seems to be generating a string server side doesn't like 
         failed = true;
       }
