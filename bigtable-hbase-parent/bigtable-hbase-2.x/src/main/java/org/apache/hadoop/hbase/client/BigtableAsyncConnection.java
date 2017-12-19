@@ -126,22 +126,22 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
       
       @Override
       public AsyncAdminBuilder setRpcTimeout(long arg0, TimeUnit arg1) {
-        throw new UnsupportedOperationException("setStartLogErrorsCnt");
+        throw new UnsupportedOperationException("setRpcTimeout");
       }
       
       @Override
       public AsyncAdminBuilder setRetryPause(long arg0, TimeUnit arg1) {
-        throw new UnsupportedOperationException("setStartLogErrorsCnt");
+        throw new UnsupportedOperationException("setRetryPause");
       }
       
       @Override
       public AsyncAdminBuilder setOperationTimeout(long arg0, TimeUnit arg1) {
-        throw new UnsupportedOperationException("setStartLogErrorsCnt");
+        throw new UnsupportedOperationException("setOperationTimeout");
       }
       
       @Override
       public AsyncAdminBuilder setMaxAttempts(int arg0) {
-        throw new UnsupportedOperationException("setStartLogErrorsCnt");
+        throw new UnsupportedOperationException("setMaxAttempts");
       }
       
       @Override
