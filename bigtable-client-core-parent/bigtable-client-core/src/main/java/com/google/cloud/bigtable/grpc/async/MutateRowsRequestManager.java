@@ -42,6 +42,16 @@ public class MutateRowsRequestManager  {
     return MutateRowsResponse.Entry.newBuilder().setIndex(i).setStatus(status).build();
   }
 
+  public enum ProcessingStatus {
+    /* All responses produced OK */
+    SUCCESS,
+    /* All responses produced OK or a retryable code */
+    RETYABLE,
+    /* Some responses a non-retryable code */
+    NOT_RETRYABLE,
+    /* Some responses a non-retryable code */
+    INLALID;
+  }
 
   /**
    * The current request to send. This starts as the original request. If retries occur, this
@@ -63,8 +73,7 @@ public class MutateRowsRequestManager  {
   private final RetryOptions retryOptions;
   private final MutateRowsRequest originalRequest;
 
-  private boolean messageIsInvalid;
-  private boolean retryable;
+  private boolean messageIsInvalid = false;
 
   public MutateRowsRequestManager(RetryOptions retryOptions, MutateRowsRequest originalRequest) {
     this.currentRequest = originalRequest;
@@ -98,12 +107,13 @@ public class MutateRowsRequestManager  {
     }
   }
 
-  public MutateRowsRequest getRetryRequest() {
-    return currentRequest;
-  }
-
-  public boolean onOK() {
-    retryable = true;
+  /**
+   * This is called when all calls to {@link #onMessage(MutateRowsResponse)} are complete.
+   *
+   * @return {@link ProcessingStatus} of the accumulated responses - success, invalid, retrable,
+   *         non-retryable.
+   */
+  public ProcessingStatus onOK() {
     // Sanity check to make sure that every mutation received a response.
     for (int i = 0; i < results.length; i++) {
       if (results[i] == null) {
@@ -114,12 +124,11 @@ public class MutateRowsRequestManager  {
 
     // There was a problem in the data found in onMessage(), so fail the RPC.
     if (messageIsInvalid) {
-      retryable = false;
-      return false;
+      return ProcessingStatus.INLALID;
     }
 
     List<Integer> toRetry = new ArrayList<>();
-    boolean success = true;
+    ProcessingStatus processingStatus = ProcessingStatus.SUCCESS;
 
     // Check the current state to determine the state of the results.
     // There are three states: OK, Fail, or Partial Retry.
@@ -129,28 +138,26 @@ public class MutateRowsRequestManager  {
         continue;
       }
 
-      success = false;
       if (retryOptions.isRetryable(getGrpcCode(status))) {
         // An individual mutation failed with a retryable code, usually DEADLINE_EXCEEDED.
         toRetry.add(i);
       } else {
         // Don't retry if even a single response is not retryable.
-        retryable = false;
+        processingStatus = ProcessingStatus.NOT_RETRYABLE;
       }
     }
 
     if (!toRetry.isEmpty()) {
       currentRequest = createRetryRequest(toRetry);
+      if (processingStatus == ProcessingStatus.SUCCESS) {
+        processingStatus = ProcessingStatus.RETYABLE;
+      }
     }
-    return success;
+    return processingStatus;
   }
 
-  public boolean isMessageInvalid() {
-    return messageIsInvalid;
-  }
-
-  public boolean isRetryable() {
-    return retryable;
+  public MutateRowsRequest getRetryRequest() {
+    return currentRequest;
   }
 
   /**
@@ -172,6 +179,10 @@ public class MutateRowsRequestManager  {
     return updatedRequest.build();
   }
 
+  /**
+   * @return a {@link MutateRowsResponse} built from the accumulation of all calls to
+   *         onMessage/onOK.
+   */
   public MutateRowsResponse buildResponse() {
     List<MutateRowsResponse.Entry> entries = new ArrayList<>();
     for (int i = 0; i < results.length; i++) {

@@ -24,6 +24,7 @@ import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.async.MutateRowsRequestManager.ProcessingStatus;
 import com.google.common.collect.ImmutableMap;
 
 import io.grpc.CallOptions;
@@ -64,16 +65,16 @@ public class RetryingMutateRowsOperation extends
 
   @Override
   protected boolean onOK(Metadata trailers) {
-    boolean success = requestManager.onOK();
+    ProcessingStatus status = requestManager.onOK();
 
-    if (requestManager.isMessageInvalid()) {
+    if (status == ProcessingStatus.INLALID) {
       // Set an exception.
       onError(INVALID_RESPONSE, trailers);
       return true;
     }
 
     // There was a problem in the data found in onMessage(), so fail the RPC.
-    if (success || !requestManager.isRetryable()) {
+    if (status == ProcessingStatus.SUCCESS || status == ProcessingStatus.NOT_RETRYABLE) {
       // Set the response, with either success, or non-retryable responses.
       completionFuture.set(Arrays.asList(requestManager.buildResponse()));
       return true;

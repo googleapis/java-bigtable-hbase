@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
@@ -33,14 +32,13 @@ import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
+import com.google.cloud.bigtable.grpc.async.MutateRowsRequestManager.ProcessingStatus;
 import com.google.rpc.Status;
 
-import io.grpc.Deadline;
 import io.grpc.Status.Code;
 
 /**
  * Tests for {@link MutateRowsRequestManager}
- *
  */
 @RunWith(JUnit4.class)
 public class TestMutateRowsRequestManager {
@@ -75,7 +73,7 @@ public class TestMutateRowsRequestManager {
     return Status.newBuilder().setCode(code.value()).build();
   }
 
-  private static boolean send(MutateRowsRequestManager underTest, MutateRowsResponse response) {
+  private static ProcessingStatus send(MutateRowsRequestManager underTest, MutateRowsResponse response) {
     underTest.onMessage(response);
     return underTest.onOK();
   }
@@ -97,31 +95,54 @@ public class TestMutateRowsRequestManager {
   }
 
   @Test
-  public void testEmptySuccess() throws Exception {
+  /**
+   * An empty request should return an empty response
+   */
+  public void testEmptySuccess() {
     MutateRowsRequestManager underTest = createRequestManager(createRequest(0));
     send(underTest, createResponse());
     Assert.assertEquals(createResponse(), underTest.buildResponse());
   }
 
   @Test
-  public void testSingleSuccess() throws Exception {
+  /**
+   * A single successful entry should work.
+   */
+  public void testSingleSuccess() {
     MutateRowsRequestManager underTest = createRequestManager(createRequest(1));
     send(underTest, createResponse(OK));
-    Assert.assertEquals(createResponse(OK),underTest.buildResponse());
+    Assert.assertEquals(createResponse(OK), underTest.buildResponse());
   }
 
   @Test
-  public void testMultiSuccess() throws Exception {
+  /**
+   * Two individual calls with one retry should work.
+   */
+  public void testTwoTrySuccess() {
+    MutateRowsRequestManager underTest = createRequestManager(createRequest(2));
+    send(underTest, createResponse(OK, DEADLINE_EXCEEDED));
+    send(underTest, createResponse(OK));
+    Assert.assertEquals(createResponse(OK, OK), underTest.buildResponse());
+  }
+
+  @Test
+  /**
+   * Two individual calls in a more complicated case with one retry should work.
+   */
+  public void testMultiSuccess() {
     MutateRowsRequestManager underTest = createRequestManager(createRequest(10));
-    send(underTest, createResponse(OK, OK, OK, OK, OK, DEADLINE_EXCEEDED, DEADLINE_EXCEEDED,
-      DEADLINE_EXCEEDED, DEADLINE_EXCEEDED));
+    send(underTest, createResponse(OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED, OK,
+      DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED));
     send(underTest, createResponse(OK, OK, OK, OK, OK));
     Assert.assertEquals(createResponse(OK, OK, OK, OK, OK, OK, OK, OK, OK, OK),
       underTest.buildResponse());
   }
 
   @Test
-  public void testMultiAttempt() throws Exception {
+  /**
+   * Multiple attempts at retries should work as expected.
+   */
+  public void testMultiAttempt() {
     MutateRowsRequestManager underTest = createRequestManager(createRequest(10));
     for (int i = 10; i > 1; i--) {
       Status statuses[] = new Status[i];
@@ -129,29 +150,24 @@ public class TestMutateRowsRequestManager {
       for (int j = 1; j < i; j++) {
         statuses[j] = DEADLINE_EXCEEDED;
       }
-      Assert.assertFalse(send(underTest, createResponse(statuses)));
-      Assert.assertTrue(underTest.isRetryable());
-      Assert.assertFalse(underTest.isMessageInvalid());
+      Assert.assertEquals(ProcessingStatus.RETYABLE, send(underTest, createResponse(statuses)));
     }
     Assert.assertEquals(createResponse(OK, OK, OK, OK, OK, OK, OK, OK, OK, DEADLINE_EXCEEDED),
       underTest.buildResponse());
   }
 
   @Test
-  public void testNotRetryable() throws Exception {
+  public void testNotRetryable() {
     MutateRowsRequestManager underTest = createRequestManager(createRequest(3));
-    Assert.assertFalse(send(underTest, createResponse(OK, OK, NOT_FOUND)));
-    Assert.assertFalse(underTest.isRetryable());
-    Assert.assertFalse(underTest.isMessageInvalid());
+    Assert.assertEquals(ProcessingStatus.NOT_RETRYABLE,
+      send(underTest, createResponse(OK, OK, NOT_FOUND)));
     Assert.assertEquals(createResponse(OK, OK, NOT_FOUND), underTest.buildResponse());
   }
 
   @Test
-  public void testInvalid() throws Exception {
+  public void testInvalid() {
     MutateRowsRequestManager underTest = createRequestManager(createRequest(3));
-    Assert.assertFalse(send(underTest, createResponse(OK, OK)));
-    Assert.assertFalse(underTest.isRetryable());
-    Assert.assertTrue(underTest.isMessageInvalid());
+    Assert.assertEquals(ProcessingStatus.INLALID, send(underTest, createResponse(OK, OK)));
   }
 
   private MutateRowsRequestManager createRequestManager(MutateRowsRequest request) {
