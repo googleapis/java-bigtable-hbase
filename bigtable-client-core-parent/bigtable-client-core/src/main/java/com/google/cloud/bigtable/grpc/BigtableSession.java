@@ -62,7 +62,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.internal.GrpcUtil;
-import io.netty.util.Recycler;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>

@@ -54,7 +54,10 @@ class ReadRowsRequestManager {
 
   void updateLastFoundKey(ByteString key) {
     this.lastFoundKey = key;
-    rowCount++;
+  }
+
+  void incrementRowCount(int count) {
+    rowCount += count;
   }
 
   ReadRowsRequest buildUpdatedRequest() {

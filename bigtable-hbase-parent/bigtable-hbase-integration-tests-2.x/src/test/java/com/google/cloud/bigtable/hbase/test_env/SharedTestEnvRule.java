@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.rules.ExternalResource;
@@ -38,6 +39,7 @@ public class SharedTestEnvRule extends ExternalResource {
   private TableName defaultTableName;
   private SharedTestEnv sharedTestEnv;
   private Connection connection;
+  private AsyncConnection asyncConnection;
   private java.util.logging.Logger julLogger;
   private java.util.logging.Handler[] savedJulHandlers;
 
@@ -52,6 +54,7 @@ public class SharedTestEnvRule extends ExternalResource {
 
     sharedTestEnv = SharedTestEnv.get();
     connection = createConnection();
+    asyncConnection = createAsyncConnection();
 
     defaultTableName = newTestTableName();
     createTable(defaultTableName);
@@ -73,6 +76,14 @@ public class SharedTestEnvRule extends ExternalResource {
       LOG.error("Failed to close connection after test", e);
     }
     connection = null;
+
+    try {
+      asyncConnection.close();;
+    } catch (Exception e) {
+      LOG.error("Failed to close asyncConnection after test", e);
+    }
+    asyncConnection = null;
+    
     try {
       sharedTestEnv.release();
     } catch (IOException e) {
@@ -94,6 +105,14 @@ public class SharedTestEnvRule extends ExternalResource {
 
   public Connection createConnection() throws IOException {
     return sharedTestEnv.createConnection();
+  }
+
+  public AsyncConnection createAsyncConnection() throws Exception {
+    return sharedTestEnv.createAsyncConnection();
+  }
+
+  public AsyncConnection getAsynConnection() {
+    return asyncConnection;
   }
 
   public boolean isBigtable() {

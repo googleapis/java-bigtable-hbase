@@ -184,6 +184,7 @@ public class RetryingReadRowsOperation extends
       AttributeValue.longAttributeValue(rowCountInLastMessage)));
 
     totalRowsProcessed += rowCountInLastMessage;
+    requestManager.incrementRowCount(rowCountInLastMessage);
 
     ByteString lastProcessedKey = rowMerger.getLastCompletedRowKey();
     if (previouslyProcessedKey != lastProcessedKey) {
