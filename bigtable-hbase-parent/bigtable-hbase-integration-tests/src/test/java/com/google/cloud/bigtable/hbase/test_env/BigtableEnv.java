@@ -60,7 +60,7 @@ class BigtableEnv extends SharedTestEnv {
     }
 
     for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
-      if (KEYS.contains(entry.getKey())) {
+      if (KEYS.contains(entry.getKey()) || entry.getKey().toString().startsWith("google.bigtable")) {
         configuration.set(entry.getKey().toString(), entry.getValue().toString());
       }
     }
