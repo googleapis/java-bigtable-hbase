@@ -31,6 +31,7 @@ limitations under the License.
     </description>
 
     <properties>
+        <!-- This is used configure SharedTestEnv to target production instead of the hbase minicluster -->
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
     </properties>
 
@@ -75,17 +76,6 @@ limitations under the License.
         </profile>
         <profile>
             <id>bigtableReplicationTest</id>
-            <dependencies>
-                <dependency>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>${google.bigtable.project.under.test}</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-tcnative-boringssl-static</artifactId>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -112,7 +102,7 @@ limitations under the License.
                                     </includes>
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
+                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
