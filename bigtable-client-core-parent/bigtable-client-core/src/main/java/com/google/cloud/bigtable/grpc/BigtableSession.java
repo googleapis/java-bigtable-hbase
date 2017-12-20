@@ -62,6 +62,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.internal.GrpcUtil;
+import io.netty.util.Recycler;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -317,7 +318,7 @@ public class BigtableSession implements Closeable {
         tableName,
         throttlingDataClient,
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-        options);
+        options.getBulkOptions());
   }
 
   /**
@@ -327,7 +328,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkRead} object.
    */
   public BulkRead createBulkRead(BigtableTableName tableName) {
-    return new BulkRead(dataClient, tableName, options,
+    return new BulkRead(dataClient, tableName, options.getBulkOptions().getBulkMaxRowKeyCount(),
         BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool()
     );
   }

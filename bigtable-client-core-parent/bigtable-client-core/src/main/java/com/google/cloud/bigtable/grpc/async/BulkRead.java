@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -69,32 +67,23 @@ public class BulkRead {
 
   private final BigtableDataClient client;
   private final int batchSizes;
-  private final String appProfileId;
   private final ExecutorService threadPool;
   private final String tableName;
 
   private final Map<RowFilter, Batch> batches;
 
-  public BulkRead(BigtableDataClient client, BigtableTableName tableName, BigtableOptions bigtableOptions,
-      ExecutorService threadPool) {
-    this(client, tableName, bigtableOptions.getAppProfileId(), bigtableOptions.getBulkOptions().getBulkMaxRowKeyCount(), threadPool);
-  }
   /**
    * Constructor for BulkRead.
    * @param client a {@link BigtableDataClient} object.
    * @param tableName a {@link BigtableTableName} object.
-   * @param appProfileId The name of the appProfile to use.
    * @param batchSizes The number of keys to lookup per RPC.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
-  @VisibleForTesting
-  BulkRead(BigtableDataClient client, BigtableTableName tableName, String appProfileId,
-      int batchSizes,
+  public BulkRead(BigtableDataClient client, BigtableTableName tableName, int batchSizes,
       ExecutorService threadPool) {
     this.client = client;
     this.tableName = tableName.toString();
     this.batchSizes = batchSizes;
-    this.appProfileId = appProfileId;
     this.threadPool = threadPool;
     this.batches = new HashMap<>();
   }
@@ -189,7 +178,6 @@ public class BulkRead {
       try {
         ResultScanner<FlatRow> scanner = client.readFlatRows(ReadRowsRequest.newBuilder()
             .setTableName(tableName)
-            .setAppProfileId(appProfileId)
             .setFilter(filter)
             .setRows(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
             .build()

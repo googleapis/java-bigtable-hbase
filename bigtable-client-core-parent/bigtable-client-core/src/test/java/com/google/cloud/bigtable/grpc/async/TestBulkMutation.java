@@ -16,7 +16,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v2.MutateRowsRequest.Entry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -288,7 +287,7 @@ public class TestBulkMutation {
   public void testAutoflush() throws Exception {
     // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the
     // scheduled executor mock
-    underTest = new BulkMutation(TABLE_NAME, "", client, operationAccountant,
+    underTest = new BulkMutation(TABLE_NAME, client, operationAccountant,
         retryExecutorService, new BulkOptions.Builder().setAutoflushMs(1000L).build());
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
     when(retryExecutorService.schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class)))
@@ -359,28 +358,8 @@ public class TestBulkMutation {
     Assert.assertTrue(underTest.currentBatch.builder.getEntriesList().contains(lastRequest));
   }
 
-  @Test
-  public void testAppProfile() throws Exception {
-    BulkMutation bulkMutation = new BulkMutation(TABLE_NAME, "my-profile", client, operationAccountant,
-        retryExecutorService,
-        BULK_OPTIONS);
-
-    Entry entry = createEntry();
-
-    bulkMutation.add(entry);
-    bulkMutation.send();
-
-    MutateRowsRequest expected = MutateRowsRequest.newBuilder()
-        .setTableName(TABLE_NAME.toString())
-        .setAppProfileId("my-profile")
-        .addEntries(entry)
-        .build();
-
-    verify(client, times(1)).mutateRowsAsync(eq(expected));
-  }
-
   private BulkMutation createBulkMutation() {
-    return new BulkMutation(TABLE_NAME, "", client, operationAccountant, retryExecutorService,
+    return new BulkMutation(TABLE_NAME, client, operationAccountant, retryExecutorService,
         BULK_OPTIONS);
   }
 

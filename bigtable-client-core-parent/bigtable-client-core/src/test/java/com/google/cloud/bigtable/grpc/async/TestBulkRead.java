@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,7 +35,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -87,7 +85,7 @@ public class TestBulkRead {
       }
     });
 
-    underTest = new BulkRead(mockClient, TABLE_NAME, "default", 5, mockThreadPool);
+    underTest = new BulkRead(mockClient, TABLE_NAME, 5, mockThreadPool);
   }
 
   /**
@@ -170,21 +168,6 @@ public class TestBulkRead {
         Assert.assertEquals(rowKeys.get(i), row.getRowKey());
       }
     }
-  }
-
-  @Test
-  public void testAppProfile() throws Exception {
-    ArgumentCaptor<ReadRowsRequest> actualRequestCaptor = ArgumentCaptor.forClass(ReadRowsRequest.class);
-    when(mockClient.readFlatRows(actualRequestCaptor.capture())).thenReturn(mockScanner);
-    FlatRow row = createRow(ByteString.copyFromUtf8("Key"));
-    when(mockScanner.next()).thenReturn(row).thenReturn(null);
-
-    underTest = new BulkRead(mockClient, TABLE_NAME, "my-profile", 5, mockThreadPool);
-
-    underTest.add(createRequest(row.getRowKey()));
-    underTest.flush();
-
-    Assert.assertEquals("my-profile", actualRequestCaptor.getValue().getAppProfileId());
   }
 
   // /////////////// HELPERS ////////////////
