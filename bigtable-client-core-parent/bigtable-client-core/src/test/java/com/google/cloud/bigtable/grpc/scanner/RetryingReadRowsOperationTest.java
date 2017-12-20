@@ -381,8 +381,9 @@ public class RetryingReadRowsOperationTest {
     verify(mockRpcTimerContext, times(expectedRetryCount + 1)).close();
   }
 
-  private static void checkRetryRequest(RetryingReadRowsOperation underTest, ByteString key, int rowCount) {
-    ReadRowsRequest request = underTest.getRetryRequest();
+  private static void checkRetryRequest(RetryingReadRowsOperation underTest, ByteString key,
+      int rowCount) {
+    ReadRowsRequest request = underTest.buildUpdatedRequst();
     Assert.assertEquals(key, request.getRows().getRowRanges(0).getStartKeyOpen());
     Assert.assertEquals(rowCount, request.getRowsLimit());
   }
