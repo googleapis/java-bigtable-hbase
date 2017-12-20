@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
@@ -148,11 +151,22 @@ public class TestMutateRowsRequestManager {
     MutateRowsRequest originalRequest = createRequest(10);
     MutateRowsRequestManager underTest =
         new MutateRowsRequestManager(retryOptions, originalRequest);
-    send(underTest, createResponse(OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED, OK,
-      DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED));
+
+    // 5 mutations succeed, 5 mutations are retryable.
+    MutateRowsResponse firstResponse = createResponse(OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED,
+      OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED);
+    send(underTest, firstResponse);
     Assert.assertEquals(createRequest(originalRequest, 1, 3, 5, 7, 9), underTest.getRetryRequest());
+    Assert.assertEquals(firstResponse, underTest.buildResponse());
+
+    // 3 mutations succeed, 2 mutations are retryable.
     send(underTest, createResponse(OK, DEADLINE_EXCEEDED, OK, OK, DEADLINE_EXCEEDED));
     Assert.assertEquals(createRequest(originalRequest, 3, 9), underTest.getRetryRequest());
+    MutateRowsResponse secondResponse = createResponse(OK, OK, OK, DEADLINE_EXCEEDED,
+      OK, OK, OK, OK, OK, DEADLINE_EXCEEDED);
+    Assert.assertEquals(secondResponse, underTest.buildResponse());
+
+    // The final 2 mutations are OK
     send(underTest, createResponse(OK, OK));
     Assert.assertEquals(createResponse(OK, OK, OK, OK, OK, OK, OK, OK, OK, OK),
       underTest.buildResponse());
@@ -160,25 +174,53 @@ public class TestMutateRowsRequestManager {
 
   @Test
   /**
-   * Multiple attempts at retries should work as expected.
+   * Multiple attempts at retries should work as expected. 10 mutations are added, and 1 gets an OK
+   * status for 9 rounds until 1 mutation is left.  Each success shows up in a random location.
    */
   public void testMultiAttempt() {
     MutateRowsRequest originalRequest = createRequest(10);
     MutateRowsRequestManager underTest =
         new MutateRowsRequestManager(retryOptions, originalRequest);
-    for (int i = 10; i > 1; i--) {
-      Status statuses[] = new Status[i];
-      int indices[] = new int[i-1];
-      statuses[0] = OK;
-      for (int j = 1; j < i; j++) {
-        indices[j - 1] = j;
-        statuses[j] = DEADLINE_EXCEEDED;
-      }
-      Assert.assertEquals(ProcessingStatus.RETRYABLE, send(underTest, createResponse(statuses)));
-      Assert.assertEquals(createRequest(originalRequest, indices), underTest.getRetryRequest());
+
+    // At the beginning, all mutations are outstanding
+    List<Integer> remaining = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      remaining.add(i);
     }
-    Assert.assertEquals(createResponse(OK, OK, OK, OK, OK, OK, OK, OK, OK, DEADLINE_EXCEEDED),
-      underTest.buildResponse());
+
+    for (int i = 0; i < 9; i++) {
+      int remainingMutationCount = remaining.size();
+      // Randomly choose a successful mutation
+      int successIndex = (int) (Math.random() * remainingMutationCount);
+
+      // Create a Status array filled with DEADLINE_EXCEEDED except for the chose one.
+      Status statuses[] = new Status[remainingMutationCount];
+      Arrays.fill(statuses, DEADLINE_EXCEEDED);
+      statuses[successIndex] = OK;
+
+      // The successful status can now be removed.
+      remaining.remove(successIndex);
+
+      // Make sure that the request is retryable, and that the retry request looks reasonable.
+      Assert.assertEquals(ProcessingStatus.RETRYABLE, send(underTest, createResponse(statuses)));
+      Assert.assertEquals(createRequest(originalRequest, toIntArray(remaining)),
+        underTest.getRetryRequest());
+    }
+
+    // Only one Mutation should be outstanding at this point. Create a response that has all OKs,
+    // with the exception of the remaining statuses.
+    Status[] statuses = new Status[10];
+    Arrays.fill(statuses, OK);
+    statuses[remaining.get(0)] = DEADLINE_EXCEEDED;
+    Assert.assertEquals(createResponse(statuses), underTest.buildResponse());
+  }
+
+  private final int[] toIntArray(List<Integer> integers) {
+    int indicesToRetry[] = new int[integers.size()];
+    for (int i = 0; i < integers.size(); i++) {
+      indicesToRetry[i] = integers.get(i);
+    }
+    return indicesToRetry;
   }
 
   @Test
@@ -192,7 +234,9 @@ public class TestMutateRowsRequestManager {
 
   @Test
   public void testInvalid() {
-    MutateRowsRequestManager underTest = new MutateRowsRequestManager(retryOptions, createRequest(3));
+    // Create 3 muntations, but only 2 OKs.  That should be invalid
+    MutateRowsRequestManager underTest =
+        new MutateRowsRequestManager(retryOptions, createRequest(3));
     Assert.assertEquals(ProcessingStatus.INVALID, send(underTest, createResponse(OK, OK)));
   }
 }

@@ -310,8 +310,13 @@ public class RetryingReadRowsOperation extends
 
   @Override
   protected void performRetry(long nextBackOff) {
-    nextRequest = requestManager.buildUpdatedRequest();
+    buildUpdatedRequst();
     super.performRetry(nextBackOff);
+  }
+
+  @VisibleForTesting
+  ReadRowsRequest buildUpdatedRequst() {
+    return nextRequest = requestManager.buildUpdatedRequest();
   }
 
   @VisibleForTesting
