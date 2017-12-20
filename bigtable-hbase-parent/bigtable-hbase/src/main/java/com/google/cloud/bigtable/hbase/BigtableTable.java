@@ -734,9 +734,10 @@ public class BigtableTable implements Table {
       throw new DoNotRetryIOException("Action's getRow must match the passed row");
     }
 
-    CheckAndMutateRowRequest.Builder requestBuilder = CheckAndMutateRowRequest.newBuilder()
-        .setTableName(hbaseAdapter.getBigtableTableName().toString())
-        .setAppProfileId(this.options.getAppProfileId());
+    CheckAndMutateRowRequest.Builder requestBuilder =
+        CheckAndMutateRowRequest.newBuilder();
+
+    requestBuilder.setTableName(hbaseAdapter.getBigtableTableName().toString());
 
     requestBuilder.setRowKey(ByteString.copyFrom(row));
     Scan scan = new Scan().addColumn(family, qualifier);

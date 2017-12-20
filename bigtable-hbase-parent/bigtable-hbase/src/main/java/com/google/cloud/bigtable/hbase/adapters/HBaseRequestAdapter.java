@@ -57,7 +57,6 @@ public class HBaseRequestAdapter {
   protected final MutationAdapters mutationAdapters;
   protected final TableName tableName;
   protected final BigtableTableName bigtableTableName;
-  protected final BigtableOptions options;
 
   /**
    * <p>Constructor for HBaseRequestAdapter.</p>
@@ -83,7 +82,6 @@ public class HBaseRequestAdapter {
     this.bigtableTableName =
         options.getInstanceName().toTableName(tableName.getQualifierAsString());
     this.mutationAdapters = mutationAdapters;
-    this.options = options;
   }
 
   /**
@@ -95,7 +93,6 @@ public class HBaseRequestAdapter {
   public MutateRowRequest adapt(Delete delete) {
     MutateRowRequest.Builder requestBuilder = Adapters.DELETE_ADAPTER.adapt(delete);
     requestBuilder.setTableName(getTableNameString());
-    requestBuilder.setAppProfileId(options.getAppProfileId());
     return requestBuilder.build();
   }
 
@@ -119,7 +116,6 @@ public class HBaseRequestAdapter {
     ReadHooks readHooks = new DefaultReadHooks();
     ReadRowsRequest.Builder builder = Adapters.GET_ADAPTER.adapt(get, readHooks);
     builder.setTableName(getTableNameString());
-    builder.setAppProfileId(options.getAppProfileId());
     return readHooks.applyPreSendHook(builder.build());
   }
 
@@ -133,7 +129,6 @@ public class HBaseRequestAdapter {
     ReadHooks readHooks = new DefaultReadHooks();
     ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
     builder.setTableName(getTableNameString());
-    builder.setAppProfileId(options.getAppProfileId());
     return readHooks.applyPreSendHook(builder.build());
   }
 
@@ -146,7 +141,6 @@ public class HBaseRequestAdapter {
   public ReadModifyWriteRowRequest adapt(Append append) {
     ReadModifyWriteRowRequest.Builder builder = Adapters.APPEND_ADAPTER.adapt(append);
     builder.setTableName(getTableNameString());
-    builder.setAppProfileId(options.getAppProfileId());
     return builder.build();
   }
 
@@ -159,7 +153,6 @@ public class HBaseRequestAdapter {
   public ReadModifyWriteRowRequest adapt(Increment increment) {
     ReadModifyWriteRowRequest.Builder builder = Adapters.INCREMENT_ADAPTER.adapt(increment);
     builder.setTableName(getTableNameString());
-    builder.setAppProfileId(options.getAppProfileId());
     return builder.build();
   }
 
@@ -172,7 +165,6 @@ public class HBaseRequestAdapter {
   public MutateRowRequest adapt(Put put) {
     MutateRowRequest.Builder builder = mutationAdapters.putAdapter.adapt(put);
     builder.setTableName(getTableNameString());
-    builder.setAppProfileId(options.getAppProfileId());
     return builder.build();
   }
 
@@ -196,7 +188,6 @@ public class HBaseRequestAdapter {
   public MutateRowRequest adapt(RowMutations mutations) {
     MutateRowRequest.Builder builder = mutationAdapters.rowMutationsAdapter.adapt(mutations);
     builder.setTableName(getTableNameString());
-    builder.setAppProfileId(options.getAppProfileId());
     return builder.build();
   }
 
@@ -219,7 +210,6 @@ public class HBaseRequestAdapter {
   public MutateRowRequest adapt(org.apache.hadoop.hbase.client.Mutation mutation) {
     MutateRowRequest.Builder builder = mutationAdapters.hbaseMutationAdapter.adapt(mutation);
     builder.setTableName(getTableNameString());
-    builder.setAppProfileId(options.getAppProfileId());
     return builder.build();
   }
 
