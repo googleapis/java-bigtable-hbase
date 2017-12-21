@@ -241,16 +241,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public void deleteTableSnapshots(String arg0, String arg1) throws IOException {
-    throw new UnsupportedOperationException("deleteTableSnapshots");
-  }
-
-  @Override
-  public void deleteTableSnapshots(Pattern arg0, Pattern arg1) throws IOException {
-    throw new UnsupportedOperationException("deleteTableSnapshots");
-  }
-
-  @Override
   public List<TableDescriptor> listTableDescriptors() throws IOException {
     throw new UnsupportedOperationException("listTableDescriptors"); // TODO
   }
@@ -292,9 +282,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public Future<Void> modifyColumnFamilyAsync(TableName arg0, ColumnFamilyDescriptor arg1)
       throws IOException {
     // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("modifyColumnFamilyAsync"); 
+    throw new UnsupportedOperationException("modifyColumnFamilyAsync");
   }
- 
+
   @Override
   public void modifyTable(TableDescriptor arg0) throws IOException {
     throw new UnsupportedOperationException("modifyTable"); // TODO

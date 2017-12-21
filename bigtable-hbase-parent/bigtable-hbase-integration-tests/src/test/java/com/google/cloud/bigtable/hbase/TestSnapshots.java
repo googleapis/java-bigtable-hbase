@@ -14,8 +14,7 @@
  * limitations under the License.
  */package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
-
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,10 +35,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 
-@SuppressWarnings("deprecation")
 public class TestSnapshots extends AbstractTest {
 
   final byte[] QUALIFIER = dataHelper.randomData("TestSingleColumnValueFilter");
@@ -52,8 +49,8 @@ public class TestSnapshots extends AbstractTest {
       TableName.valueOf(tableName.getNameAsString().substring(40) + "_clone");
 
   @After
-  public void cleanup() {
-    if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
+  public void cleanup() throws IOException {
+    if (sharedTestEnv.isBigtable() && !Boolean.getBoolean("perform.snapshot.test")) {
       return;
     }
     try (Admin admin = getConnection().getAdmin()) {
@@ -67,10 +64,6 @@ public class TestSnapshots extends AbstractTest {
     }
   }
 
-  protected boolean enableTestForBigtable() {
-    return false;
-  }
-
   private void delete(Admin admin, TableName tableName) throws IOException {
     if (admin.tableExists(tableName)) {
       admin.disableTable(tableName);
@@ -79,14 +72,13 @@ public class TestSnapshots extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testSnapshot() throws IOException {
-    if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
+    if (sharedTestEnv.isBigtable() && !Boolean.getBoolean("perform.snapshot.test")) {
       return;
     }
     try (Admin admin = getConnection().getAdmin()) {
       admin.createTable(
-        new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
+        new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY)));
 
       Map<String, Long> values = createAndPopulateTable();
       checkSnapshotCount(admin, 0);
@@ -119,7 +111,7 @@ public class TestSnapshots extends AbstractTest {
         final UUID rowKey = UUID.randomUUID();
         byte[] row = Bytes.toBytes(rowKey.toString());
         values.put(rowKey.toString(), i);
-        puts.add(new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i)));
+        puts.add(new Put(row).addColumn(SharedTestEnvRule.COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i)));
       }
       table.put(puts);
     }
@@ -132,7 +124,7 @@ public class TestSnapshots extends AbstractTest {
       for(Result result : scanner) {
         String row = Bytes.toString(result.getRow());
         Long expected = values.get(row);
-        Long found = Bytes.toLong(result.getValue(COLUMN_FAMILY, QUALIFIER));
+        Long found = Bytes.toLong(result.getValue(SharedTestEnvRule.COLUMN_FAMILY, QUALIFIER));
         Assert.assertEquals("row " + row + " not equal", expected, found);
         values.remove(row);
       }

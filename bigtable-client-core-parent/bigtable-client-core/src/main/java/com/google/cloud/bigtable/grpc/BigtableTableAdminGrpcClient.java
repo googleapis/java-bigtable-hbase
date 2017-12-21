@@ -17,6 +17,14 @@ package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 
+import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
+import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
+import com.google.bigtable.admin.v2.GetSnapshotRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
+import com.google.bigtable.admin.v2.Snapshot;
+import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.longrunning.Operation;
 import com.google.common.primitives.Ints;
 import java.io.IOException;
 import com.google.api.client.util.BackOff;
@@ -70,6 +78,12 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   private final BigtableAsyncRpc<GenerateConsistencyTokenRequest, GenerateConsistencyTokenResponse> generateConsistencyTokenRpc;
   private final BigtableAsyncRpc<CheckConsistencyRequest, CheckConsistencyResponse> checkConsistencyRpc;
 
+  private final BigtableAsyncRpc<SnapshotTableRequest, Operation> snapshotTableRpc;
+  private final BigtableAsyncRpc<GetSnapshotRequest, Snapshot> getSnapshotRpc;
+  private final BigtableAsyncRpc<ListSnapshotsRequest, ListSnapshotsResponse> listSnapshotsRpc;
+  private final BigtableAsyncRpc<DeleteSnapshotRequest, Empty> deleteSnapshotRpc;
+  private final BigtableAsyncRpc<CreateTableFromSnapshotRequest, Operation> createTableFromSnapshotRpc;
+
   /**
    * <p>Constructor for BigtableTableAdminGrpcClient.</p>
    *
@@ -101,6 +115,21 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     this.checkConsistencyRpc = asyncUtilities.createAsyncRpc(
         BigtableTableAdminGrpc.METHOD_CHECK_CONSISTENCY,
         Predicates.<CheckConsistencyRequest> alwaysFalse());
+
+    this.snapshotTableRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_SNAPSHOT_TABLE,
+        Predicates.<SnapshotTableRequest>alwaysFalse());
+
+    this.getSnapshotRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_GET_SNAPSHOT,
+        Predicates.<GetSnapshotRequest>alwaysTrue());
+
+    this.listSnapshotsRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_LIST_SNAPSHOTS,
+        Predicates.<ListSnapshotsRequest>alwaysTrue());
+
+    this.deleteSnapshotRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_DELETE_SNAPSHOT,
+        Predicates.<DeleteSnapshotRequest>alwaysFalse());
+
+    this.createTableFromSnapshotRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_CREATE_TABLE_FROM_SNAPSHOT,
+        Predicates.<CreateTableFromSnapshotRequest>alwaysFalse());
 
     this.retryOptions = bigtableOptions.getRetryOptions();
     this.retryExecutorService = retryExecutorService;
@@ -257,5 +286,36 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
       metadata.put(GRPC_RESOURCE_PREFIX_KEY, resource);
     }
     return metadata;
+  }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public ListenableFuture<Operation> snapshotTableAsync(SnapshotTableRequest request) {
+    return createUnaryListener(request, snapshotTableRpc, request.getName()).getAsyncResult();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ListenableFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request) {
+    return createUnaryListener(request, getSnapshotRpc, request.getName()).getAsyncResult();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ListenableFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request) {
+    return createUnaryListener(request, listSnapshotsRpc, request.getParent()).getAsyncResult();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ListenableFuture<Empty> deleteSnapshotAsync(DeleteSnapshotRequest request) {
+    return createUnaryListener(request, deleteSnapshotRpc, request.getName()).getAsyncResult();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ListenableFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request) {
+    return createUnaryListener(request, createTableFromSnapshotRpc, request.getParent()).getAsyncResult();
   }
 }
