@@ -118,7 +118,8 @@ public class PutAdapter extends MutationAdapter<Put> {
                 .setFamilyNameBytes(familyString)
                 .setColumnQualifier(cellQualifierByteString)
                 .setValue(value)
-                .setTimestampMicros(timestampMicros))
+                .setTimestampMicros(timestampMicros)
+                .build())
             .build());
       }
     }

@@ -62,7 +62,7 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
         String.format("Cell type %s is unsupported.", cell.getTypeByte()));
   }
 
-  static void throwOnUnsupportedDeleteFamilyVersion(@SuppressWarnings("unused") Cell cell) {
+  static void throwOnUnsupportedDeleteFamilyVersion(Cell cell) {
     throw new UnsupportedOperationException(
         "Cannot perform column family deletion at timestamp.");
   }
@@ -113,9 +113,10 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
         cell.getTimestamp(),
         BigtableConstants.HBASE_TIMEUNIT);
 
-      deleteBuilder.getTimeRangeBuilder()
+      deleteBuilder.setTimeRange(TimestampRange.newBuilder()
           .setStartTimestampMicros(startTimestamp)
-          .setEndTimestampMicros(endTimestamp);
+          .setEndTimestampMicros(endTimestamp)
+          .build());
     } else {
       // Delete all cells before a timestamp
       if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
@@ -152,7 +153,8 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
 
             mutations.add(Mutation.newBuilder()
               .setDeleteFromFamily(DeleteFromFamily.newBuilder()
-                  .setFamilyNameBytes(familyByteString).build())
+                  .setFamilyNameBytes(familyByteString)
+                  .build())
               .build());
           } else if (isFamilyVersionDelete(cell)) {
             throwOnUnsupportedDeleteFamilyVersion(cell);
