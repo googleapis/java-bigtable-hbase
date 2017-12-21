@@ -27,7 +27,6 @@ import com.google.rpc.Status;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import io.grpc.testing.GrpcServerRule;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.BlockingQueue;
@@ -35,13 +34,9 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 public class TestAppProfile {
-  @Rule
-  public final GrpcServerRule grpcServerRule = new GrpcServerRule();
-
   private FakeDataService fakeDataService;
   private Server server;
 

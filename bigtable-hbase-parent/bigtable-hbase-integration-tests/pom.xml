@@ -31,7 +31,6 @@ limitations under the License.
     </description>
 
     <properties>
-        <!-- This is used configure SharedTestEnv to target production instead of the hbase minicluster -->
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
     </properties>
 
@@ -61,44 +60,6 @@ limitations under the License.
                                     <forkCount>1</forkCount>
                                     <includes>
                                         <include>**/IntegrationTestsNoKnownGap.java</include>
-                                    </includes>
-                                    <reportNameSuffix>bigtable-server</reportNameSuffix>
-                                    <systemPropertyVariables>
-                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
-                                    </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>bigtableReplicationTest</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>api-integration-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <id>api-gap-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>integration-test</phase>
-                                <configuration>
-                                    <forkCount>1</forkCount>
-                                    <includes>
-                                        <include>**/IntegrationTestsReplication.java</include>
                                     </includes>
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
