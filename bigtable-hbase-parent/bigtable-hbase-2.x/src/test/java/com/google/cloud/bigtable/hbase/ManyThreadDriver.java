@@ -17,14 +17,14 @@ package com.google.cloud.bigtable.hbase;
 
 import io.grpc.internal.GrpcUtil;
 import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.GraphiteReporter;
@@ -124,10 +124,10 @@ public class ManyThreadDriver {
 
   static void setupTable(final TableName tableName, Connection connection) throws IOException {
     try(Admin admin = connection.getAdmin()) {
-      HTableDescriptor descriptor = new HTableDescriptor(tableName);
-      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+      TableDescriptorBuilder descriptor = TableDescriptorBuilder.newBuilder(tableName);
+      descriptor.addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY));
       try {
-        admin.createTable(descriptor);
+        admin.createTable(descriptor.build());
         System.out.println("Created the table");
       } catch (IOException ignore) {
         // Soldier on, maybe the table already exists.

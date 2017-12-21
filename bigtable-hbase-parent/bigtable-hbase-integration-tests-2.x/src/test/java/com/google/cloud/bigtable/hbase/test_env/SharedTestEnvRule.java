@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.test_env;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Handler;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -130,12 +131,21 @@ public class SharedTestEnvRule extends ExternalResource {
 
   public void createTable(TableName tableName) throws IOException {
     try (Admin admin = connection.getAdmin();) {
+//      ColumnFamilyDescriptor hcd = ColumnFamilyDescriptorBuilder.newBuilder(COLUMN_FAMILY)
+//          .setMaxVersions(MAX_VERSIONS).build();
+//      ColumnFamilyDescriptor hcdfamily2 = ColumnFamilyDescriptorBuilder.newBuilder(COLUMN_FAMILY2)
+//          .setMaxVersions(MAX_VERSIONS).build();
+//      TableDescriptor tableDescriptor = TableDescriptorBuilder.newBuilder(tableName)
+//          .addColumnFamily(hcd).addColumnFamily(hcdfamily2).build();
+//
+//      admin.createTable(tableDescriptor);
       HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
       HColumnDescriptor family2 = new HColumnDescriptor(COLUMN_FAMILY2).setMaxVersions(MAX_VERSIONS);
       admin.createTable(
           new HTableDescriptor(tableName)
               .addFamily(hcd)
               .addFamily(family2));
+
     }
   }
 }

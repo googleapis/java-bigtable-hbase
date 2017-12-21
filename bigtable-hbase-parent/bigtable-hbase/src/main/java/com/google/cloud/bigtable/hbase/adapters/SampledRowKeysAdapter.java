@@ -74,17 +74,14 @@ public abstract class SampledRowKeysAdapter {
       if (Bytes.equals(startKey, endKey)) {
         continue;
       }
-      HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
+      regions.add(createRegionLocation(startKey, endKey));
       startKey = endKey;
-
-      regions.add(createHRegionLocation(regionInfo, serverName));
     }
 
     // Create one last region if the last region doesn't reach the end or there are no regions.
     byte[] endKey = HConstants.EMPTY_END_ROW;
     if (regions.isEmpty() || !Bytes.equals(startKey, endKey)) {
-      HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
-      regions.add(createHRegionLocation(regionInfo, serverName));
+      regions.add(createRegionLocation(startKey, endKey));
     }
     return regions;
   }
@@ -96,6 +93,10 @@ public abstract class SampledRowKeysAdapter {
    * delay. {@link AbstractBigtableConnection#getRegionLocator(TableName)} calls an abstract method
    * which subclasses will construct appropriate {@link SampledRowKeysAdapter} implementations.
    */
-  protected abstract HRegionLocation createHRegionLocation(HRegionInfo hRegionInfo,
-      ServerName serverName);
+  protected abstract HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey);
+
+//  protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
+//    HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
+//    return createHRegionLocation(regionInfo, serverName);
+//  }
 }

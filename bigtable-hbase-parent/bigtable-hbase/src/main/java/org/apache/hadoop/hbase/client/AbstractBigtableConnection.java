@@ -23,7 +23,6 @@ import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
-import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
@@ -159,12 +158,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   @Override
   public Table getTable(TableName tableName) throws IOException {
     return getTable(tableName, batchPool);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new BigtableTable(this, createAdapter(tableName));
   }
 
   /** {@inheritDoc} */

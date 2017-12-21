@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -82,7 +83,8 @@ class BigtableEnv extends SharedTestEnv {
     ExecutorService executor = Executors.newCachedThreadPool(GrpcUtil.getThreadFactory("table_deleter", true));
     try (Connection connection = createConnection();
         Admin admin = connection.getAdmin()) {
-      for (final TableName tableName : admin.listTableNames("(test_table|list_table[12]|TestTable).*")) {
+      for (final TableName tableName : admin
+          .listTableNames(Pattern.compile("(test_table|list_table[12]|TestTable).*"))) {
         executor.execute(new Runnable() {
           @Override
           public void run() {

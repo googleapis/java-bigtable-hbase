@@ -187,8 +187,8 @@ public class TestBatch extends AbstractTest {
     table.batch(batch, null);
 
     // Increment
-    Append append1 = new Append(rowKey1).add(COLUMN_FAMILY, qual1, value1_2);
-    Append append2 = new Append(rowKey2).add(COLUMN_FAMILY, qual2, value2_2);
+    Append append1 = new Append(rowKey1).addColumn(COLUMN_FAMILY, qual1, value1_2);
+    Append append2 = new Append(rowKey2).addColumn(COLUMN_FAMILY, qual2, value2_2);
     batch.clear();
     batch.add(append1);
     batch.add(append2);

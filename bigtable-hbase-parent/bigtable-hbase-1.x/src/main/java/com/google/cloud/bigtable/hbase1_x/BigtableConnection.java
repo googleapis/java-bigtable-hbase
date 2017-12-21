@@ -19,14 +19,15 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.security.User;
 
+import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
 /**
@@ -63,9 +64,14 @@ public class BigtableConnection extends AbstractBigtableConnection {
       ServerName serverName) {
     return new SampledRowKeysAdapter(tableName, serverName) {
       @Override
-      public HRegionLocation createHRegionLocation(HRegionInfo hRegionInfo, ServerName serverName) {
-        return new HRegionLocation(hRegionInfo, serverName);
+      protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
+        return null;
       }
     };
+  }
+
+  @Override
+  public Table getTable(TableName tableName, ExecutorService ignored) throws IOException {
+    return new AbstractBigtableTable(this, createAdapter(tableName)){};
   }
 }
