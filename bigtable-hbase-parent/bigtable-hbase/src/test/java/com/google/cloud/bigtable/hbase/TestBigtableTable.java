@@ -64,7 +64,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Unit tests for {@link BigtableTable}.
+ * Unit tests for {@link AbstractBigtableTable}.
  */
 @RunWith(JUnit4.class)
 public class TestBigtableTable {
@@ -85,7 +85,7 @@ public class TestBigtableTable {
   @Mock
   private ResultScanner<FlatRow> mockResultScanner;
 
-  public BigtableTable table;
+  public AbstractBigtableTable table;
 
   @Before
   public void setup() {
@@ -112,7 +112,7 @@ public class TestBigtableTable {
     when(mockSession.getOptions()).thenReturn(options);
     when(mockSession.getDataClient()).thenReturn(mockClient);
     when(mockClient.readFlatRows(isA(ReadRowsRequest.class))).thenReturn(mockResultScanner);
-    table = new BigtableTable(mockConnection, hbaseAdapter);
+    table = new AbstractBigtableTable(mockConnection, hbaseAdapter);
   }
 
   @Test
@@ -169,7 +169,7 @@ public class TestBigtableTable {
   public void hasWhileMatchFilter_noAtTopLevel() {
     QualifierFilter filter =
         new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
-    assertFalse(BigtableTable.hasWhileMatchFilter(filter));
+    assertFalse(AbstractBigtableTable.hasWhileMatchFilter(filter));
   }
   
   @Test
@@ -177,7 +177,7 @@ public class TestBigtableTable {
     QualifierFilter filter =
         new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
     WhileMatchFilter whileMatchFilter = new WhileMatchFilter(filter);
-    assertTrue(BigtableTable.hasWhileMatchFilter(whileMatchFilter));
+    assertTrue(AbstractBigtableTable.hasWhileMatchFilter(whileMatchFilter));
   }
   
   @Test
@@ -185,7 +185,7 @@ public class TestBigtableTable {
     QualifierFilter filter =
         new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
     FilterList filterList = new FilterList(filter);
-    assertFalse(BigtableTable.hasWhileMatchFilter(filterList));
+    assertFalse(AbstractBigtableTable.hasWhileMatchFilter(filterList));
   }
 
   @Test
@@ -194,7 +194,7 @@ public class TestBigtableTable {
         new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
     WhileMatchFilter whileMatchFilter = new WhileMatchFilter(filter);
     FilterList filterList = new FilterList(whileMatchFilter);
-    assertTrue(BigtableTable.hasWhileMatchFilter(filterList));
+    assertTrue(AbstractBigtableTable.hasWhileMatchFilter(filterList));
   }
   
   @Test

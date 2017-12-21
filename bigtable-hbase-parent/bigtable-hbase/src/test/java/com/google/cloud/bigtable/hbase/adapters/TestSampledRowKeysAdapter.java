@@ -36,11 +36,10 @@ import java.util.List;
 public class TestSampledRowKeysAdapter {
   SampledRowKeysAdapter adapter =
       new SampledRowKeysAdapter(TableName.valueOf("test"), ServerName.valueOf("host", 123, 0)) {
-
         @Override
-        public HRegionLocation createHRegionLocation(HRegionInfo hRegionInfo,
-            ServerName serverName) {
-          return new HRegionLocation(hRegionInfo, serverName);
+        protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
+          HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
+          return new HRegionLocation(regionInfo, serverName);
         }
       };
 

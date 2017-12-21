@@ -16,11 +16,13 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.util.concurrent.CompletableFuture;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.RegionInfoBuilder;
+
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
@@ -47,11 +49,11 @@ public class BigtableAsyncTableRegionLocator implements AsyncTableRegionLocator 
     this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     this.adapter = new SampledRowKeysAdapter(tableName, serverName) {
-
       @Override
-      protected HRegionLocation createHRegionLocation(HRegionInfo hRegionInfo,
-          ServerName serverName) {
-        return new HRegionLocation(hRegionInfo, serverName);
+      protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
+        RegionInfo regionInfo =
+            RegionInfoBuilder.newBuilder(tableName).setStartKey(startKey).setEndKey(endKey).build();
+        return new HRegionLocation(regionInfo, serverName);
       }
     };
   }

@@ -19,14 +19,17 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.RegionInfoBuilder;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableBuilder;
 import org.apache.hadoop.hbase.security.User;
+
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
 /**
@@ -63,8 +66,10 @@ public class BigtableConnection extends AbstractBigtableConnection {
       ServerName serverName) {
     return new SampledRowKeysAdapter(tableName, serverName) {
       @Override
-      public HRegionLocation createHRegionLocation(HRegionInfo hRegionInfo, ServerName serverName) {
-        return new HRegionLocation(hRegionInfo, serverName);
+      protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
+        RegionInfo regionInfo =
+            RegionInfoBuilder.newBuilder(tableName).setStartKey(startKey).setEndKey(endKey).build();
+        return new HRegionLocation(regionInfo, serverName);
       }
     };
   }
@@ -80,4 +85,11 @@ public class BigtableConnection extends AbstractBigtableConnection {
   public TableBuilder getTableBuilder(TableName arg0, ExecutorService arg1) {
     throw new UnsupportedOperationException("getTableBuilder"); // TODO
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
+    return new BigtableTable(this, createAdapter(tableName));
+  }
+
 }

@@ -91,7 +91,7 @@ public class TestDelete extends AbstractTest {
 
     // Check values
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals(2, result.size());
 
@@ -127,7 +127,7 @@ public class TestDelete extends AbstractTest {
 
     // Check values
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals(3, result.size());
 
@@ -166,7 +166,7 @@ public class TestDelete extends AbstractTest {
 
     // Check values
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals(3, result.size());
 
@@ -203,7 +203,7 @@ public class TestDelete extends AbstractTest {
 
     // Check values
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals(3, result.size());
 
@@ -241,7 +241,7 @@ public class TestDelete extends AbstractTest {
 
     // Check values
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals(3, result.size());
 
@@ -279,7 +279,7 @@ public class TestDelete extends AbstractTest {
 
     // Check values
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals(5, result.size());
 
@@ -321,7 +321,7 @@ public class TestDelete extends AbstractTest {
 
     // Check values
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals(5, result.size());
 

@@ -148,7 +148,7 @@ public class TestGet extends AbstractTest {
     Get get = new Get(rowKey);
     get.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual);
     get.setTimeRange(timestamps[minVersion], timestamps[maxVersion]);
-    get.setMaxVersions(numVersions);
+    get.readVersions(numVersions);
     Result result = table.get(get);
     Assert.assertEquals(maxVersion - minVersion, result.size());
     Assert.assertTrue(result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual));
@@ -192,7 +192,7 @@ public class TestGet extends AbstractTest {
     Get get = new Get(rowKey);
     get.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual);
     get.setTimeStamp(timestamps[particularTimestamp]);
-    get.setMaxVersions(numVersions);
+    get.readVersions(numVersions);
     Result result = table.get(get);
     Assert.assertEquals(1, result.size());
     Assert.assertTrue(result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual));
@@ -231,7 +231,7 @@ public class TestGet extends AbstractTest {
     // Get with maxVersions and confirm we get the last N versions.
     Get get = new Get(rowKey);
     get.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual);
-    get.setMaxVersions(maxVersions);
+    get.readVersions(maxVersions);
     Result result = table.get(get);
     Assert.assertEquals(maxVersions, result.size());
     Assert.assertTrue(result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual));
@@ -368,7 +368,7 @@ public class TestGet extends AbstractTest {
       Assert.assertTrue(table.exists(get));
       gets.add(get);
     }
-    boolean[] exists = table.existsAll(gets);
+    boolean[] exists = table.exists(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(exists[i]);
@@ -382,7 +382,7 @@ public class TestGet extends AbstractTest {
       Assert.assertTrue(table.exists(get));
       gets.add(get);
     }
-    exists = table.existsAll(gets);
+    exists = table.exists(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(exists[i]);
@@ -396,7 +396,7 @@ public class TestGet extends AbstractTest {
       Assert.assertTrue(table.exists(get));
       gets.add(get);
     }
-    exists = table.existsAll(gets);
+    exists = table.exists(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(exists[i]);
@@ -409,7 +409,7 @@ public class TestGet extends AbstractTest {
       Assert.assertFalse(table.exists(get));
       gets.add(get);
     }
-    exists = table.existsAll(gets);
+    exists = table.exists(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertFalse(exists[i]);
@@ -431,7 +431,7 @@ public class TestGet extends AbstractTest {
     }
     boolean throwsException = false;
     try {
-      table.existsAll(gets);
+      table.exists(gets);
     } catch (RetriesExhaustedWithDetailsException e) {
       throwsException = true;
       Assert.assertEquals(numValues, e.getNumExceptions());
@@ -446,7 +446,7 @@ public class TestGet extends AbstractTest {
       Assert.assertFalse(table.exists(get));
       gets.add(get);
     }
-    exists = table.existsAll(gets);
+    exists = table.exists(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertFalse(exists[i]);
@@ -461,7 +461,7 @@ public class TestGet extends AbstractTest {
       Assert.assertTrue(table.exists(get));
       gets.add(get);
     }
-    exists = table.existsAll(gets);
+    exists = table.exists(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(exists[i]);

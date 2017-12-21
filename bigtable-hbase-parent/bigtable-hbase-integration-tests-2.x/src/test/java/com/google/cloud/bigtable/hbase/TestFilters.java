@@ -18,14 +18,17 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 
-import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -40,9 +43,7 @@ import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
-import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.FamilyFilter;
-import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FilterList.Operator;
@@ -71,12 +72,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 
 public class TestFilters extends AbstractTest {
   /**
@@ -104,7 +103,7 @@ public class TestFilters extends AbstractTest {
 
     // Filter and test
     Filter filter = new ColumnCountGetFilter(numColumnsToFilter);
-    Get get = new Get(rowKey).setFilter(filter).setMaxVersions(10);
+    Get get = new Get(rowKey).setFilter(filter).readVersions(10);
     Result result = table.get(get);
     Assert.assertEquals("Should have filtered to N columns", numColumnsToFilter, result.size());
     for (int i = 0 ; i < numColumnsToFilter; ++i) {
@@ -150,7 +149,7 @@ public class TestFilters extends AbstractTest {
 
     // Filter and test
     Filter filter = new ColumnPaginationFilter(numColumnsToFilter, offset);
-    Get get = new Get(rowKey).setFilter(filter).setMaxVersions(10);
+    Get get = new Get(rowKey).setFilter(filter).readVersions(10);
     Result result = table.get(get);
     Assert.assertEquals("Should have filtered to N columns", numColumnsToFilter, result.size());
     for (int i = offset ; i < (numColumnsToFilter + offset); ++i) {
@@ -184,7 +183,7 @@ public class TestFilters extends AbstractTest {
 
     // Filter and test
     Filter filter = new ColumnPaginationFilter(3, Bytes.toBytes("AA"));
-    Get get = new Get(rowKey).setFilter(filter).setMaxVersions(10);
+    Get get = new Get(rowKey).setFilter(filter).readVersions(10);
     Result result = table.get(get);
     Assert.assertEquals("Should have filtered to N columns", 3, result.size());
     Assert.assertEquals("AA", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
@@ -370,46 +369,46 @@ public class TestFilters extends AbstractTest {
 
     // Test BinaryComparator - EQUAL
     ByteArrayComparable rowKey2Comparable = new BinaryComparator(rowKey2);
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowKey2Comparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowKey2Comparable);
     Result[] results = scanWithFilter(table, rowKey1, rowKey4, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(rowKey2, results[0].getRow());
 
     // Test BinaryComparator - GREATER
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.GREATER, rowKey2Comparable);
     results = scanWithFilter(table, rowKey1, rowKey4, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(rowKey3, results[0].getRow());
 
     // Test BinaryComparator - GREATER_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.GREATER_OR_EQUAL, rowKey2Comparable);
     results = scanWithFilter(table, rowKey1, rowKey4, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(rowKey2, results[0].getRow());
     Assert.assertArrayEquals(rowKey3, results[1].getRow());
 
     // Test BinaryComparator - LESS
-    filter = new RowFilter(CompareFilter.CompareOp.LESS, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.LESS, rowKey2Comparable);
     results = scanWithFilter(table, rowKey1, rowKey4, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(rowKey1, results[0].getRow());
 
     // Test BinaryComparator - LESS_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.LESS_OR_EQUAL, rowKey2Comparable);
     results = scanWithFilter(table, rowKey1, rowKey4, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(rowKey1, results[0].getRow());
     Assert.assertArrayEquals(rowKey2, results[1].getRow());
 
     // Test BinaryComparator - NOT_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.NOT_EQUAL, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.NOT_EQUAL, rowKey2Comparable);
     results = scanWithFilter(table, rowKey1, rowKey4, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(rowKey1, results[0].getRow());
     Assert.assertArrayEquals(rowKey3, results[1].getRow());
 
     // Test BinaryComparator - NO_OP
-    filter = new RowFilter(CompareFilter.CompareOp.NO_OP, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.NO_OP, rowKey2Comparable);
     results = scanWithFilter(table, rowKey1, rowKey4, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
@@ -435,7 +434,7 @@ public class TestFilters extends AbstractTest {
 
     // Test BinaryComparator - EQUAL
     ByteArrayComparable rowKey2Comparable = new BinaryComparator(rowKey2);
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowKey2Comparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowKey2Comparable);
     Result[] results = scanWithFilter(table, rowKey1, rowKey4, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(rowKey2, results[0].getRow());
@@ -470,21 +469,21 @@ public class TestFilters extends AbstractTest {
 
     // Test BinaryPrefixComparator - EQUAL
     ByteArrayComparable rowBComparable = new BinaryPrefixComparator(rowB);
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowBComparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowBComparable);
     Result[] results = scanWithFilter(table, rowA, rowD, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(rowB, results[0].getRow());
     Assert.assertArrayEquals(rowBB, results[1].getRow());
 
     // Test BinaryPrefixComparator - GREATER
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER, rowBComparable);
+    filter = new RowFilter(CompareOperator.GREATER, rowBComparable);
     results = scanWithFilter(table, rowA, rowD, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(rowC, results[0].getRow());
     Assert.assertArrayEquals(rowCC, results[1].getRow());
 
     // Test BinaryPrefixComparator - GREATER_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.GREATER_OR_EQUAL, rowBComparable);
     results = scanWithFilter(table, rowA, rowD, qual, filter);
     Assert.assertEquals("# results", 4, results.length);
     Assert.assertArrayEquals(rowB, results[0].getRow());
@@ -493,14 +492,14 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowCC, results[3].getRow());
 
     // Test BinaryPrefixComparator - LESS
-    filter = new RowFilter(CompareFilter.CompareOp.LESS, rowBComparable);
+    filter = new RowFilter(CompareOperator.LESS, rowBComparable);
     results = scanWithFilter(table, rowA, rowD, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(rowA, results[0].getRow());
     Assert.assertArrayEquals(rowAA, results[1].getRow());
 
     // Test BinaryPrefixComparator - LESS_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.LESS_OR_EQUAL, rowBComparable);
     results = scanWithFilter(table, rowA, rowD, qual, filter);
     Assert.assertEquals("# results", 4, results.length);
     Assert.assertArrayEquals(rowA, results[0].getRow());
@@ -509,7 +508,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowBB, results[3].getRow());
 
     // Test BinaryPrefixComparator - NOT_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.NOT_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.NOT_EQUAL, rowBComparable);
     results = scanWithFilter(table, rowA, rowD, qual, filter);
     Assert.assertEquals("# results", 4, results.length);
     Assert.assertArrayEquals(rowA, results[0].getRow());
@@ -518,7 +517,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowCC, results[3].getRow());
 
     // Test BinaryPrefixComparator - NO_OP
-    filter = new RowFilter(CompareFilter.CompareOp.NO_OP, rowBComparable);
+    filter = new RowFilter(CompareOperator.NO_OP, rowBComparable);
     results = scanWithFilter(table, rowA, rowD, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
@@ -553,7 +552,7 @@ public class TestFilters extends AbstractTest {
 
     // Test BitComparator - XOR - EQUAL
     ByteArrayComparable rowBComparable = new BitComparator(row0101, BitComparator.BitwiseOp.XOR);
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowBComparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowBComparable);
     Result[] results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 3, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0000, results[0].getRow());
@@ -561,12 +560,12 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(Bytes.toHex(results[2].getRow()), row1111, results[2].getRow());
 
     // Test BitComparator - XOR - GREATER (effectively no values)
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER, rowBComparable);
+    filter = new RowFilter(CompareOperator.GREATER, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
     // Test BitComparator - XOR - GREATER_OR_EQUAL (same effect as EQUAL)
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.GREATER_OR_EQUAL, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 3, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0000, results[0].getRow());
@@ -574,14 +573,14 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(Bytes.toHex(results[2].getRow()), row1111, results[2].getRow());
 
     // Test BitComparator - XOR - LESS (same effect as NOT_EQUAL)
-    filter = new RowFilter(CompareFilter.CompareOp.LESS, rowBComparable);
+    filter = new RowFilter(CompareOperator.LESS, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0101, results[0].getRow());
     Assert.assertArrayEquals(Bytes.toHex(results[1].getRow()), rowDiffLength, results[1].getRow());
 
     // Test BitComparator - XOR - LESS_OR_EQUAL (effectively all values)
-    filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.LESS_OR_EQUAL, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 5, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0000, results[0].getRow());
@@ -591,14 +590,14 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(Bytes.toHex(results[4].getRow()), row1111, results[4].getRow());
 
     // Test BitComparator - XOR - NOT_EQUAL (same effect as LESS)
-    filter = new RowFilter(CompareFilter.CompareOp.NOT_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.NOT_EQUAL, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0101, results[0].getRow());
     Assert.assertArrayEquals(Bytes.toHex(results[1].getRow()), rowDiffLength, results[1].getRow());
 
     // Test BitComparator - XOR - NO_OP (no values)
-    filter = new RowFilter(CompareFilter.CompareOp.NO_OP, rowBComparable);
+    filter = new RowFilter(CompareOperator.NO_OP, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
@@ -633,26 +632,26 @@ public class TestFilters extends AbstractTest {
 
     // Test BitComparator - AND - EQUAL
     ByteArrayComparable rowBComparable = new BitComparator(row0101, BitComparator.BitwiseOp.AND);
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowBComparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowBComparable);
     Result[] results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0101, results[0].getRow());
     Assert.assertArrayEquals(Bytes.toHex(results[1].getRow()), row1111, results[1].getRow());
 
     // Test BitComparator - AND - GREATER (effectively no values)
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER, rowBComparable);
+    filter = new RowFilter(CompareOperator.GREATER, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
     // Test BitComparator - AND - GREATER_OR_EQUAL (same effect as EQUAL)
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.GREATER_OR_EQUAL, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 2, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0101, results[0].getRow());
     Assert.assertArrayEquals(Bytes.toHex(results[1].getRow()), row1111, results[1].getRow());
 
     // Test BitComparator - AND - LESS (same effect as NOT_EQUAL)
-    filter = new RowFilter(CompareFilter.CompareOp.LESS, rowBComparable);
+    filter = new RowFilter(CompareOperator.LESS, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 3, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0000, results[0].getRow());
@@ -660,7 +659,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(Bytes.toHex(results[2].getRow()), rowDiffLength, results[2].getRow());
 
     // Test BitComparator - AND - LESS_OR_EQUAL (effectively all values)
-    filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.LESS_OR_EQUAL, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 5, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0000, results[0].getRow());
@@ -670,7 +669,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(Bytes.toHex(results[4].getRow()), row1111, results[4].getRow());
 
     // Test BitComparator - AND - NOT_EQUAL (same effect as LESS)
-    filter = new RowFilter(CompareFilter.CompareOp.NOT_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.NOT_EQUAL, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 3, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0000, results[0].getRow());
@@ -678,7 +677,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(Bytes.toHex(results[2].getRow()), rowDiffLength, results[2].getRow());
 
     // Test BitComparator - AND - NO_OP (no values)
-    filter = new RowFilter(CompareFilter.CompareOp.NO_OP, rowBComparable);
+    filter = new RowFilter(CompareOperator.NO_OP, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
@@ -713,7 +712,7 @@ public class TestFilters extends AbstractTest {
 
     // Test BitComparator - OR - EQUAL
     ByteArrayComparable rowBComparable = new BitComparator(row0101, BitComparator.BitwiseOp.OR);
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowBComparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowBComparable);
     Result[] results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 4, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0000, results[0].getRow());
@@ -722,12 +721,12 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(Bytes.toHex(results[3].getRow()), row1111, results[3].getRow());
 
     // Test BitComparator - OR - GREATER (effectively no values)
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER, rowBComparable);
+    filter = new RowFilter(CompareOperator.GREATER, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
     // Test BitComparator - OR - GREATER_OR_EQUAL (same effect as EQUAL)
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.GREATER_OR_EQUAL, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 4, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0000, results[0].getRow());
@@ -736,13 +735,13 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(Bytes.toHex(results[3].getRow()), row1111, results[3].getRow());
 
     // Test BitComparator - OR - LESS (same effect as NOT_EQUAL)
-    filter = new RowFilter(CompareFilter.CompareOp.LESS, rowBComparable);
+    filter = new RowFilter(CompareOperator.LESS, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), rowDiffLength, results[0].getRow());
 
     // Test BitComparator - OR - LESS_OR_EQUAL (effectively all values)
-    filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.LESS_OR_EQUAL, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 5, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), row0000, results[0].getRow());
@@ -752,13 +751,13 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(Bytes.toHex(results[4].getRow()), row1111, results[4].getRow());
 
     // Test BitComparator - OR - NOT_EQUAL (same effect as LESS)
-    filter = new RowFilter(CompareFilter.CompareOp.NOT_EQUAL, rowBComparable);
+    filter = new RowFilter(CompareOperator.NOT_EQUAL, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(Bytes.toHex(results[0].getRow()), rowDiffLength, results[0].getRow());
 
     // Test BitComparator - OR - NO_OP (no values)
-    filter = new RowFilter(CompareFilter.CompareOp.NO_OP, rowBComparable);
+    filter = new RowFilter(CompareOperator.NO_OP, rowBComparable);
     results = scanWithFilter(table, row0000, rowMax, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
@@ -787,40 +786,40 @@ public class TestFilters extends AbstractTest {
 
     // Test BinaryComparator - EQUAL
     ByteArrayComparable nullComparator = new NullComparator();
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, nullComparator);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, nullComparator);
     Result[] results = scanWithFilter(table, rowKeyA, rowKeyB, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
     // Test BinaryComparator - GREATER
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER, nullComparator);
+    filter = new RowFilter(CompareOperator.GREATER, nullComparator);
     results = scanWithFilter(table, rowKeyA, rowKeyB, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
     // Test BinaryComparator - GREATER_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, nullComparator);
+    filter = new RowFilter(CompareOperator.GREATER_OR_EQUAL, nullComparator);
     results = scanWithFilter(table, rowKeyA, rowKeyB, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
     // Test BinaryComparator - LESS
-    filter = new RowFilter(CompareFilter.CompareOp.LESS, nullComparator);
+    filter = new RowFilter(CompareOperator.LESS, nullComparator);
     results = scanWithFilter(table, rowKeyA, rowKeyB, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(rowKeyA, results[0].getRow());
 
     // Test BinaryComparator - LESS_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, nullComparator);
+    filter = new RowFilter(CompareOperator.LESS_OR_EQUAL, nullComparator);
     results = scanWithFilter(table, rowKeyA, rowKeyB, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(rowKeyA, results[0].getRow());
 
     // Test BinaryComparator - NOT_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.NOT_EQUAL, nullComparator);
+    filter = new RowFilter(CompareOperator.NOT_EQUAL, nullComparator);
     results = scanWithFilter(table, rowKeyA, rowKeyB, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(rowKeyA, results[0].getRow());
 
     // Test BinaryComparator - NO_OP
-    filter = new RowFilter(CompareFilter.CompareOp.NO_OP, nullComparator);
+    filter = new RowFilter(CompareOperator.NO_OP, nullComparator);
     results = scanWithFilter(table, rowKeyA, rowKeyB, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
@@ -855,7 +854,7 @@ public class TestFilters extends AbstractTest {
 
     // Test SubstringComparator - EQUAL
     ByteArrayComparable rowKey2Comparable = new SubstringComparator("AB");
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowKey2Comparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowKey2Comparable);
     Result[] results = scanWithFilter(table, rowA, rowZ, qual, filter);
     Assert.assertEquals("# results", 4, results.length);
     Assert.assertArrayEquals(rowAB, results[0].getRow());
@@ -864,12 +863,12 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowDabE, results[3].getRow());
 
     // Test SubstringComparator - GREATER
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.GREATER, rowKey2Comparable);
     results = scanWithFilter(table, rowA, rowZ, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
     // Test SubstringComparator - GREATER_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.GREATER_OR_EQUAL, rowKey2Comparable);
     results = scanWithFilter(table, rowA, rowZ, qual, filter);
     Assert.assertEquals("# results", 4, results.length);
     Assert.assertArrayEquals(rowAB, results[0].getRow());
@@ -878,13 +877,13 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowDabE, results[3].getRow());
 
     // Test SubstringComparator - LESS
-    filter = new RowFilter(CompareFilter.CompareOp.LESS, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.LESS, rowKey2Comparable);
     results = scanWithFilter(table, rowA, rowZ, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(rowA, results[0].getRow());
 
     // Test SubstringComparator - LESS_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.LESS_OR_EQUAL, rowKey2Comparable);
     results = scanWithFilter(table, rowA, rowZ, qual, filter);
     Assert.assertEquals("# results", 5, results.length);
     Assert.assertArrayEquals(rowA, results[0].getRow());
@@ -894,13 +893,13 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowDabE, results[4].getRow());
 
     // Test SubstringComparator - NOT_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.NOT_EQUAL, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.NOT_EQUAL, rowKey2Comparable);
     results = scanWithFilter(table, rowA, rowZ, qual, filter);
     Assert.assertEquals("# results", 1, results.length);
     Assert.assertArrayEquals(rowA, results[0].getRow());
 
     // Test SubstringComparator - NO_OP
-    filter = new RowFilter(CompareFilter.CompareOp.NO_OP, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.NO_OP, rowKey2Comparable);
     results = scanWithFilter(table, rowA, rowZ, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
@@ -945,7 +944,7 @@ public class TestFilters extends AbstractTest {
 
     // Test RegexStringComparator - EQUAL
     ByteArrayComparable rowKey2Comparable = new RegexStringComparator(regexIPAddr);
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowKey2Comparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowKey2Comparable);
     Result[] results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 3, results.length);
     Assert.assertArrayEquals(rowGoodIP1, results[0].getRow());
@@ -953,7 +952,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowGoodIPv6, results[2].getRow());
 
     // Test RegexStringComparator - NOT_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.NOT_EQUAL, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.NOT_EQUAL, rowKey2Comparable);
     results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 4, results.length);
     Assert.assertArrayEquals(row0, results[0].getRow());
@@ -962,12 +961,12 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowRandom, results[3].getRow());
 
     // Test RegexStringComparator - GREATER
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.GREATER, rowKey2Comparable);
     results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
     // Test RegexStringComparator - GREATER_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.GREATER_OR_EQUAL, rowKey2Comparable);
     results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 3, results.length);
     Assert.assertArrayEquals(rowGoodIP1, results[0].getRow());
@@ -975,7 +974,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowGoodIPv6, results[2].getRow());
 
     // Test RegexStringComparator - LESS
-    filter = new RowFilter(CompareFilter.CompareOp.LESS, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.LESS, rowKey2Comparable);
     results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 4, results.length);
     Assert.assertArrayEquals(row0, results[0].getRow());
@@ -984,7 +983,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowRandom, results[3].getRow());
 
     // Test RegexStringComparator - LESS_OR_EQUAL
-    filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.LESS_OR_EQUAL, rowKey2Comparable);
     results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 7, results.length);
     Assert.assertArrayEquals(row0, results[0].getRow());
@@ -996,7 +995,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowGoodIPv6, results[6].getRow());
 
     // Test RegexStringComparator - NO_OP
-    filter = new RowFilter(CompareFilter.CompareOp.NO_OP, rowKey2Comparable);
+    filter = new RowFilter(CompareOperator.NO_OP, rowKey2Comparable);
     results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
 
@@ -1033,7 +1032,7 @@ public class TestFilters extends AbstractTest {
 
     // Test RegexStringComparator - EQUAL
     ByteArrayComparable rowKey2Comparable = new RegexStringComparator(regexIPAddr);
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowKey2Comparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowKey2Comparable);
     Result[] results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 3, results.length);
     Assert.assertArrayEquals(rowGoodIP1, results[0].getRow());
@@ -1076,7 +1075,7 @@ public class TestFilters extends AbstractTest {
 
     // Test RegexStringComparator - EQUAL
     ByteArrayComparable rowKey2Comparable = new RegexStringComparator(regexIPAddr);
-    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowKey2Comparable);
+    Filter filter = new RowFilter(CompareOperator.EQUAL, rowKey2Comparable);
     Result[] results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 3, results.length);
     Assert.assertArrayEquals(rowGoodIP1, results[0].getRow());
@@ -1094,7 +1093,7 @@ public class TestFilters extends AbstractTest {
 
     ByteArrayComparable rowValue2Comparable = new BinaryComparator(Bytes.toBytes("12"));
     ValueFilter valueFilter =
-        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable);
+        new ValueFilter(CompareOperator.NOT_EQUAL, rowValue2Comparable);
     WhileMatchFilter simpleWhileMatch = new WhileMatchFilter(valueFilter);
     Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
     scan.setFilter(simpleWhileMatch);
@@ -1111,7 +1110,7 @@ public class TestFilters extends AbstractTest {
 
     ByteArrayComparable valueComparable = new BinaryComparator(String.valueOf(2).getBytes());
     SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
-        COLUMN_FAMILY, qualA, CompareFilter.CompareOp.NOT_EQUAL, valueComparable);
+        COLUMN_FAMILY, qualA, CompareOperator.NOT_EQUAL, valueComparable);
     WhileMatchFilter simpleWhileMatch = new WhileMatchFilter(valueFilter);
     ColumnPrefixFilter prefixFilter = new ColumnPrefixFilter(Bytes.toBytes("qua"));
     FilterList filterList = new FilterList(Operator.MUST_PASS_ALL, simpleWhileMatch, prefixFilter);
@@ -1133,7 +1132,7 @@ public class TestFilters extends AbstractTest {
 
     ByteArrayComparable valueComparable = new BinaryComparator(String.valueOf(2).getBytes());
     SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
-        COLUMN_FAMILY, qualA, CompareFilter.CompareOp.NOT_EQUAL, valueComparable);
+        COLUMN_FAMILY, qualA, CompareOperator.NOT_EQUAL, valueComparable);
     Scan scan = new Scan().setFilter(new WhileMatchFilter(valueFilter));
 
     int[] expected = {0, 1, 10, 11, 12, 13};
@@ -1157,29 +1156,29 @@ public class TestFilters extends AbstractTest {
         new Put(rowKeyC).addColumn(COLUMN_FAMILY, qual, valueC)));
 
       // {A} == A
-      assertKeysReturnedForSCVF(table, qual, CompareOp.EQUAL, valueA, rowKeyA);
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.EQUAL, valueA, rowKeyA);
       // Nothing should match this.
-      assertKeysReturnedForSCVF(table, qual, CompareOp.EQUAL, Bytes.toBytes("ValueA*"));
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.EQUAL, Bytes.toBytes("ValueA*"));
       // {B, C} > A
-      assertKeysReturnedForSCVF(table, qual, CompareOp.GREATER, valueA, rowKeyB, rowKeyC);
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.GREATER, valueA, rowKeyB, rowKeyC);
       // {A, B, C} >= A
-      assertKeysReturnedForSCVF(table, qual, CompareOp.GREATER_OR_EQUAL, valueA, rowKeyA, rowKeyB,
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.GREATER_OR_EQUAL, valueA, rowKeyA, rowKeyB,
         rowKeyC);
       // {A} < B
-      assertKeysReturnedForSCVF(table, qual, CompareOp.LESS, valueB, rowKeyA);
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.LESS, valueB, rowKeyA);
       // {A} <= A
-      assertKeysReturnedForSCVF(table, qual, CompareOp.LESS_OR_EQUAL, valueA, rowKeyA);
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.LESS_OR_EQUAL, valueA, rowKeyA);
       // {A, B} <= B
-      assertKeysReturnedForSCVF(table, qual, CompareOp.LESS_OR_EQUAL, valueB, rowKeyA, rowKeyB);
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.LESS_OR_EQUAL, valueB, rowKeyA, rowKeyB);
       // {A, C} != B
-      assertKeysReturnedForSCVF(table, qual, CompareOp.NOT_EQUAL, valueB, rowKeyA, rowKeyC);
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.NOT_EQUAL, valueB, rowKeyA, rowKeyC);
 
       // Check to make sure that EQUALS doesn't actually do a regex filter.
-      assertKeysReturnedForSCVF(table, qual, CompareOp.EQUAL, Bytes.toBytes("ValueC.*"));
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.EQUAL, Bytes.toBytes("ValueC.*"));
 
       // Check to make sure that EQUALS with regex does work
       SingleColumnValueFilter filter =
-          new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOp.EQUAL,
+          new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOperator.EQUAL,
               new RegexStringComparator("ValueC.*"));
       filter.setFilterIfMissing(true);
       assertKeysReturnedForFilter(table, filter, rowKeyC);
@@ -1194,11 +1193,11 @@ public class TestFilters extends AbstractTest {
     byte[] empty = new byte[0];
     try (Table table = getTable()) {
       table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, empty));
-      assertKeysReturnedForSCVF(table, qual, CompareOp.EQUAL, empty, rowKey);
+      assertKeysReturnedForSCVF(table, qual, CompareOperator.EQUAL, empty, rowKey);
     }
   }
 
-  private void assertKeysReturnedForSCVF(Table table, byte[] qualifier, CompareOp operator,
+  private void assertKeysReturnedForSCVF(Table table, byte[] qualifier, CompareOperator operator,
       byte[] value, byte[]... expectedKeys) throws IOException {
     SingleColumnValueFilter filter =
         new SingleColumnValueFilter(COLUMN_FAMILY, qualifier, operator,
@@ -1232,11 +1231,11 @@ public class TestFilters extends AbstractTest {
 
     ByteArrayComparable rowValue2Comparable1 = new BinaryComparator(Bytes.toBytes("12"));
     ValueFilter valueFilter1 =
-        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable1);
+        new ValueFilter(CompareOperator.NOT_EQUAL, rowValue2Comparable1);
     WhileMatchFilter simpleWhileMatch1 = new WhileMatchFilter(valueFilter1);
     ByteArrayComparable rowValue2Comparable2 = new BinaryComparator(Bytes.toBytes("15"));
     ValueFilter valueFilter2 =
-        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable2);
+        new ValueFilter(CompareOperator.NOT_EQUAL, rowValue2Comparable2);
     WhileMatchFilter simpleWhileMatch2 = new WhileMatchFilter(valueFilter2);
     FilterList filterList = new FilterList(
       Operator.MUST_PASS_ONE,
@@ -1258,11 +1257,11 @@ public class TestFilters extends AbstractTest {
 
     ByteArrayComparable rowValue2Comparable1 = new BinaryComparator(Bytes.toBytes("12"));
     ValueFilter valueFilter1 =
-        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable1);
+        new ValueFilter(CompareOperator.NOT_EQUAL, rowValue2Comparable1);
     WhileMatchFilter simpleWhileMatch1 = new WhileMatchFilter(valueFilter1);
     ByteArrayComparable rowValue2Comparable2 = new BinaryComparator(Bytes.toBytes("15"));
     ValueFilter valueFilter2 =
-        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable2);
+        new ValueFilter(CompareOperator.NOT_EQUAL, rowValue2Comparable2);
     WhileMatchFilter simpleWhileMatch2 = new WhileMatchFilter(valueFilter2);
     FilterList filterList = new FilterList(
       Operator.MUST_PASS_ALL,
@@ -1284,7 +1283,7 @@ public class TestFilters extends AbstractTest {
 
     ByteArrayComparable rowValue2Comparable1 = new BinaryComparator(Bytes.toBytes("12"));
     ValueFilter valueFilter1 =
-        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable1);
+        new ValueFilter(CompareOperator.NOT_EQUAL, rowValue2Comparable1);
     WhileMatchFilter simpleWhileMatch1 = new WhileMatchFilter(valueFilter1);
     WhileMatchFilter simpleWhileMatch2 = new WhileMatchFilter(simpleWhileMatch1);
     Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
@@ -1333,7 +1332,7 @@ public class TestFilters extends AbstractTest {
 
     // Filter for results
     Filter filter = new ValueFilter(
-        CompareFilter.CompareOp.EQUAL,
+        CompareOperator.EQUAL,
         new BinaryComparator(Bytes.toBytes(goodValue)));
 
     Get get = new Get(rowKey).setFilter(filter);
@@ -1531,10 +1530,10 @@ public class TestFilters extends AbstractTest {
 
     // This is not intuitive. In order to get filter.setLatestVersionOnly to have an effect,
     // we must enable the scanner to see more versions:
-    scan.setMaxVersions(3);
+    scan.readVersions(3);
 
     SingleColumnValueFilter filter =
-        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier1, CompareOp.EQUAL,  value1_1);
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier1, CompareOperator.EQUAL,  value1_1);
     filter.setFilterIfMissing(false);
     filter.setLatestVersionOnly(false);
 
@@ -1553,7 +1552,7 @@ public class TestFilters extends AbstractTest {
     // a: Qualifier exists in the row and the value matches the latest version (row1)
     // d: Qualifier does not exist in the row: (row2)
     filter =
-        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier2, CompareOp.EQUAL,  value2_1);
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier2, CompareOperator.EQUAL,  value2_1);
     filter.setFilterIfMissing(false);
     scan.setFilter(filter);
     results = table.getScanner(scan).next(10);
@@ -1568,7 +1567,7 @@ public class TestFilters extends AbstractTest {
     // Test qualifier exists and value never matches:
     // c: Qualifier exists in the row and the value does NOT match
     filter =
-        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier2, CompareOp.EQUAL,  value1_1);
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier2, CompareOperator.EQUAL,  value1_1);
     filter.setFilterIfMissing(true);
     scan.setFilter(filter);
     results = table.getScanner(scan).next(10);
@@ -1618,20 +1617,20 @@ public class TestFilters extends AbstractTest {
         .setStartRow(rowKey).setStopRow(rowKey);
 
     Assert.assertNull("< 1000 should fail",
-      getFirst(table, rootScan, CompareOp.LESS, 1000l));
+      getFirst(table, rootScan, CompareOperator.LESS, 1000l));
     Assert.assertNotNull("> 1000 should succeed",
-      getFirst(table, rootScan, CompareOp.GREATER, 1000l));
+      getFirst(table, rootScan, CompareOperator.GREATER, 1000l));
     Assert.assertNull("<= 1000 should fail",
-      getFirst(table, rootScan, CompareOp.LESS_OR_EQUAL, 1000l));
+      getFirst(table, rootScan, CompareOperator.LESS_OR_EQUAL, 1000l));
     Assert.assertNotNull(">= 1000 should succeed",
-      getFirst(table, rootScan, CompareOp.GREATER_OR_EQUAL, 1000l));
+      getFirst(table, rootScan, CompareOperator.GREATER_OR_EQUAL, 1000l));
     Assert.assertNotNull("<= 2000 should succeed",
-      getFirst(table, rootScan, CompareOp.LESS_OR_EQUAL, 2000l));
+      getFirst(table, rootScan, CompareOperator.LESS_OR_EQUAL, 2000l));
     Assert.assertNotNull(">= 2000 should succeed",
-      getFirst(table, rootScan, CompareOp.GREATER_OR_EQUAL, 2000l));
+      getFirst(table, rootScan, CompareOperator.GREATER_OR_EQUAL, 2000l));
   }
 
-  protected Result getFirst(Table table, Scan rootScan, CompareOp comparitor, long value)
+  protected Result getFirst(Table table, Scan rootScan, CompareOperator comparitor, long value)
       throws IOException {
     try (ResultScanner results = table.getScanner(new Scan(rootScan)
         .setFilter(new ValueFilter(comparitor, new BinaryComparator(Bytes.toBytes(value)))))) {
@@ -1656,7 +1655,7 @@ public class TestFilters extends AbstractTest {
     scan.addFamily(COLUMN_FAMILY);
 
     SingleColumnValueExcludeFilter excludeFilter =
-        new SingleColumnValueExcludeFilter(COLUMN_FAMILY, qualifier1, CompareOp.EQUAL, value1_1);
+        new SingleColumnValueExcludeFilter(COLUMN_FAMILY, qualifier1, CompareOperator.EQUAL, value1_1);
     excludeFilter.setFilterIfMissing(true);
     excludeFilter.setLatestVersionOnly(false);
 
@@ -1805,38 +1804,38 @@ public class TestFilters extends AbstractTest {
     Get get = new Get(rowKey).addFamily(COLUMN_FAMILY);
 
     QualifierFilter equalsQualA =
-        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA));
+        new QualifierFilter(CompareOperator.EQUAL, new BinaryComparator(qualA));
     get.setFilter(equalsQualA);
     Result result = table.get(get);
     Assert.assertEquals(1, result.size());
 
     QualifierFilter greaterThanQualA =
-        new QualifierFilter(CompareOp.GREATER, new BinaryComparator(qualA));
+        new QualifierFilter(CompareOperator.GREATER, new BinaryComparator(qualA));
     get.setFilter(greaterThanQualA);
     result = table.get(get);
     Assert.assertEquals(2, result.size());
 
     QualifierFilter greaterThanEqualQualA =
         new QualifierFilter(
-            CompareOp.GREATER_OR_EQUAL, new BinaryComparator(qualA));
+            CompareOperator.GREATER_OR_EQUAL, new BinaryComparator(qualA));
     get.setFilter(greaterThanEqualQualA);
     result = table.get(get);
     Assert.assertEquals(3, result.size());
 
     QualifierFilter lessThanQualB =
-        new QualifierFilter(CompareOp.LESS, new BinaryComparator(qualB));
+        new QualifierFilter(CompareOperator.LESS, new BinaryComparator(qualB));
     get.setFilter(lessThanQualB);
     result = table.get(get);
     Assert.assertEquals(1, result.size());
 
     QualifierFilter lessThanEqualQualB =
-        new QualifierFilter(CompareOp.LESS_OR_EQUAL, new BinaryComparator(qualB));
+        new QualifierFilter(CompareOperator.LESS_OR_EQUAL, new BinaryComparator(qualB));
     get.setFilter(lessThanEqualQualB);
     result = table.get(get);
     Assert.assertEquals(2, result.size());
 
     QualifierFilter notEqualQualB =
-        new QualifierFilter(CompareOp.NOT_EQUAL, new BinaryComparator(qualB));
+        new QualifierFilter(CompareOperator.NOT_EQUAL, new BinaryComparator(qualB));
     get.setFilter(notEqualQualB);
     result = table.get(get);
     Assert.assertEquals(2, result.size());
@@ -1845,7 +1844,7 @@ public class TestFilters extends AbstractTest {
 
     // \\C* is not supported by Java regex.
     QualifierFilter regexQualFilter =
-        new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("qualA.*"));
+        new QualifierFilter(CompareOperator.EQUAL, new RegexStringComparator("qualA.*"));
     get.setFilter(regexQualFilter);
     result = table.get(get);
     Assert.assertEquals(1, result.size());
@@ -1868,7 +1867,7 @@ public class TestFilters extends AbstractTest {
 
     {
       Get get = new Get(rowKey)
-          .setFilter(new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(COLUMN_FAMILY)));
+          .setFilter(new FamilyFilter(CompareOperator.EQUAL, new BinaryComparator(COLUMN_FAMILY)));
       Result result = table.get(get);
       Assert.assertEquals(1, result.size());
       Cell cell = result.rawCells()[0];
@@ -1879,7 +1878,7 @@ public class TestFilters extends AbstractTest {
 
     {
       Get get = new Get(rowKey)
-          .setFilter(new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(COLUMN_FAMILY2)));
+          .setFilter(new FamilyFilter(CompareOperator.EQUAL, new BinaryComparator(COLUMN_FAMILY2)));
       Result result = table.get(get);
       Assert.assertEquals(1, result.size());
       Cell cell = result.rawCells()[0];
@@ -1910,7 +1909,7 @@ public class TestFilters extends AbstractTest {
 
     FilterList filterList = new FilterList(
         Operator.MUST_PASS_ALL,
-        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
+        new QualifierFilter(CompareOperator.EQUAL, new BinaryComparator(qualA)),
         pageFilter);
     scan.setFilter(filterList);
     try (ResultScanner scanner = table.getScanner(scan)) {

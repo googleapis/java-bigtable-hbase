@@ -256,7 +256,7 @@ public class TestPut extends AbstractTest {
     table.put(put);
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, qualifier);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals(1, result.size());
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qualifier));

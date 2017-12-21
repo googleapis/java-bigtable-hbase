@@ -219,6 +219,112 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
+  public List<SnapshotDescription> listSnapshots()
+      throws IOException {
+    throw new IllegalArgumentException("listSnapshots is not supported");
+  }
+
+
+  @Override
+  public void deleteColumnFamily(TableName arg0, byte[] arg1) throws IOException {
+    throw new UnsupportedOperationException("deleteColumnFamily"); // TODO
+  }
+
+  @Override
+  public Future<Void> deleteColumnFamilyAsync(TableName arg0, byte[] arg1) throws IOException {
+    throw new UnsupportedOperationException("deleteColumnFamily"); // TODO
+  }
+
+  @Override
+  public Future<Void> deleteTableAsync(TableName arg0) throws IOException {
+    throw new UnsupportedOperationException("deleteTableAsync"); // TODO
+  }
+
+  @Override
+  public void deleteTableSnapshots(String arg0, String arg1) throws IOException {
+    throw new UnsupportedOperationException("deleteTableSnapshots");
+  }
+
+  @Override
+  public void deleteTableSnapshots(Pattern arg0, Pattern arg1) throws IOException {
+    throw new UnsupportedOperationException("deleteTableSnapshots");
+  }
+
+  @Override
+  public List<TableDescriptor> listTableDescriptors() throws IOException {
+    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
+  }
+
+  @Override
+  public List<TableDescriptor> listTableDescriptors(Pattern arg0) throws IOException {
+    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
+  }
+
+  @Override
+  public List<TableDescriptor> listTableDescriptors(List<TableName> arg0) throws IOException {
+    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
+  }
+
+  @Override
+  public List<TableDescriptor> listTableDescriptors(Pattern arg0, boolean arg1) throws IOException {
+    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
+  }
+
+  @Override
+  public List<TableDescriptor> listTableDescriptorsByNamespace(byte[] arg0) throws IOException {
+    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
+  }
+
+  @Override
+  public List<SnapshotDescription> listTableSnapshots(String arg0,
+      String arg1) throws IOException {
+    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
+  }
+
+  @Override
+  public List<SnapshotDescription> listTableSnapshots(Pattern arg0,
+      Pattern arg1) throws IOException {
+    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
+  }
+
+
+  @Override
+  public Future<Void> modifyColumnFamilyAsync(TableName arg0, ColumnFamilyDescriptor arg1)
+      throws IOException {
+    // TODO - implementable with async hbase2
+    throw new UnsupportedOperationException("modifyColumnFamilyAsync"); 
+  }
+ 
+  @Override
+  public void modifyTable(TableDescriptor arg0) throws IOException {
+    throw new UnsupportedOperationException("modifyTable"); // TODO
+  }
+
+  @Override
+  public void modifyTable(TableName arg0, TableDescriptor arg1) throws IOException {
+    throw new UnsupportedOperationException("modifyTable"); // TODO
+  }
+
+  @Override
+  public Future<Void> modifyTableAsync(TableDescriptor arg0) throws IOException {
+    // TODO - implementable with async hbase2
+    throw new UnsupportedOperationException("modifyTableAsync");
+  }
+
+  @Override
+  public Future<Void> modifyTableAsync(TableName arg0, TableDescriptor arg1) throws IOException {
+    // TODO - implementable with async hbase2
+    throw new UnsupportedOperationException("modifyTableAsync");
+  }
+
+  @Override
+  public Future<Void> truncateTableAsync(TableName arg0, boolean arg1) throws IOException {
+    // TODO - implementable with async hbase2
+    throw new UnsupportedOperationException("truncateTableAsync");
+  }
+
+  /* ******* Unsupported methods *********** */
+  @Override
   public boolean abortProcedure(long arg0, boolean arg1) throws IOException {
     throw new UnsupportedOperationException("abortProcedure");
   }
@@ -226,12 +332,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public Future<Boolean> abortProcedureAsync(long arg0, boolean arg1) throws IOException {
     throw new UnsupportedOperationException("abortProcedureAsync");
-  }
-
-  @Override
-  public List<SnapshotDescription> listSnapshots()
-      throws IOException {
-    throw new IllegalArgumentException("listSnapshots is not supported");
   }
 
   @Override
@@ -301,31 +401,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void decommissionRegionServers(List<ServerName> arg0, boolean arg1) throws IOException {
     throw new UnsupportedOperationException("decommissionRegionServers");
-  }
-
-  @Override
-  public void deleteColumnFamily(TableName arg0, byte[] arg1) throws IOException {
-    throw new UnsupportedOperationException("deleteColumnFamily"); // TODO
-  }
-
-  @Override
-  public Future<Void> deleteColumnFamilyAsync(TableName arg0, byte[] arg1) throws IOException {
-    throw new UnsupportedOperationException("deleteColumnFamily"); // TODO
-  }
-
-  @Override
-  public Future<Void> deleteTableAsync(TableName arg0) throws IOException {
-    throw new UnsupportedOperationException("deleteTableAsync"); // TODO
-  }
-
-  @Override
-  public void deleteTableSnapshots(String arg0, String arg1) throws IOException {
-    throw new UnsupportedOperationException("deleteTableSnapshots");
-  }
-
-  @Override
-  public void deleteTableSnapshots(Pattern arg0, Pattern arg1) throws IOException {
-    throw new UnsupportedOperationException("deleteTableSnapshots");
   }
 
   @Override
@@ -463,43 +538,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public List<TableDescriptor> listTableDescriptors() throws IOException {
-    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
-  }
-
-  @Override
-  public List<TableDescriptor> listTableDescriptors(Pattern arg0) throws IOException {
-    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
-  }
-
-  @Override
-  public List<TableDescriptor> listTableDescriptors(List<TableName> arg0) throws IOException {
-    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
-  }
-
-  @Override
-  public List<TableDescriptor> listTableDescriptors(Pattern arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
-  }
-
-  @Override
-  public List<TableDescriptor> listTableDescriptorsByNamespace(byte[] arg0) throws IOException {
-    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
-  }
-
-  @Override
-  public List<SnapshotDescription> listTableSnapshots(String arg0,
-      String arg1) throws IOException {
-    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
-  }
-
-  @Override
-  public List<SnapshotDescription> listTableSnapshots(Pattern arg0,
-      Pattern arg1) throws IOException {
-    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
-  }
-
-  @Override
   public void majorCompact(TableName arg0, CompactType arg1)
       throws IOException, InterruptedException {
     throw new UnsupportedOperationException("majorCompact"); // TODO
@@ -522,39 +560,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public Future<Void> modifyColumnFamilyAsync(TableName arg0, ColumnFamilyDescriptor arg1)
-      throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("modifyColumnFamilyAsync"); 
-  }
-
-  @Override
   public Future<Void> modifyNamespaceAsync(NamespaceDescriptor arg0) throws IOException {
     throw new UnsupportedOperationException("modifyNamespaceAsync"); // TODO
   }
-
-  @Override
-  public void modifyTable(TableDescriptor arg0) throws IOException {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
-  }
-
-  @Override
-  public void modifyTable(TableName arg0, TableDescriptor arg1) throws IOException {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
-  }
-
-  @Override
-  public Future<Void> modifyTableAsync(TableDescriptor arg0) throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("modifyTableAsync");
-  }
-
-  @Override
-  public Future<Void> modifyTableAsync(TableName arg0, TableDescriptor arg1) throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("modifyTableAsync");
-  }
-
   @Override
   public boolean normalize() throws IOException {
     throw new UnsupportedOperationException("normalize"); // TODO
@@ -612,11 +620,4 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public Future<Void> splitRegionAsync(byte[] arg0, byte[] arg1) throws IOException {
     throw new UnsupportedOperationException("splitRegionAsync"); // TODO
   }
-
-  @Override
-  public Future<Void> truncateTableAsync(TableName arg0, boolean arg1) throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("truncateTableAsync");
-  }
-
 }

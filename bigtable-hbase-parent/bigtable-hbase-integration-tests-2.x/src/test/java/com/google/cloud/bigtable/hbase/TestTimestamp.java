@@ -57,7 +57,7 @@ public class TestTimestamp extends AbstractTest {
     // Confirm they are all here, in descending order by version number.
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, testQualifier);
-    get.setMaxVersions(numVersions + 1);
+    get.readVersions(numVersions + 1);
     Result result = table.get(get);
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
@@ -68,7 +68,7 @@ public class TestTimestamp extends AbstractTest {
     }
 
     // Now limit results to just two versions.
-    get.setMaxVersions(2);
+    get.readVersions(2);
     result = table.get(get);
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
     cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);

@@ -88,7 +88,7 @@ public class TestIncrement extends AbstractTest {
 
     // Double-check values with a Get
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     result = table.get(get);
     Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
       Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
@@ -138,7 +138,7 @@ public class TestIncrement extends AbstractTest {
     Assert.assertEquals("It should have incremented 102", 102L + 1L,
       Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual))));
 
-    Get get = new Get(rowKey).setMaxVersions(10);
+    Get get = new Get(rowKey).readVersions(10);
     result = table.get(get);
     Assert.assertEquals("Check there's now a fourth", 4, result.size());
 
@@ -152,7 +152,7 @@ public class TestIncrement extends AbstractTest {
 
     // Check values
     get = new Get(rowKey);
-    get.setMaxVersions(10);
+    get.readVersions(10);
     result = table.get(get);
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qual);
     Assert.assertEquals("Expected five results", 5, cells.size());
@@ -336,7 +336,7 @@ public class TestIncrement extends AbstractTest {
 
     // Double-check values with a Get
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     result = table.get(get);
     Assert.assertEquals("Expected two results, only the latest version for each column",
         2, result.size());

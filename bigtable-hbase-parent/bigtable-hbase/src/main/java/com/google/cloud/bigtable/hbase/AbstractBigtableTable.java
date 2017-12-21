@@ -97,9 +97,9 @@ import io.opencensus.trace.Tracing;
  * @author sduskis
  * @version $Id: $Id
  */
-public class BigtableTable implements Table {
+public abstract class AbstractBigtableTable implements Table {
   /** Constant <code>LOG</code> */
-  protected static final Logger LOG = new Logger(BigtableTable.class);
+  protected static final Logger LOG = new Logger(AbstractBigtableTable.class);
   private static final Tracer TRACER = Tracing.getTracer();
 
   private static class TableMetrics {
@@ -143,7 +143,7 @@ public class BigtableTable implements Table {
    * @param bigtableConnection a {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection} object.
    * @param hbaseAdapter a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter} object.
    */
-  public BigtableTable(AbstractBigtableConnection bigtableConnection,
+  public AbstractBigtableTable(AbstractBigtableConnection bigtableConnection,
       HBaseRequestAdapter hbaseAdapter) {
     this.bigtableConnection = bigtableConnection;
     BigtableSession session = bigtableConnection.getSession();
@@ -679,7 +679,7 @@ public class BigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(BigtableTable.class)
+    return MoreObjects.toStringHelper(AbstractBigtableTable.class)
         .add("hashCode", "0x" + Integer.toHexString(hashCode()))
         .add("project", options.getProjectId())
         .add("instance", options.getInstanceId())

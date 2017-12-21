@@ -47,7 +47,8 @@ public class TestAppend extends AbstractTest {
     // Put then append
     Put put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier, value1);
     table.put(put);
-    Append append = new Append(rowKey).add(SharedTestEnvRule.COLUMN_FAMILY, qualifier, value2);
+    Append append =
+        new Append(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier, value2);
     Result result = table.append(append);
     Cell cell = result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
     Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
@@ -55,7 +56,7 @@ public class TestAppend extends AbstractTest {
 
     // Test result
     Get get = new Get(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     result = table.get(get);
     List<Cell> cells = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
     Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
@@ -77,12 +78,12 @@ public class TestAppend extends AbstractTest {
     byte[] value = dataHelper.randomData("value1-");
 
     // Put then append
-    Append append = new Append(rowKey).add(SharedTestEnvRule.COLUMN_FAMILY, qualifier, value);
+    Append append = new Append(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier, value);
     table.append(append);
 
     // Test result
     Get get = new Get(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals("There should be one version now", 1, result.size());
     Cell cell = result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
@@ -101,7 +102,7 @@ public class TestAppend extends AbstractTest {
     // Put then append
     Put put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value1);
     table.put(put);
-    Append append = new Append(rowKey).add(SharedTestEnvRule.COLUMN_FAMILY, qual, value2);
+    Append append = new Append(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value2);
     append.setReturnResults(false);
     Result result = table.append(append);
     if(result != null) {
@@ -124,13 +125,13 @@ public class TestAppend extends AbstractTest {
     // Put then append
     Append append =
         new Append(rowKey)
-            .add(SharedTestEnvRule.COLUMN_FAMILY, qualifier1, value1)
-            .add(SharedTestEnvRule.COLUMN_FAMILY, qualifier2, value2);
+            .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier1, value1)
+            .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier2, value2);
     table.append(append);
 
     // Test result
     Get get = new Get(rowKey).addFamily(SharedTestEnvRule.COLUMN_FAMILY);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals("There should be two cells", 2, result.size());
     Cell cell1 = result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifier1);
@@ -156,15 +157,15 @@ public class TestAppend extends AbstractTest {
     // Put then append
     Append append =
         new Append(rowKey)
-            .add(SharedTestEnvRule.COLUMN_FAMILY, qualifier1, value1)
-            .add(SharedTestEnvRule.COLUMN_FAMILY2, qualifier1, value2);
+            .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier1, value1)
+            .addColumn(SharedTestEnvRule.COLUMN_FAMILY2, qualifier1, value2);
     table.append(append);
 
     // Test result
     Get get = new Get(rowKey)
         .addFamily(SharedTestEnvRule.COLUMN_FAMILY)
         .addFamily(SharedTestEnvRule.COLUMN_FAMILY2);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals("There should be two cells", 2, result.size());
     Cell cell1 = result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifier1);
@@ -191,13 +192,13 @@ public class TestAppend extends AbstractTest {
     // Put then append
     Append append =
         new Append(rowKey)
-            .add(SharedTestEnvRule.COLUMN_FAMILY, qualifier1, value1)
-            .add(SharedTestEnvRule.COLUMN_FAMILY2, qualifier1, value2);
+            .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier1, value1)
+            .addColumn(SharedTestEnvRule.COLUMN_FAMILY2, qualifier1, value2);
     table.append(append);
 
     // Test result
     Get get = new Get(rowKey).addFamily(SharedTestEnvRule.COLUMN_FAMILY).addFamily(SharedTestEnvRule.COLUMN_FAMILY2);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals("There should be two cells", 2, result.size());
     Cell cell1 = result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifier1);
