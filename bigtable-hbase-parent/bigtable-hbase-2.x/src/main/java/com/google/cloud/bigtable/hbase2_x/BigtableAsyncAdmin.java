@@ -91,10 +91,13 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<Void> createTable(TableDescriptor desc, Optional<byte[][]> splitKeys) {
+    // wraps exceptions in a CF (CompletableFuture). No null check here on desc to match Hbase impl
     if (desc.getTableName() == null) {
       return FutureUtils.failedFuture(new IllegalArgumentException("TableName cannot be null"));
     }
 
+    // Using this pattern of wrapping inexpensive prep code is required to keep all exception
+    // handing within a CF, that way clients don't have to handle them differently.
     return CompletableFuture.supplyAsync(() -> {
       CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
       builder.setParent(bigtableInstanceName.toString());
