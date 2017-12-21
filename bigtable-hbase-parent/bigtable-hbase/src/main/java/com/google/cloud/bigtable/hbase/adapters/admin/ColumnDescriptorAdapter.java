@@ -18,9 +18,9 @@ package com.google.cloud.bigtable.hbase.adapters.admin;
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.GcRule;
 import com.google.bigtable.admin.v2.GcRule.Intersection;
-import com.google.bigtable.admin.v2.GcRule.Intersection.Builder;
 import com.google.bigtable.admin.v2.GcRule.RuleCase;
 import com.google.bigtable.admin.v2.GcRule.Union;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -178,13 +179,12 @@ public class ColumnDescriptorAdapter {
       if (maxVersions == Integer.MAX_VALUE) {
         return null;
       } else {
-        return createMaxVersionsRule(maxVersions);
+        return maxVersions(maxVersions);
       }
     }
 
     // minVersions only comes into play with a TTL:
-    GcRule ageRule =
-        GcRule.newBuilder().setMaxAge(Duration.newBuilder().setSeconds(ttlSeconds)).build();
+    GcRule ageRule = maxAge(ttlSeconds);
     if (minVersions != HColumnDescriptor.DEFAULT_MIN_VERSIONS) {
       // The logic here is: only delete a cell if:
       //  1) the age is older than :ttlSeconds AND
@@ -194,20 +194,40 @@ public class ColumnDescriptorAdapter {
       // Intersection (AND)
       //    - maxAge = :HBase_ttlSeconds
       //    - maxVersions = :HBase_minVersion
-      GcRule minVersionRule = createMaxVersionsRule(minVersions);
-      Builder ageAndMin = Intersection.newBuilder().addRules(ageRule).addRules(minVersionRule);
-      ageRule = GcRule.newBuilder().setIntersection(ageAndMin).build();
+      ageRule = intersection(ageRule, maxVersions(minVersions));
     }
     if (maxVersions == Integer.MAX_VALUE) {
       return ageRule;
     } else {
-      GcRule maxVersionsRule = createMaxVersionsRule(maxVersions);
-      Union ageAndMax = Union.newBuilder().addRules(ageRule).addRules(maxVersionsRule).build();
-      return GcRule.newBuilder().setUnion(ageAndMax).build();
+      return union(ageRule, maxVersions(maxVersions));
     }
   }
 
-  private static GcRule createMaxVersionsRule(int maxVersions) {
+  @VisibleForTesting
+  static GcRule intersection(GcRule... rules) {
+    return GcRule.newBuilder()
+        .setIntersection(Intersection.newBuilder().addAllRules(Arrays.asList(rules)).build())
+        .build();
+  }
+
+  @VisibleForTesting
+  static GcRule union(GcRule... rules) {
+    return GcRule.newBuilder()
+        .setUnion(Union.newBuilder().addAllRules(Arrays.asList(rules)).build())
+        .build();
+  }
+
+  private static Duration duration(int ttlSeconds) {
+    return Duration.newBuilder().setSeconds(ttlSeconds).build();
+  }
+
+  @VisibleForTesting
+  static GcRule maxAge(int ttlSeconds) {
+    return GcRule.newBuilder().setMaxAge(duration(ttlSeconds)).build();
+  }
+
+  @VisibleForTesting
+  static GcRule maxVersions(int maxVersions) {
     return GcRule.newBuilder().setMaxNumVersions(maxVersions).build();
   }
 
