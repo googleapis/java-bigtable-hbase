@@ -56,6 +56,43 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
+  public MasterProtos.SnapshotResponse takeSnapshotAsync(
+      HBaseProtos.SnapshotDescription snapshot) throws IOException, SnapshotCreationException {
+    snapshotTable(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
+    LOG.warn("isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
+        + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
+    return MasterProtos.SnapshotResponse.newBuilder()
+        .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5)).build();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disableTableAsync(TableName tableName) throws IOException {
+    disableTable(tableName);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void enableTableAsync(TableName tableName) throws IOException {
+    enableTable(tableName);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName)
+      throws IOException {
+    throw new UnsupportedOperationException("getCompactionState");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
+      throws IOException {
+    throw new UnsupportedOperationException("getCompactionStateForRegion");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void snapshot(String snapshotName, TableName tableName,
       HBaseProtos.SnapshotDescription.Type type)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
@@ -67,18 +104,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public void snapshot(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
     snapshot(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
-  }
-
-
-  /** {@inheritDoc} */
-  @Override
-  public MasterProtos.SnapshotResponse takeSnapshotAsync(
-      HBaseProtos.SnapshotDescription snapshot) throws IOException, SnapshotCreationException {
-    snapshotTable(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
-    LOG.warn("isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-        + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
-    return MasterProtos.SnapshotResponse.newBuilder()
-        .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5)).build();
   }
 
   /** {@inheritDoc} */
@@ -147,32 +172,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
       }
     }
     return response;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void disableTableAsync(TableName tableName) throws IOException {
-    disableTable(tableName);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void enableTableAsync(TableName tableName) throws IOException {
-    enableTable(tableName);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName)
-      throws IOException {
-    throw new UnsupportedOperationException("getCompactionState");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
-      throws IOException {
-    throw new UnsupportedOperationException("getCompactionStateForRegion");
   }
 
   @Override
