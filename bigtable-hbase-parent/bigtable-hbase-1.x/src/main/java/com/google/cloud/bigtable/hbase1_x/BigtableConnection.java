@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -65,7 +66,8 @@ public class BigtableConnection extends AbstractBigtableConnection {
     return new SampledRowKeysAdapter(tableName, serverName) {
       @Override
       protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
-        return null;
+        HRegionInfo hRegionInfo = new HRegionInfo(tableName, startKey, endKey);
+        return new HRegionLocation(hRegionInfo, serverName);
       }
     };
   }
