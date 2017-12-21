@@ -99,8 +99,5 @@ public class FutureUtilsTest {
     thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(IllegalStateException.class));
     thrown.expectMessage(containsString("Test failed feature"));
     completableFuture.get();
-    
-    assertTrue("future should be complete", completableFuture.isDone());
-    assertTrue("Should complete with exception", completableFuture.isCompletedExceptionally());
   }
 }

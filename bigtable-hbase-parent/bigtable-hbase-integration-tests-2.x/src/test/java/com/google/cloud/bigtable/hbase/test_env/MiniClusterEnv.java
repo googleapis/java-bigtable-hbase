@@ -81,7 +81,6 @@ class MiniClusterEnv extends SharedTestEnv {
     for (String key : keys) {
       clientConfig.set(key, helper.getConfiguration().get(key));
     }
-
     return ConnectionFactory.createAsyncConnection(clientConfig).get();
   }
 }

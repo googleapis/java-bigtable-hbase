@@ -32,11 +32,13 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 
 import com.google.bigtable.repackaged.io.grpc.internal.GrpcUtil;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.Logger;
 import com.google.common.collect.Sets;
 
 
 class BigtableEnv extends SharedTestEnv {
-
+  private final Logger LOG = new Logger(getClass());
+  
   private static final Set<String> KEYS = Sets.newHashSet(
       "hbase.client.connection.impl",
       "hbase.client.async.connection.impl",
@@ -80,12 +82,13 @@ class BigtableEnv extends SharedTestEnv {
     ExecutorService executor = Executors.newCachedThreadPool(GrpcUtil.getThreadFactory("table_deleter", true));
     try (Connection connection = createConnection();
         Admin admin = connection.getAdmin()) {
-      for (final TableName tableName : admin.listTableNames("(test_table|list_table[12])-.*")) {
+      for (final TableName tableName : admin.listTableNames("(test_table|list_table[12]|TestTable).*")) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
             try {
               admin.deleteTable(tableName);
+              LOG.info("Test-setup deleting table: %s", tableName.getNameAsString());
             } catch (IOException e) {
               e.printStackTrace();
             }
