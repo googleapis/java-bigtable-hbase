@@ -75,7 +75,6 @@ import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-;
 
 /**
  * <p>Abstract AbstractBigtableAdmin class.</p>

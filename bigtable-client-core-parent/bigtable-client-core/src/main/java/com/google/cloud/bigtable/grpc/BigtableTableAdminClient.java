@@ -35,7 +35,6 @@ import com.google.bigtable.admin.v2.Table;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
-import java.util.concurrent.TimeoutException;
 
 /**
  * A client for the Cloud Bigtable Table Admin API.
