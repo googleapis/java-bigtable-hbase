@@ -28,8 +28,16 @@ import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 
 /**
- * Temporary copy to get things going. Cannot use existing adopter due to binary incompatibility.
- * Needs a better re-factoring 
+ * Need this extended class as {@link TableAdapter#adapt(org.apache.hadoop.hbase.HTableDescriptor)}
+ * is not binary compatible with {@link TableAdapter2x#adapt(TableDescriptor)}
+ * 
+ * Similarly, {@link ColumnDescriptorAdapter#adapt(HColumnDescriptor)} is not binary compatible with
+ * {@link ColumnDescriptorAdapter#adapt(ColumnFamilyDescriptor)}. As of now, this class just copies
+ * the columnName into a HColumnDescriptor type, which seems to be sufficient for current test
+ * cases.
+ * 
+ * TODO: Current options are either a hacky cloning or extension with lot of duplicate code. Explore
+ * a better solution.
  * 
  * @author spollapally
  */
@@ -45,8 +53,8 @@ public class TableAdapter2x extends TableAdapter {
     for (ColumnFamilyDescriptor column : desc.getColumnFamilies()) {
       try {
         String columnName = column.getNameAsString();
+        // TODO - This is a very shallow copy. See class comments for further details  
         HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(columnName);
-        // copyMatchingFields(hColumnDescriptor, column);
         ColumnFamily columnFamily = columnDescriptorAdapter.adapt(hColumnDescriptor).build();
         columnFamilies.put(columnName, columnFamily);
       } catch (Exception e) {
