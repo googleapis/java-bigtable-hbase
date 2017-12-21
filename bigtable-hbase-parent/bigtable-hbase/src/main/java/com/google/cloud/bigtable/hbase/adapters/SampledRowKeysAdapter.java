@@ -94,9 +94,4 @@ public abstract class SampledRowKeysAdapter {
    * which subclasses will construct appropriate {@link SampledRowKeysAdapter} implementations.
    */
   protected abstract HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey);
-
-//  protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
-//    HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
-//    return createHRegionLocation(regionInfo, serverName);
-//  }
 }
