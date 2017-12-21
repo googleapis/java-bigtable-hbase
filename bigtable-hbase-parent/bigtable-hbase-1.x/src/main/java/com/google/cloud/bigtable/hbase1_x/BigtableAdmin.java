@@ -56,7 +56,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  // ok
   public void snapshot(String snapshotName, TableName tableName,
       HBaseProtos.SnapshotDescription.Type type)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
@@ -65,7 +64,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  // ok
   public void snapshot(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
     snapshot(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
@@ -74,7 +72,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  // ok
   public MasterProtos.SnapshotResponse takeSnapshotAsync(
       HBaseProtos.SnapshotDescription snapshot) throws IOException, SnapshotCreationException {
     snapshotTable(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
@@ -93,7 +90,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  // ok
   public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
     ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder()
         .setParent(getSnapshotClusterName().toString())
@@ -119,14 +115,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  // ok
   public List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException {
     return listSnapshots(Pattern.compile(regex));
   }
 
   /** {@inheritDoc} */
   @Override
-  // ok
   public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
     List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
     for (HBaseProtos.SnapshotDescription description : listSnapshots()) {
@@ -138,14 +132,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  // ok
   public List<SnapshotDescription> listTableSnapshots(String tableNameRegex,
       String snapshotNameRegex) throws IOException {
     return listTableSnapshots(Pattern.compile(tableNameRegex), Pattern.compile(snapshotNameRegex));
   }
 
   @Override
-  // ok
   public List<SnapshotDescription> listTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern)
       throws IOException {
     List<SnapshotDescription> response = new ArrayList<>();
