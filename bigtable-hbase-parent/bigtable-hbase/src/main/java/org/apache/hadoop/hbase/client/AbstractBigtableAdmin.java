@@ -848,32 +848,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     snapshot(snapshotName, TableName.valueOf(tableName));
   }
 
-  /** Unsupported */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** Unsupported */
-  @Override
-  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** Unsupported */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** Unsupported */
-  @Override
-  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
   /** {@inheritDoc} */
   @Override
   public void snapshot(byte[] snapshotName, TableName tableName)
@@ -971,6 +945,32 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
   }
 
+  // ------------- Unsupported snapshot methods.
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
 
   // ------------- Snapshot method end
 
