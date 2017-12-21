@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -25,12 +26,16 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.ClusterStatus.Option;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotEnabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.apache.hadoop.hbase.client.BigtableAsyncConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
@@ -46,10 +51,20 @@ import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
+import org.apache.hadoop.hbase.util.Bytes;
+import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.CreateTableRequest.Split;
+import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
+import com.google.bigtable.admin.v2.ListTablesRequest;
+import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
+import com.google.protobuf.ByteString;
 
 /**
  * Bigtable implementation of {@link AsyncAdmin}
@@ -63,6 +78,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final BigtableOptions options;
   private final BigtableTableAdminClient bigtableTableAdminClient;
   private BigtableInstanceName bigtableInstanceName;
+  private final TableAdapter2x tableAdapter2x;
 
   public BigtableAsyncAdmin(BigtableAsyncConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
@@ -70,44 +86,143 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     this.bigtableTableAdminClient = asyncConnection.getSession().getTableAdminClient();
     this.disabledTables = asyncConnection.getDisabledTables();
     this.bigtableInstanceName = options.getInstanceName();
+    this.tableAdapter2x = new TableAdapter2x(options, new ColumnDescriptorAdapter());
   }
 
   @Override
   public CompletableFuture<Void> createTable(TableDescriptor desc, Optional<byte[][]> splitKeys) {
-    throw new UnsupportedOperationException("createTable"); // TODO
+    // wraps exceptions in a CF (CompletableFuture). No null check here on desc to match Hbase impl
+    if (desc.getTableName() == null) {
+      return FutureUtils.failedFuture(new IllegalArgumentException("TableName cannot be null"));
+    }
+
+    // Using this pattern of wrapping inexpensive prep code is required to keep all exception
+    // handing within a CF, that way clients don't have to handle them differently.
+    return CompletableFuture.supplyAsync(() -> {
+      CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
+      builder.setParent(bigtableInstanceName.toString());
+      builder.setTableId(desc.getTableName().getQualifierAsString());
+      builder.setTable(tableAdapter2x.adapt(desc));
+      if (splitKeys.isPresent()) {
+        for (byte[] splitKey : splitKeys.get()) {
+          builder
+              .addInitialSplits(Split.newBuilder().setKey(ByteString.copyFrom(splitKey)).build());
+        }
+      }
+      return builder;
+    }).thenCompose(
+        r -> FutureUtils.toCompletableFuture(bigtableTableAdminClient.createTableAsync(r.build())))
+        .thenAccept(r -> {
+        });
   }
 
   @Override
   public CompletableFuture<Void> createTable(TableDescriptor desc, byte[] startKey, byte[] endKey,
       int numRegions) {
-    throw new UnsupportedOperationException("createTable"); // TODO
+
+    return CompletableFuture.supplyAsync(() -> {
+      Optional<byte[][]> splitKeys = Optional.empty();
+      if (numRegions < 3) {
+        throw new IllegalArgumentException("Must create at least three regions");
+      } else if (Bytes.compareTo(startKey, endKey) >= 0) {
+        throw new IllegalArgumentException("Start key must be smaller than end key");
+      }
+      if (numRegions == 3) {
+        splitKeys = Optional.ofNullable(new byte[][] {startKey, endKey});
+      } else {
+        splitKeys = Optional.ofNullable(Bytes.split(startKey, endKey, numRegions - 3));
+        if (!splitKeys.isPresent() || splitKeys.get().length != numRegions - 1) {
+          throw new IllegalArgumentException("Unable to split key range into enough regions");
+        }
+      }
+      return splitKeys;
+    }).thenCompose(skeys -> createTable(desc, skeys));
   }
 
   @Override
   public CompletableFuture<Void> disableTable(TableName tableName) {
-    throw new UnsupportedOperationException("deleteTable"); // TODO
+    CompletableFuture<Void> cf = new CompletableFuture<>();
+    tableExists(tableName).thenAccept(exists -> {
+      if (!exists) {
+        cf.completeExceptionally(new TableNotFoundException(tableName));
+        return;
+      }
+      if (disabledTables.contains(tableName)) {
+        cf.completeExceptionally(new TableNotEnabledException(tableName));
+        return;
+      }
+      disabledTables.add(tableName);
+      LOG.warn("Table " + tableName + " was disabled in memory only.");
+      cf.complete(null);
+    });
+
+    return cf;
   }
 
   @Override
   public CompletableFuture<Void> deleteTable(TableName tableName) {
-    throw new UnsupportedOperationException("deleteTable"); // TODO
+    return CompletableFuture.supplyAsync(() -> {
+      Builder deleteBuilder = DeleteTableRequest.newBuilder();
+      deleteBuilder.setName(bigtableInstanceName.toTableNameStr(tableName.getNameAsString()));
+      return deleteBuilder;
+    }).thenCompose(
+        d -> FutureUtils.toCompletableFuture(bigtableTableAdminClient.deleteTableAsync(d.build())))
+        .thenAccept(r -> {
+          disabledTables.remove(tableName);
+        });
   }
 
   @Override
   public CompletableFuture<Boolean> tableExists(TableName tableName) {
-    throw new UnsupportedOperationException("tableExists"); // TODO
+    return listTableNames(Optional.of(Pattern.compile(tableName.getNameAsString())), false)
+        .thenApply(r -> r.stream().anyMatch(e -> e.equals(tableName)));
   }
 
   @Override
   public CompletableFuture<List<TableName>> listTableNames(Optional<Pattern> tableNamePattern,
       boolean includeSysTables) {
-    throw new UnsupportedOperationException("listTables"); // TODO
+    return requestTableList().thenApply(r -> {
+      Stream<TableName> result;
+      if (tableNamePattern.isPresent()) {
+        result = r.stream().map(e -> bigtableInstanceName.toTableId(e.getName()))
+            .filter(e -> tableNamePattern.get().matcher(e).matches())
+            .map(e -> TableName.valueOf(e));
+      } else {
+        result = r.stream().map(e -> bigtableInstanceName.toTableId(e.getName()))
+            .map(e -> TableName.valueOf(e));
+      }
+      return result.collect(Collectors.toList());
+    });
   }
 
   @Override
   public CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern,
       boolean includeSysTables) {
-    throw new UnsupportedOperationException("listTables"); // TODO
+    return requestTableList().thenApply(r -> {
+      List<TableDescriptor> result = new ArrayList<>();
+      Boolean hasNonEmptyPattern = tableNamePattern.isPresent();
+      for (Table table : r) {
+        String tableName = bigtableInstanceName.toTableId(table.getName());
+        if (hasNonEmptyPattern) {
+          if (tableNamePattern.get().matcher(tableName).matches()) {
+            result.add(tableAdapter2x.adapt(table));
+          }
+        } else {
+          result.add(tableAdapter2x.adapt(table));
+        }
+      }
+      return result;
+    });
+  }
+
+  private CompletableFuture<List<Table>> requestTableList() {
+    return CompletableFuture.supplyAsync(() -> {
+      ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
+      builder.setParent(bigtableInstanceName.toString());
+      return builder;
+    }).thenCompose(
+        b -> FutureUtils.toCompletableFuture(bigtableTableAdminClient.listTablesAsync(b.build())))
+        .thenApply(r -> r.getTablesList());
   }
 
   @Override
