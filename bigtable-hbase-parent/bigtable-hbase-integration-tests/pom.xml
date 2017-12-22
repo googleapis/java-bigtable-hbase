@@ -30,7 +30,6 @@ limitations under the License.
        This project contains test cases that ought to work for either bigtable-hbase or hbase proper.
     </description>
 
-
     <properties>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
     </properties>
