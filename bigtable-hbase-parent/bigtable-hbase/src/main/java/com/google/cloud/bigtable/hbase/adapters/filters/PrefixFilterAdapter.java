@@ -48,7 +48,7 @@ public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
     // Unquoted all bytes:
     baos.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
     ByteString quotedValue = ByteStringer.wrap(baos.toByteArray());
-    return RowFilters.R.rowKeyRegex(quotedValue);
+    return RowFilters.RF.rowKeyRegex(quotedValue);
   }
 
   /**

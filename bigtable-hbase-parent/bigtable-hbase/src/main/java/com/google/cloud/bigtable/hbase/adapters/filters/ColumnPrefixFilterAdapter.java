@@ -46,7 +46,7 @@ public class ColumnPrefixFilterAdapter extends TypedFilterAdapterBase<ColumnPref
     ReaderExpressionHelper.writeQuotedRegularExpression(outputStream, prefix);
     outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
 
-    return RowFilters.R.columnQualifierRegex(ByteStringer.wrap(outputStream.toByteArray()));
+    return RowFilters.RF.columnQualifierRegex(ByteStringer.wrap(outputStream.toByteArray()));
   }
 
   /** {@inheritDoc} */

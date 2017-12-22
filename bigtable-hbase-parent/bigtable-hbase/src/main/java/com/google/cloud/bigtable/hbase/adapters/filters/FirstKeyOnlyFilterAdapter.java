@@ -34,7 +34,7 @@ public class FirstKeyOnlyFilterAdapter extends TypedFilterAdapterBase<FirstKeyOn
   @Override
   public RowFilter adapt(FilterAdapterContext context, FirstKeyOnlyFilter filter)
       throws IOException {
-    return RowFilters.R.cellsPerRowLimit(1);
+    return RowFilters.RF.cellsPerRowLimit(1);
   }
 
   /** {@inheritDoc} */

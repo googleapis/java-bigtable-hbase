@@ -61,9 +61,9 @@ public class FilterListAdapter
       if (childFilters.isEmpty()) {
         return null;
       } else if (filter.getOperator() == Operator.MUST_PASS_ALL) {
-        return RowFilters.R.chain(childFilters);
+        return RowFilters.RF.chain(childFilters);
       } else {
-        return RowFilters.R.interleave(childFilters);
+        return RowFilters.RF.interleave(childFilters);
       }
     }
   }

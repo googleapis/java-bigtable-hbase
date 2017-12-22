@@ -40,7 +40,7 @@ import com.google.protobuf.ByteString;
  */
 public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter> {
   private static final RowFilter ALL_VALUES_FILTER =
-      RowFilters.R.cellsPerColumnLimit(Integer.MAX_VALUE);
+      RowFilters.RF.cellsPerColumnLimit(Integer.MAX_VALUE);
 
   private static Field FUZZY_KEY_DATA_FIELD;
   private static Exception FUZZY_KEY_DATA_FIELD_EXCEPTION;
@@ -68,7 +68,7 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
           "Fuzzy info and match mask must have the same length");
       filters.add(createSingleRowFilter(pair.getFirst(), pair.getSecond()));
     }
-    return RowFilters.R.interleave(filters);
+    return RowFilters.RF.interleave(filters);
   }
 
   private static RowFilter createSingleRowFilter(byte[] key, byte[] mask) throws IOException {
@@ -85,7 +85,7 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
     }
     ByteString quotedValue = ByteStringer.wrap(baos.toByteArray());
     quotingStream.close();
-    return RowFilters.R.rowKeyRegex(quotedValue);
+    return RowFilters.RF.rowKeyRegex(quotedValue);
   }
 
   @SuppressWarnings("unchecked")

@@ -43,7 +43,7 @@ public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowR
   public RowFilter adapt(FilterAdapterContext context, MultiRowRangeFilter filter)
       throws IOException {
 
-    return RowFilters.R.passAll();
+    return RowFilters.RF.passAll();
   }
 
   @Override

@@ -55,18 +55,20 @@ public final class RowFilters {
     }
 
     public RowFilter build() {
-      return R.columnRange(family, start, startEdgeType, end, endEdgeType);
+      return RF.columnRange(family, start, startEdgeType, end, endEdgeType);
     }
   }
 
-  public final static class R {
+  public final static Filters RF = new Filters();
+
+  public final static class Filters {
     // Applies several RowFilters to the data in sequence, progressively
     // narrowing the results.
-    public static RowFilter chain(RowFilter... filters) {
+    public RowFilter chain(RowFilter... filters) {
       return chain(Arrays.asList(filters));
     }
 
-    public static RowFilter chain(List<RowFilter> list) {
+    public RowFilter chain(List<RowFilter> list) {
       if (list.size() == 1) {
         return list.get(0);
       }
@@ -76,11 +78,11 @@ public final class RowFilters {
 
     // Applies several RowFilters to the data in parallel and combines the
     // results.
-    public static RowFilter interleave(RowFilter... filters) {
+    public RowFilter interleave(RowFilter... filters) {
       return interleave(Arrays.asList(filters));
     }
 
-    public static RowFilter interleave(List<RowFilter> list) {
+    public RowFilter interleave(List<RowFilter> list) {
       if (list.size() == 1) {
         return list.get(0);
       }
@@ -101,7 +103,7 @@ public final class RowFilters {
      * input row if `predicate_filter` does not return any results. If not provided, no results will
      * be returned in the false case. RowFilter false_filter = 3; }
      */
-    public static RowFilter condition(RowFilter predicate, RowFilter trueFilter,
+    public RowFilter condition(RowFilter predicate, RowFilter trueFilter,
         RowFilter falseFilter) {
       Condition condition = Condition.newBuilder().setPredicateFilter(predicate)
           .setTrueFilter(trueFilter).setFalseFilter(falseFilter).build();
@@ -110,19 +112,19 @@ public final class RowFilters {
 
     // Cannot be used within the `predicate_filter`, `true_filter`, or
     // `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
-    public static RowFilter sink() {
+    public RowFilter sink() {
       return RowFilter.newBuilder().setSink(true).build();
     }
 
     // Matches all cells, regardless of input. Functionally equivalent to
     // leaving `filter` unset, but included for completeness.
-    public static RowFilter passAll() {
+    public RowFilter passAll() {
       return RowFilter.newBuilder().setPassAllFilter(true).build();
     }
 
     // Does not match any cells, regardless of input. Useful for temporarily
     // disabling just part of a filter.
-    public static RowFilter blockallAll() {
+    public RowFilter blockallAll() {
       return RowFilter.newBuilder().setBlockAllFilter(true).build();
     }
 
@@ -133,13 +135,13 @@ public final class RowFilters {
     // sequence must be used if a true wildcard is desired. The `.` character
     // will not match the new line character `\n`, which may be present in a
     // binary key.
-    public static RowFilter rowKeyRegex(ByteString regex) {
+    public RowFilter rowKeyRegex(ByteString regex) {
       return RowFilter.newBuilder().setRowKeyRegexFilter(regex).build();
     }
 
     // Matches all cells from a row with probability p, and matches no cells
     // from the row with probability 1-p.
-    public static RowFilter rowSample(double probability) {
+    public RowFilter rowSample(double probability) {
       return RowFilter.newBuilder().setRowSampleFilter(probability).build();
     }
 
@@ -149,7 +151,7 @@ public final class RowFilters {
     // Note that, since column families cannot contain the new line character
     // `\n`, it is sufficient to use `.` as a full wildcard when matching
     // column family names.
-    public static RowFilter familyNameRegex(String regex) {
+    public RowFilter familyNameRegex(String regex) {
       return RowFilter.newBuilder().setFamilyNameRegexFilter(regex).build();
     }
 
@@ -159,7 +161,7 @@ public final class RowFilters {
     // escape sequence must be used if a true wildcard is desired. The `.`
     // character will not match the new line character `\n`, which may be
     // present in a binary qualifier.
-    public static RowFilter columnQualifierRegex(ByteString regex) {
+    public RowFilter columnQualifierRegex(ByteString regex) {
       return RowFilter.newBuilder().setColumnQualifierRegexFilter(regex).build();
     }
 
@@ -168,7 +170,7 @@ public final class RowFilters {
     }
 
     // Matches only cells from columns within the given range.
-    public static RowFilter columnRange(String familyRegex, ByteString qualifierStart,
+    public RowFilter columnRange(String familyRegex, ByteString qualifierStart,
         EdgeType startEdgeType, ByteString qualifierEnd, EdgeType endEdgeType) {
 
       Preconditions.checkArgument(qualifierStart != null || startEdgeType == EdgeType.None);
@@ -197,7 +199,7 @@ public final class RowFilters {
     }
 
     // Matches only cells with timestamps within the given range.
-    public static RowFilter timestampRange(Long timestampStart, Long timestampEnd) {
+    public RowFilter timestampRange(Long timestampStart, Long timestampEnd) {
 
       TimestampRange.Builder range = TimestampRange.newBuilder();
       if (timestampStart != null) {
@@ -214,21 +216,21 @@ public final class RowFilters {
     // sequence must be used if a true wildcard is desired. The `.` character
     // will not match the new line character `\n`, which may be present in a
     // binary value.
-    public static RowFilter valueRegex(ByteString regex) {
+    public RowFilter valueRegex(ByteString regex) {
       return RowFilter.newBuilder().setValueRegexFilter(regex).build();
     }
 
     // Skips the first N cells of each row, matching all subsequent cells.
     // If duplicate cells are present, as is possible when using an Interleave,
     // each copy of the cell is counted separately.
-    public static RowFilter cellsPerRowOffset(int count) {
+    public RowFilter cellsPerRowOffset(int count) {
       return RowFilter.newBuilder().setCellsPerRowOffsetFilter(count).build();
     }
 
     // Matches only the first N cells of each row.
     // If duplicate cells are present, as is possible when using an Interleave,
     // each copy of the cell is counted separately.
-    public static RowFilter cellsPerRowLimit(int count) {
+    public RowFilter cellsPerRowLimit(int count) {
       return RowFilter.newBuilder().setCellsPerRowLimitFilter(count).build();
     }
 
@@ -238,12 +240,12 @@ public final class RowFilters {
     // column `foo:bar2`.
     // If duplicate cells are present, as is possible when using an Interleave,
     // each copy of the cell is counted separately.
-    public static RowFilter cellsPerColumnLimit(int count) {
+    public RowFilter cellsPerColumnLimit(int count) {
       return RowFilter.newBuilder().setCellsPerColumnLimitFilter(count).build();
     }
 
     // Replaces each cell's value with the empty string.
-    public static RowFilter stripValue() {
+    public RowFilter stripValue() {
       return RowFilter.newBuilder().setStripValueTransformer(true).build();
     }
 
@@ -260,7 +262,7 @@ public final class RowFilters {
     // an Interleave to contain multiple `apply_label_transformers`, as they
     // will be applied to separate copies of the input. This may be relaxed in
     // the future.
-    public static RowFilter applyLabel(String s) {
+    public RowFilter applyLabel(String s) {
       return RowFilter.newBuilder().setApplyLabelTransformer(s).build();
     }
   }

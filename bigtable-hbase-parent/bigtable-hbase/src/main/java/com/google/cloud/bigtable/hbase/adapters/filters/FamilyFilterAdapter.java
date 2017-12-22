@@ -58,7 +58,7 @@ public class FamilyFilterAdapter extends TypedFilterAdapterBase<FamilyFilter> {
       throw new IllegalStateException(
           "Cannot adapt comparator " + comparator.getClass().getCanonicalName());
     }
-    return RowFilters.R.familyNameRegex(Bytes.toString(familyNameRegex));
+    return RowFilters.RF.familyNameRegex(Bytes.toString(familyNameRegex));
   }
 
   /** {@inheritDoc} */
