@@ -15,9 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ColumnRange;
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.filter.RowFilters.R;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
@@ -71,56 +70,23 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
     ByteString quotedValue = ByteStringer.wrap(quoted);
     switch (compareOp) {
       case LESS:
-        return RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setEndQualifierOpen(quotedValue))
-            .build();
+        return R.columnRangeBuilder().family(fmaily(context)).endOpened(quotedValue).build();
       case LESS_OR_EQUAL:
-        return RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setEndQualifierClosed(quotedValue))
-            .build();
+        return R.columnRangeBuilder().family(fmaily(context)).endClosed(quotedValue).build();
       case EQUAL:
-        return RowFilter.newBuilder()
-            .setColumnQualifierRegexFilter(quotedValue)
-            .build();
+        return R.chain(
+            R.familyNameRegex(fmaily(context)),
+            R.columnQualifierRegex(quotedValue));
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
-        String familyName = FilterAdapterHelper.getSingleFamilyName(context);
-        return RowFilter.newBuilder()
-            .setInterleave(
-                Interleave.newBuilder()
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setColumnRangeFilter(
-                                ColumnRange.newBuilder()
-                                    .setFamilyName(familyName)
-                                    .setEndQualifierOpen(quotedValue)))
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setColumnRangeFilter(
-                                ColumnRange.newBuilder()
-                                    .setFamilyName(familyName)
-                                    .setStartQualifierOpen(quotedValue))))
-            .build();
+        String familyName = fmaily(context);
+        return R.interleave(
+            R.columnRangeBuilder().family(familyName).endOpened(quotedValue).build(),
+            R.columnRangeBuilder().family(familyName).startOpened(quotedValue).build());
       case GREATER_OR_EQUAL:
-        return RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setStartQualifierClosed(quotedValue))
-            .build();
+        return R.columnRangeBuilder().family(fmaily(context)).startClosed(quotedValue).build();
       case GREATER:
-        return RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setStartQualifierOpen(quotedValue))
-            .build();
+        return R.columnRangeBuilder().family(fmaily(context)).startOpened(quotedValue).build();
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.
@@ -131,14 +97,16 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
     }
   }
 
+  public String fmaily(FilterAdapterContext context) {
+    return FilterAdapterHelper.getSingleFamilyName(context);
+  }
+
   private RowFilter adaptRegexStringComparator(
       CompareOp compareOp, RegexStringComparator comparator) {
     String pattern = FilterAdapterHelper.extractRegexPattern(comparator);
     switch (compareOp) {
       case EQUAL:
-        return RowFilter.newBuilder()
-            .setColumnQualifierRegexFilter(ByteString.copyFromUtf8(pattern))
-            .build();
+        return R.columnQualifierRegex(ByteString.copyFromUtf8(pattern));
       case NO_OP:
         return FilterAdapterHelper.ACCEPT_ALL_FILTER;
       case LESS:

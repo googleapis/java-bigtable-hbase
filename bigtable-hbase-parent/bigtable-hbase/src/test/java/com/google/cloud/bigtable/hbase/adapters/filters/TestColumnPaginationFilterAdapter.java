@@ -15,11 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ColumnRange;
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.protobuf.ByteString;
-
+import java.io.IOException;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
@@ -29,7 +25,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
+import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.filter.RowFilters.R;
+import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
 public class TestColumnPaginationFilterAdapter {
@@ -42,16 +40,10 @@ public class TestColumnPaginationFilterAdapter {
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(new Scan(), null), filter);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setChain(
-                Chain.newBuilder()
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerColumnLimitFilter(1))
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerRowOffsetFilter(20))
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerRowLimitFilter(10)))
-            .build(),
+        R.chain(
+            R.cellsPerColumnLimit(1),
+            R.cellsPerRowOffset(20),
+            R.cellsPerRowLimit(10)),
         adaptedFilter);
   }
 
@@ -61,14 +53,9 @@ public class TestColumnPaginationFilterAdapter {
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(new Scan(), null), filter);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setChain(
-                Chain.newBuilder()
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerColumnLimitFilter(1))
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerRowLimitFilter(10)))
-            .build(),
+        R.chain(
+            R.cellsPerColumnLimit(1),
+            R.cellsPerRowLimit(10)),
         adaptedFilter);
   }
 
@@ -81,23 +68,13 @@ public class TestColumnPaginationFilterAdapter {
             new Scan().addFamily(Bytes.toBytes("f1")), null),
         filter);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setChain(
-                Chain.newBuilder()
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setCellsPerColumnLimitFilter(1))
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setColumnRangeFilter(
-                                ColumnRange.newBuilder()
-                                    .setFamilyName("f1")
-                                    .setStartQualifierClosed(
-                                        ByteString.copyFromUtf8("q1"))))
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setCellsPerRowLimitFilter(10)))
-            .build(),
+        R.chain(
+            R.cellsPerColumnLimit(1),
+            R.columnRangeBuilder()
+              .family("f1")
+              .startClosed(ByteString.copyFromUtf8("q1"))
+              .build(),
+            R.cellsPerRowLimit(10)),
         adaptedFilter);
   }
 }

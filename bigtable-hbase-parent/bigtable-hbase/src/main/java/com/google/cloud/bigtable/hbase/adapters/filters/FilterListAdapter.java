@@ -16,8 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.filter.RowFilters;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
@@ -61,16 +60,10 @@ public class FilterListAdapter
       List<RowFilter> childFilters = collectChildFilters(context, filter);
       if (childFilters.isEmpty()) {
         return null;
-      } else if (childFilters.size() == 1) {
-        return childFilters.get(0);
       } else if (filter.getOperator() == Operator.MUST_PASS_ALL) {
-        return RowFilter.newBuilder()
-            .setChain(Chain.newBuilder().addAllFilters(childFilters))
-            .build();
+        return RowFilters.R.chain(childFilters);
       } else {
-        return RowFilter.newBuilder()
-            .setInterleave(Interleave.newBuilder().addAllFilters(childFilters))
-            .build();
+        return RowFilters.R.interleave(childFilters);
       }
     }
   }
