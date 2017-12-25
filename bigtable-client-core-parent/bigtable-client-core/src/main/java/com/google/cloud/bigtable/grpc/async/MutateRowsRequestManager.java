@@ -32,7 +32,10 @@ import io.grpc.Status.Code;
  */
 public class MutateRowsRequestManager  {
   private final static Status STATUS_INTERNAL =
-      Status.newBuilder().setCode(io.grpc.Status.Code.INTERNAL.value()).build();
+      Status.newBuilder()
+        .setCode(io.grpc.Status.Code.INTERNAL.value())
+        .setMessage("Response was not returned for this index.")
+        .build();
 
   private static Code getGrpcCode(Status status) {
     return status == null ? null : io.grpc.Status.fromCodeValue(status.getCode()).getCode();
