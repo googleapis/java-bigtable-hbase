@@ -24,7 +24,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 
@@ -33,13 +32,11 @@ import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
  * is not binary compatible with {@link TableAdapter2x#adapt(TableDescriptor)}
  * 
  * Similarly, {@link ColumnDescriptorAdapter#adapt(HColumnDescriptor)} is not binary compatible with
- * {@link ColumnDescriptorAdapter#adapt(ColumnFamilyDescriptor)}.
+ * {@link ColumnFamilyDescriptor}.
  * 
  * @author spollapally
  */
 public class TableAdapter2x extends TableAdapter {
-  private final Logger LOG = new Logger(getClass());
-
   public TableAdapter2x(BigtableOptions options, ColumnDescriptorAdapter columnDescriptorAdapter) {
     super(options, columnDescriptorAdapter);
   }
