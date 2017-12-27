@@ -20,6 +20,7 @@ import java.util.Map;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.util.Bytes;
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -32,12 +33,7 @@ import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
  * is not binary compatible with {@link TableAdapter2x#adapt(TableDescriptor)}
  * 
  * Similarly, {@link ColumnDescriptorAdapter#adapt(HColumnDescriptor)} is not binary compatible with
- * {@link ColumnDescriptorAdapter#adapt(ColumnFamilyDescriptor)}. As of now, this class just copies
- * the columnName into a HColumnDescriptor type, which seems to be sufficient for current test
- * cases.
- * 
- * TODO: Current options are either a hacky cloning or extension with lot of duplicate code. Explore
- * a better solution.
+ * {@link ColumnDescriptorAdapter#adapt(ColumnFamilyDescriptor)}.
  * 
  * @author spollapally
  */
@@ -51,16 +47,20 @@ public class TableAdapter2x extends TableAdapter {
   public Table adapt(TableDescriptor desc) {
     Map<String, ColumnFamily> columnFamilies = new HashMap<>();
     for (ColumnFamilyDescriptor column : desc.getColumnFamilies()) {
-      try {
-        String columnName = column.getNameAsString();
-        // TODO - This is a very shallow copy. See class comments for further details  
-        HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(columnName);
-        ColumnFamily columnFamily = columnDescriptorAdapter.adapt(hColumnDescriptor).build();
-        columnFamilies.put(columnName, columnFamily);
-      } catch (Exception e) {
-        LOG.error("Failed to copy ColumnFamilyDescriptor to HColumnDescriptor", e);
-        throw new RuntimeException("Failed to copy ColumnFamilyDescriptor to HColumnDescriptor", e);
+      String columnName = column.getNameAsString();
+
+      //TODO: verify if this copy is sufficient
+      HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(columnName);
+      // TODO - copy the config and value Maps
+      for (Map.Entry<String, String> entry : column.getConfiguration().entrySet()) {
+        hColumnDescriptor.setConfiguration(entry.getKey(), entry.getValue());
       }
+      for (Map.Entry<Bytes, Bytes> entry : column.getValues().entrySet()) {
+        hColumnDescriptor.setValue(entry.getKey().get(), entry.getValue().get());
+      }
+
+      ColumnFamily columnFamily = columnDescriptorAdapter.adapt(hColumnDescriptor).build();
+      columnFamilies.put(columnName, columnFamily);
     }
     return Table.newBuilder().putAllColumnFamilies(columnFamilies).build();
   }
