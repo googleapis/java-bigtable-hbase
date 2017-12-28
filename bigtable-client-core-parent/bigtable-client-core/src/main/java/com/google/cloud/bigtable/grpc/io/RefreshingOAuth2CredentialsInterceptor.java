@@ -176,7 +176,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     this.executor = Preconditions.checkNotNull(scheduler);
     this.credentials = Preconditions.checkNotNull(credentials);
 
-    rateLimiter = RateLimiter.create(1);
+    // Retry every 10 seconds.
+    rateLimiter = RateLimiter.create(0.1);
   }
 
   /**
@@ -365,15 +366,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
    */
   private HeaderCacheElement refreshCredentials() {
-    if (!rateLimiter.tryAcquire()) {
-      LOG.trace("Rate limited");
-
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-              .withDescription("Authentication rate limit has been exceeded, failing fast")
-      );
-    }
-
     try {
       LOG.info("Refreshing the OAuth token");
       AccessToken newToken = credentials.refreshAccessToken();
@@ -389,6 +381,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   private void revokeUnauthToken(HeaderCacheElement oldToken) {
+    if (!rateLimiter.tryAcquire()) {
+      LOG.trace("Rate limited");
+      return;
+    }
+
     synchronized (lock) {
       if (headerCache == oldToken) {
         LOG.warn("Got unauthenticated response from server, revoking the current token");
