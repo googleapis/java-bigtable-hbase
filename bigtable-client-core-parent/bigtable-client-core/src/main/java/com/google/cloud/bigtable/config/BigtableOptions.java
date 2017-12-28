@@ -42,11 +42,8 @@ public class BigtableOptions implements Serializable {
   /** Constant <code>BIGTABLE_EMULATOR_HOST_ENV_VAR="bigtableadmin.googleapis.com"</code> */
   public static final String BIGTABLE_EMULATOR_HOST_ENV_VAR = "BIGTABLE_EMULATOR_HOST";
 
-  /** Constant <code>BIGTABLE_TABLE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
-  public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
-      "bigtableadmin.googleapis.com";
-  /** Constant <code>BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
-  public static final String BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT =
+  /** Constant <code>BIGTABLE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
+  public static final String BIGTABLE_ADMIN_HOST_DEFAULT =
       "bigtableadmin.googleapis.com";
   /** Constant <code>BIGTABLE_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
@@ -83,8 +80,7 @@ public class BigtableOptions implements Serializable {
 
     // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
     private String dataHost = BIGTABLE_DATA_HOST_DEFAULT;
-    private String tableAdminHost = BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
-    private String instanceAdminHost = BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
+    private String adminHost = BIGTABLE_ADMIN_HOST_DEFAULT;
     private int port = BIGTABLE_PORT_DEFAULT;
 
     private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
@@ -109,8 +105,7 @@ public class BigtableOptions implements Serializable {
       this.appProfileId = original.appProfileId;
       this.userAgent = original.userAgent;
       this.dataHost = original.dataHost;
-      this.tableAdminHost = original.tableAdminHost;
-      this.instanceAdminHost = original.instanceAdminHost;
+      this.adminHost = original.adminHost;
       this.port = original.port;
       this.credentialOptions = original.credentialOptions;
       this.retryOptions = original.retryOptions;
@@ -120,13 +115,8 @@ public class BigtableOptions implements Serializable {
       this.callOptionsConfig = original.callOptionsConfig;
     }
 
-    public Builder setTableAdminHost(String tableAdminHost) {
-      this.tableAdminHost = tableAdminHost;
-      return this;
-    }
-
-    public Builder setInstanceAdminHost(String instanceAdminHost) {
-      this.instanceAdminHost = instanceAdminHost;
+    public Builder setAdminHost(String tableAdminHost) {
+      this.adminHost = tableAdminHost;
       return this;
     }
 
@@ -232,8 +222,7 @@ public class BigtableOptions implements Serializable {
       setUsePlaintextNegotiation(true);
       setCredentialOptions(CredentialOptions.nullCredential());
       setDataHost(hostPort[0]);
-      setTableAdminHost(hostPort[0]);
-      setInstanceAdminHost(hostPort[0]);
+      setAdminHost(hostPort[0]);
       setPort(port);
 
       LOG.info("Connecting to the Bigtable emulator at " + emulatorHost);
@@ -251,8 +240,7 @@ public class BigtableOptions implements Serializable {
       }
       applyEmulatorEnvironment();
       return new BigtableOptions(
-          instanceAdminHost,
-          tableAdminHost,
+          adminHost,
           dataHost,
           port,
           projectId,
@@ -269,8 +257,7 @@ public class BigtableOptions implements Serializable {
     }
   }
 
-  private final String instanceAdminHost;
-  private final String tableAdminHost;
+  private final String adminHost;
   private final String dataHost;
   private final int port;
   private final String projectId;
@@ -290,8 +277,7 @@ public class BigtableOptions implements Serializable {
 
   @VisibleForTesting
   BigtableOptions() {
-      instanceAdminHost = null;
-      tableAdminHost = null;
+      adminHost = null;
       dataHost = null;
       port = 0;
       projectId = null;
@@ -310,8 +296,7 @@ public class BigtableOptions implements Serializable {
   }
 
   private BigtableOptions(
-      String instanceAdminHost,
-      String tableAdminHost,
+      String adminHost,
       String dataHost,
       int port,
       String projectId,
@@ -327,8 +312,7 @@ public class BigtableOptions implements Serializable {
       RetryOptions retryOptions) {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
 
-    this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
-    this.instanceAdminHost = Preconditions.checkNotNull(instanceAdminHost);
+    this.adminHost = Preconditions.checkNotNull(adminHost);
     this.dataHost = Preconditions.checkNotNull(dataHost);
     this.port = port;
     this.projectId = projectId;
@@ -351,12 +335,11 @@ public class BigtableOptions implements Serializable {
     }
 
     LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
-        + "table admin host %s, cluster admin host %s.",
+        + "admin host %s.",
         projectId,
         instanceId,
         dataHost,
-        tableAdminHost,
-        instanceAdminHost);
+        adminHost);
   }
 
   /**
@@ -382,17 +365,8 @@ public class BigtableOptions implements Serializable {
    *
    * @return a {@link java.lang.String} object.
    */
-  public String getTableAdminHost() {
-    return tableAdminHost;
-  }
-
-  /**
-   * <p>Getter for the field <code>instanceAdminHost</code>.</p>
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  public String getInstanceAdminHost() {
-    return instanceAdminHost;
+  public String getAdminHost() {
+    return adminHost;
   }
 
   /**
@@ -508,8 +482,7 @@ public class BigtableOptions implements Serializable {
     return (port == other.port)
         && (dataChannelCount == other.dataChannelCount)
         && (usePlaintextNegotiation == other.usePlaintextNegotiation)
-        && Objects.equals(instanceAdminHost, other.instanceAdminHost)
-        && Objects.equals(tableAdminHost, other.tableAdminHost)
+        && Objects.equals(adminHost, other.adminHost)
         && Objects.equals(dataHost, other.dataHost)
         && Objects.equals(projectId, other.projectId)
         && Objects.equals(instanceId, other.instanceId)
@@ -527,8 +500,7 @@ public class BigtableOptions implements Serializable {
     return MoreObjects.toStringHelper(this)
         .omitNullValues()
         .add("dataHost", dataHost)
-        .add("tableAdminHost", tableAdminHost)
-        .add("instanceAdminHost", instanceAdminHost)
+        .add("adminHost", adminHost)
         .add("projectId", projectId)
         .add("instanceId", instanceId)
         .add("appProfileId", appProfileId)

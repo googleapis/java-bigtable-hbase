@@ -310,7 +310,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       .add("project", options.getProjectId())
       .add("instance", options.getInstanceId())
       .add("dataHost", options.getDataHost())
-      .add("tableAdminHost", options.getTableAdminHost())
+      .add("tableAdminHost", options.getAdminHost())
       .toString();
   }
 

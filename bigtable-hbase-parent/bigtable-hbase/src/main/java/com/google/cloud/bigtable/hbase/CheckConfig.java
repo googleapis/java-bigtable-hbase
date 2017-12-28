@@ -68,8 +68,7 @@ public class CheckConfig {
     System.out.println(String.format("User Agent: %s", options.getUserAgent()));
     System.out.println(String.format("Project ID: %s", options.getProjectId()));
     System.out.println(String.format("Instance Id: %s", options.getInstanceId()));
-    System.out.println(String.format("Instance admin host: %s", options.getInstanceAdminHost()));
-    System.out.println(String.format("Table admin host: %s", options.getTableAdminHost()));
+    System.out.println(String.format("Admin host: %s", options.getAdminHost()));
     System.out.println(String.format("Data host: %s", options.getDataHost()));
 
     Credentials credentials = CredentialFactory.getCredentials(options.getCredentialOptions());

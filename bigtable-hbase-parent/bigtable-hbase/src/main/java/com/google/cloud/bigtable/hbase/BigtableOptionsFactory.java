@@ -17,9 +17,8 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
@@ -59,11 +58,8 @@ public class BigtableOptionsFactory {
 
   /** Constant <code>BIGTABLE_PORT_KEY="google.bigtable.endpoint.port"</code> */
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
-  /** Constant <code>BIGTABLE_INSTANCE_ADMIN_HOST_KEY="google.bigtable.instance.admin.endpoint"{trunked}</code> */
-  public static final String BIGTABLE_INSTANCE_ADMIN_HOST_KEY =
-      "google.bigtable.instance.admin.endpoint.host";
-  /** Constant <code>BIGTABLE_TABLE_ADMIN_HOST_KEY="google.bigtable.admin.endpoint.host"</code> */
-  public static final String BIGTABLE_TABLE_ADMIN_HOST_KEY =
+  /** Constant <code>BIGTABLE_ADMIN_HOST_KEY="google.bigtable.admin.endpoint.host"</code> */
+  public static final String BIGTABLE_ADMIN_HOST_KEY =
       "google.bigtable.admin.endpoint.host";
   /** Constant <code>BIGTABLE_HOST_KEY="google.bigtable.endpoint.host"</code> */
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
@@ -287,12 +283,9 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setDataHost(
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));
 
-    bigtableOptionsBuilder.setTableAdminHost(getHost(
-      configuration, BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT,
-      "Table Admin"));
-
-    bigtableOptionsBuilder.setInstanceAdminHost(getHost(configuration,
-        BIGTABLE_INSTANCE_ADMIN_HOST_KEY, BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT, "Cluster Admin"));
+    bigtableOptionsBuilder.setAdminHost(getHost(
+      configuration, BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT,
+      "Admin"));
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
     bigtableOptionsBuilder.setPort(port);
