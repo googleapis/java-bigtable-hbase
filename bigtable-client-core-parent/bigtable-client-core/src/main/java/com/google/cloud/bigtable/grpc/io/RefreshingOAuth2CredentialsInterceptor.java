@@ -326,13 +326,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
-            try {
-              HeaderCacheElement newToken = refreshCredentials();
-              return updateToken(newToken);
-            } finally {
-              futureToken = null;
-              isRefreshing = false;
-            }
+            HeaderCacheElement newToken = refreshCredentials();
+            return updateToken(newToken);
           }
         });
       } catch (RuntimeException e) {
@@ -358,6 +353,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         LOG.warn("Failed to refresh the access token. Falling back to existing token. "
             + "New token state: {}, status: {}", newState, newToken.status);
       }
+      futureToken = null;
+      isRefreshing = false;
 
       return headerCache;
     }
