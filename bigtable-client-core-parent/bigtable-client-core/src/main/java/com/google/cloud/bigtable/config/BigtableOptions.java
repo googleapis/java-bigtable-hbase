@@ -115,8 +115,8 @@ public class BigtableOptions implements Serializable {
       this.callOptionsConfig = original.callOptionsConfig;
     }
 
-    public Builder setAdminHost(String tableAdminHost) {
-      this.adminHost = tableAdminHost;
+    public Builder setAdminHost(String adminHost) {
+      this.adminHost = adminHost;
       return this;
     }
 
