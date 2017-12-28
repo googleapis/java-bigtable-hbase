@@ -183,7 +183,7 @@ public class BigtableSession implements Closeable {
         !Strings.isNullOrEmpty(options.getUserAgent()), USER_AGENT_EMPTY_OR_NULL);
     LOG.info(
         "Opening connection for projectId %s, instanceId %s, "
-        + "on data host %s, table admin host %s.",
+        + "on data host %s, admin host %s.",
         options.getProjectId(), options.getInstanceId(), options.getDataHost(),
         options.getAdminHost());
     LOG.info("Bigtable options: %s.", options);
