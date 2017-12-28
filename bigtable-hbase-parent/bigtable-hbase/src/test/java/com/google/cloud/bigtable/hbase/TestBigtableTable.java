@@ -92,8 +92,7 @@ public class TestBigtableTable {
     MockitoAnnotations.initMocks(this);
 
     BigtableOptions options = new BigtableOptions.Builder()
-        .setInstanceAdminHost("localhost")
-        .setTableAdminHost("localhost")
+        .setAdminHost("localhost")
         .setDataHost("localhost")
         .setPort(0)
         .setProjectId(TEST_PROJECT)

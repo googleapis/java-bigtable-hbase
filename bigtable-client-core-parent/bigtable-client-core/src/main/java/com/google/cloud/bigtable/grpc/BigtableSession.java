@@ -112,7 +112,7 @@ public class BigtableSession implements Closeable {
       }
     });
     for (final String host : Arrays.asList(BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT,
-      BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT)) {
+      BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT)) {
       connectionStartupExecutor.execute(new Runnable() {
         @Override
         public void run() {
@@ -185,7 +185,7 @@ public class BigtableSession implements Closeable {
         "Opening connection for projectId %s, instanceId %s, "
         + "on data host %s, table admin host %s.",
         options.getProjectId(), options.getInstanceId(), options.getDataHost(),
-        options.getTableAdminHost());
+        options.getAdminHost());
     LOG.info("Bigtable options: %s.", options);
 
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
@@ -340,7 +340,7 @@ public class BigtableSession implements Closeable {
    */
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
-      ManagedChannel channel = createManagedPool(options.getTableAdminHost(), 1);
+      ManagedChannel channel = createManagedPool(options.getAdminHost(), 1);
       tableAdminClient = new BigtableTableAdminGrpcClient(channel,
           BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
     }
@@ -355,7 +355,7 @@ public class BigtableSession implements Closeable {
    */
   public synchronized BigtableInstanceClient getInstanceAdminClient() throws IOException {
     if (instanceAdminClient == null) {
-      ManagedChannel channel = createManagedPool(options.getInstanceAdminHost(), 1);
+      ManagedChannel channel = createManagedPool(options.getAdminHost(), 1);
       instanceAdminClient = new BigtableInstanceGrpcClient(channel);
     }
     return instanceAdminClient;

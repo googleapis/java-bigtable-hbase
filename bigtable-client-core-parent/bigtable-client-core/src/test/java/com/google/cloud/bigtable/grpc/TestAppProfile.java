@@ -77,8 +77,7 @@ public class TestAppProfile {
 
     BigtableOptions opts = new BigtableOptions.Builder()
         .setDataHost("localhost")
-        .setInstanceAdminHost("locahost")
-        .setTableAdminHost("localhost")
+        .setAdminHost("locahost")
         .setPort(port)
         .setProjectId("fake-project")
         .setInstanceId("fake-instance")

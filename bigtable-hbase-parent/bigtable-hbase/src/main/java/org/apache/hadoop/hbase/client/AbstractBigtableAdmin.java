@@ -705,7 +705,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return MoreObjects.toStringHelper(getClass())
         .add("project", options.getProjectId())
         .add("instance", options.getInstanceId())
-        .add("adminHost", options.getTableAdminHost())
+        .add("adminHost", options.getAdminHost())
         .toString();
   }
 

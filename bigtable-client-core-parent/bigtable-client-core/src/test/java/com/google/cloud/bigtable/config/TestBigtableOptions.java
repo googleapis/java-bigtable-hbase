@@ -99,8 +99,7 @@ public class TestBigtableOptions {
         .build();
     Assert.assertEquals(1234, options.getPort());
     Assert.assertEquals("localhost", options.getDataHost());
-    Assert.assertEquals("localhost", options.getInstanceAdminHost());
-    Assert.assertEquals("localhost", options.getTableAdminHost());
+    Assert.assertEquals("localhost", options.getAdminHost());
     Assert.assertTrue(options.usePlaintextNegotiation());
     Assert.assertEquals(CredentialOptions.nullCredential(), options.getCredentialOptions());
 
@@ -110,8 +109,7 @@ public class TestBigtableOptions {
         .build();
     Assert.assertEquals(BigtableOptions.BIGTABLE_PORT_DEFAULT, options.getPort());
     Assert.assertEquals("override", options.getDataHost());
-    Assert.assertEquals(BigtableOptions.BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT, options.getInstanceAdminHost());
-    Assert.assertEquals(BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT, options.getTableAdminHost());
+    Assert.assertEquals(BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT, options.getAdminHost());
     Assert.assertFalse(options.usePlaintextNegotiation());
     Assert.assertEquals(CredentialOptions.defaultCredentials(), options.getCredentialOptions());
   }

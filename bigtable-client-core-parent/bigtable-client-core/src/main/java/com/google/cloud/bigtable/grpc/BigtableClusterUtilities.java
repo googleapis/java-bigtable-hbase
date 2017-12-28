@@ -152,7 +152,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
         Preconditions.checkNotNull(
             options.getInstanceName(),
             "ProjectId and instanceId have to be set in the options.  Use '-' for all instanceIds.");
-    channel = BigtableSession.createChannelPool(options.getInstanceAdminHost(), options);
+    channel = BigtableSession.createChannelPool(options.getAdminHost(), options);
     client = new BigtableInstanceGrpcClient(channel);
   }
 
