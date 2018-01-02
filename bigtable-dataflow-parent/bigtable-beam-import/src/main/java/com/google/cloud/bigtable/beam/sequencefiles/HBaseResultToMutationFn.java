@@ -25,6 +25,7 @@ import com.google.common.collect.Multimaps;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -48,6 +49,8 @@ class HBaseResultToMutationFn
   private static Logger logger = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
 
   private static final long serialVersionUID = 1L;
+
+  private static final int MAX_CELLS = 100_000;
 
   private static final Predicate<Cell> IS_DELETE_MARKER_FILTER =  new Predicate<Cell>() {
     @Override
@@ -82,30 +85,39 @@ class HBaseResultToMutationFn
     if (cells.isEmpty()) {
       return;
     }
-    Put put = tryProcessRowWithNoDeleteMarkers(kv.getKey().get(), cells);
-    if (put == null) {
-      put = processRowWithDeleteMarkers(kv.getKey().get(), cells);
+
+    // Preprocess delete markers
+    if (hasDeleteMarkers(cells)) {
+      cells = preprocessDeleteMarkers(cells);
     }
-    context.output(put);
+
+    // Split the row into multiple puts if it exceeds the maximum mutation limit
+    Iterator<Cell> cellIt = cells.iterator();
+
+    while(cellIt.hasNext()) {
+      Put put = new Put(kv.getKey().get());
+
+      for(int i=0; i < MAX_CELLS && cellIt.hasNext(); i++) {
+        put.add(cellIt.next());
+      }
+
+      context.output(put);
+    }
   }
 
-  // Optimistically process the row assuming no delete markers exist. Return null if delete markers
-  // are found.
-  private Put tryProcessRowWithNoDeleteMarkers(byte[] rowKey, List<Cell> cells) throws IOException {
-    Put put = new Put(rowKey);
+  private boolean hasDeleteMarkers(List<Cell> cells) {
     for (Cell cell : cells) {
       if (CellUtil.isDelete(cell)) {
-        // Delete Marker found: abort and let caller invoke processRowWithDeleteMarkers().
-        return null;
+        return true;
       }
-      put.add(cell);
     }
-    return put;
+    return false;
   }
 
   // Process
-  private Put processRowWithDeleteMarkers(byte[] rowKey, List<Cell> cells) throws IOException {
-    Put put = new Put(rowKey);
+  private List<Cell> preprocessDeleteMarkers(List<Cell> cells) throws IOException {
+    List<Cell> resultCells = Lists.newArrayList();
+
     // Group cells by column family, since DeleteMarkers do not apply across families.
     Map<String, Collection<Cell>> dataCellsByFamilyMap =
         Multimaps.index(
@@ -115,19 +127,17 @@ class HBaseResultToMutationFn
         Multimaps.index(
             Iterables.filter(cells, IS_DELETE_MARKER_FILTER), COLUMN_FAMILY_EXTRACTOR).asMap();
     for (Map.Entry<String, Collection<Cell>> e : dataCellsByFamilyMap.entrySet()) {
-      processOneColumnFamily(put, e.getValue(), deleteMarkersByFamilyMap.get(e.getKey()));
+      processOneColumnFamily(resultCells, e.getValue(), deleteMarkersByFamilyMap.get(e.getKey()));
     }
-    return put;
+    return resultCells;
   }
 
   private void processOneColumnFamily(
-      Put put, Collection<Cell> dataCells, Collection<Cell> deleteMarkers)
+      List<Cell> resultCells, Collection<Cell> dataCells, Collection<Cell> deleteMarkers)
       throws IOException {
     if (deleteMarkers == null) {
       // No markers for this column family
-      for (Cell cell : dataCells) {
-        put.add(cell);
-      }
+      resultCells.addAll(dataCells);
     } else {
       // Build a filter for live data cells that should be sent to bigtable.
       // These are cells not marked by any delete markers in this row/family.
@@ -136,7 +146,7 @@ class HBaseResultToMutationFn
               Iterables.transform(deleteMarkers, DATA_CELL_PREDICATE_FACTORY))));
       for (Cell cell : dataCells) {
         if (liveDataCellPredicate.apply(cell)) {
-          put.add(cell);
+          resultCells.add(cell);
         }
       }
     }
