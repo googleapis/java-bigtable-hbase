@@ -31,7 +31,15 @@ limitations under the License.
     </description>
 
     <properties>
+        <hbase.version>1.0.2</hbase.version>
+        <google.bigtable.project.under.test>bigtable-hbase-1.0</google.bigtable.project.under.test>
+        <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_0.BigtableConnection</google.bigtable.connection.impl>
+        <protobuff-java.version>2.5.0</protobuff-java.version>
+        <google.bigtable.endpoint.port>443</google.bigtable.endpoint.port>
+        <google.bigtable.use.bulk.api>true</google.bigtable.use.bulk.api>
+        <google.bigtable.use.plaintext.negotiation>false</google.bigtable.use.plaintext.negotiation>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
+        <test.timeout>1800</test.timeout>
     </properties>
 
     <profiles>
@@ -65,7 +73,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -106,7 +114,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -141,7 +149,7 @@ limitations under the License.
                                     </includes>
                                     <trimStackTrace>false</trimStackTrace>
                                     <reportNameSuffix>local-mini-cluster</reportNameSuffix>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -182,6 +190,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
