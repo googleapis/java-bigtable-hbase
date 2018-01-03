@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowSet;
-import com.google.bigtable.v2.ReadRowsRequest.Builder;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Get;
@@ -44,7 +43,7 @@ public class GetAdapter implements ReadOperationAdapter<Get> {
 
   /** {@inheritDoc} */
   @Override
-  public Builder adapt(Get operation, ReadHooks readHooks) {
+  public ReadRowsRequest.Builder adapt(Get operation, ReadHooks readHooks) {
     Scan operationAsScan = new Scan(operation);
     scanAdapter.throwIfUnsupportedScan(operationAsScan);
     return ReadRowsRequest.newBuilder()

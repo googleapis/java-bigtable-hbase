@@ -15,77 +15,42 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import org.apache.hadoop.conf.Configuration;
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import java.io.IOException;
-
 public abstract class AbstractTest {
+
+  @ClassRule
+  public static SharedTestEnvRule sharedTestEnv = new SharedTestEnvRule();
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
-
   protected Logger logger = new Logger(this.getClass());
-
   @Rule
   public TestRule loggingRule = new TestRule() {
     @Override
     public Statement apply(Statement base, Description description) {
-      System.out.println(String.format("Running: %s",description.getDisplayName()));
-
+      logger.info("Running: %s", description.getDisplayName());
       return base;
-    }
-  };
-
-  private Connection connection;
-
-  @Rule
-  public ExternalResource connectionResource = new ExternalResource() {
-    @Override
-    public Statement apply(Statement base, Description description) {
-      return super.apply(base, description);
-    }
-
-    @Override
-    protected void before() throws Throwable {
-      connection = IntegrationTests.getConnection();
-      setup();
-    }
-
-    @Override
-    protected void after() {
-      try {
-        tearDown();
-      } catch (IOException e) {
-        logger.warn("Could not perform preClose", e);
-      }
     }
   };
 
   // This is for when we need to look at the results outside of the current connection
   public Connection createNewConnection() throws IOException {
-    Configuration conf = IntegrationTests.getConfiguration();
-    return ConnectionFactory.createConnection(conf);
-  }
-
-  /** Hook to setup class level resources after the connection is created. */
-  protected void setup() throws IOException {
-  }
-
-  /** Hook to remove class level resources after the connection is created. */
-  protected void tearDown() throws IOException {
+    return sharedTestEnv.createConnection();
   }
 
   protected Connection getConnection() {
-    return connection;
+    return sharedTestEnv.getConnection();
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {
+
     protected final byte[] qualifier;
     protected final byte[] value;
 

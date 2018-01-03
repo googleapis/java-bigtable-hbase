@@ -15,10 +15,34 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
+import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.CreateTableRequest.Split;
+import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
+import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
+import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListTablesRequest;
+import com.google.bigtable.admin.v2.ListTablesResponse;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
+import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.bigtable.admin.v2.Table;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
+import com.google.common.base.MoreObjects;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.longrunning.Operation;
+import com.google.protobuf.ByteString;
 import io.grpc.Status;
-import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
@@ -45,37 +68,13 @@ import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.regionserver.wal.FailedLogCloseException;
-import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
-import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.bigtable.admin.v2.CreateTableRequest;
-import com.google.bigtable.admin.v2.CreateTableRequest.Split;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
-import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
-import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.GetTableRequest;
-import com.google.bigtable.admin.v2.ListTablesRequest;
-import com.google.bigtable.admin.v2.ListTablesResponse;
-import com.google.bigtable.admin.v2.Table;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
-import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
-import com.google.common.base.MoreObjects;
-import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.google.protobuf.ByteString;
 
 /**
  * <p>Abstract AbstractBigtableAdmin class.</p>
@@ -83,13 +82,12 @@ import com.google.protobuf.ByteString;
  * @author sduskis
  * @version $Id: $Id
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractBigtableAdmin implements Admin {
 
-  private static final Logger LOG = new Logger(AbstractBigtableAdmin.class);
+  protected final Logger LOG = new Logger(getClass());
 
   /**
-   * {@inheritDoc}
-   *
    * Bigtable doesn't require disabling tables before deletes or schema changes. Some clients do
    * call disable first, and then check for disable before deletes or schema changes. We're keeping
    * track of that state in memory on so that those clients can proceed with the delete/schema
@@ -100,35 +98,34 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final Configuration configuration;
   private final BigtableOptions options;
   private final AbstractBigtableConnection connection;
-  private final BigtableTableAdminClient bigtableTableAdminClient;
+  protected final BigtableTableAdminClient bigtableTableAdminClient;
 
   private BigtableInstanceName bigtableInstanceName;
+  private BigtableClusterName bigtableSnapshotClusterName;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
   private final TableAdapter tableAdapter;
 
   /**
-   * <p>Constructor for AbstractBigtableAdmin.</p>
-   *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param configuration a {@link org.apache.hadoop.conf.Configuration} object.
+   * <p>
+   * Constructor for AbstractBigtableAdmin.
+   * </p>
    * @param connection a {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection} object.
-   * @param bigtableTableAdminClient a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
-   * @param disabledTables a {@link java.util.Set} object.
+   * @throws IOException
    */
-  public AbstractBigtableAdmin(
-      BigtableOptions options,
-      Configuration configuration,
-      AbstractBigtableConnection connection,
-      BigtableTableAdminClient bigtableTableAdminClient,
-      Set<TableName> disabledTables) {
+  public AbstractBigtableAdmin(AbstractBigtableConnection connection) throws IOException {
     LOG.debug("Creating BigtableAdmin");
-    this.configuration = configuration;
-    this.options = options;
+    this.configuration = connection.getConfiguration();
+    this.options = connection.getOptions();
     this.connection = connection;
-    this.bigtableTableAdminClient = bigtableTableAdminClient;
-    this.disabledTables = disabledTables;
+    this.bigtableTableAdminClient = connection.getSession().getTableAdminClient();
+    this.disabledTables = connection.getDisabledTables();
     this.bigtableInstanceName = options.getInstanceName();
     this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
+
+    String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
+    if (clusterId != null) {
+      this.bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
+    }
   }
 
   /** {@inheritDoc} */
@@ -190,7 +187,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
       throws IOException {
     return listTables(pattern);
   }
-
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
@@ -441,12 +437,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
-  public void enableTableAsync(TableName tableName) throws IOException {
-    enableTable(tableName);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public HTableDescriptor[] enableTables(String regex) throws IOException {
     HTableDescriptor[] tableDescriptors = listTables(regex);
     for (HTableDescriptor descriptor : tableDescriptors) {
@@ -463,12 +453,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
       enableTable(descriptor.getTableName());
     }
     return tableDescriptors;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void disableTableAsync(TableName tableName) throws IOException {
-    disableTable(tableName);
   }
 
   /** {@inheritDoc} */
@@ -611,7 +595,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
-              "Failed to %d column '%s' in table '%s'",
+              "Failed to %s column '%s' in table '%s'",
               modificationType,
               columnName,
               tableName.getNameAsString()),
@@ -707,11 +691,21 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
+  public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
+    TableName[] tableNameArray = new TableName[names.size()];
+    for(int i=0; i< names.size();i++) {
+      tableNameArray[i] = TableName.valueOf(names.get(i));
+    }
+    return getTableDescriptors(tableNameArray);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(getClass())
         .add("project", options.getProjectId())
         .add("instance", options.getInstanceId())
-        .add("adminHost", options.getTableAdminHost())
+        .add("adminHost", options.getAdminHost())
         .toString();
   }
 
@@ -815,6 +809,170 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public Pair<Integer, Integer> getAlterStatus(String tableName) throws IOException {
     return getAlterStatus(TableName.valueOf(tableName));
   }
+
+  // ------------ SNAPSHOT methods begin
+
+  /** {@inheritDoc} */
+  @Override
+  public void snapshot(String snapshotName, TableName tableName)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+
+    connection.getSession().getInstanceAdminClient()
+        .waitForOperation(snapshotTable(snapshotName, tableName));
+  }
+
+  /**
+   * Creates a snapshot from an existing table.  NOTE: Cloud Bigtable has a cleanup policy
+   *
+   * @param snapshotName
+   * @param tableName
+   * @return
+   * @throws IOException
+   */
+  protected Operation snapshotTable(String snapshotName, TableName tableName)
+      throws IOException {
+    ListenableFuture<Operation> future = bigtableTableAdminClient
+        .snapshotTableAsync(
+            SnapshotTableRequest.newBuilder()
+              .setCluster(getSnapshotClusterName().toString())
+              .setSnapshotId(snapshotName)
+              .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()))
+              .build()
+        );
+    return Futures.getUnchecked(future);
+  }
+
+  /** This is needed for the hbase shell */
+  public void snapshot(byte[] snapshotName, byte[] tableName)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    snapshot(snapshotName, TableName.valueOf(tableName));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void snapshot(byte[] snapshotName, TableName tableName)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    snapshot(Bytes.toString(snapshotName), tableName);
+  }
+
+  /** This is needed for the hbase shell */
+  public void cloneSnapshot(byte[] snapshotName, byte[] tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    cloneSnapshot(snapshotName, TableName.valueOf(tableName));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void cloneSnapshot(byte[] snapshotName, TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    cloneSnapshot(Bytes.toString(snapshotName), tableName);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void cloneSnapshot(String snapshotName, TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    CreateTableFromSnapshotRequest request = CreateTableFromSnapshotRequest.newBuilder()
+      .setParent(options.getInstanceName().toString())
+      .setTableId(tableName.getNameAsString())
+      .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
+      .build();
+    Operation operation = Futures.getUnchecked(bigtableTableAdminClient.createTableFromSnapshotAsync(request));
+    connection.getSession().getInstanceAdminClient().
+      waitForOperation(operation);
+  }
+
+  protected BigtableClusterName getClusterName() throws IOException {
+    return this.connection.getSession().getClusterName();
+  }
+
+  protected BigtableClusterName getSnapshotClusterName() throws IOException {
+    if (this.bigtableSnapshotClusterName == null) {
+      try {
+        this.bigtableSnapshotClusterName = getClusterName();
+      } catch (IllegalStateException e) {
+        throw new IllegalStateException(
+            "Failed to determine which cluster to use for snapshots, please configure it using "
+                + BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY);
+      }
+    }
+    return this.bigtableSnapshotClusterName;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteSnapshot(byte[] snapshotName) throws IOException {
+    deleteSnapshot(Bytes.toString(snapshotName));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteSnapshot(String snapshotName) throws IOException {
+    String btSnapshotName = getClusterName().toSnapshotName(snapshotName);
+    DeleteSnapshotRequest request = DeleteSnapshotRequest.newBuilder()
+        .setName(btSnapshotName)
+        .build();
+
+    Futures.getUnchecked(
+      bigtableTableAdminClient
+          .deleteSnapshotAsync(request)
+    );
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteSnapshots(String regex) throws IOException {
+    deleteSnapshots(Pattern.compile(regex));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteSnapshots(Pattern pattern) throws IOException {
+    for (SnapshotDescription snapshotDescription : listSnapshots(pattern)) {
+      deleteSnapshot(snapshotDescription.getName());
+    }
+  }
+
+  @Override
+  public void deleteTableSnapshots(String tableNameRegex, String snapshotNameRegex) throws IOException {
+    deleteTableSnapshots(Pattern.compile(tableNameRegex), Pattern.compile(snapshotNameRegex));
+  }
+
+  @Override
+  public void deleteTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern) throws IOException {
+    for (SnapshotDescription snapshotDescription : listTableSnapshots(tableNamePattern, snapshotNamePattern)) {
+      deleteSnapshot(snapshotDescription.getName());
+    }
+  }
+
+  // ------------- Unsupported snapshot methods.
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  // ------------- Snapshot method end
 
   /** {@inheritDoc} */
   @Override
@@ -1031,152 +1189,85 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
-    throw new UnsupportedOperationException("createNamespace");  // TODO
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("createNamespace is a no-op");
+    } else {
+      throw new UnsupportedOperationException("createNamespace"); // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
-    throw new UnsupportedOperationException("modifyNamespace");  // TODO
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("modifyNamespace is a no-op");
+    } else {
+      throw new UnsupportedOperationException("modifyNamespace");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public void deleteNamespace(String name) throws IOException {
-    throw new UnsupportedOperationException("deleteNamespace");  // TODO
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("deleteNamespace is a no-op");
+    } else {
+      throw new UnsupportedOperationException("deleteNamespace");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException {
-    throw new UnsupportedOperationException("getNamespaceDescriptor");  // TODO
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("getNamespaceDescriptor is a no-op");
+      return null;
+    } else {
+      throw new UnsupportedOperationException("getNamespaceDescriptor");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public NamespaceDescriptor[] listNamespaceDescriptors() throws IOException {
-    throw new UnsupportedOperationException("listNamespaceDescriptors");  // TODO
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("listNamespaceDescriptors is a no-op");
+      return new NamespaceDescriptor[0];
+    } else {
+      throw new UnsupportedOperationException("listNamespaceDescriptors");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTableDescriptorsByNamespace(String name) throws IOException {
-    throw new UnsupportedOperationException("listDescriptorsByNamespace");  // TODO
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("listTableDescriptorsByNamespace is a no-op");
+      return new HTableDescriptor[0];
+    } else {
+      throw new UnsupportedOperationException("listTableDescriptorsByNamespace");  // TODO
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public TableName[] listTableNamesByNamespace(String name) throws IOException {
-    throw new UnsupportedOperationException("listTableNamesByNamespace");  // TODO
+    if (provideWarningsForNamespaces()) {
+      LOG.warn("listTableNamesByNamespace is a no-op");
+      return new TableName[0];
+    } else {
+      throw new UnsupportedOperationException("listTableNamesByNamespace");  // TODO
+    }
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
-    throw new UnsupportedOperationException("getTableDescriptors");  // TODO
+  private boolean provideWarningsForNamespaces() {
+    return configuration.getBoolean(BigtableOptionsFactory.BIGTABLE_NAMESAPCE_WARNING_KEY, false);
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getMasterCoprocessors() {
     throw new UnsupportedOperationException("getMasterCoprocessors");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName)
-      throws IOException {
-    throw new UnsupportedOperationException("getCompactionState");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
-      throws IOException {
-    throw new UnsupportedOperationException("getCompactionStateForRegion");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void snapshot(String snapshotName, TableName tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void snapshot(byte[] snapshotName, TableName tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void snapshot(String snapshotName, TableName tableName,
-      HBaseProtos.SnapshotDescription.Type type)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void snapshot(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException {
-    throw new UnsupportedOperationException("takeSnapshotAsync");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, HBaseSnapshotException, UnknownSnapshotException {
-    throw new UnsupportedOperationException("isSnapshotFinished");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void cloneSnapshot(byte[] snapshotName, TableName tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("cloneSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void cloneSnapshot(String snapshotName, TableName tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("cloneSnapshot");  // TODO
   }
 
   /** {@inheritDoc} */
@@ -1198,48 +1289,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public boolean isProcedureFinished(String signature, String instance, Map<String, String> props)
       throws IOException {
     throw new UnsupportedOperationException("isProcedureFinished");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void deleteSnapshot(byte[] snapshotName) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void deleteSnapshot(String snapshotName) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void deleteSnapshots(String regex) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshots");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void deleteSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshots");  // TODO
   }
 
   /** {@inheritDoc} */

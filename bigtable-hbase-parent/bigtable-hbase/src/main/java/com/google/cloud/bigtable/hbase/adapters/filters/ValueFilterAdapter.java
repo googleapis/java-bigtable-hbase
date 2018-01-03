@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.bigtable.v2.ValueRange;
-import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
@@ -35,7 +33,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
+public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
 
   /** {@inheritDoc} */
   @Override
@@ -69,7 +67,7 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
   }
 
   private RowFilter adaptBinaryComparator(
-      CompareOp compareOp, BinaryComparator comparator) throws IOException {
+      CompareOp compareOp, BinaryComparator comparator) {
     ByteString value = ByteString.copyFrom(comparator.getValue());
     switch (compareOp) {
       case LESS:
@@ -77,10 +75,14 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
       case LESS_OR_EQUAL:
         return createRowFilter(ValueRange.newBuilder().setEndValueClosed(value));
       case EQUAL:
-        byte[] quotedBytes = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
-        return RowFilter.newBuilder()
-            .setValueRegexFilter(ByteStringer.wrap(quotedBytes))
-            .build();
+        if (comparator.getValue().length == 0) {
+          // The empty case does needs to use valueRegexFilter, since "end value closed" of empty
+          // is not allowed by the server.
+          return RowFilter.newBuilder().setValueRegexFilter(value).build();
+        } else {
+          return createRowFilter(
+            ValueRange.newBuilder().setStartValueClosed(value).setEndValueClosed(value));
+        }
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
         return RowFilter.newBuilder()

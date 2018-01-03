@@ -57,6 +57,25 @@ public final class BigtableClientMetrics {
     }
   }
 
+  // Simplistic initialization via slf4j
+  static {
+    Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
+    if (logger.isDebugEnabled()) {
+      if (registry == MetricRegistry.NULL_METRICS_REGISTRY) {
+        DropwizardMetricRegistry dropwizardRegistry = new DropwizardMetricRegistry();
+        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
+        setMetricRegistry(dropwizardRegistry);
+      } else if (registry instanceof DropwizardMetricRegistry) {
+        DropwizardMetricRegistry dropwizardRegistry = (DropwizardMetricRegistry) registry;
+        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
+      } else {
+        logger.info(
+          "Could not set up logging since the metrics registry is not a DropwizardMetricRegistry; it is a %s w.",
+          registry.getClass().getName());
+      }
+    }
+  }
+
   /**
    * Sets a {@link MetricRegistry} to be used in all Bigtable connection created after the call.
    * NOTE: this will not update any existing connections.
@@ -123,25 +142,6 @@ public final class BigtableClientMetrics {
    */
   public static boolean isEnabled(MetricLevel level) {
     return levelToLog.getLevel() >= level.getLevel();
-  }
-
-  // Simplistic initialization via slf4j
-  static {
-    Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
-    if (logger.isDebugEnabled()) {
-      if (registry == MetricRegistry.NULL_METRICS_REGISTRY) {
-        DropwizardMetricRegistry dropwizardRegistry = new DropwizardMetricRegistry();
-        registry = dropwizardRegistry;
-        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
-      } else if (registry instanceof DropwizardMetricRegistry) {
-        DropwizardMetricRegistry dropwizardRegistry = (DropwizardMetricRegistry) registry;
-        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
-      } else {
-        logger.info(
-          "Could not set up logging since the metrics registry is not a DropwizardMetricRegistry; it is a %s w.",
-          registry.getClass().getName());
-      }
-    }
   }
 
   private BigtableClientMetrics(){

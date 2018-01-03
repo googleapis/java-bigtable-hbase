@@ -15,26 +15,27 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-
-import org.apache.hadoop.hbase.client.Scan;
-
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableInstanceName;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.DefaultReadHooks;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadHooks;
-import com.google.bigtable.repackaged.com.google.cloud.util.ByteStringer;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowRange;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowSet;
-import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
-import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
-
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.hadoop.hbase.client.Scan;
+
+import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ByteStringer;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.batch.common.ByteStringUtil;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
+import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
+import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
+
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
- * Bigtable cluster; a table to connect to in the cluster; and a filter on the table in the form of
+ * Bigtable instance; a table to connect to in the instance; and a filter on the table in the form of
  * a {@link Scan}.
  */
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
@@ -52,8 +53,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   /**
-   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration}
-   * that will perform the specified {@link Scan} on the table.
+   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration} that
+   * will perform the specified {@link Scan} on the table.
    * @param options The {@link CloudBigtableOptions} object.
    * @param scan The {@link Scan} to add to the configuration.
    * @return The new {@link CloudBigtableScanConfiguration}.
@@ -66,8 +67,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   /**
-   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration}
-   * that will perform the specified {@link Scan} on the table.
+   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration} that
+   * will perform the specified {@link Scan} on the table.
    * @param config The {@link CloudBigtableTableConfiguration} object.
    * @param scan The {@link Scan} to add to the configuration.
    * @return The new {@link CloudBigtableScanConfiguration}.
@@ -83,7 +84,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Builds a {@link CloudBigtableScanConfiguration}.
    */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
-    protected Scan scan = new Scan();
+    private Scan scan;
     private ReadRowsRequest request;
 
     public Builder() {
@@ -113,10 +114,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     /**
      * Internal API that allows a Source to configure the request with a new start/stop row range.
-     *
      * @param startKey The first key, inclusive.
      * @param stopKey The last key, exclusive.
-     *
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     Builder withKeys(byte[] startKey, byte[] stopKey) {
@@ -152,34 +151,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * {@inheritDoc}
      */
     @Override
-    public Builder withZoneId(String zoneId) {
-      super.withZoneId(zoneId);
-      return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Builder withClusterId(String clusterId) {
-      super.withClusterId(clusterId);
-      return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public Builder withConfiguration(String key, String value) {
       super.withConfiguration(key, value);
       return this;
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withTableId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
+     * {@inheritDoc} Overrides {@link CloudBigtableScanConfiguration.Builder#withTableId(String)} so
+     * that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
     public Builder withTableId(String tableId) {
@@ -195,11 +174,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     public CloudBigtableScanConfiguration build() {
       if (request == null) {
         ReadHooks readHooks = new DefaultReadHooks();
+        if (scan == null) {
+          scan = new Scan();
+        }
         ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
         request = readHooks.applyPreSendHook(builder.build());
       }
-      return new CloudBigtableScanConfiguration(
-          projectId, instanceId, zoneId, clusterId, tableId, request, additionalConfiguration);
+      return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
+          request, additionalConfiguration);
     }
   }
 
@@ -208,24 +190,15 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
    * table ID, {@link Scan} and additional connection configuration.
-   *
    * @param projectId The project ID for the instance.
-   * @param instanceId The instance ID. Nullable if zoneID and clusterID are set.
-   * @param zoneId The zone ID
-   * @param clusterId
-   * @param tableId The table to connect to in the cluster.
+   * @param instanceId The instance ID.
+   * @param tableId The table to connect to in the instance.
    * @param request The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  protected CloudBigtableScanConfiguration(
-      String projectId,
-      String instanceId,
-      String zoneId,
-      String clusterId,
-      String tableId,
-      ReadRowsRequest request,
-      Map<String, String> additionalConfiguration) {
-    super(projectId, instanceId, zoneId, clusterId, tableId, additionalConfiguration);
+  protected CloudBigtableScanConfiguration(String projectId, String instanceId, String tableId,
+      ReadRowsRequest request, Map<String, String> additionalConfiguration) {
+    super(projectId, instanceId,  tableId, additionalConfiguration);
     if (request.getTableName().isEmpty()) {
       BigtableInstanceName bigtableInstanceName =
           new BigtableInstanceName(projectId, this.getInstanceId());
@@ -257,7 +230,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public byte[] getStopRow() {
     return getStopRowByteString().toByteArray();
   }
-
 
   /**
    * @return The start row for this configuration.
@@ -305,12 +277,18 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   /**
    * Creates a {@link ByteKeyRange} representing the start and stop keys for this instance.
-   *
    * @return A {@link ByteKeyRange}.
    */
   public ByteKeyRange toByteKeyRange() {
-    return ByteKeyRange.of(
-      ByteStringUtil.toByteKey(getStartRowByteString()),
+    return ByteKeyRange.of(ByteStringUtil.toByteKey(getStartRowByteString()),
       ByteStringUtil.toByteKey(getStopRowByteString()));
   }
+
+  @Override
+  public void populateDisplayData(DisplayData.Builder builder) {
+    super.populateDisplayData(builder);
+    builder
+        .add(DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+  }
+
 }

@@ -15,12 +15,12 @@
  */
 package com.google.cloud.bigtable.util;
 
-import com.google.protobuf.UnsafeByteOperations;
-import com.google.protobuf.ByteOutput;
-import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import com.google.protobuf.ByteOutput;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.UnsafeByteOperations;
 
 /**
  * Helper class to extract byte arrays from {@link com.google.protobuf.ByteString} without copy.
@@ -32,6 +32,8 @@ import java.nio.ByteBuffer;
  * @author sduskis
  * @version $Id: $Id
  */
+
+// sduskis (10/31/2016): Uncomment this once we upgrade to protobuf 3.0.0.
 public final class ZeroCopyByteStringUtil {
 
   /**
@@ -41,7 +43,7 @@ public final class ZeroCopyByteStringUtil {
    * @return a {@link com.google.protobuf.ByteString} object.
    */
   public static ByteString wrap(final byte[] array) {
-    return UnsafeByteOperations.unsafeWrap(ByteBuffer.wrap(array));
+    return UnsafeByteOperations.unsafeWrap(array);
   }
 
   /**
@@ -64,30 +66,30 @@ public final class ZeroCopyByteStringUtil {
     private byte[] bytes;
 
     @Override
-    public void writeLazy(byte[] value, int offset, int length) throws IOException {
-      if (offset != 0) {
+    public void writeLazy(byte[] value, int offset, int length) {
+      if (offset != 0 || length != value.length) {
         throw new UnsupportedOperationException();
       }
       bytes = value;
     }
 
     @Override
-    public void write(byte value) throws IOException {
+    public void write(byte value) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void write(byte[] value, int offset, int length) throws IOException {
+    public void write(byte[] value, int offset, int length) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void write(ByteBuffer value) throws IOException {
+    public void write(ByteBuffer value) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void writeLazy(ByteBuffer value) throws IOException {
+    public void writeLazy(ByteBuffer value) {
       throw new UnsupportedOperationException();
     }
   }

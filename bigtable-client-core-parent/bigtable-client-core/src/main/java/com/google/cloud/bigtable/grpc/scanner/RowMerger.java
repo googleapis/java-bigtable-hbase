@@ -15,42 +15,39 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.common.base.MoreObjects;
-import com.google.bigtable.v2.Cell;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
-import com.google.bigtable.v2.ReadRowsResponse;
-import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
-import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
-import com.google.bigtable.v2.Row;
-import com.google.cloud.bigtable.util.ByteStringer;
-import com.google.common.base.Preconditions;
-import com.google.protobuf.ByteString;
-
-import io.grpc.stub.StreamObserver;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.TreeMap;
+
+import com.google.common.base.Objects;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
+import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
+import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.protobuf.ByteString;
+
+import io.grpc.stub.StreamObserver;
 
 /**
  * <p>
- * Builds a complete {@link com.google.bigtable.v2.Row} from {@link com.google.bigtable.v2.ReadRowsResponse} objects. A {@link com.google.bigtable.v2.ReadRowsResponse}
- * may contain a single {@link com.google.bigtable.v2.Row}, multiple {@link com.google.bigtable.v2.Row}s, or even a part of a {@link com.google.bigtable.v2.Cell} if the
- * cell is
+ * Builds a complete {@link FlatRow} from {@link com.google.bigtable.v2.ReadRowsResponse} objects. A
+ * {@link com.google.bigtable.v2.ReadRowsResponse} may contain a single {@link FlatRow}, multiple
+ * {@link FlatRow}s, or even a part of a {@link com.google.bigtable.v2.Cell} if the cell is
  * </p>
  * <p>
- * Each RowMerger object is valid only for building a single Row. Expected usage is along the lines
- * of:
+ * Each RowMerger object is valid only for building a single FlatRow. Expected usage is along the
+ * lines of:
  * </p>
  *
  * <pre>
- * {@link io.grpc.stub.StreamObserver}&lt;{@link com.google.bigtable.v2.Row}&gt; observer = ...;
+ * {@link io.grpc.stub.StreamObserver}&lt;{@link FlatRow}&gt; observer = ...;
  * RowMerger rowMerger = new RowMerger(observer);
  * ...
  * rowMerger.onNext(...);
@@ -61,7 +58,9 @@ import java.util.TreeMap;
  * When a complete row is found, {@link io.grpc.stub.StreamObserver#onNext(Object)} will be called.
  * {@link io.grpc.stub.StreamObserver#onError(Throwable)} will be called for
  * </p>
- *
+ * <p>
+ * <b>NOTE: RowMerger is not threadsafe.</b>
+ * </p>
  * @author sduskis
  * @version $Id: $Id
  */
@@ -73,11 +72,11 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    * @param responses a {@link java.lang.Iterable} object.
    * @return a {@link java.util.List} object.
    */
-  public static List<Row> toRows(Iterable<ReadRowsResponse> responses) {
-    final ArrayList<Row> result = new ArrayList<>();
-    RowMerger rowMerger = new RowMerger(new StreamObserver<Row>() {
+  public static List<FlatRow> toRows(Iterable<ReadRowsResponse> responses) {
+    final ArrayList<FlatRow> result = new ArrayList<>();
+    RowMerger rowMerger = new RowMerger(new StreamObserver<FlatRow>() {
       @Override
-      public void onNext(Row value) {
+      public void onNext(FlatRow value) {
         result.add(value);
       }
 
@@ -107,17 +106,12 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private enum RowMergerState {
 
     /**
-     * A new {@link CellChunk} represents a completely new {@link Row}.
+     * A new {@link CellChunk} represents a completely new {@link FlatRow}.
      */
     NewRow {
       @Override
-      void handleLastScannedRowKey(ByteString lastScannedRowKey) {
-        throw new IllegalStateException("Encountered a lastScannedRowKey while processing a row.");
-      }
-
-      @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
-        Preconditions.checkArgument(rowInProgess == null,
+        Preconditions.checkArgument(rowInProgess == null || !rowInProgess.hasRowKey(),
           "A new row cannot have existing state: %s", newChunk);
         Preconditions.checkArgument(newChunk.getRowStatusCase() != RowStatusCase.RESET_ROW,
           "A new row cannot be reset: %s", newChunk);
@@ -127,30 +121,24 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           newChunk);
         Preconditions.checkState(previousKey == null || !rowKey.equals(previousKey),
           "A commit happened but the same key followed: %s", newChunk);
-
         Preconditions.checkArgument(newChunk.hasQualifier(), "A column qualifier must be set: %s",
           newChunk);
         if (newChunk.getValueSize() > 0) {
-          Preconditions.checkArgument(!isCommit(newChunk),
+          Preconditions.checkArgument(!newChunk.getCommitRow(),
             "A row cannot be have a value size and be a commit row: %s", newChunk);
         }
       }
 
       @Override
-      void handleOnComplete(StreamObserver<Row> observer) {
+      void handleOnComplete(StreamObserver<FlatRow> observer) {
         observer.onCompleted();
       }
     },
 
     /**
-     * A new {@link CellChunk} represents a new {@link Cell} in a {@link Row}.
+     * A new {@link CellChunk} represents a new {@link FlatRow.Cell} in a {@link FlatRow}.
      */
     RowInProgress {
-      @Override
-      void handleLastScannedRowKey(ByteString lastScannedRowKey) {
-        throw new IllegalStateException("Encountered a lastScannedRowKey while processing a row.");
-      }
-
       @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
         if (newChunk.hasFamilyName()) {
@@ -158,7 +146,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
             newChunk);
         }
         ByteString newRowKey = newChunk.getRowKey();
-        if (isReset(newChunk)) {
+        if (newChunk.getResetRow()) {
           Preconditions.checkState(
             newRowKey.isEmpty() && !newChunk.hasFamilyName() && !newChunk.hasQualifier()
                 && newChunk.getValue().isEmpty() && newChunk.getTimestampMicros() == 0,
@@ -167,30 +155,25 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           Preconditions.checkState(
             newRowKey.isEmpty() || newRowKey.equals(rowInProgess.getRowKey()),
             "A commit is required between row keys: %s", newChunk);
-          rowInProgess.updateCurrentKey(newChunk);
-          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !isCommit(newChunk),
+          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !newChunk.getCommitRow(),
             "A row cannot be have a value size and be a commit row: %s", newChunk);
         }
       }
 
       @Override
-      void handleOnComplete(StreamObserver<Row> observer) {
+      void handleOnComplete(StreamObserver<FlatRow> observer) {
         observer.onError(new IllegalStateException("Got a partial row, but the stream ended"));
       }
     },
 
     /**
-     * A new {@link CellChunk} represents a portion of the value in a {@link Cell} in a {@link Row}.
+     * A new {@link CellChunk} represents a portion of the value in a {@link FlatRow.Cell} in a
+     * {@link FlatRow}.
      */
     CellInProgress {
       @Override
-      void handleLastScannedRowKey(ByteString lastScannedRowKey) {
-        throw new IllegalStateException("Encountered a lastScannedRowKey while processing a cell.");
-      }
-
-      @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
-        if(isReset(newChunk)) {
+        if(newChunk.getResetRow()) {
           Preconditions.checkState(newChunk.getRowKey().isEmpty() &&
             !newChunk.hasFamilyName() &&
             !newChunk.hasQualifier() &&
@@ -198,75 +181,21 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
             newChunk.getTimestampMicros() == 0,
               "A reset should have no data");
         } else {
-          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !isCommit(newChunk),
+          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !newChunk.getCommitRow(),
             "A row cannot be have a value size and be a commit row: %s", newChunk);
         }
       }
 
       @Override
-      void handleOnComplete(StreamObserver<Row> observer) {
+      void handleOnComplete(StreamObserver<FlatRow> observer) {
         observer.onError(new IllegalStateException("Got a partial row, but the stream ended"));
       }
     };
 
-    abstract void handleLastScannedRowKey(ByteString lastScannedRowKey);
-
     abstract void validateChunk(RowInProgress rowInProgess, ByteString previousKey,
         CellChunk newChunk) throws Exception;
 
-    abstract void handleOnComplete(StreamObserver<Row> observer);
-  }
-
-  private static class FamilyBuilderManager {
-    private final Map<CellKey, Column.Builder> columnBuilders = new TreeMap<>();
-
-    public void addCell(String family, ByteString qualifier, Cell cell) {
-      CellKey key = new CellKey(family, qualifier);
-      Column.Builder columnBuilder = columnBuilders.get(key);
-      if (columnBuilder == null) {
-        columnBuilder = Column.newBuilder().setQualifier(qualifier);
-        columnBuilders.put(key, columnBuilder);
-      }
-      columnBuilder.addCells(cell);
-    }
-
-    public Row.Builder addFamiliesTo(Row.Builder rowBuilder) {
-      CellKey previousKey = null;
-      Family.Builder currentFamilyBuilder = null;
-      for (Entry<CellKey, Column.Builder> entry : columnBuilders.entrySet()) {
-        CellKey currentKey = entry.getKey();
-        if (previousKey == null || !previousKey.family.equals(currentKey.family)) {
-          currentFamilyBuilder = rowBuilder.addFamiliesBuilder().setName(currentKey.family);
-        }
-        currentFamilyBuilder.addColumns(entry.getValue());
-        previousKey = currentKey;
-      }
-      return rowBuilder;
-    }
-  }
-
-  private static class CellKey implements Comparable<CellKey> {
-    final String family;
-    final ByteString qualifier;
-
-    CellKey(String family, ByteString qualifier) {
-      this.family = family;
-      this.qualifier = qualifier;
-    }
-
-    @Override
-    public int compareTo(CellKey o) {
-      int comp = family.compareTo(o.family);
-      if (comp != 0) {
-        return comp;
-      }
-      return qualifier.asReadOnlyByteBuffer().compareTo(o.qualifier.asReadOnlyByteBuffer());
-    }
-
-    @Override
-    public String toString() {
-      return MoreObjects.toStringHelper(this).add("family", family).add("qualifier", qualifier).toString();
-    }
+    abstract void handleOnComplete(StreamObserver<FlatRow> observer);
   }
 
   /**
@@ -275,200 +204,200 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    * in the first {@link CellChunk}, and family will be present only when a family changes.
    */
   private static class CellIdentifier {
-    final ByteString rowKey;
-    final String family;
-    final ByteString qualifier;
-    final long timestampMicros;
-    final List<String> labels;
+    String family;
+    ByteString qualifier;
+    long timestampMicros;
+    List<String> labels;
 
-    CellIdentifier(CellChunk chunk) {
-      this(chunk.getRowKey(), chunk);
+    private CellIdentifier(CellChunk chunk) {
+      updateForFamily(chunk);
     }
 
-    CellIdentifier(ByteString rowKey, CellChunk chunk) {
-      this(rowKey, chunk.getFamilyName().getValue(), chunk);
-    }
-
-    CellIdentifier(ByteString rowKey, String family, CellChunk chunk) {
-      this(rowKey, family, chunk.getQualifier().getValue(), chunk);
-    }
-
-    CellIdentifier(ByteString rowKey, String family, ByteString qualifier, CellChunk chunk) {
-      this(rowKey, family, qualifier,
-          chunk.getTimestampMicros(), chunk.getLabelsList());
-    }
-
-    CellIdentifier(ByteString rowKey, String family, ByteString qualifier, long timestampMicros,
-        List<String> labels) {
-      this.rowKey = rowKey;
-      this.family = family;
-      this.qualifier = qualifier;
-      this.timestampMicros = timestampMicros;
-      this.labels = labels;
-    }
-
-    CellIdentifier nextKeyForFamily(CellChunk chunk) {
-      return new CellIdentifier(rowKey, chunk);
-    }
-
-    CellIdentifier nextKeyForQualifier(CellChunk chunk) {
-      return new CellIdentifier(rowKey, family, chunk);
-    }
-
-    CellIdentifier nextKeyForTimestamp(CellChunk chunk) {
-      return new CellIdentifier(rowKey, family, qualifier, chunk);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
+    private void updateForFamily(CellChunk chunk) {
+      String chunkFamily = chunk.getFamilyName().getValue();
+      if (!chunkFamily.equals(family)) {
+        // Try to get a reference to the same object if there's equality.
+        this.family = chunkFamily;
       }
-      if (obj == null || !(obj instanceof CellIdentifier)) {
-        return false;
-      }
-      CellIdentifier other = (CellIdentifier) obj;
-      return Objects.equals(rowKey, other.rowKey)
-          && Objects.equals(family, other.family)
-          && Objects.equals(qualifier, other.qualifier)
-          && timestampMicros == other.timestampMicros
-          && Objects.equals(labels, other.labels);
+      updateForQualifier(chunk);
     }
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(rowKey, family, qualifier, timestampMicros, labels);
+    private void updateForQualifier(CellChunk chunk) {
+      this.qualifier = chunk.getQualifier().getValue();
+      updateForTimestamp(chunk);
+    }
+
+    private void updateForTimestamp(CellChunk chunk) {
+      this.timestampMicros = chunk.getTimestampMicros();
+      this.labels = chunk.getLabelsList();
     }
   }
 
   /**
-   * This 
+   * This class represents the data in the row that's currently being processed.
    */
   private static final class RowInProgress {
-    private final FamilyBuilderManager families = new FamilyBuilderManager();
+    private ByteString rowKey;
 
     // cell in progress info
     private CellIdentifier currentId;
-    private Cell.Builder cellBuilderInProgress;
     private ByteArrayOutputStream outputStream;
 
-    void addFullChunk(ReadRowsResponse.CellChunk chunk) {
+
+    private final Map<String, List<FlatRow.Cell>> cells = new TreeMap<>();
+    private List<FlatRow.Cell> currentFamilyRowCells = null;
+    private String currentFamily;
+    private FlatRow.Cell previousNoLabelCell;
+
+    private final void addFullChunk(ReadRowsResponse.CellChunk chunk) {
       Preconditions.checkState(!hasChunkInProgess());
-      addCell(
-          Cell.newBuilder()
-              .setTimestampMicros(chunk.getTimestampMicros())
-              .addAllLabels(chunk.getLabelsList())
-              .setValue(chunk.getValue())
-              .build());
+      addCell(chunk.getValue());
     }
 
-    public void completeMultiChunkCell() {
+    private final void completeMultiChunkCell() {
       Preconditions.checkArgument(hasChunkInProgess());
-      ByteString value = ByteStringer.wrap(outputStream.toByteArray());
-      addCell(cellBuilderInProgress.setValue(value).build());
+      addCell(ByteStringer.wrap(outputStream.toByteArray()));
       outputStream = null;
-      cellBuilderInProgress = null;
     }
 
-    private void addCell(Cell cell) {
-      families.addCell(currentId.family, currentId.qualifier, cell);
+    /**
+     * Adds a Cell to {@link #cells} map which is ordered by family. Cloud Bigtable returns values
+     * sorted by family (by internal id, not lexicographically), a lexicographically ascending
+     * ordering of qualifiers, and finally by timestamp descending. Each cell can appear more than
+     * once, if there are {@link Interleave}s in the {@link ReadRowsRequest#getFilter()}, but the
+     * duplicates will appear one after the other.
+     * <p>
+     * The end result will be that {@link #cells} will be lexicographically ordered by family, and
+     * the list of cells will be ordered by qualifier and timestamp. A flattened version of the
+     * {@link #cells} map will be sorted correctly.
+     */
+    private void addCell(ByteString value) {
+      if (!Objects.equal(currentFamily, currentId.family)) {
+        currentFamilyRowCells = new ArrayList<>();
+        currentFamily = currentId.family;
+        cells.put(currentId.family, currentFamilyRowCells);
+        previousNoLabelCell = null;
+      }
+
+      FlatRow.Cell cell = new FlatRow.Cell(currentId.family, currentId.qualifier,
+        currentId.timestampMicros, value, currentId.labels);
+      if (!currentId.labels.isEmpty()) {
+        currentFamilyRowCells.add(cell);
+      } else if (!isSameTimestampAndQualifier()) {
+        currentFamilyRowCells.add(cell);
+        previousNoLabelCell = cell;
+      } // else, this is a duplicate cell.
+    }
+
+    /**
+     * Checks to see if the current {@link FlatRow.Cell}'s qualifier and timestamp are equal to the
+     * previous {@link #previousNoLabelCell}'s. This method assumes that the family is the same
+     * and the {@link #previousNoLabelCell} is not null.
+     * @return true if the new cell and old cell have logical equivalency.
+     */
+    private boolean isSameTimestampAndQualifier() {
+      return previousNoLabelCell != null
+          && currentId.timestampMicros == previousNoLabelCell.getTimestamp()
+          && Objects.equal(previousNoLabelCell.getQualifier(), currentId.qualifier);
     }
 
     /**
      * update the current key with the new chunk info
      */
-    void updateCurrentKey(ReadRowsResponse.CellChunk chunk) {
-      if (currentId == null || isNewRowKey(chunk)) {
+    private final void updateCurrentKey(ReadRowsResponse.CellChunk chunk) {
+      ByteString newRowKey = chunk.getRowKey();
+      if (rowKey == null || (!newRowKey.isEmpty() && !newRowKey.equals(rowKey))) {
+        rowKey = newRowKey;
         currentId = new CellIdentifier(chunk);
+        currentFamily = null;
+        cells.clear();
+        currentFamilyRowCells = null;
       } else if (chunk.hasFamilyName()) {
-        currentId = currentId.nextKeyForFamily(chunk);
+        currentId.updateForFamily(chunk);
       } else if (chunk.hasQualifier()) {
-        currentId = currentId.nextKeyForQualifier(chunk);
+        currentId.updateForQualifier(chunk);
       } else {
-        currentId = currentId.nextKeyForTimestamp(chunk);
+        currentId.updateForTimestamp(chunk);
       }
     }
 
-    private boolean isNewRowKey(ReadRowsResponse.CellChunk chunk) {
-      ByteString rowKey = chunk.getRowKey();
-      return !rowKey.isEmpty() && !rowKey.equals(currentId.rowKey);
-    }
-
-    public boolean hasChunkInProgess() {
+    private boolean hasChunkInProgess() {
       return outputStream != null;
     }
 
-    void addPartialCellChunk(ReadRowsResponse.CellChunk chunk) throws IOException {
+    private void addPartialCellChunk(ReadRowsResponse.CellChunk chunk) throws IOException {
       if (outputStream == null) {
         outputStream = new ByteArrayOutputStream(chunk.getValueSize());
-        cellBuilderInProgress = Cell.newBuilder()
-            .setTimestampMicros(chunk.getTimestampMicros())
-            .addAllLabels(chunk.getLabelsList());
       }
       chunk.getValue().writeTo(outputStream);
     }
 
-    public Row createRow() {
-      Row.Builder rowBuilder = Row.newBuilder().setKey(getRowKey());
-      families.addFamiliesTo(rowBuilder);
-      return rowBuilder.build();
+    private ByteString getRowKey() {
+      return rowKey;
     }
 
-    public ByteString getRowKey() {
-      return currentId.rowKey;
+    private boolean hasRowKey() {
+      return rowKey != null;
+    }
+
+    private FlatRow buildRow() {
+      return new FlatRow(rowKey, flattenCells());
+    }
+
+    /**
+     * This method flattens the {@link #cells} which has a map of Lists keyed by family name.
+     * The {@link #cells} TreeMap is sorted lexicographically, and each List is sorted by
+     * qualifier in lexicographically ascending order, and timestamp in descending order.
+     *
+     * @return an array of HBase {@link FlatRow.Cell}s that is sorted by family asc, qualifier asc, timestamp desc.
+     */
+    private ImmutableList<FlatRow.Cell> flattenCells() {
+      ImmutableList.Builder<FlatRow.Cell> combined = ImmutableList.builder();
+      for (List<FlatRow.Cell> familyCellList : cells.values()) {
+        combined.addAll(familyCellList);
+      }
+      return combined.build();
     }
   }
 
-  private static boolean isCommit(CellChunk chunk) {
-    return chunk.getRowStatusCase() == RowStatusCase.COMMIT_ROW && chunk.getCommitRow();
-  }
-
-  private static boolean isReset(CellChunk chunk) {
-    return chunk.getRowStatusCase() == RowStatusCase.RESET_ROW && chunk.getResetRow();
-  }
-
-  private final StreamObserver<Row> observer;
+  private final StreamObserver<FlatRow> observer;
 
   private RowMergerState state = RowMergerState.NewRow;
-  private ByteString previousKey;
+  private ByteString lastCompletedRowKey = null;
   private RowInProgress rowInProgress;
   private boolean complete;
+  private int rowCountInLastMessage = -1;
 
   /**
    * <p>Constructor for RowMerger.</p>
    *
    * @param observer a {@link io.grpc.stub.StreamObserver} object.
    */
-  public RowMerger(StreamObserver<Row> observer) {
+  public RowMerger(StreamObserver<FlatRow> observer) {
     this.observer = observer;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void onNext(ReadRowsResponse readRowsResponse) {
+  public final void onNext(ReadRowsResponse readRowsResponse) {
     if (complete) {
       onError(new IllegalStateException("Adding partialRow after completion"));
       return;
     }
-    ByteString lastScannedRowKey = readRowsResponse.getLastScannedRowKey();
-    if (!lastScannedRowKey.isEmpty()) {
-      state.handleLastScannedRowKey(lastScannedRowKey);
-    }
-    for (ReadRowsResponse.CellChunk chunk : readRowsResponse.getChunksList()) {
+    rowCountInLastMessage = 0;
+    for (int i = 0; i < readRowsResponse.getChunksCount(); i++) {
       try {
-        state.validateChunk(rowInProgress, previousKey, chunk);
-      } catch(Exception e) {
-        onError(e);
-        return;
-      }
-      try {
-        if (isReset(chunk)) {
+        CellChunk chunk = readRowsResponse.getChunks(i);
+        state.validateChunk(rowInProgress, lastCompletedRowKey, chunk);
+        if (chunk.getResetRow()) {
           rowInProgress = null;
           state = RowMergerState.NewRow;
           continue;
         }
-        if (rowInProgress == null) {
+        if(state == RowMergerState.NewRow) {
           rowInProgress = new RowInProgress();
+          rowInProgress.updateCurrentKey(chunk);
+        } else if (state == RowMergerState.RowInProgress) {
           rowInProgress.updateCurrentKey(chunk);
         }
         if (chunk.getValueSize() > 0) {
@@ -483,17 +412,27 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           state = RowMergerState.RowInProgress;
         }
 
-        if (isCommit(chunk)) {
-          observer.onNext(rowInProgress.createRow());
-          previousKey = rowInProgress.getRowKey();
+        if (chunk.getCommitRow()) {
+          observer.onNext(rowInProgress.buildRow());
+          lastCompletedRowKey = rowInProgress.getRowKey();
           rowInProgress = null;
           state = RowMergerState.NewRow;
+          rowCountInLastMessage++;
         }
-      } catch(IOException e) {
+      } catch (Throwable e) {
         onError(e);
+        return;
       }
     }
   }
+
+  /**
+   * @return the number of rows processed in the previous call to {@link #onNext(ReadRowsResponse)}.
+   */
+  public int getRowCountInLastMessage() {
+    return rowCountInLastMessage;
+  }
+
 
   /** {@inheritDoc} */
   @Override
@@ -510,5 +449,9 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   @Override
   public void onCompleted() {
     state.handleOnComplete(observer);
+  }
+
+  public ByteString getLastCompletedRowKey() {
+    return lastCompletedRowKey;
   }
 }

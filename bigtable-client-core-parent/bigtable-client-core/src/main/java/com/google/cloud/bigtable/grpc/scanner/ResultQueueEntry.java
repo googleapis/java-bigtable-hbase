@@ -34,7 +34,8 @@ abstract class ResultQueueEntry<T> {
   public enum Type {
     Data,
     Exception,
-    CompletionMarker;
+    CompletionMarker,
+    RequestResultMarker;
   }
 
   /**
@@ -70,6 +71,17 @@ abstract class ResultQueueEntry<T> {
   @SuppressWarnings("unchecked")
   public static <T> ResultQueueEntry<T> completionMarker() {
     return COMPLETION_ENTRY;
+  }
+
+  /**
+   * <p>retrieveResultMarker.</p>
+   *
+   * @param <T> a T object.
+   * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
+   */
+  @SuppressWarnings("unchecked")
+  public static <T> ResultQueueEntry<T> requestResultMarker() {
+    return REQUEST_RESULT_ENTRY;
   }
 
   private static final class ExceptionResultQueueEntry<T> extends ResultQueueEntry<T> {
@@ -122,6 +134,23 @@ abstract class ResultQueueEntry<T> {
         public Object getResponseOrThrow() throws IOException {
           throw new IOException(
               "Attempt to interpret a result stream completion marker as a result");
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+          // toResultQueueEntry will return null if the type field is different between this and
+          // obj.
+          return toResultQueueEntryForEquals(obj) != null;
+        }
+      };
+
+  @SuppressWarnings("rawtypes")
+  private static final ResultQueueEntry REQUEST_RESULT_ENTRY =
+      new ResultQueueEntry(Type.RequestResultMarker) {
+        @Override
+        public Object getResponseOrThrow() throws IOException {
+          throw new IOException(
+              "Attempt to interpret a result marker as a result");
         }
 
         @Override

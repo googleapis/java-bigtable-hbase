@@ -17,8 +17,12 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
+import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
-
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -27,13 +31,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-
 /**
  * Tests for {@link PrefixFilterAdapter}
  */
 @RunWith(JUnit4.class)
 public class TestPrefixFilterAdapter {
+
   @Test
   public void testPrefixAddedAsRowRegex() throws IOException {
     PrefixFilterAdapter adapter = new PrefixFilterAdapter();
@@ -49,5 +52,24 @@ public class TestPrefixFilterAdapter {
                 ByteString.copyFrom(prefixRegex))
             .build(),
         adapter.adapt(context, filter));
+  }
+
+  @Test
+  public void testIndexIsNarrowed() {
+    PrefixFilterAdapter adapter = new PrefixFilterAdapter();
+    String prefix = "Foobar";
+    PrefixFilter filter = new PrefixFilter(Bytes.toBytes(prefix));
+
+    RangeSet<RowKeyWrapper> hint = adapter.getIndexScanHint(filter);
+
+    ImmutableRangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
+        .add(
+            Range.closedOpen(
+                new RowKeyWrapper(ByteString.copyFromUtf8("Foobar")),
+                new RowKeyWrapper(ByteString.copyFromUtf8("Foobas"))
+            ))
+        .build();
+
+    Assert.assertEquals(expected, hint);
   }
 }

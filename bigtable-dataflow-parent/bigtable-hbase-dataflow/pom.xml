@@ -16,62 +16,55 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-dataflow-parent</artifactId>
-        <version>0.9.4-SNAPSHOT</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-dataflow</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project contains artifacts that provide Cloud Bigtable client readers and writers in Google Cloud Dataflow.
+       NOTE: this artifact is deprecated.  Please use bigtable-hbase-beam instead.  This project contains artifacts that provide Cloud Bigtable client readers and writers in Google Cloud Dataflow.
     </description>
 
     <dependencies>
         <dependency>
             <groupId>com.google.cloud.dataflow</groupId>
             <artifactId>google-cloud-dataflow-java-sdk-all</artifactId>
-            <version>1.7.0</version>
+            <version>1.9.1</version>
         </dependency>
         <dependency>
-            <groupId>com.google.cloud.bigtable</groupId>
-            <artifactId>bigtable-hbase-shaded-for-dataflow</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bigtable-hbase-1.x-shaded</artifactId>
             <version>${project.version}</version>
+
             <exclusions>
+                <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+                pom.xml files when invoking the build from a parent project. So we have to manually exclude
+                the dependencies. Note that this works in conjunction with the manually promoted dependencies
+                in bigtable-hbase-1.x-shaded/pom.xml -->
                 <exclusion>
-                    <groupId>com.google.cloud.bigtable</groupId>
-                    <artifactId>bigtable-hbase-1.0</artifactId>
+                    <groupId>${project.groupId}</groupId>
+                    <artifactId>bigtable-hbase-1.x</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-common</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
-        </dependency>
-       <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <classifier>${os.detected.classifier}</classifier>
+            <version>2.6</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <profiles>
@@ -154,27 +147,6 @@ limitations under the License.
     </profiles>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <artifactSet>
-                                <includes>
-                                    <include>${project.groupId}:bigtable-hbase-shaded-for-dataflow</include>
-                                </includes>
-                            </artifactSet>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-eclipse-plugin</artifactId>

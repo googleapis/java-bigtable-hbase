@@ -15,23 +15,18 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.cloud.bigtable.util.ByteStringer;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Adapt between a {@link com.google.bigtable.v2.Row} and an hbase client {@link org.apache.hadoop.hbase.client.Result}.
@@ -40,11 +35,6 @@ import com.google.cloud.bigtable.util.ByteStringer;
  * @version $Id: $Id
  */
 public class RowAdapter implements ResponseAdapter<Row, Result> {
-  // This only works because BIGTABLE_TIMEUNIT is smaller than HBASE_TIMEUNIT, otherwise we will get
-  // 0.
-  static final long TIME_CONVERSION_UNIT = BigtableConstants.BIGTABLE_TIMEUNIT.convert(1,
-    BigtableConstants.HBASE_TIMEUNIT);
-
   /**
    * {@inheritDoc}
    *
@@ -75,7 +65,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
           // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
           // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
           // HBase will treat them as duplicates.
-          long hbaseTimestamp = cell.getTimestampMicros() / TIME_CONVERSION_UNIT;
+          long hbaseTimestamp = TimestampConverter.bigtable2hbase(cell.getTimestampMicros());
           RowCell keyValue = new RowCell(
               rowKey,
               familyNameBytes,
@@ -89,49 +79,5 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
     }
 
     return Result.create(hbaseCells.toArray(new org.apache.hadoop.hbase.Cell[hbaseCells.size()]));
-  }
-
-  /**
-   * Convert a {@link org.apache.hadoop.hbase.client.Result} to a {@link com.google.bigtable.v2.Row}.
-   *
-   * @param result a {@link org.apache.hadoop.hbase.client.Result} object.
-   * @return a {@link com.google.bigtable.v2.Row} object.
-   */
-  public Row adaptToRow(Result result) {
-    Row.Builder rowBuilder = Row.newBuilder();
-
-    // Result.getRow() is derived from its cells.  If the cells are empty, the row will be null.
-    if (result.getRow() != null) {
-      rowBuilder.setKey(ByteStringer.wrap(result.getRow()));
-    }
-
-    Map<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyMap = result.getMap();
-
-    // If there are no cells, the family map is null.
-    if (familyMap != null) {
-
-      // process all families
-      for (Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyEntry :
-           familyMap.entrySet()) {
-        Family.Builder familyBuilder =
-            rowBuilder.addFamiliesBuilder().setName(Bytes.toString(familyEntry.getKey()));
-
-        // process the columns in the family
-        for (Entry<byte[], NavigableMap<Long, byte[]>> columnEntry :
-            familyEntry.getValue().entrySet()) {
-          Column.Builder columnBuilder = familyBuilder.addColumnsBuilder()
-              .setQualifier(ByteStringer.wrap(columnEntry.getKey()));
-
-          // process the cells in the column
-          for (Entry<Long, byte[]> cellData : columnEntry.getValue().entrySet()) {
-            columnBuilder.addCellsBuilder()
-                .setTimestampMicros(cellData.getKey().longValue() * TIME_CONVERSION_UNIT)
-                .setValue(ByteStringer.wrap(cellData.getValue()));
-          }
-        }
-      }
-    }
-
-    return rowBuilder.build();
   }
 }

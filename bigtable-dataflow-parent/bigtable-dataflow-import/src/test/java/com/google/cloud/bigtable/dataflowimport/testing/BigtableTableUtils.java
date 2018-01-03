@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.dataflowimport.testing;
 
-import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.dataflowimport.HBaseImportOptions;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.dataflow.CloudBigtableOptions;
 import com.google.common.collect.Sets;
 
 import org.apache.hadoop.hbase.Cell;
@@ -47,8 +47,7 @@ public class BigtableTableUtils implements AutoCloseable {
   private final String[] columnFamilyNames;
 
   private BigtableTableUtils(
-      Connection connection, Admin admin, String tableName, String ...columnFamilyNames)
-      throws IOException {
+      Connection connection, Admin admin, String tableName, String ...columnFamilyNames) {
     this.connection = connection;
     this.admin = admin;
     this.tableName = TableName.valueOf(tableName);
@@ -77,6 +76,10 @@ public class BigtableTableUtils implements AutoCloseable {
    */
   public boolean isTableExists() throws IOException {
     return admin.tableExists(tableName);
+  }
+
+  public Connection getConnection() {
+    return connection;
   }
 
   /**
@@ -118,8 +121,7 @@ public class BigtableTableUtils implements AutoCloseable {
      * Creates a {@link BigtableTableUtils} instance that manages a table named {@code tableName}.
      * The {@code columnFamilies} parameter defines the column families in this table.
      */
-    public BigtableTableUtils createBigtableTableUtils(String tableName, String ...columnFamilies)
-        throws IOException {
+    public BigtableTableUtils createBigtableTableUtils(String tableName, String... columnFamilies) {
       return new BigtableTableUtils(connection, admin, tableName, columnFamilies);
     }
 
@@ -127,7 +129,7 @@ public class BigtableTableUtils implements AutoCloseable {
       this.connection.close();
     }
 
-    public static BigtableTableUtilsFactory from(HBaseImportOptions options) throws IOException {
+    public static BigtableTableUtilsFactory from(CloudBigtableOptions options) throws IOException {
       return new BigtableTableUtilsFactory(BigtableConfiguration.connect(
           options.getBigtableProjectId(),
           options.getBigtableInstanceId()));

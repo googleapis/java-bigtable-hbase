@@ -27,27 +27,62 @@ import java.util.regex.Pattern;
 public class BigtableClusterName {
   // Use a very loose pattern so we don't validate more strictly than the server.
   private static final Pattern PATTERN =
-      Pattern.compile("projects/.*/instances/(.*)/clusters/.*");
+      Pattern.compile("projects/[^/]+/instances/([^/]+)/clusters/([^/]+)");
 
   private final String clusterName;
   private final String instanceId;
+  private final String clusterId;
 
   public BigtableClusterName(String clusterName) {
     this.clusterName = clusterName;
     Matcher matcher = PATTERN.matcher(clusterName);
     Preconditions.checkArgument(matcher.matches(), "Malformed cluster name");
     this.instanceId = matcher.group(1);
+    this.clusterId = matcher.group(2);
   }
 
+  /**
+   * @return the fully qualified cluster name. This method returns the same result as
+   *         {@link #getClusterName()}.
+   */
   @Override
   public String toString() {
     return clusterName;
   }
 
   /**
-   * @return The id of the instance that contains this cluster.
+   * @return The id of the instance that contains this cluster. It's the second group in the Cluster
+   *         name: "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
    */
   public String getInstanceId() {
     return instanceId;
+  }
+
+  /**
+   * @return The name of this cluster. It will look like the following
+   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
+   */
+  public String getClusterName() {
+    return clusterName;
+  }
+
+  /**
+   * @return The id of this cluster. It's the third group in the Cluster name:
+   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
+   */
+  public String getClusterId() {
+    return clusterId;
+  }
+
+  /**
+   * Create a fully qualified snapshot name based on the the clusterName and the snapshotId.
+   * Snapshot name will look like:
+   * "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
+   * @param snapshotId The id of the snapshot
+   * @return A fully qualified snapshot name that contains the fully qualified cluster name as the
+   *         parent and the snapshot name as the child.
+   */
+  public String toSnapshotName(String snapshotId) {
+    return clusterName + "/snapshots/" + snapshotId;
   }
 }

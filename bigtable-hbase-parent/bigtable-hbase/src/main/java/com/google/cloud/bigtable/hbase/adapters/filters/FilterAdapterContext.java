@@ -20,6 +20,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
@@ -154,5 +156,13 @@ public class FilterAdapterContext {
    */
   public int getNumberOfWhileMatchFilters() {
     return whileMatchFilters.size();
+  }
+
+  /**
+   * Get th current stack of nested FilterLists. This used by filters to check for unsupported scan configurations.
+   * @return an unmodifiable collection of current nested FilterLists
+   */
+  Collection<FilterList> getCurrentFilterLists() {
+    return Collections.unmodifiableCollection(filterListStack);
   }
 }

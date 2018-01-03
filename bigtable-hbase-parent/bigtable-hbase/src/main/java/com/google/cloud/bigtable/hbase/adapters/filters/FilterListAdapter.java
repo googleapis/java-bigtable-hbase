@@ -19,15 +19,18 @@ import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
-
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.FilterList.Operator;
-
+import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
+import com.google.common.collect.TreeRangeSet;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 
 /**
  * Adapts a FilterList into either a RowFilter with chaining or interleaving.
@@ -36,7 +39,8 @@ import java.util.List;
  * @version $Id: $Id
  */
 public class FilterListAdapter
-    implements TypedFilterAdapter<FilterList>, UnsupportedStatusCollector<FilterList> {
+    extends TypedFilterAdapterBase<FilterList> implements UnsupportedStatusCollector<FilterList> {
+
   private final FilterAdapter subFilterAdapter;
 
   /**
@@ -48,7 +52,9 @@ public class FilterListAdapter
     this.subFilterAdapter = subFilterAdapter;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public RowFilter adapt(FilterAdapterContext context, FilterList filter) throws IOException {
     try (ContextCloseable ignored = context.beginFilterList(filter)) {
@@ -57,7 +63,7 @@ public class FilterListAdapter
         return null;
       } else if (childFilters.size() == 1) {
         return childFilters.get(0);
-      } else  if (filter.getOperator() == Operator.MUST_PASS_ALL) {
+      } else if (filter.getOperator() == Operator.MUST_PASS_ALL) {
         return RowFilter.newBuilder()
             .setChain(Chain.newBuilder().addAllFilters(childFilters))
             .build();
@@ -82,7 +88,9 @@ public class FilterListAdapter
     return result;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context,
@@ -98,7 +106,9 @@ public class FilterListAdapter
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void collectUnsupportedStatuses(
       FilterAdapterContext context,
@@ -107,5 +117,62 @@ public class FilterListAdapter
     for (Filter subFilter : filter.getFilters()) {
       subFilterAdapter.collectUnsupportedStatuses(context, subFilter, unsupportedStatuses);
     }
+  }
+
+  @Override
+  public RangeSet<RowKeyWrapper> getIndexScanHint(FilterList filter) {
+    final List<RangeSet<RowKeyWrapper>> childHints = collectChildHints(filter);
+
+    if (childHints.isEmpty()) {
+      return ImmutableRangeSet.of(Range.<RowKeyWrapper>all());
+    }
+    // Optimization
+    else if (childHints.size() == 1) {
+      return childHints.get(0);
+    }
+
+    TreeRangeSet<RowKeyWrapper> result = TreeRangeSet.create(childHints.get(0));
+
+    switch (filter.getOperator()) {
+      case MUST_PASS_ONE:
+        // Union all
+        for (int i = 1; i < childHints.size(); i++) {
+          result.addAll(childHints.get(i));
+        }
+        break;
+      case MUST_PASS_ALL:
+        // Intersect all
+        for (int i = 1; i < childHints.size(); i++) {
+          result.removeAll(childHints.get(i).complement());
+        }
+        break;
+      default:
+        throw new IllegalStateException("Unknown operator: " + filter.getOperator());
+    }
+    // Wrap in an ImmutableRangeSet to keep the singleton RangeSet.all()
+    return ImmutableRangeSet.copyOf(result);
+  }
+
+  private List<RangeSet<RowKeyWrapper>> collectChildHints(FilterList filter) {
+    List<Filter> subFilters = filter.getFilters();
+
+    List<RangeSet<RowKeyWrapper>> hints = new ArrayList<>(subFilters.size());
+    RangeSet<RowKeyWrapper> last = null;
+
+    for (Filter subFilter : subFilters) {
+      SingleFilterAdapter<?> subAdapter = subFilterAdapter.getAdapterForFilterOrThrow(subFilter);
+      RangeSet<RowKeyWrapper> subRangeSet = subAdapter.getIndexScanHint(subFilter);
+
+      // Simple optimization to cover the case where no filters provide hints. ImmutableRangeSet use
+      // a singleton to represent the universe (Range that contains all of the elements).
+      // Since intersection & union with the universe is a no-op, we safely dedupe all of the
+      // consecutive universes.
+      if (last != subRangeSet) {
+        hints.add(subRangeSet);
+        last = subRangeSet;
+      }
+    }
+
+    return hints;
   }
 }

@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -41,25 +42,27 @@ public class BigtableOptions implements Serializable {
   /** Constant <code>BIGTABLE_EMULATOR_HOST_ENV_VAR="bigtableadmin.googleapis.com"</code> */
   public static final String BIGTABLE_EMULATOR_HOST_ENV_VAR = "BIGTABLE_EMULATOR_HOST";
 
-  /** Constant <code>BIGTABLE_TABLE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
-  public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
-      "bigtableadmin.googleapis.com";
-  /** Constant <code>BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
-  public static final String BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT =
+  /** Constant <code>BIGTABLE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
+  public static final String BIGTABLE_ADMIN_HOST_DEFAULT =
       "bigtableadmin.googleapis.com";
   /** Constant <code>BIGTABLE_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
+  /** Constant <code>BIGTABLE_BATCH_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
+  public static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
   /** Constant <code>BIGTABLE_PORT_DEFAULT=443</code> */
   public static final int BIGTABLE_PORT_DEFAULT = 443;
 
   /** Constant <code>BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT=getDefaultDataChannelCount()</code> */
   public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = getDefaultDataChannelCount();
 
+  /** Constant <code>BIGTABLE_APP_PROFILE_DEFAULT=""</code>, defaults to the server default app profile */
+  public static final String BIGTABLE_APP_PROFILE_DEFAULT = "";
+
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
   private static int getDefaultDataChannelCount() {
-    // 10 Channels seemed to work well on a 4 CPU machine, and this seems to scale well for higher
-    // CPU machines. Use no more than 250 Channels by default.
+    // 20 Channels seemed to work well on a 4 CPU machine, and this ratio seems to scale well for
+    // higher CPU machines. Use no more than 250 Channels by default.
     int availableProcessors = Runtime.getRuntime().availableProcessors();
     return (int) Math.min(250, Math.max(1, Math.ceil(availableProcessors * 2.5d)));
   }
@@ -73,21 +76,18 @@ public class BigtableOptions implements Serializable {
     private String userAgent;
 
     private String instanceId;
-
-    // Legacy v1 options
-    private String zoneId;
-    private String clusterId;
+    private String appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
 
     // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
     private String dataHost = BIGTABLE_DATA_HOST_DEFAULT;
-    private String tableAdminHost = BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
-    private String instanceAdminHost = BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
+    private String adminHost = BIGTABLE_ADMIN_HOST_DEFAULT;
     private int port = BIGTABLE_PORT_DEFAULT;
 
     private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
 
     private BulkOptions bulkOptions;
     private boolean usePlaintextNegotiation = false;
+    private boolean useCachedDataPool = false;
 
     private RetryOptions retryOptions = new RetryOptions.Builder().build();
     private CallOptionsConfig callOptionsConfig = new CallOptionsConfig.Builder().build();
@@ -102,12 +102,10 @@ public class BigtableOptions implements Serializable {
     private Builder(BigtableOptions original) {
       this.projectId = original.projectId;
       this.instanceId = original.instanceId;
+      this.appProfileId = original.appProfileId;
       this.userAgent = original.userAgent;
-      this.clusterId = original.clusterId;
-      this.zoneId = original.zoneId;
       this.dataHost = original.dataHost;
-      this.tableAdminHost = original.tableAdminHost;
-      this.instanceAdminHost = original.instanceAdminHost;
+      this.adminHost = original.adminHost;
       this.port = original.port;
       this.credentialOptions = original.credentialOptions;
       this.retryOptions = original.retryOptions;
@@ -117,13 +115,8 @@ public class BigtableOptions implements Serializable {
       this.callOptionsConfig = original.callOptionsConfig;
     }
 
-    public Builder setTableAdminHost(String tableAdminHost) {
-      this.tableAdminHost = tableAdminHost;
-      return this;
-    }
-
-    public Builder setInstanceAdminHost(String instanceAdminHost) {
-      this.instanceAdminHost = instanceAdminHost;
+    public Builder setAdminHost(String adminHost) {
+      this.adminHost = adminHost;
       return this;
     }
 
@@ -147,6 +140,12 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
+    public Builder setAppProfileId(String appProfileId) {
+      Preconditions.checkNotNull(appProfileId);
+      this.appProfileId = appProfileId;
+      return this;
+    }
+
     public Builder setCredentialOptions(CredentialOptions credentialOptions) {
       this.credentialOptions = credentialOptions;
       return this;
@@ -154,16 +153,6 @@ public class BigtableOptions implements Serializable {
 
     public Builder setUserAgent(String userAgent) {
       this.userAgent = userAgent;
-      return this;
-    }
-
-    public Builder setClusterId(String clusterId) {
-      this.clusterId = clusterId;
-      return this;
-    }
-
-    public Builder setZoneId(String zoneId) {
-      this.zoneId = zoneId;
       return this;
     }
 
@@ -188,6 +177,18 @@ public class BigtableOptions implements Serializable {
 
     public Builder setUsePlaintextNegotiation(boolean usePlaintextNegotiation) {
       this.usePlaintextNegotiation = usePlaintextNegotiation;
+      return this;
+    }
+
+    /**
+     * This enables an experimental {@link BigtableSession} feature that caches datapools for cases
+     * where there are many HBase Connections / BigtableSessions opened. This happens frequently in
+     * Dataflow
+     * @param useCachedDataPool
+     * @return this
+     */
+    public Builder setUseCachedDataPool(boolean useCachedDataPool) {
+      this.useCachedDataPool = useCachedDataPool;
       return this;
     }
 
@@ -221,8 +222,7 @@ public class BigtableOptions implements Serializable {
       setUsePlaintextNegotiation(true);
       setCredentialOptions(CredentialOptions.nullCredential());
       setDataHost(hostPort[0]);
-      setTableAdminHost(hostPort[0]);
-      setInstanceAdminHost(hostPort[0]);
+      setAdminHost(hostPort[0]);
       setPort(port);
 
       LOG.info("Connecting to the Bigtable emulator at " + emulatorHost);
@@ -240,16 +240,15 @@ public class BigtableOptions implements Serializable {
       }
       applyEmulatorEnvironment();
       return new BigtableOptions(
-          instanceAdminHost,
-          tableAdminHost,
+          adminHost,
           dataHost,
           port,
           projectId,
           instanceId,
+          appProfileId,
           userAgent,
-          zoneId,
-          clusterId,
           usePlaintextNegotiation,
+          useCachedDataPool,
           dataChannelCount,
           bulkOptions,
           callOptionsConfig,
@@ -258,17 +257,16 @@ public class BigtableOptions implements Serializable {
     }
   }
 
-  private final String instanceAdminHost;
-  private final String tableAdminHost;
+  private final String adminHost;
   private final String dataHost;
   private final int port;
   private final String projectId;
   private final String instanceId;
+  private final String appProfileId;
   private final String userAgent;
-  private final String zoneId;
-  private final String clusterId;
   private final int dataChannelCount;
   private final boolean usePlaintextNegotiation;
+  private final boolean useCachedDataPool;
 
   private final BigtableInstanceName instanceName;
 
@@ -279,18 +277,17 @@ public class BigtableOptions implements Serializable {
 
   @VisibleForTesting
   BigtableOptions() {
-      instanceAdminHost = null;
-      tableAdminHost = null;
+      adminHost = null;
       dataHost = null;
       port = 0;
       projectId = null;
       instanceId = null;
+      appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
       userAgent = null;
-      clusterId = null;
-      zoneId = null;
       dataChannelCount = 1;
       instanceName = null;
       usePlaintextNegotiation = false;
+      useCachedDataPool = false;
 
       bulkOptions = null;
       callOptionsConfig = null;
@@ -299,39 +296,35 @@ public class BigtableOptions implements Serializable {
   }
 
   private BigtableOptions(
-      String instanceAdminHost,
-      String tableAdminHost,
+      String adminHost,
       String dataHost,
       int port,
       String projectId,
       String instanceId,
+      String appProfileId,
       String userAgent,
-      String zoneId,
-      String clusterId,
       boolean usePlaintextNegotiation,
+      boolean useCachedChannel,
       int channelCount,
       BulkOptions bulkOptions,
       CallOptionsConfig callOptionsConfig,
       CredentialOptions credentialOptions,
       RetryOptions retryOptions) {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
-    Preconditions.checkArgument((Strings.isNullOrEmpty(clusterId)) == (Strings.isNullOrEmpty(zoneId)),
-        "clusterId and zoneId must be specified as a pair.");
 
-    this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
-    this.instanceAdminHost = Preconditions.checkNotNull(instanceAdminHost);
+    this.adminHost = Preconditions.checkNotNull(adminHost);
     this.dataHost = Preconditions.checkNotNull(dataHost);
     this.port = port;
     this.projectId = projectId;
     this.instanceId = instanceId;
+    this.appProfileId = appProfileId;
     this.credentialOptions = credentialOptions;
     this.userAgent = userAgent;
-    this.zoneId = zoneId;
-    this.clusterId = clusterId;
     this.retryOptions = retryOptions;
     this.dataChannelCount = channelCount;
     this.bulkOptions = bulkOptions;
     this.usePlaintextNegotiation = usePlaintextNegotiation;
+    this.useCachedDataPool = useCachedChannel;
     this.callOptionsConfig = callOptionsConfig;
 
     if (!Strings.isNullOrEmpty(projectId)
@@ -342,17 +335,11 @@ public class BigtableOptions implements Serializable {
     }
 
     LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
-        + "table admin host %s, cluster admin host %s.",
+        + "admin host %s.",
         projectId,
         instanceId,
         dataHost,
-        tableAdminHost,
-        instanceAdminHost);
-
-    if (!Strings.isNullOrEmpty(zoneId) || !Strings.isNullOrEmpty(clusterId)) {
-      LOG.debug("Using legacy connection configuration: zoneId: %s, clusterId: %s.",
-          zoneId, clusterId);
-    }
+        adminHost);
   }
 
   /**
@@ -378,17 +365,8 @@ public class BigtableOptions implements Serializable {
    *
    * @return a {@link java.lang.String} object.
    */
-  public String getTableAdminHost() {
-    return tableAdminHost;
-  }
-
-  /**
-   * <p>Getter for the field <code>instanceAdminHost</code>.</p>
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  public String getInstanceAdminHost() {
-    return instanceAdminHost;
+  public String getAdminHost() {
+    return adminHost;
   }
 
   /**
@@ -401,21 +379,12 @@ public class BigtableOptions implements Serializable {
   }
 
   /**
-   * <p>Getter for the field <code>zoneId</code>.</p>
+   * <p>Getter for the field <code>appProfileId</code>.</p>
    *
    * @return a {@link java.lang.String} object.
    */
-  public String getZoneId() {
-    return zoneId;
-  }
-
-  /**
-   * <p>Getter for the field <code>clusterId</code>.</p>
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  public String getClusterId() {
-    return clusterId;
+  public String getAppProfileId() {
+    return appProfileId;
   }
 
   /**
@@ -513,14 +482,12 @@ public class BigtableOptions implements Serializable {
     return (port == other.port)
         && (dataChannelCount == other.dataChannelCount)
         && (usePlaintextNegotiation == other.usePlaintextNegotiation)
-        && Objects.equals(instanceAdminHost, other.instanceAdminHost)
-        && Objects.equals(tableAdminHost, other.tableAdminHost)
+        && Objects.equals(adminHost, other.adminHost)
         && Objects.equals(dataHost, other.dataHost)
         && Objects.equals(projectId, other.projectId)
         && Objects.equals(instanceId, other.instanceId)
+        && Objects.equals(appProfileId, other.appProfileId)
         && Objects.equals(userAgent, other.userAgent)
-        && Objects.equals(zoneId, other.zoneId)
-        && Objects.equals(clusterId, other.clusterId)
         && Objects.equals(credentialOptions, other.credentialOptions)
         && Objects.equals(retryOptions, other.retryOptions)
         && Objects.equals(bulkOptions, other.bulkOptions)
@@ -533,13 +500,11 @@ public class BigtableOptions implements Serializable {
     return MoreObjects.toStringHelper(this)
         .omitNullValues()
         .add("dataHost", dataHost)
-        .add("tableAdminHost", tableAdminHost)
-        .add("instanceAdminHost", instanceAdminHost)
+        .add("adminHost", adminHost)
         .add("projectId", projectId)
         .add("instanceId", instanceId)
+        .add("appProfileId", appProfileId)
         .add("userAgent", userAgent)
-        .add("zoneId", zoneId)
-        .add("clusterId", clusterId)
         .add("credentialType", credentialOptions.getCredentialType())
         .add("port", port)
         .add("dataChannelCount", dataChannelCount)
@@ -557,5 +522,14 @@ public class BigtableOptions implements Serializable {
    */
   public Builder toBuilder() {
     return new Builder(this);
+  }
+
+  /**
+   * Experimental feature to allow situations with multiple connections to optimize their startup
+   * time.
+   * @return true if this feature should be turned on in {@link BigtableSession}.
+   */
+  public boolean useCachedChannel() {
+    return useCachedDataPool;
   }
 }

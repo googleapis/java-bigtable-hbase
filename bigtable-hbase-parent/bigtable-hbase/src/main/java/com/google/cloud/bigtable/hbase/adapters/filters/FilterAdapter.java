@@ -16,14 +16,18 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
+import com.google.common.collect.RangeSet;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
+import org.apache.hadoop.hbase.filter.FamilyFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
@@ -71,6 +75,8 @@ public class FilterAdapter {
         MultipleColumnPrefixFilter.class, new MultipleColumnPrefixFilterAdapter());
     adapter.addFilterAdapter(
         TimestampsFilter.class, new TimestampsFilterAdapter());
+    adapter.addFilterAdapter(
+      TimestampRangeFilter.class, new TimestampRangeFilterAdapter());
     ValueFilterAdapter valueFilterAdapter = new ValueFilterAdapter();
     adapter.addFilterAdapter(
         ValueFilter.class, valueFilterAdapter);
@@ -100,6 +106,16 @@ public class FilterAdapter {
     adapter.addFilterAdapter(
         org.apache.hadoop.hbase.filter.RowFilter.class, new RowFilterAdapter());
     adapter.addFilterAdapter(FuzzyRowFilter.class, new FuzzyRowFilterAdapter());
+    adapter.addFilterAdapter(FamilyFilter.class, new FamilyFilterAdapter());
+
+    // MultiRowRangeFilter only exists in hbase >= 1.1
+    try {
+      adapter.addFilterAdapter(
+          org.apache.hadoop.hbase.filter.MultiRowRangeFilter.class,
+          new MultiRowRangeFilterAdapter()
+      );
+    } catch (NoClassDefFoundError ignored) {
+    }
 
     // Passing the FilterAdapter in to the FilterListAdapter is a bit
     // unfortunate, but makes adapting the FilterList's subfilters simpler.
@@ -185,6 +201,10 @@ public class FilterAdapter {
     } else {
       adapter.collectUnsupportedStatuses(context, filter, statuses);
     }
+  }
+
+  public RangeSet<RowKeyWrapper> getIndexScanHint(Filter filter) {
+    return getAdapterForFilterOrThrow(filter).getIndexScanHint(filter);
   }
 
   /**

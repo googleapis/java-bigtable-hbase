@@ -19,13 +19,11 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.google.bigtable.v2.Cell;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
+import java.util.Arrays;
+
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
-import com.google.bigtable.v2.Row;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.StringValue;
@@ -39,13 +37,11 @@ import org.mockito.MockitoAnnotations;
 
 import io.grpc.stub.StreamObserver;
 
-import java.util.Arrays;
-
 @RunWith(JUnit4.class)
 public class RowMergerTest {
 
   @Mock
-  StreamObserver<Row> observer;
+  StreamObserver<FlatRow> observer;
 
   @Before
   public void setup() {
@@ -66,23 +62,31 @@ public class RowMergerTest {
   @Test
   public void testThreeCellRow() {
     CellChunk cellChunk1 = createCell("row_key1", "family", "qualifier", "value", 1, false);
-    CellChunk cellChunk2 = createCell(null, null, "qualifier2", "value2", 1, false);
-    CellChunk cellChunk3 = createCell(null, null, null, "value3", 2, true);
+    CellChunk cellChunk2 = createCell(null, null, "qualifier2", "value2", 2, false);
+    CellChunk cellChunk3 = createCell(null, null, null, "value3", 1, true);
     RowMerger underTest = new RowMerger(observer);
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk3).build());
 
-    Row expected =
-        Row.newBuilder()
-            .setKey(cellChunk1.getRowKey())
-            .addFamilies(
-                Family.newBuilder()
-                    .setName(cellChunk1.getFamilyName().getValue())
-                    .addColumns(toColumn(cellChunk1.getQualifier(), toCell(cellChunk1)))
-                    .addColumns(
-                        toColumn(cellChunk2.getQualifier(), 
-                          toCell(cellChunk2), toCell(cellChunk3))))
+    FlatRow expected =
+        FlatRow.newBuilder()
+            .withRowKey(cellChunk1.getRowKey())
+            .addCell(
+                  cellChunk1.getFamilyName().getValue(),
+                  cellChunk1.getQualifier().getValue(),
+                  cellChunk1.getTimestampMicros(),
+                  cellChunk1.getValue())
+            .addCell(
+                  cellChunk1.getFamilyName().getValue(),
+                  cellChunk2.getQualifier().getValue(),
+                  cellChunk2.getTimestampMicros(),
+                  cellChunk2.getValue())
+            .addCell(
+                  cellChunk1.getFamilyName().getValue(),
+                  cellChunk2.getQualifier().getValue(),
+                  cellChunk3.getTimestampMicros(),
+                  cellChunk3.getValue())
             .build();
     verify(observer, times(1)).onNext(eq(expected));
   }
@@ -98,21 +102,16 @@ public class RowMergerTest {
     RowMerger underTest = new RowMerger(observer);
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
-    
+
     ByteString value = ByteString.copyFrom("value".getBytes());
-    Row row =
-        Row.newBuilder()
-            .setKey(cellChunk1.getRowKey())
-            .addFamilies(
-                Family.newBuilder()
-                    .setName(cellChunk1.getFamilyName().getValue())
-                    .addColumns(
-                        toColumn(
-                            cellChunk1.getQualifier(),
-                            Cell.newBuilder()
-                                .setTimestampMicros(cellChunk1.getTimestampMicros())
-                                .setValue(value)
-                                .build())))
+    FlatRow row =
+        FlatRow.newBuilder()
+            .withRowKey(cellChunk1.getRowKey())
+            .addCell(
+                  cellChunk1.getFamilyName().getValue(),
+                  cellChunk1.getQualifier().getValue(),
+                  cellChunk1.getTimestampMicros(),
+                  value)
             .build();
     verify(observer, times(1)).onNext(eq(row));
   }
@@ -130,8 +129,70 @@ public class RowMergerTest {
     verify(observer, times(1)).onNext(eq(toRow(cellChunk2)));
   }
 
+
+  @Test
+  public void testVariousConditions() {
+    RowMerger underTest = new RowMerger(observer);
+
+    String rowKey = "row_key1";
+    String family1 = "family1";
+    String family2 = "family2";
+    String qualifier1 = "qualifier1";
+    String qualifier2 = "qualifier2";
+    String value1 = "value1";
+    String value2 = "value2";
+    String value3 = "value3";
+    String value4 = "value4";
+    String value5 = "value5";
+
+    ByteString rowKeyByteString = toByteString(rowKey);
+    ByteString qualifier1ByteString = toByteString(qualifier1);
+    ByteString qualifier2ByteString = toByteString(qualifier2);
+    ByteString value1ByteString = toByteString(value1);
+    ByteString value2ByteString = toByteString(value2);
+    ByteString value3ByteString = toByteString(value3);
+    ByteString value4ByteString = toByteString(value4);
+    ByteString value5ByteString = toByteString(value5);
+
+    final long ts1 = 54321L;
+    final long ts2 = 12345L;
+
+    final String label = "label";
+
+    // TODO: For now, all values in the response should be translated. There should be some deduping soon.
+    underTest.onNext(ReadRowsResponse.newBuilder()
+        .addAllChunks(Arrays.asList(
+          // First cell.
+          createCell(rowKey, family1, qualifier1, value1, ts1, false),
+          // Duplicate cell.
+          createCell(rowKey, family1, qualifier1, value1, ts1, false),
+          // Same family, same column, but different timestamps.
+          createCell(rowKey, family1, qualifier1, value2, ts2, false),
+          // With label
+          createCell(rowKey, family1, qualifier1, value2, ts2, false, label),
+          // Same family, same timestamp, but different column.
+          createCell(rowKey, family1, qualifier2, value3, ts1, false),
+          // Same column, same timestamp, but different family.
+          createCell(rowKey, family2, qualifier1, value4, ts1, false),
+          // Same timestamp, but different family qualifier2 column.
+          createCell(rowKey, family2, qualifier2, value5, ts1, true)))
+        .build());
+
+    verify(observer, times(1)).onNext(eq(FlatRow.newBuilder().withRowKey(rowKeyByteString)
+        .addCell(family1, qualifier1ByteString, ts1, value1ByteString)
+        .addCell(family1, qualifier1ByteString, ts2, value2ByteString)
+        .addCell(family1, qualifier1ByteString, ts2, value2ByteString, Arrays.asList(label))
+        .addCell(family1, qualifier2ByteString, ts1, value3ByteString)
+        .addCell(family2, qualifier1ByteString, ts1, value4ByteString)
+        .addCell(family2, qualifier2ByteString, ts1, value5ByteString).build()));
+  }
+
+  protected static ByteString toByteString(String str) {
+    return ByteString.copyFrom(str.getBytes());
+  }
+
   private static CellChunk createCell(String key, String family, String qualifier,
-      String value, long timestampMicros, boolean isCommit) {
+      String value, long timestampMicros, boolean isCommit, String ... labels) {
     CellChunk.Builder cellChunk = CellChunk.newBuilder();
     if (key != null) {
       cellChunk.setRowKey(ByteString.copyFrom(key.getBytes()));
@@ -148,32 +209,19 @@ public class RowMergerTest {
     if (isCommit) {
       cellChunk.setCommitRow(true);
     }
+    cellChunk.addAllLabels(Arrays.asList(labels));
     return cellChunk.build();
   }
 
-  private static Row toRow(CellChunk... cellChunks) {
-    Row.Builder rowBuilder = Row.newBuilder().setKey(cellChunks[0].getRowKey());
+  private static FlatRow toRow(CellChunk... cellChunks) {
+    FlatRow.Builder rowBuilder = FlatRow.newBuilder().withRowKey(cellChunks[0].getRowKey());
     for (CellChunk chunk : cellChunks) {
-      rowBuilder
-          .addFamilies(
-              Family.newBuilder()
-                  .setName(chunk.getFamilyName().getValue())
-                  .addColumns(toColumn(chunk.getQualifier(), toCell(chunk))))
-          .build();
+      rowBuilder.addCell(
+          chunk.getFamilyName().getValue(),
+          chunk.getQualifier().getValue(),
+          chunk.getTimestampMicros(),
+          chunk.getValue());
     }
     return rowBuilder.build();
-  }
-
-  protected static Column.Builder toColumn(BytesValue bytesValue, Cell... cells) {
-    return Column.newBuilder()
-        .setQualifier(bytesValue.getValue())
-        .addAllCells(Arrays.asList(cells));
-  }
-
-  private static Cell toCell(CellChunk chunk) {
-    return Cell.newBuilder()
-        .setTimestampMicros(chunk.getTimestampMicros())
-        .setValue(chunk.getValue())
-        .build();
   }
 }

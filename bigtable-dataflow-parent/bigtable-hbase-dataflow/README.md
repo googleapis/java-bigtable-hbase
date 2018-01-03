@@ -1,5 +1,7 @@
 # Cloud Bigtable + Cloud Dataflow
 
+NOTE: This project is deprecated.  Plesae use the [Cloud Bigtable + Beam](https://github.com/GoogleCloudPlatform/cloud-bigtable-client/tree/master/bigtable-dataflow-parent/bigtable-hbase-beam) connector instead.
+
 This project integrates Cloud Bigtable with Cloud Dataflow using the HBase API.
 
 See the [Cloud Bigtable Dataflow Examples Project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/tree/master/java/dataflow-connector-examples) for more information about how to use Dataflow and run the examples.
@@ -44,7 +46,7 @@ public static void main(String[] args) {
 
 ## Reading
 
-A [Source](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/io/Source) is a Dataflow construct that can read data for use as part of a Pipeline.  The Bigtable Source is not fully optimized for use in Dataflow, but is (or at least should be) functional for your use.  It will be improved when issue #400 is resolved.
+A [Source](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/io/Source) is a Dataflow construct that can read data for use as part of a Pipeline.
 
 Here's an example that uses the [Source to count the rows](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/blob/master/java/dataflow-connector-examples/src/main/java/com/google/cloud/bigtable/dataflow/example/SourceRowCount.java) of a Table:
 

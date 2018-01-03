@@ -29,10 +29,12 @@ import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
-import com.google.common.collect.ImmutableList;
+import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ServiceException;
+
+import io.grpc.stub.StreamObserver;
 
 /**
  * Interface to access v2 Bigtable data service methods.
@@ -47,9 +49,8 @@ public interface BigtableDataClient {
    *
    * @param request a {@link com.google.bigtable.v2.MutateRowRequest} object.
    * @return a {@link com.google.bigtable.v2.MutateRowResponse} object.
-   * @throws com.google.protobuf.ServiceException if any.
    */
-  MutateRowResponse mutateRow(MutateRowRequest request) throws ServiceException;
+  MutateRowResponse mutateRow(MutateRowRequest request);
 
   /**
    * Mutate a row atomically.
@@ -66,9 +67,8 @@ public interface BigtableDataClient {
    *
    * @param request a {@link com.google.bigtable.v2.MutateRowsRequest} object.
    * @return a {@link java.util.List} object.
-   * @throws com.google.protobuf.ServiceException if any.
    */
-  List<MutateRowsResponse> mutateRows(MutateRowsRequest request) throws ServiceException;
+  List<MutateRowsResponse> mutateRows(MutateRowsRequest request);
 
   /**
    * Mutates multiple rows in a batch. Each individual row is mutated atomically as in MutateRow,
@@ -84,10 +84,8 @@ public interface BigtableDataClient {
    *
    * @param request a {@link com.google.bigtable.v2.CheckAndMutateRowRequest} object.
    * @return a {@link com.google.bigtable.v2.CheckAndMutateRowResponse} object.
-   * @throws com.google.protobuf.ServiceException if any.
    */
-  CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
-      throws ServiceException;
+  CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request);
 
   /**
    * Mutate a row atomically dependent on a precondition.
@@ -120,9 +118,9 @@ public interface BigtableDataClient {
    * Sample row keys from a table.
    *
    * @param request a {@link com.google.bigtable.v2.SampleRowKeysRequest} object.
-   * @return a {@link com.google.common.collect.ImmutableList} object.
+   * @return an immutable {@link List} object.
    */
-  ImmutableList<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request);
+  List<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request);
 
   /**
    * Sample row keys from a table, returning a Future that will complete when the sampling has
@@ -134,7 +132,7 @@ public interface BigtableDataClient {
   ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(SampleRowKeysRequest request);
 
   /**
-   * Perform a scan over rows.
+   * Perform a scan over {@link Row}s, in key order.
    *
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
@@ -142,13 +140,48 @@ public interface BigtableDataClient {
   ResultScanner<Row> readRows(ReadRowsRequest request);
 
   /**
-   * Read multiple Rows into an in-memory list.
+   * Read multiple {@link Row}s into an in-memory list, in key order.
    *
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
    * all reads have completed.
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    */
   ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request);
+
+  /**
+   * Returns a list of {@link FlatRow}s, in key order.
+   *
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   * @return a List with {@link FlatRow}s.
+   */
+  List<FlatRow> readFlatRowsList(ReadRowsRequest request);
+
+  /**
+   * Perform a scan over {@link FlatRow}s, in key order.
+   *
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
+   */
+  ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request);
+
+  /**
+   * Perform a streaming read of {@link FlatRow}s in key order. It would be a good idea to turn on
+   * client side timeouts via {@link
+   * com.google.cloud.bigtable.config.CallOptionsConfig.Builder#setUseTimeout(boolean)}.
+   * @param request a {@link ReadRowsRequest} object.
+   * @param observer a {@link StreamObserver} object
+   * @return a {@link ScanHandler} which can be used to either cancel or timeout the request.
+   */
+  ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> observer);
+
+  /**
+   * Read multiple {@link FlatRow}s into an in-memory list, in key order.
+   *
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
+   * all reads have completed.
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   */
+  ListenableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request);
 
   /**
    * Sets a {@link com.google.cloud.bigtable.grpc.CallOptionsFactory} which creates {@link io.grpc.CallOptions}

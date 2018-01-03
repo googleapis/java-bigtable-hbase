@@ -15,19 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v2.Cell;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
-import com.google.bigtable.v2.Row;
-import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-import com.google.cloud.bigtable.hbase.adapters.filters.BigtableWhileMatchResultScannerAdapter;
-import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -38,7 +35,11 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
+import com.google.protobuf.ByteString;
+
+import io.opencensus.trace.Span;
 
 /**
  * Unit tests for the {@link BigtableWhileMatchResultScannerAdapter}.
@@ -47,10 +48,13 @@ import java.io.IOException;
 public class TestBigtableWhileMatchResultScannerAdapter {
 
   @Mock
-  private ResponseAdapter<Row, Result> mockRowAdapter;
-  
+  private ResponseAdapter<FlatRow, Result> mockRowAdapter;
+
   @Mock
-  com.google.cloud.bigtable.grpc.scanner.ResultScanner<Row> mockBigtableResultScanner;
+  com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> mockBigtableResultScanner;
+
+  @Mock
+  Span mockSpan;
 
   private BigtableWhileMatchResultScannerAdapter adapter;
 
@@ -65,52 +69,54 @@ public class TestBigtableWhileMatchResultScannerAdapter {
   public void adapt_noRow() throws IOException {
     when(mockBigtableResultScanner.next()).thenReturn(null);
 
-    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner);
+    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
     assertNull(scanner.next());
     verify(mockBigtableResultScanner).next();
     verifyZeroInteractions(mockRowAdapter);
+    verify(mockSpan, times(1)).end();
   }
 
   @Test
   public void adapt_oneRow() throws IOException {
-    Row row = Row.newBuilder().setKey(ByteString.copyFromUtf8("key")).build();
+    FlatRow row = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key")).build();
     when(mockBigtableResultScanner.next()).thenReturn(row);
     Result result = new Result();
     when(mockRowAdapter.adaptResponse(same(row))).thenReturn(result);
 
-    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner);
+    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
     assertSame(result, scanner.next());
     verify(mockBigtableResultScanner).next();
     verify(mockRowAdapter).adaptResponse(same(row));
+    verify(mockSpan, times(0)).end();
   }
 
   @Test
   public void adapt_oneRow_hasMatchingLabels() throws IOException {
-    Row row = Row.newBuilder().setKey(ByteString.copyFromUtf8("key"))
-        .addFamilies(Family.newBuilder().addColumns(Column.newBuilder()
-            .addCells(Cell.newBuilder().addLabels("a-in"))
-            .addCells(Cell.newBuilder().addLabels("a-out"))))
+    FlatRow row = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key"))
+        .addCell("", ByteString.EMPTY, 0, ByteString.EMPTY, Arrays.asList("a-in"))
+        .addCell("", ByteString.EMPTY, 0, ByteString.EMPTY, Arrays.asList("a-out"))
         .build();
     when(mockBigtableResultScanner.next()).thenReturn(row);
     Result result = new Result();
     when(mockRowAdapter.adaptResponse(same(row))).thenReturn(result);
 
-    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner);
+    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
     assertSame(result, scanner.next());
     verify(mockBigtableResultScanner).next();
     verify(mockRowAdapter).adaptResponse(same(row));
+    verify(mockSpan, times(0)).end();
   }
 
   @Test
   public void adapt_oneRow_hasNoMatchingLabels() throws IOException {
-    Row row = Row.newBuilder().setKey(ByteString.copyFromUtf8("key"))
-        .addFamilies(Family.newBuilder().addColumns(Column.newBuilder()
-            .addCells(Cell.newBuilder().addLabels("a-in"))))
+    FlatRow row = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key"))
+        .addCell("", ByteString.EMPTY, 0, ByteString.EMPTY, Arrays.asList("a-in"))
         .build();
     when(mockBigtableResultScanner.next()).thenReturn(row);
 
-    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner);
+    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
     assertNull(scanner.next());
+    verify(mockSpan, times(1)).end();
     verify(mockBigtableResultScanner).next();
     verifyZeroInteractions(mockRowAdapter);
   }

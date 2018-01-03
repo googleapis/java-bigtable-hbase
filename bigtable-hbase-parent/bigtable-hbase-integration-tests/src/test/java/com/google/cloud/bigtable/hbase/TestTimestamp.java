@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -40,7 +39,7 @@ public class TestTimestamp extends AbstractTest {
   @Test
   public void testArbitraryTimestamp() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQual-");
     int numVersions = 4;

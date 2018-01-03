@@ -15,9 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 
+import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 
@@ -39,6 +41,7 @@ import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.FamilyFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
@@ -46,6 +49,8 @@ import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
+import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
 import org.apache.hadoop.hbase.filter.PageFilter;
@@ -69,7 +74,6 @@ import org.junit.experimental.categories.Category;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -116,7 +120,7 @@ public class TestFilters extends AbstractTest {
   }
 
   private Table getTable() throws IOException {
-    return getConnection().getTable(TABLE_NAME);
+    return getConnection().getTable(sharedTestEnv.getDefaultTableName());
   }
 
   /**
@@ -1119,6 +1123,24 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
+  public void testWhileMatchFilter_withUpdate() throws IOException {
+    String rowKeyPrefix = dataHelper.randomString("wmf-wu-");
+    byte[] qualA = dataHelper.randomData("qualA");
+    Table table = addDataForTesting(rowKeyPrefix, qualA);
+
+    table.put(new Put(Bytes.toBytes(rowKeyPrefix + "14")).addColumn(COLUMN_FAMILY, qualA,
+      Bytes.toBytes(String.valueOf(2))));
+
+    ByteArrayComparable valueComparable = new BinaryComparator(String.valueOf(2).getBytes());
+    SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
+        COLUMN_FAMILY, qualA, CompareFilter.CompareOp.NOT_EQUAL, valueComparable);
+    Scan scan = new Scan().setFilter(new WhileMatchFilter(valueFilter));
+
+    int[] expected = {0, 1, 10, 11, 12, 13};
+    assertWhileMatchFilterResult(qualA, table, scan, expected);
+  }
+
+  @Test
   public void testSingleValueFilterAscii() throws IOException {
     byte[] qual = dataHelper.randomData("testSingleValueFilterCompOps");
     // Add {, }, and @ to make sure that they do not need to be encoded
@@ -1161,6 +1183,18 @@ public class TestFilters extends AbstractTest {
               new RegexStringComparator("ValueC.*"));
       filter.setFilterIfMissing(true);
       assertKeysReturnedForFilter(table, filter, rowKeyC);
+    }
+  }
+
+  @Test
+  public void testSingleValueFilterEmpty() throws IOException {
+    byte[] qual = dataHelper.randomData("testSingleValueFilterEmpty");
+    // Add {, }, and @ to make sure that they do not need to be encoded
+    byte[] rowKey = dataHelper.randomData("Empty");
+    byte[] empty = new byte[0];
+    try (Table table = getTable()) {
+      table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, empty));
+      assertKeysReturnedForSCVF(table, qual, CompareOp.EQUAL, empty, rowKey);
     }
   }
 
@@ -1265,14 +1299,18 @@ public class TestFilters extends AbstractTest {
     int[] actual = new int[expected.length];
     int i = 0;
     try (ResultScanner scanner = table.getScanner(scan)) {
-      Iterator<Result> iterator = scanner.iterator();
-      while (iterator.hasNext()) {
-        for (Cell cell : iterator.next().getColumnCells(COLUMN_FAMILY, qualA)) {
-          int cellIntValue = Integer.parseInt(Bytes.toString(CellUtil.cloneValue(cell)));
-          actual[i++] = cellIntValue;
+      for (Result r : scanner) {
+        List<Cell> cells = r.getColumnCells(COLUMN_FAMILY, qualA);
+        if (!cells.isEmpty()) {
+          Assert.assertEquals("Expected 1 result, but got " + cells.size(), 1, cells.size());
+          if (i < expected.length) {
+            actual[i] = Integer.parseInt(Bytes.toString(CellUtil.cloneValue(cells.get(0))));
+          }
+          i++;
         }
       }
     }
+    Assert.assertEquals(expected.length, i);
     Assert.assertArrayEquals(expected, actual);
   }
 
@@ -1426,6 +1464,36 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
+  public void testTimestampRangeFilter() throws IOException {
+    // Initialize
+    int numCols = 10;
+    String goodValue = "includeThisValue";
+    Table table = getTable();
+    byte[] rowKey = dataHelper.randomData("testRow-TimestampRange-");
+    Put put = new Put(rowKey);
+    for (int i = 0; i < numCols; ++i) {
+      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
+    }
+    table.put(put);
+
+    // Filter for results
+    Filter filter = new TimestampRangeFilter(4, 6);
+
+    Get get = new Get(rowKey).setFilter(filter);
+    Result result = table.get(get);
+    Cell[] cells = result.rawCells();
+    Assert.assertEquals("Should have three cells, timestamps 4 and 5.", 2, cells.length);
+
+    // Since the qualifiers are random, ignore the order of the returned cells.
+    long[] timestamps =
+        new long[] { cells[0].getTimestamp(), cells[1].getTimestamp() };
+    Arrays.sort(timestamps);
+    Assert.assertArrayEquals(new long[] { 4L, 5L }, timestamps);
+
+    table.close();
+  }
+
+  @Test
   public void testSingleColumnValueFilter() throws IOException {
     // Set up:
     // Row 1: f:qualifier1 = value1_1, f:qualifier2 = value2_1
@@ -1534,6 +1602,42 @@ public class TestFilters extends AbstractTest {
         25 <= results.length && results.length <= 75);
   }
 
+
+  @Test
+  public void testSingleValueLongCompares() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rowKeyNumeric-");
+    byte[] qualToCheck = dataHelper.randomData("toCheckNumeric-");
+
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+
+    table.put(new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      Bytes.toBytes(2000l)));
+
+    Scan rootScan = new Scan()
+        .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck)
+        .setStartRow(rowKey).setStopRow(rowKey);
+
+    Assert.assertNull("< 1000 should fail",
+      getFirst(table, rootScan, CompareOp.LESS, 1000l));
+    Assert.assertNotNull("> 1000 should succeed",
+      getFirst(table, rootScan, CompareOp.GREATER, 1000l));
+    Assert.assertNull("<= 1000 should fail",
+      getFirst(table, rootScan, CompareOp.LESS_OR_EQUAL, 1000l));
+    Assert.assertNotNull(">= 1000 should succeed",
+      getFirst(table, rootScan, CompareOp.GREATER_OR_EQUAL, 1000l));
+    Assert.assertNotNull("<= 2000 should succeed",
+      getFirst(table, rootScan, CompareOp.LESS_OR_EQUAL, 2000l));
+    Assert.assertNotNull(">= 2000 should succeed",
+      getFirst(table, rootScan, CompareOp.GREATER_OR_EQUAL, 2000l));
+  }
+
+  protected Result getFirst(Table table, Scan rootScan, CompareOp comparitor, long value)
+      throws IOException {
+    try (ResultScanner results = table.getScanner(new Scan(rootScan)
+        .setFilter(new ValueFilter(comparitor, new BinaryComparator(Bytes.toBytes(value)))))) {
+      return results.next();
+    }
+  }
   @Test
   public void testSingleColumnValueExcludeFilter() throws IOException {
     byte[] rowKey1 = dataHelper.randomData("scvfrk1");
@@ -1576,6 +1680,7 @@ public class TestFilters extends AbstractTest {
     String prefix = "testPrefixFilter";
     int rowCount = 10;
     byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
+    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
     List<Put> puts = new ArrayList<>();
     for (byte[] rowKey : rowKeys) {
       puts.add(
@@ -1590,12 +1695,95 @@ public class TestFilters extends AbstractTest {
     ResultScanner scanner = table.getScanner(scan);
     Result[] results = scanner.next(rowCount + 2);
     Assert.assertEquals(rowCount, results.length);
-    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
+
     // Both results[] and rowKeys[] should be in the same order now. Iterate over both
     // and verify rowkeys.
     for (int i = 0; i < rowCount; i++) {
       Assert.assertArrayEquals(rowKeys[i], results[i].getRow());
     }
+
+    // Make sure that it works with start & end rows: exclude first & last row
+    Scan boundedScan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filter)
+        .setStartRow(rowKeys[1])
+        .setStopRow(rowKeys[rowKeys.length - 1]);
+
+    ResultScanner boundedScanner = table.getScanner(boundedScan);
+    Result[] boundedResults = boundedScanner.next(rowCount + 2);
+    Assert.assertEquals(rowCount - 2, boundedResults.length);
+    for(int i=0; i < rowCount - 2; i++) {
+      Assert.assertArrayEquals(rowKeys[i+1], boundedResults[i].getRow());
+    }
+  }
+  @Test
+  public void testMultiRangeFilter() throws IOException {
+    String prefix = "testMultiRangeFilter";
+    int rowCount = 10;
+    byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
+    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
+    List<Put> puts = new ArrayList<>();
+    for (byte[] rowKey : rowKeys) {
+      puts.add(
+          new Put(rowKey)
+              .addColumn(COLUMN_FAMILY, Bytes.toBytes("q1"), Bytes.toBytes("val1")));
+    }
+    Table table = getTable();
+    table.put(puts);
+
+    MultiRowRangeFilter filter = new MultiRowRangeFilter(Arrays.asList(
+        // rows 1 & 2
+        new RowRange(rowKeys[1], true, rowKeys[3], false),
+        // rows 6 & 7
+        new RowRange(rowKeys[5], false, rowKeys[7], true)
+    ));
+
+    Scan scan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filter);
+    ResultScanner scanner = table.getScanner(scan);
+    Result[] results = scanner.next(rowCount + 2);
+    Assert.assertEquals(4, results.length);
+
+    // first range: rows 1 & 2
+    Assert.assertArrayEquals(rowKeys[1], results[0].getRow());
+    Assert.assertArrayEquals(rowKeys[2], results[1].getRow());
+    // second range: rows 6 & 7
+    Assert.assertArrayEquals(rowKeys[6], results[2].getRow());
+    Assert.assertArrayEquals(rowKeys[7], results[3].getRow());
+  }
+
+  @Test
+  @Category(KnownGap.class)
+  public void testMultiRangeFilterOrList() throws IOException {
+    String prefix = "testMultiRangeFilterOrList";
+    int rowCount = 10;
+    byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
+    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
+    List<Put> puts = new ArrayList<>();
+    for (byte[] rowKey : rowKeys) {
+      puts.add(
+          new Put(rowKey)
+              .addColumn(COLUMN_FAMILY, Bytes.toBytes("q1"), Bytes.toBytes("val1")));
+    }
+    Table table = getTable();
+    table.put(puts);
+
+    MultiRowRangeFilter rangeFilter = new MultiRowRangeFilter(Arrays.asList(
+        // rows 1 & 2
+        new RowRange(rowKeys[1], true, rowKeys[3], false)
+    ));
+
+    PrefixFilter prefixFilter = new PrefixFilter(rowKeys[8]);
+
+    FilterList filterList = new FilterList(Operator.MUST_PASS_ONE, rangeFilter, prefixFilter);
+
+    Scan scan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filterList);
+    ResultScanner scanner = table.getScanner(scan);
+    Result[] results = scanner.next(rowCount + 2);
+    Assert.assertEquals(3, results.length);
+
+    // first range: rows 1 & 2
+    Assert.assertArrayEquals(rowKeys[1], results[0].getRow());
+    Assert.assertArrayEquals(rowKeys[2], results[1].getRow());
+    // second range: rows 9
+    Assert.assertArrayEquals(rowKeys[8], results[2].getRow());
   }
 
   @Test
@@ -1663,6 +1851,44 @@ public class TestFilters extends AbstractTest {
     Assert.assertEquals(1, result.size());
   }
 
+
+  @Test
+  public void testFamilyFilter() throws IOException {
+    byte[] rowKey = dataHelper.randomData("family-filter-");
+    byte[] qualA = dataHelper.randomData("family-filter-qualA-");
+    byte[] qualAValue = dataHelper.randomData("qualA-value");
+    byte[] qualB = dataHelper.randomData("family-filter-qualB-");
+    byte[] qualBValue = dataHelper.randomData("qualB-value");
+
+    Table table = getTable();
+    Put put = new Put(rowKey);
+    put.addColumn(COLUMN_FAMILY, qualA, qualAValue);
+    put.addColumn(COLUMN_FAMILY2, qualB, qualBValue);
+    table.put(put);
+
+    {
+      Get get = new Get(rowKey)
+          .setFilter(new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(COLUMN_FAMILY)));
+      Result result = table.get(get);
+      Assert.assertEquals(1, result.size());
+      Cell cell = result.rawCells()[0];
+      Assert.assertTrue(CellUtil.matchingFamily(cell, COLUMN_FAMILY));
+      Assert.assertTrue(CellUtil.matchingQualifier(cell, qualA));
+      Assert.assertTrue(CellUtil.matchingValue(cell, qualAValue));
+    }
+
+    {
+      Get get = new Get(rowKey)
+          .setFilter(new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(COLUMN_FAMILY2)));
+      Result result = table.get(get);
+      Assert.assertEquals(1, result.size());
+      Cell cell = result.rawCells()[0];
+      Assert.assertTrue(CellUtil.matchingFamily(cell, COLUMN_FAMILY2));
+      Assert.assertTrue(CellUtil.matchingQualifier(cell, qualB));
+      Assert.assertTrue(CellUtil.matchingValue(cell, qualBValue));
+    }
+  }
+
   @Test
   public void testPageFilters() throws IOException {
     byte[][] rowKeys = dataHelper.randomData("pageFilter-", 100);
@@ -1699,7 +1925,7 @@ public class TestFilters extends AbstractTest {
    */
   @Test
   public void testFuzzyRowFilter() throws IOException {
-    if (!IntegrationTests.isBigtable()) {
+    if (!sharedTestEnv.isBigtable()) {
       // HBase doesn't seem to work as expected.  Test to make sure that bigtable does the right thing.
       return;
     }

@@ -18,9 +18,11 @@ package com.google.cloud.bigtable.dataflow;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
+
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
- * Bigtable cluster, including a table to connect to in the cluster.
+ * Bigtable instance, including a table to connect to in the instance.
  */
 public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration {
 
@@ -43,8 +45,6 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     builder
         .withProjectId(options.getBigtableProjectId())
         .withInstanceId(options.getBigtableInstanceId())
-        .withZoneId(options.getBigtableZoneId())
-        .withClusterId(options.getBigtableClusterId())
         .withTableId(options.getBigtableTableId());
   }
 
@@ -94,30 +94,6 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      *
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withZoneId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
-     */
-    @Override
-    public Builder withZoneId(String zoneId) {
-      super.withZoneId(zoneId);
-      return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withClusterId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
-     */
-    @Override
-    public Builder withClusterId(String clusterId) {
-      super.withClusterId(clusterId);
-      return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
      * Overrides {@link CloudBigtableScanConfiguration.Builder#withConfiguration(String, String)} so
      * that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
@@ -134,7 +110,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     @Override
     public CloudBigtableTableConfiguration build() {
       return new CloudBigtableTableConfiguration(
-          projectId, instanceId, zoneId, clusterId, tableId, additionalConfiguration);
+          projectId, instanceId, tableId, additionalConfiguration);
     }
   }
 
@@ -147,59 +123,17 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   /**
    * Creates a {@link CloudBigtableTableConfiguration} using the specified configuration.
    *
-   * @deprecated use the {@link Builder} instead.
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID
-   * @param tableId The table to connect to in the cluster.
-   * @param additionalConfiguration A {@link Map} with additional connection configuration.
-   */
-  @Deprecated
-  public CloudBigtableTableConfiguration(
-      String projectId,
-      String instanceId,
-      String tableId,
-      Map<String, String> additionalConfiguration) {
-    this(projectId, instanceId, null, null, tableId, additionalConfiguration);
-  }
-
-  /**
-   * Creates a {@link CloudBigtableTableConfiguration} using the specified configuration.
-   *
-   * @deprecated use the {@link Builder} instead.
-   * @param projectId The project ID for the cluster.
-   * @param zoneId The zone where the cluster is located.
-   * @param clusterId The cluster ID for the cluster.
-   * @param tableId The table to connect to in the cluster.
-   * @param additionalConfiguration A {@link Map} with additional connection configuration.
-   */
-  @Deprecated
-  public CloudBigtableTableConfiguration(
-      String projectId,
-      String zoneId,
-      String clusterId,
-      String tableId,
-      Map<String, String> additionalConfiguration) {
-    this(projectId, null, zoneId, clusterId, tableId, additionalConfiguration);
-  }
-
-  /**
-   * Creates a {@link CloudBigtableTableConfiguration} using the specified configuration.
-   *
-   * @param projectId The project ID for the cluster.
-   * @param instanceId The instance ID. This is nullable if zoneId and clusterId are set.
-   * @param zoneId The zone where the cluster is located.
-   * @param clusterId The cluster ID for the cluster.
-   * @param tableId The table to connect to in the cluster.
+   * @param tableId The table to connect to in the instance.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
   protected CloudBigtableTableConfiguration(
       String projectId,
       String instanceId,
-      String zoneId,
-      String clusterId,
       String tableId,
       Map<String, String> additionalConfiguration) {
-    super(projectId, instanceId, zoneId, clusterId, additionalConfiguration);
+    super(projectId, instanceId, additionalConfiguration);
     this.tableId = tableId;
   }
 
@@ -227,5 +161,11 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   public boolean equals(Object obj) {
     return super.equals(obj)
         && Objects.equals(tableId, ((CloudBigtableTableConfiguration) obj).tableId);
+  }
+
+  @Override
+  public void populateDisplayData(DisplayData.Builder builder) {
+    super.populateDisplayData(builder);
+    builder.add(DisplayData.item("tableId", tableId).withLabel("Table ID"));
   }
 }

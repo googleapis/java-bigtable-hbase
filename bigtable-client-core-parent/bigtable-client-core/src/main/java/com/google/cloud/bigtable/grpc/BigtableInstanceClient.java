@@ -27,6 +27,7 @@ import com.google.bigtable.admin.v2.ListInstancesResponse;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
+import java.io.IOException;
 
 /**
  * BigtableInstanceClient manages instances and clusters.
@@ -56,6 +57,14 @@ public interface BigtableInstanceClient {
    * @return a {@link com.google.longrunning.Operation} object.
    */
   Operation getOperation(GetOperationRequest request);
+
+
+  /**
+   * Waits for the long running operation to complete.
+   * @param operation
+   * @throws IOException
+   */
+  void waitForOperation(Operation operation) throws IOException;
 
   /**
    * Lists all instances in the given project.

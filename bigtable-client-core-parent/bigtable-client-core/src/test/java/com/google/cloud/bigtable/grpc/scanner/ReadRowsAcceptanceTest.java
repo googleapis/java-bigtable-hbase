@@ -15,13 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.bigtable.v2.Cell;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
-import com.google.bigtable.v2.Row;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.ByteString;
@@ -79,9 +75,12 @@ public class ReadRowsAcceptanceTest {
     public List<TestResult> getNonExceptionResults() {
       ArrayList<TestResult> response = new ArrayList<>();
       if (results != null) {
+        TestResult previous = null;
         for (TestResult result : results) {
-          if (!result.error) {
+          if (!result.error && !result.equals(previous)) {
+            // Dedup the results.  Row merger dedups as well.
             response.add(result);
+            previous = result;
           }
         }
       }
@@ -176,33 +175,35 @@ public class ReadRowsAcceptanceTest {
   public void test() throws Exception {
     // TODO Merge the specified chunks into rows and
     // validate the returned rows against the test results.
-    List<Row> responses = new ArrayList<>();
+    List<FlatRow> responses = new ArrayList<>();
     List<Throwable> exceptions = new ArrayList<>();
     addResponses(responses, exceptions);
     processResults(responses, exceptions);
   }
 
-  private void addResponses(List<Row> responses, List<Throwable> exceptions) throws IOException {
+  private void addResponses(List<FlatRow> responses, List<Throwable> exceptions)
+      throws IOException {
     RowMerger rowMerger = createRowMerger(responses, exceptions);
-    ReadRowsResponse.Builder responseBuilder = ReadRowsResponse.newBuilder();
+
     for (String chunkStr : testCase.chunks) {
+      ReadRowsResponse.Builder responseBuilder = ReadRowsResponse.newBuilder();
       CellChunk.Builder ccBuilder = CellChunk.newBuilder();
       TextFormat.merge(new StringReader(chunkStr), ccBuilder);
       responseBuilder.addChunks(ccBuilder.build());
+      rowMerger.onNext(responseBuilder.build());
     }
-    rowMerger.onNext(responseBuilder.build());
     if (exceptions.isEmpty()) {
       rowMerger.onCompleted();
     }
   }
 
   private static RowMerger createRowMerger(
-      final List<Row> responses, final List<Throwable> exceptions) {
+      final List<FlatRow> responses, final List<Throwable> exceptions) {
     return new RowMerger(
-        new StreamObserver<Row>() {
+        new StreamObserver<FlatRow>() {
 
           @Override
-          public void onNext(Row value) {
+          public void onNext(FlatRow value) {
             responses.add(value);
           }
 
@@ -216,7 +217,7 @@ public class ReadRowsAcceptanceTest {
         });
   }
 
-  private void processResults(List<Row> responses, List<Throwable> exceptions) {
+  private void processResults(List<FlatRow> responses, List<Throwable> exceptions) {
     List<TestResult> denormalizedResponses = denormalizeResponses(responses);
     Assert.assertEquals(testCase.getNonExceptionResults(), denormalizedResponses);
     if (testCase.expectsError()) {
@@ -228,22 +229,18 @@ public class ReadRowsAcceptanceTest {
     }
   }
 
-  private List<TestResult> denormalizeResponses(List<Row> responses) {
+  private List<TestResult> denormalizeResponses(List<FlatRow> responses) {
     ArrayList<TestResult> response = new ArrayList<>();
-    for (Row row : responses) {
-      for (Family family : row.getFamiliesList()) {
-        for (Column column : family.getColumnsList()) {
-          for (Cell cell : column.getCellsList()) {
-            response.add(new TestResult(
-              toString(row.getKey()),
-              family.getName(),
-              toString(column.getQualifier()),
-              cell.getTimestampMicros(),
-              toString(cell.getValue()),
-              cell.getLabelsCount() == 0 ? "" : cell.getLabels(0),
-              false));
-          }
-        }
+    for (FlatRow row : responses) {
+      for (FlatRow.Cell cell : row.getCells()) {
+        response.add(new TestResult(
+          toString(row.getRowKey()),
+          cell.getFamily(),
+          toString(cell.getQualifier()),
+          cell.getTimestamp(),
+          toString(cell.getValue()),
+          cell.getLabels().isEmpty() ? "" : cell.getLabels().get(0),
+          false));
       }
     }
     return response;

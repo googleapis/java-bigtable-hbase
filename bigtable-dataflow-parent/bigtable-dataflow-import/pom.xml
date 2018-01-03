@@ -16,19 +16,18 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-dataflow-parent</artifactId>
-        <version>0.9.4-SNAPSHOT</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-dataflow-import</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project contains artifacts that import HBase Sequence Files into Google Cloud Bigtable using Google Cloud Dataflow.
+       DEPRECATED: use bigtable-beam-import insteam. This project contains artifacts that import HBase Sequence Files into Google Cloud Bigtable using Google Cloud Dataflow.
     </description>
 
     <properties>
-        <gcsconnector.version>1.4.3-hadoop2</gcsconnector.version>
+        <gcsconnector.version>1.6.1-hadoop2</gcsconnector.version>
         <!-- A guava version that is compatible with both gcs-connector and hadoop2. This overrides
             guava version specification in parent project. -->
         <guava.version>15.0</guava.version>
@@ -36,56 +35,34 @@ limitations under the License.
 
     <dependencies>
         <dependency>
-            <groupId>com.google.cloud.bigtable</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-dataflow</artifactId>
             <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.cloud.bigtable</groupId>
-                    <artifactId>bigtable-hbase-shaded-for-dataflow</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
-        <dependency>
-            <!-- Keeping guava dependency here so that third party code using this package
-                 does not have to declare it-->
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
-        </dependency>
-        <dependency>
-            <!-- hbase-server jar provides Deserializer for the Result class. It also pulls in
-                 necessary hadoop jars. -->
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
-        </dependency>
+
         <dependency>
             <!-- For accessing gs buckets from the hadoop SequenceFile reader. -->
             <groupId>com.google.cloud.bigdataoss</groupId>
             <artifactId>gcs-connector</artifactId>
             <version>${gcsconnector.version}</version>
         </dependency>
+
+        <!-- Test -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
+            <version>${mockito.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <scope>test</scope>
-            <classifier>${os.detected.classifier}</classifier>
         </dependency>
     </dependencies>
+
+
     <profiles>
         <profile>
             <id>sequencefileIntegrationTest</id>
@@ -151,6 +128,34 @@ limitations under the License.
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.google.cloud.bigtable.dataflowimport.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                </configuration>
             </plugin>
         </plugins>
     </build>

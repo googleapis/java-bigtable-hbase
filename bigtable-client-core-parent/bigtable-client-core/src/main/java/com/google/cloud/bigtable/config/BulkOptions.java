@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.config;
 
 import java.io.Serializable;
 
+import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -49,14 +50,32 @@ public class BulkOptions implements Serializable {
    */
   public static final int BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT = 25;
 
+  /**
+   * Whether or not to enable a mechanism that reduces the likelihood that a {@link BulkMutation}
+   * intensive application will overload a cluster.
+   */
+  public static final boolean BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT = false;
 
-  // Default rpc count per channel.
-  /** Constant <code>BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT=50</code> */
+  /**
+   * The target RPC response time for a MutateRows request. This value is meaningful if bulk
+   * mutation throttling is enabled. 100 ms. is a generally ok latency for MutateRows RPCs, but it
+   * could go higher (for example 300 ms) for less latency sensitive applications that need more
+   * throughput, or lower (10 ms) for latency sensitive applications.
+   */
+  public static final int BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT = 100;
+
+  /**
+   * The maximum amount of time a row will be buffered for. By default 0: indefinitely.
+   */
+  public static long BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT = 0;
+
+  /** Default rpc count per channel. */
   public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 50;
 
-  // This is the maximum accumulated size of uncompleted requests that we allow before throttling.
-  // Default to 10% of available memory with a max of 1GB.
-  /** Constant <code>BIGTABLE_MAX_MEMORY_DEFAULT=(long) Math.min(1 &lt;&lt; 30, (Runtime.getRuntime().maxMemory() * 0.1d))</code> */
+  /**
+    * This is the maximum accumulated size of uncompleted requests that we allow before throttling.
+    * Default to 10% of available memory with a max of 1GB.
+   */
   public static final long BIGTABLE_MAX_MEMORY_DEFAULT =
       (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
 
@@ -66,11 +85,14 @@ public class BulkOptions implements Serializable {
   public static class Builder {
 
     private int asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
-    private boolean useBulkApi = false;
+    private boolean useBulkApi = true;
     private int bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
     private long bulkMaxRequestSize = BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
+    private long autoflushMs = BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
     private int maxInflightRpcs = -1;
     private long maxMemory = BIGTABLE_MAX_MEMORY_DEFAULT;
+    private boolean enableBulkMutationThrottling = BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT;
+    private int bulkMutationRpcTargetMs = BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
 
     public Builder() {
     }
@@ -80,8 +102,11 @@ public class BulkOptions implements Serializable {
       this.useBulkApi = original.useBulkApi;
       this.bulkMaxRowKeyCount = original.bulkMaxRowKeyCount;
       this.bulkMaxRequestSize = original.bulkMaxRequestSize;
+      this.autoflushMs = original.autoflushMs;
       this.maxInflightRpcs = original.maxInflightRpcs;
       this.maxMemory = original.maxMemory;
+      this.enableBulkMutationThrottling = original.enableBulkMutationThrottling;
+      this.bulkMutationRpcTargetMs = original.bulkMutationRpcTargetMs;
     }
 
     public Builder setAsyncMutatorWorkerCount(int asyncMutatorCount) {
@@ -110,6 +135,13 @@ public class BulkOptions implements Serializable {
       return this;
     }
 
+    public Builder setAutoflushMs(long autoflushMs) {
+      Preconditions.checkArgument(
+          autoflushMs >= 0, "autoflushMs must be greater or equal to 0.");
+      this.autoflushMs = autoflushMs;
+      return this;
+    }
+
     public Builder setMaxInflightRpcs(int maxInflightRpcs) {
       Preconditions.checkArgument(maxInflightRpcs > 0, "maxInflightRpcs must be greater than 0.");
       this.maxInflightRpcs = maxInflightRpcs;
@@ -122,14 +154,34 @@ public class BulkOptions implements Serializable {
       return this;
     }
 
+    /**
+     * Enable an experimental feature that will throttle requests from {@link BulkMutation} if
+     * request latency surpasses a latency threshold. The default is
+     * {@link BulkOptions#BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT}.
+     *
+     * @return this, for convenience.
+     */
+    public Builder enableBulkMutationThrottling() {
+      this.enableBulkMutationThrottling = true;
+      return this;
+    }
+
+    public Builder setBulkMutationRpcTargetMs(int bulkMutationRpcTargetMs) {
+      this.bulkMutationRpcTargetMs = bulkMutationRpcTargetMs;
+      return this;
+    }
+
     public BulkOptions build() {
       return new BulkOptions(
           asyncMutatorCount,
           useBulkApi,
           bulkMaxRowKeyCount,
           bulkMaxRequestSize,
+          autoflushMs,
           maxInflightRpcs,
-          maxMemory);
+          maxMemory,
+          enableBulkMutationThrottling,
+          bulkMutationRpcTargetMs);
     }
   }
 
@@ -137,9 +189,13 @@ public class BulkOptions implements Serializable {
   private final boolean useBulkApi;
   private final int bulkMaxRowKeyCount;
   private final long bulkMaxRequestSize;
+  private final long autoflushMs;
 
   private final int maxInflightRpcs;
   private final long maxMemory;
+
+  private final boolean enableBulkMutationThrottling;
+  private final int bulkMutationRpcTargetMs;
 
   @VisibleForTesting
   BulkOptions() {
@@ -147,8 +203,11 @@ public class BulkOptions implements Serializable {
       useBulkApi = false;
       bulkMaxRowKeyCount = -1;
       bulkMaxRequestSize = -1;
+      autoflushMs = -1l;
       maxInflightRpcs = -1;
       maxMemory = -1l;
+      enableBulkMutationThrottling = false;
+      bulkMutationRpcTargetMs = -1;
   }
 
   private BulkOptions(
@@ -156,14 +215,20 @@ public class BulkOptions implements Serializable {
       boolean useBulkApi,
       int bulkMaxKeyCount,
       long bulkMaxRequestSize,
+      long autoflushMs,
       int maxInflightRpcs,
-      long maxMemory) {
+      long maxMemory,
+      boolean enableBulkMutationThrottling,
+      int bulkMutationRpcTargetMs) {
     this.asyncMutatorCount = asyncMutatorCount;
     this.useBulkApi = useBulkApi;
     this.bulkMaxRowKeyCount = bulkMaxKeyCount;
     this.bulkMaxRequestSize = bulkMaxRequestSize;
+    this.autoflushMs = autoflushMs;
     this.maxInflightRpcs = maxInflightRpcs;
     this.maxMemory = maxMemory;
+    this.enableBulkMutationThrottling = enableBulkMutationThrottling;
+    this.bulkMutationRpcTargetMs = bulkMutationRpcTargetMs;
   }
 
   /**
@@ -203,6 +268,14 @@ public class BulkOptions implements Serializable {
   }
 
   /**
+   * <p>Getter for the field <code>autoflushMs</code>.</p>
+   * @return a long
+   */
+  public long getAutoflushMs() {
+    return autoflushMs;
+  }
+
+  /**
    * <p>Getter for the field <code>maxInflightRpcs</code>.</p>
    *
    * @return a int.
@@ -220,6 +293,25 @@ public class BulkOptions implements Serializable {
     return maxMemory;
   }
 
+  /**
+   * Is an experimental feature of throttling bulk mutation RPCs turned on?
+   *
+   * @return a boolean
+   */
+  public boolean isEnableBulkMutationThrottling() {
+    return enableBulkMutationThrottling;
+  }
+
+  /**
+   * if {@link #isEnableBulkMutationThrottling()}, then bulk mutation RPC latency will be compared
+   * against this value. If the RPC latency is higher, then some throttling will be applied.
+   * @return the number of milliseconds that is an appropriate amount of time for a bulk mutation
+   *         RPC.
+   */
+  public int getBulkMutationRpcTargetMs() {
+    return bulkMutationRpcTargetMs;
+  }
+
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
@@ -234,8 +326,11 @@ public class BulkOptions implements Serializable {
         && (useBulkApi == other.useBulkApi)
         && (bulkMaxRowKeyCount == other.bulkMaxRowKeyCount)
         && (bulkMaxRequestSize == other.bulkMaxRequestSize)
+        && (autoflushMs == other.autoflushMs)
         && (maxInflightRpcs == other.maxInflightRpcs)
-        && (maxMemory == other.maxMemory);
+        && (maxMemory == other.maxMemory)
+        && (enableBulkMutationThrottling == other.enableBulkMutationThrottling)
+        && (bulkMutationRpcTargetMs == other.bulkMutationRpcTargetMs);
   }
 
   /** {@inheritDoc} */
@@ -247,8 +342,11 @@ public class BulkOptions implements Serializable {
         .add("useBulkApi", useBulkApi)
         .add("bulkMaxKeyCount", bulkMaxRowKeyCount)
         .add("bulkMaxRequestSize", bulkMaxRequestSize)
+        .add("autoflushMs", autoflushMs)
         .add("maxInflightRpcs", maxInflightRpcs)
         .add("maxMemory", maxMemory)
+        .add("enableBulkMutationThrottling", enableBulkMutationThrottling)
+        .add("bulkMutationRpcTargetMs", bulkMutationRpcTargetMs)
         .toString();
   }
 

@@ -15,8 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.containsString;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
@@ -55,7 +56,7 @@ public class TestIncrement extends AbstractTest {
   @Test
   public void testIncrement() throws IOException {
     // Initialize data
-    try (Table table = getConnection().getTable(TABLE_NAME)){
+    try (Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName())){
       testIncrement(dataHelper, table);
     }
   }
@@ -118,7 +119,7 @@ public class TestIncrement extends AbstractTest {
   @Category(KnownGap.class)
   public void testIncrementWithTimerange() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
 
@@ -186,7 +187,7 @@ public class TestIncrement extends AbstractTest {
     long oneMinute = 60 * 1000;
     long fifteenMinutes = 15 * 60 * 1000;
 
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     Put put = new Put(rowKey);
@@ -205,6 +206,7 @@ public class TestIncrement extends AbstractTest {
       TimeUnit.MILLISECONDS.sleep(10);  // Make sure the clock has a chance to move
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      throw new RuntimeException("sleep was interrupted", e);
     }
     table.increment(increment);
     result = table.get(get);
@@ -221,7 +223,7 @@ public class TestIncrement extends AbstractTest {
   @Category(KnownGap.class)
   public void testFailOnIncrementInt() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int value = new Random().nextInt();
@@ -231,7 +233,13 @@ public class TestIncrement extends AbstractTest {
     // Increment
     Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qual, 1L);
     expectedException.expect(DoNotRetryIOException.class);
-    expectedException.expectMessage("Attempted to increment field that isn't 64 bits wide");
+
+    expectedException.expectMessage(
+        anyOf(
+            containsString("Attempted to increment field that isn't 64 bits wide"),
+            containsString("Field is not a long")
+        )
+    );
     table.increment(increment);
   }
 
@@ -242,7 +250,7 @@ public class TestIncrement extends AbstractTest {
   @Category(KnownGap.class)
   public void testFailOnIncrementString() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
@@ -252,7 +260,12 @@ public class TestIncrement extends AbstractTest {
     // Increment
     Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qual, 1L);
     expectedException.expect(DoNotRetryIOException.class);
-    expectedException.expectMessage("Attempted to increment field that isn't 64 bits wide");
+    expectedException.expectMessage(
+        anyOf(
+            containsString("Attempted to increment field that isn't 64 bits wide"),
+            containsString(" Field is not a long")
+        )
+    );
     table.increment(increment);
   }
 
@@ -262,7 +275,7 @@ public class TestIncrement extends AbstractTest {
   @Test
   public void testIncrementEightBytes() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = new byte[8];

@@ -31,7 +31,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class ColumnPaginationFilterAdapter implements TypedFilterAdapter<ColumnPaginationFilter> {
+public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<ColumnPaginationFilter> {
 
   private static final FilterSupportStatus UNSUPPORTED_STATUS =
       FilterSupportStatus.newNotSupported(

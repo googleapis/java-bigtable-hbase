@@ -15,7 +15,8 @@
  */
 package com.google.cloud.bigtable.mapreduce;
 
-
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -40,7 +41,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.Export;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat2;
 import org.apache.hadoop.hbase.mapreduce.KeyValueSortReducer;
 import org.apache.hadoop.hbase.mapreduce.ResultSerialization;
@@ -49,7 +49,6 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
@@ -101,6 +100,7 @@ public class Import extends Configured implements Tool {
      * @param context  The current context.
      * @throws IOException When something is broken with the data.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public void map(ImmutableBytesWritable row, Result value, Context context) throws IOException {
       try {
@@ -118,7 +118,8 @@ public class Import extends Configured implements Tool {
           }
         }
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        Thread.currentThread().interrupt();
+        throw new IOException("map process was interrupted", e);
       }
     }
 
@@ -148,7 +149,8 @@ public class Import extends Configured implements Tool {
       try {
         writeResult(row, value, context);
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        Thread.currentThread().interrupt();
+        throw new IOException("map process was interrupted", e);
       }
     }
 
@@ -403,13 +405,20 @@ public class Import extends Configured implements Tool {
    */
   public static Job createSubmittableJob(Configuration conf, String[] args)
   throws IOException {
+    conf.setIfUnset("hbase.client.connection.impl",
+      BigtableConfiguration.getConnectionClass().getName());
+    conf.setIfUnset(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, "60000");
+
     TableName tableName = TableName.valueOf(args[0]);
     conf.set(TABLE_NAME, tableName.getNameAsString());
     Path inputDir = new Path(args[1]);
     Job job = Job.getInstance(conf, conf.get(JOB_NAME_CONF_KEY, NAME + "_" + tableName));
     job.setJarByClass(Importer.class);
     FileInputFormat.setInputPaths(job, inputDir);
-    job.setInputFormatClass(SequenceFileInputFormat.class);
+    // Randomize the splits to avoid hot spotting a single tablet server
+    job.setInputFormatClass(ShuffledSequenceFileInputFormat.class);
+    // Give the mappers enough work to do otherwise each split will be dominated by spinup time
+    ShuffledSequenceFileInputFormat.setMinInputSplitSize(job, 1L*1024*1024*1024);
     String hfileOutPath = conf.get(BULK_OUTPUT_CONF_KEY);
 
     // make sure we get the filter in the jars
@@ -440,7 +449,8 @@ public class Import extends Configured implements Tool {
       // No reducers.  Just write straight to table.  Call initTableReducerJob
       // because it sets up the TableOutputFormat.
       job.setMapperClass(Importer.class);
-      TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), null, job);
+      //TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), null, job);
+      TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), null, job, null, null, null, null, false);
       job.setNumReduceTasks(0);
     }
     return job;
@@ -454,6 +464,9 @@ public class Import extends Configured implements Tool {
       System.err.println("ERROR: " + errorMsg);
     }
     System.err.println("Usage: Import [options] <tablename> <inputdir>");
+    System.err.println(" Mandatory properties:");
+    System.err.println("  -D " + BigtableOptionsFactory.PROJECT_ID_KEY + "=<bigtable project id>");
+    System.err.println("  -D " + BigtableOptionsFactory.INSTANCE_ID_KEY + "=<bigtable instance id>");
     System.err
         .println(" To apply a generic org.apache.hadoop.hbase.filter.Filter to the input, use");
     System.err.println("  -D" + FILTER_CLASS_CONF_KEY + "=<name of filter class>");
@@ -478,6 +491,14 @@ public class Import extends Configured implements Tool {
     String[] otherArgs = new GenericOptionsParser(getConf(), args).getRemainingArgs();
     if (otherArgs.length < 2) {
       usage("Wrong number of arguments: " + otherArgs.length);
+      return -1;
+    }
+    if (getConf().get(BigtableOptionsFactory.PROJECT_ID_KEY) == null) {
+      usage("Must specify the property " + BigtableOptionsFactory.PROJECT_ID_KEY);
+      return -1;
+    }
+    if (getConf().get(BigtableOptionsFactory.INSTANCE_ID_KEY) == null) {
+      usage("Must specify the property" + BigtableOptionsFactory.INSTANCE_ID_KEY);
       return -1;
     }
     String inputVersionString = System.getProperty(ResultSerialization.IMPORT_FORMAT_VER);

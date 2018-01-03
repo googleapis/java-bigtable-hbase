@@ -15,13 +15,18 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.api.client.util.Strings.isNullOrEmpty;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
-import static com.google.cloud.bigtable.config.CallOptionsConfig.*;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT;
+import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
+import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
+import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
@@ -30,12 +35,11 @@ import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import io.grpc.Status;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.util.VersionInfo;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -54,11 +58,8 @@ public class BigtableOptionsFactory {
 
   /** Constant <code>BIGTABLE_PORT_KEY="google.bigtable.endpoint.port"</code> */
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
-  /** Constant <code>BIGTABLE_INSTANCE_ADMIN_HOST_KEY="google.bigtable.instance.admin.endpoint"{trunked}</code> */
-  public static final String BIGTABLE_INSTANCE_ADMIN_HOST_KEY =
-      "google.bigtable.instance.admin.endpoint.host";
-  /** Constant <code>BIGTABLE_TABLE_ADMIN_HOST_KEY="google.bigtable.admin.endpoint.host"</code> */
-  public static final String BIGTABLE_TABLE_ADMIN_HOST_KEY =
+  /** Constant <code>BIGTABLE_ADMIN_HOST_KEY="google.bigtable.admin.endpoint.host"</code> */
+  public static final String BIGTABLE_ADMIN_HOST_KEY =
       "google.bigtable.admin.endpoint.host";
   /** Constant <code>BIGTABLE_HOST_KEY="google.bigtable.endpoint.host"</code> */
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
@@ -67,10 +68,11 @@ public class BigtableOptionsFactory {
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   /** Constant <code>INSTANCE_ID_KEY="google.bigtable.instance.id"</code> */
   public static final String INSTANCE_ID_KEY = "google.bigtable.instance.id";
-  /** Constant <code>CLUSTER_KEY="google.bigtable.cluster.name"</code> */
-  public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
-  /** Constant <code>ZONE_KEY="google.bigtable.zone.name"</code> */
-  public static final String ZONE_KEY = "google.bigtable.zone.name";
+  /** Constant <code>CLUSTER_KEY="google.bigtable.snapshot.cluster.id"</code> */
+  public static final String BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY = "google.bigtable.snapshot.cluster.id";
+
+  /** Constant <code>CUSTOM_USER_AGENT_KEY="google.bigtable.custom.user.agent"</code> */
+  public static final String CUSTOM_USER_AGENT_KEY = "google.bigtable.custom.user.agent";
 
   /**
    * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
@@ -111,6 +113,12 @@ public class BigtableOptionsFactory {
       "google.bigtable.auth.json.keyfile";
 
   /**
+   * Key to set to a json security credentials string.
+   */
+  public static final String BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY =
+      "google.bigtable.auth.json.value";
+
+  /**
    * Key to set to a boolean flag indicating whether or not grpc retries should be enabled.
    * The default is to enable retries on failed idempotent operations.
    */
@@ -138,6 +146,14 @@ public class BigtableOptionsFactory {
    */
   public static final String ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY =
       "google.bigtable.grpc.retry.deadlineexceeded.enable";
+
+  /**
+   * Key to set the initial amount of time to wait for retries, given a backoff policy on errors.
+   * This flag is used only when grpc retries is enabled.
+   */
+  public static final String INITIAL_ELAPSED_BACKOFF_MILLIS_KEY =
+      "google.bigtable.grpc.retry.initial.elapsed.backoff.ms";
+
   /**
    * Key to set the maximum amount of time to wait for retries, given a backoff policy on errors.
    * This flag is used only when grpc retries is enabled.
@@ -179,6 +195,10 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_BULK_MAX_ROW_KEY_COUNT =
       "google.bigtable.bulk.max.row.key.count";
 
+  /** Constant <code>BIGTABLE_BULK_AUTOFLUSH_MS_KEY="google.bigtable.bulk.autoflush.ms"</code>*/
+  public static final String BIGTABLE_BULK_AUTOFLUSH_MS_KEY =
+      "google.bigtable.bulk.autoflush.ms";
+
   /** Constant <code>MAX_INFLIGHT_RPCS_KEY="google.bigtable.buffered.mutator.max.in"{trunked}</code> */
   public static final String MAX_INFLIGHT_RPCS_KEY =
       "google.bigtable.buffered.mutator.max.inflight.rpcs";
@@ -189,10 +209,33 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY =
       "google.bigtable.buffered.mutator.max.memory";
 
+  /**
+   * Turn on a feature that will reduce the likelihood of BufferedMutator overloading a Cloud
+   * Bigtable cluster.
+   */
+  public static final String BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING =
+      "google.bigtable.buffered.mutator.throttling.enable";
 
-  /** Constant <code>BIGTABLE_USE_PLAINTEXT_NEGOTIATION="google.bigtable.use.plaintext.negotiati"{trunked}</code> */
+  /**
+   * Tweak the throttling
+   */
+  public static final String BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS =
+      "google.bigtable.buffered.mutator.throttling.threshold.ms";
+
+
+  /**
+   * Constant
+   * <code>BIGTABLE_USE_PLAINTEXT_NEGOTIATION="google.bigtable.use.plaintext.negotiation"</code>
+   */
   public static final String BIGTABLE_USE_PLAINTEXT_NEGOTIATION =
       "google.bigtable.use.plaintext.negotiation";
+
+  /**
+   * Constant
+   * <code>BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL="google.bigtable.use.cached.data.channel.pool"</code>
+   */
+  public static final String BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL =
+      "google.bigtable.use.cached.data.channel.pool";
 
   /**
    * The number of asynchronous workers to use for buffered mutator operations.
@@ -218,6 +261,11 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY = "google.bigtable.long.rpc.timeout.ms";
 
   /**
+   * Allow namespace methods to be no-ops
+   */
+  public static final String BIGTABLE_NAMESAPCE_WARNING_KEY = "google.bigtable.namespace.warnings";
+
+  /**
    * <p>fromConfiguration.</p>
    *
    * @param configuration a {@link org.apache.hadoop.conf.Configuration} object.
@@ -230,27 +278,14 @@ public class BigtableOptionsFactory {
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
-    String zoneId = configuration.get(ZONE_KEY);
-    String clusterId = configuration.get(CLUSTER_KEY);
-    Preconditions.checkArgument((Strings.isNullOrEmpty(clusterId)) == (Strings.isNullOrEmpty(zoneId)),
-        "clusterId and zoneId must be specified as a pair.");
-    bigtableOptionsBuilder.setZoneId(zoneId);
-    bigtableOptionsBuilder.setClusterId(clusterId);
-    if (Strings.isNullOrEmpty(clusterId)) {
-      bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
-    } else {
-      bigtableOptionsBuilder.setInstanceId(configuration.get(INSTANCE_ID_KEY));
-    }
+    bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
 
     bigtableOptionsBuilder.setDataHost(
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));
 
-    bigtableOptionsBuilder.setTableAdminHost(getHost(
-      configuration, BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT,
-      "Table Admin"));
-
-    bigtableOptionsBuilder.setInstanceAdminHost(getHost(configuration,
-        BIGTABLE_INSTANCE_ADMIN_HOST_KEY, BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT, "Cluster Admin"));
+    bigtableOptionsBuilder.setAdminHost(getHost(
+      configuration, BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT,
+      "Admin"));
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
     bigtableOptionsBuilder.setPort(port);
@@ -291,7 +326,20 @@ public class BigtableOptionsFactory {
         BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
     builder.setDataChannelCount(channelCount);
 
-    builder.setUserAgent(BigtableConstants.USER_AGENT);
+    // This is primarily used by Dataflow where connections open and close often. This is a
+    // performance optimization that will reduce the cost to open connections.
+    boolean useCachedDataPool =
+        configuration.getBoolean(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, false);
+    builder.setUseCachedDataPool(useCachedDataPool);
+
+    // This information is in addition to bigtable-client-core version, and jdk version.
+    StringBuilder agentBuilder = new StringBuilder();
+    agentBuilder.append("hbase-").append(VersionInfo.getVersion());
+    String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
+    if (customUserAgent != null) {
+      agentBuilder.append(',').append(customUserAgent);
+    }
+    builder.setUserAgent(agentBuilder.toString());
   }
 
   private static void setBulkOptions(final Configuration configuration,
@@ -306,13 +354,17 @@ public class BigtableOptionsFactory {
     bulkOptionsBuilder.setBulkMaxRowKeyCount(
         configuration.getInt(
             BIGTABLE_BULK_MAX_ROW_KEY_COUNT,
-            BulkOptions.BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT));
+            BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT));
     bulkOptionsBuilder.setBulkMaxRequestSize(
         configuration.getLong(
             BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES,
-            BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT));
+            BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT));
+    bulkOptionsBuilder.setAutoflushMs(
+        configuration.getLong(
+            BIGTABLE_BULK_AUTOFLUSH_MS_KEY,
+            BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT));
 
-    int defaultRpcCount = BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
+    int defaultRpcCount = BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
         * bigtableOptionsBuilder.getDataChannelCount();
     int maxInflightRpcs = configuration.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
     bulkOptionsBuilder.setMaxInflightRpcs(maxInflightRpcs);
@@ -321,6 +373,14 @@ public class BigtableOptionsFactory {
         BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
         BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT);
     bulkOptionsBuilder.setMaxMemory(maxMemory);
+
+    if (configuration.getBoolean(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING,
+      BulkOptions.BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT)) {
+      bulkOptionsBuilder.enableBulkMutationThrottling();
+      bulkOptionsBuilder.setBulkMutationRpcTargetMs(
+        configuration.getInt(BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+          BulkOptions.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT));
+    }
 
     bigtableOptionsBuilder.setBulkOptions(bulkOptionsBuilder.build());
   }
@@ -331,12 +391,18 @@ public class BigtableOptionsFactory {
         BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
       LOG.debug("Using service accounts");
 
-      if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY) != null) {
+      if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY) != null) {
+        String jsonValue = configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY);
+        LOG.debug("Using json value");
+        builder.setCredentialOptions(
+          CredentialOptions.jsonCredentials(jsonValue));
+      } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY) != null) {
         String keyfileLocation =
             configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
         LOG.debug("Using json keyfile: %s", keyfileLocation);
-        builder.setCredentialOptions(CredentialOptions.jsonCredentials(new FileInputStream(
-            keyfileLocation)));
+        builder.setCredentialOptions(
+          CredentialOptions.jsonCredentials(
+            new FileInputStream(keyfileLocation)));
       } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY) != null) {
         String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
         LOG.debug("Service account %s specified.", serviceAccount);
@@ -345,11 +411,12 @@ public class BigtableOptionsFactory {
         Preconditions.checkState(!isNullOrEmpty(keyfileLocation),
           "Key file location must be specified when setting service account email");
         LOG.debug("Using p12 keyfile: %s", keyfileLocation);
-        builder.setCredentialOptions(CredentialOptions.p12Credential(serviceAccount,
-          keyfileLocation));
+        builder.setCredentialOptions(
+          CredentialOptions.p12Credential(serviceAccount,  keyfileLocation));
       } else {
         LOG.debug("Using default credentials.");
-        builder.setCredentialOptions(CredentialOptions.defaultCredentials());
+        builder.setCredentialOptions(
+          CredentialOptions.defaultCredentials());
       }
     } else if (configuration.getBoolean(
         BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT)) {
@@ -367,17 +434,10 @@ public class BigtableOptionsFactory {
 
     clientCallOptionsBuilder
         .setUseTimeout(configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT));
-    if (configuration.get(BIGTABLE_RPC_TIMEOUT_MS_KEY) != null) {
-      clientCallOptionsBuilder.setShortRpcTimeoutMs(
-        configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, SHORT_TIMEOUT_MS_DEFAULT));
-    } else {
-      clientCallOptionsBuilder.setShortRpcTimeoutMs(
-        configuration.getInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT, SHORT_TIMEOUT_MS_DEFAULT));
-    }
-
+    clientCallOptionsBuilder.setShortRpcTimeoutMs(
+      configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, SHORT_TIMEOUT_MS_DEFAULT));
     clientCallOptionsBuilder.setLongRpcTimeoutMs(
-      configuration.getInt(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, LONG_TIMEOUT_MS_DEFAULT));
-
+      configuration.getInt(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY, LONG_TIMEOUT_MS_DEFAULT));
     bigtableOptionsBuilder.setCallOptionsConfig(clientCallOptionsBuilder.build());
   }
 
@@ -410,6 +470,12 @@ public class BigtableOptionsFactory {
         configuration.getBoolean(ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, true);
     LOG.debug("gRPC retry on deadline exceeded enabled: %s", retryOnDeadlineExceeded);
     retryOptionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
+
+    int initialElapsedBackoffMillis = configuration.getInt(
+      INITIAL_ELAPSED_BACKOFF_MILLIS_KEY,
+      RetryOptions.DEFAULT_INITIAL_BACKOFF_MILLIS);
+    LOG.debug("gRPC retry initialElapsedBackoffMillis: %d", initialElapsedBackoffMillis);
+    retryOptionsBuilder.setInitialBackoffMillis(initialElapsedBackoffMillis);
 
     int maxElapsedBackoffMillis = configuration.getInt(
         MAX_ELAPSED_BACKOFF_MILLIS_KEY,

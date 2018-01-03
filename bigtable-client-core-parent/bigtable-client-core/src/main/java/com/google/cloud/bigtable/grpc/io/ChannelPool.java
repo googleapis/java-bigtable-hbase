@@ -16,12 +16,9 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
@@ -38,6 +35,7 @@ import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
+import io.grpc.Metadata.Key;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
@@ -52,9 +50,13 @@ public class ChannelPool extends ManagedChannel {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(ChannelPool.class);
 
-  private static final AtomicInteger ChannelIdGenerator = new AtomicInteger();
+  /** Constant <code>CHANNEL_ID_KEY</code> */
+  private static final Key<String> CHANNEL_ID_KEY =
+      Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
 
-  protected static Stats STATS;
+  public static final String extractIdentifier(Metadata trailers) {
+    return trailers != null ? trailers.get(ChannelPool.CHANNEL_ID_KEY) : "";
+  }
 
   /**
    * A factory for creating ManagedChannels to be used in a {@link ChannelPool}.
@@ -65,6 +67,10 @@ public class ChannelPool extends ManagedChannel {
   public interface ChannelFactory {
     ManagedChannel create() throws IOException;
   }
+
+  private static final AtomicInteger ChannelIdGenerator = new AtomicInteger();
+
+  protected static Stats STATS;
 
   private static class Stats {
     /**
@@ -103,11 +109,13 @@ public class ChannelPool extends ManagedChannel {
     private final Timer timer;
 
     private final AtomicBoolean active = new AtomicBoolean(true);
+    private final int channelId;
 
     public InstrumentedChannel(ManagedChannel channel) {
       this.delegate = channel;
+      this.channelId = ChannelIdGenerator.incrementAndGet();
       this.timer = BigtableClientMetrics.timer(MetricLevel.Trace,
-        "channels.channel" + ChannelIdGenerator.incrementAndGet() + ".rpc.latency");
+        "channels.channel" + channelId + ".rpc.latency");
       getStats().ACTIVE_CHANNEL_COUNTER.inc();
     }
 
@@ -155,9 +163,6 @@ public class ChannelPool extends ManagedChannel {
         @Override
         protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
             throws Exception {
-          for (HeaderInterceptor interceptor : headerInterceptors) {
-            interceptor.updateHeaders(headers);
-          }
           ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext, decremented);
           getStats().ACTIVE_RPC_COUNTER.inc();
           getStats().RPC_METER.mark();
@@ -191,6 +196,10 @@ public class ChannelPool extends ManagedChannel {
         @Override
         public void onClose(Status status, Metadata trailers) {
           try {
+            if (trailers != null) {
+              // Be extra defensive since this is only used for logging
+              trailers.put(CHANNEL_ID_KEY, Integer.toString(channelId));
+            }
             if (!decremented.getAndSet(true)) {
               getStats().ACTIVE_RPC_COUNTER.dec();
             }
@@ -217,70 +226,39 @@ public class ChannelPool extends ManagedChannel {
     }
   }
 
-  private final AtomicReference<ImmutableList<InstrumentedChannel>> channels = new AtomicReference<>();
+  private final ImmutableList<ManagedChannel> channels;
   private final AtomicInteger requestCount = new AtomicInteger();
-  private final ImmutableList<HeaderInterceptor> headerInterceptors;
-  private final ChannelFactory factory;
   private final String authority;
 
   private boolean shutdown = false;
 
+
   /**
    * <p>Constructor for ChannelPool.</p>
    *
-   * @param headerInterceptors a {@link java.util.List} object.
    * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
    * @throws java.io.IOException if any.
    */
-  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
-      throws IOException {
-    this.factory = factory;
-    InstrumentedChannel channel = new InstrumentedChannel(factory.create());
-    this.channels.set(ImmutableList.of(channel));
-    authority = channel.authority();
-    if (headerInterceptors == null) {
-      this.headerInterceptors = ImmutableList.of();
-    } else {
-      this.headerInterceptors = ImmutableList.copyOf(headerInterceptors);
+  public ChannelPool(ChannelFactory factory, int count) throws IOException {
+    Preconditions.checkArgument(count > 0, "Channel count has to be a positive number.");
+    ImmutableList.Builder<ManagedChannel> channeListBuilder = ImmutableList.builder();
+    for (int i = 0; i < count; i++) {
+      channeListBuilder.add(new InstrumentedChannel(factory.create()));
     }
+    this.channels = channeListBuilder.build();
+    authority = channels.get(0).authority();
   }
 
   /**
-   * Makes sure that the number of channels is at least as big as the specified capacity.  This
-   * method is only synchronized when the pool has to be expanded.
-   *
-   * @param capacity The minimum number of channels required for the RPCs of the ChannelPool's
-   * clients.
-   * @throws java.io.IOException if any.
-   */
-  public void ensureChannelCount(int capacity) throws IOException {
-    if (this.shutdown) {
-      throw new IOException("The channel is closed.");
-    }
-    if (channels.get().size() < capacity) {
-      synchronized (this) {
-        if (channels.get().size() < capacity) {
-          List<InstrumentedChannel> newChannelList = new ArrayList<>(channels.get());
-          while(newChannelList.size() < capacity) {
-            newChannelList.add(new InstrumentedChannel(factory.create()));
-          }
-          setChannels(newChannelList);
-        }
-      }
-    }
-  }
-
-  /**
-   * Performs a simple round robin on the list of {@link InstrumentedChannel}s in the {@code channels}
+   * Performs a simple round robin on the list of {@link ManagedChannel}s in the {@code channels}
    * list. This method should not be synchronized, if possible, to reduce bottlenecks.
    *
-   * @return A {@link InstrumentedChannel} that can be used for a single RPC call.
+   * @return A {@link ManagedChannel} that can be used for a single RPC call.
    */
-  private InstrumentedChannel getNextChannel() {
+  private ManagedChannel getNextChannel() {
     int currentRequestNum = requestCount.getAndIncrement();
-    ImmutableList<InstrumentedChannel> channelsList = channels.get();
-    int index = Math.abs(currentRequestNum % channelsList.size());
-    return channelsList.get(index);
+    int index = Math.abs(currentRequestNum % channels.size());
+    return channels.get(index);
   }
 
   /** {@inheritDoc} */
@@ -305,28 +283,18 @@ public class ChannelPool extends ManagedChannel {
   }
 
   /**
-   * Sets the values in newChannelList to the {@code channels} AtomicReference.  The values are
-   * copied into an {@link ImmutableList}.
-   *
-   * @param newChannelList A {@link List} of {@link ManagedChannel}s to set to the {@code channels}
-   */
-  private void setChannels(List<InstrumentedChannel> newChannelList) {
-    channels.set(ImmutableList.copyOf(newChannelList));
-  }
-
-  /**
    * <p>size.</p>
    *
    * @return a int.
    */
   public int size() {
-    return channels.get().size();
+    return channels.size();
   }
 
   /** {@inheritDoc} */
   @Override
   public synchronized ManagedChannel shutdown() {
-    for (InstrumentedChannel channelWrapper : channels.get()) {
+    for (ManagedChannel channelWrapper : channels) {
       channelWrapper.shutdown();
     }
     this.shutdown = true;
@@ -342,7 +310,7 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public boolean isTerminated() {
-    for (InstrumentedChannel channel : channels.get()) {
+    for (ManagedChannel channel : channels) {
       if (!channel.isTerminated()) {
         return false;
       }
@@ -353,7 +321,7 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public ManagedChannel shutdownNow() {
-    for (InstrumentedChannel channel : channels.get()) {
+    for (ManagedChannel channel : channels) {
       if (!channel.isTerminated()) {
         channel.shutdownNow();
       }
@@ -365,7 +333,7 @@ public class ChannelPool extends ManagedChannel {
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long endTimeNanos = System.nanoTime() + unit.toNanos(timeout);
-    for (InstrumentedChannel channel : channels.get()) {
+    for (ManagedChannel channel : channels) {
       if (channel.isTerminated()) {
         continue;
       }

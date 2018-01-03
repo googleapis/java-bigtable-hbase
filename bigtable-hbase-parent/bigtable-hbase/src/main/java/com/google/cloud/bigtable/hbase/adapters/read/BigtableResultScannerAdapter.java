@@ -15,8 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.api.client.util.Throwables;
-import com.google.bigtable.v2.Row;
+import com.google.common.base.Throwables;
+
+import io.opencensus.trace.Span;
+import io.opencensus.trace.Tracing;
+
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
@@ -31,35 +34,44 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class BigtableResultScannerAdapter {
+public class BigtableResultScannerAdapter<T> {
 
-  final ResponseAdapter<Row, Result> rowAdapter;
+  final ResponseAdapter<T, Result> rowAdapter;
 
   /**
    * <p>Constructor for BigtableResultScannerAdapter.</p>
    *
    * @param rowAdapter a {@link com.google.cloud.bigtable.hbase.adapters.ResponseAdapter} object.
    */
-  public BigtableResultScannerAdapter(ResponseAdapter<Row, Result> rowAdapter) {
+  public BigtableResultScannerAdapter(ResponseAdapter<T, Result> rowAdapter) {
     this.rowAdapter = rowAdapter;
   }
 
   /**
-   * <p>adapt.</p>
-   *
-   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
+   * <p>
+   * adapt.
+   * </p>
+   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
+   *          object.
+   * @param span A parent {@link Span} for the scan that needs to be closed when the scanning is
+   *          complete. The span has an HBase specific tag, which needs to be handled by the
+   *          adapter.
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(
-      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<Row> bigtableResultScanner) {
+      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<T> bigtableResultScanner,
+      final Span span) {
     return new AbstractClientScanner() {
+      int rowCount = 0;
       @Override
       public Result next() throws IOException {
-        Row row = bigtableResultScanner.next();
+        T row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
+          closeSpan();
           return null;
         }
+        rowCount++;
         return rowAdapter.adaptResponse(row);
       }
 
@@ -69,12 +81,24 @@ public class BigtableResultScannerAdapter {
           bigtableResultScanner.close();
         } catch (IOException ioe) {
           throw Throwables.propagate(ioe);
+        } finally {
+          closeSpan();
         }
       }
 
+      protected void closeSpan() {
+        try (AutoCloseable c = Tracing.getTracer().withSpan(span)) {
+          span.end();
+        } catch (Exception e) {
+          // ignore. withSpan() returns a Closable which can throw exceptions, but no exceptions
+          // will actually be thrown
+        }
+      }
+
+
       /**
-       * This is an HBase concept that was added in hbase 1.0.2.  It's not relevent for Cloud
-       * Bigtable.  It will not be called from the hbase code and should not be called by the user.
+       * This is an HBase concept that was added in HBase 1.0.2.  It's not relevant for Cloud
+       * Bigtable.  It will not be called from the HBase code and should not be called by the user.
        */
       // Developers Note: Do not add @Override so that this can remain backwards compatible with
       // 1.0.1.

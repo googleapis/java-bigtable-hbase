@@ -15,6 +15,7 @@
  */
  package com.google.cloud.bigtable.dataflow;
 
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,30 +47,25 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.bigtable.repackaged.com.google.cloud.config.Logger;
-import com.google.bigtable.repackaged.com.google.cloud.hbase1_0.BigtableConnection;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.DoFnTester;
+import com.google.cloud.dataflow.sdk.values.KV;
 
 public class CloudBigtableIOIntegrationTest {
-  private static final String BIGTABLE_PROJECT_KEY = "google.bigtable.project.id";
-  private static final String BIGTABLE_INSTANCE_KEY = "google.bigtable.instance.id";
-  private static final String BIGTABLE_CLUSTER_KEY = "google.bigtable.cluster.name";
-  private static final String BIGTABLE_ZONE_KEY = "google.bigtable.zone.name";
 
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final byte[] QUALIFIER1 = Bytes.toBytes("qualifier1");
 
   private static final Logger LOG = new Logger(CloudBigtableIOIntegrationTest.class);
 
-  private static String projectId = System.getProperty(BIGTABLE_PROJECT_KEY);
-  private static String instanceId = System.getProperty(BIGTABLE_INSTANCE_KEY);
-  private static String clusterId = System.getProperty(BIGTABLE_CLUSTER_KEY);
-  private static String zoneId = System.getProperty(BIGTABLE_ZONE_KEY);
+  private static String projectId = System.getProperty(PROJECT_ID_KEY);
+  private static String instanceId = System.getProperty(INSTANCE_ID_KEY);
 
   private static int LARGE_VALUE_SIZE = 201326;
 
@@ -91,22 +87,13 @@ public class CloudBigtableIOIntegrationTest {
   private static CloudBigtableConfiguration config;
 
   @BeforeClass
-  public static void setup() throws IOException {
-    if (instanceId != null) {
-      config =
-          new CloudBigtableConfiguration.Builder()
-              .withProjectId(projectId)
-              .withInstanceId(instanceId)
-              .build();
-    } else {
-      config =
-          new CloudBigtableConfiguration.Builder()
-              .withProjectId(projectId)
-              .withClusterId(clusterId)
-              .withZoneId(zoneId)
-              .build();
-    }
-    connection = new BigtableConnection(config.toHBaseConfig());
+  public static void setup() {
+    config =
+        new CloudBigtableConfiguration.Builder()
+            .withProjectId(projectId)
+            .withInstanceId(instanceId)
+            .build();
+    connection = BigtableConfiguration.connect(config.toHBaseConfig());
   }
 
   @AfterClass
@@ -158,6 +145,42 @@ public class CloudBigtableIOIntegrationTest {
         admin.deleteTable(tableName);
       }
     }
+  }
+
+  @Test
+  public void testWriteToTable_multiTablewrites() throws Exception {
+    final int INSERT_COUNT_PER_TABLE = 50;
+    int BATCH_SIZE = INSERT_COUNT_PER_TABLE / 2;
+    try (Admin admin = connection.getAdmin()) {
+      TableName tableName1 = createNewTable(admin);
+      TableName tableName2 = createNewTable(admin);
+      DoFn<KV<String, Iterable<Mutation>>, Void> writer =
+          new CloudBigtableIO.CloudBigtableMultiTableWriteFn(config);
+
+      try {
+        DoFnTester<KV<String, Iterable<Mutation>>, Void> tester = DoFnTester.of(writer);
+        tester.processBatch(
+          createKV(tableName1, 0, BATCH_SIZE),
+          createKV(tableName2, 0, BATCH_SIZE),
+          createKV(tableName1, BATCH_SIZE, BATCH_SIZE),
+          createKV(tableName2, BATCH_SIZE, BATCH_SIZE));
+        checkTableRowCount(tableName1, INSERT_COUNT_PER_TABLE);
+        checkTableRowCount(tableName2, INSERT_COUNT_PER_TABLE);
+      } finally {
+        admin.deleteTable(tableName1);
+        admin.deleteTable(tableName2);
+      }
+    }
+  }
+
+  protected KV<String, Iterable<Mutation>> createKV(TableName tableName, int start_count, int insertCount) {
+    List<Mutation> mutations = new ArrayList<>();
+    for (int i = 0; i < insertCount; i++) {
+      byte[] row = Bytes.toBytes("row_" + (i + start_count));
+      mutations.add(new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER1,
+        Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8))));
+    }
+    return KV.<String, Iterable<Mutation>> of(tableName.getNameAsString(), mutations);
   }
 
   private void writeThroughDataflow(DoFn<Mutation, Void> writer, int insertCount) throws Exception {

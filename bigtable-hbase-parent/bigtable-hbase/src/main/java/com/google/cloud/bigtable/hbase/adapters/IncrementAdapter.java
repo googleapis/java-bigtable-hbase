@@ -59,7 +59,7 @@ public class IncrementAdapter
           CellDeduplicationHelper.deduplicateFamily(operation, familyEntry.getKey());
 
       for (Cell cell : mutationCells){
-        ReadModifyWriteRule.Builder rule = result.addRulesBuilder();
+        ReadModifyWriteRule.Builder rule = ReadModifyWriteRule.newBuilder();
         rule.setIncrementAmount(
             Bytes.toLong(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength()));
         rule.setFamilyName(familyName);
@@ -68,6 +68,7 @@ public class IncrementAdapter
                 cell.getQualifierArray(),
                 cell.getQualifierOffset(),
                 cell.getQualifierLength()));
+        result.addRules(rule.build());
       }
     }
     return result;

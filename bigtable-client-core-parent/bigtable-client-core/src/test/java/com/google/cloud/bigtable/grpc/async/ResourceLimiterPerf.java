@@ -56,7 +56,8 @@ public class ResourceLimiterPerf {
    */
   private static void test(ListeningExecutorService pool)
       throws InterruptedException, ExecutionException, TimeoutException {
-    final ResourceLimiter underTest = new ResourceLimiter(SIZE, (int) SIZE);
+    final ResourceLimiter underTest =
+        new ResourceLimiter(new ResourceLimiterStats(), SIZE, (int) SIZE);
     final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
 
     final int readerCount = 20;
@@ -72,6 +73,7 @@ public class ResourceLimiterPerf {
                 registeredEvents.offer(underTest.registerOperationWithHeapSize(1));
               }
             } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
               e.printStackTrace();
               throw new RuntimeException(e);
             } finally {
@@ -102,6 +104,7 @@ public class ResourceLimiterPerf {
                 }
               }
             } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
               throw new RuntimeException(e);
             } finally {
               long totalTime = System.nanoTime() - startComplete;

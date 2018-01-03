@@ -42,6 +42,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -49,6 +51,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -102,6 +105,9 @@ import javax.annotation.Nullable;
  */
 public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   private static final long serialVersionUID = 0L;
+  private static final Logger SOURCE_LOG = LoggerFactory.getLogger(HadoopFileSource.class);
+
+  private static final long MIN_BUNDLE_SIZE_BYTES = 100 * (1 << 20);
 
   // Work-around to suppress confusing warning and stack traces by gcs-connector.
   // See setIsRemoteFileFromLaunchSite() for more information. This variable
@@ -148,8 +154,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    */
   public static <K, V, T extends FileInputFormat<K, V>> HadoopFileSource<K, V> from(
       String filepattern, Class<T> formatClass, Class<K> keyClass, Class<V> valueClass) {
-    return (HadoopFileSource<K, V>)
-        new HadoopFileSource<K, V>(filepattern, formatClass, keyClass, valueClass);
+    return new HadoopFileSource<K, V>(filepattern, formatClass, keyClass, valueClass);
   }
 
   /**
@@ -238,7 +243,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    *
    * @return a {@link java.lang.Class} object.
    */
-  public Class<? extends FileInputFormat<?, ?>> getFormatClass() {
+  public Class<? extends FileInputFormat<K, V>> getFormatClass() {
     return formatClass;
   }
 
@@ -278,7 +283,24 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   public List<? extends BoundedSource<KV<K, V>>> splitIntoBundles(long desiredBundleSizeBytes,
       PipelineOptions options) throws Exception {
     if (serializableSplit == null) {
-      return Lists.transform(computeSplits(desiredBundleSizeBytes),
+      // Dataflow can send a really small number desiredBundleSizeBytes, as low as 1. 100 MB chunks
+      // seem to be a good floor.
+      long bundleSizeBytes = Math.max(desiredBundleSizeBytes, MIN_BUNDLE_SIZE_BYTES);
+
+      // Each file in the path described by the filePattern is broken down into splits reflecting
+      // the desiredBundleSizeBytes.  The list will be ordered by filename and starting location
+      List<InputSplit> splits = computeSplits(bundleSizeBytes);
+      SOURCE_LOG.info("Got " + splits.size() + " splits.");
+
+      // Randomize the order of the splits. This improves Bigtable performance, since splits will
+      // reach different nodes. Without this shuffle, the splits will likely hit very few nodes
+      // since the splits have contiguous row ranges.
+      //
+      // With the shuffle, the ranges across the splits will be disjointed. Each split will now have
+      // a higher likelihood of reaching a different node than its neighbors.
+      Collections.shuffle(splits);
+
+      return Lists.transform(splits,
           new Function<InputSplit, BoundedSource<KV<K, V>>>() {
         @Nullable @Override
         public BoundedSource<KV<K, V>> apply(@Nullable InputSplit inputSplit) {
@@ -361,28 +383,34 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     if (isRemoteFileFromLaunchSite) {
       return 0;
     }
-    long size = 0;
+
     try {
+      if (serializableSplit != null) {
+        return serializableSplit.getSplit().getLength();
+      }
       Job job = Job.getInstance(getDeserializerConfiguration()); // new instance
+      long size = 0;
       for (FileStatus st : listStatus(createFormat(job), job)) {
         size += st.getLen();
       }
+      return size;
     } catch (IOException | NoSuchMethodException | InvocationTargetException
-        | IllegalAccessException | InstantiationException e) {
+        | IllegalAccessException | InstantiationException | InterruptedException e) {
       // ignore, and return 0
+      SOURCE_LOG.error("Got exception while trying to getEstimatedSizeBytes().", e);
+      return 0;
     }
-    return size;
+
   }
 
+  @SuppressWarnings("unchecked")
   private List<FileStatus> listStatus(FileInputFormat<K, V> format,
       JobContext jobContext) throws NoSuchMethodException, InvocationTargetException,
       IllegalAccessException {
     // FileInputFormat#listStatus is protected, so call using reflection
     Method listStatus = FileInputFormat.class.getDeclaredMethod("listStatus", JobContext.class);
     listStatus.setAccessible(true);
-    @SuppressWarnings("unchecked")
-    List<FileStatus> stat = (List<FileStatus>) listStatus.invoke(format, jobContext);
-    return stat;
+    return (List<FileStatus>) listStatus.invoke(format, jobContext);
   }
 
   /** {@inheritDoc} */
@@ -395,22 +423,23 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
 
     private final BoundedSource<KV<K, V>> source;
     private final String filepattern;
-    private final Class<? extends FileInputFormat<?, ?>> formatClass;
+    private final Class<? extends FileInputFormat<K, V>> formatClass;
     private final Map<String, String> serializationProperties;
 
-    private FileInputFormat<?, ?> format;
+    private FileInputFormat<K, V> format;
     private TaskAttemptContext attemptContext;
     private List<InputSplit> splits;
     private ListIterator<InputSplit> splitsIterator;
     private Configuration conf;
     private RecordReader<K, V> currentReader;
     private KV<K, V> currentPair;
+    private volatile boolean done = false;
 
     /**
      * Create a {@code HadoopFileReader} based on a file or a file pattern specification.
      */
     public HadoopFileReader(BoundedSource<KV<K, V>> source, String filepattern,
-        Class<? extends FileInputFormat<?, ?>> formatClass,
+        Class<? extends FileInputFormat<K, V>> formatClass,
         Map<String, String> serializationProperties) {
       this(source, filepattern, formatClass, null, serializationProperties);
     }
@@ -419,7 +448,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
      * Create a {@code HadoopFileReader} based on a single Hadoop input split.
      */
     public HadoopFileReader(BoundedSource<KV<K, V>> source, String filepattern,
-        Class<? extends FileInputFormat<?, ?>> formatClass, InputSplit split,
+        Class<? extends FileInputFormat<K, V>> formatClass, InputSplit split,
         Map<String, String> serializationProperties) {
       this.source = source;
       this.filepattern = filepattern;
@@ -429,7 +458,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
         this.splitsIterator = splits.listIterator();
       }
       this.serializationProperties = serializationProperties == null
-          ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(serializationProperties);
+          ? ImmutableMap.<String, String> of() : ImmutableMap.copyOf(serializationProperties);
     }
 
     @Override
@@ -439,14 +468,11 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       FileInputFormat.addInputPath(job, path);
 
       try {
-        @SuppressWarnings("unchecked")
-        FileInputFormat<K, V> f = (FileInputFormat<K, V>) formatClass.newInstance();
-        this.format = f;
+        this.format = formatClass.newInstance();
       } catch (InstantiationException | IllegalAccessException e) {
         throw new IOException("Cannot instantiate file input format " + formatClass, e);
       }
-      this.attemptContext = new TaskAttemptContextImpl(job.getConfiguration(),
-          new TaskAttemptID());
+      this.attemptContext = new TaskAttemptContextImpl(job.getConfiguration(), new TaskAttemptID());
 
       if (splitsIterator == null) {
         this.splits = format.getSplits(job);
@@ -466,9 +492,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
           while (splitsIterator.hasNext()) {
             // advance the reader and see if it has records
             InputSplit nextSplit = splitsIterator.next();
-            @SuppressWarnings("unchecked")
-            RecordReader<K, V> reader =
-                (RecordReader<K, V>) format.createRecordReader(nextSplit, attemptContext);
+            RecordReader<K, V> reader = format.createRecordReader(nextSplit, attemptContext);
             if (currentReader != null) {
               currentReader.close();
             }
@@ -483,6 +507,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
           }
           // either no next split or all readers were empty
           currentPair = null;
+          done = true;
           return false;
         }
       } catch (InterruptedException e) {
@@ -496,18 +521,18 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       return getHadoopConfigWithOverrides(serializationProperties);
     }
 
-    @SuppressWarnings("unchecked")
     private KV<K, V> nextPair() throws IOException, InterruptedException {
-      K key = currentReader.getCurrentKey();
-      V value = currentReader.getCurrentValue();
-      // clone Writable objects since they are reused between calls to RecordReader#nextKeyValue
-      if (key instanceof Writable) {
-        key = (K) WritableUtils.clone((Writable) key, conf);
-      }
+      return KV.of(
+        cloneIfWritable(currentReader.getCurrentKey()),
+        cloneIfWritable(currentReader.getCurrentValue()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T cloneIfWritable(T value) {
       if (value instanceof Writable) {
-        value = (V) WritableUtils.clone((Writable) value, conf);
+        return (T) WritableUtils.clone((Writable) value, conf);
       }
-      return KV.of(key, value);
+      return value;
     }
 
     @Override
@@ -560,8 +585,16 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       try {
         return (double) currentReader.getProgress();
       } catch (IOException | InterruptedException e) {
+        SOURCE_LOG.error("Problem with HadoopFileSource.getProcess()", e);
         return null;
       }
+    }
+
+    @Override
+    public final long getSplitPointsRemaining() {
+      // This source does not currently support dynamic work rebalancing, so remaining
+      // parallelism is always 1.
+      return done ? 0 : 1;
     }
 
     @Override
@@ -583,8 +616,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
 
     private InputSplit split;
 
-    public SerializableSplit() {
-    }
+    public SerializableSplit() {}
 
     public SerializableSplit(InputSplit split) {
       Preconditions.checkArgument(split instanceof Writable, "Split is not writable: "
@@ -613,6 +645,4 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       }
     }
   }
-
-
 }

@@ -20,9 +20,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 
@@ -40,14 +40,15 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
   }
 
   @Override
-  public Result decode(InputStream inputStream, Coder.Context context)
-      throws IOException {
-    return Adapters.ROW_ADAPTER.adaptResponse(Row.parseDelimitedFrom(inputStream));
+  public Result decode(InputStream inputStream, Coder.Context context) throws IOException {
+    ClientProtos.Result protoResult = ClientProtos.Result.parseDelimitedFrom(inputStream);
+    return ProtobufUtil.toResult(protoResult);
   }
 
   @Override
   public void encode(Result value, OutputStream outputStream, Coder.Context context)
       throws IOException {
-    Adapters.ROW_ADAPTER.adaptToRow(value).writeDelimitedTo(outputStream);
+    ClientProtos.Result protoResult = ProtobufUtil.toResult(value);
+    protoResult.writeDelimitedTo(outputStream);
   }
 }

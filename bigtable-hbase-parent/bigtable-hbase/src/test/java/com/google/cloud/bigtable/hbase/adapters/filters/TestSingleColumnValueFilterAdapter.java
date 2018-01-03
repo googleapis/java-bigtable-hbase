@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.bigtable.v2.ValueRange;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -123,8 +124,10 @@ public class TestSingleColumnValueFilterAdapter  {
 
     Assert.assertEquals(
         RowFilter.newBuilder()
-            .setValueRegexFilter(ByteString.copyFromUtf8("foobar"))
-            .build(),
+        .setValueRangeFilter(ValueRange.newBuilder()
+            .setStartValueClosed(ByteString.copyFromUtf8("foobar"))
+            .setEndValueClosed(ByteString.copyFromUtf8("foobar")))
+        .build(),
         adaptedFilter
             .getCondition()
             .getPredicateFilter()
@@ -204,7 +207,9 @@ public class TestSingleColumnValueFilterAdapter  {
     // Assert that the condition includes a value filter:
     Assert.assertEquals(
         RowFilter.newBuilder()
-            .setValueRegexFilter(ByteString.copyFrom(value))
+            .setValueRangeFilter(ValueRange.newBuilder()
+                .setStartValueClosed(ByteString.copyFrom(value))
+                .setEndValueClosed(ByteString.copyFrom(value)))
             .build(),
         cellExistsBranch
             .getCondition()

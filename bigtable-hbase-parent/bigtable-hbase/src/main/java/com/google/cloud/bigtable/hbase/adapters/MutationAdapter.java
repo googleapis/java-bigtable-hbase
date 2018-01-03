@@ -15,78 +15,55 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v2.MutateRowRequest;
-
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Increment;
+import java.util.Collection;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Mutation;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Row;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowsRequest;
+import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.protobuf.ByteString;
 
 /**
- * Adapt a generic Mutation to a bigtable operation.
- *
- * This class uses instanceof checking to determine an appropriate adaptation to apply.
+ * Adapt an HBase {@link Mutation} Operation into a Google Cloud Bigtable {@link
+ * com.google.bigtable.v2.MutateRowRequest.Builder} or {@link
+ * com.google.bigtable.v2.MutateRowsRequest.Entry}.
  *
  * @author sduskis
  * @version $Id: $Id
  */
-public class MutationAdapter
-    implements OperationAdapter<Mutation, MutateRowRequest.Builder> {
+public abstract class MutationAdapter<T extends Row>
+    implements OperationAdapter<T, MutateRowRequest.Builder> {
 
-  static class AdapterInstanceMap {
-    private Map<Class<?>, OperationAdapter<?, ?>> unsafeMap =
-        new HashMap<Class<?>, OperationAdapter<?, ?>>();
-
-    public <S extends Mutation, U extends OperationAdapter<S, MutateRowRequest.Builder>>
-    Class<S> put(Class<S> key, U adapter) {
-      unsafeMap.put(key, adapter);
-      return key;
-    }
-
-    // The only way to add to the unsafeMap is via put which enforces our type constraints at
-    // compile-time. The unchecked cast should be safe.
-    @SuppressWarnings("unchecked")
-    public <S extends Mutation, U extends OperationAdapter<S, MutateRowRequest.Builder>>
-    U get(Class<? extends S> key) {
-      return (U) unsafeMap.get(key);
-    }
-  }
-
-  private final AdapterInstanceMap adapterMap = new AdapterInstanceMap();
-
-  /**
-   * <p>Constructor for MutationAdapter.</p>
-   *
-   * @param deleteAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
-   * @param putAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
-   * @param incrementAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
-   * @param appendAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
-   */
-  public MutationAdapter(
-      OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
-      OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
-      OperationAdapter<Increment, MutateRowRequest.Builder> incrementAdapter,
-      OperationAdapter<Append, MutateRowRequest.Builder> appendAdapter) {
-    adapterMap.put(Delete.class, deleteAdapter);
-    adapterMap.put(Put.class, putAdapter);
-    adapterMap.put(Increment.class, incrementAdapter);
-    adapterMap.put(Append.class, appendAdapter);
+  protected static byte[] getBytes(ByteString bs) {
+    return ByteStringer.extract(bs);
   }
 
   /** {@inheritDoc} */
   @Override
-  public MutateRowRequest.Builder adapt(Mutation mutation) {
-    OperationAdapter<Mutation, MutateRowRequest.Builder> adapter =
-        adapterMap.get(mutation.getClass());
-    if (adapter == null) {
-      throw new UnsupportedOperationException(
-          String.format(
-              "Cannot adapt mutation of type %s.", mutation.getClass().getCanonicalName()));
-    }
-    return adapter.adapt(mutation);
+  public final MutateRowRequest.Builder adapt(T operation) {
+    return MutateRowRequest.newBuilder()
+        .setRowKey(ByteString.copyFrom(operation.getRow()))
+        .addAllMutations(adaptMutations(operation));
   }
+
+  public final MutateRowsRequest.Entry toEntry(T operation) {
+    return MutateRowsRequest.Entry.newBuilder()
+        .setRowKey(ByteString.copyFrom(operation.getRow()))
+        .addAllMutations(adaptMutations(operation)).build();
+  }
+
+  /**
+   * Converts an HBase {@link Mutation} which represents a set of changes to a single row from an
+   * HBase perspective to a collection of Cloud Bigtable {@link com.google.bigtable.v2.Mutation}
+   * which represent the set of changes. The name "Mutation" represents a more granular change in
+   * Bigtable than an HBase "Mutation"; An HBase {@link Cell} is akin to a Cloud Bigtable {@link
+   * com.google.bigtable.v2.Mutation}. A CloudBigtable {@link MutateRowRequest} or {@link
+   * com.google.bigtable.v2.MutateRowsRequest.Entry} is akin to an HBase {@link Mutation}.
+   *
+   * @param operation The HBase {@link Mutation} to convert
+   * @return a {@link Collection} of Cloud Bigtable {@link Mutation}
+   */
+  protected abstract Collection<com.google.bigtable.v2.Mutation> adaptMutations(T operation);
 }

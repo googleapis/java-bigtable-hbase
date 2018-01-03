@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.hbase.client.Delete;
@@ -44,7 +43,7 @@ public class TestDeleteAdapter {
   protected DataGenerationHelper randomHelper = new DataGenerationHelper();
 
   @Test
-  public void testFullRowDelete() throws IOException {
+  public void testFullRowDelete() {
     byte[] rowKey = randomHelper.randomData("rk1-");
     Delete delete = new Delete(rowKey);
     MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
@@ -71,7 +70,7 @@ public class TestDeleteAdapter {
   }
 
   @Test
-  public void testColumnFamilyDelete() throws IOException {
+  public void testColumnFamilyDelete() {
     byte[] rowKey = randomHelper.randomData("rk1-");
     byte[] family = randomHelper.randomData("family1-");
     Delete delete = new Delete(rowKey);
@@ -105,7 +104,7 @@ public class TestDeleteAdapter {
   }
 
   @Test
-  public void testDeleteColumnAtTimestamp() throws IOException {
+  public void testDeleteColumnAtTimestamp() {
     byte[] rowKey = randomHelper.randomData("rk1-");
     byte[] family = randomHelper.randomData("family1-");
     byte[] qualifier = randomHelper.randomData("qualifier");
@@ -153,7 +152,7 @@ public class TestDeleteAdapter {
   }
 
   @Test
-  public void testDeleteColumnBeforeTimestamp() throws IOException {
+  public void testDeleteColumnBeforeTimestamp() {
     byte[] rowKey = randomHelper.randomData("rk1-");
     byte[] family = randomHelper.randomData("family1-");
     byte[] qualifier = randomHelper.randomData("qualifier");
@@ -202,7 +201,7 @@ public class TestDeleteAdapter {
    * {@link Mutation}. Compare the two mutations for equality. This ensures that the adapt
    * process is idempotent.
    */
-  private void testTwoWayAdapt(Delete delete, DeleteAdapter adapter) throws IOException {
+  private void testTwoWayAdapt(Delete delete, DeleteAdapter adapter) {
     // delete -> mutation
     MutateRowRequest firstAdapt = adapter.adapt(delete).build();
     // mutation -> delete -> mutation;

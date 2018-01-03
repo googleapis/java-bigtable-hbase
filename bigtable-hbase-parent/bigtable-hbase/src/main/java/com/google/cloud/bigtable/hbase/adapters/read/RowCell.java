@@ -15,6 +15,7 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -198,4 +199,49 @@ public class RowCell implements Cell {
   public byte[] getRow() {
     return Bytes.copy(this.rowArray);
   }
+
+  /**
+   * Needed doing 'contains' on List.  Only compares the key portion, not the value.
+   */
+  @Override
+  public boolean equals(Object other) {
+    if (!(other instanceof Cell)) {
+      return false;
+    }
+    return CellComparator.equals(this, (Cell)other);
+  }
+
+  /**
+   * In line with {@link #equals(Object)}, only uses the key portion, not the value.
+   */
+  @Override
+  public int hashCode() {
+    return CellComparator.hashCodeIgnoreMvcc(this);
+  }
+
+
+  //---------------------------------------------------------------------------
+  //
+  //  String representation
+  //
+  //---------------------------------------------------------------------------
+
+  @Override
+  public String toString() {
+    if (this.rowArray == null || this.rowArray.length == 0) {
+      return "";
+    }
+
+
+    return Bytes.toStringBinary(this.rowArray)
+        + "/"
+        + (familyArray.length > 0 ? Bytes.toStringBinary(familyArray) : "")
+        + (familyArray.length > 0 ? ":" : "")
+        + (qualifierArray.length > 0 ? Bytes.toStringBinary(qualifierArray) : "")
+        + "/"
+        + (KeyValue.humanReadableTimestamp(timestamp))
+        + "/"
+        + Type.codeToType(getTypeByte());
+  }
 }
+

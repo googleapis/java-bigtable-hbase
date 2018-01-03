@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import static com.google.cloud.bigtable.util.ThreadPoolUtil.createThreadFactory;
-
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
@@ -24,6 +22,9 @@ import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
+
+import io.grpc.ClientInterceptor;
+import io.grpc.internal.GrpcUtil;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -50,9 +51,9 @@ public class CredentialInterceptorCache {
   }
 
   private final ExecutorService executor =
-      Executors.newCachedThreadPool(createThreadFactory("Credentials-Refresh"));
+      Executors.newCachedThreadPool(GrpcUtil.getThreadFactory("Credentials-Refresh-%d", true));
 
-  private HeaderInterceptor defaultCredentialInterceptor;
+  private ClientInterceptor defaultCredentialInterceptor;
 
   private CredentialInterceptorCache() {
   }
@@ -79,7 +80,7 @@ public class CredentialInterceptorCache {
    * @throws java.io.IOException if any.
    * @throws java.security.GeneralSecurityException if any.
    */
-  public synchronized HeaderInterceptor getCredentialsInterceptor(
+  public synchronized ClientInterceptor getCredentialsInterceptor(
       CredentialOptions credentialOptions, RetryOptions retryOptions)
       throws IOException, GeneralSecurityException {
     // Default credentials is the most likely CredentialType. It's also the only CredentialType
@@ -103,8 +104,7 @@ public class CredentialInterceptorCache {
             credentials.getClass().getName()));
 
     RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
-        new RefreshingOAuth2CredentialsInterceptor(
-            executor, (OAuth2Credentials) credentials, retryOptions);
+        new RefreshingOAuth2CredentialsInterceptor(executor, (OAuth2Credentials) credentials);
 
     // The RefreshingOAuth2CredentialsInterceptor uses the credentials to get a security token that
     // will live for a short time.  That token is added on all calls by the gRPC interceptor to

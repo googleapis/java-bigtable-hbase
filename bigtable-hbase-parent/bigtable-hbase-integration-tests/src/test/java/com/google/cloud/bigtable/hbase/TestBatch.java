@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,7 +27,6 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
@@ -43,6 +41,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.internal.ArrayComparisonFailure;
 
 public class TestBatch extends AbstractTest {
   /**
@@ -57,71 +56,69 @@ public class TestBatch extends AbstractTest {
    */
   @Test
   public void testBatchPutGetAndDelete() throws IOException, InterruptedException {
+    testGetPutDelete(5, false);
+  }
+
+  @Test
+  public void test100BatchPutGetAndDelete() throws IOException, InterruptedException {
+    testGetPutDelete(100, true);
+  }
+
+  private void testGetPutDelete(int count, boolean sameQualifier)
+      throws IOException, InterruptedException, ArrayComparisonFailure {
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
-    byte[] rowKey1 = dataHelper.randomData("testrow-");
-    byte[] qual1 = dataHelper.randomData("qual-");
-    byte[] value1 = dataHelper.randomData("value-");
-    byte[] rowKey2 = dataHelper.randomData("testrow-");
-    byte[] qual2 = dataHelper.randomData("qual-");
-    byte[] value2 = dataHelper.randomData("value-");
+    byte[][] rowKeys = new byte[count][];
+    byte[][] quals = new byte[count][];
+    byte[][] values = new byte[count][];
     byte[] emptyRowKey = dataHelper.randomData("testrow-");
 
-    Put put1 = new Put(rowKey1).addColumn(COLUMN_FAMILY, qual1, value1);
-    Put put2 = new Put(rowKey2).addColumn(COLUMN_FAMILY, qual2, value2);
-    List<Row> batch = new ArrayList<Row>(2);
-    batch.add(put1);
-    batch.add(put2);
-    Object[] results = new Object[batch.size()];
-    table.batch(batch, results);
-    Assert.assertTrue("Should be a Result", results[0] instanceof Result);
-    Assert.assertTrue("Should be a Result", results[1] instanceof Result);
-    Assert.assertTrue("Should be empty", ((Result) results[0]).isEmpty());
-    Assert.assertTrue("Should be empty", ((Result) results[1]).isEmpty());
-    Assert.assertEquals("Batch should not have been cleared", 2, batch.size());
+    List<Row> puts = new ArrayList<Row>(count);
+    List<Row> gets = new ArrayList<Row>(count);
+    List<Row> deletes = new ArrayList<Row>(count);
+    for (int i = 0; i < count; i++) {
+      rowKeys[i] = dataHelper.randomData("testrow-");
+      quals[i] = sameQualifier && i > 0 ? quals[0] : dataHelper.randomData("qual-");
+      values[i] = dataHelper.randomData("value-");
+      puts.add(new Put(rowKeys[i]).addColumn(COLUMN_FAMILY, quals[i], values[i]));
+      gets.add(new Get(rowKeys[i]));
+      deletes.add(new Delete(rowKeys[i]));
+    }
+    gets.add(new Get(emptyRowKey));
+
+    Object[] results = new Object[count];
+    table.batch(puts, results);
+    for (int i = 0; i < count; i++) {
+      Assert.assertTrue("Should be a Result", results[i] instanceof Result);
+      Assert.assertTrue("Should be empty", ((Result) results[i]).isEmpty());
+    }
+    Assert.assertEquals("Batch should not have been cleared", count, puts.size());
 
     // Check values
-    Get get1 = new Get(rowKey1);
-    Get get2 = new Get(rowKey2);
-    Get get3 = new Get(emptyRowKey);
-    batch.clear();
-    batch.add(get1);
-    batch.add(get2);
-    batch.add(get3);
-    results = new Object[batch.size()];
-    table.batch(batch, results);
-    Assert.assertTrue("Should be Result", results[0] instanceof Result);
-    Assert.assertTrue("Should be Result", results[1] instanceof Result);
-    Assert.assertTrue("Should be Result", results[2] instanceof Result);
-    Assert.assertEquals("Should be one value", 1, ((Result) results[0]).size());
-    Assert.assertEquals("Should be one value", 1, ((Result) results[1]).size());
-    Assert.assertEquals("Should be empty", 0, ((Result) results[2]).size());
-    Assert.assertArrayEquals("Should be value1", value1,
-      CellUtil.cloneValue(((Result) results[0]).getColumnLatestCell(COLUMN_FAMILY, qual1)));
-    Assert.assertArrayEquals("Should be value2", value2,
-      CellUtil.cloneValue(((Result) results[1]).getColumnLatestCell(COLUMN_FAMILY, qual2)));
+    results = new Object[count + 1];
+    table.batch(gets, results);
+    for (int i = 0; i < count; i++) {
+      Assert.assertTrue("Should be Result", results[i] instanceof Result);
+      Assert.assertEquals("Should be one value", 1, ((Result) results[i]).size());
+      Assert.assertArrayEquals("Value is incorrect", values[i],
+        CellUtil.cloneValue(((Result) results[i]).getColumnLatestCell(COLUMN_FAMILY, quals[i])));
+    }
+    Assert.assertEquals("Should be empty", 0, ((Result) results[count]).size());
 
     // Delete values
-    Delete delete1 = new Delete(rowKey1);
-    Delete delete2 = new Delete(rowKey2);
-    batch.clear();
-    batch.add(delete1);
-    batch.add(delete2);
-    results = new Object[batch.size()];
-    table.batch(batch, results);
-    Assert.assertTrue("Should be a Result", results[0] instanceof Result);
-    Assert.assertTrue("Should be a Result", results[1] instanceof Result);
-    Assert.assertTrue("Should be empty", ((Result) results[0]).isEmpty());
-    Assert.assertTrue("Should be empty", ((Result) results[1]).isEmpty());
+    results = new Object[count];
+    table.batch(deletes, results);
+    for (int i = 0; i < count; i++) {
+      Assert.assertTrue("Should be a Result", results[i] instanceof Result);
+      Assert.assertTrue("Should be empty", ((Result) results[i]).isEmpty());
+    }
 
     // Check that delete succeeded
-    batch.clear();
-    batch.add(get1);
-    batch.add(get2);
-    results = new Object[batch.size()];
-    table.batch(batch, results);
-    Assert.assertTrue("Should be empty", ((Result) results[0]).isEmpty());
-    Assert.assertTrue("Should be empty", ((Result) results[1]).isEmpty());
+    results = new Object[count + 1];
+    table.batch(gets, results);
+    for (int i = 0; i < count; i++) {
+      Assert.assertTrue("Should be empty", ((Result) results[i]).isEmpty());
+    }
 
     table.close();
   }
@@ -132,7 +129,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchIncrement() throws IOException, InterruptedException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     Random random = new Random();
@@ -171,7 +168,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchAppend() throws IOException, InterruptedException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] value1_1 = dataHelper.randomData("value-");
@@ -214,17 +211,20 @@ public class TestBatch extends AbstractTest {
    */
   @Test
   @Category(KnownGap.class)
+  // TODO: There seems to be a server-side issue with this batch put. The server side throws
+  // INVALID_ARGUMENT for all 5 puts.
   public void testBatchWithException() throws IOException, InterruptedException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[][] rowKeys = dataHelper.randomData("testrow-", 5);
     byte[][] quals = dataHelper.randomData("qual-", 5);
     byte[][] values = dataHelper.randomData("value-", 5);
+    byte[] MISSING_FAMILY = Bytes.toBytes("NO_SUCH_FAMILY");
 
     Put put0 = new Put(rowKeys[0]).addColumn(COLUMN_FAMILY, quals[0], values[0]);
-    Put put1 = new Put(rowKeys[1]).addColumn(Bytes.toBytes("NO SUCH FAMILY"), quals[1], values[1]);
+    Put put1 = new Put(rowKeys[1]).addColumn(MISSING_FAMILY, quals[1], values[1]);
     Put put2 = new Put(rowKeys[2]).addColumn(COLUMN_FAMILY, quals[2], values[2]);
-    Put put3 = new Put(rowKeys[3]).addColumn(Bytes.toBytes("NO SUCH FAMILY"), quals[3], values[3]);
+    Put put3 = new Put(rowKeys[3]).addColumn(MISSING_FAMILY, quals[3], values[3]);
     Put put4 = new Put(rowKeys[4]).addColumn(COLUMN_FAMILY, quals[4], values[4]);
     List<Row> batch = new ArrayList<Row>(5);
     Object[] results = new Object[5];
@@ -278,10 +278,9 @@ public class TestBatch extends AbstractTest {
    * row.
    */
   @Test
-  @Category(KnownGap.class)
   public void testRowMutations() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("qual-", 3);
     byte[][] values = dataHelper.randomData("value-", 3);
@@ -303,7 +302,7 @@ public class TestBatch extends AbstractTest {
       CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[1])));
 
     // Now delete the value #1 and insert value #3
-    Delete delete = new Delete(rowKey).addColumn(COLUMN_FAMILY, quals[1]);
+    Delete delete = new Delete(rowKey).addColumns(COLUMN_FAMILY, quals[1]);
     Put put2 = new Put(rowKey).addColumn(COLUMN_FAMILY, quals[2], values[2]);
     rm = new RowMutations(rowKey);
     rm.add(delete);
@@ -320,11 +319,11 @@ public class TestBatch extends AbstractTest {
 
     table.close();
   }
-  
+
   @Test
   public void testBatchGets() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] value1 = dataHelper.randomData("value-");
@@ -372,9 +371,11 @@ public class TestBatch extends AbstractTest {
 
   @Test
   public void testBatchDoesntHang() throws Exception {
-    Connection closedConnection = ConnectionFactory.createConnection(IntegrationTests.getConfiguration());
-    Table table = closedConnection.getTable(TABLE_NAME);
-    closedConnection.close();
+    Table table;
+    try(Connection closedConnection = sharedTestEnv.createConnection()) {
+      table = closedConnection.getTable(sharedTestEnv.getDefaultTableName());
+    }
+
     try {
       table.batch(Arrays.asList(new Get(Bytes.toBytes("key"))), new Object[1]);
       Assert.fail("Expected an exception");

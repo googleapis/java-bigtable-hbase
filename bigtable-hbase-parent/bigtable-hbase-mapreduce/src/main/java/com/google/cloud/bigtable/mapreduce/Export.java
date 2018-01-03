@@ -18,6 +18,8 @@
 */
 package com.google.cloud.bigtable.mapreduce;
 
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.IOException;
 
 import org.apache.commons.logging.Log;
@@ -38,6 +40,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.IdentityTableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -59,6 +62,9 @@ public class Export {
   final static String NAME = "export";
   final static String RAW_SCAN = "hbase.mapreduce.include.deleted.rows";
   final static String EXPORT_BATCHING = "hbase.export.scanner.batch";
+  // In addition to TableInputFormat.SCAN_COLUMN_FAMILY, which allows a user to specify a single column,
+  // add the ability to specify multiple column families via comma separated list
+  final static String SCAN_COLUMN_FAMILIES = "hbase.mapreduce.scan.column.families";
 
   /**
    * Sets up the actual job.
@@ -70,14 +76,19 @@ public class Export {
    */
   public static Job createSubmittableJob(Configuration conf, String[] args)
   throws IOException {
+    conf.setIfUnset("hbase.client.connection.impl",
+      BigtableConfiguration.getConnectionClass().getName());
+    conf.setIfUnset(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, "60000");
+    conf.setBoolean(TableInputFormat.SHUFFLE_MAPS, true);
+
     String tableName = args[0];
     Path outputDir = new Path(args[1]);
-    Job job = new Job(conf, NAME + "_" + tableName);
+    Job job = Job.getInstance(conf, NAME + "_" + tableName);
     job.setJobName(NAME + "_" + tableName);
     job.setJarByClass(Export.class);
     // Set optional scan parameters
     Scan s = getConfiguredScanForJob(conf, args);
-    IdentityTableMapper.initJob(tableName, s, IdentityTableMapper.class, job);
+    TableMapReduceUtil.initTableMapperJob(tableName, s, IdentityTableMapper.class, ImmutableBytesWritable.class, Result.class, job, false);
     // No reducers.  Just write straight to output files.
     job.setNumReduceTasks(0);
     job.setOutputFormatClass(SequenceFileOutputFormat.class);
@@ -114,6 +125,10 @@ public class Export {
     
     if (conf.get(TableInputFormat.SCAN_COLUMN_FAMILY) != null) {
       s.addFamily(Bytes.toBytes(conf.get(TableInputFormat.SCAN_COLUMN_FAMILY)));
+    }
+    // Add additional comma-separated families
+    for (String family : conf.getStrings(SCAN_COLUMN_FAMILIES, new String[0])) {
+      s.addFamily(Bytes.toBytes(family));
     }
     // Set RowFilter or Prefix Filter if applicable.
     Filter exportFilter = getExportFilter(args);
@@ -157,6 +172,9 @@ public class Export {
     }
     System.err.println("Usage: Export [-D <property=value>]* <tablename> <outputdir> [<versions> " +
       "[<starttime> [<endtime>]] [^[regex pattern] or [Prefix] to filter]]\n");
+    System.err.println("  Mandatory properties:");
+    System.err.println("   -D " + BigtableOptionsFactory.PROJECT_ID_KEY + "=<bigtable project id>");
+    System.err.println("   -D " + BigtableOptionsFactory.INSTANCE_ID_KEY + "=<bigtable instance id>");
     System.err.println("  Note: -D properties will be applied to the conf used. ");
     System.err.println("  For example: ");
     System.err.println("   -D mapreduce.output.fileoutputformat.compress=true");
@@ -165,6 +183,7 @@ public class Export {
     System.err.println("  Additionally, the following SCAN properties can be specified");
     System.err.println("  to control/limit what is exported..");
     System.err.println("   -D " + TableInputFormat.SCAN_COLUMN_FAMILY + "=<familyName>");
+    System.err.println("   -D " + SCAN_COLUMN_FAMILIES + "=<familyName>[,<familyName2>...]");
     System.err.println("   -D " + RAW_SCAN + "=true");
     System.err.println("   -D " + TableInputFormat.SCAN_ROW_START + "=<ROWSTART>");
     System.err.println("   -D " + TableInputFormat.SCAN_ROW_STOP + "=<ROWSTOP>");
@@ -189,6 +208,15 @@ public class Export {
       usage("Wrong number of arguments: " + otherArgs.length);
       System.exit(-1);
     }
+    if (conf.get(BigtableOptionsFactory.PROJECT_ID_KEY) == null) {
+      usage("Must specify the property " + BigtableOptionsFactory.PROJECT_ID_KEY);
+      System.exit(-1);
+    }
+    if (conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY) == null) {
+      usage("Must specify the property" + BigtableOptionsFactory.INSTANCE_ID_KEY);
+      System.exit(-1);
+    }
+
     Job job = createSubmittableJob(conf, otherArgs);
     System.exit(job.waitForCompletion(true)? 0 : 1);
   }

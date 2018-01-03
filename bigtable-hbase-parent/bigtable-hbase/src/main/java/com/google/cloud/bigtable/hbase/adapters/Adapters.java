@@ -15,14 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.cloud.bigtable.hbase.adapters.read.RowRangeAdapter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Increment;
-
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.filters.BigtableWhileMatchResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.BigtableResultScannerAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
@@ -36,6 +38,8 @@ import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
 public final class Adapters {
   /** Constant <code>ROW_ADAPTER</code> */
   public static final RowAdapter ROW_ADAPTER = new RowAdapter();
+  /** Constant <code>FLAT_ROW_ADAPTER</code> */
+  public static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
   /** Constant <code>APPEND_ADAPTER</code> */
   public static final AppendAdapter APPEND_ADAPTER = new AppendAdapter();
   /** Constant <code>INCREMENT_ADAPTER</code> */
@@ -44,15 +48,19 @@ public final class Adapters {
   public static final DeleteAdapter DELETE_ADAPTER = new DeleteAdapter();
   /** Constant <code>FILTER_ADAPTER</code> */
   public static final FilterAdapter FILTER_ADAPTER = FilterAdapter.buildAdapter();
+  /** Constant <code>ROW_RANGE_ADAPTER</code> */
+  public static final RowRangeAdapter ROW_RANGE_ADAPTER = new RowRangeAdapter();
   /** Constant <code>SCAN_ADAPTER</code> */
-  public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(FILTER_ADAPTER);
+  public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(
+      FILTER_ADAPTER, ROW_RANGE_ADAPTER
+  );
   /** Constant <code>BIGTABLE_RESULT_SCAN_ADAPTER</code> */
-  public static final BigtableResultScannerAdapter BIGTABLE_RESULT_SCAN_ADAPTER =
-      new BigtableResultScannerAdapter(ROW_ADAPTER);
+  public static final BigtableResultScannerAdapter<FlatRow> BIGTABLE_RESULT_SCAN_ADAPTER =
+      new BigtableResultScannerAdapter<>(FLAT_ROW_ADAPTER);
   /** Constant <code>BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER</code> */
   public static final BigtableWhileMatchResultScannerAdapter
       BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER =
-      new BigtableWhileMatchResultScannerAdapter(ROW_ADAPTER);
+      new BigtableWhileMatchResultScannerAdapter(FLAT_ROW_ADAPTER);
   /** Constant <code>GET_ADAPTER</code> */
   public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
 
@@ -60,14 +68,14 @@ public final class Adapters {
    * <p>createMutationsAdapter.</p>
    *
    * @param putAdapter a {@link com.google.cloud.bigtable.hbase.adapters.PutAdapter} object.
-   * @return a {@link com.google.cloud.bigtable.hbase.adapters.MutationAdapter} object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.HBaseMutationAdapter} object.
    */
-  public static MutationAdapter createMutationsAdapter(PutAdapter putAdapter) {
-    return new MutationAdapter(
+  public static HBaseMutationAdapter createMutationsAdapter(PutAdapter putAdapter) {
+    return new HBaseMutationAdapter(
       DELETE_ADAPTER,
       putAdapter,
-      new UnsupportedOperationAdapter<Increment>("increment"),
-      new UnsupportedOperationAdapter<Append>("append"));
+      new UnsupportedMutationAdapter<Increment>("increment"),
+      new UnsupportedMutationAdapter<Append>("append"));
   }
 
   /**

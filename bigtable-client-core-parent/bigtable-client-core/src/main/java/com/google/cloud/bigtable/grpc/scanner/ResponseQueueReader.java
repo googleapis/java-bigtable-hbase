@@ -20,23 +20,29 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.bigtable.v2.Row;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.Preconditions;
 
+import io.grpc.stub.ClientCallStreamObserver;
+import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
 
 /**
- * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
- * complete Row objects from the partial ReadRowsResponse objects.
+ * Manages a queue of {@link ResultQueueEntry}s of {@link FlatRow}.
  *
  * @author sduskis
  * @version $Id: $Id
+ * @see BigtableDataGrpcClient#readFlatRows(com.google.bigtable.v2.ReadRowsRequest) for more
+ *     information.
  */
-public class ResponseQueueReader implements StreamObserver<Row> {
+public class ResponseQueueReader
+    implements StreamObserver<FlatRow>, ClientResponseObserver<ReadRowsRequest, FlatRow> {
 
   private static Timer firstResponseTimer;
 
@@ -48,42 +54,46 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     return firstResponseTimer;
   }
 
-  protected final BlockingQueue<ResultQueueEntry<Row>> resultQueue;
-  protected AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
-  private final int readPartialRowTimeoutMillis;
+  private final BlockingQueue<ResultQueueEntry<FlatRow>> resultQueue =
+      new LinkedBlockingQueue<>();
+  private AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
   private boolean lastResponseProcessed = false;
   private Long startTime;
+  private ClientCallStreamObserver<ReadRowsRequest> requestStream;
+  private AtomicInteger markerCounter = new AtomicInteger();
 
   /**
    * <p>Constructor for ResponseQueueReader.</p>
-   *
-   * @param readPartialRowTimeoutMillis a int.
-   * @param capacityCap a int.
    */
-  public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap) {
-    this.resultQueue = new LinkedBlockingQueue<>(capacityCap);
-    this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
+  public ResponseQueueReader() {
     if (BigtableClientMetrics.isEnabled(MetricLevel.Info)) {
       startTime = System.nanoTime();
     }
   }
 
+  @Override
+  public void beforeStart(ClientCallStreamObserver<ReadRowsRequest> requestStream) {
+    requestStream.disableAutoInboundFlowControl();
+    this.requestStream = requestStream;
+  }
+
   /**
-   * Get the next complete Row object from the response queue.
+   * Get the next complete {@link FlatRow} object from the response queue.
    *
-   * @return null if end-of-stream, otherwise a complete Row.
+   * @return null if end-of-stream, otherwise a complete {@link FlatRow}.
    * @throws java.io.IOException On errors.
    */
-  public synchronized Row getNextMergedRow() throws IOException {
+  public synchronized FlatRow getNextMergedRow() throws IOException {
     if (lastResponseProcessed) {
       return null;
     }
 
-    ResultQueueEntry<Row> queueEntry = getNext();
+    ResultQueueEntry<FlatRow> queueEntry = getNext();
 
     switch (queueEntry.getType()) {
     case CompletionMarker:
       lastResponseProcessed = true;
+      markerCounter.decrementAndGet();
       break;
     case Data:
       if (startTime != null) {
@@ -92,13 +102,20 @@ public class ResponseQueueReader implements StreamObserver<Row> {
       }
       return queueEntry.getResponseOrThrow();
     case Exception:
+      markerCounter.decrementAndGet();
       return queueEntry.getResponseOrThrow();
+    case RequestResultMarker:
+      markerCounter.decrementAndGet();
+      if (!completionMarkerFound.get()) {
+        requestStream.request(1);
+      }
+      return getNextMergedRow();
     default:
       throw new IllegalStateException("Cannot process type: " + queueEntry.getType());
     }
 
     Preconditions.checkState(lastResponseProcessed,
-      "Should only exit merge loop with by returning a complete Row or hitting end of stream.");
+      "Should only exit merge loop with by returning a complete FlatRow or hitting end of stream.");
     return null;
   }
 
@@ -108,10 +125,10 @@ public class ResponseQueueReader implements StreamObserver<Row> {
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
    * @throws java.io.IOException if any.
    */
-  protected ResultQueueEntry<Row> getNext() throws IOException {
-    ResultQueueEntry<Row> queueEntry;
+  protected ResultQueueEntry<FlatRow> getNext() throws IOException {
+    ResultQueueEntry<FlatRow> queueEntry;
     try {
-      queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
+      queueEntry = resultQueue.poll(250, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Interrupted while waiting for next result", e);
@@ -129,40 +146,48 @@ public class ResponseQueueReader implements StreamObserver<Row> {
    * @return a int.
    */
   public int available() {
-    return resultQueue.size();
+    return resultQueue.size() - markerCounter.get();
   }
 
   /** {@inheritDoc} */
   @Override
-  public void onNext(Row row) {
-    try {
-      resultQueue.put(ResultQueueEntry.fromResponse(row));
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
-    }
+  public void onNext(FlatRow row) {
+    addEntry("adding a data ResultQueueEntry", ResultQueueEntry.fromResponse(row));
   }
 
   /** {@inheritDoc} */
   @Override
   public void onError(Throwable t) {
-    try {
-      resultQueue.put(ResultQueueEntry.<Row> fromThrowable(t));
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
-    }
+    addEntry("adding an error ResultQueueEntry", ResultQueueEntry.<FlatRow> fromThrowable(t));
+    markerCounter.incrementAndGet();
   }
 
   /** {@inheritDoc} */
   @Override
   public void onCompleted() {
+    completionMarkerFound.set(true);
+    addEntry("setting completion", ResultQueueEntry.<FlatRow> completionMarker());
+    markerCounter.incrementAndGet();
+  }
+
+  /**
+   * This marker notifies {@link #getNextMergedRow()} to request more results and allows for flow
+   * control based on the state of the {@link #resultQueue}. If rows are removed from the queue
+   * quickly, {@link #getNextMergedRow()} will request more results. If rows are not read fast
+   * enough, then gRPC will stop fetching rows, and will wait until more rows are requested. This
+   * marker tells {@link #getNextMergedRow()} to read more rows.
+   */
+  public void addRequestResultMarker() {
+    addEntry("setting request result marker", ResultQueueEntry.<FlatRow> requestResultMarker());
+    markerCounter.incrementAndGet();
+  }
+
+  private void addEntry(String message, ResultQueueEntry<FlatRow> entry) {
     try {
-      completionMarkerFound.set(true);
-      resultQueue.put(ResultQueueEntry.<Row> completionMarker());
+      resultQueue.put(entry);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
+      throw new RuntimeException("Interrupted while " + message, e);
     }
   }
 }

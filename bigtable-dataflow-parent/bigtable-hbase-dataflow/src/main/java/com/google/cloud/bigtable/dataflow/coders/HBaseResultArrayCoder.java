@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.dataflow.coders;
 
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 
@@ -47,7 +45,7 @@ public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
     int resultCount = ois.readInt();
     Result[] results = new Result[resultCount];
     for (int i = 0; i < resultCount; i++) {
-      results[i] = Adapters.ROW_ADAPTER.adaptResponse(Row.parseDelimitedFrom(inputStream));
+      results[i] = HBaseResultCoder.getInstance().decode(ois, context);
     }
     return results;
   }
@@ -57,9 +55,9 @@ public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
       throws IOException {
     ObjectOutputStream oos = new ObjectOutputStream(outputStream);
     oos.writeInt(results.length);
-    oos.flush();
     for (Result result : results) {
-      Adapters.ROW_ADAPTER.adaptToRow(result).writeDelimitedTo(outputStream);
+      HBaseResultCoder.getInstance().encode(result, oos, context);
     }
+    oos.flush();
   }
 }

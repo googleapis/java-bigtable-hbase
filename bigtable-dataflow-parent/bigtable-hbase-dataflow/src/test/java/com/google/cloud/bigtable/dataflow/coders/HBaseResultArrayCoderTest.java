@@ -15,11 +15,12 @@
  */
 package com.google.cloud.bigtable.dataflow.coders;
 
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.google.cloud.dataflow.sdk.util.MutationDetector;
+import com.google.cloud.dataflow.sdk.util.MutationDetectors;
 
 /**
  * Tests for {@link HBaseResultArrayCoder}
@@ -28,18 +29,20 @@ public class HBaseResultArrayCoderTest {
 
   private HBaseResultArrayCoder underTest = new HBaseResultArrayCoder();
 
-  private Result[] original = new Result[]{createResult()};
+  private Result[] original =
+      new Result[] { HBaseResultCoderTest.TEST_RESULT, HBaseResultCoderTest.TEST_RESULT };
 
   @Test
   public void testRoundTrip() throws Exception {
     Result[] copy = CoderTestUtil.encodeAndDecode(underTest, original);
     // This method throws an exception if the values are not equal.
     Result.compareResults(original[0], copy[0]);
-  }
 
-  private Result createResult() {
-    return Result.create(new Cell[] { new KeyValue("key".getBytes(), "family".getBytes(),
-        "qualifier".getBytes(), System.currentTimeMillis(), "value".getBytes()) });
+    MutationDetector mutationDetector = MutationDetectors.forValueWithCoder(original, underTest);
+
+    mutationDetector.verifyUnmodified();
+    Thread.sleep(10);
+    mutationDetector.verifyUnmodified();
   }
 
   @Test
@@ -48,4 +51,3 @@ public class HBaseResultArrayCoderTest {
       CoderTestUtil.encode(underTest, original));
   }
 }
-

@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-client-parent</artifactId>
-        <version>0.9.4-SNAPSHOT</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-dataflow-parent</artifactId>
@@ -31,9 +31,10 @@ limitations under the License.
     </description>
 
     <modules>
-        <module>bigtable-hbase-shaded-for-dataflow</module>
         <module>bigtable-hbase-dataflow</module>
+        <module>bigtable-hbase-beam</module>
         <module>bigtable-dataflow-import</module>
+        <module>bigtable-beam-import</module>
     </modules>
 
     <build>

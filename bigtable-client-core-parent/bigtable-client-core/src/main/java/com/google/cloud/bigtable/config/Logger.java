@@ -64,6 +64,20 @@ public class Logger {
   }
 
   /**
+   * <p>debug</p>
+   *
+   * @see Log#debug
+   * @param message Format string.
+   * @param t a {@link java.lang.Throwable} object.
+   * @param args Arguments for format string.
+   */
+  public void debug(String message, Throwable t, Object ... args) {
+    if (log.isDebugEnabled()) {
+      log.debug(String.format(message, args), t);
+    }
+  }
+
+  /**
    * <p>info</p>
    *
    * @see Log#info

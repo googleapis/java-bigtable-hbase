@@ -15,9 +15,15 @@
  */
 package com.google.cloud.bigtable.dataflowimport;
 
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
+import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
+import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.KvCoder;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
+import com.google.cloud.dataflow.sdk.io.Read;
+import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner;
 import com.google.cloud.dataflow.sdk.transforms.PTransform;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
@@ -32,7 +38,6 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.ResultSerialization;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 
@@ -64,9 +69,10 @@ import java.util.Map;
  * }
  * </pre>
  *
- * @author sduskis
- * @version $Id: $Id
+ * @deprecated Please use the bigtable-beam-import version of this class instead.
  */
+
+@Deprecated
 public class HBaseImportIO {
   // Needed for HBase 0.94 format. Copied from ResultSerialization.IMPORT_FORMAT_VER.
   @VisibleForTesting
@@ -144,5 +150,28 @@ public class HBaseImportIO {
       builder.put(IMPORT_FORMAT_VER, VERSION_094_STRING);
     }
     return builder.build();
+  }
+
+  public static void main(String[] args) throws Exception {
+    if (args.length == 0 || "--help".equals(args[0])) {
+      PipelineOptionsFactory.printHelp(System.out, HBaseImportOptions.class);
+      return;
+    }
+
+    HBaseImportOptions options = PipelineOptionsFactory.fromArgs(args)
+        .withValidation()
+        .as(HBaseImportOptions.class);
+
+    CloudBigtableTableConfiguration cbtConfig = CloudBigtableTableConfiguration.fromCBTOptions(options)
+        .toBuilder()
+        .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseImportIO")
+        .build();
+
+    Pipeline p = CloudBigtableIO.initializeForWrite(Pipeline.create(options));
+    p
+        .apply("ReadSequenceFile", Read.from(HBaseImportIO.createSource(options)))
+        .apply("ConvertResultToMutations", HBaseImportIO.transformToMutations())
+        .apply("WriteToTable", CloudBigtableIO.writeToTable(cbtConfig));
+    p.run();
   }
 }

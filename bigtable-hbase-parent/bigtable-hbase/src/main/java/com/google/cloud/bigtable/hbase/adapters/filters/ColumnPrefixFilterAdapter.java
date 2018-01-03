@@ -30,7 +30,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class ColumnPrefixFilterAdapter implements TypedFilterAdapter<ColumnPrefixFilter> {
+public class ColumnPrefixFilterAdapter extends TypedFilterAdapterBase<ColumnPrefixFilter> {
   ReaderExpressionHelper readerExpressionHelper = new ReaderExpressionHelper();
 
   /** {@inheritDoc} */

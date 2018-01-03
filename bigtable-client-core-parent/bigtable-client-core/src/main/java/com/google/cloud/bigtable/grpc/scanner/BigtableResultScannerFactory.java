@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.bigtable.v2.ReadRowsRequest;
+
 /**
  * A factory for creating ResultScanners that can be used to scan over Rows for a
  * given ReadRowsRequest.
@@ -22,13 +24,13 @@ package com.google.cloud.bigtable.grpc.scanner;
  * @author sduskis
  * @version $Id: $Id
  */
-public interface BigtableResultScannerFactory<RequestT, ResponseT> {
+public interface BigtableResultScannerFactory<ResponseT> {
 
   /**
    * Create a scanner for the given request.
    *
-   * @param request a RequestT object.
+   * @param request a ReadRowsRequest object.
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
    */
-  ResultScanner<ResponseT> createScanner(RequestT request);
+  ResultScanner<ResponseT> createScanner(ReadRowsRequest request);
 }

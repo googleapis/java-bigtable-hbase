@@ -23,6 +23,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.ArrayList;
@@ -35,12 +36,12 @@ import java.util.List;
  * @author sduskis
  * @version $Id: $Id
  */
-public class SampledRowKeysAdapter {
+public abstract class SampledRowKeysAdapter {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(SampledRowKeysAdapter.class);
 
-  private final TableName tableName;
-  private final ServerName serverName;
+  protected final TableName tableName;
+  protected final ServerName serverName;
 
   /**
    * <p>Constructor for SampledRowKeysAdapter.</p>
@@ -73,18 +74,24 @@ public class SampledRowKeysAdapter {
       if (Bytes.equals(startKey, endKey)) {
         continue;
       }
-      HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
+      regions.add(createRegionLocation(startKey, endKey));
       startKey = endKey;
-
-      regions.add(new HRegionLocation(regionInfo, serverName));
     }
 
     // Create one last region if the last region doesn't reach the end or there are no regions.
     byte[] endKey = HConstants.EMPTY_END_ROW;
     if (regions.isEmpty() || !Bytes.equals(startKey, endKey)) {
-      HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
-      regions.add(new HRegionLocation(regionInfo, serverName));
+      regions.add(createRegionLocation(startKey, endKey));
     }
     return regions;
   }
+
+  /**
+   * HBase 1.x and 2.x have non compatible {@link HRegionInfo} classes. HBase 2.x introduces a
+   * RegionInfo interface, which makes the two hbase classes with the same name binary incompatible.
+   * {@link HRegionLocation} uses RegionInfo instead of {@link HRegionInfo}, causing confusion and
+   * delay. {@link AbstractBigtableConnection#getRegionLocator(TableName)} calls an abstract method
+   * which subclasses will construct appropriate {@link SampledRowKeysAdapter} implementations.
+   */
+  protected abstract HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey);
 }

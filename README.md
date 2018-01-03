@@ -30,20 +30,20 @@ which makes it easy for development teams to get started.
 
 ### Using the Java client
 
-* Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven), e.g.:
- ```xml
-  <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-1.2</artifactId>
-      <version>0.9.3</version>
-  </dependency>
+* Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven).
+  * bigtable-hbase-1.x: use for standalone applications where you are in control your dependencies.
+  * bigtable-hbase-1.x-hadoop: use in hadoop environments
+  * bigtable-hbase-1.x-shaded: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
 
-  <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-tcnative-boringssl-static</artifactId>
-      <version>1.1.33.Fork19</version>
-  </dependency>
-```
+* Example:
+   ```xml
+    <dependency>
+        <groupId>com.google.cloud.bigtable</groupId>
+        <artifactId>bigtable-hbase-1.x</artifactId>
+        <version>1.0.0-pre3</version>
+    </dependency>
+  ```
+
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
 
 ## Questions and discussions
@@ -61,7 +61,7 @@ infrequent product and client library announcements.
 ## Developing and testing
 
 1. Running `mvn clean install` will build and install Cloud Bigtable client artifacts to your local repository, and then run the unit tests.
-1. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above).
+2. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above).
 
    Use the following command to run the integration tests:
 
@@ -71,6 +71,10 @@ infrequent product and client library announcements.
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
    ```
+
+NOTE: This project uses extensive shading which IDEs have trouble with. To over come these issues,
+you can disable the `with-shaded` profile in your IDE to force it to resolve the dependencies from your local
+maven repository. When you disable that profile, you have to attach workspace sources to local maven repository jars.
 
 ## Contributing changes
 

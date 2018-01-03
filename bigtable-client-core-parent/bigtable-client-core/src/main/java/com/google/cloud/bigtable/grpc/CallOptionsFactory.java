@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.grpc;
 
 import java.util.concurrent.TimeUnit;
+
+import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowSet;
@@ -76,7 +78,7 @@ public interface CallOptionsFactory {
       }
 
       int timeout = config.getShortRpcTimeoutMs();
-      if (isLongRequest(request)) {
+      if (isLongRequest(descriptor, request)) {
         timeout = config.getLongRpcTimeoutMs();
       }
       return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
@@ -85,16 +87,18 @@ public interface CallOptionsFactory {
     /**
      * @param request
      * @return true if this is a {@link MutateRowsRequest} or a {@link ReadRowsRequest} that's a
-     *     scan.
+     *         scan.
      */
-    boolean isLongRequest(Object request) {
-      Class<?> requestClass = request.getClass();
-      return requestClass == MutateRowsRequest.class
-          || (requestClass == ReadRowsRequest.class && !isGet((ReadRowsRequest) request));
+    public static <RequestT> boolean isLongRequest(MethodDescriptor<RequestT, ?> descriptor,
+        RequestT request) {
+      return descriptor == BigtableGrpc.METHOD_MUTATE_ROWS || !isGet(request);
     }
 
-    private boolean isGet(ReadRowsRequest request) {
-      RowSet rowSet = request.getRows();
+    public static boolean isGet(Object request) {
+      if (request.getClass() != ReadRowsRequest.class) {
+        return false;
+      }
+      RowSet rowSet = ((ReadRowsRequest) request).getRows();
       return rowSet != null && rowSet.getRowRangesCount() == 0 && rowSet.getRowKeysCount() == 1;
     }
   }

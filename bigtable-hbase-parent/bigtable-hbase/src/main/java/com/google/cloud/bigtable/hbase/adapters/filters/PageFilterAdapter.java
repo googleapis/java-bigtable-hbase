@@ -32,7 +32,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class PageFilterAdapter implements TypedFilterAdapter<PageFilter> {
+public class PageFilterAdapter extends TypedFilterAdapterBase<PageFilter> {
 
   private static final FilterSupportStatus TOP_LEVEL_ONLY =
       FilterSupportStatus.newNotSupported(

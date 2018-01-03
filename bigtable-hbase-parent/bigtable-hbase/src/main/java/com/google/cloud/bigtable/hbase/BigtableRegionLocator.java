@@ -32,7 +32,6 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
-import com.google.common.collect.ImmutableList;
 
 /**
  * <p>BigtableRegionLocator class.</p>
@@ -40,7 +39,7 @@ import com.google.common.collect.ImmutableList;
  * @author sduskis
  * @version $Id: $Id
  */
-public class BigtableRegionLocator implements RegionLocator {
+public abstract class BigtableRegionLocator implements RegionLocator {
   // Reuse the results from previous calls during this time.
   /** Constant <code>MAX_REGION_AGE_MILLIS=60 * 1000</code> */
   public static long MAX_REGION_AGE_MILLIS = 60 * 1000;
@@ -67,9 +66,12 @@ public class BigtableRegionLocator implements RegionLocator {
     this.client = client;
     this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
-    this.adapter = new SampledRowKeysAdapter(tableName, serverName);
+    this.adapter = getSampledRowKeysAdapter(tableName, serverName);
   }
 
+  public abstract SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
+      ServerName serverName);
+  
   /**
    * The list of regions will be sorted and cover all the possible rows.
    */
@@ -85,7 +87,7 @@ public class BigtableRegionLocator implements RegionLocator {
     LOG.debug("Sampling rowkeys for table %s", request.getTableName());
 
     try {
-      ImmutableList<SampleRowKeysResponse> responses = client.sampleRowKeys(request.build());
+      List<SampleRowKeysResponse> responses = client.sampleRowKeys(request.build());
       regions = adapter.adaptResponse(responses);
       regionsFetchTimeMillis = System.currentTimeMillis();
       return regions;

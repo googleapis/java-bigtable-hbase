@@ -19,17 +19,18 @@ package org.apache.hadoop.hbase.client;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
-import com.google.cloud.bigtable.hbase.BigtableTable;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.security.User;
@@ -73,11 +74,17 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       }
     };
     Runtime.getRuntime().addShutdownHook(new Thread(shutDownRunnable));
+
+    // Force the loading of HConstants.class, which shares a bi-directional reference with KeyValue.
+    // This bi-drectional relationship causes problems when KeyValue and HConstants are class loaded
+    // in different threads. This forces a clean class loading of both HConstants and KeyValue along
+    // with a whole bunch of other classes.
+    Adapters.class.getName();
   }
 
   private final Logger LOG = new Logger(getClass());
 
-  private final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
+  protected final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
 
   private final Configuration conf;
   private volatile boolean closed = false;
@@ -155,12 +162,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   /** {@inheritDoc} */
   @Override
-  public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new BigtableTable(this, createAdapter(tableName));
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
     TableName tableName = params.getTableName();
     if (tableName == null) {
@@ -169,12 +170,10 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
 
-    ExecutorService pool = batchPool != null ? batchPool
-        : BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
     HBaseRequestAdapter adapter = createAdapter(tableName);
     ExceptionListener listener = params.getListener();
     BigtableBufferedMutator bigtableBufferedMutator =
-        new BigtableBufferedMutator(adapter, conf, session, listener, pool) {
+        new BigtableBufferedMutator(adapter, conf, session, listener) {
           @Override
           public void close() throws IOException {
             try {
@@ -188,7 +187,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     return bigtableBufferedMutator;
   }
 
-  private HBaseRequestAdapter createAdapter(TableName tableName) {
+  public HBaseRequestAdapter createAdapter(TableName tableName) {
     if (mutationAdapters == null) {
       synchronized(this) {
         if (mutationAdapters == null) {
@@ -224,27 +223,39 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   /** {@inheritDoc} */
   @Override
   public RegionLocator getRegionLocator(TableName tableName) throws IOException {
-    for (RegionLocator locator : locatorCache) {
-      if (locator.getName().equals(tableName)) {
-        return locator;
-      }
+    RegionLocator locator = getCachedLocator(tableName);
+
+    if (locator == null) {
+      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClient()) {
+
+        @Override
+        public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
+            ServerName serverName) {
+          return createSampledRowKeysAdapter(tableName, serverName);
+        }
+      };
+
+      locatorCache.add(locator);
     }
-
-    RegionLocator newLocator =
-        new BigtableRegionLocator(tableName, options, session.getDataClient());
-
-    if (locatorCache.add(newLocator)) {
-      return newLocator;
-    }
-
-    for (RegionLocator locator : locatorCache) {
-      if (locator.getName().equals(tableName)) {
-        return locator;
-      }
-    }
-
-    throw new IllegalStateException(newLocator + " was supposed to be in the cache");
+    return locator;
   }
+
+  private RegionLocator getCachedLocator(TableName tableName) {
+    for (RegionLocator locator : locatorCache) {
+      if (locator.getName().equals(tableName)) {
+        return locator;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * There are some hbase 1.x and 2.x incompatibilities which require this abstract method. See
+   * {@link SampledRowKeysAdapter} for more details.
+   */
+  protected abstract SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
+    ServerName serverName);
 
   /** {@inheritDoc} */
   @Override
@@ -299,7 +310,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       .add("project", options.getProjectId())
       .add("instance", options.getInstanceId())
       .add("dataHost", options.getDataHost())
-      .add("tableAdminHost", options.getTableAdminHost())
+      .add("tableAdminHost", options.getAdminHost())
       .toString();
   }
 
@@ -312,6 +323,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
           this.batchPool.shutdownNow();
         }
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         this.batchPool.shutdownNow();
       }
     }

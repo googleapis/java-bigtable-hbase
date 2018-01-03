@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-hbase-parent</artifactId>
-        <version>0.9.4-SNAPSHOT</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-hbase-integration-tests</artifactId>
@@ -38,24 +38,13 @@ limitations under the License.
         <google.bigtable.endpoint.port>443</google.bigtable.endpoint.port>
         <google.bigtable.use.bulk.api>true</google.bigtable.use.bulk.api>
         <google.bigtable.use.plaintext.negotiation>false</google.bigtable.use.plaintext.negotiation>
+        <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
         <test.timeout>1800</test.timeout>
     </properties>
 
     <profiles>
        <profile>
             <id>bigtableIntegrationTest</id>
-            <dependencies>
-                <dependency>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>${google.bigtable.project.under.test}</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-tcnative-boringssl-static</artifactId>
-                    <classifier>${os.detected.classifier}</classifier>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -82,7 +71,7 @@ limitations under the License.
                                     </includes>
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
+                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
@@ -94,13 +83,6 @@ limitations under the License.
         </profile>
         <profile>
             <id>bigtableGapTest</id>
-            <dependencies>
-                <dependency>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>${google.bigtable.project.under.test}</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -130,7 +112,7 @@ limitations under the License.
                                     </includes>
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
+                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
@@ -142,13 +124,6 @@ limitations under the License.
         </profile>
         <profile>
             <id>hbaseLocalMiniClusterTest</id>
-            <dependencies>
-                <dependency>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-all</artifactId>
-                    <version>4.0.24.Final</version>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -172,6 +147,7 @@ limitations under the License.
                                     <includes>
                                         <include>**/IntegrationTests.java</include>
                                     </includes>
+                                    <trimStackTrace>false</trimStackTrace>
                                     <reportNameSuffix>local-mini-cluster</reportNameSuffix>
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
@@ -183,13 +159,6 @@ limitations under the License.
         </profile>
         <profile>
             <id>simpleBigtableIntegrationTest</id>
-            <dependencies>
-                <dependency>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>${google.bigtable.project.under.test}</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -219,9 +188,61 @@ limitations under the License.
                                     </includes>
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
+                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>emulatorTests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>${project.groupId}</groupId>
+                        <artifactId>bigtable-emulator-maven-plugin</artifactId>
+                        <version>${project.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>start</goal>
+                                    <goal>stop</goal>
+                                </goals>
+                                <configuration>
+                                    <propertyName>bigtable.emulator.endpoint</propertyName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>emulator-integration-test</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>**/EmulatorTests.java</include>
+                                    </includes>
+                                    <reportNameSuffix>emulator</reportNameSuffix>
+                                    <systemPropertyVariables>
+                                        <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
+                                        <google.bigtable.project.id>fake-project</google.bigtable.project.id>
+                                        <google.bigtable.instance.id>fake-instance</google.bigtable.instance.id>
+                                    </systemPropertyVariables>
+                                    <environmentVariables>
+                                        <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
+                                    </environmentVariables>
+                                    <trimStackTrace>false</trimStackTrace>
                                 </configuration>
                             </execution>
                         </executions>
@@ -233,75 +254,55 @@ limitations under the License.
 
     <dependencies>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>13.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <type>test-jar</type>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
+
+            <exclusions>
+                <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+                pom.xml files when invoking the build from a parent project. So we have to manually exclude
+                the dependencies. -->
+                <exclusion>
+                    <groupId>${project.groupId}</groupId>
+                    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-minicluster</artifactId>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            <version>${hbase.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-hadoop-compat</artifactId>
+            <artifactId>hbase-testing-util</artifactId>
+            <version>${hbase.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>1.7.7</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+            <version>${hamcrest.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-common</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-hadoop-compat</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>${compat.module}</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <classifier>${os.detected.classifier}</classifier>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>

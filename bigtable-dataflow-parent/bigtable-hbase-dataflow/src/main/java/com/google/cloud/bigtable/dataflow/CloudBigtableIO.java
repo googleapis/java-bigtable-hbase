@@ -15,19 +15,20 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.bigtable.repackaged.com.google.api.client.repackaged.com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
@@ -44,23 +45,27 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
-import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.cloud.bigtable.batch.common.ByteStringUtil;
+import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -68,7 +73,6 @@ import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
-import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRangeTracker;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.transforms.Aggregator;
@@ -76,6 +80,7 @@ import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.PTransform;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.transforms.Sum;
+import com.google.cloud.dataflow.sdk.transforms.display.DisplayData;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PDone;
@@ -87,7 +92,6 @@ import com.google.common.annotations.VisibleForTesting;
  * writing <a href="https://cloud.google.com/bigtable/">Google Cloud Bigtable</a> entities in a
  * Cloud Dataflow pipeline.
  * </p>
- *
  * <p>
  * Google Cloud Bigtable offers you a fast, fully managed, massively scalable NoSQL database service
  * that's ideal for web, mobile, and Internet of Things applications requiring terabytes to
@@ -96,17 +100,15 @@ import com.google.common.annotations.VisibleForTesting;
  * battle-tested at Google for more than 10 years--it's the database driving major applications such
  * as Google Analytics and Gmail.
  * </p>
- *
  * <p>
  * To use {@link CloudBigtableIO}, users must use gcloud to get a credential for Cloud Bigtable:
  *
  * <pre>
  * $ gcloud auth login
  * </pre>
- *
  * <p>
- * To read a {@link PCollection} from a table, with an optional
- * {@link Scan}, use {@link CloudBigtableIO#read(CloudBigtableScanConfiguration)}:
+ * To read a {@link PCollection} from a table, with an optional {@link Scan}, use
+ * {@link CloudBigtableIO#read(CloudBigtableScanConfiguration)}:
  * </p>
  *
  * <pre>
@@ -122,7 +124,6 @@ import com.google.common.annotations.VisibleForTesting;
  *          .build())));
  * }
  * </pre>
- *
  * <p>
  * To write a {@link PCollection} to a table, use
  * {@link CloudBigtableIO#writeToTable(CloudBigtableTableConfiguration)}:
@@ -143,8 +144,12 @@ import com.google.common.annotations.VisibleForTesting;
  *          .build()));
  * }
  * </pre>
+ *
+ * @deprecated Please use the Beam version of CloudBigtableIO instead. This project will be removed
+ *             in future versions.
  */
 
+@Deprecated
 public class CloudBigtableIO {
 
   enum CoderType {
@@ -154,6 +159,7 @@ public class CloudBigtableIO {
 
   private static AtomicCoder<Result> RESULT_CODER = new HBaseResultCoder();
   private static AtomicCoder<Result[]> RESULT_ARRAY_CODER = new HBaseResultArrayCoder();
+  private static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
 
   @SuppressWarnings("rawtypes")
   private static AtomicCoder HBASE_MUTATION_CODER = new HBaseMutationCoder();
@@ -186,7 +192,7 @@ public class CloudBigtableIO {
      * @param resultScanner The {@link ResultScanner} on which to operate.
      * @param rangeTracker The {@link ByteKeyRangeTracker} that defines the range in which to get results.
      */
-    ResultOutputType next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker) throws IOException;
+    ResultOutputType next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker) throws IOException;
 
     /**
      * Is the work complete? Checks for null in the case of {@link Result}, or empty in the case of
@@ -207,12 +213,12 @@ public class CloudBigtableIO {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Result next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker)
+    public Result next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker)
         throws IOException {
-      Row row = resultScanner.next();
+      FlatRow row = resultScanner.next();
       if (row != null
-          && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getKey()))) {
-        return Adapters.ROW_ADAPTER.adaptResponse(row);
+          && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getRowKey()))) {
+        return FLAT_ROW_ADAPTER.adaptResponse(row);
       }
       return null;
     }
@@ -241,21 +247,21 @@ public class CloudBigtableIO {
 
 
     @Override
-    public Result[] next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker)
+    public Result[] next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker)
         throws IOException {
       List<Result> results = new ArrayList<>();
       for (int i = 0; i < arraySize; i++) {
-        Row row = resultScanner.next();
+        FlatRow row = resultScanner.next();
         if (row == null) {
           // The scan completed.
           break;
         }
-        ByteKey key = ByteStringUtil.toByteKey(row.getKey());
+        ByteKey key = ByteStringUtil.toByteKey(row.getRowKey());
         if (!rangeTracker.tryReturnRecordAt(true, key)) {
           // A split occurred and the split key was before this key.
           break;
         }
-        results.add(Adapters.ROW_ADAPTER.adaptResponse(row));
+        results.add(FLAT_ROW_ADAPTER.adaptResponse(row));
       }
       return results.toArray(new Result[results.size()]);
     }
@@ -355,7 +361,12 @@ public class CloudBigtableIO {
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         splits.add(createSourceWithKeys(startKey, endKey, 0));
       }
-      return reduceSplits(splits);
+      List<SourceWithKeys<ResultOutputType>> result = reduceSplits(splits);
+
+      // Randomize the list, since the default behavior would lead to multiple workers hitting the
+      // same tablet.
+      Collections.shuffle(result);
+      return result;
     }
 
     private List<SourceWithKeys<ResultOutputType>>
@@ -408,14 +419,7 @@ public class CloudBigtableIO {
      */
     public synchronized List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
       if (sampleRowKeys == null) {
-        BigtableOptions bigtableOptions = getConfiguration().toBigtableOptions();
-        try (BigtableSession session = new BigtableSession(bigtableOptions)) {
-          BigtableTableName tableName =
-              bigtableOptions.getInstanceName().toTableName(getConfiguration().getTableId());
-          SampleRowKeysRequest request =
-              SampleRowKeysRequest.newBuilder().setTableName(tableName.toString()).build();
-          sampleRowKeys = session.getDataClient().sampleRowKeys(request);
-        }
+        sampleRowKeys = new CloudBigtableServiceImpl().getSampleRowKeys(getConfiguration());
       }
       return sampleRowKeys;
     }
@@ -542,6 +546,12 @@ public class CloudBigtableIO {
      */
     protected CloudBigtableScanConfiguration getConfiguration() {
       return configuration;
+    }
+
+    @Override
+    public void populateDisplayData(DisplayData.Builder builder) {
+      super.populateDisplayData(builder);
+      configuration.populateDisplayData(builder);
     }
   }
 
@@ -729,9 +739,9 @@ public class CloudBigtableIO {
     private CloudBigtableIO.AbstractSource<ResultOutputType> source;
     private final ScanIterator<ResultOutputType> scanIterator;
 
-    private volatile BigtableSession session;
-    private volatile ResultScanner<Row> scanner;
-    private volatile ResultOutputType current;
+    private transient BigtableSession session;
+    private transient ResultScanner<FlatRow> scanner;
+    private transient ResultOutputType current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
     private final ByteKeyRangeTracker rangeTracker;
@@ -750,21 +760,18 @@ public class CloudBigtableIO {
       */
     @Override
     public boolean start() throws IOException {
-      long connectionStart = System.currentTimeMillis();
       initializeScanner();
       workStart = System.currentTimeMillis();
-      READER_LOG.info("{} Starting work. Creating Scanner took: {} ms.",
-        this,
-        workStart - connectionStart);
       return advance();
     }
 
     @VisibleForTesting
     void initializeScanner() throws IOException {
-      Configuration hbaseConfig = source.getConfiguration().toHBaseConfig();
-      hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-      session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(hbaseConfig));
-      scanner = session.getDataClient().readRows(source.getConfiguration().getRequest());
+      Configuration config = source.getConfiguration().toHBaseConfig();
+
+      // This will use cached data channels under the covers.
+      session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(config));
+      scanner = session.getDataClient().readFlatRows(source.getConfiguration().getRequest());
     }
 
     /**
@@ -784,6 +791,9 @@ public class CloudBigtableIO {
 
     @Override
     public final Double getFractionConsumed() {
+      if (rangeTracker.isDone()) {
+        return 1.0;
+      }
       return rangeTracker.getFractionConsumed();
     }
 
@@ -794,38 +804,56 @@ public class CloudBigtableIO {
      */
     @Override
     public final synchronized BoundedSource<ResultOutputType> splitAtFraction(double fraction) {
+      if (fraction < .01 || fraction > .99) {
+        return null;
+      }
       ByteKey splitKey;
-      final ByteKeyRange range = source.getConfiguration().toByteKeyRange();
       try {
-        splitKey = range.interpolateKey(fraction);
+        splitKey = rangeTracker.getRange().interpolateKey(fraction);
       } catch (IllegalArgumentException e) {
-        READER_LOG.info("{}: Failed to interpolate key for fraction {}.", range, fraction);
+        READER_LOG.info("{}: Failed to interpolate key for fraction {}.", rangeTracker.getRange(), fraction);
         return null;
       }
 
-      READER_LOG.debug("Proposing to split {} at fraction {} (key {})", rangeTracker, fraction,
+      READER_LOG.info("Proposing to split {} at fraction {} (key {})", rangeTracker, fraction,
         splitKey);
 
       long estimatedSizeBytes = -1;
       try {
         estimatedSizeBytes = source.getEstimatedSizeBytes(null);
       } catch (IOException e) {
-        READER_LOG.info("{}: Failed to get estimated size for key for fraction {}.", range, fraction);
+        READER_LOG.info("{}: Failed to get estimated size for key for fraction {}.", rangeTracker.getRange(), fraction);
         return null;
       }
-      long newEstimatedSize = (long) (fraction * estimatedSizeBytes);
-      byte[] splitKeyBytes = splitKey.getBytes();
-      SourceWithKeys<ResultOutputType> residual = source.createSourceWithKeys(splitKeyBytes,
-        source.getConfiguration().getZeroCopyStopRow(), estimatedSizeBytes - newEstimatedSize);
+      SourceWithKeys<ResultOutputType> residual = null;
+      SourceWithKeys<ResultOutputType> primary = null;
+      try {
+        long newPrimarySize = (long) (fraction * estimatedSizeBytes);
+        long residualSize = estimatedSizeBytes - newPrimarySize;
 
-      SourceWithKeys<ResultOutputType> primary = this.source.createSourceWithKeys(
-        source.getConfiguration().getZeroCopyStartRow(), splitKeyBytes, newEstimatedSize);
+        byte[] currentStartKey = rangeTracker.getRange().getStartKey().getBytes();
+        byte[] splitKeyBytes = splitKey.getBytes();
+        byte[] currentStopKey = rangeTracker.getRange().getEndKey().getBytes();
 
-      if (!rangeTracker.trySplitAtPosition(splitKey)) {
+        if (!rangeTracker.trySplitAtPosition(splitKey)) {
+          return null;
+        }
+
+        primary = source.createSourceWithKeys(currentStartKey, splitKeyBytes, newPrimarySize);
+        residual = source.createSourceWithKeys(splitKeyBytes, currentStopKey, residualSize);
+
+        this.source = primary;
+        return residual;
+      } catch (Throwable t) {
+        try {
+          String msg = String.format("%d Failed to get estimated size for key for fraction %f.",
+            rangeTracker.getRange(), fraction);
+          READER_LOG.warn(msg, t);
+        } catch (Throwable t1) {
+          // ignore.
+        }
         return null;
       }
-      this.source = primary;
-      return residual;
     }
 
     @VisibleForTesting
@@ -834,8 +862,13 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    protected void setScanner(ResultScanner<Row> scanner) {
+    protected void setScanner(ResultScanner<FlatRow> scanner) {
       this.scanner = scanner;
+    }
+
+    @VisibleForTesting
+    public ByteKeyRangeTracker getRangeTracker() {
+      return rangeTracker;
     }
 
     /**
@@ -843,8 +876,10 @@ public class CloudBigtableIO {
      */
     @Override
     public void close() throws IOException {
-      scanner.close();
-      session.close();
+      if (scanner != null) {
+        scanner.close();
+        scanner = null;
+      }
       long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
       long operationsPerSecond = elapsedTimeMs == 0 ? 0 : (totalOps * 1000 / elapsedTimeMs);
@@ -873,10 +908,9 @@ public class CloudBigtableIO {
 
     @Override
     public String toString() {
-      CloudBigtableScanConfiguration configuration = source.getConfiguration();
       return String.format("Reader for: ['%s' - '%s']",
-        Bytes.toStringBinary(configuration.getZeroCopyStartRow()),
-        Bytes.toStringBinary(configuration.getZeroCopyStopRow()));
+        Bytes.toStringBinary(rangeTracker.getStartPosition().getBytes()),
+        Bytes.toStringBinary(rangeTracker.getStopPosition().getBytes()));
     }
   }
 
@@ -906,38 +940,78 @@ public class CloudBigtableIO {
   }
 
 
+  private static class MutationStatsExporter {
+    private static final Logger STATS_LOG = LoggerFactory.getLogger(AbstractSource.class);
+    private static Map<String, MutationStatsExporter> mutationStatsExporters = new HashMap<>();
 
-  /**
-   * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of
-   * {@link Mutation}s to a table specified via a {@link CloudBigtableTableConfiguration} using the
-   * BufferedMutator.
-   */
-  public static class CloudBigtableSingleTableBufferedWriteFn
-      extends AbstractCloudBigtableTableDoFn<Mutation, Void> {
-    private static final long serialVersionUID = 2L;
-    private transient BufferedMutator mutator;
-    private final String tableName;
-
-    // Stats
-    private final Aggregator<Long, Long> mutationsCounter;
-    private final Aggregator<Long, Long> exceptionsCounter;
-
-    public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
-      super(config);
-      tableName = config.getTableId();
-      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
-      exceptionsCounter = createAggregator("exceptions", new Sum.SumLongFn());
+    static synchronized void initializeMutationStatsExporter(BufferedMutatorDoFn<?> doFn) {
+      CloudBigtableConfiguration config = doFn.getConfig();
+      BigtableInstanceName instanceName =
+          new BigtableInstanceName(config.getProjectId(), config.getInstanceId());
+      String key = instanceName.toString();
+      MutationStatsExporter mutationStatsExporter = mutationStatsExporters.get(key);
+      if (mutationStatsExporter == null) {
+        mutationStatsExporter = new MutationStatsExporter(instanceName, doFn);
+        mutationStatsExporter.startExport();
+        mutationStatsExporters.put(key, mutationStatsExporter);
+      }
     }
 
-    private synchronized BufferedMutator getBufferedMutator(Context context)
+    private final AggregatorWithState cumulativeThrottlingSeconds;
+    private final BigtableInstanceName instanceName;
+
+    MutationStatsExporter(BigtableInstanceName instanceName, BufferedMutatorDoFn<?> doFn) {
+      this.instanceName = instanceName;
+      cumulativeThrottlingSeconds = new AggregatorWithState(doFn.cumulativeThrottlingSeconds);
+    }
+
+    protected void startExport() {
+      Runnable r = new Runnable() {
+        @Override
+        public void run() {
+          try {
+            cumulativeThrottlingSeconds.set(TimeUnit.NANOSECONDS.toSeconds(
+              ResourceLimiterStats.getInstance(instanceName).getCumulativeThrottlingTimeNanos()));
+          } catch (Exception e) {
+            STATS_LOG.warn("Something bad happened in export stats", e);
+          }
+        }
+      };
+      BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().scheduleAtFixedRate(r, 5, 5,
+        TimeUnit.MILLISECONDS);
+    }
+  }
+
+  /**
+   * This is a DoFn that relies on {@link BufferedMutator} as the implementation to write data to
+   * Cloud Bigtable. The main function of this class is to manage Aggregators relating to mutations.
+   * @param <InputType>
+   */
+  private static abstract class BufferedMutatorDoFn<InputType>
+      extends AbstractCloudBigtableTableDoFn<InputType, Void> {
+
+    private static final long serialVersionUID = 1L;
+
+    // Stats
+    protected final Aggregator<Long, Long> mutationsCounter;
+    protected final Aggregator<Long, Long> exceptionsCounter;
+    protected final Aggregator<Long, Long> cumulativeThrottlingSeconds;
+
+    public BufferedMutatorDoFn(CloudBigtableConfiguration config) {
+      super(config);
+      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
+      exceptionsCounter = createAggregator("exceptions", new Sum.SumLongFn());
+      cumulativeThrottlingSeconds =
+          createAggregator("cumulativeThrottlingSeconds", new Sum.SumLongFn());
+    }
+
+    protected BufferedMutator createBufferedMutator(Context context, String tableName)
         throws IOException {
-      if (mutator == null) {
-        ExceptionListener listener = createExceptionListener(context);
-        BufferedMutatorParams params = new BufferedMutatorParams(TableName.valueOf(tableName))
-            .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT).listener(listener);
-        mutator = getConnection().getBufferedMutator(params);
-      }
-      return mutator;
+      MutationStatsExporter.initializeMutationStatsExporter(this);
+      return getConnection()
+          .getBufferedMutator(new BufferedMutatorParams(TableName.valueOf(tableName))
+              .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT)
+              .listener(createExceptionListener(context)));
     }
 
     protected ExceptionListener createExceptionListener(final Context context) {
@@ -949,6 +1023,31 @@ public class CloudBigtableIO {
           throw exception;
         }
       };
+    }
+  }
+
+  /**
+   * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of
+   * {@link Mutation}s to a table specified via a {@link CloudBigtableTableConfiguration} using the
+   * BufferedMutator.
+   */
+  public static class CloudBigtableSingleTableBufferedWriteFn
+      extends BufferedMutatorDoFn<Mutation> {
+    private static final long serialVersionUID = 2L;
+    private transient BufferedMutator mutator;
+    private final String tableName;
+
+    public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
+      super(config);
+      tableName = config.getTableId();
+    }
+
+    private synchronized BufferedMutator getBufferedMutator(Context context)
+        throws IOException {
+      if (mutator == null) {
+        mutator = createBufferedMutator(context, tableName);
+      }
+      return mutator;
     }
 
     /**
@@ -968,10 +1067,11 @@ public class CloudBigtableIO {
      * Closes the {@link BufferedMutator} and {@link Connection}.
      */
     @Override
-    public void finishBundle(Context context) throws Exception {
+    public synchronized void finishBundle(Context context) throws Exception {
       try {
         if (mutator != null) {
           mutator.close();
+          mutator = null;
         }
       } catch (RetriesExhaustedWithDetailsException exception) {
         exceptionsCounter.addValue((long) exception.getCauses().size());
@@ -1016,7 +1116,7 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Performs an asynchronous mutation via {@link BufferedMutator#mutate(Mutation)}.
+     * Performs an asynchronous mutation via {@link Table#put(Put)}.
      */
     @Override
     public void processElement(ProcessContext context) throws Exception {
@@ -1065,17 +1165,21 @@ public class CloudBigtableIO {
    * family is greater than one.  In a case where multiple versions could be a problem, it's best to
    * add a timestamp to the {@link Put}.
    */
-  public static class CloudBigtableMultiTableWriteFn extends
-  AbstractCloudBigtableTableDoFn<KV<String, Iterable<Mutation>>, Void> {
+  public static class CloudBigtableMultiTableWriteFn
+      extends BufferedMutatorDoFn<KV<String, Iterable<Mutation>>> {
     private static final long serialVersionUID = 2L;
 
     // Stats
-    private final Aggregator<Long, Long> mutationsCounter;
+    private transient Map<String, BufferedMutator> mutators;
 
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
+    }
 
-      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
+    @Override
+    public void startBundle(DoFn<KV<String, Iterable<Mutation>>, Void>.Context c) throws Exception {
+      super.startBundle(c);
+      mutators = new HashMap<>();
     }
 
     /**
@@ -1089,16 +1193,40 @@ public class CloudBigtableIO {
     @Override
     public void processElement(ProcessContext context) throws Exception {
       KV<String, Iterable<Mutation>> element = context.element();
-      String tableName = element.getKey();
-      try (Table t = getConnection().getTable(TableName.valueOf(tableName))) {
-        List<Mutation> mutations = Lists.newArrayList(element.getValue());
-        int mutationCount = mutations.size();
-        t.batch(mutations, new Object[mutationCount]);
-        mutationsCounter.addValue((long) mutationCount);
+      BufferedMutator mutator = getMutator(context, element.getKey());
+      try {
+        for (Mutation mutation : element.getValue()) {
+          mutator.mutate(mutation);
+          mutationsCounter.addValue(1l);
+        }
       } catch (RetriesExhaustedWithDetailsException exception) {
         logExceptions(context, exception);
         rethrowException(exception);
       }
+    }
+
+    private BufferedMutator getMutator(Context context, String tableName) throws IOException {
+      BufferedMutator mutator = mutators.get(tableName);
+      if (mutator == null) {
+        mutator = createBufferedMutator(context, tableName);
+        mutators.put(tableName, mutator);
+      }
+      return mutator;
+    }
+
+    @Override
+    public void finishBundle(DoFn<KV<String, Iterable<Mutation>>, Void>.Context c)
+        throws Exception {
+      for (BufferedMutator bufferedMutator : mutators.values()) {
+        try {
+          bufferedMutator.flush();
+        } catch (RetriesExhaustedWithDetailsException exception) {
+          logExceptions(c, exception);
+          rethrowException(exception);
+        }
+      }
+      mutators.clear();
+      super.finishBundle(c);
     }
   }
 
@@ -1119,6 +1247,12 @@ public class CloudBigtableIO {
     public PDone apply(PCollection<T> input) {
       input.apply(ParDo.of(function));
       return PDone.in(input.getPipeline());
+    }
+
+    @Override
+    public void populateDisplayData(DisplayData.Builder builder) {
+      super.populateDisplayData(builder);
+      function.populateDisplayData(builder);
     }
   }
 

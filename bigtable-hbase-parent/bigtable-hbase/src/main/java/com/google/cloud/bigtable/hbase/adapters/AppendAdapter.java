@@ -47,7 +47,7 @@ public class AppendAdapter implements OperationAdapter<Append, ReadModifyWriteRo
       List<Cell> cells = CellDeduplicationHelper.deduplicateFamily(operation, entry.getKey());
 
       for (Cell cell : cells) {
-        ReadModifyWriteRule.Builder rule = result.addRulesBuilder();
+        ReadModifyWriteRule.Builder rule = ReadModifyWriteRule.newBuilder();
         rule.setFamilyName(familyName);
         rule.setColumnQualifier(
             ByteString.copyFrom(
@@ -59,6 +59,7 @@ public class AppendAdapter implements OperationAdapter<Append, ReadModifyWriteRo
                 cell.getValueArray(),
                 cell.getValueOffset(),
                 cell.getValueLength()));
+        result.addRules(rule.build());
       }
     }
     return result;

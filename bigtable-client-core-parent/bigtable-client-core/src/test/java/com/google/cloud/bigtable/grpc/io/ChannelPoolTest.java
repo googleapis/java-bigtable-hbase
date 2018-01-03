@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,6 +37,8 @@ import org.junit.runners.JUnit4;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
+import com.google.bigtable.v2.BigtableGrpc;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
@@ -85,23 +86,19 @@ public class ChannelPoolTest {
 
   @Test
   public void testInterceptorIsCalled() throws Exception {
-    MethodDescriptor descriptor = mock(MethodDescriptor.class);
-    HeaderInterceptor interceptor = mock(HeaderInterceptor.class);
-    ChannelPool pool =
-        new ChannelPool(Collections.singletonList(interceptor), new MockChannelFactory());
+    MethodDescriptor descriptor = BigtableGrpc.METHOD_MUTATE_ROW;
+    ChannelPool pool = new ChannelPool(new MockChannelFactory(), 1);
     ClientCall call = pool.newCall(descriptor, CallOptions.DEFAULT);
     Metadata headers = new Metadata();
     call.start(null, headers);
-    verify(interceptor, times(1)).updateHeaders(same(headers));
   }
 
   @Test
   public void testChannelsAreRoundRobinned() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    MethodDescriptor descriptor = mock(MethodDescriptor.class);
+    MethodDescriptor descriptor = BigtableGrpc.METHOD_MUTATE_ROW;
     MockitoAnnotations.initMocks(this);
-    ChannelPool pool = new ChannelPool(null, factory);
-    pool.ensureChannelCount(2);
+    ChannelPool pool = new ChannelPool(factory, 2);
     pool.newCall(descriptor, CallOptions.DEFAULT);
     verify(factory.channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
     verify(factory.channels.get(1), times(0)).newCall(same(descriptor), same(CallOptions.DEFAULT));
@@ -113,8 +110,7 @@ public class ChannelPoolTest {
   @Test
   public void testEnsureCapcity() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    ChannelPool pool = new ChannelPool(null, factory);
-    pool.ensureChannelCount(4);
+    ChannelPool pool = new ChannelPool(factory, 4);
     Assert.assertEquals(4, factory.channels.size());
     Assert.assertEquals(4, pool.size());
   }
@@ -122,7 +118,7 @@ public class ChannelPoolTest {
   @Test
   public void testShutdown() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    new ChannelPool(null, factory).shutdown();
+    new ChannelPool(factory, 1).shutdown();
     for (ManagedChannel managedChannel : factory.channels) {
       verify(managedChannel, times(1)).shutdown();
     }
@@ -131,7 +127,7 @@ public class ChannelPoolTest {
   @Test
   public void testShutdownNow() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    new ChannelPool(null, factory).shutdownNow();
+    new ChannelPool(factory, 1).shutdownNow();
     for (ManagedChannel managedChannel : factory.channels) {
       verify(managedChannel, times(1)).shutdownNow();
     }
@@ -140,8 +136,7 @@ public class ChannelPoolTest {
   @Test
   public void testAwaitTermination() throws IOException, InterruptedException {
     MockChannelFactory factory = new MockChannelFactory();
-    ChannelPool pool = new ChannelPool(null, factory);
-    pool.ensureChannelCount(5);
+    ChannelPool pool = new ChannelPool(factory, 1);
     for (ManagedChannel managedChannel : factory.channels) {
       when(managedChannel.isTerminated()).thenReturn(false);
     }

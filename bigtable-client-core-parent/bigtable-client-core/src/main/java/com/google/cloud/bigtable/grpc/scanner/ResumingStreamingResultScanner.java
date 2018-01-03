@@ -15,16 +15,15 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.Row;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
-import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
-import com.google.cloud.bigtable.metrics.Timer.Context;
-import com.google.common.annotations.VisibleForTesting;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.Meter;
+import com.google.cloud.bigtable.metrics.Timer;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 
 import java.io.IOException;
+import java.util.ArrayList;
+
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A ResultScanner that attempts to resume the readRows call when it encounters gRPC INTERNAL
@@ -32,114 +31,75 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class ResumingStreamingResultScanner extends AbstractBigtableResultScanner {
+@NotThreadSafe
+public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
 
-  private static final Logger LOG = new Logger(ResumingStreamingResultScanner.class);
+  private static final Meter resultsMeter =
+      BigtableClientMetrics.meter(MetricLevel.Info, "scanner.results");
+  private static final Timer resultsTimer =
+      BigtableClientMetrics.timer(MetricLevel.Debug, "scanner.results.latency");
 
   // Member variables from the constructor.
-  private final ReadRowsRequestRetryHandler retryHandler;
-  private final BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory;
-  private final Logger logger;
-  private final RpcMetrics rpcMetrics;
-
-  private ResultScanner<Row> currentDelegate;
-
-  private Context operationContext;
-  private Context rpcContext;
+  private final ScanHandler scanHandler;
+  private final ResponseQueueReader responseQueueReader;
 
   /**
    * <p>
    * Constructor for ResumingStreamingResultScanner.
    * </p>
-   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
-   * @param originalRequest a {@link com.google.bigtable.v2.ReadRowsRequest} object.
-   * @param scannerFactory a
-   *          {@link com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory} object.
-   * @param rpcMetrics a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics}
-   *          object to keep track of retries and failures.
+   * @param responseQueueReader a {@link ResponseQueueReader} which queues up {@link FlatRow}s.
+   * @param scanHandler a {@link ScanHandler} which handles exception situations.
    */
-  public ResumingStreamingResultScanner(RetryOptions retryOptions, ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory, RpcMetrics rpcMetrics) {
-    this(retryOptions, originalRequest, scannerFactory, rpcMetrics, LOG);
-  }
-
-  @VisibleForTesting
-  ResumingStreamingResultScanner(
-      RetryOptions retryOptions,
-      ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory,
-      RpcMetrics rpcMetrics,
-      Logger logger) {
-    this.operationContext = rpcMetrics.timeOperation();
-    this.retryHandler = new ReadRowsRequestRetryHandler(retryOptions, originalRequest,
-        rpcMetrics, logger);
-    this.scannerFactory = scannerFactory;
-    this.logger = logger;
-    this.rpcMetrics = rpcMetrics;
-
-    this.currentDelegate = scannerFactory.createScanner(originalRequest);
-    this.rpcContext = rpcMetrics.timeRpc();
+  public ResumingStreamingResultScanner(ResponseQueueReader responseQueueReader,
+      ScanHandler scanHandler) {
+    this.responseQueueReader = responseQueueReader;
+    this.scanHandler = scanHandler;
   }
 
   /** {@inheritDoc} */
   @Override
-  public Row next() throws IOException {
-    while (true) {
-      try {
-        Row result = currentDelegate.next();
-        if (result != null) {
-          retryHandler.update(result);
-        }
-        return result;
-      } catch (ScanTimeoutException rte) {
-        closeRpcContext();
-        closeCurrentDelegate();
-        ReadRowsRequest newRequest = retryHandler.handleScanTimeout(rte);
-        currentDelegate = scannerFactory.createScanner(newRequest);
-        this.rpcContext = rpcMetrics.timeRpc();
-      } catch (IOExceptionWithStatus ioe) {
-        closeRpcContext();
-        closeCurrentDelegate();
-        ReadRowsRequest newRequest = retryHandler.handleIOException(ioe);
-        currentDelegate = scannerFactory.createScanner(newRequest);
-        this.rpcContext = rpcMetrics.timeRpc();
+  public final FlatRow[] next(int count) throws IOException {
+    ArrayList<FlatRow> resultList = new ArrayList<>(count);
+    for (int i = 0; i < count; i++) {
+      FlatRow row = next();
+      if (row == null) {
+        break;
       }
+      resultList.add(row);
     }
+    return resultList.toArray(new FlatRow[resultList.size()]);
   }
 
-  private void closeCurrentDelegate() {
-    try {
-      currentDelegate.close();
-    } catch (IOException ioe) {
-      logger.warn("Error closing scanner before reissuing request: ", ioe);
+  /** {@inheritDoc} */
+  @Override
+  public FlatRow next() throws IOException {
+    try(Timer.Context ignored = resultsTimer.time()) {
+      while (true) {
+        try {
+          FlatRow result = responseQueueReader.getNextMergedRow();
+          if (result != null) {
+            resultsMeter.mark();
+          }
+          return result;
+        } catch (ScanTimeoutException rte) {
+          scanHandler.handleTimeout(rte);
+        } catch (Throwable e) {
+          scanHandler.cancel();
+          throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", e);
+        }
+      }
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public int available() {
-    return currentDelegate.available();
+    return responseQueueReader.available();
   }
 
   /** {@inheritDoc} */
   @Override
-  public synchronized void close() throws IOException {
-    closeRpcContext();
-    closeOperationContext();
-    currentDelegate.close();
-  }
-
-  private void closeOperationContext() {
-    if (operationContext != null) {
-      operationContext.close();
-      operationContext = null;
-    }
-  }
-
-  private void closeRpcContext() {
-    if (rpcContext != null) {
-      rpcContext.close();
-      rpcContext = null;
-    }
+  public void close() throws IOException {
+    scanHandler.cancel();
   }
 }

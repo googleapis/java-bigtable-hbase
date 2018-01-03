@@ -82,7 +82,7 @@ public class TestBigtableOptionsFactory {
   @Test
   public void testAdminHostKeyIsUsed() throws IOException {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_TABLE_ADMIN_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
@@ -101,16 +101,6 @@ public class TestBigtableOptionsFactory {
   }
 
   @Test
-  public void testLegacyOptions() throws IOException {
-    configuration.set(BigtableOptionsFactory.ZONE_KEY, "z");
-    configuration.set(BigtableOptionsFactory.CLUSTER_KEY, "c");
-    configuration.unset(BigtableOptionsFactory.INSTANCE_ID_KEY);
-    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals("z", options.getZoneId());
-    Assert.assertEquals("c", options.getClusterId());
-  }
-
-  @Test
   public void testDefaultRetryOptions() throws IOException {
     RetryOptions retryOptions =
         BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
@@ -119,7 +109,7 @@ public class TestBigtableOptionsFactory {
       retryOptions.enableRetries());
     assertEquals(
         RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS,
-        retryOptions.getMaxElaspedBackoffMillis());
+        retryOptions.getMaxElapsedBackoffMillis());
     assertEquals(
         RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS,
         retryOptions.getReadPartialRowTimeoutMillis());
@@ -138,7 +128,7 @@ public class TestBigtableOptionsFactory {
         BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
     assertEquals(false, retryOptions.enableRetries());
     assertEquals(false, retryOptions.retryOnDeadlineExceeded());
-    assertEquals(111, retryOptions.getMaxElaspedBackoffMillis());
+    assertEquals(111, retryOptions.getMaxElapsedBackoffMillis());
     assertEquals(123, retryOptions.getReadPartialRowTimeoutMillis());
   }
 }

@@ -31,6 +31,9 @@ import com.google.longrunning.OperationsGrpc;
 import com.google.protobuf.Empty;
 
 import io.grpc.Channel;
+import io.grpc.protobuf.StatusProto;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>BigtableInstanceGrpcClient class.</p>
@@ -63,6 +66,48 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
   @Override
   public Operation getOperation(GetOperationRequest request) {
     return operationsStub.getOperation(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void waitForOperation(Operation operation) throws IOException {
+    GetOperationRequest request = GetOperationRequest.newBuilder()
+        .setName(operation.getName())
+        .build();
+
+    Operation currentOperationState = operation;
+    long startMs = System.currentTimeMillis();
+    while (true) {
+      if (currentOperationState.getDone()) {
+        switch (currentOperationState.getResultCase()) {
+          case RESPONSE:
+            return;
+          case ERROR:
+            throw StatusProto.toStatusRuntimeException(currentOperationState.getError());
+          case RESULT_NOT_SET:
+            throw new IllegalStateException(
+                "System returned invalid response for Operation check: " + currentOperationState);
+        }
+      }
+      final long waitMs;
+      long timePassedS = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startMs);
+      if (timePassedS < 5) {
+        waitMs = 250;
+      } else if (timePassedS < 60){
+        waitMs = 1000;
+      } else if (timePassedS < 300) {
+        waitMs = 10000;
+      } else {
+        waitMs = 60000;
+      }
+      try {
+        Thread.sleep(waitMs);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Waiting for operation was interrupted.", e);
+      }
+      currentOperationState = getOperation(request);
+    }
   }
 
   /** {@inheritDoc} */

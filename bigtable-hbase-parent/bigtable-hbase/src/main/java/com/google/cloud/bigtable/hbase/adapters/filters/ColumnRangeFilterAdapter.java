@@ -31,7 +31,7 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class ColumnRangeFilterAdapter implements TypedFilterAdapter<ColumnRangeFilter> {
+public class ColumnRangeFilterAdapter extends TypedFilterAdapterBase<ColumnRangeFilter> {
 
   private static final String REQUIRE_SINGLE_FAMILY_MESSAGE =
       "Scan or Get operations using ColumnRangeFilter must "
