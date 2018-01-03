@@ -38,6 +38,7 @@ limitations under the License.
         <google.bigtable.endpoint.port>443</google.bigtable.endpoint.port>
         <google.bigtable.use.bulk.api>true</google.bigtable.use.bulk.api>
         <google.bigtable.use.plaintext.negotiation>false</google.bigtable.use.plaintext.negotiation>
+        <test.timeout>1800</test.timeout>
     </properties>
 
     <profiles>
@@ -83,7 +84,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -131,7 +132,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -172,7 +173,7 @@ limitations under the License.
                                         <include>**/IntegrationTests.java</include>
                                     </includes>
                                     <reportNameSuffix>local-mini-cluster</reportNameSuffix>
-                                    <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -220,7 +221,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
