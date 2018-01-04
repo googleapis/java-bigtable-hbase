@@ -260,8 +260,7 @@ public class BigtableSession implements Closeable {
    */
   public synchronized BigtableClusterName getClusterName() throws IOException {
     if (this.clusterName == null) {
-      try (BigtableClusterUtilities util =
-          BigtableClusterUtilities.forInstance(options.getProjectId(), options.getInstanceId())) {
+      try (BigtableClusterUtilities util = new BigtableClusterUtilities(options)) {
         ListClustersResponse clusters = util.getClusters();
         Preconditions.checkState(clusters.getClustersCount() == 1,
           String.format(
