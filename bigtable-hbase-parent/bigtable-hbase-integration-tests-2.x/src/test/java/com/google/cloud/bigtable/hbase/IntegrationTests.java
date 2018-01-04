@@ -52,7 +52,7 @@ import org.junit.runners.Suite;
 public class IntegrationTests {
 
   @ClassRule
-  public static Timeout timeoutRule = new Timeout(10, TimeUnit.MINUTES);
+  public static Timeout timeoutRule = new Timeout(30, TimeUnit.MINUTES);
 
   @ClassRule
   public static SharedTestEnvRule sharedTestEnvRule = new SharedTestEnvRule();
