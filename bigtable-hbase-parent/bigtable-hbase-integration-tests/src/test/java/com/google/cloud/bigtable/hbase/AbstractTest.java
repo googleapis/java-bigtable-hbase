@@ -15,14 +15,17 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
 
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
 public abstract class AbstractTest {
 
@@ -45,6 +48,15 @@ public abstract class AbstractTest {
         System.currentTimeMillis() - start);
     };
   };
+
+  @BeforeClass
+  public static void truncate() {
+    try(Admin admin = sharedTestEnv.getConnection().getAdmin()) {
+      admin.truncateTable(sharedTestEnv.getDefaultTableName(), true);
+    } catch (IOException e) {
+      new Logger(AbstractTest.class).warn("Cloud not truncate Table");
+    };
+  }
 
   // This is for when we need to look at the results outside of the current connection
   public Connection createNewConnection() throws IOException {
