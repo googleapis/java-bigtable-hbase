@@ -91,7 +91,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     throw new UnsupportedOperationException("getCompactionStateForRegion");
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * The snapshot will be created with the ttl configured by
+   * {@link com.google.cloud.bigtable.hbase.BigtableOptionsFactory#BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY}
+   * key in the configuration. Will default to the serverside default.
+   * */
   @Override
   public void snapshot(String snapshotName, TableName tableName,
       HBaseProtos.SnapshotDescription.Type type)
@@ -120,8 +126,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         .setParent(getSnapshotClusterName().toString())
         .build();
 
-    ListSnapshotsResponse snapshotList = Futures.getUnchecked(
-        bigtableTableAdminClient.listSnapshotsAsync(request)
+    ListSnapshotsResponse snapshotList = Futures.getChecked(
+        bigtableTableAdminClient.listSnapshotsAsync(request),
+        IOException.class
     );
 
     List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();

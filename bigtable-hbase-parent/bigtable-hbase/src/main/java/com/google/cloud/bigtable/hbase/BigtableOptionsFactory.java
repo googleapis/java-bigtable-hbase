@@ -68,8 +68,11 @@ public class BigtableOptionsFactory {
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   /** Constant <code>INSTANCE_ID_KEY="google.bigtable.instance.id"</code> */
   public static final String INSTANCE_ID_KEY = "google.bigtable.instance.id";
-  /** Constant <code>CLUSTER_KEY="google.bigtable.snapshot.cluster.id"</code> */
+
+  /** Constant <code>BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY="google.bigtable.snapshot.cluster.id"</code> */
   public static final String BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY = "google.bigtable.snapshot.cluster.id";
+  /** Constant <code>BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY="google.bigtable.snapshot.default.ttl.secs"</code> */
+  public static final String BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY = "google.bigtable.snapshot.default.ttl.secs";
 
   /** Constant <code>CUSTOM_USER_AGENT_KEY="google.bigtable.custom.user.agent"</code> */
   public static final String CUSTOM_USER_AGENT_KEY = "google.bigtable.custom.user.agent";
