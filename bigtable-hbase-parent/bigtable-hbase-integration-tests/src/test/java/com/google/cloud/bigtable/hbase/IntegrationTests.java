@@ -49,7 +49,7 @@ import org.junit.runners.Suite;
 })
 public class IntegrationTests {
 
-  public static final int TIME_OUT_MINUTES =
+  private static final int TIME_OUT_MINUTES =
       Integer.getInteger("integration.test.timeout.minutes", 3);
 
   @ClassRule
