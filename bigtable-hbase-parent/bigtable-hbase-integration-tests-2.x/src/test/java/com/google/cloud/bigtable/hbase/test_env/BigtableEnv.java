@@ -50,7 +50,8 @@ class BigtableEnv extends SharedTestEnv {
       BigtableOptionsFactory.PROJECT_ID_KEY,
       BigtableOptionsFactory.INSTANCE_ID_KEY,
       BigtableOptionsFactory.BIGTABLE_USE_BULK_API,
-      BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION
+      BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION,
+      BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY
   );
   private Configuration configuration;
 
