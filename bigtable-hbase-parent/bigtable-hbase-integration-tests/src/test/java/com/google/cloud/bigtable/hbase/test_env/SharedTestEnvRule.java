@@ -60,7 +60,7 @@ public class SharedTestEnvRule extends ExternalResource {
   @Override
   protected void after() {
     try (Admin admin = connection.getAdmin()) {
-
+      LOG.info("Deleting table " + defaultTableName.getNameAsString());
       admin.disableTable(defaultTableName);
       admin.deleteTable(defaultTableName);
     } catch (Exception e) {
@@ -111,6 +111,7 @@ public class SharedTestEnvRule extends ExternalResource {
 
   public void createTable(TableName tableName) throws IOException {
     try (Admin admin = connection.getAdmin();) {
+      LOG.info("Creating table " + defaultTableName.getNameAsString());
       HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
       HColumnDescriptor family2 = new HColumnDescriptor(COLUMN_FAMILY2).setMaxVersions(MAX_VERSIONS);
       admin.createTable(

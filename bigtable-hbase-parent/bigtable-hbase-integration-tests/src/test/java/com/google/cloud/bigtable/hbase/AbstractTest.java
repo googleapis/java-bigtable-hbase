@@ -17,27 +17,33 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
+
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 
 public abstract class AbstractTest {
 
-  @ClassRule
-  public static SharedTestEnvRule sharedTestEnv = new SharedTestEnvRule();
-  protected DataGenerationHelper dataHelper = new DataGenerationHelper();
+  public static SharedTestEnvRule sharedTestEnv = IntegrationTests.sharedTestEnvRule;
+
+  protected static DataGenerationHelper dataHelper = new DataGenerationHelper();
   protected Logger logger = new Logger(this.getClass());
   @Rule
-  public TestRule loggingRule = new TestRule() {
+  public TestWatcher loggingRule = new TestWatcher() {
+    private long start;
+
     @Override
-    public Statement apply(Statement base, Description description) {
-      logger.info("Running: %s", description.getDisplayName());
-      return base;
+    public void starting(Description description) {
+      this.start = System.currentTimeMillis();
+      logger.info("Starting: %s", description.getDisplayName());
     }
+
+    protected void finished(Description description) {
+      logger.info("Test: %s finished in %d ms.", description.getDisplayName(),
+        System.currentTimeMillis() - start);
+    };
   };
 
   // This is for when we need to look at the results outside of the current connection
