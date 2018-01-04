@@ -74,13 +74,14 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
 
   /** {@inheritDoc} */
   @Override
-  public void waitForOperation(Operation operation) throws InterruptedException, TimeoutException {
+  public void waitForOperation(Operation operation) throws IOException, TimeoutException {
     waitForOperation(operation, 10, TimeUnit.MINUTES);
   }
 
   /** {@inheritDoc} */
+  @Override
   public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
-      throws TimeoutException, InterruptedException {
+      throws TimeoutException, IOException {
     GetOperationRequest request = GetOperationRequest.newBuilder()
         .setName(operation.getName())
         .build();
@@ -111,13 +112,18 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
       try {
         backOffMillis = backOff.nextBackOffMillis();
       } catch (IOException e) {
-        //Will never happen
+        // Should never happen.
         throw new RuntimeException(e);
       }
       if (backOffMillis == BackOff.STOP) {
         throw new TimeoutException("Operation did not complete in time");
       } else {
-        Thread.sleep(backOffMillis);
+        try {
+          Thread.sleep(backOffMillis);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new IOException("Interrupted while waiting for operation to finish");
+        }
       }
 
       currentOperationState = getOperation(request);

@@ -96,7 +96,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    *
    * The snapshot will be created with the ttl configured by
    * {@link com.google.cloud.bigtable.hbase.BigtableOptionsFactory#BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY}
-   * key in the configuration. Will default to the serverside default.
+   * key in the configuration. If not configured, the ttl will be set to serverside default.
    * */
   @Override
   public void snapshot(String snapshotName, TableName tableName,

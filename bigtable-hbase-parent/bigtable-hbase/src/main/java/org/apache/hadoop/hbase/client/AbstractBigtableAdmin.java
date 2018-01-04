@@ -820,14 +820,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void snapshot(String snapshotName, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
 
+    Operation operation = snapshotTable(snapshotName, tableName);
     try {
-      connection.getSession().getInstanceAdminClient()
-          .waitForOperation(snapshotTable(snapshotName, tableName));
+      connection.getSession().getInstanceAdminClient().waitForOperation(operation);
     } catch (TimeoutException e) {
       throw new IOException("Timed out waiting for snapshot creation to finish", e);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while waiting for snapshot creation to finish");
     }
   }
 
@@ -904,9 +901,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
           waitForOperation(operation);
     } catch (TimeoutException e) {
       throw new IOException("Timed out waiting for cloneSnapshot operation to finish", e);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while waiting for cloneSnapshot operation to finish");
     }
   }
 
@@ -947,7 +941,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * {@inheritDoc}
    *
-   * The tables will be deleted serially and the first failure will prevent the deletion of the
+   * The snapshots will be deleted serially and the first failure will prevent the deletion of the
    * remaining snapshots.
    */
   @Override
@@ -958,7 +952,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * {@inheritDoc}
    *
-   * The tables will be deleted serially and the first failure will prevent the deletion of the
+   * The snapshots will be deleted serially and the first failure will prevent the deletion of the
    * remaining snapshots.
    */
   @Override
@@ -977,7 +971,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * {@inheritDoc}
    *
-   * The tables will be deleted serially and the first failure will prevent the deletion of the
+   * The snapshots will be deleted serially and the first failure will prevent the deletion of the
    * remaining snapshots.
    */
   @Override
