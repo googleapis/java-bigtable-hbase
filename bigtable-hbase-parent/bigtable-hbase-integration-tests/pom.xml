@@ -32,6 +32,7 @@ limitations under the License.
 
     <properties>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
+        <test.timeout>1800</test.timeout>
     </properties>
 
     <profiles>
@@ -65,7 +66,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -106,7 +107,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -141,7 +142,7 @@ limitations under the License.
                                     </includes>
                                     <trimStackTrace>false</trimStackTrace>
                                     <reportNameSuffix>local-mini-cluster</reportNameSuffix>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
