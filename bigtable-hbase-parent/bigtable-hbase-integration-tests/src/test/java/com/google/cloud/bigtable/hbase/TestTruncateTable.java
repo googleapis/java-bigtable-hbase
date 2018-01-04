@@ -42,8 +42,10 @@ public class TestTruncateTable extends AbstractTest {
 
   @Test
   public void testTruncate() throws IOException {
-    TableName tableName = sharedTestEnv.newTestTableName();
-    sharedTestEnv.createTable(tableName);
+    testTruncate(sharedTestEnv.getDefaultTableName());
+  }
+
+  private void testTruncate(TableName tableName) throws IOException {
     Admin admin = getConnection().getAdmin();
     try (Table table = getConnection().getTable(tableName)) {
       byte[] rowKey = dataHelper.randomData("testrow-");
@@ -59,13 +61,8 @@ public class TestTruncateTable extends AbstractTest {
       assertTrue(admin.tableExists(tableName));
       assertFalse(table.exists(new Get(rowKey)));
     } finally {
-      if (admin.tableExists(tableName)) {
-        if (admin.isTableEnabled(tableName)) {
-          // The table may or may not be enabled, depending on the success of truncate table.
-          admin.disableTable(tableName);
-        }
-        admin.deleteTable(tableName);
-      }
+      admin.enableTable(tableName);
+      admin.close();
     }
   }
 
@@ -86,20 +83,7 @@ public class TestTruncateTable extends AbstractTest {
     testSpllits(tableName, splits);
 
     try {
-      try (Table table = getConnection().getTable(tableName)) {
-        byte[] rowKey = dataHelper.randomData("testrow-");
-        byte[] qual = dataHelper.randomData("qual-");
-        byte[] value = dataHelper.randomData("value-");
-        Put put = new Put(rowKey);
-        put.addColumn(COLUMN_FAMILY, qual, 1L, value);
-        put.addColumn(COLUMN_FAMILY, qual, 2L, value);
-        table.put(put);
-        assertTrue(table.exists(new Get(rowKey)));
-        admin.disableTable(tableName);
-        admin.truncateTable(tableName, true);
-        assertTrue(admin.tableExists(tableName));
-        assertFalse(table.exists(new Get(rowKey)));
-      }
+      testTruncate(tableName);
       testSpllits(tableName, splits);
     } finally {
       if (admin.tableExists(tableName)) {
@@ -109,6 +93,7 @@ public class TestTruncateTable extends AbstractTest {
         }
         admin.deleteTable(tableName);
       }
+      admin.close();
     }
   }
 

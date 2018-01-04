@@ -1893,11 +1893,13 @@ public class TestFilters extends AbstractTest {
     byte[][] rowKeys = dataHelper.randomData("pageFilter-", 100);
     byte[] qualA = dataHelper.randomData("qualA");
     byte[] value = Bytes.toBytes("Important data goes here");
-    Table table = getTable();
+    List<Put> puts = new ArrayList<>();
     for (byte[] rowKey : rowKeys) {
-      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qualA, value);
-      table.put(put);
+      puts.add(new Put(rowKey).addColumn(COLUMN_FAMILY, qualA, value));
     }
+
+    Table table = getTable();
+    table.put(puts);
 
     Scan scan = new Scan(Bytes.toBytes("pageFilter-"));
 
