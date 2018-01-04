@@ -253,8 +253,8 @@ public class TestCreateTable extends AbstractTest {
 
     Admin admin = getConnection().getAdmin();
 
-    TableName tableName = TableName.valueOf("TestTable" +
-        UUID.randomUUID().toString());
+    TableName tableName = sharedTestEnv.newTestTableName();
+
     HTableDescriptor descriptor = new HTableDescriptor(tableName);
     descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
     byte[] startKey = Bytes.toBytes("AAA");
@@ -300,8 +300,7 @@ public class TestCreateTable extends AbstractTest {
 
     Admin admin = getConnection().getAdmin();
 
-    TableName tableName = TableName.valueOf("TestTable" +
-        UUID.randomUUID().toString());
+    TableName tableName = sharedTestEnv.newTestTableName();
     HTableDescriptor descriptor = new HTableDescriptor(tableName);
     descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
     byte[] startKey = Bytes.toBytes("AAA");
@@ -352,22 +351,7 @@ public class TestCreateTable extends AbstractTest {
   public void testAlreadyExists() throws IOException {
     thrown.expect(TableExistsException.class);
     Admin admin = getConnection().getAdmin();
-    TableName tableName = TableName.valueOf("TestTable" +
-        UUID.randomUUID().toString());
-    HTableDescriptor descriptor = new HTableDescriptor(tableName);
-    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-
-    try {
-      admin.createTable(descriptor);
-      admin.createTable(descriptor);
-    } finally {
-      try {
-        admin.disableTable(tableName);
-        admin.deleteTable(tableName);
-      } catch (Throwable t) {
-        // Log the error and ignore it.
-        LOG.warn("Error cleaning up the table", t);
-      }
-    }
+    TableName tableName = sharedTestEnv.getDefaultTableName();
+    admin.createTable(admin.getTableDescriptor(tableName));
   }
 }

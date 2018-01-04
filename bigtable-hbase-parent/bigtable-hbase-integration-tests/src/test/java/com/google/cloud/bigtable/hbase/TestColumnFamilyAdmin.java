@@ -59,75 +59,41 @@ public class TestColumnFamilyAdmin extends AbstractTest {
   }
 
   @Test
-  public void testCreateTable() throws IOException {
-    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
-    Assert.assertEquals(descriptor.getTableName(), retrievedDescriptor.getTableName());
-  }
-
-  @Test
-  public void testCreateTableFull() throws IOException {
-    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
-    Assert.assertEquals(descriptor, retrievedDescriptor);
+  public void testCreate() throws IOException {
+    Assert.assertEquals(descriptor, admin.getTableDescriptor(tableName));
   }
 
   @Test
   public void testAddColumn() throws IOException {
     HColumnDescriptor newColumn = new HColumnDescriptor("NEW_COLUMN");
     admin.addColumn(tableName, newColumn);
-    
-    // Make sure this call doesn't fail, but don't actually check the results yet, since Bigtable
-    // backend doesn't return column families yet.
-    admin.getTableDescriptor(tableName);
-    
-    HTableDescriptor expectedDescriptor = new HTableDescriptor(descriptor);
-    expectedDescriptor.addFamily(newColumn);
 
-    admin.getTableDescriptor(tableName);
+    Assert.assertEquals(new HTableDescriptor(descriptor).addFamily(newColumn),
+      admin.getTableDescriptor(tableName));
   }
 
   @Test
-  public void testAddAndCompareColumn() throws IOException {
-    HColumnDescriptor newColumn = new HColumnDescriptor("NEW_COLUMN");
-    admin.addColumn(tableName, newColumn);
-
-    HTableDescriptor expectedDescriptor = new HTableDescriptor(descriptor);
-    expectedDescriptor.addFamily(newColumn);
-
-    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
-    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
-  }
-
-  @Test
-  public void testModifyColumnFamily() throws IOException {
+  public void testModifyColumn() throws IOException {
     HColumnDescriptor newColumn = new HColumnDescriptor("MODIFY_COLUMN");
     newColumn.setMaxVersions(2);
     admin.addColumn(tableName, newColumn);
 
-    HTableDescriptor expectedDescriptor = new HTableDescriptor(descriptor);
-    expectedDescriptor.addFamily(newColumn);
-
-    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
-    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+    Assert.assertEquals(new HTableDescriptor(descriptor).addFamily(newColumn),
+      admin.getTableDescriptor(tableName));
 
     newColumn.setMaxVersions(100);
     admin.modifyColumn(tableName, newColumn);
 
-    expectedDescriptor = new HTableDescriptor(descriptor);
-    expectedDescriptor.addFamily(newColumn);
-
-    retrievedDescriptor = admin.getTableDescriptor(tableName);
-    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
-
+    Assert.assertEquals(new HTableDescriptor(descriptor).addFamily(newColumn),
+      admin.getTableDescriptor(tableName));
   }
 
   @Test
   public void testRemoveColumn() throws IOException {
     admin.deleteColumn(tableName, DELETE_COLUMN_FAMILY);
-    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
+    HTableDescriptor expectedDescriptor = new HTableDescriptor(tableName)
+        .addFamily(new HColumnDescriptor(COLUMN_FAMILY));
 
-    HTableDescriptor expectedDescriptor = new HTableDescriptor(tableName);
-    expectedDescriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-
-    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+    Assert.assertEquals(expectedDescriptor, admin.getTableDescriptor(tableName));
   }
 }

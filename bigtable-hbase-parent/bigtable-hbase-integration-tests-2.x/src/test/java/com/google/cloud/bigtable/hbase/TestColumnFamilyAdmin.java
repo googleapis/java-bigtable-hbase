@@ -59,12 +59,6 @@ public class TestColumnFamilyAdmin extends AbstractTest {
   }
 
   @Test
-  public void testCreateTable() throws IOException {
-    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
-    Assert.assertEquals(descriptor.getTableName(), retrievedDescriptor.getTableName());
-  }
-
-  @Test
   public void testCreateTableFull() throws IOException {
     HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
     Assert.assertEquals(descriptor, retrievedDescriptor);
