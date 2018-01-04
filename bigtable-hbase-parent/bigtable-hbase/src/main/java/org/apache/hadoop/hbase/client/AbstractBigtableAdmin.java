@@ -51,6 +51,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -817,8 +818,15 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void snapshot(String snapshotName, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
 
-    connection.getSession().getInstanceAdminClient()
-        .waitForOperation(snapshotTable(snapshotName, tableName));
+    try {
+      connection.getSession().getInstanceAdminClient()
+          .waitForOperation(snapshotTable(snapshotName, tableName));
+    } catch (TimeoutException e) {
+      throw new IOException("Timed out waiting for snapshot creation to finish", e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IOException("Interrupted while waiting for snapshot creation to finish");
+    }
   }
 
   /**
@@ -878,8 +886,16 @@ public abstract class AbstractBigtableAdmin implements Admin {
       .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
       .build();
     Operation operation = Futures.getUnchecked(bigtableTableAdminClient.createTableFromSnapshotAsync(request));
-    connection.getSession().getInstanceAdminClient().
-      waitForOperation(operation);
+
+    try {
+      connection.getSession().getInstanceAdminClient().
+          waitForOperation(operation);
+    } catch (TimeoutException e) {
+      throw new IOException("Timed out waiting for cloneSnapshot operation to finish", e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IOException("Interrupted while waiting for cloneSnapshot operation to finish");
+    }
   }
 
   protected BigtableClusterName getClusterName() throws IOException {
