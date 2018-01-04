@@ -48,6 +48,8 @@ public class TestCreateTable extends AbstractTest {
 
   private static final Logger LOG = new Logger(TestCreateTable.class);
 
+  private static boolean shouldTest = "true".equals(ystem.getProperty("bigtable.test.create.table", "true"));
+
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
@@ -349,26 +351,12 @@ public class TestCreateTable extends AbstractTest {
     }
   }
 
+
   @Test
   public void testAlreadyExists() throws IOException {
     thrown.expect(TableExistsException.class);
     Admin admin = getConnection().getAdmin();
-    TableName tableName = TableName.valueOf("TestTable" +
-        UUID.randomUUID().toString());
-    HTableDescriptor descriptor = new HTableDescriptor(tableName);
-    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-
-    try {
-      admin.createTable(descriptor);
-      admin.createTable(descriptor);
-    } finally {
-      try {
-        admin.disableTable(tableName);
-        admin.deleteTable(tableName);
-      } catch (Throwable t) {
-        // Log the error and ignore it.
-        LOG.warn("Error cleaning up the table", t);
-      }
-    }
+    TableName tableName = sharedTestEnv.getDefaultTableName();
+    admin.createTable(admin.getTableDescriptor(tableName));
   }
 }
