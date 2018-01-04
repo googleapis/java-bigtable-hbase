@@ -64,7 +64,7 @@ public class SharedTestEnvRule extends ExternalResource {
   @Override
   protected void after() {
     try (Admin admin = connection.getAdmin()) {
-
+      LOG.info("Deleting table " + defaultTableName.getNameAsString());
       admin.disableTable(defaultTableName);
       admin.deleteTable(defaultTableName);
     } catch (Exception e) {
@@ -79,7 +79,7 @@ public class SharedTestEnvRule extends ExternalResource {
     connection = null;
 
     try {
-      asyncConnection.close();;
+      asyncConnection.close();
     } catch (Exception e) {
       LOG.error("Failed to close asyncConnection after test", e);
     }
@@ -139,6 +139,7 @@ public class SharedTestEnvRule extends ExternalResource {
 //          .addColumnFamily(hcd).addColumnFamily(hcdfamily2).build();
 //
 //      admin.createTable(tableDescriptor);
+      LOG.info("Creating table " + defaultTableName.getNameAsString());
       HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
       HColumnDescriptor family2 = new HColumnDescriptor(COLUMN_FAMILY2).setMaxVersions(MAX_VERSIONS);
       admin.createTable(
