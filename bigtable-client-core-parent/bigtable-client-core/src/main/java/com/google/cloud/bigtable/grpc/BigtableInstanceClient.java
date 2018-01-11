@@ -28,6 +28,8 @@ import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * BigtableInstanceClient manages instances and clusters.
@@ -60,11 +62,24 @@ public interface BigtableInstanceClient {
 
 
   /**
-   * Waits for the long running operation to complete.
+   * Waits for the long running operation to complete by polling with exponential backoff.
+   * A default timeout of 10 minutes is used.
    * @param operation
-   * @throws IOException
+   * @throws InterruptedException
+   * @throws TimeoutException If the timeout is exceeded.
    */
-  void waitForOperation(Operation operation) throws IOException;
+  void waitForOperation(Operation operation) throws TimeoutException, IOException;
+
+  /**
+   * Waits for the long running operation to complete by polling with exponential backoff.
+   * @param operation
+   * @param timeout
+   * @param timeUnit
+   * @throws InterruptedException
+   * @throws TimeoutException If the timeout is exceeded.
+   */
+  void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
+      throws IOException, TimeoutException;
 
   /**
    * Lists all instances in the given project.

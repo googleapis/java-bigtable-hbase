@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.ExponentialBackOff;
 import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
 import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.CreateInstanceRequest;
@@ -25,6 +27,7 @@ import com.google.bigtable.admin.v2.ListClustersRequest;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.admin.v2.ListInstancesRequest;
 import com.google.bigtable.admin.v2.ListInstancesResponse;
+import com.google.common.primitives.Ints;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc;
@@ -34,6 +37,7 @@ import io.grpc.Channel;
 import io.grpc.protobuf.StatusProto;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * <p>BigtableInstanceGrpcClient class.</p>
@@ -70,13 +74,27 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
 
   /** {@inheritDoc} */
   @Override
-  public void waitForOperation(Operation operation) throws IOException {
+  public void waitForOperation(Operation operation) throws IOException, TimeoutException {
+    waitForOperation(operation, 10, TimeUnit.MINUTES);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
+      throws TimeoutException, IOException {
     GetOperationRequest request = GetOperationRequest.newBuilder()
         .setName(operation.getName())
         .build();
 
+    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
+        .setInitialIntervalMillis(100)
+        .setMultiplier(1.3)
+        .setMaxIntervalMillis(Ints.checkedCast(TimeUnit.SECONDS.toMillis(60)))
+        .setMaxElapsedTimeMillis(Ints.checkedCast(timeUnit.toMillis(timeout)))
+        .build();
+
     Operation currentOperationState = operation;
-    long startMs = System.currentTimeMillis();
+
     while (true) {
       if (currentOperationState.getDone()) {
         switch (currentOperationState.getResultCase()) {
@@ -89,23 +107,25 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
                 "System returned invalid response for Operation check: " + currentOperationState);
         }
       }
-      final long waitMs;
-      long timePassedS = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startMs);
-      if (timePassedS < 5) {
-        waitMs = 250;
-      } else if (timePassedS < 60){
-        waitMs = 1000;
-      } else if (timePassedS < 300) {
-        waitMs = 10000;
-      } else {
-        waitMs = 60000;
-      }
+
+      final long backOffMillis;
       try {
-        Thread.sleep(waitMs);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new IOException("Waiting for operation was interrupted.", e);
+        backOffMillis = backOff.nextBackOffMillis();
+      } catch (IOException e) {
+        // Should never happen.
+        throw new RuntimeException(e);
       }
+      if (backOffMillis == BackOff.STOP) {
+        throw new TimeoutException("Operation did not complete in time");
+      } else {
+        try {
+          Thread.sleep(backOffMillis);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new IOException("Interrupted while waiting for operation to finish");
+        }
+      }
+
       currentOperationState = getOperation(request);
     }
   }

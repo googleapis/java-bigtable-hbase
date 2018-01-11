@@ -42,6 +42,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Duration;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,6 +52,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -114,17 +117,17 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   public AbstractBigtableAdmin(AbstractBigtableConnection connection) throws IOException {
     LOG.debug("Creating BigtableAdmin");
-    this.configuration = connection.getConfiguration();
-    this.options = connection.getOptions();
+    configuration = connection.getConfiguration();
+    options = connection.getOptions();
     this.connection = connection;
-    this.bigtableTableAdminClient = connection.getSession().getTableAdminClient();
-    this.disabledTables = connection.getDisabledTables();
-    this.bigtableInstanceName = options.getInstanceName();
-    this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
+    bigtableTableAdminClient = connection.getSession().getTableAdminClient();
+    disabledTables = connection.getDisabledTables();
+    bigtableInstanceName = options.getInstanceName();
+    tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
 
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
-      this.bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
+      bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
   }
 
@@ -415,7 +418,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void enableTable(TableName tableName) throws IOException {
     TableName.isLegalFullyQualifiedTableName(tableName.getName());
-    if (!this.tableExists(tableName)) {
+    if (!tableExists(tableName)) {
       throw new TableNotFoundException(tableName);
     }
     disabledTables.remove(tableName);
@@ -459,10 +462,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void disableTable(TableName tableName) throws IOException {
     TableName.isLegalFullyQualifiedTableName(tableName.getName());
-    if (!this.tableExists(tableName)) {
+    if (!tableExists(tableName)) {
       throw new TableNotFoundException(tableName);
     }
-    if (this.isTableDisabled(tableName)) {
+    if (isTableDisabled(tableName)) {
       throw new TableNotEnabledException(tableName);
     }
     disabledTables.add(tableName);
@@ -817,8 +820,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void snapshot(String snapshotName, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
 
-    connection.getSession().getInstanceAdminClient()
-        .waitForOperation(snapshotTable(snapshotName, tableName));
+    Operation operation = snapshotTable(snapshotName, tableName);
+    try {
+      connection.getSession().getInstanceAdminClient().waitForOperation(operation);
+    } catch (TimeoutException e) {
+      throw new IOException("Timed out waiting for snapshot creation to finish", e);
+    }
   }
 
   /**
@@ -831,15 +838,23 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   protected Operation snapshotTable(String snapshotName, TableName tableName)
       throws IOException {
+
+    SnapshotTableRequest.Builder requestBuilder = SnapshotTableRequest.newBuilder()
+        .setCluster(getSnapshotClusterName().toString())
+        .setSnapshotId(snapshotName)
+        .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
+
+    int ttlSecs = configuration.getInt(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY, -1);
+    if (ttlSecs > 0) {
+      requestBuilder.setTtl(
+          Duration.newBuilder().setSeconds(ttlSecs).build()
+      );
+    }
+
     ListenableFuture<Operation> future = bigtableTableAdminClient
-        .snapshotTableAsync(
-            SnapshotTableRequest.newBuilder()
-              .setCluster(getSnapshotClusterName().toString())
-              .setSnapshotId(snapshotName)
-              .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()))
-              .build()
-        );
-    return Futures.getUnchecked(future);
+        .snapshotTableAsync(requestBuilder.build());
+
+    return Futures.getChecked(future, IOException.class);
   }
 
   /** This is needed for the hbase shell */
@@ -873,30 +888,37 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     CreateTableFromSnapshotRequest request = CreateTableFromSnapshotRequest.newBuilder()
-      .setParent(options.getInstanceName().toString())
-      .setTableId(tableName.getNameAsString())
-      .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
-      .build();
-    Operation operation = Futures.getUnchecked(bigtableTableAdminClient.createTableFromSnapshotAsync(request));
-    connection.getSession().getInstanceAdminClient().
-      waitForOperation(operation);
+        .setParent(options.getInstanceName().toString())
+        .setTableId(tableName.getNameAsString())
+        .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
+        .build();
+    Operation operation = Futures
+        .getChecked(bigtableTableAdminClient.createTableFromSnapshotAsync(request),
+            IOException.class);
+
+    try {
+      connection.getSession().getInstanceAdminClient().
+          waitForOperation(operation);
+    } catch (TimeoutException e) {
+      throw new IOException("Timed out waiting for cloneSnapshot operation to finish", e);
+    }
   }
 
   protected BigtableClusterName getClusterName() throws IOException {
-    return this.connection.getSession().getClusterName();
+    return connection.getSession().getClusterName();
   }
 
   protected BigtableClusterName getSnapshotClusterName() throws IOException {
-    if (this.bigtableSnapshotClusterName == null) {
+    if (bigtableSnapshotClusterName == null) {
       try {
-        this.bigtableSnapshotClusterName = getClusterName();
+        bigtableSnapshotClusterName = getClusterName();
       } catch (IllegalStateException e) {
         throw new IllegalStateException(
             "Failed to determine which cluster to use for snapshots, please configure it using "
                 + BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY);
       }
     }
-    return this.bigtableSnapshotClusterName;
+    return bigtableSnapshotClusterName;
   }
 
   /** {@inheritDoc} */
@@ -913,19 +935,26 @@ public abstract class AbstractBigtableAdmin implements Admin {
         .setName(btSnapshotName)
         .build();
 
-    Futures.getUnchecked(
-      bigtableTableAdminClient
-          .deleteSnapshotAsync(request)
-    );
+    Futures.getUnchecked(bigtableTableAdminClient.deleteSnapshotAsync(request));
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * The snapshots will be deleted serially and the first failure will prevent the deletion of the
+   * remaining snapshots.
+   */
   @Override
   public void deleteSnapshots(String regex) throws IOException {
     deleteSnapshots(Pattern.compile(regex));
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * The snapshots will be deleted serially and the first failure will prevent the deletion of the
+   * remaining snapshots.
+   */
   @Override
   public void deleteSnapshots(Pattern pattern) throws IOException {
     for (SnapshotDescription snapshotDescription : listSnapshots(pattern)) {
@@ -933,11 +962,18 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteTableSnapshots(String tableNameRegex, String snapshotNameRegex) throws IOException {
     deleteTableSnapshots(Pattern.compile(tableNameRegex), Pattern.compile(snapshotNameRegex));
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * The snapshots will be deleted serially and the first failure will prevent the deletion of the
+   * remaining snapshots.
+   */
   @Override
   public void deleteTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern) throws IOException {
     for (SnapshotDescription snapshotDescription : listTableSnapshots(tableNamePattern, snapshotNamePattern)) {
