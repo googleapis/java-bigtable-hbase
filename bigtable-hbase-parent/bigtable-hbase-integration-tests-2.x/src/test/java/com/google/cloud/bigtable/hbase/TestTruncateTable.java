@@ -42,10 +42,11 @@ public class TestTruncateTable extends AbstractTest {
 
   @Test
   public void testTruncate() throws IOException {
-    TableName tableName = sharedTestEnv.newTestTableName();
+    TableName tableName = sharedTestEnv.getDefaultTableName();
     sharedTestEnv.createTable(tableName);
     Admin admin = getConnection().getAdmin();
-    try (Table table = getConnection().getTable(tableName)) {
+    try (
+        Table table = getConnection().getTable(tableName)) {
       byte[] rowKey = dataHelper.randomData("testrow-");
       byte[] qual = dataHelper.randomData("qual-");
       byte[] value = dataHelper.randomData("value-");
@@ -59,13 +60,8 @@ public class TestTruncateTable extends AbstractTest {
       assertTrue(admin.tableExists(tableName));
       assertFalse(table.exists(new Get(rowKey)));
     } finally {
-      if (admin.tableExists(tableName)) {
-        if (admin.isTableEnabled(tableName)) {
-          // The table may or may not be enabled, depending on the success of truncate table.
-          admin.disableTable(tableName);
-        }
-        admin.deleteTable(tableName);
-      }
+      admin.enableTable(tableName);
+      admin.close();
     }
   }
 
