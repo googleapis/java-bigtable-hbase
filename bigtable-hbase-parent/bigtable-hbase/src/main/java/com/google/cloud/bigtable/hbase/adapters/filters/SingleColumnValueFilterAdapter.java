@@ -94,9 +94,9 @@ public class SingleColumnValueFilterAdapter
    *        chain: {
    *           family: [filter.family]
    *           qualifier: [filter.qualifier],
-   *           value: // something interesting
    *           // if filter.latestOnly, then add
    *           // cells_per_column: 1
+   *           value: // something interesting
    *        }
    *      }
    *      true_filter: {
@@ -181,7 +181,8 @@ public class SingleColumnValueFilterAdapter
             .setCondition(
                 Condition.newBuilder()
                     .setPredicateFilter(columnSpecFilter)
-                    .setFalseFilter(ALL_VALUES_FILTER))
+                    .setFalseFilter(ALL_VALUES_FILTER)
+                    .build())
             .build())
           .build()
       ).build();
