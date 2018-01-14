@@ -21,12 +21,12 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.UUID;
 
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -35,150 +35,187 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.google.common.collect.ImmutableSet;
 
 public class TestSingleColumnValueFilter extends AbstractTest {
 
-  static final int count = 10;
-  final byte[] QUALIFIER = dataHelper.randomData("TestSingleColumnValueFilter");
+  private static final int count = 10;
+  private static final String PREFIX = "TestSingleColumnValueFilter";
+  private static final String NOT_STRICT_KEY = PREFIX + "_NotStrict";
+  private static final byte[] QUALIFIER = dataHelper.randomData(PREFIX);
+  private static final byte[] OTHER_QUALIFIER = dataHelper.randomData(NOT_STRICT_KEY);
 
-  private Map<String, Long> result = new HashMap<>();
-  private Table table;
-  private boolean added = false;
+  private static Set<String> keys = null;
+  private static Table table;
 
-  @Before
-  public void fillTable() throws IOException {
-    table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
-    if (!added) {
-      result.clear();
-      List<Put> puts = new ArrayList<>();
-      for (long i = 0; i < count; i++) {
-        final UUID rowKey = UUID.randomUUID();
-        byte[] row = Bytes.toBytes(rowKey.toString());
-        result.put(rowKey.toString(), i);
-        puts.add(new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i)));
-      }
-      table.put(puts);
-      added = true;
+  @BeforeClass
+  public static void fillTable() throws IOException {
+    table = sharedTestEnv.getConnection().getTable(sharedTestEnv.getDefaultTableName());
+
+    List<Put> puts = new ArrayList<>();
+    ImmutableSet.Builder<String> keyBuilder = ImmutableSet.builder();
+    for (long i = 0; i < count; i++) {
+      byte[] row = dataHelper.randomData(PREFIX);
+      keyBuilder.add(Bytes.toString(row));
+      int randomValue = (int) Math.floor(count * Math.random());
+      puts.add(new Put(row)
+        .addColumn(COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i))
+        .addColumn(COLUMN_FAMILY, OTHER_QUALIFIER, Bytes.toBytes(randomValue)));
     }
+
+    byte[] otheRow = dataHelper.randomData(NOT_STRICT_KEY);
+    byte[] stringVal = Bytes.toBytes("Not a number");
+    puts.add(new Put(otheRow).addColumn(COLUMN_FAMILY, OTHER_QUALIFIER, stringVal));
+
+    keys = keyBuilder.build();
+    table.put(puts);
   }
 
-  @After
-  public void delete() throws IOException {
+  @AfterClass
+  public static void delete() throws IOException {
     table.close();
     table = null;
-    result.clear();
+    keys = null;
   }
 
   @Test
   public void testInf() throws IOException {
-    Scan scan = new Scan();
     SingleColumnValueFilter filter =
         new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.LESS_OR_EQUAL,
             Bytes.toBytes(2L));
     filter.setFilterIfMissing(true);
-    scan.setFilter(filter);
-    Set<String> rowKeys = getResult(scan);
+    Map<String, Long> rowKeys = getResult(filter);
     Assert.assertEquals(3, rowKeys.size());
-    for (final String k : rowKeys) {
-      Long v = result.get(k);
-      Assert.assertNotNull(v);
-      Assert.assertTrue(v <= 2);
+    for (Entry<String, Long> entry : rowKeys.entrySet()) {
+      checkKey(entry.getKey());
+      Long v = entry.getValue();
+      Assert.assertTrue(String.format("%d > 2", v), v <= 2);
     }
   }
 
-  private Set<String> getResult(Scan scan) throws IOException {
-    Set<String> rowKeys = new HashSet<>();
+  private static void checkKey(String key) {
+    Assert.assertNotNull(key + " was incorrectly returned", keys.contains(key));
+  }
+
+  private static Map<String, Long> getResult(SingleColumnValueFilter filter) throws IOException {
+    Scan scan = new Scan();
+    scan.setRowPrefixFilter(Bytes.toBytes(PREFIX));
+    scan.setFilter(filter);
+
+    Map<String, Long> rowKeys = new HashMap<>();
     try (ResultScanner scanner = table.getScanner(scan)) {
       for (Result result : scanner) {
-        rowKeys.add(Bytes.toString(result.getRow()));
+        String key = Bytes.toString(result.getRow());
+
+        if (!key.startsWith(PREFIX)) {
+          Assert.fail(String.format("Found key %s which does not start with %s", key, PREFIX));
+        } else if (key.startsWith(NOT_STRICT_KEY)) {
+          long randomValue = (long) ((Math.random() * 30) - 15);
+          rowKeys.put(key, randomValue);
+        } else {
+          Assert.assertEquals(2, result.size());
+          byte[] val = CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, QUALIFIER));
+          rowKeys.put(key, Bytes.toLong(val));
+        }
       }
     }
     return rowKeys;
   }
 
   @Test
+  public void testNotStrictInf() throws IOException {
+    SingleColumnValueFilter filter =
+        new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.LESS, Bytes.toBytes(4L));
+    filter.setFilterIfMissing(false);
+    boolean foundRowWithMissingColumn = false;
+    Map<String, Long> rowKeys = getResult(filter);
+    Assert.assertEquals(5, rowKeys.size());
+    for (Entry<String, Long> entry : rowKeys.entrySet()) {
+      String key = entry.getKey();
+      if (key.startsWith(NOT_STRICT_KEY)) {
+        foundRowWithMissingColumn = true;
+      } else {
+        Long v = entry.getValue();
+        Assert.assertTrue(String.format("%d >= 4", v), v < 4);
+      }
+    }
+    Assert.assertTrue(foundRowWithMissingColumn);
+  }
+
+  @Test
   public void testStrictInf() throws IOException {
-    Scan scan = new Scan();
     SingleColumnValueFilter filter =
         new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.LESS, Bytes.toBytes(4L));
     filter.setFilterIfMissing(true);
-    scan.setFilter(filter);
-    Set<String> rowKeys = getResult(scan);
+    Map<String, Long> rowKeys = getResult(filter);
     Assert.assertEquals(4, rowKeys.size());
-    for (final String k : rowKeys) {
-      Long v = result.get(k);
-      Assert.assertNotNull(v);
-      Assert.assertTrue(v < 4);
+    for (Entry<String, Long> entry : rowKeys.entrySet()) {
+      checkKey(entry.getKey());
+      Long v = entry.getValue();
+      Assert.assertTrue(String.format("%d >= 4", v), v < 4);
     }
   }
 
   @Test
   public void testStrictSup() throws IOException {
-    Scan scan = new Scan();
     SingleColumnValueFilter filter =
         new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.GREATER, Bytes.toBytes(4L));
     filter.setFilterIfMissing(true);
-    scan.setFilter(filter);
-    Set<String> rowKeys = getResult(scan);
+    Map<String, Long> rowKeys = getResult(filter);
     Assert.assertEquals(5, rowKeys.size());
-    for (final String k : rowKeys) {
-      Long v = result.get(k);
-      Assert.assertNotNull(v);
-      Assert.assertTrue(v > 4);
+    for (Entry<String, Long> entry : rowKeys.entrySet()) {
+      checkKey(entry.getKey());
+      Long v = entry.getValue();
+      Assert.assertTrue(String.format("%d <= 4", v), v > 4);
     }
   }
 
   @Test
   public void testEqual() throws IOException {
-    Scan scan = new Scan();
     SingleColumnValueFilter filter =
         new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.EQUAL, Bytes.toBytes(4L));
     filter.setFilterIfMissing(true);
-    scan.setFilter(filter);
-    Set<String> rowKeys = getResult(scan);
+    Map<String, Long> rowKeys = getResult(filter);
     Assert.assertEquals(1, rowKeys.size());
-    for (final String k : rowKeys) {
-      Long v = result.get(k);
-      Assert.assertNotNull(v);
-      Assert.assertTrue(v == 4);
+    for (Entry<String, Long> entry : rowKeys.entrySet()) {
+      checkKey(entry.getKey());
+      Long v = entry.getValue();
+      Assert.assertTrue(String.format("%d != 4", v), v == 4);
     }
   }
 
   @Test
   public void testSup() throws IOException {
-    Scan scan = new Scan();
     SingleColumnValueFilter filter =
         new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.GREATER_OR_EQUAL,
             Bytes.toBytes(5L));
     filter.setFilterIfMissing(true);
-    scan.setFilter(filter);
-    Set<String> rowKeys = getResult(scan);
+    Map<String, Long> rowKeys = getResult(filter);
     Assert.assertEquals(5, rowKeys.size());
-    for (final String k : rowKeys) {
-      Long v = result.get(k);
-      Assert.assertNotNull(v);
-      Assert.assertTrue(v >= 5);
+    for (Entry<String, Long> entry : rowKeys.entrySet()) {
+      checkKey(entry.getKey());
+      Long v = entry.getValue();
+      Assert.assertTrue(String.format("%d < 5", v), v >= 5);
     }
   }
 
   @Test
   public void testNot() throws IOException {
-    Scan scan = new Scan();
     SingleColumnValueFilter filter =
         new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.NOT_EQUAL,
             Bytes.toBytes(5L));
     filter.setFilterIfMissing(true);
-    scan.setFilter(filter);
-    Set<String> rowKeys = getResult(scan);
+    Map<String, Long> rowKeys = getResult(filter);
     Assert.assertEquals(9, rowKeys.size());
-    for (final String k : rowKeys) {
-      Long v = result.get(k);
-      Assert.assertNotNull(v);
-      Assert.assertTrue(v != 5);
+    for (Entry<String, Long> entry : rowKeys.entrySet()) {
+      checkKey(entry.getKey());
+      Long v = entry.getValue();
+      Assert.assertTrue(String.format("%d == 5", v), v != 5);
     }
   }
 }

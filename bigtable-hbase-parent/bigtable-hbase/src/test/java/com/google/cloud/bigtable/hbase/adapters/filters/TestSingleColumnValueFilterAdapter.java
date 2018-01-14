@@ -17,7 +17,9 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.bigtable.v2.RowFilter.Condition;
 import com.google.bigtable.v2.ValueRange;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -35,7 +37,7 @@ import java.io.IOException;
 @RunWith(JUnit4.class)
 public class TestSingleColumnValueFilterAdapter  {
 
-  SingleColumnValueFilterAdapter adapter =
+  static final SingleColumnValueFilterAdapter UNDER_TEST =
       new SingleColumnValueFilterAdapter(new ValueFilterAdapter());
 
   @Test
@@ -53,7 +55,7 @@ public class TestSingleColumnValueFilterAdapter  {
     filter.setFilterIfMissing(false);
     filter.setLatestVersionOnly(true);
 
-    RowFilter adaptedFilter = adapter.adapt(
+    RowFilter adaptedFilter = UNDER_TEST.adapt(
         new FilterAdapterContext(new Scan(), null),
         filter);
 
@@ -61,7 +63,7 @@ public class TestSingleColumnValueFilterAdapter  {
         family,
         qualifier,
         filterValue,
-        1 /* latest version only = true */,
+        true,
         adaptedFilter);
   }
 
@@ -80,7 +82,7 @@ public class TestSingleColumnValueFilterAdapter  {
     filter.setFilterIfMissing(false);
     filter.setLatestVersionOnly(false);
 
-    RowFilter adaptedFilter = adapter.adapt(
+    RowFilter adaptedFilter = UNDER_TEST.adapt(
         new FilterAdapterContext(new Scan(), null),
         filter);
 
@@ -88,13 +90,14 @@ public class TestSingleColumnValueFilterAdapter  {
         family,
         qualifier,
         filterValue,
-        Integer.MAX_VALUE /* latest version only = false */,
+        false,
         adaptedFilter);
   }
 
   @Test
   public void filterIfMissingIsApplied() throws IOException {
-    byte[] filterValue = Bytes.toBytes("foobar");
+    String valueStr = "foobar";
+    byte[] filterValue = Bytes.toBytes(valueStr);
     byte[] qualifier = Bytes.toBytes("someColumn");
     byte[] family = Bytes.toBytes("f");
 
@@ -107,123 +110,117 @@ public class TestSingleColumnValueFilterAdapter  {
     filter.setFilterIfMissing(true);
     filter.setLatestVersionOnly(false);
 
-    RowFilter adaptedFilter = adapter.adapt(
+    RowFilter adaptedFilter = UNDER_TEST.adapt(
         new FilterAdapterContext(new Scan(), null),
         filter);
 
     assertColumnSpecification(
-        Bytes.toString(family),
+        family,
         qualifier,
-        Integer.MAX_VALUE,
+        false,
         adaptedFilter
             .getCondition()
+            .getPredicateFilter());
+
+    Assert.assertEquals(
+        createValueRangeFilter(valueStr),
+        getValueRangeFilter(
+            adaptedFilter
+            .getCondition()
             .getPredicateFilter()
-            .getChain()
-            .getFilters(0)
             .getChain());
 
     Assert.assertEquals(
-        RowFilter.newBuilder()
-        .setValueRangeFilter(ValueRange.newBuilder()
-            .setStartValueClosed(ByteString.copyFromUtf8("foobar"))
-            .setEndValueClosed(ByteString.copyFromUtf8("foobar")))
-        .build(),
-        adaptedFilter
-            .getCondition()
-            .getPredicateFilter()
-            .getChain()
-            .getFilters(1));
-
-    Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setCellsPerColumnLimitFilter(Integer.MAX_VALUE)
-            .build(),
+        SingleColumnValueFilterAdapter.ALL_VALUES_FILTER,
         adaptedFilter.getCondition().getTrueFilter());
+  }
+
+  private static RowFilter createValueRangeFilter(String valueStr) {
+    ByteString value = ByteString.copyFromUtf8(valueStr);
+    return RowFilter.newBuilder()
+        .setValueRangeFilter(ValueRange.newBuilder()
+            .setStartValueClosed(value)
+            .setEndValueClosed(value))
+        .build();
   }
 
   // Assert that the given family, qualifier and versions are applied
   // via the given Chain.
-  private void assertColumnSpecification(
-      String family, byte[] qualifier, int versions, Chain chain) {
-    Chain expected =
-        Chain.newBuilder()
-          .addFilters(
-              RowFilter.newBuilder()
-                  .setFamilyNameRegexFilter(family))
-          .addFilters(
-              RowFilter.newBuilder()
-                  .setColumnQualifierRegexFilter(
-                      ByteString.copyFrom(qualifier)))
-          .addFilters(
-              RowFilter.newBuilder()
-                  .setCellsPerColumnLimitFilter(versions))
-        .build();
+  private static void assertColumnSpecification(
+      byte[] family, byte[] qualifier, boolean latestOnly, RowFilter filter) throws IOException {
+    Chain chain = filter.getChain();
+    Assert.assertEquals(
+        Bytes.toString(family),
+        chain.getFilters(0).getFamilyNameRegexFilter());
+    Assert.assertArrayEquals(
+        qualifier,
+        chain.getFilters(1).getColumnQualifierRegexFilter().toByteArray());
 
-    Assert.assertEquals(expected, chain);
+    if (latestOnly) {
+      Assert.assertEquals(
+          SingleColumnValueFilterAdapter.LATEST_ONLY_FILTER,
+          chain.getFilters(2));
+    }
   }
 
-  private void assertFilterIfNotMIssingMatches(
+  private static void assertFilterIfNotMIssingMatches(
       byte[] family,
       byte[] qualifier,
       byte[] value,
-      int versions,
-      RowFilter adaptedFilter) {
-    // We won't be doing a filter if missing, so start by seeing if the cell
-    // is in the row - if it is, we'll perform the value filter otherwise we'll
-    // include all cells in the row:
+      boolean latestOnly,
+      RowFilter adaptedFilter) throws IOException {
+    Condition cellSetCondition = adaptedFilter.getInterleave().getFilters(0).getCondition();
+    Condition cellUnsetCondition = adaptedFilter.getInterleave().getFilters(1).getCondition();
+
+    // ---------------  Check the conditions -------------------/
+
+    // Assert that if the cell is set, that the condition includes a column check:
     assertColumnSpecification(
-        Bytes.toString(family),
+        family,
         qualifier,
-        versions,
-        adaptedFilter
-            .getCondition()
-            .getPredicateFilter()
-            .getChain());
-
-    // Cell is not in the row, include all cells in the false branch:
-    Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setCellsPerColumnLimitFilter(
-                Integer.MAX_VALUE)
-            .build(),
-        adaptedFilter.getCondition().getFalseFilter());
-
-    RowFilter cellExistsBranch =
-        adaptedFilter
-            .getCondition()
-            .getTrueFilter();
-
-    assertColumnSpecification(
-        Bytes.toString(family),
-        qualifier,
-        versions,
-        cellExistsBranch
-            .getCondition()
-            .getPredicateFilter()
-            .getChain()
-            .getFilters(0)
-            .getChain());
-
-    // Assert that the condition includes a value filter:
+        latestOnly,
+        cellSetCondition.getPredicateFilter());
+ 
+    // Assert that the condition also includes a value filter:
+    ByteString valueBS = ByteString.copyFrom(value);
     Assert.assertEquals(
         RowFilter.newBuilder()
             .setValueRangeFilter(ValueRange.newBuilder()
-                .setStartValueClosed(ByteString.copyFrom(value))
-                .setEndValueClosed(ByteString.copyFrom(value)))
+                .setStartValueClosed(valueBS)
+                .setEndValueClosed(valueBS))
             .build(),
-        cellExistsBranch
-            .getCondition()
-            .getPredicateFilter()
-            .getChain()
-            .getFilters(1));
+            getValueRangeFilter(cellSetCondition.getPredicateFilter().getChain()));
 
-    // Include all cells that match the value filter and cell spec:
+    // If the cell is unset, the condition includes a column check:
+    assertColumnSpecification(
+      family,
+      qualifier,
+      latestOnly,
+      cellUnsetCondition.getPredicateFilter());
+
+    // ---------------  Check true / false filters -------------------/
+
+    // Cell is in the row, include all cells in the true branch:
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setCellsPerColumnLimitFilter(Integer.MAX_VALUE)
-            .build(),
-        cellExistsBranch
-            .getCondition()
-            .getTrueFilter());
+        SingleColumnValueFilterAdapter.ALL_VALUES_FILTER,
+        cellSetCondition.getTrueFilter());
+
+    Assert.assertFalse(cellSetCondition.hasFalseFilter());
+
+    // Cell is not in the row, include all cells in the false branch:
+    Assert.assertEquals(
+        SingleColumnValueFilterAdapter.ALL_VALUES_FILTER,
+        cellUnsetCondition.getFalseFilter());
+
+    Assert.assertFalse(cellUnsetCondition.hasTrueFilter());
+  }
+
+  private static RowFilter getValueRangeFilter(Chain chain) {
+    for (RowFilter filter : chain.getFiltersList()) {
+      if (filter.hasValueRangeFilter()) {
+        return filter;
+      }
+    }
+    return null;
   }
 }

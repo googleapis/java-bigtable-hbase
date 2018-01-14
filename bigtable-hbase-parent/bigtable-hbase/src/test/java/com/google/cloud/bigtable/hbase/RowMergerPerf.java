@@ -29,11 +29,15 @@ public class RowMergerPerf {
 
   public static void main(String[] args) {
 //     warm up
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
       System.out.println("===================");
       System.out.println("testing 1 Cell");
       rowMergerPerf(1);
     }
+
+      System.out.println("===================");
+      System.out.println("testing " + 10 + " Cells");
+      rowMergerPerf(10);
 
     for (int i = 5; i <= 105; i += 10) {
       System.out.println("===================");

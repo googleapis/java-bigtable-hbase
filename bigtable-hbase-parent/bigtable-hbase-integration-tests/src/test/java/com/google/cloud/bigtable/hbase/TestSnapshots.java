@@ -39,7 +39,7 @@ import org.junit.Test;
 
 public class TestSnapshots extends AbstractTest {
 
-  final byte[] QUALIFIER = dataHelper.randomData("TestSingleColumnValueFilter");
+  final byte[] QUALIFIER = dataHelper.randomData("TestSnapshots");
 
   private final TableName tableName = sharedTestEnv.newTestTableName();
   // The maximum size of a table id or snapshot id is 50. newTestTableName().size() can approach 50.
