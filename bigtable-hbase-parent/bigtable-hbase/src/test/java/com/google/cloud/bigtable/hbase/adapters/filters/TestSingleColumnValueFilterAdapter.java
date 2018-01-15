@@ -128,7 +128,7 @@ public class TestSingleColumnValueFilterAdapter  {
             adaptedFilter
             .getCondition()
             .getPredicateFilter()
-            .getChain());
+            .getChain()));
 
     Assert.assertEquals(
         SingleColumnValueFilterAdapter.ALL_VALUES_FILTER,
