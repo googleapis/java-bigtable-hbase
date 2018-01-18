@@ -64,6 +64,12 @@ public class BigtableOptionsFactory {
   /** Constant <code>BIGTABLE_HOST_KEY="google.bigtable.endpoint.host"</code> */
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
 
+  /**
+   * Constant <code>BIGTABLE_HOST_KEY="google.bigtable.emulator.endpoint.host"</code>. Values should
+   * be of format: `host:port`
+   */
+  public static final String BIGTABLE_EMULATOR_HOST_KEY = "google.bigtable.emulator.endpoint.host";
+
   /** Constant <code>PROJECT_ID_KEY="google.bigtable.project.id"</code> */
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   /** Constant <code>INSTANCE_ID_KEY="google.bigtable.instance.id"</code> */
@@ -294,6 +300,11 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setPort(port);
     bigtableOptionsBuilder.setUsePlaintextNegotiation(
       configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false));
+
+    String emulatorHost = configuration.get(BIGTABLE_EMULATOR_HOST_KEY);
+    if (emulatorHost != null) {
+      bigtableOptionsBuilder.enableEmulator(emulatorHost);
+    }
 
     setBulkOptions(configuration, bigtableOptionsBuilder);
     setChannelOptions(configuration, bigtableOptionsBuilder);

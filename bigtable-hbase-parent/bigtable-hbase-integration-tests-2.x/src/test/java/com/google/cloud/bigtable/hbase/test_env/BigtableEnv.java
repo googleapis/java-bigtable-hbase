@@ -47,6 +47,7 @@ class BigtableEnv extends SharedTestEnv {
       BigtableOptionsFactory.BIGTABLE_PORT_KEY,
       BigtableOptionsFactory.BIGTABLE_HOST_KEY,
       BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY,
+      BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY,
       BigtableOptionsFactory.PROJECT_ID_KEY,
       BigtableOptionsFactory.INSTANCE_ID_KEY,
       BigtableOptionsFactory.BIGTABLE_USE_BULK_API,

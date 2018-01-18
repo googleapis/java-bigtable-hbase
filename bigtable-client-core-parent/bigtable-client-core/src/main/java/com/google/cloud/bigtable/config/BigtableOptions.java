@@ -207,25 +207,37 @@ public class BigtableOptions implements Serializable {
         return;
       }
 
-      String[] hostPort = emulatorHost.split(":");
+      enableEmulator(emulatorHost);
+    }
+
+    public Builder enableEmulator(String emulatorHostAndPort) {
+      String[] hostPort = emulatorHostAndPort.split(":");
       Preconditions.checkArgument(hostPort.length == 2,
           "Malformed " + BIGTABLE_EMULATOR_HOST_ENV_VAR + " environment variable: " +
-          emulatorHost + ". Expecting host:port.");
+          emulatorHostAndPort + ". Expecting host:port.");
 
       int port;
       try {
         port = Integer.parseInt(hostPort[1]);
       } catch (NumberFormatException e) {
         throw new RuntimeException("Invalid port in " + BIGTABLE_EMULATOR_HOST_ENV_VAR +
-            " environment variable: " + emulatorHost);
+            " environment variable: " + emulatorHostAndPort);
       }
+      enableEmulator(hostPort[0], port);
+      return this;
+    }
+
+    public Builder enableEmulator(String host, int port) {
+      Preconditions.checkArgument(host != null && !host.isEmpty(), "Host cannot be null or empty");
+      Preconditions.checkArgument(port > 0, "Port must be positive");
       setUsePlaintextNegotiation(true);
       setCredentialOptions(CredentialOptions.nullCredential());
-      setDataHost(hostPort[0]);
-      setAdminHost(hostPort[0]);
+      setDataHost(host);
+      setAdminHost(host);
       setPort(port);
 
-      LOG.info("Connecting to the Bigtable emulator at " + emulatorHost);
+      LOG.info("Connecting to the Bigtable emulator at " + host + ":" + port);
+      return this;
     }
 
     public BigtableOptions build() {
