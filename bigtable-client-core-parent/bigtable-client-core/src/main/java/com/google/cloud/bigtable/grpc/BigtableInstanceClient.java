@@ -65,7 +65,7 @@ public interface BigtableInstanceClient {
    * Waits for the long running operation to complete by polling with exponential backoff.
    * A default timeout of 10 minutes is used.
    * @param operation
-   * @throws InterruptedException
+   * @throws IOException
    * @throws TimeoutException If the timeout is exceeded.
    */
   void waitForOperation(Operation operation) throws TimeoutException, IOException;
@@ -75,7 +75,7 @@ public interface BigtableInstanceClient {
    * @param operation
    * @param timeout
    * @param timeUnit
-   * @throws InterruptedException
+   * @throws IOException
    * @throws TimeoutException If the timeout is exceeded.
    */
   void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
