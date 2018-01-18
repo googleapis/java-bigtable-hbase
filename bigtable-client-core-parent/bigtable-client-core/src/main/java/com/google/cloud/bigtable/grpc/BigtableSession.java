@@ -60,7 +60,6 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.internal.GrpcUtil;
 
 /**
@@ -451,7 +450,6 @@ public class BigtableSession implements Closeable {
     }
 
     return builder
-        .nameResolverFactory(new DnsNameResolverProvider())
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
         .userAgent(BigtableVersionInfo.CORE_UESR_AGENT + "," + options.getUserAgent())
