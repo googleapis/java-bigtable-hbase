@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.filter.RowFilters;
 
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
@@ -33,9 +34,7 @@ public class FirstKeyOnlyFilterAdapter extends TypedFilterAdapterBase<FirstKeyOn
   @Override
   public RowFilter adapt(FilterAdapterContext context, FirstKeyOnlyFilter filter)
       throws IOException {
-    return RowFilter.newBuilder()
-        .setCellsPerRowLimitFilter(1)
-        .build();
+    return RowFilters.RF.cellsPerRowLimit(1);
   }
 
   /** {@inheritDoc} */

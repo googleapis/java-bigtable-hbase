@@ -15,8 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ColumnRange;
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.filter.RowFilters.ColumnRangeFilterBuilder;
+import com.google.cloud.bigtable.filter.RowFilters.R;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -44,27 +45,27 @@ public class ColumnRangeFilterAdapter extends TypedFilterAdapterBase<ColumnRange
   public RowFilter adapt(FilterAdapterContext context, ColumnRangeFilter filter)
       throws IOException {
     byte[] familyName = getSingleFamily(context.getScan());
-    ColumnRange.Builder rangeBuilder = ColumnRange.newBuilder();
-    rangeBuilder.setFamilyName(Bytes.toString(familyName));
+    ColumnRangeFilterBuilder rangeBuilder = R.columnRangeBuilder()
+        .family(Bytes.toString(familyName));
 
     if (filter.getMinColumn() != null) {
       ByteString startQualifier = ByteString.copyFrom(filter.getMinColumn());
       if (filter.getMinColumnInclusive()) {
-        rangeBuilder.setStartQualifierClosed(startQualifier);
+        rangeBuilder.startClosed(startQualifier);
       } else {
-        rangeBuilder.setStartQualifierOpen(startQualifier);
+        rangeBuilder.startOpened(startQualifier);
       }
     }
 
     if (filter.getMaxColumn() != null) {
       ByteString endQualifier = ByteString.copyFrom(filter.getMaxColumn());
       if (filter.getMaxColumnInclusive()) {
-        rangeBuilder.setEndQualifierClosed(endQualifier);
+        rangeBuilder.endClosed(endQualifier);
       } else {
-        rangeBuilder.setEndQualifierOpen(endQualifier);
+        rangeBuilder.endOpened(endQualifier);
       }
     }
-    return RowFilter.newBuilder().setColumnRangeFilter(rangeBuilder).build();
+    return rangeBuilder.build();
   }
 
   /** {@inheritDoc} */

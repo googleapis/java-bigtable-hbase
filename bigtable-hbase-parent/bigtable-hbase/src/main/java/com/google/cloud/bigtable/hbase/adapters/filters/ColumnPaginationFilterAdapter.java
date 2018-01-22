@@ -15,15 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ColumnRange;
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.IOException;
+import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.filter.RowFilters.R;
+import com.google.protobuf.ByteString;
 
 /**
  * Adapter to convert a ColumnPaginationFilter to a RowFilter.
@@ -42,28 +43,22 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
   @Override
   public RowFilter adapt(FilterAdapterContext context, ColumnPaginationFilter filter)
       throws IOException {
+    RowFilter intermediate = null;
     if (filter.getColumnOffset() != null) {
       byte[] family = context.getScan().getFamilies()[0];
       // Include all cells starting at the qualifier scan.getColumnOffset()
       // up to limit cells.
-      return createChain(
-          filter,
-          RowFilter.newBuilder()
-              .setColumnRangeFilter(
-                  ColumnRange.newBuilder()
-                      .setFamilyName(Bytes.toString(family))
-                      .setStartQualifierClosed(
-                          ByteString.copyFrom(filter.getColumnOffset()))));
+      intermediate = R.columnRangeBuilder()
+          .family(Bytes.toString(family))
+          .startClosed(ByteString.copyFrom(filter.getColumnOffset()))
+          .build();
     } else if (filter.getOffset() > 0) {
       // Include starting at an integer offset up to limit cells.
-      return createChain(
-          filter,
-          RowFilter.newBuilder()
-              .setCellsPerRowOffsetFilter(filter.getOffset()));
+      intermediate = R.cellsPerRowOffset(filter.getOffset());
     } else {
       // No meaningful offset supplied.
-      return createChain(filter, null);
     }
+    return createChain(filter, intermediate);
   }
 
   /**
@@ -72,18 +67,14 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
    * and are less than the limit per row.
    */
   private RowFilter createChain(
-      ColumnPaginationFilter filter, RowFilter.Builder intermediate) {
-    Chain.Builder builder = Chain.newBuilder();
-    builder.addFilters(
-        RowFilter.newBuilder()
-            .setCellsPerColumnLimitFilter(1));
+      ColumnPaginationFilter filter, RowFilter intermediate) {
+    List<RowFilter> filters = new ArrayList<>();
+    filters.add(R.cellsPerColumnLimit(1));
     if (intermediate != null) {
-      builder.addFilters(intermediate);
+      filters.add(intermediate);
     }
-    builder.addFilters(
-        RowFilter.newBuilder()
-            .setCellsPerRowLimitFilter(filter.getLimit()));
-    return RowFilter.newBuilder().setChain(builder).build();
+    filters.add(R.cellsPerRowLimit(filter.getLimit()));
+    return R.chain(filters);
   }
 
   /** {@inheritDoc} */

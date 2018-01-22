@@ -16,14 +16,17 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.filter.RowFilters.R;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An adapter to transform an HBase MultipleColumnPrefixFilter into a
@@ -40,7 +43,7 @@ public class MultipleColumnPrefixFilterAdapter
   public RowFilter adapt(
       FilterAdapterContext context,
       MultipleColumnPrefixFilter filter) throws IOException {
-    Interleave.Builder interleaveBuilder = Interleave.newBuilder();
+    List<RowFilter> filters = new ArrayList<>();
     ByteArrayOutputStream outputStream = null;
     for (byte[] prefix : filter.getPrefix()) {
       if (outputStream == null) {
@@ -51,16 +54,11 @@ public class MultipleColumnPrefixFilterAdapter
       ReaderExpressionHelper.writeQuotedExpression(outputStream, prefix);
       outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
 
-      RowFilter.Builder singlePrefixBuilder = RowFilter.newBuilder();
-      singlePrefixBuilder.setColumnQualifierRegexFilter(
-          ByteStringer.wrap(
-              outputStream.toByteArray()));
+      ByteString regex = ByteStringer.wrap(outputStream.toByteArray());
 
-      interleaveBuilder.addFilters(singlePrefixBuilder);
+      filters.add(R.columnQualifierRegex(regex));
     }
-    return RowFilter.newBuilder()
-        .setInterleave(interleaveBuilder)
-        .build();
+    return R.interleave(filters);
   }
 
   /** {@inheritDoc} */

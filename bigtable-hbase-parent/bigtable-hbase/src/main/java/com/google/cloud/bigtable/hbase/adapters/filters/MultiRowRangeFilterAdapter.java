@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.filter.RowFilters;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.ImmutableRangeSet;
@@ -42,9 +43,7 @@ public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowR
   public RowFilter adapt(FilterAdapterContext context, MultiRowRangeFilter filter)
       throws IOException {
 
-    return RowFilter.newBuilder()
-        .setPassAllFilter(true)
-        .build();
+    return RowFilters.RF.passAll();
   }
 
   @Override
