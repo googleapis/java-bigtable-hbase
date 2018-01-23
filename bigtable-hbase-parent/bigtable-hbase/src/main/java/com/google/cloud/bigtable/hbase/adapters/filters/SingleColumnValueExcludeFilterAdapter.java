@@ -15,13 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ColumnRange;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.QualifierRangeFilter;
 import com.google.protobuf.ByteString;
 
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -57,36 +56,18 @@ public class SingleColumnValueExcludeFilterAdapter
   @Override
   public RowFilter adapt(FilterAdapterContext context, SingleColumnValueExcludeFilter filter)
       throws IOException {
-    RowFilter excludeMatchColumnFilter =
-        makeExcludeMatchColumnFilter(context.getScan(), filter);
-    return RowFilter.newBuilder()
-        .setChain(
-            Chain.newBuilder()
-                .addFilters(delegateAdapter.adapt(context, filter))
-                .addFilters(excludeMatchColumnFilter))
-        .build();
+    String family = Bytes.toString(context.getScan().getFamilies()[0]);
+    ByteString qualifier = ByteString.copyFrom(filter.getQualifier());
+    return F.chain()
+        .filter(delegateAdapter.toFilter(context, filter))
+        .filter(F.interleave()
+            .filter(range(family).endOpen(qualifier))
+            .filter(range(family).startOpen(qualifier)))
+        .toProto();
   }
 
-  private RowFilter makeExcludeMatchColumnFilter(
-      Scan scan, SingleColumnValueExcludeFilter filter) {
-    String family = Bytes.toString(scan.getFamilies()[0]);
-    ByteString qualifier = ByteString.copyFrom(filter.getQualifier());
-    return RowFilter.newBuilder()
-        .setInterleave(
-            Interleave.newBuilder()
-                .addFilters(
-                    RowFilter.newBuilder()
-                        .setColumnRangeFilter(
-                            ColumnRange.newBuilder()
-                                .setFamilyName(family)
-                                .setEndQualifierOpen(qualifier)))
-                .addFilters(
-                    RowFilter.newBuilder()
-                        .setColumnRangeFilter(
-                            ColumnRange.newBuilder()
-                                .setFamilyName(family)
-                                .setStartQualifierOpen(qualifier))))
-        .build();
+  private static QualifierRangeFilter range(String family) {
+    return F.qualifier().range(family);
   }
 
   /** {@inheritDoc} */

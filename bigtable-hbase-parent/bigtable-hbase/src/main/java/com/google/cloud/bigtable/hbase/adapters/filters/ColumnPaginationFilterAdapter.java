@@ -15,9 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ColumnRange;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.ChainFilter;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
@@ -44,22 +45,18 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
       throws IOException {
     if (filter.getColumnOffset() != null) {
       byte[] family = context.getScan().getFamilies()[0];
+      ByteString startQualifier = ByteString.copyFrom(filter.getColumnOffset());
       // Include all cells starting at the qualifier scan.getColumnOffset()
       // up to limit cells.
       return createChain(
           filter,
-          RowFilter.newBuilder()
-              .setColumnRangeFilter(
-                  ColumnRange.newBuilder()
-                      .setFamilyName(Bytes.toString(family))
-                      .setStartQualifierClosed(
-                          ByteString.copyFrom(filter.getColumnOffset()))));
+          F.qualifier().range(Bytes.toString(family))
+              .startClosed(startQualifier));
     } else if (filter.getOffset() > 0) {
       // Include starting at an integer offset up to limit cells.
       return createChain(
           filter,
-          RowFilter.newBuilder()
-              .setCellsPerRowOffsetFilter(filter.getOffset()));
+          F.offset().cellsPerRow(filter.getOffset()));
     } else {
       // No meaningful offset supplied.
       return createChain(filter, null);
@@ -72,18 +69,14 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
    * and are less than the limit per row.
    */
   private RowFilter createChain(
-      ColumnPaginationFilter filter, RowFilter.Builder intermediate) {
-    Chain.Builder builder = Chain.newBuilder();
-    builder.addFilters(
-        RowFilter.newBuilder()
-            .setCellsPerColumnLimitFilter(1));
+      ColumnPaginationFilter filter, Filter intermediate) {
+    ChainFilter chain = F.chain();
+    chain.filter(F.limit().cellsPerColumn(1));
     if (intermediate != null) {
-      builder.addFilters(intermediate);
+      chain.filter(intermediate);
     }
-    builder.addFilters(
-        RowFilter.newBuilder()
-            .setCellsPerRowLimitFilter(filter.getLimit()));
-    return RowFilter.newBuilder().setChain(builder).build();
+    chain.filter(F.limit().cellsPerRow(filter.getLimit()));
+    return chain.toProto();
   }
 
   /** {@inheritDoc} */

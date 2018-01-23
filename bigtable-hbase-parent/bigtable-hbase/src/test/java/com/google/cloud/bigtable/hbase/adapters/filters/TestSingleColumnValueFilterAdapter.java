@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowFilter.Condition;
-import com.google.bigtable.v2.ValueRange;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -131,17 +131,13 @@ public class TestSingleColumnValueFilterAdapter  {
             .getChain()));
 
     Assert.assertEquals(
-        SingleColumnValueFilterAdapter.ALL_VALUES_FILTER,
+        F.pass().toProto(),
         adaptedFilter.getCondition().getTrueFilter());
   }
 
   private static RowFilter createValueRangeFilter(String valueStr) {
     ByteString value = ByteString.copyFromUtf8(valueStr);
-    return RowFilter.newBuilder()
-        .setValueRangeFilter(ValueRange.newBuilder()
-            .setStartValueClosed(value)
-            .setEndValueClosed(value))
-        .build();
+    return F.value().range().startClosed(value).endClosed(value).toProto();
   }
 
   // Assert that the given family, qualifier and versions are applied
@@ -158,7 +154,7 @@ public class TestSingleColumnValueFilterAdapter  {
 
     if (latestOnly) {
       Assert.assertEquals(
-          SingleColumnValueFilterAdapter.LATEST_ONLY_FILTER,
+          F.limit().cellsPerColumn(1).toProto(),
           chain.getFilters(2));
     }
   }
@@ -184,12 +180,11 @@ public class TestSingleColumnValueFilterAdapter  {
     // Assert that the condition also includes a value filter:
     ByteString valueBS = ByteString.copyFrom(value);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setValueRangeFilter(ValueRange.newBuilder()
-                .setStartValueClosed(valueBS)
-                .setEndValueClosed(valueBS))
-            .build(),
-            getValueRangeFilter(cellSetCondition.getPredicateFilter().getChain()));
+        F.value().range()
+            .startClosed(valueBS)
+            .endClosed(valueBS)
+            .toProto(),
+        getValueRangeFilter(cellSetCondition.getPredicateFilter().getChain()));
 
     // If the cell is unset, the condition includes a column check:
     assertColumnSpecification(
@@ -202,14 +197,14 @@ public class TestSingleColumnValueFilterAdapter  {
 
     // Cell is in the row, include all cells in the true branch:
     Assert.assertEquals(
-        SingleColumnValueFilterAdapter.ALL_VALUES_FILTER,
+        F.pass().toProto(),
         cellSetCondition.getTrueFilter());
 
     Assert.assertFalse(cellSetCondition.hasFalseFilter());
 
     // Cell is not in the row, include all cells in the false branch:
     Assert.assertEquals(
-        SingleColumnValueFilterAdapter.ALL_VALUES_FILTER,
+        F.pass().toProto(),
         cellUnsetCondition.getFalseFilter());
 
     Assert.assertFalse(cellUnsetCondition.hasTrueFilter());

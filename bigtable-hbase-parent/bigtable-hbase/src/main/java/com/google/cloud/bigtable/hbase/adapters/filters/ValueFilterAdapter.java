@@ -15,9 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Interleave;
-import com.google.bigtable.v2.ValueRange;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.ValueRangeFilter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
@@ -38,6 +40,10 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
   /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, ValueFilter filter) throws IOException {
+    return toFilter(context, filter).toProto();
+  }
+
+  public Filter toFilter(FilterAdapterContext context, ValueFilter filter) throws IOException {
     if (filter.getComparator() instanceof BinaryComparator) {
       return adaptBinaryComparator(
           filter.getOperator(), (BinaryComparator) filter.getComparator());
@@ -48,7 +54,6 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
     throw new IllegalStateException(
         String.format("Cannot adapt filter with comparator%s", filter.getComparator()));
   }
-
   /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
@@ -66,61 +71,53 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
             filter.getOperator()));
   }
 
-  private RowFilter adaptBinaryComparator(
+  private Filter adaptBinaryComparator(
       CompareOp compareOp, BinaryComparator comparator) {
     ByteString value = ByteString.copyFrom(comparator.getValue());
     switch (compareOp) {
       case LESS:
-        return createRowFilter(ValueRange.newBuilder().setEndValueOpen(value));
+        return range().endOpen(value);
       case LESS_OR_EQUAL:
-        return createRowFilter(ValueRange.newBuilder().setEndValueClosed(value));
+        return range().endClosed(value);
       case EQUAL:
         if (comparator.getValue().length == 0) {
           // The empty case does needs to use valueRegexFilter, since "end value closed" of empty
           // is not allowed by the server.
-          return RowFilter.newBuilder().setValueRegexFilter(value).build();
+          return F.value().regex(value);
         } else {
-          return createRowFilter(
-            ValueRange.newBuilder().setStartValueClosed(value).setEndValueClosed(value));
+          return range().startClosed(value).endClosed(value);
         }
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
-        return RowFilter.newBuilder()
-            .setInterleave(
-                Interleave.newBuilder()
-                    .addFilters(
-                        createRowFilter(ValueRange.newBuilder().setEndValueOpen(value)))
-                    .addFilters(
-                        createRowFilter(ValueRange.newBuilder().setStartValueOpen(value))))
-                .build();
+        return F.interleave()
+            .filter(range().endOpen(value))
+            .filter(range().startOpen(value));
       case GREATER_OR_EQUAL:
-        return createRowFilter(ValueRange.newBuilder().setStartValueClosed(value));
+        return range().startClosed(value);
       case GREATER:
-        return createRowFilter(ValueRange.newBuilder().setStartValueOpen(value));
+        return range().startOpen(value);
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.
-        return FilterAdapterHelper.ACCEPT_ALL_FILTER;
+        return F.pass();
       default:
         throw new IllegalStateException(
             String.format("Cannot handle unknown compare op %s", compareOp));
     }
   }
 
-  private static RowFilter createRowFilter(ValueRange.Builder valueRange) {
-    return RowFilter.newBuilder().setValueRangeFilter(valueRange).build();
+  private static ValueRangeFilter range() {
+    return F.value().range();
   }
 
-  private RowFilter adaptRegexStringComparator(
+  private Filter adaptRegexStringComparator(
       CompareOp compareOp, RegexStringComparator comparator) {
     String pattern = FilterAdapterHelper.extractRegexPattern(comparator);
     switch (compareOp) {
       case EQUAL:
-        return RowFilter.newBuilder()
-            .setValueRegexFilter(ByteString.copyFromUtf8(pattern))
-            .build();
+        return F.value().regex(pattern);
       case NO_OP:
-        return FilterAdapterHelper.ACCEPT_ALL_FILTER;
+        return F.pass();
       case LESS:
       case LESS_OR_EQUAL:
       case NOT_EQUAL:

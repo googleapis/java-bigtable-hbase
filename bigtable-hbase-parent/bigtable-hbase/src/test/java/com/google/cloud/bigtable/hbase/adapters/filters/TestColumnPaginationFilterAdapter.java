@@ -15,11 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ColumnRange;
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.protobuf.ByteString;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
 
+import com.google.bigtable.v2.RowFilter;
+import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
@@ -41,18 +40,12 @@ public class TestColumnPaginationFilterAdapter {
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 20);
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(new Scan(), null), filter);
-    Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setChain(
-                Chain.newBuilder()
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerColumnLimitFilter(1))
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerRowOffsetFilter(20))
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerRowLimitFilter(10)))
-            .build(),
-        adaptedFilter);
+    RowFilter expected = F.chain()
+          .filter(F.limit().cellsPerColumn(1))
+          .filter(F.offset().cellsPerRow(20))
+          .filter(F.limit().cellsPerRow(10))
+          .toProto();
+    Assert.assertEquals(expected, adaptedFilter);
   }
 
   @Test
@@ -60,44 +53,25 @@ public class TestColumnPaginationFilterAdapter {
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 0);
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(new Scan(), null), filter);
-    Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setChain(
-                Chain.newBuilder()
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerColumnLimitFilter(1))
-                    .addFilters(RowFilter.newBuilder()
-                        .setCellsPerRowLimitFilter(10)))
-            .build(),
-        adaptedFilter);
+    RowFilter expected = F.chain()
+        .filter(F.limit().cellsPerColumn(1))
+        .filter(F.limit().cellsPerRow(10))
+        .toProto();
+    Assert.assertEquals(expected, adaptedFilter);
   }
 
   @Test
   public void qualifierOffsetIsPartiallySupported() throws IOException {
-    ColumnPaginationFilter filter =
-        new ColumnPaginationFilter(10, Bytes.toBytes("q1"));
+    Scan scan = new Scan().addFamily(Bytes.toBytes("f1"));
     RowFilter adaptedFilter = adapter.adapt(
-        new FilterAdapterContext(
-            new Scan().addFamily(Bytes.toBytes("f1")), null),
-        filter);
-    Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setChain(
-                Chain.newBuilder()
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setCellsPerColumnLimitFilter(1))
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setColumnRangeFilter(
-                                ColumnRange.newBuilder()
-                                    .setFamilyName("f1")
-                                    .setStartQualifierClosed(
-                                        ByteString.copyFromUtf8("q1"))))
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setCellsPerRowLimitFilter(10)))
-            .build(),
-        adaptedFilter);
+        new FilterAdapterContext(scan, null),
+        new ColumnPaginationFilter(10, Bytes.toBytes("q1")));
+    RowFilter expected = F.chain()
+        .filter(F.limit().cellsPerColumn(1))
+        .filter(F.qualifier().range("f1")
+            .startClosed(ByteString.copyFromUtf8("q1")))
+        .filter(F.limit().cellsPerRow(10))
+        .toProto();
+    Assert.assertEquals(expected, adaptedFilter);
   }
 }

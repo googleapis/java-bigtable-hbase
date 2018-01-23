@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import java.io.IOException;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
@@ -24,7 +26,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Builder;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
@@ -54,21 +55,20 @@ public class RowFilterAdapter
         compareOp == null ? null : compareOp.getClass().getCanonicalName()));
     }
     ByteArrayComparable comparator = filter.getComparator();
-    Builder builder = RowFilter.newBuilder();
+    ByteString regexValue;
     if (comparator == null) {
       throw new IllegalStateException("Comparator cannot be null"); 
     } else if (comparator instanceof RegexStringComparator) {
-      ByteString rawValue = ByteString.copyFrom(comparator.getValue());
-      builder.setRowKeyRegexFilter(rawValue);
+      regexValue = ByteString.copyFrom(comparator.getValue());
     } else if (comparator instanceof BinaryComparator) {
       byte[] quotedRegularExpression =
           ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
-      builder.setRowKeyRegexFilter(ByteStringer.wrap(quotedRegularExpression));
+      regexValue = ByteStringer.wrap(quotedRegularExpression);
     } else {
       throw new IllegalStateException(String.format("Cannot adapt comparator %s", comparator
           .getClass().getCanonicalName()));
     }
-    return builder.build();
+    return F.key().regex(regexValue).toProto();
   }
   
   /** {@inheritDoc} */

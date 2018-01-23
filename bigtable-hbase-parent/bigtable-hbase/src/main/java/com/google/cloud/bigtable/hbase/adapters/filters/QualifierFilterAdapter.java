@@ -15,9 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ColumnRange;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.QualifierRangeFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
@@ -53,10 +55,12 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
       throws IOException {
     if (filter.getComparator() instanceof RegexStringComparator) {
       return adaptRegexStringComparator(
-          filter.getOperator(), (RegexStringComparator) filter.getComparator());
+          filter.getOperator(), (RegexStringComparator) filter.getComparator())
+          .toProto();
     } else if (filter.getComparator() instanceof BinaryComparator) {
       return adaptBinaryComparator(
-          context, filter.getOperator(), (BinaryComparator) filter.getComparator());
+          context, filter.getOperator(), (BinaryComparator) filter.getComparator())
+          .toProto();
     }
     throw new IllegalStateException(
         String.format(
@@ -64,83 +68,58 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
             filter.getComparator().getClass().getCanonicalName()));
   }
 
-  private RowFilter adaptBinaryComparator(
+  private Filter adaptBinaryComparator(
       FilterAdapterContext context, CompareOp compareOp, BinaryComparator comparator)
       throws IOException {
     byte[] quoted = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
     ByteString quotedValue = ByteStringer.wrap(quoted);
     switch (compareOp) {
       case LESS:
-        return RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setEndQualifierOpen(quotedValue))
-            .build();
+        return range(context).endOpen(quotedValue);
       case LESS_OR_EQUAL:
-        return RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setEndQualifierClosed(quotedValue))
-            .build();
+        return range(context).endClosed(quotedValue);
       case EQUAL:
-        return RowFilter.newBuilder()
-            .setColumnQualifierRegexFilter(quotedValue)
-            .build();
+        return F.qualifier().regex(quotedValue);
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
-        String familyName = FilterAdapterHelper.getSingleFamilyName(context);
-        return RowFilter.newBuilder()
-            .setInterleave(
-                Interleave.newBuilder()
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setColumnRangeFilter(
-                                ColumnRange.newBuilder()
-                                    .setFamilyName(familyName)
-                                    .setEndQualifierOpen(quotedValue)))
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setColumnRangeFilter(
-                                ColumnRange.newBuilder()
-                                    .setFamilyName(familyName)
-                                    .setStartQualifierOpen(quotedValue))))
-            .build();
+        String familyName = getFamily(context);
+        return F.interleave()
+            .filter(range(familyName).endOpen(quotedValue))
+            .filter(range(familyName).startOpen(quotedValue));
       case GREATER_OR_EQUAL:
-        return RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setStartQualifierClosed(quotedValue))
-            .build();
+        return range(context).startClosed(quotedValue);
       case GREATER:
-        return RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setStartQualifierOpen(quotedValue))
-            .build();
+        return range(context).startOpen(quotedValue);
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.
-        return FilterAdapterHelper.ACCEPT_ALL_FILTER;
+        return F.pass();
       default:
         throw new IllegalStateException(
             String.format("Cannot handle unknown compare op %s", compareOp));
     }
   }
 
-  private RowFilter adaptRegexStringComparator(
+  private QualifierRangeFilter range(FilterAdapterContext context) {
+    return range(getFamily(context));
+  }
+
+  private QualifierRangeFilter range(String family) {
+    return F.qualifier().range(family);
+  }
+
+  private static String getFamily(FilterAdapterContext context) {
+    return FilterAdapterHelper.getSingleFamilyName(context);
+  }
+
+  private static Filter adaptRegexStringComparator(
       CompareOp compareOp, RegexStringComparator comparator) {
     String pattern = FilterAdapterHelper.extractRegexPattern(comparator);
     switch (compareOp) {
       case EQUAL:
-        return RowFilter.newBuilder()
-            .setColumnQualifierRegexFilter(ByteString.copyFromUtf8(pattern))
-            .build();
+        return F.qualifier().regex(pattern);
       case NO_OP:
-        return FilterAdapterHelper.ACCEPT_ALL_FILTER;
+        return F.pass();
       case LESS:
       case LESS_OR_EQUAL:
       case NOT_EQUAL:
