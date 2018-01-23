@@ -27,13 +27,11 @@ limitations under the License.
     <packaging>pom</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project is a parent project for the dataflow Cloud Bigtable java client projects. 
+       This project is a parent project for the beam Cloud Bigtable java client projects. 
     </description>
 
     <modules>
-        <module>bigtable-hbase-dataflow</module>
         <module>bigtable-hbase-beam</module>
-        <module>bigtable-dataflow-import</module>
         <module>bigtable-beam-import</module>
     </modules>
 
