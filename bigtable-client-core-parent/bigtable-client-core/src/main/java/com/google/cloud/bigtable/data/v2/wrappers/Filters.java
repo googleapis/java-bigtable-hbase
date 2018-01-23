@@ -243,7 +243,10 @@ public final class Filters {
 
   /** DSL for configuring a conditional filter. */
   public static final class ConditionFilter implements Filter {
-    RowFilter.Condition.Builder builder = RowFilter.Condition.newBuilder();
+    private RowFilter.Condition.Builder builder = RowFilter.Condition.newBuilder();
+
+    private ConditionFilter() {
+    }
 
     private ConditionFilter(Filter predicate) {
       builder.setPredicateFilter(predicate.toProto());
@@ -389,6 +392,10 @@ public final class Filters {
   }
 
   public static final class QualifierFilter {
+
+    private QualifierFilter() {
+    }
+
     /**
      * Matches only cells from columns whose qualifiers satisfy the given <a
      * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since column
@@ -416,10 +423,7 @@ public final class Filters {
 
     /** Matches only cells from columns whose qualifiers equal the value. */
     public Filter exactMatch(ByteString value) {
-      return new SimpleFilter(
-          RowFilter.newBuilder()
-              .setColumnQualifierRegexFilter(RegexUtil.literalRegex(value))
-              .build());
+      return regex(RegexUtil.literalRegex(value));
     }
 
     /**
@@ -465,12 +469,14 @@ public final class Filters {
     @InternalApi
     @Override
     public RowFilter toProto() {
-      return
-        RowFilter.newBuilder().setTimestampRangeFilter(range.build()).build();
+      return RowFilter.newBuilder().setTimestampRangeFilter(range.build()).build();
     }
   }
 
   public static final class TimestampFilter {
+
+    private TimestampFilter() {
+    }
 
     /**
      * Matches only cells with timestamps within the given range.
@@ -495,6 +501,9 @@ public final class Filters {
   /** Matches only cells with values that fall within the given value range. */
   public static final class ValueRangeFilter implements Filter{
     private ValueRange.Builder range = ValueRange.newBuilder();
+
+    private ValueRangeFilter() {
+    }
 
     /**
      * Used when giving an inclusive lower bound for the range.
@@ -536,6 +545,10 @@ public final class Filters {
   }
 
   public static final class ValueFilter {
+
+    private ValueFilter() {
+    }
+
     /**
      * Matches only cells with values that satisfy the given <a
      * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since cell values
@@ -550,6 +563,11 @@ public final class Filters {
       return regex(ByteString.copyFromUtf8(regex));
     }
 
+    /** Matches only cells with values that match the given value. */
+    public Filter exactMatch(ByteString value) {
+      return regex(RegexUtil.literalRegex(value));
+    }
+
     /**
      * Matches only cells with values that satisfy the given <a
      * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since cell values
@@ -562,12 +580,6 @@ public final class Filters {
      */
     public Filter regex(ByteString regex) {
       return new SimpleFilter(RowFilter.newBuilder().setValueRegexFilter(regex).build());
-    }
-
-    /** Matches only cells with values that match the given value. */
-    public Filter exactMatch(ByteString value) {
-      return new SimpleFilter(
-          RowFilter.newBuilder().setValueRegexFilter(RegexUtil.literalRegex(value)).build());
     }
 
     /**
@@ -587,6 +599,9 @@ public final class Filters {
 
   public static final class OffsetFilter {
 
+    private OffsetFilter() {
+    }
+
     /**
      * Skips the first N cells of each row, matching all subsequent cells. If duplicate cells are
      * present, as is possible when using an {@link InterleaveFilter}, each copy of the cell is
@@ -598,6 +613,9 @@ public final class Filters {
   }
 
   public static final class LimitFilter {
+
+    private LimitFilter() {
+    }
 
     /**
      * Matches only the first N cells of each row. If duplicate cells are present, as is possible
