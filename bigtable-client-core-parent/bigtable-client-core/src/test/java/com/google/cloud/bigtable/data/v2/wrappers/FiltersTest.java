@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.data.v2.wrappers;
 
 import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
 
+import java.util.concurrent.TimeUnit;
+
 import com.google.bigtable.v2.ColumnRange;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
@@ -38,7 +40,9 @@ public class FiltersTest {
         F.chain()
             .filter(F.key().regex(".*"))
             .filter(F.key().sample(0.5))
-            .filter(F.chain().filter(F.family().regex("hi$")))
+            .filter(F.chain()
+                .filter(F.family().regex("hi$"))
+                .filter(F.qualifier().regex("^q")))
             .toProto();
 
     RowFilter expectedFilter =
@@ -53,7 +57,10 @@ public class FiltersTest {
                             .setChain(
                                 Chain.newBuilder()
                                     .addFilters(
-                                        RowFilter.newBuilder().setFamilyNameRegexFilter("hi$")))))
+                                        RowFilter.newBuilder().setFamilyNameRegexFilter("hi$"))
+                                    .addFilters(
+                                        RowFilter.newBuilder().setColumnQualifierRegexFilter(
+                                            ByteString.copyFromUtf8("^q"))))))
             .build();
 
     Assert.assertEquals(expectedFilter, actualProto);
@@ -65,7 +72,9 @@ public class FiltersTest {
         F.interleave()
             .filter(F.key().regex(".*"))
             .filter(F.key().sample(0.5))
-            .filter(F.interleave().filter(F.family().regex("hi$")))
+            .filter(F.interleave()
+                .filter(F.family().regex("hi$"))
+                .filter(F.qualifier().regex("^q")))
             .toProto();
 
     RowFilter expectedFilter =
@@ -80,7 +89,10 @@ public class FiltersTest {
                             .setInterleave(
                                 Interleave.newBuilder()
                                     .addFilters(
-                                        RowFilter.newBuilder().setFamilyNameRegexFilter("hi$")))))
+                                        RowFilter.newBuilder().setFamilyNameRegexFilter("hi$"))
+                                    .addFilters(
+                                        RowFilter.newBuilder().setColumnQualifierRegexFilter(
+                                            ByteString.copyFromUtf8("^q"))))))
             .build();
 
     Assert.assertEquals(expectedFilter, actualProto);
@@ -219,11 +231,9 @@ public class FiltersTest {
     String family = "family";
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
-    RowFilter actualProto = F.qualifier().range()
-        .family(family)
+    RowFilter actualProto = F.qualifier().range(family)
         .startOpen(begin)
         .endClosed(end)
-        .build()
         .toProto();
     RowFilter expectedFilter =
         RowFilter.newBuilder()
@@ -242,11 +252,9 @@ public class FiltersTest {
     String family = "family";
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
-    RowFilter actualProto = F.qualifier().range()
-        .family(family)
+    RowFilter actualProto = F.qualifier().range(family)
         .startClosed(begin)
         .endOpen(end)
-        .build()
         .toProto();
     RowFilter expectedFilter =
         RowFilter.newBuilder()
@@ -293,7 +301,6 @@ public class FiltersTest {
     RowFilter actualProto = F.value().range()
         .startOpen(begin)
         .endClosed(end)
-        .build()
         .toProto();
 
     RowFilter expectedFilter =
@@ -315,7 +322,6 @@ public class FiltersTest {
     RowFilter actualProto = F.value().range()
         .startClosed(begin)
         .endOpen(end)
-        .build()
         .toProto();
 
     RowFilter expectedFilter =
@@ -363,5 +369,43 @@ public class FiltersTest {
     RowFilter expectedFilter = RowFilter.newBuilder().setCellsPerColumnLimitFilter(10).build();
 
     Assert.assertEquals(expectedFilter, actualProto);
+  }
+
+  @Test
+  public void timestampFullRangeTest() {
+    long start = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis() - 10000000);
+    long end = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
+    RowFilter actualProto = F.timestamp().range(start, end).toProto();
+
+    RowFilter.Builder expected = RowFilter.newBuilder();
+    expected.getTimestampRangeFilterBuilder()
+      .setStartTimestampMicros(start)
+      .setEndTimestampMicros(end);
+
+    Assert.assertEquals(expected.build(), actualProto);
+  }
+
+  @Test
+  public void timestampStartTest() {
+    long start = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis() - 10000000);
+    RowFilter actualProto = F.timestamp().range().startClosed(start).toProto();
+
+    RowFilter.Builder expected = RowFilter.newBuilder();
+    expected.getTimestampRangeFilterBuilder()
+      .setStartTimestampMicros(start);
+
+    Assert.assertEquals(expected.build(), actualProto);
+  }
+
+  @Test
+  public void timestampEndTest() {
+    long end = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
+    RowFilter actualProto = F.timestamp().range().endOpen(end).toProto();
+
+    RowFilter.Builder expected = RowFilter.newBuilder();
+    expected.getTimestampRangeFilterBuilder()
+      .setEndTimestampMicros(end);
+
+    Assert.assertEquals(expected.build(), actualProto);
   }
 }

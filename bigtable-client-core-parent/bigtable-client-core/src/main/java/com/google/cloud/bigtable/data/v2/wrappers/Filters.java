@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.data.v2.wrappers;
 
+import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ColumnRange;
 import com.google.bigtable.v2.RowFilter;
@@ -47,10 +48,19 @@ public final class Filters {
   /** Entry point into the DSL. */
   public static final Filters F = new Filters();
 
+  private static final SimpleFilter PASS =
+      new SimpleFilter(RowFilter.newBuilder().setPassAllFilter(true).build());
+  private static final SimpleFilter BLOCK =
+      new SimpleFilter(RowFilter.newBuilder().setBlockAllFilter(true).build());
+  private static final SimpleFilter SINK =
+      new SimpleFilter(RowFilter.newBuilder().setSink(true).build());
+  private static final SimpleFilter STRIP_VALUE =
+      new SimpleFilter(RowFilter.newBuilder().setStripValueTransformer(true).build());
+
   private Filters() {}
 
   /**
-   * Creates an empty chain filter list. Filters can be added to the chain by invoking {@link
+   * Creates an empty chain filter lidst. Filters can be added to the chain by invoking {@link
    * ChainFilter#filter(Filter)}.
    *
    * <p>The elements of "filters" are chained together to process the input row:
@@ -65,8 +75,8 @@ public final class Filters {
   }
 
   /**
-   * Creates an empty interleave filter list. Filters can be added to the chain by invoking {@link
-   * InterleaveFilter#filter(Filter)}.
+   * Creates an empty interleave filter list. Filters can be added to the interleave by invoking
+   * {@link InterleaveFilter#filter(Filter)}.
    *
    * <p>The elements of "filters" all process a copy of the input row, and the results are pooled,
    * sorted, and combined into a single output row. If multiple cells are produced with the same
@@ -132,7 +142,7 @@ public final class Filters {
   // Miscellaneous filters without a clear target.
   /** Matches all cells, regardless of input. Functionally equivalent to having no filter. */
   public Filter pass() {
-    return new SimpleFilter(RowFilter.newBuilder().setPassAllFilter(true).build());
+    return PASS;
   }
 
   /**
@@ -140,7 +150,7 @@ public final class Filters {
    * filter.
    */
   public Filter block() {
-    return new SimpleFilter(RowFilter.newBuilder().setBlockAllFilter(true).build());
+    return BLOCK;
   }
 
   /**
@@ -150,7 +160,7 @@ public final class Filters {
    * details.
    */
   public Filter sink() {
-    return new SimpleFilter(RowFilter.newBuilder().setSink(true).build());
+    return SINK;
   }
 
   /**
@@ -170,7 +180,15 @@ public final class Filters {
   /** DSL for adding filters to a chain. */
   public static class ChainFilter extends Filter {
 
-    RowFilter.Chain.Builder builder = RowFilter.Chain.newBuilder();
+    final RowFilter.Chain.Builder builder;
+
+    public ChainFilter() {
+      this(RowFilter.Chain.newBuilder());
+    }
+
+    ChainFilter(RowFilter.Chain.Builder builder) {
+      this.builder = builder;
+    }
 
     /** Add a filter to chain. */
     public ChainFilter filter(Filter filter) {
@@ -181,7 +199,16 @@ public final class Filters {
     @InternalApi
     @Override
     public RowFilter toProto() {
-      return RowFilter.newBuilder().setChain(builder.build()).build();
+      if (builder.getFiltersCount() == 1) {
+        return builder.getFilters(0);
+      } else {
+        return RowFilter.newBuilder().setChain(builder.build()).build();
+      }
+    }
+
+    @Override
+    public ChainFilter clone() {
+      return new ChainFilter(builder.build().toBuilder());
     }
   }
 
@@ -197,7 +224,11 @@ public final class Filters {
     @InternalApi
     @Override
     public RowFilter toProto() {
-      return RowFilter.newBuilder().setInterleave(builder.build()).build();
+      if (builder.getFiltersCount() == 1) {
+        return builder.getFilters(0);
+      } else {
+        return RowFilter.newBuilder().setInterleave(builder.build()).build();
+      }
     }
   }
 
@@ -238,8 +269,20 @@ public final class Filters {
      * be present in a binary key.
      */
     public Filter regex(String regex) {
+      return regex(ByteString.copyFromUtf8(regex));
+    }
+
+    /**
+     * Matches only cells from rows whose keys satisfy the given <a
+     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. In other words, passes through
+     * the entire row when the key matches, and otherwise produces an empty row. Note that, since
+     * row keys can contain arbitrary bytes, the `\C` escape sequence must be used if a true
+     * wildcard is desired. The `.` character will not match the new line character `\n`, which may
+     * be present in a binary key.
+     */
+    public Filter regex(ByteString regex) {
       return new SimpleFilter(
-          RowFilter.newBuilder().setRowKeyRegexFilter(ByteString.copyFromUtf8(regex)).build());
+          RowFilter.newBuilder().setRowKeyRegexFilter(regex).build());
     }
 
     /**
@@ -280,6 +323,42 @@ public final class Filters {
     }
   }
 
+  /**
+   * Matches only cells from columns within the given range.
+   */
+  public static class QualifierRangeFilter extends Filter{
+    private ColumnRange.Builder range = ColumnRange.newBuilder();
+
+    public QualifierRangeFilter(String family) {
+      range.setFamilyName(Preconditions.checkNotNull(family));
+    }
+
+    public QualifierRangeFilter startClosed(ByteString value) {
+      range.setStartQualifierClosed(value);
+      return this;
+    }
+
+    public QualifierRangeFilter startOpen(ByteString value) {
+      range.setStartQualifierOpen(value);
+      return this;
+    }
+
+    public QualifierRangeFilter endClosed(ByteString value) {
+      range.setEndQualifierClosed(value);
+      return this;
+    }
+
+    public QualifierRangeFilter endOpen(ByteString value) {
+      range.setEndQualifierOpen(value);
+      return this;
+    }
+
+    @Override
+    public RowFilter toProto() {
+      return RowFilter.newBuilder().setColumnRangeFilter(range.build()).build();
+    }
+  }
+
   public static class QualifierFilter {
 
     /**
@@ -290,9 +369,20 @@ public final class Filters {
      * be present in a binary qualifier.
      */
     public Filter regex(String regex) {
+      return regex(ByteString.copyFromUtf8(regex));
+    }
+
+    /**
+     * Matches only cells from columns whose qualifiers satisfy the given <a
+     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since column
+     * qualifiers can contain arbitrary bytes, the `\C` escape sequence must be used if a true
+     * wildcard is desired. The `.` character will not match the new line character `\n`, which may
+     * be present in a binary qualifier.
+     */
+    public Filter regex(ByteString regex) {
       return new SimpleFilter(
           RowFilter.newBuilder()
-              .setColumnQualifierRegexFilter(ByteString.copyFromUtf8(regex))
+              .setColumnQualifierRegexFilter(regex)
               .build());
     }
 
@@ -305,69 +395,84 @@ public final class Filters {
     }
 
     /**
-     * Matches only cells from columns within the given range.
+     * Construct a {@link QualifierRangeFilter} that can create a {@link ColumnRange} oriented
+     * {@link Filter}.
+     * @return a new {@link QualifierRangeFilter}
      */
-    public static class RangeBuilder {
-      private ColumnRange.Builder range = ColumnRange.newBuilder();
+    public QualifierRangeFilter range(String family) {
+      return new QualifierRangeFilter(family);
+    }
+  }
 
-      public RangeBuilder family(String family) {
-        range.setFamilyName(family);
-        return this;
-      }
+  /**
+   * Matches only cells with microsecond timestamps within the given range.  Start is inclusive
+   * and end is exclusive.
+   */
 
-      public RangeBuilder startClosed(ByteString value) {
-        range.setStartQualifierClosed(value);
-        return this;
-      }
+  public static class TimestampRangeFilter extends Filter {
+    private final TimestampRange.Builder range = TimestampRange.newBuilder();
 
-      public RangeBuilder startOpen(ByteString value) {
-        range.setStartQualifierOpen(value);
-        return this;
-      }
-
-      public RangeBuilder endClosed(ByteString value) {
-        range.setEndQualifierClosed(value);
-        return this;
-      }
-
-      public RangeBuilder endOpen(ByteString value) {
-        range.setEndQualifierOpen(value);
-        return this;
-      }
-
-      public Filter build() {
-        return new SimpleFilter(
-          RowFilter.newBuilder().setColumnRangeFilter(range.build()).build());
-      }
+    public TimestampRangeFilter startClosed(long startMicros) {
+      range.setStartTimestampMicros(startMicros);
+      return this;
     }
 
-    /**
-     * Construct a {@link RangeBuilder} that can create a {@link ColumnRange} oriented
-     * {@link Filter}.
-     * @return a new {@link RangeBuilder}
-     */
-    public RangeBuilder range() {
-      return new RangeBuilder();
+    public TimestampRangeFilter endOpen(long endMicros) {
+      range.setEndTimestampMicros(endMicros);
+      return this;
+    }
+
+    @Override
+    public RowFilter toProto() {
+      return
+        RowFilter.newBuilder().setTimestampRangeFilter(range.build()).build();
     }
   }
 
   public static class TimestampFilter {
+
+    public TimestampRangeFilter range() {
+      return new TimestampRangeFilter();
+    }
+
     /**
      * Matches only cells with timestamps within the given range.
      *
-     * @param start Inclusive start of the range.
-     * @param end Exclusive end of the range.
+     * @param startMicros Inclusive start of the range in microseconds.
+     * @param endMicros Exclusive end of the range in microseconds.
      */
-    public Filter range(Long start, Long end) {
-      TimestampRange.Builder range = TimestampRange.newBuilder();
-      if (start != null) {
-        range.setStartTimestampMicros(start);
-      }
-      if (end != null) {
-        range.setEndTimestampMicros(end);
-      }
-      return new SimpleFilter(
-          RowFilter.newBuilder().setTimestampRangeFilter(range.build()).build());
+    public Filter range(long startMicros, long endMicros) {
+      return range().startClosed(startMicros).endOpen(endMicros);
+    }
+  }
+
+  /** Matches only cells with values that fall within the given value range. */
+  public static class ValueRangeFilter extends Filter{
+    private ValueRange.Builder range = ValueRange.newBuilder();
+
+    public ValueRangeFilter startClosed(ByteString value) {
+      range.setStartValueClosed(value);
+      return this;
+    }
+
+    public ValueRangeFilter startOpen(ByteString value) {
+      range.setStartValueOpen(value);
+      return this;
+    }
+
+    public ValueRangeFilter endClosed(ByteString value) {
+      range.setEndValueClosed(value);
+      return this;
+    }
+
+    public ValueRangeFilter endOpen(ByteString value) {
+      range.setEndValueOpen(value);
+      return this;
+    }
+
+    @Override
+    public RowFilter toProto() {
+      return RowFilter.newBuilder().setValueRangeFilter(range.build()).build();
     }
   }
 
@@ -383,8 +488,21 @@ public final class Filters {
      * @return
      */
     public Filter regex(String regex) {
-      return new SimpleFilter(
-          RowFilter.newBuilder().setValueRegexFilter(ByteString.copyFromUtf8(regex)).build());
+      return regex(ByteString.copyFromUtf8(regex));
+    }
+
+    /**
+     * Matches only cells with values that satisfy the given <a
+     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since cell values
+     * can contain arbitrary bytes, the `\C` escape sequence must be used if a true wildcard is
+     * desired. The `.` character will not match the new line character `\n`, which may be present
+     * in a binary value.
+     *
+     * @param regex
+     * @return
+     */
+    public Filter regex(ByteString regex) {
+      return new SimpleFilter(RowFilter.newBuilder().setValueRegexFilter(regex).build());
     }
 
     /** Matches only cells with values that match the given value. */
@@ -393,48 +511,18 @@ public final class Filters {
           RowFilter.newBuilder().setValueRegexFilter(RegexUtil.literalRegex(value)).build());
     }
 
-    /** Matches only cells with values that fall within the given value range. */
-    public static class RangeBuilder {
-      private ValueRange.Builder range = ValueRange.newBuilder();
-
-      public RangeBuilder startClosed(ByteString value) {
-        range.setStartValueClosed(value);
-        return this;
-      }
-
-      public RangeBuilder startOpen(ByteString value) {
-        range.setStartValueOpen(value);
-        return this;
-      }
-
-      public RangeBuilder endClosed(ByteString value) {
-        range.setEndValueClosed(value);
-        return this;
-      }
-
-      public RangeBuilder endOpen(ByteString value) {
-        range.setEndValueOpen(value);
-        return this;
-      }
-
-      public Filter build() {
-        return new SimpleFilter(
-          RowFilter.newBuilder().setValueRangeFilter(range.build()).build());
-      }
-    }
-
     /**
-     * Construct a {@link RangeBuilder} that can create a {@link ValueRange} oriented
+     * Construct a {@link ValueRangeBuilder} that can create a {@link ValueRange} oriented
      * {@link Filter}.
-     * @return a new {@link RangeBuilder}
+     * @return a new {@link ValueRangeBuilder}
      */
-    public RangeBuilder range() {
-      return new RangeBuilder();
+    public ValueRangeFilter range() {
+      return new ValueRangeFilter();
     }
 
     /** Replaces each cell's value with the empty string. */
     public Filter strip() {
-      return new SimpleFilter(RowFilter.newBuilder().setStripValueTransformer(true).build());
+      return STRIP_VALUE;
     }
   }
 
