@@ -42,10 +42,17 @@ public class TestTruncateTable extends AbstractTest {
 
   @Test
   public void testTruncate() throws IOException {
-    TableName tableName = sharedTestEnv.getDefaultTableName();
-    sharedTestEnv.createTable(tableName);
-    Admin admin = getConnection().getAdmin();
-    try (
+    TableName newTestTableName = sharedTestEnv.newTestTableName();
+    sharedTestEnv.createTable(newTestTableName);
+    try {
+      testTruncate(newTestTableName);
+    } finally {
+      deleteTable(newTestTableName);
+    }
+  }
+
+  private void testTruncate(TableName tableName) throws IOException {
+    try (Admin admin = getConnection().getAdmin();
         Table table = getConnection().getTable(tableName)) {
       byte[] rowKey = dataHelper.randomData("testrow-");
       byte[] qual = dataHelper.randomData("qual-");
@@ -59,9 +66,6 @@ public class TestTruncateTable extends AbstractTest {
       admin.truncateTable(tableName, false);
       assertTrue(admin.tableExists(tableName));
       assertFalse(table.exists(new Get(rowKey)));
-    } finally {
-      admin.enableTable(tableName);
-      admin.close();
     }
   }
 
@@ -77,27 +81,21 @@ public class TestTruncateTable extends AbstractTest {
     HTableDescriptor descriptor = new HTableDescriptor(tableName);
     descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
 
-    Admin admin = getConnection().getAdmin();
-    admin.createTable(descriptor, splits);
-    testSpllits(tableName, splits);
-
-    try {
-      try (Table table = getConnection().getTable(tableName)) {
-        byte[] rowKey = dataHelper.randomData("testrow-");
-        byte[] qual = dataHelper.randomData("qual-");
-        byte[] value = dataHelper.randomData("value-");
-        Put put = new Put(rowKey);
-        put.addColumn(COLUMN_FAMILY, qual, 1L, value);
-        put.addColumn(COLUMN_FAMILY, qual, 2L, value);
-        table.put(put);
-        assertTrue(table.exists(new Get(rowKey)));
-        admin.disableTable(tableName);
-        admin.truncateTable(tableName, true);
-        assertTrue(admin.tableExists(tableName));
-        assertFalse(table.exists(new Get(rowKey)));
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.createTable(descriptor, splits);
+      testSplits(tableName, splits);
+      testTruncate(tableName);
+      if (sharedTestEnv.isBigtable()) {
+        // The splits are only preserved by Cloud Bigtable, and not by HBase.
+        testSplits(tableName, splits);
       }
-      testSpllits(tableName, splits);
     } finally {
+      deleteTable(tableName);
+    }
+  }
+
+  private void deleteTable(TableName tableName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
       if (admin.tableExists(tableName)) {
         if (admin.isTableEnabled(tableName)) {
           // The table may or may not be enabled, depending on the success of truncate table.
@@ -108,7 +106,7 @@ public class TestTruncateTable extends AbstractTest {
     }
   }
 
-  private void testSpllits(TableName tableName, byte[][] splits) throws IOException {
+  private void testSplits(TableName tableName, byte[][] splits) throws IOException {
     // This logic was borrowed from TestCreateTable.testFiveRegionSplit()
     List<HRegionLocation> regions = null;
     try (RegionLocator locator = getConnection().getRegionLocator(tableName)) {
