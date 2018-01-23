@@ -216,9 +216,11 @@ public class FiltersTest {
 
   @Test
   public void qualifierRangeOpenClosed() {
+    String family = "family";
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
     RowFilter actualProto = F.qualifier().range()
+        .family(family)
         .startOpen(begin)
         .endClosed(end)
         .build()
@@ -227,6 +229,7 @@ public class FiltersTest {
         RowFilter.newBuilder()
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
+                    .setFamilyName(family)
                     .setStartQualifierOpen(begin)
                     .setEndQualifierClosed(end))
             .build();
@@ -236,9 +239,11 @@ public class FiltersTest {
 
   @Test
   public void qualifierRangeClosedOpen() {
+    String family = "family";
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
     RowFilter actualProto = F.qualifier().range()
+        .family(family)
         .startClosed(begin)
         .endOpen(end)
         .build()
@@ -247,6 +252,7 @@ public class FiltersTest {
         RowFilter.newBuilder()
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
+                    .setFamilyName(family)
                     .setStartQualifierClosed(begin)
                     .setEndQualifierOpen(end))
             .build();

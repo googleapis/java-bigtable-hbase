@@ -310,6 +310,11 @@ public final class Filters {
     public static class RangeBuilder {
       private ColumnRange.Builder range = ColumnRange.newBuilder();
 
+      public RangeBuilder family(String family) {
+        range.setFamilyName(family);
+        return this;
+      }
+
       public RangeBuilder startClosed(ByteString value) {
         range.setStartQualifierClosed(value);
         return this;
