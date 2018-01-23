@@ -60,7 +60,7 @@ public final class Filters {
   private Filters() {}
 
   /**
-   * Creates an empty chain filter lidst. Filters can be added to the chain by invoking {@link
+   * Creates an empty chain filter list. Filters can be added to the chain by invoking {@link
    * ChainFilter#filter(Filter)}.
    *
    * <p>The elements of "filters" are chained together to process the input row:
@@ -178,15 +178,15 @@ public final class Filters {
 
   // Implementations of target specific filters.
   /** DSL for adding filters to a chain. */
-  public static class ChainFilter extends Filter {
+  public static final class ChainFilter implements Filter, Cloneable {
 
-    final RowFilter.Chain.Builder builder;
+    private final RowFilter.Chain.Builder builder;
 
-    public ChainFilter() {
+    private ChainFilter() {
       this(RowFilter.Chain.newBuilder());
     }
 
-    ChainFilter(RowFilter.Chain.Builder builder) {
+    private ChainFilter(RowFilter.Chain.Builder builder) {
       this.builder = builder;
     }
 
@@ -206,6 +206,9 @@ public final class Filters {
       }
     }
 
+    /**
+     * Makes a deep copy of the Chain.
+     */
     @Override
     public ChainFilter clone() {
       return new ChainFilter(builder.build().toBuilder());
@@ -213,9 +216,15 @@ public final class Filters {
   }
 
   /** DSL for adding filters to the interleave list. */
-  public static class InterleaveFilter extends Filter {
+  public static final class InterleaveFilter implements Filter {
     RowFilter.Interleave.Builder builder = RowFilter.Interleave.newBuilder();
 
+    private InterleaveFilter() {
+    }
+
+    /**
+     * Adds a {@link Filter} to the interleave list.
+     */
     public InterleaveFilter filter(Filter filter) {
       builder.addFilters(filter.toProto());
       return this;
@@ -233,10 +242,10 @@ public final class Filters {
   }
 
   /** DSL for configuring a conditional filter. */
-  public static class ConditionFilter extends Filter {
+  public static final class ConditionFilter implements Filter {
     RowFilter.Condition.Builder builder = RowFilter.Condition.newBuilder();
 
-    ConditionFilter(Filter predicate) {
+    private ConditionFilter(Filter predicate) {
       builder.setPredicateFilter(predicate.toProto());
     }
 
@@ -259,7 +268,11 @@ public final class Filters {
     }
   }
 
-  public static class KeyFilter {
+  public static final class KeyFilter {
+
+    private KeyFilter() {
+    }
+
     /**
      * Matches only cells from rows whose keys satisfy the given <a
      * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. In other words, passes through
@@ -303,7 +316,10 @@ public final class Filters {
     }
   }
 
-  public static class FamilyFilter {
+  public static final class FamilyFilter {
+
+    private FamilyFilter() {
+    }
 
     /**
      * Matches only cells from columns whose families satisfy the given <a
@@ -326,41 +342,53 @@ public final class Filters {
   /**
    * Matches only cells from columns within the given range.
    */
-  public static class QualifierRangeFilter extends Filter{
+  public static final class QualifierRangeFilter implements Filter{
     private ColumnRange.Builder range = ColumnRange.newBuilder();
 
-    public QualifierRangeFilter(String family) {
+    private QualifierRangeFilter(String family) {
       range.setFamilyName(Preconditions.checkNotNull(family));
     }
 
+    /**
+     * Used when giving an inclusive lower bound for the range.
+     */
     public QualifierRangeFilter startClosed(ByteString value) {
       range.setStartQualifierClosed(value);
       return this;
     }
 
+    /**
+     * Used when giving an exclusive lower bound for the range.
+     */
     public QualifierRangeFilter startOpen(ByteString value) {
       range.setStartQualifierOpen(value);
       return this;
     }
 
+    /**
+     * sed when giving an inclusive upper bound for the range.
+     */
     public QualifierRangeFilter endClosed(ByteString value) {
       range.setEndQualifierClosed(value);
       return this;
     }
 
+    /**
+     * Used when giving an exclusive upper bound for the range.
+     */
     public QualifierRangeFilter endOpen(ByteString value) {
       range.setEndQualifierOpen(value);
       return this;
     }
 
+    @InternalApi
     @Override
     public RowFilter toProto() {
       return RowFilter.newBuilder().setColumnRangeFilter(range.build()).build();
     }
   }
 
-  public static class QualifierFilter {
-
+  public static final class QualifierFilter {
     /**
      * Matches only cells from columns whose qualifiers satisfy the given <a
      * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since column
@@ -408,20 +436,33 @@ public final class Filters {
    * Matches only cells with microsecond timestamps within the given range.  Start is inclusive
    * and end is exclusive.
    */
-
-  public static class TimestampRangeFilter extends Filter {
+  public static final class TimestampRangeFilter implements Filter {
     private final TimestampRange.Builder range = TimestampRange.newBuilder();
 
+    private TimestampRangeFilter() {
+    }
+
+    /**
+     * Inclusive lower bound. If left empty, interpreted as 0.
+     *
+     * @param startMicros inclusive timestamp in microseconds.
+     */
     public TimestampRangeFilter startClosed(long startMicros) {
       range.setStartTimestampMicros(startMicros);
       return this;
     }
 
+    /**
+     * Exclusive upper bound. If left empty, interpreted as infinity.
+     *
+     * @param endMicros exclusive timestamp in microseconds.
+     */
     public TimestampRangeFilter endOpen(long endMicros) {
       range.setEndTimestampMicros(endMicros);
       return this;
     }
 
+    @InternalApi
     @Override
     public RowFilter toProto() {
       return
@@ -429,8 +470,13 @@ public final class Filters {
     }
   }
 
-  public static class TimestampFilter {
+  public static final class TimestampFilter {
 
+    /**
+     * Matches only cells with timestamps within the given range.
+     *
+     * @return a {@link TimestampRangeFilter} on which start / end timestamps can be specified.
+     */
     public TimestampRangeFilter range() {
       return new TimestampRangeFilter();
     }
@@ -447,36 +493,49 @@ public final class Filters {
   }
 
   /** Matches only cells with values that fall within the given value range. */
-  public static class ValueRangeFilter extends Filter{
+  public static final class ValueRangeFilter implements Filter{
     private ValueRange.Builder range = ValueRange.newBuilder();
 
+    /**
+     * Used when giving an inclusive lower bound for the range.
+     */
     public ValueRangeFilter startClosed(ByteString value) {
       range.setStartValueClosed(value);
       return this;
     }
 
+    /**
+     * Used when giving an exclusive lower bound for the range.
+     */
     public ValueRangeFilter startOpen(ByteString value) {
       range.setStartValueOpen(value);
       return this;
     }
 
+    /**
+     * Used when giving an inclusive upper bound for the range.
+     */
     public ValueRangeFilter endClosed(ByteString value) {
       range.setEndValueClosed(value);
       return this;
     }
 
     public ValueRangeFilter endOpen(ByteString value) {
+      /**
+       * Used when giving an exclusive upper bound for the range.
+       */
       range.setEndValueOpen(value);
       return this;
     }
 
+    @InternalApi
     @Override
     public RowFilter toProto() {
       return RowFilter.newBuilder().setValueRangeFilter(range.build()).build();
     }
   }
 
-  public static class ValueFilter {
+  public static final class ValueFilter {
     /**
      * Matches only cells with values that satisfy the given <a
      * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since cell values
@@ -526,7 +585,7 @@ public final class Filters {
     }
   }
 
-  public static class OffsetFilter {
+  public static final class OffsetFilter {
 
     /**
      * Skips the first N cells of each row, matching all subsequent cells. If duplicate cells are
@@ -538,7 +597,7 @@ public final class Filters {
     }
   }
 
-  public static class LimitFilter {
+  public static final class LimitFilter {
 
     /**
      * Matches only the first N cells of each row. If duplicate cells are present, as is possible
@@ -560,7 +619,7 @@ public final class Filters {
     }
   }
 
-  private static final class SimpleFilter extends Filter {
+  private static final class SimpleFilter implements Filter {
 
     private final RowFilter proto;
 
@@ -575,12 +634,7 @@ public final class Filters {
     }
   }
 
-  public abstract static class Filter {
-
-    final RowFilter.Builder builder = RowFilter.newBuilder();
-
-    Filter() {}
-
+  public interface Filter {
     @InternalApi
     public abstract RowFilter toProto();
   }
