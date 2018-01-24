@@ -63,36 +63,6 @@ limitations under the License.
     <artifactId>metrics-core</artifactId>
     <version>${dropwizard.metrics.version}</version>
   </dependency>
-
-  <dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-impl</artifactId>
-    <version>${opencensus.version}</version>
-  </dependency>
-  <dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-contrib-zpages</artifactId>
-    <version>${opencensus.version}</version>
-  </dependency>
-  <dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
-    <version>${opencensus.version}</version>
-    <exclusions>
-        <exclusion>
-            <groupId>io.netty</groupId>
-            <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>io.grpc</groupId>
-            <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.google.auto.value</groupId>
-            <artifactId>auto-value</artifactId>
-        </exclusion>
-    </exclusions>
-  </dependency>
  </dependencies>
 
   <build>
