@@ -15,8 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.common.base.Preconditions;
 
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
@@ -33,10 +34,7 @@ public class FilterAdapterHelper {
   /**
    * A RowFilter that will match all cells.
    */
-  public static final RowFilter ACCEPT_ALL_FILTER =
-      RowFilter.newBuilder()
-          .setFamilyNameRegexFilter(ReaderExpressionHelper.ALL_FAMILIES)
-          .build();
+  public static final RowFilter ACCEPT_ALL_FILTER = F.pass().toProto();
 
   /**
    * Extract a single family name from a FilterAdapterContext. Throws if there

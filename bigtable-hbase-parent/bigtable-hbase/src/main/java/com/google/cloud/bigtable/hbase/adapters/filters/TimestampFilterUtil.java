@@ -15,8 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.TimestampRange;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 
 /**
@@ -35,7 +36,7 @@ public class TimestampFilterUtil {
   /**
    * Converts a [startMs, endMs) timestamps to a Cloud Bigtable [startMicros, endMicros) filter.
    */
-  public static RowFilter hbaseToTimestampRangeFilter(long hbaseStartTimestamp,
+  public static Filter hbaseToTimestampRangeFilter(long hbaseStartTimestamp,
       long hbaseEndTimestamp) {
     return toTimestampRangeFilter(hbaseToBigtableTimeUnit(hbaseStartTimestamp),
       hbaseToBigtableTimeUnit(hbaseEndTimestamp));
@@ -45,13 +46,8 @@ public class TimestampFilterUtil {
    * Converts a [startMicros, endNons) timestamps to a Cloud Bigtable [startMicros, endMicros)
    * filter.
    */
-  public static RowFilter toTimestampRangeFilter(long bigtableStartTimestamp,
+  public static Filter toTimestampRangeFilter(long bigtableStartTimestamp,
       long bigtableEndTimestamp) {
-    return RowFilter.newBuilder()
-        .setTimestampRangeFilter(
-            TimestampRange.newBuilder()
-                .setStartTimestampMicros(bigtableStartTimestamp)
-                .setEndTimestampMicros(bigtableEndTimestamp))
-        .build();
+    return F.timestamp().range(bigtableStartTimestamp, bigtableEndTimestamp);
   }
 }

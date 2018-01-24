@@ -15,8 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
 
@@ -40,27 +42,21 @@ public class MultipleColumnPrefixFilterAdapter
   public RowFilter adapt(
       FilterAdapterContext context,
       MultipleColumnPrefixFilter filter) throws IOException {
-    Interleave.Builder interleaveBuilder = Interleave.newBuilder();
+    InterleaveFilter interleave = F.interleave();
     ByteArrayOutputStream outputStream = null;
     for (byte[] prefix : filter.getPrefix()) {
       if (outputStream == null) {
         outputStream = new ByteArrayOutputStream(prefix.length * 2);
+      } else {
+        outputStream.reset();
       }
-      outputStream.reset();
 
       ReaderExpressionHelper.writeQuotedExpression(outputStream, prefix);
       outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
 
-      RowFilter.Builder singlePrefixBuilder = RowFilter.newBuilder();
-      singlePrefixBuilder.setColumnQualifierRegexFilter(
-          ByteStringer.wrap(
-              outputStream.toByteArray()));
-
-      interleaveBuilder.addFilters(singlePrefixBuilder);
+      interleave.filter(F.qualifier().regex(ByteStringer.wrap(outputStream.toByteArray())));
     }
-    return RowFilter.newBuilder()
-        .setInterleave(interleaveBuilder)
-        .build();
+    return interleave.toProto();
   }
 
   /** {@inheritDoc} */

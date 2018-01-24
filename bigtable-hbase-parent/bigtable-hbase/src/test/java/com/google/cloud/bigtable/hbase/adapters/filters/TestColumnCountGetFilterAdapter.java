@@ -15,8 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
@@ -39,15 +40,10 @@ public class TestColumnCountGetFilterAdapter {
             new FilterAdapterContext(new Scan(), null),
             new ColumnCountGetFilter(2));
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setChain(Chain.newBuilder()
-                .addFilters(
-                    RowFilter.newBuilder()
-                        .setCellsPerColumnLimitFilter(1))
-                .addFilters(
-                    RowFilter.newBuilder()
-                        .setCellsPerRowLimitFilter(2)))
-        .build(),
+        F.chain()
+            .filter(F.limit().cellsPerColumn(1))
+            .filter(F.limit().cellsPerRow(2))
+            .toProto(),
         adaptedFilter);
   }
 }

@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
@@ -46,10 +48,7 @@ public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
     ReaderExpressionHelper.writeQuotedRegularExpression(baos, filter.getPrefix());
     // Unquoted all bytes:
     baos.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
-    ByteString quotedValue = ByteStringer.wrap(baos.toByteArray());
-    return RowFilter.newBuilder()
-        .setRowKeyRegexFilter(quotedValue)
-        .build();
+    return F.key().regex(ByteStringer.wrap(baos.toByteArray())).toProto();
   }
 
   /**

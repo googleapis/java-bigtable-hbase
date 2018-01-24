@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Builder;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.ByteStringer;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.FamilyFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 
@@ -46,20 +47,20 @@ public class FamilyFilterAdapter extends TypedFilterAdapterBase<FamilyFilter> {
     }
 
     ByteArrayComparable comparator = filter.getComparator();
-    Builder builder = RowFilter.newBuilder();
+    String family = null;
     if (comparator == null) {
       throw new IllegalStateException("Comparator cannot be null"); 
     } else if (comparator instanceof RegexStringComparator) {
-      builder.setFamilyNameRegexFilterBytes(ByteStringer.wrap(comparator.getValue()));
+      family = Bytes.toString(comparator.getValue());
     } else if (comparator instanceof BinaryComparator) {
       byte[] quotedRegularExpression =
           ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
-      builder.setFamilyNameRegexFilterBytes(ByteStringer.wrap(quotedRegularExpression));
+      family = Bytes.toString(quotedRegularExpression);
     } else {
       throw new IllegalStateException(
           "Cannot adapt comparator " + comparator.getClass().getCanonicalName());
     }
-    return builder.build();
+    return F.family().regex(family).toProto();
   }
 
   /** {@inheritDoc} */

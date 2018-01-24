@@ -15,8 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
@@ -32,19 +33,18 @@ import java.io.IOException;
  */
 public class KeyOnlyFilterAdapter extends TypedFilterAdapterBase<KeyOnlyFilter> {
   /** Constant <code>TEST_CELL</code> */
-  protected static final Cell TEST_CELL = new KeyValue(
+  private static final Cell TEST_CELL = new KeyValue(
       Bytes.toBytes('r'), // Row
       Bytes.toBytes('f'), // Family
       Bytes.toBytes('q'), // qualifier
       1L,
       Bytes.toBytes('v'));
 
-  protected static RowFilter KEY_ONLY_FILTER =
-      RowFilter.newBuilder()
-          .setChain(Chain.newBuilder()
-              .addFilters(RowFilter.newBuilder().setCellsPerRowLimitFilter(1).build())
-              .addFilters(RowFilter.newBuilder().setStripValueTransformer(true).build()).build())
-          .build();
+  private static RowFilter KEY_ONLY_FILTER =
+      F.chain()
+          .filter(F.limit().cellsPerRow(1))
+          .filter(F.value().strip())
+          .toProto();
 
   /** {@inheritDoc} */
   @Override

@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import com.google.bigtable.v2.RowFilter;
 
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
-
-import java.io.IOException;
 
 /**
  * Adapter for FirstKeyOnlyFilter to RowFilter.
@@ -29,13 +29,12 @@ import java.io.IOException;
  */
 public class FirstKeyOnlyFilterAdapter extends TypedFilterAdapterBase<FirstKeyOnlyFilter> {
 
+  private static RowFilter LIMIT_ONE = F.limit().cellsPerRow(1).toProto();
+
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, FirstKeyOnlyFilter filter)
-      throws IOException {
-    return RowFilter.newBuilder()
-        .setCellsPerRowLimitFilter(1)
-        .build();
+  public RowFilter adapt(FilterAdapterContext context, FirstKeyOnlyFilter filter) {
+    return LIMIT_ONE;
   }
 
   /** {@inheritDoc} */

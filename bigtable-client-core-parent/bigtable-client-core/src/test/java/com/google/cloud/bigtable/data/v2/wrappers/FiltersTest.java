@@ -231,7 +231,7 @@ public class FiltersTest {
     String family = "family";
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
-    RowFilter actualProto = F.qualifier().range(family)
+    RowFilter actualProto = F.qualifier().rangeWithinFamily(family)
         .startOpen(begin)
         .endClosed(end)
         .toProto();
@@ -252,7 +252,7 @@ public class FiltersTest {
     String family = "family";
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
-    RowFilter actualProto = F.qualifier().range(family)
+    RowFilter actualProto = F.qualifier().rangeWithinFamily(family)
         .startClosed(begin)
         .endOpen(end)
         .toProto();

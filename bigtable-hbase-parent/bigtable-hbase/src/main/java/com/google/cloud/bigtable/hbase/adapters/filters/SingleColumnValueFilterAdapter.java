@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+
 import static com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.quoteRegularExpression;
 
 import java.io.IOException;
@@ -24,9 +26,8 @@ import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.bigtable.v2.RowFilter.Condition;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.ChainFilter;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
@@ -41,11 +42,7 @@ public class SingleColumnValueFilterAdapter
     extends TypedFilterAdapterBase<SingleColumnValueFilter> {
 
   @VisibleForTesting
-  static final RowFilter ALL_VALUES_FILTER =
-      RowFilter.newBuilder().setPassAllFilter(true).build();
-  @VisibleForTesting
-  static final RowFilter LATEST_ONLY_FILTER =
-      RowFilter.newBuilder().setCellsPerColumnLimitFilter(1).build();
+  static final Filter LATEST_ONLY_FILTER = F.limit().cellsPerColumn(1);
   private final ValueFilterAdapter delegateAdapter;
 
   /**
@@ -151,71 +148,58 @@ public class SingleColumnValueFilterAdapter
   @Override
   public RowFilter adapt(FilterAdapterContext context, SingleColumnValueFilter filter)
       throws IOException {
+    return toFilter(context, filter).toProto();
+  }
 
+  Filter toFilter(FilterAdapterContext context, SingleColumnValueFilter filter)
+      throws IOException {
     // filter to check if the column exists
-    RowFilter columnSpecFilter = getColumnSpecFilter(
-      filter.getFamily(),
-      filter.getQualifier(),
-      filter.getLatestVersionOnly());
+    ChainFilter columnSpecFilter = getColumnSpecFilter(
+        filter.getFamily(),
+        filter.getQualifier(),
+        filter.getLatestVersionOnly());
 
     // filter to return the row if the condition is met
-    RowFilter emitRowsWithValueFilter = RowFilter.newBuilder()
-      .setCondition(
-          Condition.newBuilder()
-              .setPredicateFilter(
-                  RowFilter.newBuilder()
-                      .setChain(
-                          columnSpecFilter.getChain().toBuilder()
-                              .addFilters(createValueMatchFilter(context, filter))
-                              .build()))
-              .setTrueFilter(ALL_VALUES_FILTER))
-      .build();
-
     if (filter.getFilterIfMissing()) {
-      return emitRowsWithValueFilter;
+      return F.condition(addValue(context, filter, columnSpecFilter))
+               .then(F.pass());
     } else {
-      return RowFilter.newBuilder().setInterleave(
-        Interleave.newBuilder()
-          .addFilters(emitRowsWithValueFilter)
-          .addFilters(RowFilter.newBuilder()
-            .setCondition(
-                Condition.newBuilder()
-                    .setPredicateFilter(columnSpecFilter)
-                    .setFalseFilter(ALL_VALUES_FILTER)
-                    .build())
-            .build())
-          .build()
-      ).build();
+      return F.interleave()
+          .filter(F.condition(addValue(context, filter, columnSpecFilter.clone()))
+                   .then(F.pass()))
+          .filter(F.condition(columnSpecFilter)
+                   .otherwise(F.pass()));
     }
   }
 
+  private Filter addValue(FilterAdapterContext context, SingleColumnValueFilter filter,
+      ChainFilter columnSpecFilter) throws IOException {
+    return columnSpecFilter.clone().filter(createValueMatchFilter(context, filter));
+  }
+
   @VisibleForTesting
-  static RowFilter getColumnSpecFilter(byte[] family, byte[] qualifier, boolean latestVersionOnly)
+  static ChainFilter getColumnSpecFilter(byte[] family, byte[] qualifier, boolean latestVersionOnly)
       throws IOException {
     ByteString wrappedQual = ByteStringer.wrap(quoteRegularExpression(qualifier));
     String wrappedFamily = Bytes.toString(quoteRegularExpression(family));
-    Chain.Builder chainBuilder = Chain.newBuilder()
-        .addFilters(RowFilter.newBuilder()
-            .setFamilyNameRegexFilter(wrappedFamily)
-            .build())
-        .addFilters(RowFilter.newBuilder()
-            .setColumnQualifierRegexFilter(wrappedQual)
-            .build());
+    ChainFilter builder = F.chain()
+        .filter(F.family().regex(wrappedFamily))
+        .filter(F.qualifier().regex(wrappedQual));
 
     if (latestVersionOnly) {
-      chainBuilder.addFilters(LATEST_ONLY_FILTER);
+      builder.filter(LATEST_ONLY_FILTER);
     }
 
-    return RowFilter.newBuilder().setChain(chainBuilder.build()).build();
+    return builder;
   }
 
   /**
    * Emit a filter that will match against a single value.
    */
-  private RowFilter createValueMatchFilter(
+  private Filter createValueMatchFilter(
       FilterAdapterContext context, SingleColumnValueFilter filter) throws IOException {
     ValueFilter valueFilter = new ValueFilter(filter.getOperator(), filter.getComparator());
-    return delegateAdapter.adapt(context, valueFilter);
+    return delegateAdapter.toFilter(context, valueFilter);
   }
 
   /** {@inheritDoc} */

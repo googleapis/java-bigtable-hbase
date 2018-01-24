@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
 
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 
@@ -37,15 +37,10 @@ public class ColumnCountGetFilterAdapter extends TypedFilterAdapterBase<ColumnCo
       throws IOException {
     // This is fairly broken for all scans, but I'm simply going for bug-for-bug
     // compatible with string reader expressions.
-    return RowFilter.newBuilder()
-        .setChain(Chain.newBuilder()
-            .addFilters(
-                RowFilter.newBuilder()
-                    .setCellsPerColumnLimitFilter(1))
-            .addFilters(
-                RowFilter.newBuilder()
-                    .setCellsPerRowLimitFilter(filter.getLimit())))
-        .build();
+    return F.chain()
+        .filter(F.limit().cellsPerColumn(1))
+        .filter(F.limit().cellsPerRow(filter.getLimit()))
+        .toProto();
   }
 
   /** {@inheritDoc} */
