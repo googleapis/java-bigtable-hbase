@@ -46,7 +46,7 @@ public class ColumnRangeFilterAdapter extends TypedFilterAdapterBase<ColumnRange
   public RowFilter adapt(FilterAdapterContext context, ColumnRangeFilter filter)
       throws IOException {
     byte[] familyName = getSingleFamily(context.getScan());
-    QualifierRangeFilter rangeBuilder = F.qualifier().range(Bytes.toString(familyName));
+    QualifierRangeFilter rangeBuilder = F.qualifier().rangeWithinFamily(Bytes.toString(familyName));
 
     if (filter.getMinColumn() != null) {
       ByteString startQualifier = ByteString.copyFrom(filter.getMinColumn());

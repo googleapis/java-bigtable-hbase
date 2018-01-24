@@ -105,7 +105,7 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
   }
 
   private QualifierRangeFilter range(String family) {
-    return F.qualifier().range(family);
+    return F.qualifier().rangeWithinFamily(family);
   }
 
   private static String getFamily(FilterAdapterContext context) {

@@ -50,7 +50,7 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
       // up to limit cells.
       return createChain(
           filter,
-          F.qualifier().range(Bytes.toString(family))
+          F.qualifier().rangeWithinFamily(Bytes.toString(family))
               .startClosed(startQualifier));
     } else if (filter.getOffset() > 0) {
       // Include starting at an integer offset up to limit cells.

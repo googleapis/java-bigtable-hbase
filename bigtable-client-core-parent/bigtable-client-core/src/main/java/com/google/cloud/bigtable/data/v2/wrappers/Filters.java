@@ -431,7 +431,7 @@ public final class Filters {
      * {@link Filter}.
      * @return a new {@link QualifierRangeFilter}
      */
-    public QualifierRangeFilter range(String family) {
+    public QualifierRangeFilter rangeWithinFamily(String family) {
       return new QualifierRangeFilter(family);
     }
   }

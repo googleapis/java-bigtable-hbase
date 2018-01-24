@@ -67,7 +67,7 @@ public class SingleColumnValueExcludeFilterAdapter
   }
 
   private static QualifierRangeFilter range(String family) {
-    return F.qualifier().range(family);
+    return F.qualifier().rangeWithinFamily(family);
   }
 
   /** {@inheritDoc} */

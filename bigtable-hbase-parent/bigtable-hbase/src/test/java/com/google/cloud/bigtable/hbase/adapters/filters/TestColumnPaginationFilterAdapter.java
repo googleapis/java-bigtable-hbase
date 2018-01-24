@@ -68,7 +68,7 @@ public class TestColumnPaginationFilterAdapter {
         new ColumnPaginationFilter(10, Bytes.toBytes("q1")));
     RowFilter expected = F.chain()
         .filter(F.limit().cellsPerColumn(1))
-        .filter(F.qualifier().range("f1")
+        .filter(F.qualifier().rangeWithinFamily("f1")
             .startClosed(ByteString.copyFromUtf8("q1")))
         .filter(F.limit().cellsPerRow(10))
         .toProto();
