@@ -74,6 +74,8 @@ public class BigtableOptionsFactory {
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   /** Constant <code>INSTANCE_ID_KEY="google.bigtable.instance.id"</code> */
   public static final String INSTANCE_ID_KEY = "google.bigtable.instance.id";
+  /** Constant <code>APP_PROFILE_ID_KEY="google.bigtable.app_profile.id"</code> */
+  public static final String APP_PROFILE_ID_KEY = "google.bigtable.app_profile.id";
 
   /** Constant <code>BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY="google.bigtable.snapshot.cluster.id"</code> */
   public static final String BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY = "google.bigtable.snapshot.cluster.id";
@@ -288,6 +290,10 @@ public class BigtableOptionsFactory {
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
     bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
+    String appProfileId = configuration.get(APP_PROFILE_ID_KEY, null);
+    if (appProfileId != null) {
+      bigtableOptionsBuilder.setAppProfileId(appProfileId);
+    }
 
     bigtableOptionsBuilder.setDataHost(
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));
