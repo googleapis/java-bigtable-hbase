@@ -20,6 +20,9 @@ import java.io.IOException;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 
+/**
+ * Converts a {@link BigtableFilter} to a {@link RowFilter}.
+ */
 public class BigtableFilterAdapter extends TypedFilterAdapterBase<BigtableFilter> {
 
   @Override
