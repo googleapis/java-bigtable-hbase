@@ -278,7 +278,7 @@ public final class Filters {
 
     /**
      * Matches only cells from rows whose keys satisfy the given <a
-     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. In other words, passes through
+     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. In other words, passes through
      * the entire row when the key matches, and otherwise produces an empty row. Note that, since
      * row keys can contain arbitrary bytes, the `\C` escape sequence must be used if a true
      * wildcard is desired. The `.` character will not match the new line character `\n`, which may
@@ -290,7 +290,7 @@ public final class Filters {
 
     /**
      * Matches only cells from rows whose keys satisfy the given <a
-     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. In other words, passes through
+     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. In other words, passes through
      * the entire row when the key matches, and otherwise produces an empty row. Note that, since
      * row keys can contain arbitrary bytes, the `\C` escape sequence must be used if a true
      * wildcard is desired. The `.` character will not match the new line character `\n`, which may
@@ -325,8 +325,8 @@ public final class Filters {
     }
 
     /**
-     * Matches only cells from columns whose families satisfy the given <a
-     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. For technical reasons, the
+     * Matches only cells from columns whose families satisfy the given
+     * <a href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. For technical reasons, the
      * regex must not contain the `:` character, even if it is not being used as a literal. Note
      * that, since column families cannot contain the new line character `\n`, it is sufficient to
      * use `.` as a full wildcard when matching column family names.
@@ -398,7 +398,7 @@ public final class Filters {
 
     /**
      * Matches only cells from columns whose qualifiers satisfy the given <a
-     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since column
+     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. Note that, since column
      * qualifiers can contain arbitrary bytes, the `\C` escape sequence must be used if a true
      * wildcard is desired. The `.` character will not match the new line character `\n`, which may
      * be present in a binary qualifier.
@@ -409,7 +409,7 @@ public final class Filters {
 
     /**
      * Matches only cells from columns whose qualifiers satisfy the given <a
-     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since column
+     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. Note that, since column
      * qualifiers can contain arbitrary bytes, the `\C` escape sequence must be used if a true
      * wildcard is desired. The `.` character will not match the new line character `\n`, which may
      * be present in a binary qualifier.
@@ -551,7 +551,7 @@ public final class Filters {
 
     /**
      * Matches only cells with values that satisfy the given <a
-     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since cell values
+     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. Note that, since cell values
      * can contain arbitrary bytes, the `\C` escape sequence must be used if a true wildcard is
      * desired. The `.` character will not match the new line character `\n`, which may be present
      * in a binary value.
@@ -570,7 +570,7 @@ public final class Filters {
 
     /**
      * Matches only cells with values that satisfy the given <a
-     * href="https://github.com/google/re2/wiki/Syntax>RE2 regex</a>. Note that, since cell values
+     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. Note that, since cell values
      * can contain arbitrary bytes, the `\C` escape sequence must be used if a true wildcard is
      * desired. The `.` character will not match the new line character `\n`, which may be present
      * in a binary value.
@@ -583,9 +583,9 @@ public final class Filters {
     }
 
     /**
-     * Construct a {@link ValueRangeBuilder} that can create a {@link ValueRange} oriented
+     * Construct a {@link ValueRangeFilter} that can create a {@link ValueRange} oriented
      * {@link Filter}.
-     * @return a new {@link ValueRangeBuilder}
+     * @return a new {@link ValueRangeFilter}
      */
     public ValueRangeFilter range() {
       return new ValueRangeFilter();
