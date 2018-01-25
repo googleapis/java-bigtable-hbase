@@ -63,6 +63,16 @@ public class TimestampRangeFilter extends FilterBase implements Serializable {
   }
 
   @Override
+  public boolean equals(Object obj) {
+    if (obj == null || !(obj instanceof TimestampRangeFilter)) {
+      return false;
+    }
+    TimestampRangeFilter other = (TimestampRangeFilter) obj;
+    return startTimestampInclusive == other.startTimestampInclusive
+        && endTimestampExclusive == other.endTimestampExclusive;
+  }
+
+  @Override
   public byte[] toByteArray() throws IOException {
     try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutput out = new ObjectOutputStream(bos)) {
