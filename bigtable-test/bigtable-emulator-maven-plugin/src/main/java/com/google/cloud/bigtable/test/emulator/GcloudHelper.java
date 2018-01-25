@@ -81,7 +81,7 @@ class GcloudHelper {
   }
 
   private String[] getComponents() throws IOException, InterruptedException, ExecutionException {
-    Process p = Runtime.getRuntime().exec("gcloud components list --format=value(id) --filter=state.name=Installed");
+    Process p = Runtime.getRuntime().exec("gcloud components list --format=value(id) --only-local-state");
 
     Future<String> stdout = readFully(p.getInputStream());
     Future<String> stderr = readFully(p.getErrorStream());
