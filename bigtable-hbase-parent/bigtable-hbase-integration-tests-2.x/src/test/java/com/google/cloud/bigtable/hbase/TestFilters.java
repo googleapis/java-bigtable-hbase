@@ -72,6 +72,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.wrappers.Filters;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import com.google.common.collect.ImmutableList;
@@ -2012,6 +2015,32 @@ public class TestFilters extends AbstractTest {
     }
   }
 
+  @Test
+  public void testBigtableFilter() throws IOException {
+    if (!sharedTestEnv.isBigtable()) {
+      return;
+    }
+
+    byte[] rowKey = dataHelper.randomData("cbt-filter-");
+    byte[] qualA = Bytes.toBytes("a");
+    byte[] qualB = Bytes.toBytes("b");
+    byte[] valA = dataHelper.randomData("a");
+    byte[] valB = dataHelper.randomData("b");
+
+    try(Table table = getTable()){
+      table.put(new Put(rowKey)
+        .addColumn(COLUMN_FAMILY, qualA, valA)
+        .addColumn(COLUMN_FAMILY, qualB, valB));
+
+      Filters.Filter qualAFilter =
+          Filters.F.qualifier().exactMatch(ByteString.copyFrom(qualA));
+      BigtableFilter bigtableFilter = new BigtableFilter(qualAFilter);
+      Result result = table.get(new Get(rowKey).setFilter(bigtableFilter));
+
+      Assert.assertEquals(1, result.size());
+      Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], valA));
+    }
+  }
   private Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
       Filter f) throws IOException {
     Scan scan = new Scan(startRow, endRow).setFilter(f).addColumn(COLUMN_FAMILY, qual);
