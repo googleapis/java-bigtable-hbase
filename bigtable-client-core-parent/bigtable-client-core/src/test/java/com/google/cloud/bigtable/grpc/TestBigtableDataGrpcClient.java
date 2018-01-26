@@ -171,7 +171,7 @@ public class TestBigtableDataGrpcClient {
     assertFalse(defaultClient.checkAndMutateRpc.isRetryable(null));
 
     CheckAndMutateRowRequest.Builder request = CheckAndMutateRowRequest.newBuilder();
-    assertTrue(defaultClient.checkAndMutateRpc.isRetryable(request.build()));
+    assertFalse(defaultClient.checkAndMutateRpc.isRetryable(request.build()));
 
     request.addTrueMutations(
         Mutation.newBuilder().setSetCell(SetCell.newBuilder().setTimestampMicros(-1)));
