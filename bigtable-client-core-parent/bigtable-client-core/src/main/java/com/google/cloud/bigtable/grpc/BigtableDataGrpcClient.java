@@ -108,17 +108,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         }
       };
 
-  /** Constant <code>IS_RETRYABLE_CHECK_AND_MUTATE</code> */
-  private static final Predicate<CheckAndMutateRowRequest> IS_RETRYABLE_CHECK_AND_MUTATE =
-      new Predicate<CheckAndMutateRowRequest>() {
-        @Override
-        public boolean apply(CheckAndMutateRowRequest checkAndMutateRowRequest) {
-          return checkAndMutateRowRequest != null
-              && allCellsHaveTimestamps(checkAndMutateRowRequest.getTrueMutationsList())
-              && allCellsHaveTimestamps(checkAndMutateRowRequest.getFalseMutationsList());
-        }
-      };
-
   private static final boolean allCellsHaveTimestamps(Iterable<Mutation> mutations) {
     for (Mutation mut : mutations) {
       if (mut.getSetCell().getTimestampMicros() <= 0) {
@@ -205,7 +194,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     this.checkAndMutateRpc =
         asyncUtilities.createAsyncRpc(
             BigtableGrpc.METHOD_CHECK_AND_MUTATE_ROW,
-            getMutationRetryableFunction(IS_RETRYABLE_CHECK_AND_MUTATE));
+            getMutationRetryableFunction(Predicates.<CheckAndMutateRowRequest> alwaysFalse()));
     this.readWriteModifyRpc =
         asyncUtilities.createAsyncRpc(
             BigtableGrpc.METHOD_READ_MODIFY_WRITE_ROW,
