@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.test_env;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.logging.Handler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,7 +28,6 @@ import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.rules.ExternalResource;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
 public class SharedTestEnvRule extends ExternalResource {
 
@@ -41,17 +39,9 @@ public class SharedTestEnvRule extends ExternalResource {
   private SharedTestEnv sharedTestEnv;
   private Connection connection;
   private AsyncConnection asyncConnection;
-  private java.util.logging.Logger julLogger;
-  private java.util.logging.Handler[] savedJulHandlers;
 
   @Override
   protected void before() throws Throwable {
-    julLogger = java.util.logging.LogManager.getLogManager().getLogger("");
-    savedJulHandlers = julLogger.getHandlers();
-    for (Handler h : savedJulHandlers) {
-      julLogger.removeHandler(h);
-    }
-    SLF4JBridgeHandler.install();
 
     sharedTestEnv = SharedTestEnv.get();
     connection = createConnection();
@@ -91,13 +81,6 @@ public class SharedTestEnvRule extends ExternalResource {
       LOG.error("Failed to release the environment after test", e);
     }
     sharedTestEnv = null;
-
-    SLF4JBridgeHandler.uninstall();
-    for (Handler handler : savedJulHandlers) {
-      julLogger.addHandler(handler);
-    }
-    julLogger = null;
-    savedJulHandlers = null;
   }
 
   public Connection getConnection() {
