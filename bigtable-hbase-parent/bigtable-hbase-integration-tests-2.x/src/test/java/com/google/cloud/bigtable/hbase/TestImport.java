@@ -40,10 +40,12 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class TestImport extends AbstractTest {
   private File baseDir;
+  private List<TableName> tablesToDelete = new ArrayList<>();
 
   @Before
   public void setup() {
@@ -51,6 +53,12 @@ public class TestImport extends AbstractTest {
   }
   @After
   public void teardown() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      for (TableName tableName : tablesToDelete) {
+        admin.disableTable(tableName);
+        admin.deleteTable(tableName);
+      }
+    }
     FileUtils.deleteDirectory(baseDir);
   }
 
@@ -59,15 +67,15 @@ public class TestImport extends AbstractTest {
   public void testMapReduce() throws IOException, ClassNotFoundException, InterruptedException {
     Admin admin = getConnection().getAdmin();
 
-    admin.disableTable(sharedTestEnv.getDefaultTableName());
-    admin.deleteTable(sharedTestEnv.getDefaultTableName());
-    sharedTestEnv.createTable(sharedTestEnv.getDefaultTableName());
+    TableName tableName = sharedTestEnv.newTestTableName();
+    tablesToDelete.add(tableName);
+    sharedTestEnv.createTable(tableName);
     // Put a value.
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("testQualifier-");
     byte[] value = dataHelper.randomData("testValue-");
 
-    try (Table oldTable = getConnection().getTable(sharedTestEnv.getDefaultTableName())){
+    try (Table oldTable = getConnection().getTable(tableName)){
       Put put = new Put(rowKey);
       put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value);
       oldTable.put(put);
@@ -86,7 +94,7 @@ public class TestImport extends AbstractTest {
 
 
     String[] args = new String[]{
-        sharedTestEnv.getDefaultTableName().getNameAsString(),
+        tableName.getNameAsString(),
         outputDir
     };
     Job job = Export.createSubmittableJob(conf, args);
@@ -94,6 +102,7 @@ public class TestImport extends AbstractTest {
 
     // Create new table.
     TableName newTableName = sharedTestEnv.newTestTableName();
+    tablesToDelete.add(newTableName);
     try (Table newTable = getConnection().getTable(newTableName)){
       // Change for method in IntegrationTests
       HColumnDescriptor hcd = new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY);
@@ -115,9 +124,6 @@ public class TestImport extends AbstractTest {
       List<Cell> cells = result.listCells();
       Assert.assertEquals(1, cells.size());
       Assert.assertArrayEquals(CellUtil.cloneValue(cells.get(0)), value);
-    } finally {
-      admin.disableTable(newTableName);
-      admin.deleteTable(newTableName);
     }
   }
 }

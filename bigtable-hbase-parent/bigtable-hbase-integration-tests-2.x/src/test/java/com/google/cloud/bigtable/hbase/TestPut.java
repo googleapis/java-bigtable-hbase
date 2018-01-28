@@ -55,7 +55,7 @@ public class TestPut extends AbstractTest {
   @Test
   public void testPutMultipleCellsOneRow() throws IOException {
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("testQualifier-", NUM_CELLS);
     byte[][] values = dataHelper.randomData("testValue-", NUM_CELLS);
@@ -98,7 +98,7 @@ public class TestPut extends AbstractTest {
    */
   public void testPutGetDeleteMultipleRows() throws IOException {
     // Initialize interface
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[][] rowKeys = dataHelper.randomData("testrow-", NUM_ROWS);
     byte[][] qualifiers = dataHelper.randomData("testQualifier-", NUM_ROWS);
     byte[][] values = dataHelper.randomData("testValue-", NUM_ROWS);
@@ -163,7 +163,7 @@ public class TestPut extends AbstractTest {
     long oneMinute = 60 * 1000;
     long fifteenMinutes = 15 * 60 * 1000;
 
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
@@ -196,7 +196,7 @@ public class TestPut extends AbstractTest {
   @Test(expected = NoSuchColumnFamilyException.class)
   @Category(KnownGap.class)
   public void testIOExceptionOnFailedPut() throws Exception {
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] badfamily = Bytes.toBytes("badcolumnfamily-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
@@ -209,7 +209,7 @@ public class TestPut extends AbstractTest {
   @Test
   @Category(KnownGap.class)
   public void testAtomicPut() throws Exception {
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] goodQual = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] goodValue = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
@@ -247,7 +247,7 @@ public class TestPut extends AbstractTest {
     byte[] value1 = Bytes.toBytes("testvalue-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value2 = Bytes.toBytes("testvalue-" + RandomStringUtils.randomAlphanumeric(8));
     long timestamp = System.currentTimeMillis();
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, qualifier, timestamp, value1);
     table.put(put);
@@ -278,7 +278,7 @@ public class TestPut extends AbstractTest {
     }
     multiplePutsOneBad(numberOfGoodPuts, goodkeys, rowKey);
     Get get = new Get(rowKey);
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     Result whatsLeft = table.get(get);
     Assert.assertEquals("Same row, all other puts accepted", numberOfGoodPuts, whatsLeft.size());
     table.close();
@@ -301,7 +301,7 @@ public class TestPut extends AbstractTest {
       Get get = new Get(goodkeys[i]);
       gets.add(get);
     }
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     Result[] whatsLeft = table.get(gets);
     int cellCount = 0;
     for (Result result : whatsLeft) {
@@ -314,7 +314,7 @@ public class TestPut extends AbstractTest {
   @Test
   public void testMultipleFamilies() throws IOException {
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("multiFamRow-");
     byte[][] quals = dataHelper.randomData("testQualifier-", NUM_CELLS);
     byte[][] values = dataHelper.randomData("testValue-", NUM_CELLS * 2);
@@ -368,7 +368,7 @@ public class TestPut extends AbstractTest {
 
   private void multiplePutsOneBad(int numberOfGoodPuts, byte[][] goodkeys, byte[] badkey)
       throws IOException {
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     List<Put> puts = new ArrayList<Put>();
     for (int i = 0; i < numberOfGoodPuts; ++i) {
       byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));

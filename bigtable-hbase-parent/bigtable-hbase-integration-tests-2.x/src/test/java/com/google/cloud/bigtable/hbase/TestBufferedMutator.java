@@ -55,7 +55,7 @@ public class TestBufferedMutator extends AbstractTest {
 
   @Test
   public void testAutoFlushOn() throws Exception {
-    try (Table mutator = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    try (Table mutator = getDefaultTable();
         Connection c = createNewConnection();
         Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName());) {
       mutator.put(getPut());

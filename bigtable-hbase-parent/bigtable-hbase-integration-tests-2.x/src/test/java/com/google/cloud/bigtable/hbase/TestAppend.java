@@ -37,7 +37,7 @@ public class TestAppend extends AbstractTest {
   @Test
   public void testAppend() throws Exception {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualifier = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value1-");
@@ -72,7 +72,7 @@ public class TestAppend extends AbstractTest {
   @Test
   public void testAppendToEmptyCell() throws Exception {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualifier = dataHelper.randomData("qualifier-");
     byte[] value = dataHelper.randomData("value1-");
@@ -93,7 +93,7 @@ public class TestAppend extends AbstractTest {
   @Test
   public void testAppendNoResult() throws Exception {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value-");
@@ -115,7 +115,7 @@ public class TestAppend extends AbstractTest {
   @Test
   public void testAppendToMultipleColumns() throws Exception {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualifier1 = dataHelper.randomData("qualifier1-");
     byte[] qualifier2 = dataHelper.randomData("qualifier2-");
@@ -148,7 +148,7 @@ public class TestAppend extends AbstractTest {
   @Test
   public void testAppendToMultipleFamilies() throws Exception {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualifier1 = dataHelper.randomData("qualifier1-");
     byte[] value1 = dataHelper.randomData("value1-");
@@ -183,7 +183,7 @@ public class TestAppend extends AbstractTest {
   @Test
   public void testAppendMultiFamilyEmptyQualifier() throws Exception {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualifier1 = new byte[0];
     byte[] value1 = dataHelper.randomData("value1-");

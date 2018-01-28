@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import java.io.IOException;
 
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
@@ -48,12 +49,16 @@ public abstract class AbstractTest {
   };
 
   // This is for when we need to look at the results outside of the current connection
-  public Connection createNewConnection() throws IOException {
+  protected Connection createNewConnection() throws IOException {
     return sharedTestEnv.createConnection();
   }
 
   protected Connection getConnection() {
     return sharedTestEnv.getConnection();
+  }
+
+  protected Table getDefaultTable() throws IOException {
+    return sharedTestEnv.getDefaultTable();
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {

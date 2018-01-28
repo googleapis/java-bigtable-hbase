@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.rules.ExternalResource;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -114,6 +115,10 @@ public class SharedTestEnvRule extends ExternalResource {
 
   public AsyncConnection getAsynConnection() {
     return asyncConnection;
+  }
+
+  public Table getDefaultTable() throws IOException {
+    return getConnection().getTable(defaultTableName);
   }
 
   public boolean isBigtable() {

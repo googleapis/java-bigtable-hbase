@@ -75,7 +75,7 @@ public class TestBasicOps extends AbstractTest {
   @Test
   public void testNullQualifier() throws IOException {
     // Initialize values
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] testValue = dataHelper.randomData("testValue-");
 
@@ -199,7 +199,7 @@ public class TestBasicOps extends AbstractTest {
   private void
       testPutGetDelete(boolean doGet, byte[] rowKey, byte[] testQualifier, byte[] testValue)
           throws IOException {
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
 
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();

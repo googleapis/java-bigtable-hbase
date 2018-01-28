@@ -52,7 +52,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testNoQualifier() throws IOException {
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     int numValues = 3;
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -88,7 +88,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testMultipleQualifiers() throws IOException {
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     int numValues = 3;
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -128,7 +128,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testTimeRange() throws IOException {
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int numVersions = 5;
@@ -173,7 +173,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testSingleTimestamp() throws IOException {
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int numVersions = 5;
@@ -213,7 +213,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testMaxVersions() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int totalVersions = 5;
@@ -259,7 +259,7 @@ public class TestGet extends AbstractTest {
   @Category(KnownGap.class)
   public void testMaxResultsPerColumnFamily() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     int totalColumns = 10;
     int offsetColumn = 3;
@@ -309,7 +309,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testEmptyValues() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     int numValues = 10;
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -346,7 +346,7 @@ public class TestGet extends AbstractTest {
   @Category(KnownGap.class)
   public void testExists() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     int numValues = 10;
     byte[][] rowKeys = dataHelper.randomData("testrow-", numValues);
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -474,7 +474,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testOneBadApple() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     int numValues = 10;
 
     // Run a control test.
@@ -517,7 +517,7 @@ public class TestGet extends AbstractTest {
     };
     byte[][] values = dataHelper.randomData("value-", qualifiers.length);
     byte[] rowKey = dataHelper.randomData("rowKey");
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     Put put = new Put(rowKey);
 
     for (int i = 0; i < qualifiers.length; i++) {

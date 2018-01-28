@@ -55,7 +55,7 @@ public class TestSingleColumnValueFilter extends AbstractTest {
 
   @BeforeClass
   public static void fillTable() throws IOException {
-    table = sharedTestEnv.getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    table = sharedTestEnv.getDefaultTable();
 
     List<Put> puts = new ArrayList<>();
     ImmutableSet.Builder<String> keyBuilder = ImmutableSet.builder();
