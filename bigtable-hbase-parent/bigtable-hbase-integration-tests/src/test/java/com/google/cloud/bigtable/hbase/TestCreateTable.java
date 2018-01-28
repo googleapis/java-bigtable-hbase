@@ -46,8 +46,6 @@ import java.util.concurrent.TimeUnit;
 
 public class TestCreateTable extends AbstractTest {
 
-  private static final Logger LOG = new Logger(TestCreateTable.class);
-
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
@@ -137,26 +135,26 @@ public class TestCreateTable extends AbstractTest {
   }
 
   private void createTable(Admin admin, String goodName, TableName[] tableNames) throws IOException {
-    LOG.info("Try create table for: %s", goodName);
+    logger.info("Try create table for: %s", goodName);
     TableName tableName = TableName.valueOf(goodName);
     HTableDescriptor descriptor = new HTableDescriptor(tableName)
         .addFamily(new HColumnDescriptor(COLUMN_FAMILY));
 
     try {
       if (contains(tableNames, tableName)) {
-        LOG.warn("Not creating the table since it exists: %s", tableName);
+        logger.warn("Not creating the table since it exists: %s", tableName);
       } else {
-        LOG.info("Do create table for: %s", goodName);
+        logger.info("Do create table for: %s", goodName);
         admin.createTable(descriptor);
       }
     } finally {
       try {
         admin.disableTable(tableName);
-        LOG.info("Do delete table for: %s", goodName);
+        logger.info("Do delete table for: %s", goodName);
         admin.deleteTable(tableName);
       } catch (Throwable t) {
-        // Log the error and ignore it.
-        LOG.warn("Error cleaning up the table", t);
+        // logger the error and ignore it.
+        logger.warn("Error cleaning up the table", t);
       }
     }
   }
@@ -218,8 +216,8 @@ public class TestCreateTable extends AbstractTest {
         admin.disableTable(tableName);
         admin.deleteTable(tableName);
       } catch (Throwable t) {
-        // Log the error and ignore it.
-        LOG.warn("Error cleaning up the table", t);
+        // logger the error and ignore it.
+        logger.warn("Error cleaning up the table", t);
       }
     }
   }
@@ -289,8 +287,8 @@ public class TestCreateTable extends AbstractTest {
         admin.disableTable(tableName);
         admin.deleteTable(tableName);
       } catch (Throwable t) {
-        // Log the error and ignore it.
-        LOG.warn("Error cleaning up the table", t);
+        // logger the error and ignore it.
+        logger.warn("Error cleaning up the table", t);
       }
     }
   }
@@ -341,8 +339,8 @@ public class TestCreateTable extends AbstractTest {
         admin.deleteTable(tableName);
         admin.close();
       } catch (Throwable t) {
-        // Log the error and ignore it.
-        LOG.warn("Error cleaning up the table", t);
+        // logger the error and ignore it.
+        logger.warn("Error cleaning up the table", t);
       }
     }
   }
