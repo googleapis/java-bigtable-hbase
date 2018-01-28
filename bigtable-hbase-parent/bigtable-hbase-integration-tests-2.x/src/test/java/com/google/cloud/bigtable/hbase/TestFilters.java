@@ -122,7 +122,7 @@ public class TestFilters extends AbstractTest {
   }
 
   private Table getTable() throws IOException {
-    return getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    return getDefaultTable();
   }
 
   /**
@@ -1610,7 +1610,7 @@ public class TestFilters extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("rowKeyNumeric-");
     byte[] qualToCheck = dataHelper.randomData("toCheckNumeric-");
 
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
 
     table.put(new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
       Bytes.toBytes(2000l)));

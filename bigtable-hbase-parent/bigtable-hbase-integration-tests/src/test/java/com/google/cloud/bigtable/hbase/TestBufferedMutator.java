@@ -39,7 +39,9 @@ public class TestBufferedMutator extends AbstractTest {
 
   @Test
   public void testAutoFlushOff() throws Exception {
-    try (BufferedMutator mutator = getConnection().getBufferedMutator(sharedTestEnv.getDefaultTableName());
+    try (
+        BufferedMutator mutator =
+            getConnection().getBufferedMutator(sharedTestEnv.getDefaultTableName());
         Connection c = createNewConnection();
         Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName());) {
       // Set up the tiny write and read
@@ -55,7 +57,7 @@ public class TestBufferedMutator extends AbstractTest {
 
   @Test
   public void testAutoFlushOn() throws Exception {
-    try (Table mutator = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    try (Table mutator = getDefaultTable();
         Connection c = createNewConnection();
         Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName());) {
       mutator.put(getPut());
@@ -67,8 +69,8 @@ public class TestBufferedMutator extends AbstractTest {
   @Ignore(value="We need a better test now that BigtableBufferedMutator has different logic")
   public void testBufferSizeFlush() throws Exception {
     int maxSize = 1024;
-    BufferedMutatorParams params = new BufferedMutatorParams(sharedTestEnv.getDefaultTableName())
-        .writeBufferSize(maxSize);
+    BufferedMutatorParams params =
+        new BufferedMutatorParams(sharedTestEnv.getDefaultTableName()).writeBufferSize(maxSize);
     try (BufferedMutator mutator = getConnection().getBufferedMutator(params)) {
       // HBase 1.0.0 has a bug in it. It returns maxSize instead of the buffer size for
       // getWriteBufferSize.  https://issues.apache.org/jira/browse/HBASE-13113

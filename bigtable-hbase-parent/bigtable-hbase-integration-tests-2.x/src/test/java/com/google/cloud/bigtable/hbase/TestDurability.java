@@ -55,7 +55,7 @@ public class TestDurability extends AbstractTest {
     Put put = new Put(rowKey);
     put.setDurability(durability);
     put.addColumn(SharedTestEnvRule.COLUMN_FAMILY, testQualifier, testValue);
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     table.put(put);
 
     // Get

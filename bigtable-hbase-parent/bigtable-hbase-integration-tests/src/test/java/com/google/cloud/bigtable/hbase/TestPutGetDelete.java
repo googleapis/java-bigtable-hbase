@@ -42,7 +42,7 @@ public class TestPutGetDelete extends AbstractTest {
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = dataHelper.randomData("testValue-");
 
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
 
     // Put
     Put put = new Put(rowKey);

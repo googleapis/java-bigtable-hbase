@@ -69,7 +69,7 @@ public class TestScan extends AbstractTest {
 
   @Test
   public void testGetScannerBeforeTimestamp() throws IOException {
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[][] values = dataHelper.randomData("value-", 2);
@@ -105,7 +105,7 @@ public class TestScan extends AbstractTest {
   @Test
   public void testGetScannerNoQualifiers() throws IOException {
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     int numValues = 3;
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -147,7 +147,7 @@ public class TestScan extends AbstractTest {
     int rowsToWrite = 100;
 
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
 
     byte[][] rowKeys = new byte[rowsToWrite][];
     rowKeys[0] = dataHelper.randomData(prefix);
@@ -213,7 +213,7 @@ public class TestScan extends AbstractTest {
     int rowsToWrite = 100;
 
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
 
     byte[][] rowKeys = new byte[rowsToWrite][];
     rowKeys[0] = dataHelper.randomData(prefix);
@@ -257,7 +257,7 @@ public class TestScan extends AbstractTest {
   @Test
   public void testStartEndEquals() throws IOException {
     // Initialize variables
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("start_end_equals");
     byte[] qualifier = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");

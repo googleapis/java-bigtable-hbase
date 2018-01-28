@@ -52,7 +52,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutSameQual() throws IOException {
     // Initialize
-    try (Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName())) {
+    try (Table table = getDefaultTable()) {
       testCheckAndMutate(dataHelper, table);
     }
   }
@@ -95,7 +95,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndDeleteSameQual() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value-");
@@ -125,7 +125,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutDiffQual() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual1 = dataHelper.randomData("qualifier-");
     byte[] qual2 = dataHelper.randomData("qualifier-");
@@ -166,7 +166,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndDeleteDiffQual() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual1 = dataHelper.randomData("qualifier-");
     byte[] qual2 = dataHelper.randomData("qualifier-");
@@ -208,7 +208,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutDiffRow() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey1 = dataHelper.randomData("rowKey-");
     byte[] rowKey2 = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
@@ -228,7 +228,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndDeleteDiffRow() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey1 = dataHelper.randomData("rowKey-");
     byte[] rowKey2 = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
@@ -246,7 +246,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndMutate() throws IOException {
     // Initialize
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualCheck = dataHelper.randomData("qualifier-");
     byte[] qualPut = dataHelper.randomData("qualifier-");
@@ -300,7 +300,7 @@ public class TestCheckAndMutate extends AbstractTest {
     byte[] otherQual = dataHelper.randomData("other-");
     boolean success;
 
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
 
     table.put(new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
       Bytes.toBytes(2000l)));
@@ -364,7 +364,7 @@ public class TestCheckAndMutate extends AbstractTest {
     byte[] otherQual = dataHelper.randomData("other-");
     boolean success;
 
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     Put someRandomPut =
         new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
 

@@ -66,7 +66,7 @@ public class TestBatch extends AbstractTest {
 
   private void testGetPutDelete(int count, boolean sameQualifier)
       throws IOException, InterruptedException, ArrayComparisonFailure {
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     // Initialize data
     byte[][] rowKeys = new byte[count][];
     byte[][] quals = new byte[count][];
@@ -129,7 +129,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchIncrement() throws IOException, InterruptedException {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     Random random = new Random();
@@ -168,7 +168,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchAppend() throws IOException, InterruptedException {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] value1_1 = dataHelper.randomData("value-");
@@ -215,7 +215,7 @@ public class TestBatch extends AbstractTest {
   // INVALID_ARGUMENT for all 5 puts.
   public void testBatchWithException() throws IOException, InterruptedException {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[][] rowKeys = dataHelper.randomData("testrow-", 5);
     byte[][] quals = dataHelper.randomData("qual-", 5);
     byte[][] values = dataHelper.randomData("value-", 5);
@@ -280,7 +280,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testRowMutations() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("qual-", 3);
     byte[][] values = dataHelper.randomData("value-", 3);
@@ -323,7 +323,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchGets() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName());
+    Table table = getDefaultTable();
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] value1 = dataHelper.randomData("value-");
