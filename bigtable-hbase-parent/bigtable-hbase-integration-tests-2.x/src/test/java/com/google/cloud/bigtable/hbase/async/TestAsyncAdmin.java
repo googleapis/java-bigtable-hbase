@@ -40,7 +40,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import com.google.cloud.bigtable.hbase.AbstractTest;
-import com.google.cloud.bigtable.hbase.Logger;
 
 /**
  * Integration tests for BigtableAsyncConnection
@@ -48,8 +47,6 @@ import com.google.cloud.bigtable.hbase.Logger;
  * @author spollapally
  */
 public class TestAsyncAdmin extends AbstractTest {
-  private final Logger LOG = new Logger(getClass());
-
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
@@ -209,7 +206,7 @@ public class TestAsyncAdmin extends AbstractTest {
         getConnection().getAdmin().deleteTable(tableName);
       }
     } catch (Throwable t) {
-      LOG.warn("Error cleaning up the table", t);
+      logger.warn("Error cleaning up the table", t);
     }
   }
 }
