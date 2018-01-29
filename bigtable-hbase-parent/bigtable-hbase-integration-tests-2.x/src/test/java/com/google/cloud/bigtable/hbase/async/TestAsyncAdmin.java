@@ -19,6 +19,8 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,11 +33,14 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.hamcrest.core.IsInstanceOf;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -47,12 +52,24 @@ import com.google.cloud.bigtable.hbase.AbstractTest;
  * @author spollapally
  */
 public class TestAsyncAdmin extends AbstractTest {
+
+  private static AsyncConnection asyncCon;
+
+  @BeforeClass
+  public static void setupAsyncCon() throws InterruptedException, ExecutionException {
+    asyncCon = ConnectionFactory.createAsyncConnection(sharedTestEnv.getConfiguration()).get();
+  }
+
+  @AfterClass
+  public static void closeAsyncCon() throws IOException {
+    asyncCon.close();
+  }
+
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testAsyncConnection() throws Exception {
-    AsyncConnection asyncCon = getAsyncConnection();
     Assert.assertNotNull("async connection should not be null", asyncCon);
     AsyncAdmin asycAdmin = asyncCon.getAdmin();
     Assert.assertNotNull("asycAdmin should not be null", asycAdmin);
@@ -60,14 +77,14 @@ public class TestAsyncAdmin extends AbstractTest {
 
   @Test
   public void testCreateTable_exception() throws Exception {
-    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
     thrown.expect(NullPointerException.class);
     asyncAdmin.createTable(null).get();
   }
 
   @Test
   public void testCreateTable_harness() throws Exception {
-    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
     TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
 
     try {
@@ -134,7 +151,7 @@ public class TestAsyncAdmin extends AbstractTest {
 
   @Test
   public void testCreateTableWithNumRegions_exception() throws Exception {
-    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
     TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
     thrown.expect(ExecutionException.class);
     thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(IllegalArgumentException.class));
@@ -144,7 +161,7 @@ public class TestAsyncAdmin extends AbstractTest {
 
   @Test
   public void testCreateTableWithSplits() throws Exception {
-    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
     TableName tableName1 = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
     TableName tableName2 = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
 
@@ -173,7 +190,7 @@ public class TestAsyncAdmin extends AbstractTest {
 
   @Test
   public void testDisbleTable_exceptions() throws Exception {
-    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
     TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
 
     // test non existing table

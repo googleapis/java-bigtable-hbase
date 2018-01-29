@@ -372,7 +372,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchDoesntHang() throws Exception {
     Table table;
-    try(Connection closedConnection = sharedTestEnv.createConnection()) {
+    try(Connection closedConnection = createNewConnection()) {
       table = closedConnection.getTable(sharedTestEnv.getDefaultTableName());
     }
 
