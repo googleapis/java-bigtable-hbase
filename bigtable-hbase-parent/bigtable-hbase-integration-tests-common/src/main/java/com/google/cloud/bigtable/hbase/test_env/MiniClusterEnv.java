@@ -18,11 +18,8 @@ package com.google.cloud.bigtable.hbase.test_env;
 import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 
 class MiniClusterEnv extends SharedTestEnv {
   private static final Log LOG = LogFactory.getLog(MiniClusterEnv.class);
@@ -33,9 +30,23 @@ class MiniClusterEnv extends SharedTestEnv {
   protected void setup() throws Exception {
     LOG.info("Starting hbase minicluster");
 
+    System.setProperty("org.apache.hadoop.hbase.shaded.io.netty.packagePrefix",
+      "org.apache.hadoop.hbase.shaded.");
+
     helper = HBaseTestingUtility.createLocalHTU();
     helper.startMiniCluster();
 
+    // Need to create a separate config for the client to avoid
+    // leaking hadoop configs, which messes up local mapreduce jobs
+    configuration = HBaseConfiguration.create();
+
+    String[] keys = new String[]{
+        "hbase.zookeeper.quorum",
+        "hbase.zookeeper.property.clientPort"
+    };
+    for (String key : keys) {
+      configuration.set(key, helper.getConfiguration().get(key));
+    }
     LOG.info("Test dir: " + helper.getDataTestDir());
   }
 
@@ -47,22 +58,5 @@ class MiniClusterEnv extends SharedTestEnv {
       LOG.warn("Failed to clean up testDir");
     }
     helper = null;
-  }
-
-  @Override
-  public Connection createConnection() throws IOException {
-    // Need to create a separate config for the client to avoid
-    // leaking hadoop configs, which messes up local mapreduce jobs
-    Configuration clientConfig = HBaseConfiguration.create();
-
-    String[] keys = new String[]{
-        "hbase.zookeeper.quorum",
-        "hbase.zookeeper.property.clientPort"
-    };
-    for (String key : keys) {
-      clientConfig.set(key, helper.getConfiguration().get(key));
-    }
-
-    return ConnectionFactory.createConnection(clientConfig);
   }
 }

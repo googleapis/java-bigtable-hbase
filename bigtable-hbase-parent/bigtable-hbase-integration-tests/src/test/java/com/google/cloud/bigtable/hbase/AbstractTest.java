@@ -49,15 +49,15 @@ public abstract class AbstractTest {
   };
 
   // This is for when we need to look at the results outside of the current connection
-  protected Connection createNewConnection() throws IOException {
+  protected static Connection createNewConnection() throws IOException {
     return sharedTestEnv.createConnection();
   }
 
-  protected Connection getConnection() {
+  protected static Connection getConnection() {
     return sharedTestEnv.getConnection();
   }
 
-  protected Table getDefaultTable() throws IOException {
+  protected static Table getDefaultTable() throws IOException {
     return sharedTestEnv.getDefaultTable();
   }
 

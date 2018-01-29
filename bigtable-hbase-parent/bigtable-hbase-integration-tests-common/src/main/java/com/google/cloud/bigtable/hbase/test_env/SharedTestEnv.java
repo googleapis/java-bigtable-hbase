@@ -17,7 +17,8 @@ package com.google.cloud.bigtable.hbase.test_env;
 
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import org.apache.hadoop.hbase.client.Connection;
+
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * A singleton test environment.
@@ -29,7 +30,7 @@ abstract class SharedTestEnv {
 
   private static SharedTestEnv instance;
   private long refCount = 0;
-
+  protected Configuration configuration;
 
   static synchronized SharedTestEnv get() throws Exception {
     if (instance == null) {
@@ -69,5 +70,7 @@ abstract class SharedTestEnv {
 
   protected abstract void teardown() throws IOException;
 
-  public abstract Connection createConnection() throws IOException;
+  public Configuration getConfiguration() {
+    return configuration;
+  }
 }

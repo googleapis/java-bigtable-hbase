@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -56,10 +55,6 @@ public abstract class AbstractTest {
 
   protected Connection getConnection() {
     return sharedTestEnv.getConnection();
-  }
-
-  protected AsyncConnection getAsyncConnection() throws Exception {
-    return sharedTestEnv.getAsynConnection();
   }
 
   protected Table getDefaultTable() throws IOException {
