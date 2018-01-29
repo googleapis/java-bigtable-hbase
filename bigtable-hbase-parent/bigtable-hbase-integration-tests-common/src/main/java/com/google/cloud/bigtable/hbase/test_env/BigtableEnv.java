@@ -28,10 +28,10 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
 import com.google.bigtable.repackaged.io.grpc.internal.GrpcUtil;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.Logger;
 import com.google.common.collect.Sets;
 
 class BigtableEnv extends SharedTestEnv {
