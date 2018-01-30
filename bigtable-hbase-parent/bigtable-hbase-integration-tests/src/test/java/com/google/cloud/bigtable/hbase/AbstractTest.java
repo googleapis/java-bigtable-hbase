@@ -29,7 +29,7 @@ import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
 public abstract class AbstractTest {
 
-  public static SharedTestEnvRule sharedTestEnv = IntegrationTests.sharedTestEnvRule;
+  public SharedTestEnvRule sharedTestEnv = SharedTestEnvRule.getInstance();
 
   protected static DataGenerationHelper dataHelper = new DataGenerationHelper();
   protected Logger logger = new Logger(this.getClass());
@@ -50,15 +50,15 @@ public abstract class AbstractTest {
   };
 
   // This is for when we need to look at the results outside of the current connection
-  protected static Connection createNewConnection() throws IOException {
+  protected Connection createNewConnection() throws IOException {
     return sharedTestEnv.createConnection();
   }
 
-  protected static Connection getConnection() {
+  protected Connection getConnection() {
     return sharedTestEnv.getConnection();
   }
 
-  protected static Table getDefaultTable() throws IOException {
+  protected Table getDefaultTable() throws IOException {
     return sharedTestEnv.getDefaultTable();
   }
 

@@ -34,6 +34,20 @@ public abstract class SharedTestEnvRule extends ExternalResource {
   public static final int MAX_VERSIONS = 6;
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final byte[] COLUMN_FAMILY2 = Bytes.toBytes("test_family2");
+  private static SharedTestEnvRule instance;
+
+  /**
+   * This class is generally a singleton, where implementation can change.  Some startup utility
+   * will set this instance.
+   */
+  public static void setInstance(SharedTestEnvRule instance) {
+    SharedTestEnvRule.instance = instance;
+  }
+
+  public static SharedTestEnvRule getInstance() {
+    return instance;
+  }
+
   protected static final Log LOG = LogFactory.getLog(SharedTestEnvRule.class);
   private TableName defaultTableName;
   private SharedTestEnv sharedTestEnv;

@@ -40,6 +40,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import com.google.common.collect.ImmutableSet;
 
 public class TestSingleColumnValueFilter extends AbstractTest {
@@ -55,7 +56,7 @@ public class TestSingleColumnValueFilter extends AbstractTest {
 
   @BeforeClass
   public static void fillTable() throws IOException {
-    table = sharedTestEnv.getDefaultTable();
+    table = SharedTestEnvRule.getInstance().getDefaultTable();
 
     List<Put> puts = new ArrayList<>();
     ImmutableSet.Builder<String> keyBuilder = ImmutableSet.builder();
