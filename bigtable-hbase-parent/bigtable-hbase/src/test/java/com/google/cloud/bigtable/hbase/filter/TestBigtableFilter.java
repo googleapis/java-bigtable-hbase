@@ -33,7 +33,7 @@ import com.google.cloud.bigtable.data.v2.wrappers.Filters;
 public class TestBigtableFilter {
   @Test
   public void testSerialization() throws IOException {
-    BigtableFilter original = new BigtableFilter(Filters.F.pass());
+    BigtableFilter original = new BigtableFilter(Filters.FILTERS.pass());
     FilterProtos.Filter proto = ProtobufUtil.toFilter(original);
     Assert.assertEquals(original, ProtobufUtil.toFilter(proto));
   }

@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
@@ -48,6 +48,6 @@ public class TimestampFilterUtil {
    */
   public static Filter toTimestampRangeFilter(long bigtableStartTimestamp,
       long bigtableEndTimestamp) {
-    return F.timestamp().range(bigtableStartTimestamp, bigtableEndTimestamp);
+    return FILTERS.timestamp().range(bigtableStartTimestamp, bigtableEndTimestamp);
   }
 }

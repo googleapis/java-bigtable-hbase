@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.data.v2.wrappers;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,12 +37,12 @@ public class FiltersTest {
   @Test
   public void chainTest() {
     RowFilter actualProto =
-        F.chain()
-            .filter(F.key().regex(".*"))
-            .filter(F.key().sample(0.5))
-            .filter(F.chain()
-                .filter(F.family().regex("hi$"))
-                .filter(F.qualifier().regex("^q")))
+        FILTERS.chain()
+            .filter(FILTERS.key().regex(".*"))
+            .filter(FILTERS.key().sample(0.5))
+            .filter(FILTERS.chain()
+                .filter(FILTERS.family().regex("hi$"))
+                .filter(FILTERS.qualifier().regex("^q")))
             .toProto();
 
     RowFilter expectedFilter =
@@ -69,12 +69,12 @@ public class FiltersTest {
   @Test
   public void interleaveTest() {
     RowFilter actualProto =
-        F.interleave()
-            .filter(F.key().regex(".*"))
-            .filter(F.key().sample(0.5))
-            .filter(F.interleave()
-                .filter(F.family().regex("hi$"))
-                .filter(F.qualifier().regex("^q")))
+        FILTERS.interleave()
+            .filter(FILTERS.key().regex(".*"))
+            .filter(FILTERS.key().sample(0.5))
+            .filter(FILTERS.interleave()
+                .filter(FILTERS.family().regex("hi$"))
+                .filter(FILTERS.qualifier().regex("^q")))
             .toProto();
 
     RowFilter expectedFilter =
@@ -101,9 +101,9 @@ public class FiltersTest {
   @Test
   public void conditionTest() {
     RowFilter actualProto =
-        F.condition(F.key().regex(".*"))
-            .then(F.label("true"))
-            .otherwise(F.label("false"))
+        FILTERS.condition(FILTERS.key().regex(".*"))
+            .then(FILTERS.label("true"))
+            .otherwise(FILTERS.label("false"))
             .toProto();
 
     RowFilter expectedFilter =
@@ -121,7 +121,7 @@ public class FiltersTest {
 
   @Test
   public void passTest() {
-    RowFilter actualProto = F.pass().toProto();
+    RowFilter actualProto = FILTERS.pass().toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setPassAllFilter(true).build();
 
@@ -130,7 +130,7 @@ public class FiltersTest {
 
   @Test
   public void blockTest() {
-    RowFilter actualProto = F.block().toProto();
+    RowFilter actualProto = FILTERS.block().toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setBlockAllFilter(true).build();
 
@@ -139,7 +139,7 @@ public class FiltersTest {
 
   @Test
   public void sinkTest() {
-    RowFilter actualProto = F.sink().toProto();
+    RowFilter actualProto = FILTERS.sink().toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setSink(true).build();
 
@@ -148,7 +148,7 @@ public class FiltersTest {
 
   @Test
   public void labelTest() {
-    RowFilter actualProto = F.label("my-label").toProto();
+    RowFilter actualProto = FILTERS.label("my-label").toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setApplyLabelTransformer("my-label").build();
 
@@ -157,7 +157,7 @@ public class FiltersTest {
 
   @Test
   public void keyRegexTest() {
-    RowFilter actualProto = F.key().regex(".*").toProto();
+    RowFilter actualProto = FILTERS.key().regex(".*").toProto();
 
     RowFilter expectedFilter =
         RowFilter.newBuilder().setRowKeyRegexFilter(ByteString.copyFromUtf8(".*")).build();
@@ -167,7 +167,7 @@ public class FiltersTest {
 
   @Test
   public void keyExactMatchTest() {
-    RowFilter actualProto = F.key().exactMatch(ByteString.copyFromUtf8(".*")).toProto();
+    RowFilter actualProto = FILTERS.key().exactMatch(ByteString.copyFromUtf8(".*")).toProto();
 
     RowFilter expectedFilter =
         RowFilter.newBuilder().setRowKeyRegexFilter(ByteString.copyFromUtf8("\\.\\*")).build();
@@ -177,7 +177,7 @@ public class FiltersTest {
 
   @Test
   public void keySampleTest() {
-    RowFilter actualProto = F.key().sample(0.3).toProto();
+    RowFilter actualProto = FILTERS.key().sample(0.3).toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setRowSampleFilter(0.3).build();
 
@@ -186,7 +186,7 @@ public class FiltersTest {
 
   @Test
   public void familyRegexTest() {
-    RowFilter actualProto = F.family().regex("^hi").toProto();
+    RowFilter actualProto = FILTERS.family().regex("^hi").toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setFamilyNameRegexFilter("^hi").build();
 
@@ -195,7 +195,7 @@ public class FiltersTest {
 
   @Test
   public void familyExactMatchTest() {
-    RowFilter actualProto = F.family().exactMatch("^hi").toProto();
+    RowFilter actualProto = FILTERS.family().exactMatch("^hi").toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setFamilyNameRegexFilter("\\^hi").build();
 
@@ -204,7 +204,7 @@ public class FiltersTest {
 
   @Test
   public void qualifierRegexTest() {
-    RowFilter actualProto = F.qualifier().regex("^hi").toProto();
+    RowFilter actualProto = FILTERS.qualifier().regex("^hi").toProto();
 
     RowFilter expectedFilter =
         RowFilter.newBuilder()
@@ -216,7 +216,7 @@ public class FiltersTest {
 
   @Test
   public void qualifierExactMatchTest() {
-    RowFilter actualProto = F.qualifier().exactMatch(ByteString.copyFromUtf8("^hi")).toProto();
+    RowFilter actualProto = FILTERS.qualifier().exactMatch(ByteString.copyFromUtf8("^hi")).toProto();
 
     RowFilter expectedFilter =
         RowFilter.newBuilder()
@@ -231,7 +231,7 @@ public class FiltersTest {
     String family = "family";
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
-    RowFilter actualProto = F.qualifier().rangeWithinFamily(family)
+    RowFilter actualProto = FILTERS.qualifier().rangeWithinFamily(family)
         .startOpen(begin)
         .endClosed(end)
         .toProto();
@@ -252,7 +252,7 @@ public class FiltersTest {
     String family = "family";
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
-    RowFilter actualProto = F.qualifier().rangeWithinFamily(family)
+    RowFilter actualProto = FILTERS.qualifier().rangeWithinFamily(family)
         .startClosed(begin)
         .endOpen(end)
         .toProto();
@@ -270,7 +270,7 @@ public class FiltersTest {
 
   @Test
   public void valueRegex() {
-    RowFilter actualProto = F.value().regex("some[0-9]regex").toProto();
+    RowFilter actualProto = FILTERS.value().regex("some[0-9]regex").toProto();
 
     RowFilter expectedFilter =
         RowFilter.newBuilder()
@@ -283,7 +283,7 @@ public class FiltersTest {
   @Test
   public void valueExactMatch() {
     RowFilter actualProto =
-        F.value().exactMatch(ByteString.copyFromUtf8("some[0-9]regex")).toProto();
+        FILTERS.value().exactMatch(ByteString.copyFromUtf8("some[0-9]regex")).toProto();
 
     RowFilter expectedFilter =
         RowFilter.newBuilder()
@@ -298,7 +298,7 @@ public class FiltersTest {
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
 
-    RowFilter actualProto = F.value().range()
+    RowFilter actualProto = FILTERS.value().range()
         .startOpen(begin)
         .endClosed(end)
         .toProto();
@@ -319,7 +319,7 @@ public class FiltersTest {
     ByteString begin = ByteString.copyFromUtf8("begin");
     ByteString end = ByteString.copyFromUtf8("end");
 
-    RowFilter actualProto = F.value().range()
+    RowFilter actualProto = FILTERS.value().range()
         .startClosed(begin)
         .endOpen(end)
         .toProto();
@@ -337,7 +337,7 @@ public class FiltersTest {
 
   @Test
   public void valueStripTest() {
-    RowFilter actualProto = F.value().strip().toProto();
+    RowFilter actualProto = FILTERS.value().strip().toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setStripValueTransformer(true).build();
 
@@ -346,7 +346,7 @@ public class FiltersTest {
 
   @Test
   public void offsetCellsPerRowTest() {
-    RowFilter actualProto = F.offset().cellsPerRow(10).toProto();
+    RowFilter actualProto = FILTERS.offset().cellsPerRow(10).toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setCellsPerRowOffsetFilter(10).build();
 
@@ -355,7 +355,7 @@ public class FiltersTest {
 
   @Test
   public void limitCellsPerRowTest() {
-    RowFilter actualProto = F.limit().cellsPerRow(10).toProto();
+    RowFilter actualProto = FILTERS.limit().cellsPerRow(10).toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setCellsPerRowLimitFilter(10).build();
 
@@ -364,7 +364,7 @@ public class FiltersTest {
 
   @Test
   public void limitCellsPerColumnTest() {
-    RowFilter actualProto = F.limit().cellsPerColumn(10).toProto();
+    RowFilter actualProto = FILTERS.limit().cellsPerColumn(10).toProto();
 
     RowFilter expectedFilter = RowFilter.newBuilder().setCellsPerColumnLimitFilter(10).build();
 
@@ -375,7 +375,7 @@ public class FiltersTest {
   public void timestampFullRangeTest() {
     long start = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis() - 10000000);
     long end = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
-    RowFilter actualProto = F.timestamp().range(start, end).toProto();
+    RowFilter actualProto = FILTERS.timestamp().range(start, end).toProto();
 
     RowFilter.Builder expected = RowFilter.newBuilder();
     expected.getTimestampRangeFilterBuilder()
@@ -388,7 +388,7 @@ public class FiltersTest {
   @Test
   public void timestampStartTest() {
     long start = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis() - 10000000);
-    RowFilter actualProto = F.timestamp().range().startClosed(start).toProto();
+    RowFilter actualProto = FILTERS.timestamp().range().startClosed(start).toProto();
 
     RowFilter.Builder expected = RowFilter.newBuilder();
     expected.getTimestampRangeFilterBuilder()
@@ -400,7 +400,7 @@ public class FiltersTest {
   @Test
   public void timestampEndTest() {
     long end = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
-    RowFilter actualProto = F.timestamp().range().endOpen(end).toProto();
+    RowFilter actualProto = FILTERS.timestamp().range().endOpen(end).toProto();
 
     RowFilter.Builder expected = RowFilter.newBuilder();
     expected.getTimestampRangeFilterBuilder()

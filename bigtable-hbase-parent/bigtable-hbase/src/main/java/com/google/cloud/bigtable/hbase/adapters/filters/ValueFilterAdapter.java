@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
@@ -83,13 +83,13 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
         if (comparator.getValue().length == 0) {
           // The empty case does needs to use valueRegexFilter, since "end value closed" of empty
           // is not allowed by the server.
-          return F.value().regex(value);
+          return FILTERS.value().regex(value);
         } else {
           return range().startClosed(value).endClosed(value);
         }
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
-        return F.interleave()
+        return FILTERS.interleave()
             .filter(range().endOpen(value))
             .filter(range().startOpen(value));
       case GREATER_OR_EQUAL:
@@ -99,7 +99,7 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.
-        return F.pass();
+        return FILTERS.pass();
       default:
         throw new IllegalStateException(
             String.format("Cannot handle unknown compare op %s", compareOp));
@@ -107,7 +107,7 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
   }
 
   private static ValueRangeFilter range() {
-    return F.value().range();
+    return FILTERS.value().range();
   }
 
   private Filter adaptRegexStringComparator(
@@ -115,9 +115,9 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
     String pattern = FilterAdapterHelper.extractRegexPattern(comparator);
     switch (compareOp) {
       case EQUAL:
-        return F.value().regex(pattern);
+        return FILTERS.value().regex(pattern);
       case NO_OP:
-        return F.pass();
+        return FILTERS.pass();
       case LESS:
       case LESS_OR_EQUAL:
       case NOT_EQUAL:

@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.protobuf.ByteString;
@@ -40,10 +40,10 @@ public class TestColumnPaginationFilterAdapter {
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 20);
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(new Scan(), null), filter);
-    RowFilter expected = F.chain()
-          .filter(F.limit().cellsPerColumn(1))
-          .filter(F.offset().cellsPerRow(20))
-          .filter(F.limit().cellsPerRow(10))
+    RowFilter expected = FILTERS.chain()
+          .filter(FILTERS.limit().cellsPerColumn(1))
+          .filter(FILTERS.offset().cellsPerRow(20))
+          .filter(FILTERS.limit().cellsPerRow(10))
           .toProto();
     Assert.assertEquals(expected, adaptedFilter);
   }
@@ -53,9 +53,9 @@ public class TestColumnPaginationFilterAdapter {
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 0);
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(new Scan(), null), filter);
-    RowFilter expected = F.chain()
-        .filter(F.limit().cellsPerColumn(1))
-        .filter(F.limit().cellsPerRow(10))
+    RowFilter expected = FILTERS.chain()
+        .filter(FILTERS.limit().cellsPerColumn(1))
+        .filter(FILTERS.limit().cellsPerRow(10))
         .toProto();
     Assert.assertEquals(expected, adaptedFilter);
   }
@@ -66,11 +66,11 @@ public class TestColumnPaginationFilterAdapter {
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(scan, null),
         new ColumnPaginationFilter(10, Bytes.toBytes("q1")));
-    RowFilter expected = F.chain()
-        .filter(F.limit().cellsPerColumn(1))
-        .filter(F.qualifier().rangeWithinFamily("f1")
+    RowFilter expected = FILTERS.chain()
+        .filter(FILTERS.limit().cellsPerColumn(1))
+        .filter(FILTERS.qualifier().rangeWithinFamily("f1")
             .startClosed(ByteString.copyFromUtf8("q1")))
-        .filter(F.limit().cellsPerRow(10))
+        .filter(FILTERS.limit().cellsPerRow(10))
         .toProto();
     Assert.assertEquals(expected, adaptedFilter);
   }
