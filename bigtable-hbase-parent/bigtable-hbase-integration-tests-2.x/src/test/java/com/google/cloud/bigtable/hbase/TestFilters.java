@@ -2033,7 +2033,7 @@ public class TestFilters extends AbstractTest {
         .addColumn(COLUMN_FAMILY, qualB, valB));
 
       Filters.Filter qualAFilter =
-          Filters.F.qualifier().exactMatch(ByteString.copyFrom(qualA));
+          Filters.FILTERS.qualifier().exactMatch(ByteString.copyFrom(qualA));
       BigtableFilter bigtableFilter = new BigtableFilter(qualAFilter);
       Result result = table.get(new Get(rowKey).setFilter(bigtableFilter));
 
