@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import java.io.IOException;
 
@@ -68,7 +68,7 @@ public class RowFilterAdapter
       throw new IllegalStateException(String.format("Cannot adapt comparator %s", comparator
           .getClass().getCanonicalName()));
     }
-    return F.key().regex(regexValue).toProto();
+    return FILTERS.key().regex(regexValue).toProto();
   }
   
   /** {@inheritDoc} */

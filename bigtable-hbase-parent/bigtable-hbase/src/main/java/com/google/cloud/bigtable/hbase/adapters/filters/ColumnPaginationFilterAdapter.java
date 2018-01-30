@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.ChainFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
@@ -50,13 +50,13 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
       // up to limit cells.
       return createChain(
           filter,
-          F.qualifier().rangeWithinFamily(Bytes.toString(family))
+          FILTERS.qualifier().rangeWithinFamily(Bytes.toString(family))
               .startClosed(startQualifier));
     } else if (filter.getOffset() > 0) {
       // Include starting at an integer offset up to limit cells.
       return createChain(
           filter,
-          F.offset().cellsPerRow(filter.getOffset()));
+          FILTERS.offset().cellsPerRow(filter.getOffset()));
     } else {
       // No meaningful offset supplied.
       return createChain(filter, null);
@@ -70,12 +70,12 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
    */
   private RowFilter createChain(
       ColumnPaginationFilter filter, Filter intermediate) {
-    ChainFilter chain = F.chain();
-    chain.filter(F.limit().cellsPerColumn(1));
+    ChainFilter chain = FILTERS.chain();
+    chain.filter(FILTERS.limit().cellsPerColumn(1));
     if (intermediate != null) {
       chain.filter(intermediate);
     }
-    chain.filter(F.limit().cellsPerRow(filter.getLimit()));
+    chain.filter(FILTERS.limit().cellsPerRow(filter.getLimit()));
     return chain.toProto();
   }
 

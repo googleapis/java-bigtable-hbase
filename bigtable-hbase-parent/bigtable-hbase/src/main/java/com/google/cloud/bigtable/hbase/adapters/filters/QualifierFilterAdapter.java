@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
@@ -79,11 +79,11 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
       case LESS_OR_EQUAL:
         return range(context).endClosed(quotedValue);
       case EQUAL:
-        return F.qualifier().regex(quotedValue);
+        return FILTERS.qualifier().regex(quotedValue);
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
         String familyName = getFamily(context);
-        return F.interleave()
+        return FILTERS.interleave()
             .filter(range(familyName).endOpen(quotedValue))
             .filter(range(familyName).startOpen(quotedValue));
       case GREATER_OR_EQUAL:
@@ -93,7 +93,7 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.
-        return F.pass();
+        return FILTERS.pass();
       default:
         throw new IllegalStateException(
             String.format("Cannot handle unknown compare op %s", compareOp));
@@ -105,7 +105,7 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
   }
 
   private QualifierRangeFilter range(String family) {
-    return F.qualifier().rangeWithinFamily(family);
+    return FILTERS.qualifier().rangeWithinFamily(family);
   }
 
   private static String getFamily(FilterAdapterContext context) {
@@ -117,9 +117,9 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
     String pattern = FilterAdapterHelper.extractRegexPattern(comparator);
     switch (compareOp) {
       case EQUAL:
-        return F.qualifier().regex(pattern);
+        return FILTERS.qualifier().regex(pattern);
       case NO_OP:
-        return F.pass();
+        return FILTERS.pass();
       case LESS:
       case LESS_OR_EQUAL:
       case NOT_EQUAL:

@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -41,7 +41,7 @@ import com.google.common.base.Preconditions;
  * @version $Id: $Id
  */
 public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter> {
-  private static final RowFilter ALL_VALUES_FILTER = F.pass().toProto();
+  private static final RowFilter ALL_VALUES_FILTER = FILTERS.pass().toProto();
 
   private static Field FUZZY_KEY_DATA_FIELD;
   private static Exception FUZZY_KEY_DATA_FIELD_EXCEPTION;
@@ -62,7 +62,7 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
     if (pairs.isEmpty()) {
       return ALL_VALUES_FILTER;
     }
-    InterleaveFilter interleave = F.interleave();
+    InterleaveFilter interleave = FILTERS.interleave();
     for (Pair<byte[], byte[]> pair : pairs) {
       Preconditions.checkArgument(
           pair.getFirst().length == pair.getSecond().length,
@@ -87,7 +87,7 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
       }
     }
     quotingStream.close();
-    return F.key().regex(Bytes.toString(baos.toByteArray()));
+    return FILTERS.key().regex(Bytes.toString(baos.toByteArray()));
   }
 
   @SuppressWarnings("unchecked")

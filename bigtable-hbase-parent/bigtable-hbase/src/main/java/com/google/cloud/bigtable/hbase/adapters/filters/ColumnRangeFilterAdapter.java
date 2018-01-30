@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.QualifierRangeFilter;
@@ -46,7 +46,7 @@ public class ColumnRangeFilterAdapter extends TypedFilterAdapterBase<ColumnRange
   public RowFilter adapt(FilterAdapterContext context, ColumnRangeFilter filter)
       throws IOException {
     byte[] familyName = getSingleFamily(context.getScan());
-    QualifierRangeFilter rangeBuilder = F.qualifier().rangeWithinFamily(Bytes.toString(familyName));
+    QualifierRangeFilter rangeBuilder = FILTERS.qualifier().rangeWithinFamily(Bytes.toString(familyName));
 
     if (filter.getMinColumn() != null) {
       ByteString startQualifier = ByteString.copyFrom(filter.getMinColumn());

@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
@@ -60,7 +60,7 @@ public class FamilyFilterAdapter extends TypedFilterAdapterBase<FamilyFilter> {
       throw new IllegalStateException(
           "Cannot adapt comparator " + comparator.getClass().getCanonicalName());
     }
-    return F.family().regex(family).toProto();
+    return FILTERS.family().regex(family).toProto();
   }
 
   /** {@inheritDoc} */

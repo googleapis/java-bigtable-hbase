@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.QualifierRangeFilter;
@@ -58,16 +58,16 @@ public class SingleColumnValueExcludeFilterAdapter
       throws IOException {
     String family = Bytes.toString(context.getScan().getFamilies()[0]);
     ByteString qualifier = ByteString.copyFrom(filter.getQualifier());
-    return F.chain()
+    return FILTERS.chain()
         .filter(delegateAdapter.toFilter(context, filter))
-        .filter(F.interleave()
+        .filter(FILTERS.interleave()
             .filter(range(family).endOpen(qualifier))
             .filter(range(family).startOpen(qualifier)))
         .toProto();
   }
 
   private static QualifierRangeFilter range(String family) {
-    return F.qualifier().rangeWithinFamily(family);
+    return FILTERS.qualifier().rangeWithinFamily(family);
   }
 
   /** {@inheritDoc} */

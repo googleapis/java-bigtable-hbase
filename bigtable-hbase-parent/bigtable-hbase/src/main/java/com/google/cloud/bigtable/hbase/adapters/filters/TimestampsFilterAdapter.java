@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.InterleaveFilter;
@@ -35,7 +35,7 @@ public class TimestampsFilterAdapter
   /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, TimestampsFilter filter) {
-    InterleaveFilter interleave = F.interleave();
+    InterleaveFilter interleave = FILTERS.interleave();
     for (long timestamp : filter.getTimestamps()) {
       interleave.filter(TimestampFilterUtil.hbaseToTimestampRangeFilter(timestamp, timestamp + 1));
     }

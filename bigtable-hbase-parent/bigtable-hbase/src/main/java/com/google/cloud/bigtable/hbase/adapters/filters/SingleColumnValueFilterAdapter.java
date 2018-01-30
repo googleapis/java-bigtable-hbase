@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import static com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.quoteRegularExpression;
 
@@ -42,7 +42,7 @@ public class SingleColumnValueFilterAdapter
     extends TypedFilterAdapterBase<SingleColumnValueFilter> {
 
   @VisibleForTesting
-  static final Filter LATEST_ONLY_FILTER = F.limit().cellsPerColumn(1);
+  static final Filter LATEST_ONLY_FILTER = FILTERS.limit().cellsPerColumn(1);
   private final ValueFilterAdapter delegateAdapter;
 
   /**
@@ -161,14 +161,14 @@ public class SingleColumnValueFilterAdapter
 
     // filter to return the row if the condition is met
     if (filter.getFilterIfMissing()) {
-      return F.condition(addValue(context, filter, columnSpecFilter))
-               .then(F.pass());
+      return FILTERS.condition(addValue(context, filter, columnSpecFilter))
+               .then(FILTERS.pass());
     } else {
-      return F.interleave()
-          .filter(F.condition(addValue(context, filter, columnSpecFilter.clone()))
-                   .then(F.pass()))
-          .filter(F.condition(columnSpecFilter)
-                   .otherwise(F.pass()));
+      return FILTERS.interleave()
+          .filter(FILTERS.condition(addValue(context, filter, columnSpecFilter.clone()))
+                   .then(FILTERS.pass()))
+          .filter(FILTERS.condition(columnSpecFilter)
+                   .otherwise(FILTERS.pass()));
     }
   }
 
@@ -182,9 +182,9 @@ public class SingleColumnValueFilterAdapter
       throws IOException {
     ByteString wrappedQual = ByteStringer.wrap(quoteRegularExpression(qualifier));
     String wrappedFamily = Bytes.toString(quoteRegularExpression(family));
-    ChainFilter builder = F.chain()
-        .filter(F.family().regex(wrappedFamily))
-        .filter(F.qualifier().regex(wrappedQual));
+    ChainFilter builder = FILTERS.chain()
+        .filter(FILTERS.family().regex(wrappedFamily))
+        .filter(FILTERS.qualifier().regex(wrappedQual));
 
     if (latestVersionOnly) {
       builder.filter(LATEST_ONLY_FILTER);

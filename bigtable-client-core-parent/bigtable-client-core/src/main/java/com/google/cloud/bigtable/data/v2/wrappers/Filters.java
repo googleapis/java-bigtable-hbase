@@ -27,26 +27,26 @@ import com.google.protobuf.ByteString;
 /**
  * A Fluent DSL to create a hierarchy of filters for the CheckAndMutateRow RPCs and ReadRows Query.
  *
- * <p>Intended usage is to statically import, or in case of conflict assign the static variable F
+ * <p>Intended usage is to statically import, or in case of conflict assign the static variable FILTERS
  * and use its fluent API to build filters.
  *
  * <p>Sample code:
  *
  * <pre>{@code
- * import static com.google.cloud.bigtable.data.v2.wrappers.Filters.F;
+ * import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
  *
  * void main() {
  *   // Build the filter expression
- *   RowFilter filter = F.chain()
- *     .filter(F.qualifier().regex("prefix.*"))
- *     .filter(F.limit().cellsPerRow(10));
+ *   RowFilter filter = FILTERS.chain()
+ *     .filter(FILTERS.qualifier().regex("prefix.*"))
+ *     .filter(FILTERS.limit().cellsPerRow(10));
  * }
  *
  * }</pre>
  */
 public final class Filters {
   /** Entry point into the DSL. */
-  public static final Filters F = new Filters();
+  public static final Filters FILTERS = new Filters();
 
   private static final SimpleFilter PASS =
       new SimpleFilter(RowFilter.newBuilder().setPassAllFilter(true).build());
