@@ -56,6 +56,27 @@ import org.junit.runners.Suite;
 })
 public class IntegrationTests {
 
+  static {
+    SharedTestEnvRule.setInstance(new SharedTestEnvRule() {
+      @Override
+      /*
+       * NOTE: This code is identical to the hbase 2.x code, but this produces binary incompatible
+       * results.  This code has to remain in the 1.x integration testing code-base.
+       */
+      public void createTable(TableName tableName) throws IOException {
+        try (Admin admin = getConnection().getAdmin()) {
+          LOG.info("Creating table " + tableName.getNameAsString());
+          HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
+          HColumnDescriptor family2 = new HColumnDescriptor(COLUMN_FAMILY2).setMaxVersions(MAX_VERSIONS);
+          admin.createTable(
+              new HTableDescriptor(tableName)
+                  .addFamily(hcd)
+                  .addFamily(family2));
+        }
+      }
+    });
+  }
+
   private static final int TIME_OUT_MINUTES =
       Integer.getInteger("integration.test.timeout.minutes", 3);
 
@@ -63,22 +84,5 @@ public class IntegrationTests {
   public static Timeout timeoutRule = new Timeout(TIME_OUT_MINUTES, TimeUnit.MINUTES);
 
   @ClassRule
-  public static SharedTestEnvRule sharedTestEnvRule = new SharedTestEnvRule() {
-    @Override
-    /*
-     * NOTE: This code is identical to the hbase 2.x code, but this produces binary incompatible
-     * results.  This code has to remain in the 1.x integration testing code-base.
-     */
-    public void createTable(TableName tableName) throws IOException {
-      try (Admin admin = getConnection().getAdmin()) {
-        LOG.info("Creating table " + tableName.getNameAsString());
-        HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
-        HColumnDescriptor family2 = new HColumnDescriptor(COLUMN_FAMILY2).setMaxVersions(MAX_VERSIONS);
-        admin.createTable(
-            new HTableDescriptor(tableName)
-                .addFamily(hcd)
-                .addFamily(family2));
-      }
-    }
-  };
+  public static SharedTestEnvRule sharedTestEnvRule = SharedTestEnvRule.getInstance();
 }

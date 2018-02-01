@@ -29,7 +29,7 @@ import org.junit.runner.Description;
 
 public abstract class AbstractTest {
 
-  public static SharedTestEnvRule sharedTestEnv = IntegrationTests.sharedTestEnvRule;
+  public SharedTestEnvRule sharedTestEnv = SharedTestEnvRule.getInstance();
 
   protected static DataGenerationHelper dataHelper = new DataGenerationHelper();
   protected Logger logger = new Logger(this.getClass());

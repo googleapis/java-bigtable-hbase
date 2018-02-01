@@ -45,6 +45,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import com.google.cloud.bigtable.hbase.AbstractTest;
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
 /**
  * Integration tests for BigtableAsyncConnection
@@ -57,7 +58,8 @@ public class TestAsyncAdmin extends AbstractTest {
 
   @BeforeClass
   public static void setupAsyncCon() throws InterruptedException, ExecutionException {
-    asyncCon = ConnectionFactory.createAsyncConnection(sharedTestEnv.getConfiguration()).get();
+    asyncCon = ConnectionFactory
+        .createAsyncConnection(SharedTestEnvRule.getInstance().getConfiguration()).get();
   }
 
   @AfterClass
