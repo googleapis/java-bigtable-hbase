@@ -33,11 +33,11 @@ limitations under the License.
     <modules>
         <module>bigtable-hbase</module>
         <module>bigtable-hbase-integration-tests-common</module>
-        <module>bigtable-hbase-integration-tests</module>
-        <module>bigtable-hbase-integration-tests-2.x</module>
-        <module>bigtable-hbase-mapreduce</module>
         <module>bigtable-hbase-1.x</module>
+        <module>bigtable-hbase-1.x-integration-tests</module>
         <module>bigtable-hbase-2.x</module>
+        <module>bigtable-hbase-2.x-integration-tests</module>
+        <module>bigtable-hbase-mapreduce</module>
     </modules>
 
     <profiles>
