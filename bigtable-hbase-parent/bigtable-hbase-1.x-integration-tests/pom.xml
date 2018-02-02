@@ -33,6 +33,7 @@ limitations under the License.
     <properties>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
         <test.timeout>1800</test.timeout>
+        <thread.count>10</thread.count>
     </properties>
 
     <profiles>
@@ -67,6 +68,8 @@ limitations under the License.
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
+                                    <parallel>classesAndMethods</parallel>
+                                    <threadCount>${thread.count}</threadCount>
                                 </configuration>
                             </execution>
                         </executions>
@@ -109,6 +112,8 @@ limitations under the License.
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                     <trimStackTrace>false</trimStackTrace>
+                                    <parallel>classesAndMethods</parallel>
+                                    <threadCount>${thread.count}</threadCount>
                                 </configuration>
                             </execution>
                         </executions>
@@ -145,6 +150,8 @@ limitations under the License.
                                     <reportNameSuffix>local-mini-cluster</reportNameSuffix>
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                     <trimStackTrace>false</trimStackTrace>
+                                    <parallel>classesAndMethods</parallel>
+                                    <threadCount>${thread.count}</threadCount>
                                 </configuration>
                             </execution>
                         </executions>
@@ -238,6 +245,8 @@ limitations under the License.
                                         <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
                                     </environmentVariables>
                                     <trimStackTrace>false</trimStackTrace>
+                                    <parallel>classesAndMethods</parallel>
+                                    <threadCount>${thread.count}</threadCount>
                                 </configuration>
                             </execution>
                         </executions>
