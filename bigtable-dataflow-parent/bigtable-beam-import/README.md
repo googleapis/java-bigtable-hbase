@@ -5,14 +5,14 @@ Cloud Dataflow.
 
 ## Instructions
 
-Download [the import/export jar](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.0.0-pre4/bigtable-beam-import-1.0.0-pre4-shaded.jar), which is an aggregation of all required jars.
+Download [the import/export jar](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.1.0/bigtable-beam-import-1.1.0-shaded.jar), which is an aggregation of all required jars.
 
 ## Export
 
 On the command line:
 
 ```
-java -jar bigtable-beam-import-1.0.0-pre4-shaded.jar export \
+java -jar bigtable-beam-import-1.1.0-shaded.jar export \
     --runner=dataflow \
     --project=[your_project_id] \
     --bigtableInstanceId=[your_instance_id] \
@@ -30,7 +30,7 @@ Create the table in your cluster.
 On the command line:
 
 ```
-java -jar bigtable-beam-import-1.0.0-pre4-shaded.jar import \
+java -jar bigtable-beam-import-1.1.0-shaded.jar import \
     --runner=dataflow \
     --project=[your_project_id] \
     --bigtableInstanceId=[your_instance_id] \
