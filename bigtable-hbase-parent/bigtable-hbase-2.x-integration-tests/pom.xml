@@ -35,6 +35,8 @@ limitations under the License.
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase2_x.BigtableConnection</google.bigtable.connection.impl>
         <google.bigtable.async.connection.impl>org.apache.hadoop.hbase.client.BigtableAsyncConnection</google.bigtable.async.connection.impl>
         <google.bigtable.registry.impl>org.apache.hadoop.hbase.client.BigtableAsyncRegistry</google.bigtable.registry.impl>
+        <test.timeout>1800</test.timeout>
+        <thread.count>10</thread.count>
     </properties>
 
     <profiles>
@@ -60,7 +62,6 @@ limitations under the License.
                                 </goals>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <forkCount>1</forkCount>
                                     <includes>
                                         <include>**/IntegrationTestsNoKnownGap.java</include>
                                     </includes>
@@ -71,6 +72,9 @@ limitations under the License.
                                         <google.bigtable.registry.impl>${google.bigtable.registry.impl}</google.bigtable.registry.impl>
                                     </systemPropertyVariables>
                                     <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
+                                    <parallel>classesAndMethods</parallel>
+                                    <threadCount>${thread.count}</threadCount>
                                 </configuration>
                             </execution>
                         </executions>
@@ -103,7 +107,6 @@ limitations under the License.
                                     <!-- to enable netty logging, include:
                                     -Djava.util.logging.config.file=src/test/resources/logging.properties
                                     -->
-                                    <forkCount>1</forkCount>
                                     <includes>
                                         <include>**/IntegrationTestsGap.java</include>
                                     </includes>
@@ -111,7 +114,9 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
+                                    <parallel>classesAndMethods</parallel>
+                                    <threadCount>${thread.count}</threadCount>
                                 </configuration>
                             </execution>
                         </executions>
@@ -146,7 +151,9 @@ limitations under the License.
                                     </includes>
                                     <trimStackTrace>false</trimStackTrace>
                                     <reportNameSuffix>local-mini-cluster</reportNameSuffix>
-                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
+                                    <parallel>classesAndMethods</parallel>
+                                    <threadCount>${thread.count}</threadCount>
                                 </configuration>
                             </execution>
                         </executions>
@@ -240,6 +247,9 @@ limitations under the License.
                                         <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
                                     </environmentVariables>
                                     <trimStackTrace>false</trimStackTrace>
+                                    <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
+                                    <parallel>classesAndMethods</parallel>
+                                    <threadCount>${thread.count}</threadCount>
                                 </configuration>
                             </execution>
                         </executions>
