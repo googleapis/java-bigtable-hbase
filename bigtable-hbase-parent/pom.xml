@@ -35,8 +35,6 @@ limitations under the License.
         <module>bigtable-hbase-integration-tests-common</module>
         <module>bigtable-hbase-1.x</module>
         <module>bigtable-hbase-1.x-integration-tests</module>
-        <module>bigtable-hbase-2.x</module>
-        <module>bigtable-hbase-2.x-integration-tests</module>
         <module>bigtable-hbase-mapreduce</module>
     </modules>
 
@@ -53,8 +51,6 @@ limitations under the License.
             <modules>
                 <module>bigtable-hbase-1.x-shaded</module>
                 <module>bigtable-hbase-1.x-hadoop</module>
-                <module>bigtable-hbase-2.x-shaded</module>
-                <module>bigtable-hbase-2.x-hadoop</module>
             </modules>
         </profile>
         <profile>
