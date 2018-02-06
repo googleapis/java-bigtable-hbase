@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 
 import io.grpc.CallOptions;
-import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.ClientCallStreamObserver;
@@ -53,16 +52,11 @@ public class RetryingReadRowsOperation extends
 
   private static final String TIMEOUT_CANCEL_MSG = "Client side timeout induced cancellation";
 
-  private static class CallToStreamObserverAdapter<T> extends ClientCallStreamObserver<T> {
-    private final ClientCall<T, ?> call;
+  private class CallToStreamObserverAdapter extends ClientCallStreamObserver<ReadRowsRequest> {
     private boolean autoFlowControlEnabled = true;
 
-    public CallToStreamObserverAdapter(ClientCall<T, ?> call) {
-      this.call = call;
-    }
-
     @Override
-    public void onNext(T value) {
+    public void onNext(ReadRowsRequest value) {
       call.sendMessage(value);
     }
 
@@ -115,7 +109,7 @@ public class RetryingReadRowsOperation extends
 
   // The number of times we've retried after a timeout
   private int timeoutRetryCount = 0;
-  private CallToStreamObserverAdapter<ReadRowsRequest> adapter;
+  private CallToStreamObserverAdapter adapter;
   private StreamObserver<ReadRowsResponse> resultObserver;
   private int totalRowsProcessed = 0;
   private volatile ReadRowsRequest nextRequest;
@@ -151,16 +145,16 @@ public class RetryingReadRowsOperation extends
   @Override
   public void run() {
     // restart the clock.
-    lastResponseMs = clock.currentTimeMillis();
     this.rowMerger = new RowMerger(rowObserver);
+    adapter = new CallToStreamObserverAdapter();
     synchronized (callLock) {
       super.run();
       // pre-fetch one more result, for performance reasons.
-      adapter = new CallToStreamObserverAdapter<ReadRowsRequest>(call);
       adapter.request(1);
       if (rowObserver instanceof ClientResponseObserver) {
         ((ClientResponseObserver<ReadRowsRequest, FlatRow>) rowObserver).beforeStart(adapter);
       }
+      lastResponseMs = clock.currentTimeMillis();
     }
   }
 

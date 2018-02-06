@@ -57,8 +57,33 @@ import io.opencensus.trace.Tracing;
 /**
  * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
  */
+@SuppressWarnings("unchecked")
 public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT>  {
+
+  @SuppressWarnings("rawtypes")
+  private static final ClientCall NULL_CALL = new ClientCall() {
+
+    @Override
+    public void start(Listener responseListener, Metadata headers) {
+    }
+
+    @Override
+    public void request(int numMessages) {
+    }
+
+    @Override
+    public void cancel(String message, Throwable cause) {
+    }
+
+    @Override
+    public void halfClose() {
+    }
+
+    @Override
+    public void sendMessage(Object message) {
+    }
+  };
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
@@ -111,7 +136,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected final GrpcFuture<ResultT> completionFuture;
   protected Object callLock = new String("");
-  protected ClientCall<RequestT, ResponseT> call;
+  protected ClientCall<RequestT, ResponseT> call = NULL_CALL;
   protected Timer.Context operationTimerContext;
   protected Timer.Context rpcTimerContext;
 
@@ -150,7 +175,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   public void onClose(Status status, Metadata trailers) {
     try (Closeable s = TRACER.withSpan(operationSpan)) {
       synchronized (callLock) {
-        call = null;
+        call = NULL_CALL;
       }
       rpcTimerContext.close();
       // OK
