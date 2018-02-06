@@ -37,6 +37,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -334,6 +335,25 @@ public class RetryingReadRowsOperationTest {
 
     thrown.expect(BigtableRetriesExhaustedException.class);
     performTimeout(underTest, time);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testImmediateOnClose() {
+    Mockito.doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        invocation.getArgumentAt(1, ClientCall.Listener.class).onClose(Status.OK, new Metadata());
+        return null;
+      }
+    }).when(mockRetryableRpc).start(any(ReadRowsRequest.class), any(ClientCall.Listener.class),
+      any(Metadata.class), eq(mockClientCall));
+
+    RetryingReadRowsOperation underTest = createOperation(mockFlatRowObserver);
+
+    // The test revolves around this call not throwing an exception.  It did at one point with
+    // an invocation of call.request(1) when call is null.
+    start(underTest);
   }
 
   protected void performTimeout(RetryingReadRowsOperation underTest, AtomicLong time)
