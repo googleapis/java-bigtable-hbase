@@ -53,7 +53,6 @@ import org.junit.runners.Suite;
     TestPut.class,
     TestTimestamp.class,
     TestTruncateTable.class,
-    TestImport.class,
     TestAsyncAdmin.class
 })
 public class IntegrationTests {

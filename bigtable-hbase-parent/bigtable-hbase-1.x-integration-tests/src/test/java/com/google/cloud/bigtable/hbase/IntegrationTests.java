@@ -51,8 +51,7 @@ import org.junit.runners.Suite;
     TestListTables.class,
     TestPut.class,
     TestTimestamp.class,
-    TestTruncateTable.class,
-    TestImport.class
+    TestTruncateTable.class
 })
 public class IntegrationTests {
 
