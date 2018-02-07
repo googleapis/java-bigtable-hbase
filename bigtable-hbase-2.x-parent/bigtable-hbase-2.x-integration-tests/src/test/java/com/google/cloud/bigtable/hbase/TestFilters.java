@@ -1716,9 +1716,10 @@ public class TestFilters extends AbstractTest {
       Assert.assertArrayEquals(rowKeys[i+1], boundedResults[i].getRow());
     }
   }
+
   @Test
   public void testMultiRangeFilter() throws IOException {
-    String prefix = "testMultiRangeFilter";
+    String prefix = "testMultiRangeFilter_";
     int rowCount = 10;
     byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
     Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
@@ -1752,9 +1753,8 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testMultiRangeFilterOrList() throws IOException {
-    String prefix = "testMultiRangeFilterOrList";
+    String prefix = "testMultiRangeFilterOrList_";
     int rowCount = 10;
     byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
     Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
