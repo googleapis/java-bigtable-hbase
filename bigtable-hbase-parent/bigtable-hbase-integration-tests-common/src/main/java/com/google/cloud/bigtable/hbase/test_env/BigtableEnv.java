@@ -27,12 +27,11 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
-import com.google.bigtable.repackaged.io.grpc.internal.GrpcUtil;
-import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.Logger;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 class BigtableEnv extends SharedTestEnv {
   private final Logger LOG = new Logger(getClass());
@@ -41,15 +40,15 @@ class BigtableEnv extends SharedTestEnv {
       "hbase.client.connection.impl",
       "hbase.client.async.connection.impl",
       "hbase.client.registry.impl",
-      BigtableOptionsFactory.BIGTABLE_PORT_KEY,
-      BigtableOptionsFactory.BIGTABLE_HOST_KEY,
-      BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY,
-      BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY,
-      BigtableOptionsFactory.PROJECT_ID_KEY,
-      BigtableOptionsFactory.INSTANCE_ID_KEY,
-      BigtableOptionsFactory.BIGTABLE_USE_BULK_API,
-      BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION,
-      BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY
+      "google.bigtable.endpoint.port",
+      "google.bigtable.endpoint.host",
+      "google.bigtable.admin.endpoint.host",
+      "google.bigtable.emulator.endpoint.host",
+      "google.bigtable.project.id",
+      "google.bigtable.instance.id",
+      "google.bigtable.use.bulk.api",
+      "google.bigtable.use.plaintext.negotiation",
+      "google.bigtable.snapshot.cluster.id"
   );
 
   @Override
@@ -77,8 +76,9 @@ class BigtableEnv extends SharedTestEnv {
       }
     }
 
-    ExecutorService executor = Executors.newCachedThreadPool(GrpcUtil.getThreadFactory("table_deleter", true));
-    try (Connection connection = BigtableConfiguration.connect(configuration);
+    ExecutorService executor = Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("table-deleter").build());
+    try (Connection connection = ConnectionFactory.createConnection(configuration);
         Admin admin = connection.getAdmin()) {
       for (final TableName tableName : admin
           .listTableNames(Pattern.compile("(test_table|list_table[12]|TestTable).*"))) {

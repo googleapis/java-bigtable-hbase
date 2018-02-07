@@ -17,8 +17,6 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-import com.google.common.base.Stopwatch;
-
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -196,18 +194,18 @@ public class TestBasicOps extends AbstractTest {
     testPutGetDelete(doGet, testRowKey, testQualifier, testValue);
   }
 
+
   private void
       testPutGetDelete(boolean doGet, byte[] rowKey, byte[] testQualifier, byte[] testValue)
           throws IOException {
     Table table = getDefaultTable();
 
     Stopwatch stopwatch = new Stopwatch();
-    stopwatch.start();
     // Put
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, testQualifier, testValue);
     table.put(put);
-    print("Put took %d ms", stopwatch);
+    stopwatch.print("Put took %d ms");
 
     // Get
     Get get = new Get(rowKey);
@@ -217,31 +215,34 @@ public class TestBasicOps extends AbstractTest {
     // testing on large values.
     if (doGet) {
       Result result = table.get(get);
-      print("Get took %d ms", stopwatch);
+      stopwatch.print("Get took %d ms");
       Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
       List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
       Assert.assertEquals(1, cells.size());
       Assert.assertTrue(Arrays.equals(testValue, CellUtil.cloneValue(cells.get(0))));
-      print("Verifying took %d ms", stopwatch);
+      stopwatch.print("Verifying took %d ms");
     }
     // Delete
     Delete delete = new Delete(rowKey);
     delete.addColumns(COLUMN_FAMILY, testQualifier);
     table.delete(delete);
-    print("Delete took %d ms", stopwatch);
+    stopwatch.print("Delete took %d ms");
 
     // Confirm deleted
     Assert.assertFalse(table.exists(get));
-    print("Exists took %d ms", stopwatch);
-    stopwatch.reset();
+    stopwatch.print("Exists took %d ms");
     table.close();
 
-    print("close took %d ms", stopwatch);
+    stopwatch.print("close took %d ms");
   }
 
-  private void print(String string, Stopwatch stopwatch) {
-    logger.info(string, stopwatch.elapsedMillis());
-    stopwatch.reset();
-    stopwatch.start();
+  private class Stopwatch {
+    long lastCheckin = System.currentTimeMillis();
+
+    private void print(String string) {
+      long now = System.currentTimeMillis();
+      logger.info(string, now - lastCheckin);
+      lastCheckin = now;
+    }
   }
 }
