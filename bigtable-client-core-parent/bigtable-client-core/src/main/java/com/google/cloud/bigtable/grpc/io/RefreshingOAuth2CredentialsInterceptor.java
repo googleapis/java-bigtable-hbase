@@ -59,6 +59,8 @@ import javax.annotation.concurrent.GuardedBy;
  */
 public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor {
 
+  public static int TIMEOUT_SECONDS = 15;
+
   private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
 
   /**
@@ -278,7 +280,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
           );
       }
     }
-    return deferredResult.get(5, TimeUnit.SECONDS);
+    return deferredResult.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
   }
 
   /**
@@ -288,7 +290,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   HeaderCacheElement syncRefresh() {
     try {
-      return asyncRefresh().get(5, TimeUnit.SECONDS);
+      return asyncRefresh().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (Exception e) {
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
