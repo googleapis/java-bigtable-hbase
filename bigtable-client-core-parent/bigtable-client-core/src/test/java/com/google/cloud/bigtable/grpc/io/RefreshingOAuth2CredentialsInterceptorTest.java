@@ -16,7 +16,9 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 import com.google.api.client.util.Clock;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -100,6 +102,15 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Assert.assertFalse(underTest.isRefreshing());
   }
 
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testBadExecutor() throws IOException {
+    ExecutorService mockExecutor = Mockito.mock(ExecutorService.class);
+    when(mockExecutor.submit(any(Callable.class))).thenThrow(new RuntimeException(""));
+    underTest = new RefreshingOAuth2CredentialsInterceptor(mockExecutor, credentials);
+    Assert.assertEquals(CacheState.Exception, underTest.getHeaderSafe().getCacheState());
+  }
+
   @Test
   public void testStaleAndExpired() throws IOException {
     long expiration = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
@@ -154,8 +165,10 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   public void testRefreshAfterStale() throws Exception {
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
 
-    final AccessToken staleToken = new AccessToken("stale", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
-    AccessToken goodToken = new AccessToken("good", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 11));
+    long expires = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
+    final AccessToken staleToken = new AccessToken("stale", new Date(expires));
+    AccessToken goodToken =
+        new AccessToken("good", new Date(expires + HeaderCacheElement.TOKEN_STALENESS_MS + 1));
 
     //noinspection unchecked
     Mockito.when(credentials.refreshAccessToken())
@@ -177,8 +190,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Assert.assertEquals(CacheState.Stale, secondResult.getCacheState());
     Assert.assertThat(secondResult.header, containsString("stale"));
 
-    // Wait for the refresh to finish
-    underTest.syncRefresh();
+    // forward to expired
+    setTimeInMillieconds(expires);
 
     // Third call - now returns good token
     HeaderCacheElement thirdResult = underTest.getHeaderSafe();
