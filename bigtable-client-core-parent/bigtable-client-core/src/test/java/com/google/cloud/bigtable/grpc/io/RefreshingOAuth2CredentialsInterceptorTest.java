@@ -106,7 +106,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   @Test
   public void testExecutorProblem() throws IOException {
     ExecutorService mockExecutor = Mockito.mock(ExecutorService.class);
-    when(mockExecutor.submit(any(Callable.class))).thenThrow(new TimeoutException(""));
+    when(mockExecutor.submit(any(Callable.class))).thenThrow(new RuntimeException(""));
     underTest = new RefreshingOAuth2CredentialsInterceptor(mockExecutor, credentials);
     Assert.assertEquals(CacheState.Exception, underTest.getHeaderSafe().getCacheState());
   }
