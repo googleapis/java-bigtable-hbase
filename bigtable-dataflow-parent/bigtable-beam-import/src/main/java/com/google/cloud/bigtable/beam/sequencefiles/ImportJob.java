@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
@@ -107,7 +108,12 @@ public class ImportJob {
     CloudBigtableTableConfiguration.Builder configBuilder = new CloudBigtableTableConfiguration.Builder()
         .withProjectId(opts.getBigtableProject())
         .withInstanceId(opts.getBigtableInstanceId())
-        .withTableId(opts.getBigtableTableId());
+        .withTableId(opts.getBigtableTableId())
+        // Since the input files are presorted, we can increase the batch size significantly
+        .withConfiguration(BigtableOptionsFactory.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES,
+            Long.toString(2L * 1024 * 1024))
+        .withConfiguration(BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT,
+            Integer.toString(1_000));
 
     if (opts.getBigtableAppProfileId() != null) {
       configBuilder.withAppProfileId(opts.getBigtableAppProfileId());
