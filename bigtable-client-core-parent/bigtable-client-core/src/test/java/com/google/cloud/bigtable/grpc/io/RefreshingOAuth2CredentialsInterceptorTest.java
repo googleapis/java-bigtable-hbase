@@ -235,16 +235,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
       }
     });
 
-    // Force a synchronous refresh.  This ought to wait until a refresh happening in another thread
-    // completes.
-    Callable<Void> syncRefreshCallable = new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        underTest.syncRefresh();
-        return null;
-      }
-    };
-
     underTest =
         new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
 
@@ -252,7 +242,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
     Assert.assertEquals(CacheState.Expired, underTest.headerCache.getCacheState());
 
-    syncCall(lock, syncRefreshCallable);
+    syncCall(lock);
 
     // Check to make sure that the AccessToken was retrieved.
     Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
@@ -263,21 +253,22 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // Kick off a couple of asynchronous refreshes. Kicking off more than one shouldn't be
     // necessary, but also should not be harmful, since there are likely to be multiple concurrent
     // requests that call asyncRefresh() when the token turns stale.
-    underTest.asyncRefresh();
-    underTest.asyncRefresh();
-    underTest.asyncRefresh();
+    Future<HeaderCacheElement> future1 = underTest.asyncRefresh();
+    Future<HeaderCacheElement> future2 = underTest.asyncRefresh();
+    Future<HeaderCacheElement> future3 = underTest.asyncRefresh();
 
-    syncCall(lock, syncRefreshCallable);
+    Assert.assertEquals(future1, future2);
+    Assert.assertEquals(future2, future3);
+    syncCall(lock);
     Assert.assertFalse(underTest.isRefreshing());
   }
 
-  private void syncCall(final Object lock, Callable<Void> syncRefreshCallable)
+  private void syncCall(final Object lock)
       throws InterruptedException, ExecutionException, TimeoutException {
-    Future<Void> future = executorService.submit(syncRefreshCallable);
     // let the Thread running syncRefreshCallable() have a turn so that it can initiate the call
     // to refreshAccessToken().
     try {
-      future.get(100, TimeUnit.MILLISECONDS);
+      underTest.asyncRefresh().get(100, TimeUnit.MILLISECONDS);
     } catch (TimeoutException ignored) {
     }
 
@@ -294,7 +285,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // Wait for no more than a second to make sure that the call to underTest.syncRefresh()
     // completes properly.  If a second passes without syncRefresh() completing, future.get(..)
     // will throw a TimeoutException.
-    future.get(1, TimeUnit.SECONDS);
+    underTest.asyncRefresh().get(100, TimeUnit.MILLISECONDS);
   }
 
   private void initialize(long expiration) throws IOException {
