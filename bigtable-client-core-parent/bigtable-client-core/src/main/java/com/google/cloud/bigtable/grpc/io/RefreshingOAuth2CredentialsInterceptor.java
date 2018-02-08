@@ -75,7 +75,18 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   @VisibleForTesting
   enum CacheState {
-    Good, Stale, Expired, Exception
+    Good(true), Stale(true),
+    Expired(false), Exception(false);
+
+    private boolean isValid;
+
+    CacheState(boolean isValid) {
+      this.isValid = isValid;
+    }
+
+    public boolean isValid() {
+      return isValid;
+    }
   }
 
   private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
@@ -139,6 +150,10 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       } else {
         return CacheState.Good;
       }
+    }
+
+    boolean isValid() {
+      return getCacheState().isValid();
     }
   }
 
@@ -338,16 +353,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private HeaderCacheElement updateToken(HeaderCacheElement newToken) {
     synchronized (lock) {
       // Update the token only if the new token is good or the old token is bad
-      CacheState newState = newToken.getCacheState();
-      boolean newTokenOk = newState == CacheState.Good || newState == CacheState.Stale;
-      CacheState oldCacheState = headerCache.getCacheState();
-      boolean oldTokenOk = oldCacheState == CacheState.Good || oldCacheState == CacheState.Stale;
-
-      if (newTokenOk || !oldTokenOk) {
+      if (newToken.isValid() || !headerCache.isValid()) {
         headerCache = newToken;
       } else {
         LOG.warn("Failed to refresh the access token. Falling back to existing token. "
-            + "New token state: {}, status: {}", newState, newToken.status);
+            + "New token state: {}, status: {}", newToken.getCacheState(), newToken.status);
       }
       futureToken = null;
 
