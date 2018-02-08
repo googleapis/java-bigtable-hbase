@@ -104,9 +104,9 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testBadExecutor() throws IOException {
+  public void testExecutorProblem() throws IOException {
     ExecutorService mockExecutor = Mockito.mock(ExecutorService.class);
-    when(mockExecutor.submit(any(Callable.class))).thenThrow(new RuntimeException(""));
+    when(mockExecutor.submit(any(Callable.class))).thenThrow(new TimeoutException(""));
     underTest = new RefreshingOAuth2CredentialsInterceptor(mockExecutor, credentials);
     Assert.assertEquals(CacheState.Exception, underTest.getHeaderSafe().getCacheState());
   }
