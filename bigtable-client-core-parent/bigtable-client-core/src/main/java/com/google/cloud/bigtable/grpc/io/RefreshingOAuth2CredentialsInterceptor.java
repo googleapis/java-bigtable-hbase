@@ -266,37 +266,27 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   @VisibleForTesting
   HeaderCacheElement getHeader() throws ExecutionException, InterruptedException, TimeoutException {
-    final Future<HeaderCacheElement> deferredResult;
 
     // Optimize for the common case: do a volatile read to peek for a Good cache value
     HeaderCacheElement headerCacheUnsync = this.headerCache;
-    if (headerCacheUnsync.getCacheState() == CacheState.Good) {
-      return headerCacheUnsync;
-    }
 
     // TODO(igorbernstein2): figure out how to make this work with appengine request scoped threads
-    synchronized (lock) {
-      CacheState state = headerCache.getCacheState();
-
-      switch (state) {
-        case Good:
-          return headerCache;
-        case Stale:
-          asyncRefresh();
-          return headerCache;
-        case Expired:
-        case Exception:
-          // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
-          deferredResult = asyncRefresh();
-          break;
-        default:
-          return new HeaderCacheElement(
-              Status.UNAUTHENTICATED
-                  .withCause(new IllegalStateException("Could not process state: " + state))
-          );
-      }
+    switch (headerCacheUnsync.getCacheState()) {
+      case Good:
+        return headerCacheUnsync;
+      case Stale:
+        asyncRefresh();
+        return headerCacheUnsync;
+      case Expired:
+      case Exception:
+        // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
+        return syncRefresh();
+      default:
+        return new HeaderCacheElement(
+            Status.UNAUTHENTICATED
+                .withCause(new IllegalStateException("Could not process state: " + headerCacheUnsync.getCacheState()))
+        );
     }
-    return deferredResult.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
   }
 
   /**
