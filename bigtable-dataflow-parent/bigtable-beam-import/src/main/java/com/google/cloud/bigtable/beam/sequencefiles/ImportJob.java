@@ -40,6 +40,11 @@ public class ImportJob {
   public interface ImportOptions extends GcpOptions {
     //TODO: switch to ValueProviders
 
+    @Description("This Bigtable App Profile id. (Replication alpha feature).")
+    String getBigtableAppProfileId();
+    @SuppressWarnings("unused")
+    void setBigtableAppProfileId(String appProfileId);
+
     @Description("The project that contains the table to export. Defaults to --project.")
     @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
     String getBigtableProject();
@@ -99,16 +104,19 @@ public class ImportJob {
         100 * 1024 * 1024
     );
 
-    CloudBigtableTableConfiguration config = new CloudBigtableTableConfiguration.Builder()
+    CloudBigtableTableConfiguration.Builder configBuilder = new CloudBigtableTableConfiguration.Builder()
         .withProjectId(opts.getBigtableProject())
         .withInstanceId(opts.getBigtableInstanceId())
-        .withTableId(opts.getBigtableTableId())
-        .build();
+        .withTableId(opts.getBigtableTableId());
+
+    if (opts.getBigtableAppProfileId() != null) {
+      configBuilder.withAppProfileId(opts.getBigtableAppProfileId());
+    }
 
     pipeline
         .apply("Read Sequence File", Read.from(new ShuffledSource<>(source)))
         .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
-        .apply("Write to Bigtable", CloudBigtableIO.writeToTable(config));
+        .apply("Write to Bigtable", CloudBigtableIO.writeToTable(configBuilder.build()));
 
     return pipeline;
   }

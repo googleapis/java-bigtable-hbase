@@ -79,6 +79,11 @@ public class ExportJob {
   public interface ExportOptions extends GcpOptions {
     //TODO: switch to ValueProviders
 
+    @Description("This Bigtable App Profile id. (Replication alpha feature).")
+    String getBigtableAppProfileId();
+    @SuppressWarnings("unused")
+    void setBigtableAppProfileId(String appProfileId);
+
     @Description("The project that contains the table to export. Defaults to --project.")
     @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
     String getBigtableProject();
@@ -174,12 +179,16 @@ public class ExportJob {
       scan.setFilter(new ParseFilter().parseFilterString(opts.getBigtableFilter()));
     }
 
-    CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
+    CloudBigtableScanConfiguration.Builder configBuilder = new CloudBigtableScanConfiguration.Builder()
         .withProjectId(opts.getBigtableProject())
         .withInstanceId(opts.getBigtableInstanceId())
         .withTableId(opts.getBigtableTableId())
-        .withScan(scan)
-        .build();
+        .withScan(scan);
+
+    if (opts.getBigtableAppProfileId() != null) {
+      configBuilder.withAppProfileId(opts.getBigtableAppProfileId());
+    }
+
 
     ValueProvider<ResourceId> dest = NestedValueProvider.of(
         opts.getDestinationPath(), new StringToDirectoryResourceId()
@@ -200,7 +209,7 @@ public class ExportJob {
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
     pipeline
-        .apply("Read table", Read.from(CloudBigtableIO.read(config)))
+        .apply("Read table", Read.from(CloudBigtableIO.read(configBuilder.build())))
         .apply("Format results", MapElements.via(new ResultToKV()))
         .apply("Write", WriteFiles.to(sink));
 
