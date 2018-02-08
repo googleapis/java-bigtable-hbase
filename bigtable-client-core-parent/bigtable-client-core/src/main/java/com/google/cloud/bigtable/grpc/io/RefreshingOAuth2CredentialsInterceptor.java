@@ -75,7 +75,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   enum CacheState {
     Good, Stale, Expired, Exception
   }
-  
+
   private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
       "Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
@@ -143,27 +143,17 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
 
   private final ExecutorService executor;
-
-  @VisibleForTesting
-  RateLimiter rateLimiter;
-
+  private final RateLimiter rateLimiter;
   private final OAuth2Credentials credentials;
+  private final Object lock = new Object();
 
-  @VisibleForTesting
-  final Object lock = new Object();
+  @GuardedBy("lock")
+  private Future<HeaderCacheElement> futureToken = null;
 
   // Note that the cache is volatile to allow us to peek for a Good value
   @VisibleForTesting
   @GuardedBy("lock")
   volatile HeaderCacheElement headerCache = EMPTY_HEADER;
-
-  @VisibleForTesting
-  @GuardedBy("lock")
-  boolean isRefreshing = false;
-
-  @VisibleForTesting
-  @GuardedBy("lock")
-  Future<HeaderCacheElement> futureToken = null;
 
 
   /**
@@ -315,27 +305,31 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     LOG.trace("asyncRefresh");
 
     synchronized (lock) {
-      if (isRefreshing) {
+      if (futureToken != null) {
         LOG.trace("asyncRefresh is already in progress");
         return futureToken;
       }
-      isRefreshing = true;
       LOG.trace("asyncRefresh taking ownership");
 
+      Future<HeaderCacheElement> future;
       try {
-        this.futureToken = executor.submit(new Callable<HeaderCacheElement>() {
+        future = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
             HeaderCacheElement newToken = refreshCredentials();
             return updateToken(newToken);
           }
         });
+
+        if (!future.isDone()) {
+          this.futureToken = future;
+        }
       } catch (RuntimeException e) {
-        isRefreshing = false;
+        futureToken = null;
         throw e;
       }
 
-      return this.futureToken;
+      return future;
     }
   }
 
@@ -354,7 +348,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
             + "New token state: {}, status: {}", newState, newToken.status);
       }
       futureToken = null;
-      isRefreshing = false;
 
       return headerCache;
     }
@@ -411,6 +404,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         revokeUnauthToken(origToken);
       }
       super.onClose(status, trailers);
+    }
+  }
+
+  @VisibleForTesting
+  boolean isRefreshing() {
+    synchronized(lock) {
+      return futureToken != null;
     }
   }
 }

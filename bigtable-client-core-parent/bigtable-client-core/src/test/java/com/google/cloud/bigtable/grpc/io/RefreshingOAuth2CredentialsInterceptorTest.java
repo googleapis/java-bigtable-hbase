@@ -19,7 +19,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Mockito.times;
 
 import com.google.api.client.util.Clock;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
@@ -86,6 +86,18 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   public void testSyncRefresh() throws IOException {
     initialize(HeaderCacheElement.TOKEN_STALENESS_MS + 1);
     Assert.assertEquals(CacheState.Good, underTest.headerCache.getCacheState());
+    Assert.assertFalse(underTest.isRefreshing());
+  }
+
+  @Test
+  public void testRefresh() throws IOException {
+    Mockito.when(credentials.refreshAccessToken()).thenReturn(
+        new AccessToken("", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1)));
+    underTest = new RefreshingOAuth2CredentialsInterceptor(MoreExecutors.newDirectExecutorService(),
+        credentials);
+    underTest.syncRefresh();
+    Assert.assertEquals(CacheState.Good, underTest.headerCache.getCacheState());
+    Assert.assertFalse(underTest.isRefreshing());
   }
 
   @Test
@@ -116,7 +128,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   @Test
   public void testRefreshAfterFailure() throws Exception {
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
-    underTest.rateLimiter.setRate(100000);
 
     final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
 
@@ -142,7 +153,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   @Test
   public void testRefreshAfterStale() throws Exception {
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
-    underTest.rateLimiter.setRate(100000);
 
     final AccessToken staleToken = new AccessToken("stale", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
     AccessToken goodToken = new AccessToken("good", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 11));
@@ -168,11 +178,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Assert.assertThat(secondResult.header, containsString("stale"));
 
     // Wait for the refresh to finish
-    final Future<?> waiter;
-    synchronized (underTest.lock) {
-      waiter = underTest.isRefreshing ? underTest.futureToken : Futures.immediateFuture(null);
-    }
-    waiter.get();
+    underTest.syncRefresh();
 
     // Third call - now returns good token
     HeaderCacheElement thirdResult = underTest.getHeaderSafe();
@@ -228,7 +234,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     underTest =
         new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
-    underTest.rateLimiter.setRate(100000);
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
@@ -240,9 +245,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
 
     // Check to make sure we're no longer refreshing.
-    synchronized (underTest.lock) {
-      Assert.assertFalse(underTest.isRefreshing);
-    }
+    Assert.assertFalse(underTest.isRefreshing());
 
     // Kick off a couple of asynchronous refreshes. Kicking off more than one shouldn't be
     // necessary, but also should not be harmful, since there are likely to be multiple concurrent
@@ -252,7 +255,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     underTest.asyncRefresh();
 
     syncCall(lock, syncRefreshCallable);
-    Assert.assertFalse(underTest.isRefreshing);
+    Assert.assertFalse(underTest.isRefreshing());
   }
 
   private void syncCall(final Object lock, Callable<Void> syncRefreshCallable)
@@ -269,9 +272,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // actually doing a refresh at this point; the other ones will have see that a refresh is in
     // progress and finish the invocation of the Thread without performing a refres().. Make sure
     // that at least 1 refresh process is in progress.
-    synchronized (underTest.lock) {
-      Assert.assertTrue(underTest.isRefreshing);
-    }
+    Assert.assertTrue(underTest.isRefreshing());
 
     synchronized (lock) {
       lock.notifyAll();
