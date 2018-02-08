@@ -21,6 +21,7 @@ import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.RateLimiter;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -343,7 +344,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         }
       } catch (RuntimeException e) {
         futureToken = null;
-        throw e;
+        LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
+        return Futures.immediateFuture(new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withDescription("Unexpected error trying to authenticate")
+              .withCause(e)));
       }
 
       return future;
