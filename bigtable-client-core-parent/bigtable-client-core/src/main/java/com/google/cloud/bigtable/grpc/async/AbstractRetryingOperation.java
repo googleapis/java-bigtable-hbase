@@ -210,11 +210,14 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       return;
     }
 
+    String channelId = ChannelPool.extractIdentifier(trailers);
     // Non retry scenario
     if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)
     // Unauthenticated is special because the request never made it to
     // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
+      LOG.info("Could not complete RPC. Failure #%d, got: %s on channel %s", status.getCause(),
+        failedCount, status, channelId);
       rpc.getRpcMetrics().markFailure();
       finalizeStats(status);
       setException(status.asRuntimeException());
@@ -227,9 +230,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
     // Backoffs timed out.
     if (nextBackOff == BackOff.STOP) {
+      LOG.info("All retries were exhausted. Failure #%d, got: %s on channel %s", status.getCause(),
+        failedCount, status, channelId);
       setException(getExhaustedRetriesException(status));
     } else {
-      String channelId = ChannelPool.extractIdentifier(trailers);
       LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s", status.getCause(),
         failedCount, status, channelId);
       performRetry(nextBackOff);

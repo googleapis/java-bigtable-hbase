@@ -201,15 +201,15 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
        * delegate().start() was not called. If start() is not called, then don't call
        * delegate().request(), delegate().sendMessage() or delegate().halfClose();
        */
-      private boolean unauthorized = false;
+      private volatile boolean unauthorized = false;
 
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
         HeaderCacheElement headerCache = getHeaderSafe();
 
         if (!headerCache.status.isOk()) {
-          responseListener.onClose(headerCache.status, new Metadata());
           unauthorized = true;
+          responseListener.onClose(headerCache.status, new Metadata());
           return;
         }
 
@@ -253,6 +253,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     try {
       return getHeader();
     } catch (Exception e) {
+      LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
               .withDescription("Unexpected failure get auth token")
@@ -265,7 +266,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
   @VisibleForTesting
-  HeaderCacheElement getHeader() throws ExecutionException, InterruptedException, TimeoutException {
+  HeaderCacheElement getHeader() {
 
     // Optimize for the common case: do a volatile read to peek for a Good cache value
     HeaderCacheElement headerCacheUnsync = this.headerCache;
@@ -282,10 +283,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
         return syncRefresh();
       default:
+        String message = "Could not process state: " + headerCacheUnsync.getCacheState();
+        LOG.warn(message);
         return new HeaderCacheElement(
             Status.UNAUTHENTICATED
-                .withCause(new IllegalStateException("Could not process state: " + headerCacheUnsync.getCacheState()))
-        );
+                .withCause(new IllegalStateException(message)));
     }
   }
 
@@ -297,9 +299,33 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   HeaderCacheElement syncRefresh() {
     try {
       return asyncRefresh().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    } catch (Exception e) {
+    } catch (InterruptedException e) {
+      LOG.warn("Interrupted while trying to refresh google credentials.", e);
+      Thread.currentThread().interrupt();
       return new HeaderCacheElement(
           Status.UNAUTHENTICATED
+              .withDescription("Authentication was interrupted.")
+              .withCause(e)
+      );
+    } catch (ExecutionException e) {
+      LOG.warn("ExecutionException while trying to refresh google credentials.", e);
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withDescription("ExecutionException during Authentication.")
+              .withCause(e)
+      );
+    } catch (TimeoutException e) {
+      LOG.warn("TimeoutException while trying to refresh google credentials.", e);
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withDescription("TimeoutException during Authentication.")
+              .withCause(e)
+      );
+    } catch (Exception e) {
+      LOG.warn("Unexpected execption while trying to refresh google credentials.", e);
+      return new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withDescription("Unexpected execption during Authentication.")
               .withCause(e)
       );
     }
@@ -313,19 +339,16 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     LOG.trace("asyncRefresh");
 
     synchronized (lock) {
-      if (futureToken != null) {
-        LOG.trace("asyncRefresh is already in progress");
-        return futureToken;
-      }
-      LOG.trace("asyncRefresh taking ownership");
-
       Future<HeaderCacheElement> future;
       try {
+        if (futureToken != null) {
+          return futureToken;
+        }
+
         future = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
-            HeaderCacheElement newToken = refreshCredentials();
-            return updateToken(newToken);
+            return updateToken();
           }
         });
 
@@ -345,7 +368,19 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
   }
 
-  private HeaderCacheElement updateToken(HeaderCacheElement newToken) {
+  private HeaderCacheElement updateToken() {
+    HeaderCacheElement newToken;
+    try {
+      LOG.info("Refreshing the OAuth token");
+      newToken = new HeaderCacheElement(credentials.refreshAccessToken());
+    } catch (Exception e) {
+      LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
+      newToken = new HeaderCacheElement(
+          Status.UNAUTHENTICATED
+              .withDescription("Unexpected error trying to authenticate")
+              .withCause(e)
+      );
+    }
     synchronized (lock) {
       // Update the token only if the new token is good or the old token is bad
       if (newToken.isValid() || !headerCache.isValid()) {
@@ -360,25 +395,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
   }
 
-  /**
-   * Calls {@link com.google.auth.oauth2.OAuth2Credentials#refreshAccessToken()}.
-   *
-   * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
-   */
-  private HeaderCacheElement refreshCredentials() {
-    try {
-      LOG.info("Refreshing the OAuth token");
-      AccessToken newToken = credentials.refreshAccessToken();
-      return new HeaderCacheElement(newToken);
-    } catch (Exception e) {
-      LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-              .withDescription("Unexpected error trying to authenticate")
-              .withCause(e)
-      );
-    }
-  }
 
   private void revokeUnauthToken(HeaderCacheElement oldToken) {
     if (!rateLimiter.tryAcquire()) {
