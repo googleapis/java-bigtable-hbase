@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.util.Clock;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
@@ -202,8 +203,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Mockito.verify(credentials, times(2)).refreshAccessToken();
   }
 
-
-  @Test
+  @Test(timeout=30000)
   /*
    * Test that checks that concurrent requests to RefreshingOAuth2CredentialsInterceptor refresh
    * logic doesn't cause hanging behavior.  Specifically, when an Expired condition occurs it
@@ -212,7 +212,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
    * that condition.
    */
   public void testRefreshDoesntHang() throws Exception {
-    for (int i = 0; i < 10_000; i++) {
+    for (int i = 0; i < 100; i++) {
+      MockitoAnnotations.initMocks(this);
       testHanging();
     }
   }
@@ -231,16 +232,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // Create a mechanism that will allow us to control when the accessToken is returned.
     // credentials.refreshAccessToken() will get called asynchronously and will wait until the
     // lock is notified before returning.  That will allow us to set up multiple concurrent calls
-    final Object lock = new Object();
-    Mockito.when(credentials.refreshAccessToken()).thenAnswer(new Answer<AccessToken>() {
-      @Override
-      public AccessToken answer(InvocationOnMock invocation) throws Throwable {
-        synchronized (lock) {
-          lock.wait();
-        }
-        return new AccessToken("", new Date(expiration));
-      }
-    });
+    final FutureAnswer<AccessToken> answer = new FutureAnswer<>();
+    Mockito.when(credentials.refreshAccessToken()).thenAnswer(answer);
 
     underTest =
         new RefreshingOAuth2CredentialsInterceptor(executorService, credentials);
@@ -249,7 +242,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
     Assert.assertEquals(CacheState.Expired, underTest.headerCache.getCacheState());
 
-    syncCall(lock);
+    syncCall(answer, new Date(expiration));
 
     // Check to make sure that the AccessToken was retrieved.
     Assert.assertEquals(CacheState.Stale, underTest.headerCache.getCacheState());
@@ -257,39 +250,51 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // Check to make sure we're no longer refreshing.
     Assert.assertFalse(underTest.isRefreshing());
 
+    answer.reset();
+
     // Kick off 100 asynchronous refreshes. Kicking off more than one shouldn't be
     // necessary, but also should not be harmful, since there are likely to be multiple concurrent
     // requests that call asyncRefresh() when the token turns stale.
     Future<HeaderCacheElement> previous = underTest.asyncRefresh();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
       Future<HeaderCacheElement> current = underTest.asyncRefresh();
       Assert.assertEquals(previous, current);
       previous = current;
     }
 
-    syncCall(lock);
+    syncCall(answer, new Date(expiration + HeaderCacheElement.TOKEN_EXPIRES_MS + 1));
     Assert.assertFalse(underTest.isRefreshing());
   }
 
-  private void syncCall(final Object lock)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    // let the Thread running syncRefreshCallable() have a turn so that it can initiate the call
-    // to refreshAccessToken().
-    try {
-      underTest.asyncRefresh().get(100, TimeUnit.MILLISECONDS);
-    } catch (TimeoutException ignored) {
+  private static class FutureAnswer<T> implements Answer<T>{
+
+    private SettableFuture<T> future = SettableFuture.create();
+
+    @Override
+    public T answer(InvocationOnMock invocation) throws Throwable {
+      return future.get();
     }
+
+    void set(T value) {
+      future.set(value);
+    }
+
+    void reset() {
+      future = SettableFuture.create();;
+    }
+  }
+
+  private void syncCall(FutureAnswer<AccessToken> answer, Date expirationTime)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    underTest.asyncRefresh();
 
     // There should be a single thread kicked off by the underTest.asyncRefresh() calls about
     // actually doing a refresh at this point; the other ones will have see that a refresh is in
-    // progress and finish the invocation of the Thread without performing a refres().. Make sure
+    // progress and finish the invocation of the Thread without performing a refresh().. Make sure
     // that at least 1 refresh process is in progress.
     Assert.assertTrue(underTest.isRefreshing());
 
-    synchronized (lock) {
-      lock.notifyAll();
-    }
-
+    answer.set(new AccessToken("hi", expirationTime));
     // Wait for no more than a second to make sure that the call to underTest.syncRefresh()
     // completes properly.  If a second passes without syncRefresh() completing, future.get(..)
     // will throw a TimeoutException.
