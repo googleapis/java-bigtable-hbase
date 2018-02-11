@@ -212,6 +212,13 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
    * that condition.
    */
   public void testRefreshDoesntHang() throws Exception {
+    for (int i = 0; i < 10_000; i++) {
+      testHanging();
+    }
+  }
+
+  private void testHanging()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     // Assume that the user starts at this time... it's an arbitrarily big number which will
     // assure that subtracting HeaderCacheElement.TOKEN_STALENESS_MS and TOKEN_EXPIRES_MS will not
     // be negative.
@@ -250,15 +257,16 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     // Check to make sure we're no longer refreshing.
     Assert.assertFalse(underTest.isRefreshing());
 
-    // Kick off a couple of asynchronous refreshes. Kicking off more than one shouldn't be
+    // Kick off 100 asynchronous refreshes. Kicking off more than one shouldn't be
     // necessary, but also should not be harmful, since there are likely to be multiple concurrent
     // requests that call asyncRefresh() when the token turns stale.
-    Future<HeaderCacheElement> future1 = underTest.asyncRefresh();
-    Future<HeaderCacheElement> future2 = underTest.asyncRefresh();
-    Future<HeaderCacheElement> future3 = underTest.asyncRefresh();
+    Future<HeaderCacheElement> previous = underTest.asyncRefresh();
+    for (int i = 0; i < 100; i++) {
+      Future<HeaderCacheElement> current = underTest.asyncRefresh();
+      Assert.assertEquals(previous, current);
+      previous = current;
+    }
 
-    Assert.assertEquals(future1, future2);
-    Assert.assertEquals(future2, future3);
     syncCall(lock);
     Assert.assertFalse(underTest.isRefreshing());
   }

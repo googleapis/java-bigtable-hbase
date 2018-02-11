@@ -339,13 +339,15 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     LOG.trace("asyncRefresh");
 
     synchronized (lock) {
-      Future<HeaderCacheElement> future;
       try {
         if (futureToken != null) {
           return futureToken;
         }
+        if (headerCache.getCacheState() == CacheState.Good) {
+          return Futures.immediateFuture(headerCache);
+        }
 
-        future = executor.submit(new Callable<HeaderCacheElement>() {
+        Future<HeaderCacheElement> future = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
           public HeaderCacheElement call() throws Exception {
             return updateToken();
@@ -355,6 +357,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
         if (!future.isDone()) {
           this.futureToken = future;
         }
+        return future;
       } catch (RuntimeException e) {
         futureToken = null;
         LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
@@ -363,8 +366,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
               .withDescription("Unexpected error trying to authenticate")
               .withCause(e)));
       }
-
-      return future;
     }
   }
 
