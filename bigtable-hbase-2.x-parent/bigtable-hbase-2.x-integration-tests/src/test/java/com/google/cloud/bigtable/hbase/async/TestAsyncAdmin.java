@@ -20,74 +20,55 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
+
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
-import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.hamcrest.core.IsInstanceOf;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import com.google.cloud.bigtable.hbase.AbstractTest;
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
 /**
  * Integration tests for BigtableAsyncConnection
  * 
  * @author spollapally
  */
-public class TestAsyncAdmin extends AbstractTest {
-
-  private static AsyncConnection asyncCon;
-
-  @BeforeClass
-  public static void setupAsyncCon() throws InterruptedException, ExecutionException {
-    asyncCon = ConnectionFactory
-        .createAsyncConnection(SharedTestEnvRule.getInstance().getConfiguration()).get();
-  }
-
-  @AfterClass
-  public static void closeAsyncCon() throws IOException {
-    asyncCon.close();
-  }
+public class TestAsyncAdmin extends AbstractAsyncTest {
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testAsyncConnection() throws Exception {
-    Assert.assertNotNull("async connection should not be null", asyncCon);
-    AsyncAdmin asycAdmin = asyncCon.getAdmin();
+    Assert.assertNotNull("async connection should not be null", getAsyncConnection());
+    AsyncAdmin asycAdmin = getAsyncConnection().getAdmin();
     Assert.assertNotNull("asycAdmin should not be null", asycAdmin);
   }
 
   @Test
   public void testCreateTable_exception() throws Exception {
-    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     thrown.expect(NullPointerException.class);
     asyncAdmin.createTable(null).get();
   }
 
   @Test
   public void testCreateTable_harness() throws Exception {
-    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
-    TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    TableName tableName = sharedTestEnv.newTestTableName();
 
     try {
       // test exists
@@ -153,7 +134,7 @@ public class TestAsyncAdmin extends AbstractTest {
 
   @Test
   public void testCreateTableWithNumRegions_exception() throws Exception {
-    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
     thrown.expect(ExecutionException.class);
     thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(IllegalArgumentException.class));
@@ -163,7 +144,7 @@ public class TestAsyncAdmin extends AbstractTest {
 
   @Test
   public void testCreateTableWithSplits() throws Exception {
-    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     TableName tableName1 = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
     TableName tableName2 = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
 
@@ -192,7 +173,7 @@ public class TestAsyncAdmin extends AbstractTest {
 
   @Test
   public void testDisbleTable_exceptions() throws Exception {
-    AsyncAdmin asyncAdmin = asyncCon.getAdmin();
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
 
     // test non existing table

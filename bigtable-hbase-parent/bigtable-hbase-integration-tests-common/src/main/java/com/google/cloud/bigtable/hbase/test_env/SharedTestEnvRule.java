@@ -15,7 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.apache.commons.logging.Log;
@@ -30,6 +34,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.rules.ExternalResource;
 
 public abstract class SharedTestEnvRule extends ExternalResource {
+  private static final String HBASE_CONN_KEY = "hbase_conn";
 
   public static final int MAX_VERSIONS = 6;
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
@@ -51,22 +56,26 @@ public abstract class SharedTestEnvRule extends ExternalResource {
   protected static final Log LOG = LogFactory.getLog(SharedTestEnvRule.class);
   private TableName defaultTableName;
   private SharedTestEnv sharedTestEnv;
-  private Connection connection;
+  private Map<String, Closeable> closeables = new HashMap<>();
 
   @Override
   protected void before() throws Throwable {
     sharedTestEnv = SharedTestEnv.get();
-    connection = createConnection();
+    registerClosable(HBASE_CONN_KEY, createConnection());
 
     defaultTableName = newTestTableName();
     createTable(defaultTableName);
+  }
+
+  public void registerClosable(String key, Closeable c) {
+    closeables.put(key, c);
   }
 
   public abstract void createTable(TableName defaultTableName) throws IOException;
 
   @Override
   protected void after() {
-    try (Admin admin = connection.getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       LOG.info("Deleting table " + defaultTableName.getNameAsString());
       admin.disableTable(defaultTableName);
       admin.deleteTable(defaultTableName);
@@ -74,12 +83,14 @@ public abstract class SharedTestEnvRule extends ExternalResource {
       throw new RuntimeException("Error deleting table after the integration tests", e);
     }
 
-    try {
-      connection.close();
-    } catch (IOException e) {
-      LOG.error("Failed to close connection after test", e);
+    for(Entry<String, Closeable> entry : closeables.entrySet()) {
+      try {
+        entry.getValue().close();
+      } catch (IOException e) {
+        LOG.error("Failed to close " + entry.getKey() + " after test", e);
+      }
     }
-    connection = null;
+    closeables.clear();
     try {
       sharedTestEnv.release();
     } catch (IOException e) {
@@ -92,8 +103,12 @@ public abstract class SharedTestEnvRule extends ExternalResource {
     return sharedTestEnv.getConfiguration();
   }
 
+  public Closeable getClosable(String key) {
+    return closeables.get(key);
+  }
+
   public Connection getConnection() {
-    return connection;
+    return (Connection) getClosable(HBASE_CONN_KEY);
   }
 
   public Connection createConnection() throws IOException {
