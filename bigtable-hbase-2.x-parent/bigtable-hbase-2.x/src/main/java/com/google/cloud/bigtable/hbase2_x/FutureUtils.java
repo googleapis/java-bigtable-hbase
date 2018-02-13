@@ -34,7 +34,7 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 public class FutureUtils {
 
-  private static final ExecutorService DIRECT_EXECUTOR = MoreExecutors.newDirectExecutorService();
+  public static final ExecutorService DIRECT_EXECUTOR = MoreExecutors.newDirectExecutorService();
   static Logger logger = new Logger(FutureUtils.class);
 
   public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
