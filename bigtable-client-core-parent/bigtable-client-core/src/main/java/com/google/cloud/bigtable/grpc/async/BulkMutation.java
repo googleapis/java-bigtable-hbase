@@ -426,8 +426,10 @@ public class BulkMutation {
         scheduledFlush = retryExecutorService.schedule(new Runnable() {
           @Override
           public void run() {
-            scheduledFlush = null;
-            send();
+            synchronized (BulkMutation.this) {
+              scheduledFlush = null;
+              send();
+            }
           }
         }, autoflushMs, TimeUnit.MILLISECONDS);
       }
