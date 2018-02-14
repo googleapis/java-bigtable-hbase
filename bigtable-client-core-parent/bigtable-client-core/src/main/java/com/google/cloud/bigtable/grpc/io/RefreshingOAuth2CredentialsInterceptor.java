@@ -18,7 +18,9 @@ package com.google.cloud.bigtable.grpc.io;
 import com.google.api.client.util.Clock;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
+import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
@@ -30,9 +32,13 @@ import io.grpc.ClientCall.Listener;
 import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+
+import java.io.Closeable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -297,7 +303,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * This method should not be called while holding the refresh lock
    */
   HeaderCacheElement syncRefresh() {
-    try {
+    try (Closeable ss = Tracing.getTracer().spanBuilder("CredentialsRefresh").startScopedSpan()) {
       return asyncRefresh().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.warn("Interrupted while trying to refresh google credentials.", e);
