@@ -33,15 +33,18 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncAdmin;
+import com.google.cloud.bigtable.hbase2_x.BigtableAsyncBufferedMutator;
+import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTable;
+import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTableRegionLocator;
 
 /**
  * Bigtable implementation of {@link AsyncConnection}
- * 
+ *
  * @author spollapally
  */
 public class BigtableAsyncConnection implements AsyncConnection, Closeable {
   private final Logger LOG = new Logger(getClass());
-  
+
   private final Configuration conf;
   private BigtableSession session;
   private BigtableOptions options;
@@ -55,13 +58,13 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
     // with a whole bunch of other classes.
     Adapters.class.getName();
   }
-  
+
   public BigtableAsyncConnection(Configuration conf) throws IOException {
     this(conf, null, null, null);
   }
 
-  public BigtableAsyncConnection(Configuration conf, AsyncRegistry registry, String clusterId,
-      User user) throws IOException {
+  public BigtableAsyncConnection(Configuration conf, AsyncRegistry ignoredRegistry,
+      String ignoredClusterId, User ignoredUser) throws IOException {
     LOG.debug("Creating BigtableAsyncConnection");
     this.conf = conf;
 
@@ -72,7 +75,7 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
       LOG.error("Error loading BigtableOptions from Configuration.", ioe);
       throw ioe;
     }
-    
+
     this.closed = false;
     this.session = new BigtableSession(opts);
     this.options = this.session.getOptions();
@@ -96,11 +99,11 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
   public BigtableOptions getOptions() {
     return this.options;
   }
-  
+
   public Set<TableName> getDisabledTables() {
     return disabledTables;
   }
-  
+
   @Override
   public void close() throws IOException {
     LOG.debug("closeing BigtableAsyncConnection");
@@ -118,32 +121,32 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
   @Override
   public AsyncAdminBuilder getAdminBuilder() {
     return new AsyncAdminBuilder() {
-      
+
       @Override
       public AsyncAdminBuilder setStartLogErrorsCnt(int arg0) {
-        throw new UnsupportedOperationException("setStartLogErrorsCnt");
+        return this;
       }
-      
+
       @Override
       public AsyncAdminBuilder setRpcTimeout(long arg0, TimeUnit arg1) {
-        throw new UnsupportedOperationException("setRpcTimeout");
+        return this;
       }
-      
+
       @Override
       public AsyncAdminBuilder setRetryPause(long arg0, TimeUnit arg1) {
-        throw new UnsupportedOperationException("setRetryPause");
+        return this;
       }
-      
+
       @Override
       public AsyncAdminBuilder setOperationTimeout(long arg0, TimeUnit arg1) {
-        throw new UnsupportedOperationException("setOperationTimeout");
+        return this;
       }
-      
+
       @Override
       public AsyncAdminBuilder setMaxAttempts(int arg0) {
-        throw new UnsupportedOperationException("setMaxAttempts");
+        return this;
       }
-      
+
       @Override
       public AsyncAdmin build() {
         try {
@@ -158,33 +161,159 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
 
   @Override
   public AsyncAdminBuilder getAdminBuilder(ExecutorService arg0) {
-    throw new UnsupportedOperationException("getAdminBuilder ExecutorService"); // TODO
+    return getAdminBuilder();
   }
 
   @Override
-  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(TableName arg0) {
-    throw new UnsupportedOperationException("getBufferedMutatorBuilder"); // TODO
+  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(final TableName tableName) {
+    return new AsyncBufferedMutatorBuilder() {
+
+      @Override
+      public AsyncBufferedMutatorBuilder setWriteBufferSize(long arg0) {
+        return this;
+      }
+
+      @Override
+      public AsyncBufferedMutatorBuilder setStartLogErrorsCnt(int arg0) {
+        return this;
+      }
+
+      @Override
+      public AsyncBufferedMutatorBuilder setRpcTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncBufferedMutatorBuilder setRetryPause(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncBufferedMutatorBuilder setOperationTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncBufferedMutatorBuilder setMaxAttempts(int arg0) {
+        return this;
+      }
+
+      @Override
+      public AsyncBufferedMutator build() {
+        return new BigtableAsyncBufferedMutator();
+      }
+    };
   }
 
   @Override
-  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(TableName arg0,
+  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(TableName tableName,
       ExecutorService arg1) {
-    throw new UnsupportedOperationException("getBufferedMutatorBuilder"); // TODO
+    return getBufferedMutatorBuilder(tableName);
   }
 
   @Override
-  public AsyncTableBuilder<RawAsyncTable> getRawTableBuilder(TableName arg0) {
-    throw new UnsupportedOperationException("getRawTableBuilder"); // TODO
+  public AsyncTableBuilder<RawAsyncTable> getRawTableBuilder(TableName tableName) {
+    return new AsyncTableBuilder<RawAsyncTable>() {
+      @Override
+      public RawAsyncTable build() {
+      throw new UnsupportedOperationException("getRawTableBuilder"); // TODO
+      }
+
+      @Override
+      public AsyncTableBuilder<RawAsyncTable> setMaxAttempts(int arg0) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<RawAsyncTable> setOperationTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<RawAsyncTable> setReadRpcTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<RawAsyncTable> setRetryPause(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<RawAsyncTable> setRpcTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<RawAsyncTable> setScanTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<RawAsyncTable> setStartLogErrorsCnt(int arg0) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<RawAsyncTable> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+    };
   }
 
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
-    throw new UnsupportedOperationException("getRegionLocator"); // TODO
+    return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getDataClient());
   }
 
   @Override
   public AsyncTableBuilder<AsyncTable> getTableBuilder(TableName tableName,
       ExecutorService executorService) {
-    throw new UnsupportedOperationException("getTableBuilder"); // TODO
+    return new AsyncTableBuilder<AsyncTable>() {
+      @Override
+      public AsyncTable build() {
+        return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
+      }
+
+      @Override
+      public AsyncTableBuilder<AsyncTable> setMaxAttempts(int arg0) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<AsyncTable> setOperationTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<AsyncTable> setReadRpcTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<AsyncTable> setRetryPause(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<AsyncTable> setRpcTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<AsyncTable> setScanTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<AsyncTable> setStartLogErrorsCnt(int arg0) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<AsyncTable> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+    };
   }
 }
