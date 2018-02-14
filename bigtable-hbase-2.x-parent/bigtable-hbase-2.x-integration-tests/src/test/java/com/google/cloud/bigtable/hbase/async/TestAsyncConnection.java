@@ -23,6 +23,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import com.google.cloud.bigtable.hbase.KnownGap;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -31,6 +33,7 @@ import com.google.common.util.concurrent.MoreExecutors;
  * Integration tests to make sure that AsyncConnection methods do not throw exceptions.
  * @author sduskis
  */
+@RunWith(JUnit4.class)
 public class TestAsyncConnection extends AbstractAsyncTest {
 
   private static final ExecutorService directExecutorService = MoreExecutors.sameThreadExecutor();

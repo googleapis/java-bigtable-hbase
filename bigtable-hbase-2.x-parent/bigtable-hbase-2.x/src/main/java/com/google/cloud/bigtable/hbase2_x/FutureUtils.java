@@ -16,9 +16,14 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
+
+import com.google.cloud.bigtable.config.Logger;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Utility methods for converting guava {@link ListenableFuture} Future to
@@ -29,9 +34,23 @@ import com.google.common.util.concurrent.ListenableFuture;
  */
 public class FutureUtils {
 
+  private static final ExecutorService DIRECT_EXECUTOR = MoreExecutors.newDirectExecutorService();
+  static Logger logger = new Logger(FutureUtils.class);
+
+  public static <T> CompletableFuture<T>
+      toCompletableFuture(final ListenableFuture<T> listenableFuture) {
+    return toCompletableFuture(listenableFuture, DIRECT_EXECUTOR);
+  }
+
   public static <T> CompletableFuture<T> toCompletableFuture(
-      final ListenableFuture<T> listenableFuture) {
-    final CompletableFuture<T> completableFuture = new CompletableFuture<T>() {
+      final ListenableFuture<T> listenableFuture, ExecutorService es) {
+    return toCompletableFuture(listenableFuture, (r -> r), es);
+  }
+
+  public static <BTType, HBType> CompletableFuture<HBType> toCompletableFuture(
+      final ListenableFuture<BTType> listenableFuture, final Function<BTType, HBType> converter,
+      ExecutorService es) {
+    CompletableFuture<HBType> completableFuture = new CompletableFuture<HBType>() {
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
         boolean result = listenableFuture.cancel(mayInterruptIfRunning);
@@ -40,15 +59,21 @@ public class FutureUtils {
       }
     };
 
-    Futures.addCallback(listenableFuture, new FutureCallback<T>() {
+    FutureCallback<BTType> callback = new FutureCallback<BTType>() {
       public void onFailure(Throwable throwable) {
         completableFuture.completeExceptionally(throwable);
       }
 
-      public void onSuccess(T t) {
-        completableFuture.complete(t);
+      public void onSuccess(BTType s) {
+        try {
+          completableFuture.complete(converter.apply(s));
+        } catch (RuntimeException e) {
+          onFailure(e);
+        }
       }
-    });
+    };
+    Futures.addCallback(listenableFuture, callback, es);
+
     return completableFuture;
   }
 

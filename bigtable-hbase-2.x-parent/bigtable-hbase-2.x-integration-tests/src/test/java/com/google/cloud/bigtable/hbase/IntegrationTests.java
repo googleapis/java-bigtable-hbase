@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.async.TestAsyncAdmin;
 import com.google.cloud.bigtable.hbase.async.TestAsyncConnection;
+import com.google.cloud.bigtable.hbase.async.TestBasicAsyncOps;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
 import java.io.IOException;
@@ -55,7 +56,8 @@ import org.junit.runners.Suite;
     TestTimestamp.class,
     TestTruncateTable.class,
     TestAsyncAdmin.class,
-    TestAsyncConnection.class
+    TestAsyncConnection.class,
+    TestBasicAsyncOps.class
 })
 public class IntegrationTests {
 
@@ -75,6 +77,7 @@ public class IntegrationTests {
               new HTableDescriptor(tableName)
                   .addFamily(hcd)
                   .addFamily(family2));
+          LOG.info("Created table " + tableName.getNameAsString());
         }
       }
     });
