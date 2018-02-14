@@ -44,7 +44,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Integration tests for BigtableAsyncConnection
+ * Integration tests for BigtableAsyncAdmin
  * 
  * @author spollapally
  */
