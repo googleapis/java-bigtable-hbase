@@ -145,9 +145,9 @@ public class BatchExecutor {
       this.bulkMutation = session.createBulkMutation(tableName);
     }
 
-    protected void flush() throws InterruptedException {
+    protected void flush() {
       // If there is a bulk mutation in progress, then send it.
-      bulkMutation.flush();
+      bulkMutation.sendUnsent();
       bulkRead.flush();
     }
   }
@@ -240,8 +240,8 @@ public class BatchExecutor {
     batchCallback(actions, results, null);
   }
 
-  private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
-      Object[] results, Batch.Callback<R> callback) throws InterruptedException {
+  public <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
+      Object[] results, Batch.Callback<R> callback) {
     BulkOperation bulkOperation = new BulkOperation(session, requestAdapter.getBigtableTableName());
     try {
       List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());

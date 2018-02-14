@@ -404,7 +404,7 @@ public class BulkMutation {
 
     boolean didSend = false;
     if (currentBatch != null && currentBatch.wouldBeFull(entry)) {
-      send();
+      sendUnsent();
       if (scheduledFlush != null) {
         scheduledFlush.cancel(true);
         scheduledFlush = null;
@@ -428,7 +428,7 @@ public class BulkMutation {
           public void run() {
             synchronized (BulkMutation.this) {
               scheduledFlush = null;
-              send();
+              sendUnsent();
             }
           }
         }, autoflushMs, TimeUnit.MILLISECONDS);
@@ -442,12 +442,11 @@ public class BulkMutation {
    * Send any outstanding {@link MutateRowRequest}s and wait until all requests are complete.
    */
   public void flush() throws InterruptedException {
-    send();
+    sendUnsent();
     operationAccountant.awaitCompletion();
   }
 
-  @VisibleForTesting
-  synchronized void send() {
+  public synchronized void sendUnsent() {
     if (currentBatch != null) {
       try {
         currentBatch.run();
