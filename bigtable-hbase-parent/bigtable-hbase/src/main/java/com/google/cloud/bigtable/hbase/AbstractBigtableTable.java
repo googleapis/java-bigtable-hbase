@@ -339,8 +339,7 @@ public abstract class AbstractBigtableTable implements Table {
     }
   }
 
-  @VisibleForTesting
-  static boolean hasWhileMatchFilter(Filter filter) {
+  public static boolean hasWhileMatchFilter(Filter filter) {
     if (filter instanceof WhileMatchFilter) {
       return true;
     }
