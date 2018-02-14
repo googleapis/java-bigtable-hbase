@@ -207,7 +207,7 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
 
   @Override
   public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(TableName tableName,
-      ExecutorService arg1) {
+      ExecutorService es) {
     return getBufferedMutatorBuilder(tableName);
   }
 
@@ -268,11 +268,12 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
 
   @Override
   public AsyncTableBuilder<AsyncTable> getTableBuilder(TableName tableName,
-      ExecutorService executorService) {
+      final ExecutorService executorService) {
     return new AsyncTableBuilder<AsyncTable>() {
       @Override
       public AsyncTable build() {
-        return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
+        return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName),
+            executorService);
       }
 
       @Override

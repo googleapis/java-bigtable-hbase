@@ -40,12 +40,15 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
- * Integration tests for BigtableAsyncConnection
+ * Integration tests for BigtableAsyncAdmin
  * 
  * @author spollapally
  */
+@RunWith(JUnit4.class)
 public class TestAsyncAdmin extends AbstractAsyncTest {
 
   @Rule
