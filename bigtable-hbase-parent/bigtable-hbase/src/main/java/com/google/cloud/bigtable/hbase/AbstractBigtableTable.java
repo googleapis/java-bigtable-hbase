@@ -758,8 +758,8 @@ public abstract class AbstractBigtableTable implements Table {
       scan.setFilter(valueFilter);
       requestBuilder.addAllTrueMutations(mutations);
     }
-    requestBuilder.setPredicateFilter(Adapters.SCAN_ADAPTER.buildFilter(scan,
-      UNSUPPORTED_READ_HOOKS));
+    requestBuilder.setPredicateFilter(
+      Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS));
     return requestBuilder;
   }
 

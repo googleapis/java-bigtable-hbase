@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
@@ -80,13 +82,8 @@ public class TestGetAdapter {
     get.setMaxVersions(10);
     ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
     Assert.assertEquals(
-        Chain.newBuilder()
-            .addFilters(RowFilter.newBuilder()
-                .setFamilyNameRegexFilter(".*"))
-            .addFilters(RowFilter.newBuilder()
-                .setCellsPerColumnLimitFilter(10))
-            .build(),
-        rowRequestBuilder.getFilter().getChain());
+        FILTERS.limit().cellsPerColumn(10).toProto(),
+        rowRequestBuilder.getFilter());
   }
 
   @Test
@@ -95,13 +92,8 @@ public class TestGetAdapter {
     get.addFamily(Bytes.toBytes("f1"));
     ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
     Assert.assertEquals(
-        Chain.newBuilder()
-            .addFilters(RowFilter.newBuilder()
-                .setFamilyNameRegexFilter("f1"))
-            .addFilters(RowFilter.newBuilder()
-                .setCellsPerColumnLimitFilter(Integer.MAX_VALUE))
-            .build(),
-        rowRequestBuilder.getFilter().getChain());
+        FILTERS.family().exactMatch("f1").toProto(),
+        rowRequestBuilder.getFilter());
   }
 
   @Test
@@ -110,17 +102,11 @@ public class TestGetAdapter {
     get.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("q1"));
     ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
     Assert.assertEquals(
-        Chain.newBuilder()
-            .addFilters(
-                RowFilter.newBuilder().setChain(Chain.newBuilder()
-                    .addFilters(RowFilter.newBuilder()
-                        .setFamilyNameRegexFilter("f1"))
-                    .addFilters(RowFilter.newBuilder()
-                        .setColumnQualifierRegexFilter(ByteString.copyFromUtf8("q1")))))
-            .addFilters(RowFilter.newBuilder()
-                .setCellsPerColumnLimitFilter(Integer.MAX_VALUE))
-            .build(),
-        rowRequestBuilder.getFilter().getChain());
+        FILTERS.chain()
+            .filter(FILTERS.family().regex("f1"))
+            .filter(FILTERS.qualifier().regex("q1"))
+            .toProto(),
+        rowRequestBuilder.getFilter());
   }
 
   @Test
@@ -130,23 +116,12 @@ public class TestGetAdapter {
     get.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("q2"));
     ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
     Assert.assertEquals(
-        Chain.newBuilder()
-            .addFilters(
-                RowFilter.newBuilder().setChain(Chain.newBuilder()
-                    .addFilters(RowFilter.newBuilder()
-                        .setFamilyNameRegexFilter("f1"))
-                    .addFilters(RowFilter.newBuilder()
-                        .setInterleave(
-                            Interleave.newBuilder()
-                                .addFilters(RowFilter.newBuilder()
-                                    .setColumnQualifierRegexFilter(
-                                        ByteString.copyFromUtf8("q1")))
-                                .addFilters(RowFilter.newBuilder()
-                                    .setColumnQualifierRegexFilter(
-                                        ByteString.copyFromUtf8("q2")))))))
-            .addFilters(RowFilter.newBuilder()
-                .setCellsPerColumnLimitFilter(Integer.MAX_VALUE))
-            .build(),
-        rowRequestBuilder.getFilter().getChain());
+        FILTERS.chain()
+            .filter(FILTERS.family().regex("f1"))
+            .filter(FILTERS.interleave()
+                .filter(FILTERS.qualifier().regex("q1"))
+                .filter(FILTERS.qualifier().regex("q2")))
+            .toProto(),
+        rowRequestBuilder.getFilter());
   }
 }
