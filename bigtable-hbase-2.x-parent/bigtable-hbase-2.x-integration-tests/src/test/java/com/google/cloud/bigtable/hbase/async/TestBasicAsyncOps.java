@@ -17,22 +17,27 @@ package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -40,6 +45,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
@@ -71,39 +77,7 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
     byte[] rowKey = dataHelper.randomData("TestBasicAsyncOps-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = dataHelper.randomData("testValue-");
-    testPutGetDelete(true, rowKey, testQualifier, testValue);
-  }
-
-  @Test
-  public void testRowMutations() throws Exception {
-    System.out.println("TestBasicAsyncOps");
-    byte[] rowKey = dataHelper.randomData("testRowMutations-");
-    byte[] testQualifier1 = dataHelper.randomData("testQualifier2-");
-    byte[] testQualifier2 = dataHelper.randomData("testQualifier1-");
-    byte[] testValue1 = dataHelper.randomData("testValue-");
-    byte[] testValue2 = dataHelper.randomData("testValue-");
-    byte[] testValue3 = dataHelper.randomData("testValue-");
-    AsyncTable table = getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), executor);
-
-    RowMutations rowMutations1 = new RowMutations(rowKey);
-    rowMutations1.add(new Put(rowKey)
-      .addColumn(COLUMN_FAMILY, testQualifier1, testValue1)
-      .addColumn(COLUMN_FAMILY, testQualifier2, testValue2));
-    table.mutateRow(rowMutations1).get();
-
-    RowMutations rowMutations2 = new RowMutations(rowKey);
-    rowMutations2.add(new Delete(rowKey).addColumns(COLUMN_FAMILY, testQualifier2));
-    rowMutations2.add(new Put(rowKey).addColumn(COLUMN_FAMILY, testQualifier1, testValue3));
-    table.mutateRow(rowMutations2).get();
-
-    Result result = table.get(new Get(rowKey)).get();
-    Assert.assertEquals(1, result.size());
-    Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], testValue3));
-  }
-
-  private void testPutGetDelete(boolean doGet, byte[] rowKey, byte[] testQualifier,
-      byte[] testValue) throws IOException, InterruptedException, ExecutionException {
-    AsyncTable table = getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), executor);
+    AsyncTable table = getAsyncTable();
 
     Stopwatch stopwatch = new Stopwatch();
     // Put
@@ -118,7 +92,7 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
 
     // Do the get on some tests, but not others.  The rationale for that is to do performance
     // testing on large values.
-    if (doGet) {
+    if (true) {
       Result result = table.get(get).get();
       stopwatch.print("Get took %d ms");
       Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
@@ -138,6 +112,109 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
     Assert.assertNotNull(exists);
     Assert.assertFalse(exists.get());
     stopwatch.print("Exists took %d ms");
+  }
+
+  @Test
+  public void testRowMutations() throws Exception {
+    byte[] rowKey = dataHelper.randomData("testRowMutations-");
+    byte[] testQualifier1 = dataHelper.randomData("testQualifier2-");
+    byte[] testQualifier2 = dataHelper.randomData("testQualifier1-");
+    byte[] testValue1 = dataHelper.randomData("testValue-");
+    byte[] testValue2 = dataHelper.randomData("testValue-");
+    byte[] testValue3 = dataHelper.randomData("testValue-");
+    AsyncTable table = getAsyncTable();
+
+    RowMutations rowMutations1 = new RowMutations(rowKey);
+    rowMutations1.add(new Put(rowKey)
+      .addColumn(COLUMN_FAMILY, testQualifier1, testValue1)
+      .addColumn(COLUMN_FAMILY, testQualifier2, testValue2));
+    table.mutateRow(rowMutations1).get();
+
+    RowMutations rowMutations2 = new RowMutations(rowKey);
+    rowMutations2.add(new Delete(rowKey).addColumns(COLUMN_FAMILY, testQualifier2));
+    rowMutations2.add(new Put(rowKey).addColumn(COLUMN_FAMILY, testQualifier1, testValue3));
+    table.mutateRow(rowMutations2).get();
+
+    Result result = table.get(new Get(rowKey)).get();
+    Assert.assertEquals(1, result.size());
+    Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], testValue3));
+  }
+
+  @Test
+  public void testAppend() throws Exception {
+    // Initialize
+    Table table = getDefaultTable();
+    byte[] rowKey = dataHelper.randomData("testAppend-");
+    byte[] qualifier = dataHelper.randomData("qualifier-");
+    byte[] value1 = dataHelper.randomData("value1-");
+    byte[] value2 = dataHelper.randomData("value1-");
+    byte[] value1And2 = ArrayUtils.addAll(value1, value2);
+
+    // Put then append
+    Put put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier, value1);
+    table.put(put);
+    Append append =
+        new Append(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier, value2);
+    Result result = getAsyncTable().append(append).get();
+    Cell cell = result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
+    Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
+      CellUtil.cloneValue(cell));
+
+    // Test result
+    Get get = new Get(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
+    get.readVersions(5);
+    result = table.get(get);
+    List<Cell> cells = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
+    Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
+      CellUtil.cloneValue(cells.get(0)));
+    if (result.size() == 2) {
+      // TODO: This isn't always true with CBT.  Why is that?
+      Assert.assertEquals("There should be two versions now", 2, result.size());
+      Assert.assertArrayEquals("Expect original value still there", value1,
+        CellUtil.cloneValue(cells.get(1)));
+    }
+  }
+
+  @Test
+  public void testIncrement() throws Exception {
+    // Initialize data
+    try (Table table = getDefaultTable()){
+      byte[] rowKey = dataHelper.randomData("testrow-");
+      byte[] qual1 = dataHelper.randomData("qual-");
+      long value1 = new Random().nextInt();
+      long incr1 = new Random().nextInt();
+      byte[] qual2 = dataHelper.randomData("qual-");
+      long value2 = new Random().nextInt();
+      long incr2 = new Random().nextInt();
+
+      // Put and increment
+      Put put = new Put(rowKey);
+      put.addColumn(COLUMN_FAMILY, qual1, Bytes.toBytes(value1));
+      put.addColumn(COLUMN_FAMILY, qual2, Bytes.toBytes(value2));
+      table.put(put);
+      Increment increment = new Increment(rowKey);
+      increment.addColumn(COLUMN_FAMILY, qual1, incr1);
+      increment.addColumn(COLUMN_FAMILY, qual2, incr2);
+      Result result = getAsyncTable().increment(increment).get();
+      Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
+        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
+      Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
+        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual2))));
+      Assert.assertEquals(2, result.size());
+
+      // Double-check values with a Get
+      Get get = new Get(rowKey);
+      get.readVersions(5);
+      result = table.get(get);
+      Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
+        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
+      Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
+        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual2))));
+    }
+  }
+
+   private AsyncTable getAsyncTable() throws InterruptedException, ExecutionException {
+    return getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), executor);
   }
 
   private class Stopwatch {

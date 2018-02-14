@@ -45,6 +45,8 @@ import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -86,7 +88,14 @@ public class BigtableAsyncTable implements AsyncTable {
 
   @Override
   public CompletableFuture<Result> append(Append append) {
-    throw new UnsupportedOperationException("append"); // TODO
+    ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
+    ListenableFuture<ReadModifyWriteRowResponse> future = client.readModifyWriteRowAsync(request);
+
+    return FutureUtils.toCompletableFuture(future)
+        .thenApply(response -> append.isReturnResults() ?
+            Adapters.ROW_ADAPTER.adaptResponse(response.getRow()) :
+            null
+        );
   }
 
   @SuppressWarnings("unchecked")
@@ -232,8 +241,10 @@ public class BigtableAsyncTable implements AsyncTable {
   }
 
   @Override
-  public CompletableFuture<Result> increment(Increment arg0) {
-    throw new UnsupportedOperationException("increment"); // TODO
+  public CompletableFuture<Result> increment(Increment increment) {
+    ReadModifyWriteRowRequest request = hbaseAdapter.adapt(increment);
+    return FutureUtils.toCompletableFuture(client.readModifyWriteRowAsync(request))
+        .thenApply( response -> Adapters.ROW_ADAPTER.adaptResponse(response.getRow()));
   }
 
   @Override
