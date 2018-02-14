@@ -15,10 +15,14 @@ d * Copyright 2017 Google Inc. All Rights Reserved.
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
+import static java.util.stream.Collectors.toList;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -40,7 +44,7 @@ import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
-import com.google.cloud.bigtable.config.Logger;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -55,7 +59,6 @@ import com.google.common.util.concurrent.ListenableFuture;
  * @author spollapally
  */
 public class BigtableAsyncTable implements AsyncTable {
-  private final Logger LOG = new Logger(getClass());
 
   private final BigtableAsyncConnection asyncConnection;
   private final BigtableDataClient client;
@@ -86,9 +89,16 @@ public class BigtableAsyncTable implements AsyncTable {
     throw new UnsupportedOperationException("append"); // TODO
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> List<CompletableFuture<T>> batch(List<? extends Row> actions) {
-    throw new UnsupportedOperationException("batch"); // TODO
+    List<? extends Row> updatedActions = actions.stream()
+        .map(row -> row instanceof Get ? fromHB2Get((Get) row) : row)
+        .collect(toList());
+    // TODO: The CompletableFutures need to return Void for Put/Delete.
+    return asyncRequests(updatedActions).stream()
+        .map(lfuture -> (CompletableFuture<T>) toCompletableFuture(lfuture))
+        .collect(toList());
   }
 
   @Override
@@ -101,23 +111,41 @@ public class BigtableAsyncTable implements AsyncTable {
     // figure out how to time this with Opencensus
     MutateRowRequest request = hbaseAdapter.adapt(delete);
     ListenableFuture<MutateRowResponse> future = client.mutateRowAsync(request);
-    return FutureUtils.toCompletableFuture(future, executorService)
+    return toCompletableFuture(future, executorService)
         .thenApply(r -> null);
   }
 
   @Override
   public List<CompletableFuture<Void>> delete(List<Delete> deletes) {
-    throw new UnsupportedOperationException("delete list"); // TODO
+    Stream<CompletableFuture<Void>> stream = asyncRequests(deletes)
+          .stream()
+          .map(lfuture -> toCompletableFuture(lfuture)
+                .thenApply(r -> null));
+    return stream.collect(toList());
+  }
+
+  private List<ListenableFuture<?>> asyncRequests(List<? extends Row> actions) {
+    Object[] results = new Object[actions.size()];
+    return getBatchExecutor().issueAsyncRowRequests(actions, results, null);
   }
 
   @Override
   public CompletableFuture<Result> get(Get get) {
-    ListenableFuture<List<FlatRow>> future = client.readFlatRowsAsync(hbaseAdapter.adapt(get));
-    return FutureUtils.toCompletableFuture(future, (list -> toResult("get", list)),
+    ReadRowsRequest request = hbaseAdapter.adapt(fromHB2Get(get));
+    ListenableFuture<List<FlatRow>> future = client.readFlatRowsAsync(request);
+    return toCompletableFuture(future, (list -> toResult("get", list)),
       executorService);
   }
+  
+  private static Get fromHB2Get(Get get) {
+    if (get.isCheckExistenceOnly()) {
+      return addKeyOnlyFilter(get);
+    } else {
+      return get;
+    }
+  }
 
-  private Get addKeyOnlyFilter(Get get) {
+  private static Get addKeyOnlyFilter(Get get) {
     Get existsGet = new Get(get);
     if (get.getFilter() == null) {
       existsGet.setFilter(new KeyOnlyFilter());
@@ -147,9 +175,25 @@ public class BigtableAsyncTable implements AsyncTable {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public List<CompletableFuture<Result>> get(List<Get> arg0) {
-    throw new UnsupportedOperationException("get"); // TODO
+  public List<CompletableFuture<Result>> get(List<Get> gets) {
+    List<Get> hb1Gets = gets.stream()
+        .map(BigtableAsyncTable::fromHB2Get)
+        .collect(toList());
+    return asyncRequests(hb1Gets).stream()
+        .map(lfuture ->  (CompletableFuture<Result>) toCompletableFuture(lfuture))
+        .collect(toList());
+  }
+
+  @Override
+  public List<CompletableFuture<Boolean>> exists(List<Get> gets) {
+    List<Get> existGets = gets.stream()
+          .map(BigtableAsyncTable::addKeyOnlyFilter)
+          .collect(toList());
+    return get(existGets).stream()
+          .map(cf -> cf.thenApply(r -> !r.isEmpty()))
+          .collect(toList());
   }
 
   @Override
@@ -196,7 +240,7 @@ public class BigtableAsyncTable implements AsyncTable {
   public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
     MutateRowRequest request = hbaseAdapter.adapt(rowMutations);
     ListenableFuture<MutateRowResponse> future = client.mutateRowAsync(request);
-    return FutureUtils.toCompletableFuture(future, executorService)
+    return toCompletableFuture(future, executorService)
         .thenApply(r -> null);
   }
 
@@ -204,13 +248,17 @@ public class BigtableAsyncTable implements AsyncTable {
   public CompletableFuture<Void> put(Put put) {
     // figure out how to time this with Opencensus
     MutateRowRequest request = hbaseAdapter.adapt(put);
-    ListenableFuture<MutateRowResponse> future = client.mutateRowAsync(request);
-    return FutureUtils.toCompletableFuture(future, executorService).thenApply(r -> null);
+    ListenableFuture<?> future = client.mutateRowAsync(request);
+    return toCompletableFuture(future, executorService).thenApply(r -> null);
   }
 
   @Override
-  public List<CompletableFuture<Void>> put(List<Put> arg0) {
-    throw new UnsupportedOperationException("put"); // TODO
+  public List<CompletableFuture<Void>> put(List<Put> puts) {
+    Stream<CompletableFuture<Void>> stream = asyncRequests(puts)
+        .stream()
+        .map(lfuture -> toCompletableFuture(lfuture)
+              .thenApply(r -> null));
+    return stream.collect(toList());
   }
 
   @Override
@@ -227,5 +275,4 @@ public class BigtableAsyncTable implements AsyncTable {
   public void scan(Scan scan, ScanResultConsumer consumer) {
     throw new UnsupportedOperationException("scan"); // TODO
   }
-
 }

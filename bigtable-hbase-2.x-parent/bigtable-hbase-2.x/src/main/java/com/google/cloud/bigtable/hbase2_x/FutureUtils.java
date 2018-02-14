@@ -37,8 +37,7 @@ public class FutureUtils {
   private static final ExecutorService DIRECT_EXECUTOR = MoreExecutors.newDirectExecutorService();
   static Logger logger = new Logger(FutureUtils.class);
 
-  public static <T> CompletableFuture<T>
-      toCompletableFuture(final ListenableFuture<T> listenableFuture) {
+  public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
     return toCompletableFuture(listenableFuture, DIRECT_EXECUTOR);
   }
 
