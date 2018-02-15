@@ -87,22 +87,22 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
       @Override
       public TableBuilder setWriteRpcTimeout(int arg0) {
-        return null;
+        return this;
       }
 
       @Override
       public TableBuilder setRpcTimeout(int arg0) {
-        return null;
+        return this;
       }
 
       @Override
       public TableBuilder setReadRpcTimeout(int arg0) {
-        return null;
+        return this;
       }
 
       @Override
       public TableBuilder setOperationTimeout(int arg0) {
-        return null;
+        return this;
       }
 
       @Override
@@ -118,7 +118,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
   /** {@inheritDoc} */
   @Override
-  public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
+  public Table getTable(TableName tableName, ExecutorService ignored) throws IOException {
     return new BigtableTable(this, createAdapter(tableName));
   }
 
