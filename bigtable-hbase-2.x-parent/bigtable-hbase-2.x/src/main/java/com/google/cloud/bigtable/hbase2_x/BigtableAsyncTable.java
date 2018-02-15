@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.hbase2_x;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
 import static java.util.stream.Collectors.toList;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -39,6 +41,7 @@ import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
+import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 
@@ -47,6 +50,7 @@ import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -57,6 +61,9 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.stub.StreamObserver;
+import io.opencensus.trace.Span;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
 
 /**
  * Bigtable implementation of {@link AsyncTable}.
@@ -64,6 +71,9 @@ import io.grpc.stub.StreamObserver;
  * @author spollapally
  */
 public class BigtableAsyncTable implements AsyncTable {
+
+  protected static final Logger LOG = new Logger(AbstractBigtableTable.class);
+  private static final Tracer TRACER = Tracing.getTracer();
 
   private final BigtableAsyncConnection asyncConnection;
   private final BigtableDataClient client;
@@ -288,9 +298,39 @@ public class BigtableAsyncTable implements AsyncTable {
                  .collect(toList()));
   }
 
+  /** {@inheritDoc} */
   @Override
   public ResultScanner getScanner(Scan scan) {
-    return asyncConnection.getTable(tableName, executorService).getScanner(scan);
+    LOG.trace("getScanner(Scan)");
+    Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
+    try (Closeable c = TRACER.withSpan(span)) {
+      com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
+          client.readFlatRows(hbaseAdapter.adapt(scan));
+      if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
+        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+      }
+      return Adapters.BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+    } catch (final Throwable throwable) {
+      LOG.error("Encountered exception when executing getScanner.", throwable);
+
+      return new ResultScanner() {
+        @Override
+        public boolean renewLease() {
+          return false;
+        }
+        @Override
+        public Result next() throws IOException {
+           throw throwable;
+        }
+        @Override
+        public ScanMetrics getScanMetrics() {
+          return null;
+        }
+        @Override
+        public void close() {
+        }
+      };
+    }
   }
 
   @Override
