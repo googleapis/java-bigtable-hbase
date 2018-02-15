@@ -121,7 +121,7 @@ public class BigtableWhileMatchResultScannerAdapter {
    * Returns {@code true} iff there are matching {@link WhileMatchFilter} labels or no {@link
    * WhileMatchFilter} labels.
    */
-  private static boolean hasMatchingLabels(FlatRow row) {
+  public static boolean hasMatchingLabels(FlatRow row) {
     int inLabelCount = 0;
     int outLabelCount = 0;
     for (FlatRow.Cell cell : row.getCells()) {

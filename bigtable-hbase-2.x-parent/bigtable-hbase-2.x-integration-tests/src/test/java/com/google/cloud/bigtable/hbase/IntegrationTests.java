@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import com.google.cloud.bigtable.hbase.async.TestAsyncAdmin;
 import com.google.cloud.bigtable.hbase.async.TestAsyncBatch;
 import com.google.cloud.bigtable.hbase.async.TestAsyncConnection;
+import com.google.cloud.bigtable.hbase.async.TestAsyncScan;
 import com.google.cloud.bigtable.hbase.async.TestBasicAsyncOps;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
@@ -57,9 +58,10 @@ import org.junit.runners.Suite;
     TestTimestamp.class,
     TestTruncateTable.class,
     TestAsyncAdmin.class,
+    TestAsyncBatch.class,
     TestAsyncConnection.class,
-    TestBasicAsyncOps.class,
-    TestAsyncBatch.class
+    TestAsyncScan.class,
+    TestBasicAsyncOps.class
 })
 public class IntegrationTests {
 

@@ -50,10 +50,13 @@ import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.ListenableFuture;
+
+import io.grpc.stub.StreamObserver;
 
 /**
  * Bigtable implementation of {@link AsyncTable}.
@@ -274,16 +277,43 @@ public class BigtableAsyncTable implements AsyncTable {
 
   @Override
   public CompletableFuture<List<Result>> scanAll(Scan scan) {
-    throw new UnsupportedOperationException("scanAll"); // TODO
+    if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
+      throw new UnsupportedOperationException(
+          "scanAll with while match filter is not allowed");
+    }
+    return toCompletableFuture(client.readFlatRowsAsync(hbaseAdapter.adapt(scan)))
+         .thenApply(list -> 
+             list.stream()
+                 .map(row -> Adapters.FLAT_ROW_ADAPTER.adaptResponse(row))
+                 .collect(toList()));
   }
 
   @Override
   public ResultScanner getScanner(Scan scan) {
-    throw new UnsupportedOperationException("getScanner"); // TODO
+    return asyncConnection.getTable(tableName, executorService).getScanner(scan);
   }
 
   @Override
-  public void scan(Scan scan, ScanResultConsumer consumer) {
-    throw new UnsupportedOperationException("scan"); // TODO
+  public void scan(Scan scan, final ScanResultConsumer consumer) {
+    if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
+      throw new UnsupportedOperationException(
+          "scan with consumer and while match filter is not allowed");
+    }
+    client.readFlatRows(hbaseAdapter.adapt(scan), new StreamObserver<FlatRow>() {
+      @Override
+      public void onNext(FlatRow value) {
+        consumer.onNext(Adapters.FLAT_ROW_ADAPTER.adaptResponse(value));
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        consumer.onError(t);
+      }
+
+      @Override
+      public void onCompleted() {
+        consumer.onComplete();
+      }
+    });
   }
 }

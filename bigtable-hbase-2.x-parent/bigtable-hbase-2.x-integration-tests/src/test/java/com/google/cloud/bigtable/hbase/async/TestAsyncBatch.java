@@ -81,7 +81,7 @@ public class TestAsyncBatch extends AbstractAsyncTest {
 
   private void testPutsGetsDeletes(boolean doGet, byte[][] rowKeys, byte[][] testQualifiers,
       byte[][] testValues) throws IOException, InterruptedException, ExecutionException {
-    AsyncTable table = getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), executor);
+    AsyncTable table = getDefaultAsyncTable(executor);
 
     // setup
     List<Get> gets = new ArrayList<>();
