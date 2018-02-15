@@ -16,23 +16,16 @@
 package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
-import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.AsyncTable;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -76,7 +69,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
     List<Put> puts = new ArrayList<>();
     for (int i = 0; i < rowKeys.length; i++) {
       Put put = new Put(rowKeys[i]);
-      for (int j = 0; i < numValues; ++j) {
+      for (int j = 0; j < numValues; j++) {
         put.addColumn(COLUMN_FAMILY, quals[j], values[j]);
       }
     }
