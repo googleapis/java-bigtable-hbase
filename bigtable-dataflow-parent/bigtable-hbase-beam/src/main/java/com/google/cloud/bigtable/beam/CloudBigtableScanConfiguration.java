@@ -231,7 +231,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   RowRange getRowRange() {
-    return request.getRows().getRowRanges(0);
+    RowSet rows = request.getRows();
+    return rows.getRowRanges(0);
   }
 
   @Override

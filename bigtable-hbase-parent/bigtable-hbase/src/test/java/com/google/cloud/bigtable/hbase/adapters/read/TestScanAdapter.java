@@ -15,13 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest.Builder;
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
@@ -87,6 +87,15 @@ public class TestScanAdapter {
   }
 
   @Test
+  public void testNewScan() {
+    Scan scan = new Scan();
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    Assert.assertEquals(RowSet.newBuilder()
+        .addRowRanges(RowRange.getDefaultInstance()).build(),
+      request.getRows());
+  }
+
+  @Test
   public void testStartAndEndKeysAreSet() {
     byte[] startKey = Bytes.toBytes("startKey");
     byte[] stopKey = Bytes.toBytes("stopKey");
@@ -111,13 +120,8 @@ public class TestScanAdapter {
     scan.setMaxVersions(10);
     ReadRowsRequest.Builder rowRequestBuilder = scanAdapter.adapt(scan, throwingReadHooks);
     Assert.assertEquals(
-        Chain.newBuilder()
-            .addFilters(RowFilter.newBuilder()
-                .setFamilyNameRegexFilter(".*"))
-            .addFilters(RowFilter.newBuilder()
-                .setCellsPerColumnLimitFilter(10))
-            .build(),
-        rowRequestBuilder.getFilter().getChain());
+        FILTERS.limit().cellsPerColumn(10).toProto(),
+        rowRequestBuilder.getFilter());
   }
 
   @Test

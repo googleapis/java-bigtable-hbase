@@ -335,6 +335,10 @@ public final class Filters {
       return new SimpleFilter(RowFilter.newBuilder().setFamilyNameRegexFilter(regex).build());
     }
 
+    public Filter regex(ByteString regex) {
+      return new SimpleFilter(RowFilter.newBuilder().setFamilyNameRegexFilterBytes(regex).build());
+    }
+
     /** Matches only cells from columns whose families match the value. */
     public Filter exactMatch(String value) {
       return new SimpleFilter(
@@ -655,5 +659,9 @@ public final class Filters {
   public interface Filter {
     @InternalApi
     public abstract RowFilter toProto();
+  }
+
+  public Filter raw(final RowFilter rowFilter) {
+    return new SimpleFilter(rowFilter);
   }
 }
