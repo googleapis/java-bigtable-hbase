@@ -39,7 +39,7 @@ import org.junit.Test;
 public class TestAsyncBufferedMutator extends AbstractAsyncTest {
 
   @Test
-  public void testBufferdMutatorMulti() throws Exception {
+  public void testBufferdMutator() throws Exception {
     TableName defaultTableName = sharedTestEnv.getDefaultTableName();
 
     final byte[] rowKey = dataHelper.randomData("TestAsyncBufferedMutator-");
@@ -58,7 +58,7 @@ public class TestAsyncBufferedMutator extends AbstractAsyncTest {
   }
 
   @Test
-  public void testBufferdMutator() throws Exception {
+  public void testBufferdMutatorMulti() throws Exception {
     final byte[] rowKey1 = dataHelper.randomData("TestAsyncBufferedMutator-");
     final byte[] rowKey2 = dataHelper.randomData("TestAsyncBufferedMutator-");
     final byte[] qualifier = dataHelper.randomData("testQualifier-");
