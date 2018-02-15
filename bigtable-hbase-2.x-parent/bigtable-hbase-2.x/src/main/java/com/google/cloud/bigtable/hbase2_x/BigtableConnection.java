@@ -82,13 +82,43 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
   /** {@inheritDoc} */
   @Override
-  public TableBuilder getTableBuilder(TableName arg0, ExecutorService arg1) {
-    throw new UnsupportedOperationException("getTableBuilder"); // TODO
+  public TableBuilder getTableBuilder(final TableName tableName, final ExecutorService pool) {
+    return new TableBuilder() {
+
+      @Override
+      public TableBuilder setWriteRpcTimeout(int arg0) {
+        return this;
+      }
+
+      @Override
+      public TableBuilder setRpcTimeout(int arg0) {
+        return this;
+      }
+
+      @Override
+      public TableBuilder setReadRpcTimeout(int arg0) {
+        return this;
+      }
+
+      @Override
+      public TableBuilder setOperationTimeout(int arg0) {
+        return this;
+      }
+
+      @Override
+      public Table build() {
+        try {
+          return getTable(tableName, pool);
+        } catch (IOException e) {
+          throw new RuntimeException("Could not create the table", e);
+        }
+      }
+    };
   }
 
   /** {@inheritDoc} */
   @Override
-  public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
+  public Table getTable(TableName tableName, ExecutorService ignored) throws IOException {
     return new BigtableTable(this, createAdapter(tableName));
   }
 

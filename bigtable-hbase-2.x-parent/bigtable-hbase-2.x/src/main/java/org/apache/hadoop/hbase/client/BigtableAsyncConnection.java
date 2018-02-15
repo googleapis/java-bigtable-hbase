@@ -200,7 +200,8 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
 
       @Override
       public AsyncBufferedMutator build() {
-        return new BigtableAsyncBufferedMutator();
+        return new BigtableAsyncBufferedMutator(createAdapter(tableName), getConfiguration(),
+            session);
       }
     };
   }

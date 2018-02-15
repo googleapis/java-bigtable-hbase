@@ -17,10 +17,17 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncBufferedMutator;
 import org.apache.hadoop.hbase.client.Mutation;
+
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.hbase.BigtableBufferedMutatorHelper;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 
 /**
  * Bigtable implementation of {@link AsyncBufferedMutator}
@@ -29,38 +36,82 @@ import org.apache.hadoop.hbase.client.Mutation;
  */
 public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
 
+
+  private final BigtableBufferedMutatorHelper helper;
+
+  /**
+   * <p>Constructor for BigtableBufferedMutator.</p>
+   *
+   * @param adapter Converts HBase objects to Bigtable protos
+   * @param configuration For Additional configuration. TODO: move this to options
+   * @param listener Handles exceptions. By default, it just throws the exception.
+   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} to get {@link com.google.cloud.bigtable.config.BigtableOptions}, {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor}
+   * and {@link com.google.cloud.bigtable.grpc.async.BulkMutation} objects from
+   * starting the async operations on the BigtableDataClient.
+   */
+  public BigtableAsyncBufferedMutator(
+      HBaseRequestAdapter adapter,
+      Configuration configuration,
+      BigtableSession session) {
+    helper = new BigtableBufferedMutatorHelper(adapter, configuration, session);
+  }
+
+  /** {@inheritDoc} */
   @Override
   public void close() {
-    throw new UnsupportedOperationException("close"); // TODO
+    flush();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void flush() {
-    throw new UnsupportedOperationException("flush"); // TODO
+    helper.sendUnsent();
   }
 
+  /** {@inheritDoc} */
   @Override
   public Configuration getConfiguration() {
-    throw new UnsupportedOperationException("getConfiguration"); // TODO
+    return helper.getConfiguration();
   }
 
+  /** {@inheritDoc} */
   @Override
   public TableName getName() {
-    throw new UnsupportedOperationException("getName"); // TODO
+    return helper.getName();
   }
 
+  /** {@inheritDoc} */
   @Override
   public long getWriteBufferSize() {
-    throw new UnsupportedOperationException("getWriteBufferSize"); // TODO
+    return helper.getWriteBufferSize();
   }
 
+  /** {@inheritDoc} */
   @Override
-  public CompletableFuture<Void> mutate(Mutation arg0) {
-    throw new UnsupportedOperationException("mutate"); // TODO
+  public List<CompletableFuture<Void>> mutate(List<? extends Mutation> mutations) {
+    Stream<CompletableFuture<Void>> stream = helper.mutate(mutations).stream()
+        .map(lfuture -> FutureUtils.toCompletableFuture(lfuture).thenApply(r-> null));
+    return stream.collect(Collectors.toList());
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * Being a Mutation. This method will block if either of the following are true:
+   * 1) There are more than {@code maxInflightRpcs} RPCs in flight
+   * 2) There are more than {@link #getWriteBufferSize()} bytes pending
+   */
   @Override
-  public List<CompletableFuture<Void>> mutate(List<? extends Mutation> arg0) {
-    throw new UnsupportedOperationException("mutate"); // TODO
+  public CompletableFuture<Void> mutate(final Mutation mutation) {
+    return FutureUtils.toCompletableFuture(helper.mutate(mutation)).thenApply(r -> null);
+  }
+
+  /**
+   * <p>hasInflightRequests.</p>
+   *
+   * @return a boolean.
+   */
+  public boolean hasInflightRequests() {
+    return helper.hasInflightRequests();
   }
 }
