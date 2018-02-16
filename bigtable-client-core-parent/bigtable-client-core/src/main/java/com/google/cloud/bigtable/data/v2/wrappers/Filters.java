@@ -15,20 +15,21 @@
  */
 package com.google.cloud.bigtable.data.v2.wrappers;
 
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ColumnRange;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.TimestampRange;
 import com.google.bigtable.v2.ValueRange;
 import com.google.cloud.bigtable.data.v2.internal.RegexUtil;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
+import javax.annotation.Nonnull;
 
 /**
  * A Fluent DSL to create a hierarchy of filters for the CheckAndMutateRow RPCs and ReadRows Query.
  *
- * <p>Intended usage is to statically import, or in case of conflict assign the static variable FILTERS
- * and use its fluent API to build filters.
+ * <p>Intended usage is to statically import, or in case of conflict, assign the static variable
+ * FILTERS and use its fluent API to build filters.
  *
  * <p>Sample code:
  *
@@ -61,7 +62,7 @@ public final class Filters {
 
   /**
    * Creates an empty chain filter list. Filters can be added to the chain by invoking {@link
-   * ChainFilter#filter(Filter)}.
+   * ChainFilter#filter(Filters.Filter)}.
    *
    * <p>The elements of "filters" are chained together to process the input row:
    *
@@ -76,7 +77,7 @@ public final class Filters {
 
   /**
    * Creates an empty interleave filter list. Filters can be added to the interleave by invoking
-   * {@link InterleaveFilter#filter(Filter)}.
+   * {@link InterleaveFilter#filter(Filters.Filter)}.
    *
    * <p>The elements of "filters" all process a copy of the input row, and the results are pooled,
    * sorted, and combined into a single output row. If multiple cells are produced with the same
@@ -89,18 +90,20 @@ public final class Filters {
 
   /**
    * Creates an empty condition filter. The filter results of the predicate can be configured by
-   * invoking {@link ConditionFilter#then(Filter)} and {@link ConditionFilter#otherwise(Filter)}.
+   * invoking {@link ConditionFilter#then(Filters.Filter)} and {@link
+   * ConditionFilter#otherwise(Filters.Filter)}.
    *
    * <p>A RowFilter which evaluates one of two possible RowFilters, depending on whether or not a
    * predicate RowFilter outputs any cells from the input row.
    *
    * <p>IMPORTANT NOTE: The predicate filter does not execute atomically with the {@link
-   * ConditionFilter#then(Filter)} and {@link ConditionFilter#otherwise(Filter)} (Filter)} filters,
-   * which may lead to inconsistent or unexpected results. Additionally, {@link ConditionFilter} may
-   * have poor performance, especially when filters are set for the {@link
-   * ConditionFilter#otherwise(Filter)}.
+   * ConditionFilter#then(Filters.Filter)} and {@link ConditionFilter#otherwise(Filters.Filter)}
+   * (Filter)} filters, which may lead to inconsistent or unexpected results. Additionally, {@link
+   * ConditionFilter} may have poor performance, especially when filters are set for the {@link
+   * ConditionFilter#otherwise(Filters.Filter)}.
    */
-  public ConditionFilter condition(Filter predicate) {
+  public ConditionFilter condition(@Nonnull Filter predicate) {
+    Preconditions.checkNotNull(predicate);
     return new ConditionFilter(predicate);
   }
 
@@ -140,7 +143,11 @@ public final class Filters {
   }
 
   // Miscellaneous filters without a clear target.
-  public Filter raw(final RowFilter rowFilter) {
+  /**
+   * Wraps protobuf representation of a filter.
+   * <p>For advanced use only.
+   */
+  public Filter raw(RowFilter rowFilter) {
     return new SimpleFilter(rowFilter);
   }
 
@@ -176,14 +183,14 @@ public final class Filters {
    * label. It is okay for an {@link InterleaveFilter} to contain multiple labels, as they will be
    * applied to separate copies of the input. This may be relaxed in the future.
    */
-  public Filter label(String label) {
+  public Filter label(@Nonnull String label) {
+    Preconditions.checkNotNull(label);
     return new SimpleFilter(RowFilter.newBuilder().setApplyLabelTransformer(label).build());
   }
 
   // Implementations of target specific filters.
   /** DSL for adding filters to a chain. */
   public static final class ChainFilter implements Filter, Cloneable {
-
     private final RowFilter.Chain.Builder builder;
 
     private ChainFilter() {
@@ -195,7 +202,8 @@ public final class Filters {
     }
 
     /** Add a filter to chain. */
-    public ChainFilter filter(Filter filter) {
+    public ChainFilter filter(@Nonnull Filter filter) {
+      Preconditions.checkNotNull(filter);
       builder.addFilters(filter.toProto());
       return this;
     }
@@ -210,9 +218,7 @@ public final class Filters {
       }
     }
 
-    /**
-     * Makes a deep copy of the Chain.
-     */
+    /** Makes a deep copy of the Chain. */
     @Override
     public ChainFilter clone() {
       return new ChainFilter(builder.build().toBuilder());
@@ -221,15 +227,15 @@ public final class Filters {
 
   /** DSL for adding filters to the interleave list. */
   public static final class InterleaveFilter implements Filter {
-    RowFilter.Interleave.Builder builder = RowFilter.Interleave.newBuilder();
+    private RowFilter.Interleave.Builder builder;
 
     private InterleaveFilter() {
+      builder = RowFilter.Interleave.newBuilder();
     }
 
-    /**
-     * Adds a {@link Filter} to the interleave list.
-     */
-    public InterleaveFilter filter(Filter filter) {
+    /** Adds a {@link Filter} to the interleave list. */
+    public InterleaveFilter filter(@Nonnull Filter filter) {
+      Preconditions.checkNotNull(filter);
       builder.addFilters(filter.toProto());
       return this;
     }
@@ -247,23 +253,23 @@ public final class Filters {
 
   /** DSL for configuring a conditional filter. */
   public static final class ConditionFilter implements Filter {
-    private RowFilter.Condition.Builder builder = RowFilter.Condition.newBuilder();
+    private RowFilter.Condition.Builder builder;
 
-    private ConditionFilter() {
-    }
-
-    private ConditionFilter(Filter predicate) {
-      builder.setPredicateFilter(predicate.toProto());
+    private ConditionFilter(@Nonnull Filter predicate) {
+        Preconditions.checkNotNull(predicate);
+        builder = RowFilter.Condition.newBuilder().setPredicateFilter(predicate.toProto());
     }
 
     /** Sets (replaces) the filter to apply when the predicate is true. */
-    public ConditionFilter then(Filter filter) {
+    public ConditionFilter then(@Nonnull Filter filter) {
+      Preconditions.checkNotNull(filter);
       builder.setTrueFilter(filter.toProto());
       return this;
     }
 
     /** Sets (replaces) the filter to apply when the predicate is false. */
-    public ConditionFilter otherwise(Filter filter) {
+    public ConditionFilter otherwise(@Nonnull Filter filter) {
+      Preconditions.checkNotNull(filter);
       builder.setFalseFilter(filter.toProto());
       return this;
     }
@@ -271,47 +277,50 @@ public final class Filters {
     @InternalApi
     @Override
     public RowFilter toProto() {
+      Preconditions.checkState(
+          builder.hasTrueFilter() || builder.hasFalseFilter(),
+          "ConditionFilter must have either a then or otherwise filter.");
       return RowFilter.newBuilder().setCondition(builder.build()).build();
     }
   }
 
   public static final class KeyFilter {
-
-    private KeyFilter() {
-    }
+    private KeyFilter() {}
 
     /**
      * Matches only cells from rows whose keys satisfy the given <a
-     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. In other words, passes through
-     * the entire row when the key matches, and otherwise produces an empty row. Note that, since
-     * row keys can contain arbitrary bytes, the `\C` escape sequence must be used if a true
+     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. In other words, passes
+     * through the entire row when the key matches, and otherwise produces an empty row. Note that,
+     * since row keys can contain arbitrary bytes, the `\C` escape sequence must be used if a true
      * wildcard is desired. The `.` character will not match the new line character `\n`, which may
      * be present in a binary key.
      */
-    public Filter regex(String regex) {
+    public Filter regex(@Nonnull String regex) {
+      Preconditions.checkNotNull(regex);
       return regex(ByteString.copyFromUtf8(regex));
     }
 
     /**
      * Matches only cells from rows whose keys satisfy the given <a
-     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. In other words, passes through
-     * the entire row when the key matches, and otherwise produces an empty row. Note that, since
-     * row keys can contain arbitrary bytes, the `\C` escape sequence must be used if a true
+     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. In other words, passes
+     * through the entire row when the key matches, and otherwise produces an empty row. Note that,
+     * since row keys can contain arbitrary bytes, the `\C` escape sequence must be used if a true
      * wildcard is desired. The `.` character will not match the new line character `\n`, which may
      * be present in a binary key.
      */
-    public Filter regex(ByteString regex) {
-      return new SimpleFilter(
-          RowFilter.newBuilder().setRowKeyRegexFilter(regex).build());
+    public Filter regex(@Nonnull ByteString regex) {
+      Preconditions.checkNotNull(regex);
+      return new SimpleFilter(RowFilter.newBuilder().setRowKeyRegexFilter(regex).build());
     }
 
     /**
      * Matches only cells from rows whose keys equal the value. In other words, passes through the
      * entire row when the key matches, and otherwise produces an empty row.
      */
-    public Filter exactMatch(ByteString value) {
-      return new SimpleFilter(
-          RowFilter.newBuilder().setRowKeyRegexFilter(RegexUtil.literalRegex(value)).build());
+    public Filter exactMatch(@Nonnull ByteString value) {
+      Preconditions.checkNotNull(value);
+
+      return regex(RegexUtil.literalRegex(value));
     }
 
     /**
@@ -319,41 +328,42 @@ public final class Filters {
      * probability 1-`probability`.
      */
     public Filter sample(double probability) {
+      Preconditions.checkArgument(0 <= probability, "Probability must be positive");
+      Preconditions.checkArgument(probability <= 1.0, "Probability must be less than 1.0");
+
       return new SimpleFilter(RowFilter.newBuilder().setRowSampleFilter(probability).build());
     }
   }
 
   public static final class FamilyFilter {
-
-    private FamilyFilter() {
-    }
+    private FamilyFilter() {}
 
     /**
-     * Matches only cells from columns whose families satisfy the given
-     * <a href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. For technical reasons, the
+     * Matches only cells from columns whose families satisfy the given <a
+     * href="https://github.com/google/re2/wiki/Syntax">RE2 regex</a>. For technical reasons, the
      * regex must not contain the `:` character, even if it is not being used as a literal. Note
      * that, since column families cannot contain the new line character `\n`, it is sufficient to
      * use `.` as a full wildcard when matching column family names.
      */
-    public Filter regex(String regex) {
+    public Filter regex(@Nonnull String regex) {
+      Preconditions.checkNotNull(regex);
       return new SimpleFilter(RowFilter.newBuilder().setFamilyNameRegexFilter(regex).build());
     }
 
-    public Filter regex(ByteString regex) {
+    public Filter regex(@Nonnull ByteString regex) {
+      Preconditions.checkNotNull(regex);
       return new SimpleFilter(RowFilter.newBuilder().setFamilyNameRegexFilterBytes(regex).build());
     }
 
     /** Matches only cells from columns whose families match the value. */
-    public Filter exactMatch(String value) {
-      return new SimpleFilter(
-          RowFilter.newBuilder().setFamilyNameRegexFilter(RegexUtil.literalRegex(value)).build());
+    public Filter exactMatch(@Nonnull String value) {
+      Preconditions.checkNotNull(value);
+      return regex(RegexUtil.literalRegex(value));
     }
   }
 
   public static final class QualifierFilter {
-
-    private QualifierFilter() {
-    }
+    private QualifierFilter() {}
 
     /**
      * Matches only cells from columns whose qualifiers satisfy the given <a
@@ -362,7 +372,8 @@ public final class Filters {
      * wildcard is desired. The `.` character will not match the new line character `\n`, which may
      * be present in a binary qualifier.
      */
-    public Filter regex(String regex) {
+    public Filter regex(@Nonnull String regex) {
+      Preconditions.checkNotNull(regex);
       return regex(ByteString.copyFromUtf8(regex));
     }
 
@@ -373,31 +384,31 @@ public final class Filters {
      * wildcard is desired. The `.` character will not match the new line character `\n`, which may
      * be present in a binary qualifier.
      */
-    public Filter regex(ByteString regex) {
-      return new SimpleFilter(
-          RowFilter.newBuilder()
-              .setColumnQualifierRegexFilter(regex)
-              .build());
+    public Filter regex(@Nonnull ByteString regex) {
+      Preconditions.checkNotNull(regex);
+
+      return new SimpleFilter(RowFilter.newBuilder().setColumnQualifierRegexFilter(regex).build());
     }
 
     /** Matches only cells from columns whose qualifiers equal the value. */
-    public Filter exactMatch(ByteString value) {
+    public Filter exactMatch(@Nonnull ByteString value) {
+      Preconditions.checkNotNull(value);
       return regex(RegexUtil.literalRegex(value));
     }
 
     /**
      * Construct a {@link QualifierRangeFilter} that can create a {@link ColumnRange} oriented
      * {@link Filter}.
+     *
      * @return a new {@link QualifierRangeFilter}
      */
-    public QualifierRangeFilter rangeWithinFamily(String family) {
+    public QualifierRangeFilter rangeWithinFamily(@Nonnull String family) {
+      Preconditions.checkNotNull(family);
       return new QualifierRangeFilter(family);
     }
   }
 
-  /**
-   * Matches only cells from columns within the given range.
-   */
+  /** Matches only cells from columns within the given range. */
   public static final class QualifierRangeFilter implements Filter{
     private ColumnRange.Builder range = ColumnRange.newBuilder();
 
@@ -445,9 +456,7 @@ public final class Filters {
   }
 
   public static final class TimestampFilter {
-
-    private TimestampFilter() {
-    }
+    private TimestampFilter() {}
 
     /**
      * Matches only cells with timestamps within the given range.
@@ -470,8 +479,8 @@ public final class Filters {
   }
 
   /**
-   * Matches only cells with microsecond timestamps within the given range.  Start is inclusive
-   * and end is exclusive.
+   * Matches only cells with microsecond timestamps within the given range. Start is inclusive and
+   * end is exclusive.
    */
   public static final class TimestampRangeFilter implements Filter {
     private final TimestampRange.Builder range = TimestampRange.newBuilder();
@@ -507,9 +516,7 @@ public final class Filters {
   }
 
   public static final class ValueFilter {
-
-    private ValueFilter() {
-    }
+    private ValueFilter() {}
 
     /**
      * Matches only cells with values that satisfy the given <a
@@ -517,16 +524,15 @@ public final class Filters {
      * can contain arbitrary bytes, the `\C` escape sequence must be used if a true wildcard is
      * desired. The `.` character will not match the new line character `\n`, which may be present
      * in a binary value.
-     *
-     * @param regex
-     * @return
      */
-    public Filter regex(String regex) {
+    public Filter regex(@Nonnull String regex) {
+      Preconditions.checkNotNull(regex);
       return regex(ByteString.copyFromUtf8(regex));
     }
 
     /** Matches only cells with values that match the given value. */
-    public Filter exactMatch(ByteString value) {
+    public Filter exactMatch(@Nonnull ByteString value) {
+      Preconditions.checkNotNull(value);
       return regex(RegexUtil.literalRegex(value));
     }
 
@@ -536,17 +542,16 @@ public final class Filters {
      * can contain arbitrary bytes, the `\C` escape sequence must be used if a true wildcard is
      * desired. The `.` character will not match the new line character `\n`, which may be present
      * in a binary value.
-     *
-     * @param regex
-     * @return
      */
-    public Filter regex(ByteString regex) {
+    public Filter regex(@Nonnull ByteString regex) {
+      Preconditions.checkNotNull(regex);
       return new SimpleFilter(RowFilter.newBuilder().setValueRegexFilter(regex).build());
     }
 
     /**
-     * Construct a {@link ValueRangeFilter} that can create a {@link ValueRange} oriented
-     * {@link Filter}.
+     * Construct a {@link ValueRangeFilter} that can create a {@link ValueRange} oriented {@link
+     * Filter}.
+     *
      * @return a new {@link ValueRangeFilter}
      */
     public ValueRangeFilter range() {
@@ -606,9 +611,7 @@ public final class Filters {
   }
 
   public static final class OffsetFilter {
-
-    private OffsetFilter() {
-    }
+    private OffsetFilter() {}
 
     /**
      * Skips the first N cells of each row, matching all subsequent cells. If duplicate cells are
@@ -621,9 +624,7 @@ public final class Filters {
   }
 
   public static final class LimitFilter {
-
-    private LimitFilter() {
-    }
+    private LimitFilter() {}
 
     /**
      * Matches only the first N cells of each row. If duplicate cells are present, as is possible
@@ -646,10 +647,10 @@ public final class Filters {
   }
 
   private static final class SimpleFilter implements Filter {
-
     private final RowFilter proto;
 
-    private SimpleFilter(RowFilter proto) {
+    private SimpleFilter(@Nonnull RowFilter proto) {
+      Preconditions.checkNotNull(proto);
       this.proto = proto;
     }
 
@@ -662,6 +663,6 @@ public final class Filters {
 
   public interface Filter {
     @InternalApi
-    public abstract RowFilter toProto();
+    RowFilter toProto();
   }
 }
