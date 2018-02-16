@@ -45,13 +45,10 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
-import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -63,26 +60,21 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
-import com.google.protobuf.ByteString;
 
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.Span;
@@ -106,22 +98,6 @@ public abstract class AbstractBigtableTable implements Table {
     Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.put.latency");
     Timer getTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.get.latency");
   }
-
-  // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
-  // them (which they shouldn't since we built the filter), throw an exception.
-  private static final ReadHooks UNSUPPORTED_READ_HOOKS = new ReadHooks() {
-    @Override
-    public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
-      throw new IllegalStateException(
-          "We built a bad Filter for conditional mutation.");
-    }
-
-    @Override
-    public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
-      throw new UnsupportedOperationException(
-          "We built a bad Filter for conditional mutation.");
-    }
-  };
 
   private static void addBatchSizeAnnotation(Collection<?> c) {
     TRACER.getCurrentSpan().addAnnotation("batchSize",
@@ -412,24 +388,11 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
     LOG.trace("checkAndPut(byte[], byte[], byte[], CompareOp, value, Put)");
-    CheckAndMutateRowRequest.Builder requestBuilder =
-        makeConditionalMutationRequestBuilder(
-            row,
-            family,
-            qualifier,
-            compareOp,
-            value,
-            put.getRow(),
-            hbaseAdapter.adapt(put).getMutationsList());
+    CheckAndMutateRowRequest request =
+        CheckAndMutateUtil.makeConditionalMutationRequest(hbaseAdapter, row, family, qualifier,
+          compareOp, value, put.getRow(), hbaseAdapter.adapt(put).getMutationsList());
 
-    try (Closeable ss =
-        TRACER.spanBuilder("BigtableTable.checkAndPut").startScopedSpan()) {
-      CheckAndMutateRowResponse response =
-          client.checkAndMutateRow(requestBuilder.build());
-      return wasMutationApplied(requestBuilder, response);
-    } catch (Throwable t) {
-      throw logAndCreateIOException("checkAndPut", row, t);
-    }
+    return checkAndMutate(row, request, "checkAndPut");
   }
 
   /** {@inheritDoc} */
@@ -465,24 +428,11 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
     LOG.trace("checkAndDelete(byte[], byte[], byte[], CompareOp, byte[], Delete)");
-    CheckAndMutateRowRequest.Builder requestBuilder =
-        makeConditionalMutationRequestBuilder(
-            row,
-            family,
-            qualifier,
-            compareOp,
-            value,
-            delete.getRow(),
-            hbaseAdapter.adapt(delete).getMutationsList());
+    CheckAndMutateRowRequest request =
+        CheckAndMutateUtil.makeConditionalMutationRequest(hbaseAdapter, row, family, qualifier,
+          compareOp, value, delete.getRow(), hbaseAdapter.adapt(delete).getMutationsList());
 
-    try (Closeable ss =
-        TRACER.spanBuilder("BigtableTable.checkAndDelete").startScopedSpan()) {
-      CheckAndMutateRowResponse response =
-          client.checkAndMutateRow(requestBuilder.build());
-      return wasMutationApplied(requestBuilder, response);
-    } catch (Throwable t) {
-      throw logAndCreateIOException("checkAndDelete", row, t);
-    }
+    return checkAndMutate(row, request, "checkAndDelete");
   }
 
   /** {@inheritDoc} */
@@ -493,28 +443,20 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     LOG.trace("checkAndMutate(byte[], byte[], byte[], CompareOp, byte[], RowMutations)");
 
-    List<Mutation> adaptedMutations = new ArrayList<>();
-    for (org.apache.hadoop.hbase.client.Mutation mut : rm.getMutations()) {
-      adaptedMutations.addAll(hbaseAdapter.adapt(mut).getMutationsList());
-    }
+    CheckAndMutateRowRequest request =
+        CheckAndMutateUtil.makeConditionalMutationRequest(hbaseAdapter, row, family, qualifier,
+          compareOp, value, rm.getRow(), hbaseAdapter.adapt(rm).getMutationsList());
 
-    CheckAndMutateRowRequest.Builder requestBuilder =
-        makeConditionalMutationRequestBuilder(
-            row,
-            family,
-            qualifier,
-            compareOp,
-            value,
-            rm.getRow(),
-            adaptedMutations);
+    return checkAndMutate(row, request, "checkAndMutate");
+  }
 
-    try (Closeable ss =
-        TRACER.spanBuilder("BigtableTable.checkAndMutate").startScopedSpan()) {
-      CheckAndMutateRowResponse response =
-          client.checkAndMutateRow(requestBuilder.build());
-      return wasMutationApplied(requestBuilder, response);
+  private boolean checkAndMutate(final byte[] row, CheckAndMutateRowRequest request, String type)
+      throws IOException {
+    try (Closeable ss = TRACER.spanBuilder("BigtableTable." + type).startScopedSpan()) {
+      CheckAndMutateRowResponse response = client.checkAndMutateRow(request);
+      return CheckAndMutateUtil.wasMutationApplied(request, response);
     } catch (Throwable t) {
-      throw logAndCreateIOException("checkAndMutate", row, t);
+      throw logAndCreateIOException(type, row, t);
     }
   }
 
@@ -685,107 +627,6 @@ public abstract class AbstractBigtableTable implements Table {
         .add("table", tableName.getNameAsString())
         .add("host", options.getDataHost())
         .toString();
-  }
-
-  /**
-   * <p>wasMutationApplied.</p>
-   *
-   * @param requestBuilder a {@link com.google.bigtable.v2.CheckAndMutateRowRequest.Builder} object.
-   * @param response a {@link com.google.bigtable.v2.CheckAndMutateRowResponse} object.
-   * @return a boolean.
-   */
-  protected boolean wasMutationApplied(
-      CheckAndMutateRowRequest.Builder requestBuilder,
-      CheckAndMutateRowResponse response) {
-
-    // If we have true mods, we want the predicate to have matched.
-    // If we have false mods, we did not want the predicate to have matched.
-    return (requestBuilder.getTrueMutationsCount() > 0
-        && response.getPredicateMatched())
-        || (requestBuilder.getFalseMutationsCount() > 0
-        && !response.getPredicateMatched());
-  }
-
-  /**
-   * <p>makeConditionalMutationRequestBuilder.</p>
-   *
-   * @param row an array of byte.
-   * @param family an array of byte.
-   * @param qualifier an array of byte.
-   * @param compareOp a {@link org.apache.hadoop.hbase.filter.CompareFilter.CompareOp} object.
-   * @param value an array of byte.
-   * @param actionRow an array of byte.
-   * @param mutations a {@link java.util.List} object.
-   * @return a {@link com.google.bigtable.v2.CheckAndMutateRowRequest.Builder} object.
-   * @throws java.io.IOException if any.
-   */
-  protected CheckAndMutateRowRequest.Builder makeConditionalMutationRequestBuilder(
-      byte[] row,
-      byte[] family,
-      byte[] qualifier,
-      CompareFilter.CompareOp compareOp,
-      byte[] value,
-      byte[] actionRow,
-      List<com.google.bigtable.v2.Mutation> mutations) throws IOException {
-
-    if (!Arrays.equals(actionRow, row)) {
-      // The following odd exception message is for compatibility with HBase.
-      throw new DoNotRetryIOException("Action's getRow must match the passed row");
-    }
-
-    CheckAndMutateRowRequest.Builder requestBuilder =
-        CheckAndMutateRowRequest.newBuilder();
-
-    requestBuilder.setTableName(hbaseAdapter.getBigtableTableName().toString());
-
-    requestBuilder.setRowKey(ByteString.copyFrom(row));
-    Scan scan = new Scan().addColumn(family, qualifier);
-    scan.setMaxVersions(1);
-    if (value == null) {
-      // If we don't have a value and we are doing CompareOp.EQUAL, we want to mutate if there
-      // is no cell with the qualifier. If we are doing CompareOp.NOT_EQUAL, we want to mutate
-      // if there is any cell. We don't actually want an extra filter for either of these cases,
-      // but we do need to invert the compare op.
-      if (CompareFilter.CompareOp.EQUAL.equals(compareOp)) {
-        requestBuilder.addAllFalseMutations(mutations);
-      } else if (CompareFilter.CompareOp.NOT_EQUAL.equals(compareOp)) {
-        requestBuilder.addAllTrueMutations(mutations);
-      }
-    } else {
-      ValueFilter valueFilter =
-          new ValueFilter(reverseCompareOp(compareOp), new BinaryComparator(value));
-      scan.setFilter(valueFilter);
-      requestBuilder.addAllTrueMutations(mutations);
-    }
-    requestBuilder.setPredicateFilter(
-      Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS));
-    return requestBuilder;
-  }
-
-  /**
-   * For some reason, the ordering of CheckAndMutate operations is the inverse order of normal
-   * {@link ValueFilter} operations.
-   *
-   * @param compareOp
-   * @return the inverse of compareOp
-   */
-  private static CompareOp reverseCompareOp(CompareOp compareOp) {
-    switch (compareOp) {
-    case EQUAL:
-    case NOT_EQUAL:
-    case NO_OP:
-      return compareOp;
-    case LESS:
-      return CompareOp.GREATER;
-    case LESS_OR_EQUAL:
-      return CompareOp.GREATER_OR_EQUAL;
-    case GREATER:
-      return CompareOp.LESS;
-    case GREATER_OR_EQUAL:
-      return CompareOp.LESS_OR_EQUAL;
-    default:
-      return CompareOp.NO_OP;
-    }
   }
 
   static String makeGenericExceptionMessage(String operation, String projectId, String tableName) {

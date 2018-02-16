@@ -26,11 +26,35 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 
 public class BigtableTable extends AbstractBigtableTable {
+
+  @SuppressWarnings("deprecation")
+  public static final CompareOp toCompareOp(CompareOperator compareOp) {
+    switch(compareOp) {
+    case EQUAL:
+      return CompareOp.EQUAL;
+    case GREATER:
+      return CompareOp.GREATER;
+    case GREATER_OR_EQUAL:
+      return CompareOp.GREATER_OR_EQUAL;
+    case LESS:
+      return CompareOp.LESS;
+    case LESS_OR_EQUAL:
+      return CompareOp.LESS_OR_EQUAL;
+    case NO_OP:
+      return CompareOp.NO_OP;
+    case NOT_EQUAL:
+      return CompareOp.NOT_EQUAL;
+    default:
+      throw new IllegalArgumentException("CompareOp type: " + compareOp + " cannot be converted");
+    }
+  }
 
   public BigtableTable(AbstractBigtableConnection bigtableConnection,
       HBaseRequestAdapter hbaseAdapter) {
@@ -38,21 +62,23 @@ public class BigtableTable extends AbstractBigtableTable {
   }
 
   @Override
-  public boolean checkAndDelete(byte[] arg0, byte[] arg1, byte[] arg2, CompareOperator arg3,
-      byte[] arg4, Delete arg5) throws IOException {
-    return false;
+  public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
+      CompareOperator compareOp, byte[] value, Delete delete) throws IOException {
+    return super.checkAndDelete(row, family, qualifier, toCompareOp(compareOp), value, delete);
+  }
+
+
+  @Override
+  public boolean checkAndMutate(final byte[] row, final byte[] family, final byte[] qualifier,
+      final CompareOperator compareOp, final byte[] value, final RowMutations rm)
+      throws IOException {
+    return super.checkAndMutate(row, family, qualifier, toCompareOp(compareOp), value, rm);
   }
 
   @Override
-  public boolean checkAndMutate(byte[] arg0, byte[] arg1, byte[] arg2, CompareOperator arg3,
-      byte[] arg4, RowMutations arg5) throws IOException {
-    return false;
-  }
-
-  @Override
-  public boolean checkAndPut(byte[] arg0, byte[] arg1, byte[] arg2, CompareOperator arg3,
-      byte[] arg4, Put arg5) throws IOException {
-    return false;
+  public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
+      CompareOperator compareOp, byte[] value, Put put) throws IOException {
+    return super.checkAndPut(row, family, qualifier, toCompareOp(compareOp), value, put);
   }
 
   @Override
