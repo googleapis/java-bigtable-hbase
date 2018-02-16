@@ -75,7 +75,6 @@ public class BigtableBufferedMutatorHelper {
    * </p>
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
-   * @param listener Handles exceptions. By default, it just throws the exception.
    * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} to get
    *          {@link com.google.cloud.bigtable.config.BigtableOptions},
    *          {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} and
