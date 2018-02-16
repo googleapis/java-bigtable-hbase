@@ -325,7 +325,7 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
     expectedException.expectMessage("Action's getRow must match");
     table.checkAndMutate(rowKey2, SharedTestEnvRule.COLUMN_FAMILY)
         .qualifier(qual)
-        .ifEquals(null)
+        .ifNotExists()
         .thenPut(put)
         .get();
   }
