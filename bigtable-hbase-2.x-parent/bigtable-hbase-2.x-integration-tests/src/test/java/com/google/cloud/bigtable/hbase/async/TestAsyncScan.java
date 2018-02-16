@@ -97,7 +97,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
     Result[] results = resultScanner.next(3);
     resultScanner.close();
 
-    Assert.assertEquals(2, results.length);
+    Assert.assertEquals(rowKeys.length, results.length);
     for (Result result : results) {
       verify(result);
     }
@@ -112,7 +112,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
         .scanAll(scan)
         .get(1, TimeUnit.MINUTES);
 
-    Assert.assertEquals(2, results.size());
+    Assert.assertEquals(rowKeys.length, results.size());
     for (Result result : results) {
       verify(result);
     }
