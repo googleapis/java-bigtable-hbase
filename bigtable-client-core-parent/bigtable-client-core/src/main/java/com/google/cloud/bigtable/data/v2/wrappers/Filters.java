@@ -18,9 +18,10 @@ package com.google.cloud.bigtable.data.v2.wrappers;
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ColumnRange;
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.TimestampRange;
 import com.google.bigtable.v2.ValueRange;
 import com.google.cloud.bigtable.data.v2.internal.RegexUtil;
+import com.google.cloud.bigtable.data.v2.wrappers.Range.AbstractByteStringRange;
+import com.google.cloud.bigtable.data.v2.wrappers.Range.AbstractTimestampRange;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import javax.annotation.Nonnull;
@@ -409,49 +410,45 @@ public final class Filters {
   }
 
   /** Matches only cells from columns within the given range. */
-  public static final class QualifierRangeFilter implements Filter{
-    private ColumnRange.Builder range = ColumnRange.newBuilder();
+  public static final class QualifierRangeFilter
+      extends AbstractByteStringRange<QualifierRangeFilter> implements Filter {
+    private final String family;
 
     private QualifierRangeFilter(String family) {
-      range.setFamilyName(Preconditions.checkNotNull(family));
-    }
-
-    /**
-     * Used when giving an inclusive lower bound for the range.
-     */
-    public QualifierRangeFilter startClosed(ByteString value) {
-      range.setStartQualifierClosed(value);
-      return this;
-    }
-
-    /**
-     * Used when giving an exclusive lower bound for the range.
-     */
-    public QualifierRangeFilter startOpen(ByteString value) {
-      range.setStartQualifierOpen(value);
-      return this;
-    }
-
-    /**
-     * sed when giving an inclusive upper bound for the range.
-     */
-    public QualifierRangeFilter endClosed(ByteString value) {
-      range.setEndQualifierClosed(value);
-      return this;
-    }
-
-    /**
-     * Used when giving an exclusive upper bound for the range.
-     */
-    public QualifierRangeFilter endOpen(ByteString value) {
-      range.setEndQualifierOpen(value);
-      return this;
+      this.family = family;
     }
 
     @InternalApi
     @Override
     public RowFilter toProto() {
-      return RowFilter.newBuilder().setColumnRangeFilter(range.build()).build();
+      ColumnRange.Builder builder = ColumnRange.newBuilder().setFamilyName(family);
+
+      switch (getStartBound()) {
+        case CLOSED:
+          builder.setStartQualifierClosed(getStart());
+          break;
+        case OPEN:
+          builder.setStartQualifierOpen(getStart());
+          break;
+        case UNBOUNDED:
+          break;
+        default:
+          throw new IllegalStateException("Unknown start bound: " + getStartBound());
+      }
+      switch (getEndBound()) {
+        case CLOSED:
+          builder.setEndQualifierClosed(getEnd());
+          break;
+        case OPEN:
+          builder.setEndQualifierOpen(getEnd());
+          break;
+        case UNBOUNDED:
+          break;
+        default:
+          throw new IllegalStateException("Unknown end bound: " + getEndBound());
+      }
+
+      return RowFilter.newBuilder().setColumnRangeFilter(builder.build()).build();
     }
   }
 
@@ -479,39 +476,43 @@ public final class Filters {
   }
 
   /**
-   * Matches only cells with microsecond timestamps within the given range. Start is inclusive and
-   * end is exclusive.
+   * Matches only cells with microsecond timestamps within the given range.
    */
-  public static final class TimestampRangeFilter implements Filter {
-    private final TimestampRange.Builder range = TimestampRange.newBuilder();
-
-    private TimestampRangeFilter() {
-    }
-
-    /**
-     * Inclusive lower bound. If left empty, interpreted as 0.
-     *
-     * @param startMicros inclusive timestamp in microseconds.
-     */
-    public TimestampRangeFilter startClosed(long startMicros) {
-      range.setStartTimestampMicros(startMicros);
-      return this;
-    }
-
-    /**
-     * Exclusive upper bound. If left empty, interpreted as infinity.
-     *
-     * @param endMicros exclusive timestamp in microseconds.
-     */
-    public TimestampRangeFilter endOpen(long endMicros) {
-      range.setEndTimestampMicros(endMicros);
-      return this;
-    }
+  public static final class TimestampRangeFilter
+      extends AbstractTimestampRange<TimestampRangeFilter> implements Filter {
+    private TimestampRangeFilter() {}
 
     @InternalApi
     @Override
     public RowFilter toProto() {
-      return RowFilter.newBuilder().setTimestampRangeFilter(range.build()).build();
+      com.google.bigtable.v2.TimestampRange.Builder builder =
+          com.google.bigtable.v2.TimestampRange.newBuilder();
+
+      switch (getStartBound()) {
+        case CLOSED:
+          builder.setStartTimestampMicros(getStart());
+          break;
+        case OPEN:
+          builder.setStartTimestampMicros(getStart() + 1);
+          break;
+        case UNBOUNDED:
+          break;
+        default:
+          throw new IllegalStateException("Unknown start bound: " + getStartBound());
+      }
+      switch (getEndBound()) {
+        case CLOSED:
+          builder.setEndTimestampMicros(getEnd() + 1);
+          break;
+        case OPEN:
+          builder.setEndTimestampMicros(getEnd());
+          break;
+        case UNBOUNDED:
+          break;
+        default:
+          throw new IllegalStateException("Unknown end bound: " + getEndBound());
+      }
+      return RowFilter.newBuilder().setTimestampRangeFilter(builder.build()).build();
     }
   }
 
@@ -565,48 +566,39 @@ public final class Filters {
   }
 
   /** Matches only cells with values that fall within the given value range. */
-  public static final class ValueRangeFilter implements Filter{
-    private ValueRange.Builder range = ValueRange.newBuilder();
-
-    private ValueRangeFilter() {
-    }
-
-    /**
-     * Used when giving an inclusive lower bound for the range.
-     */
-    public ValueRangeFilter startClosed(ByteString value) {
-      range.setStartValueClosed(value);
-      return this;
-    }
-
-    /**
-     * Used when giving an exclusive lower bound for the range.
-     */
-    public ValueRangeFilter startOpen(ByteString value) {
-      range.setStartValueOpen(value);
-      return this;
-    }
-
-    /**
-     * Used when giving an inclusive upper bound for the range.
-     */
-    public ValueRangeFilter endClosed(ByteString value) {
-      range.setEndValueClosed(value);
-      return this;
-    }
-
-    public ValueRangeFilter endOpen(ByteString value) {
-      /**
-       * Used when giving an exclusive upper bound for the range.
-       */
-      range.setEndValueOpen(value);
-      return this;
-    }
+  public static final class ValueRangeFilter extends AbstractByteStringRange<ValueRangeFilter>
+      implements Filter {
+    private ValueRangeFilter() {}
 
     @InternalApi
     @Override
     public RowFilter toProto() {
-      return RowFilter.newBuilder().setValueRangeFilter(range.build()).build();
+      ValueRange.Builder builder = ValueRange.newBuilder();
+      switch (getStartBound()) {
+        case CLOSED:
+          builder.setStartValueClosed(getStart());
+          break;
+        case OPEN:
+          builder.setStartValueOpen(getStart());
+          break;
+        case UNBOUNDED:
+          break;
+        default:
+          throw new IllegalStateException("Unknown start bound: " + getStartBound());
+      }
+      switch (getEndBound()) {
+        case CLOSED:
+          builder.setEndValueClosed(getEnd());
+          break;
+        case OPEN:
+          builder.setEndValueOpen(getEnd());
+          break;
+        case UNBOUNDED:
+          break;
+        default:
+          throw new IllegalStateException("Unknown end bound: " + getEndBound());
+      }
+      return RowFilter.newBuilder().setValueRangeFilter(builder.build()).build();
     }
   }
 
