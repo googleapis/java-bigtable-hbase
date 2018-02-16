@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
@@ -42,21 +43,27 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
+import org.apache.hadoop.hbase.shaded.com.google.common.base.Preconditions;
 
+import com.google.bigtable.v2.CheckAndMutateRowRequest;
+import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
-import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -70,6 +77,7 @@ import io.opencensus.trace.Tracing;
  * 
  * @author spollapally
  */
+@SuppressWarnings("deprecation")
 public class BigtableAsyncTable implements AsyncTable {
 
   protected static final Logger LOG = new Logger(AbstractBigtableTable.class);
@@ -124,8 +132,106 @@ public class BigtableAsyncTable implements AsyncTable {
   }
 
   @Override
-  public CheckAndMutateBuilder checkAndMutate(byte[] rowParam, byte[] familyParam) {
-    throw new UnsupportedOperationException("checkAndMutate"); // TODO
+  public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
+    return new CheckAndMutateBuilderImpl(row, family);
+  }
+
+
+  private final class CheckAndMutateBuilderImpl implements CheckAndMutateBuilder {
+
+    private final byte[] row;
+
+    private final byte[] family;
+
+    private byte[] qualifier;
+
+    private CompareOperator op;
+
+    private byte[] value;
+
+    CheckAndMutateBuilderImpl(byte[] row, byte[] family) {
+      this.row = Preconditions.checkNotNull(row, "row is null");
+      this.family = Preconditions.checkNotNull(family, "family is null");
+    }
+
+    @Override
+    public CheckAndMutateBuilder qualifier(byte[] qualifier) {
+      this.qualifier = Preconditions.checkNotNull(qualifier, "qualifier is null. Consider using" +
+          " an empty byte array, or just do not call this method if you want a null qualifier");
+      return this;
+    }
+
+    @Override
+    public CheckAndMutateBuilder ifNotExists() {
+      this.op = CompareOperator.EQUAL;
+      this.value = null;
+      return this;
+    }
+
+    @Override
+    public CheckAndMutateBuilder ifMatches(CompareOperator compareOp, byte[] value) {
+      this.op = Preconditions.checkNotNull(compareOp, "compareOp is null");
+      this.value = Preconditions.checkNotNull(value, "value is null");
+      return this;
+    }
+
+    private void preCheck() {
+      Preconditions.checkNotNull(op, "condition is null. You need to specify the condition by" +
+          " calling ifNotExists/ifEquals/ifMatches before executing the request");
+    }
+
+    @Override
+    public CompletableFuture<Boolean> thenPut(Put put) {
+      preCheck();
+      try {
+        return call(put.getRow(), hbaseAdapter.adapt(put).getMutationsList());
+      } catch (Exception e) {
+        return FutureUtils.failedFuture(e);
+      }
+    }
+
+    private CheckAndMutateRowRequest getRequest(CompareOp compareOp, byte[] actionRow,
+        List<Mutation> mutations) throws IOException {
+      return CheckAndMutateUtil.makeConditionalMutationRequest(
+          hbaseAdapter,
+          row,
+          family,
+          qualifier,
+          compareOp,
+          value,
+          actionRow,
+          mutations);
+    }
+
+    private CompletableFuture<Boolean> call(byte[] row,
+        List<Mutation> mutations) throws IOException {
+      CompareOp compareOp = BigtableTable.toCompareOp(op);
+      CheckAndMutateRowRequest request = getRequest(compareOp, row, mutations);
+      ListenableFuture<CheckAndMutateRowResponse> lfuture = client.checkAndMutateRowAsync(request);
+      return FutureUtils.toCompletableFuture(lfuture).thenApply(
+        response -> CheckAndMutateUtil.wasMutationApplied(request, response));
+    }
+
+    @Override
+    public CompletableFuture<Boolean> thenDelete(Delete delete) {
+      preCheck();
+      try {
+        return call(delete.getRow(), hbaseAdapter.adapt(delete).getMutationsList());
+      } catch (Exception e) {
+        return FutureUtils.failedFuture(e);
+      }
+    }
+
+    @Override
+    public CompletableFuture<Boolean> thenMutate(RowMutations mutation) {
+      preCheck();
+      try {
+        return call(mutation.getRow(), hbaseAdapter.adapt(mutation).getMutationsList());
+      } catch (Exception e) {
+        return FutureUtils.failedFuture(e);
+      }
+
+    }
   }
 
   @Override

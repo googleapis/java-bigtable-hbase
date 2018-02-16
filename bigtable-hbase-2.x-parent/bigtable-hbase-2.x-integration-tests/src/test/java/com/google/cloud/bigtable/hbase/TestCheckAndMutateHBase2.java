@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,14 @@ package com.google.cloud.bigtable.hbase;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -39,7 +38,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RunWith(JUnit4.class)
-public class TestCheckAndMutate extends AbstractTest {
+public class TestCheckAndMutateHBase2 extends AbstractTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
@@ -81,7 +80,7 @@ public class TestCheckAndMutate extends AbstractTest {
 
     // Check results
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals("Should be two results", 2, result.size());
     List<Cell> cells = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, qual);
@@ -150,7 +149,7 @@ public class TestCheckAndMutate extends AbstractTest {
 
     // Check results
     Get get = new Get(rowKey);
-    get.setMaxVersions(5);
+    get.readVersions(5);
     Result result = table.get(get);
     Assert.assertEquals("Should be two results", 2, result.size());
     Assert.assertArrayEquals(value1, CellUtil.cloneValue(result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual1)));
@@ -217,8 +216,8 @@ public class TestCheckAndMutate extends AbstractTest {
     // Put then again
     Put put = new Put(rowKey1).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value);
     //Fix behavior as a part of Async Impl
-    //expectedException.expect(DoNotRetryIOException.class);
-    expectedException.expect(IOException.class);
+    expectedException.expect(DoNotRetryIOException.class);
+//    expectedException.expect(IOException.class);
     expectedException.expectMessage("Action's getRow must match");
     table.checkAndPut(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put);
 
@@ -235,8 +234,8 @@ public class TestCheckAndMutate extends AbstractTest {
 
     // Put then again
     Delete delete = new Delete(rowKey1).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual);
-    //expectedException.expect(DoNotRetryIOException.class);
-    expectedException.expect(IOException.class);
+    expectedException.expect(DoNotRetryIOException.class);
+//    expectedException.expect(IOException.class);
     expectedException.expectMessage("Action's getRow must match");
     table.checkAndDelete(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, delete);
 
@@ -260,9 +259,9 @@ public class TestCheckAndMutate extends AbstractTest {
     rm.add(new Delete(rowKey).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qualDelete));
 
     boolean success = table.checkAndMutate(
-        rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valueCheck, rm);
+        rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOperator.EQUAL, valueCheck, rm);
     Assert.assertFalse("Column doesn't exist.  Should fail.", success);
-    success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, null, rm);
+    success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOperator.EQUAL, null, rm);
     Assert.assertTrue(success);
 
     // Add a value now
@@ -271,14 +270,14 @@ public class TestCheckAndMutate extends AbstractTest {
         .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualDelete, Bytes.toBytes("todelete"));
     table.put(put);
     // Fail on null check, now there's a value there
-    success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, null, rm);
+    success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOperator.EQUAL, null, rm);
     Assert.assertFalse("Null check should fail", success);
     // valuePut is in qualPut and not in qualCheck so this will fail:
     success = table.checkAndMutate(
-        rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valuePut, rm);
+        rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOperator.EQUAL, valuePut, rm);
     Assert.assertFalse("Wrong value should fail", success);
     success = table.checkAndMutate(
-        rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valueCheck, rm);
+        rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOperator.EQUAL, valueCheck, rm);
     Assert.assertTrue(success);
 
     Result row = table.get(new Get(rowKey).addFamily(SharedTestEnvRule.COLUMN_FAMILY));
@@ -294,7 +293,7 @@ public class TestCheckAndMutate extends AbstractTest {
   }
 
   @Test
-  public void testCompareOps() throws IOException {
+  public void testCompareOperators() throws IOException {
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualToCheck = dataHelper.randomData("toCheck-");
     byte[] otherQual = dataHelper.randomData("other-");
@@ -309,56 +308,56 @@ public class TestCheckAndMutate extends AbstractTest {
         new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.LESS, Bytes.toBytes(1000l), someRandomPut);
+      CompareOperator.LESS, Bytes.toBytes(1000l), someRandomPut);
     Assert.assertTrue("1000 < 2000 should succeed", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.LESS, Bytes.toBytes(4000l), someRandomPut);
+      CompareOperator.LESS, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertFalse("4000 < 2000 should fail", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.GREATER, Bytes.toBytes(1000l), someRandomPut);
+      CompareOperator.GREATER, Bytes.toBytes(1000l), someRandomPut);
     Assert.assertFalse("1000 > 2000 should fail", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.GREATER, Bytes.toBytes(4000l), someRandomPut);
+      CompareOperator.GREATER, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertTrue("4000 > 2000 should succeed", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.LESS_OR_EQUAL, Bytes.toBytes(1000l), someRandomPut);
+      CompareOperator.LESS_OR_EQUAL, Bytes.toBytes(1000l), someRandomPut);
     Assert.assertTrue("1000 <= 2000 should succeed", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.LESS_OR_EQUAL, Bytes.toBytes(4000l), someRandomPut);
+      CompareOperator.LESS_OR_EQUAL, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertFalse("4000 <= 2000 should fail", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.GREATER_OR_EQUAL, Bytes.toBytes(1000l), someRandomPut);
+      CompareOperator.GREATER_OR_EQUAL, Bytes.toBytes(1000l), someRandomPut);
     Assert.assertFalse("1000 >= 2000 should fail", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.GREATER_OR_EQUAL, Bytes.toBytes(4000l), someRandomPut);
+      CompareOperator.GREATER_OR_EQUAL, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertTrue("4000 >= 2000 should succeed", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.EQUAL, Bytes.toBytes(1000l), someRandomPut);
+      CompareOperator.EQUAL, Bytes.toBytes(1000l), someRandomPut);
     Assert.assertFalse("1000 == 2000 should fail", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.EQUAL, Bytes.toBytes(2000l), someRandomPut);
+      CompareOperator.EQUAL, Bytes.toBytes(2000l), someRandomPut);
     Assert.assertTrue("2000 == 2000 should succeed", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.NOT_EQUAL, Bytes.toBytes(2000l), someRandomPut);
+      CompareOperator.NOT_EQUAL, Bytes.toBytes(2000l), someRandomPut);
     Assert.assertFalse("2000 != 2000 should fail", success);
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.NOT_EQUAL, Bytes.toBytes(4000l), someRandomPut);
+      CompareOperator.NOT_EQUAL, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertTrue("4000 != 2000 should succeed", success);
   }
 
   @Test
-  public void testCompareOpsVersions() throws IOException {
+  public void testCompareOperatorsVersions() throws IOException {
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualToCheck = dataHelper.randomData("toCheck-");
     byte[] otherQual = dataHelper.randomData("other-");
@@ -375,7 +374,7 @@ public class TestCheckAndMutate extends AbstractTest {
       qualToCheck, Bytes.toBytes(4000l)));
 
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      CompareOp.GREATER, Bytes.toBytes(3000l), someRandomPut);
+      CompareOperator.GREATER, Bytes.toBytes(3000l), someRandomPut);
     Assert.assertFalse("3000 > 4000 should fail", success);
 
   }
