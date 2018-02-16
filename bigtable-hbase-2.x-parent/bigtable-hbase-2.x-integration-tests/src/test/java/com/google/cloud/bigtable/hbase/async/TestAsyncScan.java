@@ -149,7 +149,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
       }
     });
 
-    Assert.assertEquals(2, lock.get().intValue());
+    Assert.assertEquals(rowKeys.length, lock.get().intValue());
   }
 
   private static void verify(Result result) {
