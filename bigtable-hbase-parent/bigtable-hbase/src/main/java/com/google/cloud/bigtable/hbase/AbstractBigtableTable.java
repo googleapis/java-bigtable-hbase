@@ -75,6 +75,7 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
@@ -99,7 +100,7 @@ import io.opencensus.trace.Tracing;
 public abstract class AbstractBigtableTable implements Table {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractBigtableTable.class);
-  public static final Tracer TRACER = Tracing.getTracer();
+  private static final Tracer TRACER = Tracing.getTracer();
 
   private static class TableMetrics {
     Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.put.latency");
@@ -787,7 +788,7 @@ public abstract class AbstractBigtableTable implements Table {
     }
   }
 
-  public static String makeGenericExceptionMessage(String operation, String projectId, String tableName) {
+  static String makeGenericExceptionMessage(String operation, String projectId, String tableName) {
     return String.format(
         "Failed to perform operation. Operation='%s', projectId='%s', tableName='%s'",
         operation,
