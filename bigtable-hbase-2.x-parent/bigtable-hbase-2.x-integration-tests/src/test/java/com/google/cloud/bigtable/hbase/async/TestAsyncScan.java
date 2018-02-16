@@ -72,6 +72,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
       for (int j = 0; j < numValues; j++) {
         put.addColumn(COLUMN_FAMILY, quals[j], values[j]);
       }
+      puts.add(put);
     }
     table.put(puts);
 
@@ -96,7 +97,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
     Result[] results = resultScanner.next(3);
     resultScanner.close();
 
-    Assert.assertEquals(2, results.length);
+    Assert.assertEquals(rowKeys.length, results.length);
     for (Result result : results) {
       verify(result);
     }
@@ -111,7 +112,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
         .scanAll(scan)
         .get(1, TimeUnit.MINUTES);
 
-    Assert.assertEquals(2, results.size());
+    Assert.assertEquals(rowKeys.length, results.size());
     for (Result result : results) {
       verify(result);
     }
@@ -122,16 +123,18 @@ public class TestAsyncScan extends AbstractAsyncTest {
     Scan scan = new Scan();
     scan.setRowPrefixFilter(Bytes.toBytes(prefix));
 
-    SettableFuture<Object> lock = SettableFuture.create();
+    SettableFuture<Integer> lock = SettableFuture.create();
     getDefaultAsyncTable(executor).scan(scan, new ScanResultConsumer() {
+      int count = 0;
       @Override
       public boolean onNext(Result result) {
         try {
           verify(result);
-          return false;
+          count++;
+          return true;
         } catch (Exception e) {
           lock.setException(e);
-          return true;
+          return false;
         }
       }
 
@@ -142,13 +145,11 @@ public class TestAsyncScan extends AbstractAsyncTest {
 
       @Override
       public void onComplete() {
-        if (!lock.isDone()) {
-          lock.set("");
-        }
+        lock.set(count);
       }
     });
 
-    lock.get();
+    Assert.assertEquals(rowKeys.length, lock.get().intValue());
   }
 
   private static void verify(Result result) {
