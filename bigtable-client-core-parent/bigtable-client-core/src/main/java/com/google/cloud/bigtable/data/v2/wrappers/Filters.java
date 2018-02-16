@@ -191,15 +191,11 @@ public final class Filters {
 
   // Implementations of target specific filters.
   /** DSL for adding filters to a chain. */
-  public static final class ChainFilter implements Filter, Cloneable {
-    private final RowFilter.Chain.Builder builder;
+  public static final class ChainFilter implements Filter {
+    private RowFilter.Chain.Builder builder;
 
     private ChainFilter() {
-      this(RowFilter.Chain.newBuilder());
-    }
-
-    private ChainFilter(RowFilter.Chain.Builder builder) {
-      this.builder = builder;
+      this.builder = RowFilter.Chain.newBuilder();
     }
 
     /** Add a filter to chain. */
@@ -222,7 +218,13 @@ public final class Filters {
     /** Makes a deep copy of the Chain. */
     @Override
     public ChainFilter clone() {
-      return new ChainFilter(builder.build().toBuilder());
+      try {
+        ChainFilter clone = (ChainFilter) super.clone();
+        clone.builder = builder.clone();
+        return clone;
+      } catch (CloneNotSupportedException | ClassCastException e) {
+        throw new RuntimeException("should never happen");
+      }
     }
   }
 
@@ -248,6 +250,17 @@ public final class Filters {
         return builder.getFilters(0);
       } else {
         return RowFilter.newBuilder().setInterleave(builder.build()).build();
+      }
+    }
+
+    @Override
+    public InterleaveFilter clone() {
+      try {
+        InterleaveFilter clone = (InterleaveFilter) super.clone();
+        clone.builder = builder.clone();
+        return clone;
+      } catch (CloneNotSupportedException | ClassCastException e) {
+        throw new RuntimeException("should never happen");
       }
     }
   }
@@ -282,6 +295,17 @@ public final class Filters {
           builder.hasTrueFilter() || builder.hasFalseFilter(),
           "ConditionFilter must have either a then or otherwise filter.");
       return RowFilter.newBuilder().setCondition(builder.build()).build();
+    }
+
+    @Override
+    public ConditionFilter clone() {
+      try {
+        ConditionFilter clone = (ConditionFilter) super.clone();
+        clone.builder = builder.clone();
+        return clone;
+      } catch (CloneNotSupportedException | ClassCastException e) {
+        throw new RuntimeException("should never happen");
+      }
     }
   }
 
@@ -450,6 +474,11 @@ public final class Filters {
 
       return RowFilter.newBuilder().setColumnRangeFilter(builder.build()).build();
     }
+
+    @Override
+    public QualifierRangeFilter clone() {
+      return super.clone();
+    }
   }
 
   public static final class TimestampFilter {
@@ -513,6 +542,11 @@ public final class Filters {
           throw new IllegalStateException("Unknown end bound: " + getEndBound());
       }
       return RowFilter.newBuilder().setTimestampRangeFilter(builder.build()).build();
+    }
+
+    @Override
+    public TimestampRangeFilter clone() {
+      return super.clone();
     }
   }
 
@@ -600,6 +634,11 @@ public final class Filters {
       }
       return RowFilter.newBuilder().setValueRangeFilter(builder.build()).build();
     }
+
+    @Override
+    public ValueRangeFilter clone() {
+      return super.clone();
+    }
   }
 
   public static final class OffsetFilter {
@@ -651,9 +690,18 @@ public final class Filters {
     public RowFilter toProto() {
       return proto;
     }
+
+    @Override
+    public SimpleFilter clone() {
+      try {
+        return (SimpleFilter) super.clone();
+      } catch (CloneNotSupportedException e) {
+        throw new RuntimeException("should never happen", e);
+      }
+    }
   }
 
-  public interface Filter {
+  public interface Filter extends Cloneable {
     @InternalApi
     RowFilter toProto();
   }
