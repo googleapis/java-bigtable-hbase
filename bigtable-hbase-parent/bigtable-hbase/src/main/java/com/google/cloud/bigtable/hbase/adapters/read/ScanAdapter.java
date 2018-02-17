@@ -189,7 +189,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   }
 
   private Filters.Filter createFamilyFilter(byte[] familyName) {
-    return FILTERS.family().regex(ByteStringer.wrap(quoteRegex(familyName)));
+    return FILTERS.family().exactMatch(new String(familyName));
   }
 
   private Filters.Filter createColumnLimitFilter(int maxVersionsPerColumn) {

@@ -375,11 +375,6 @@ public final class Filters {
       return new SimpleFilter(RowFilter.newBuilder().setFamilyNameRegexFilter(regex).build());
     }
 
-    public Filter regex(@Nonnull ByteString regex) {
-      Preconditions.checkNotNull(regex);
-      return new SimpleFilter(RowFilter.newBuilder().setFamilyNameRegexFilterBytes(regex).build());
-    }
-
     /** Matches only cells from columns whose families match the value. */
     public Filter exactMatch(@Nonnull String value) {
       Preconditions.checkNotNull(value);
