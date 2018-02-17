@@ -492,16 +492,6 @@ public final class Filters {
     public TimestampRangeFilter range() {
       return new TimestampRangeFilter();
     }
-
-    /**
-     * Matches only cells with timestamps within the given range.
-     *
-     * @param startMicros Inclusive start of the range in microseconds.
-     * @param endMicros Exclusive end of the range in microseconds.
-     */
-    public Filter range(long startMicros, long endMicros) {
-      return range().startClosed(startMicros).endOpen(endMicros);
-    }
   }
 
   /**

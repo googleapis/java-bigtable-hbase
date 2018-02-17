@@ -48,6 +48,6 @@ public class TimestampFilterUtil {
    */
   public static Filter toTimestampRangeFilter(long bigtableStartTimestamp,
       long bigtableEndTimestamp) {
-    return FILTERS.timestamp().range(bigtableStartTimestamp, bigtableEndTimestamp);
+    return FILTERS.timestamp().range().of(bigtableStartTimestamp, bigtableEndTimestamp);
   }
 }
