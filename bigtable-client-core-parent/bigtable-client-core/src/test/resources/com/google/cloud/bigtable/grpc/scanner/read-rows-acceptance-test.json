@@ -258,7 +258,7 @@
     {
       "name": "split cell, bare commit",
       "chunks": [
-        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"v\"\nvalue_size: 9\ncommit_row: false\n",
         "value: \"alue-VAL\"\ncommit_row: false\n",
         "commit_row: true\n"
       ],
@@ -286,7 +286,7 @@
     {
       "name": "split cell",
       "chunks": [
-        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"v\"\nvalue_size: 9\ncommit_row: false\n",
         "value: \"alue-VAL\"\ncommit_row: true\n"
       ],
       "results": [
@@ -304,9 +304,9 @@
     {
       "name": "split four ways",
       "chunks": [
-        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nlabels: \"L\"\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
-        "value: \"a\"\nvalue_size: 10\ncommit_row: false\n",
-        "value: \"l\"\nvalue_size: 10\ncommit_row: false\n",
+        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nlabels: \"L\"\nvalue: \"v\"\nvalue_size: 9\ncommit_row: false\n",
+        "value: \"a\"\nvalue_size: 9\ncommit_row: false\n",
+        "value: \"l\"\nvalue_size: 9\ncommit_row: false\n",
         "value: \"ue-VAL\"\ncommit_row: true\n"
       ],
       "results": [
@@ -324,9 +324,9 @@
     {
       "name": "two split cells",
       "chunks": [
-        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 99\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 99\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"alue-VAL_1\"\ncommit_row: false\n",
-        "timestamp_micros: 98\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "timestamp_micros: 98\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"alue-VAL_2\"\ncommit_row: true\n"
       ],
       "results": [
@@ -353,9 +353,9 @@
     {
       "name": "multi-qualifier splits",
       "chunks": [
-        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 99\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 99\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"alue-VAL_1\"\ncommit_row: false\n",
-        "qualifier: \u003c\n  value: \"D\"\n\u003e\ntimestamp_micros: 98\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "qualifier: \u003c\n  value: \"D\"\n\u003e\ntimestamp_micros: 98\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"alue-VAL_2\"\ncommit_row: true\n"
       ],
       "results": [
@@ -382,11 +382,11 @@
     {
       "name": "multi-qualifier multi-split",
       "chunks": [
-        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 99\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
-        "value: \"a\"\nvalue_size: 10\ncommit_row: false\n",
+        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 99\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
+        "value: \"a\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"lue-VAL_1\"\ncommit_row: false\n",
-        "qualifier: \u003c\n  value: \"D\"\n\u003e\ntimestamp_micros: 98\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
-        "value: \"a\"\nvalue_size: 10\ncommit_row: false\n",
+        "qualifier: \u003c\n  value: \"D\"\n\u003e\ntimestamp_micros: 98\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
+        "value: \"a\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"lue-VAL_2\"\ncommit_row: true\n"
       ],
       "results": [
@@ -413,9 +413,9 @@
     {
       "name": "multi-family split",
       "chunks": [
-        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 99\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 99\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"alue-VAL_1\"\ncommit_row: false\n",
-        "family_name: \u003c\n  value: \"B\"\n\u003e\nqualifier: \u003c\n  value: \"E\"\n\u003e\ntimestamp_micros: 98\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "family_name: \u003c\n  value: \"B\"\n\u003e\nqualifier: \u003c\n  value: \"E\"\n\u003e\ntimestamp_micros: 98\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"alue-VAL_2\"\ncommit_row: true\n"
       ],
       "results": [
@@ -818,9 +818,9 @@
     {
       "name": "two rows with splits, same timestamp",
       "chunks": [
-        "row_key: \"RK_1\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "row_key: \"RK_1\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"alue-VAL_1\"\ncommit_row: true\n",
-        "row_key: \"RK_2\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
+        "row_key: \"RK_2\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"v\"\nvalue_size: 11\ncommit_row: false\n",
         "value: \"alue-VAL_2\"\ncommit_row: true\n"
       ],
       "results": [
