@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -354,7 +355,11 @@ public class TestCheckAndMutateHBase2 extends AbstractTest {
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
       CompareOperator.NOT_EQUAL, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertTrue("4000 != 2000 should succeed", success);
-  }
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOperator.NOT_EQUAL, null, someRandomPut);
+    Assert.assertTrue("4000 != null should succeed", success);
+}
 
   @Test
   public void testCompareOperatorsVersions() throws IOException {
