@@ -56,7 +56,7 @@ public class CheckAndMutateUtil {
   /**
    * <p>wasMutationApplied.</p>
    *
-   * @param requestBuilder a {@link com.google.bigtable.v2.CheckAndMutateRowRequest.Builder} object.
+   * @param request a {@link com.google.bigtable.v2.CheckAndMutateRowRequest} object.
    * @param response a {@link com.google.bigtable.v2.CheckAndMutateRowResponse} object.
    * @return a boolean.
    */
