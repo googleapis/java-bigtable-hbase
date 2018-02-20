@@ -293,7 +293,7 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
     delete = new Delete(rowKey).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual2);
     success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY)
         .qualifier(qual1)
-        .ifEquals(null)
+        .ifNotExists()
         .thenDelete(delete)
         .get();
     Assert.assertTrue(success);
