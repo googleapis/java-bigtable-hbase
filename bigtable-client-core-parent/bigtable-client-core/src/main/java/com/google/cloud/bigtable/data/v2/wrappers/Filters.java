@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.data.v2.wrappers;
 
 import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.v2.ColumnRange;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.ValueRange;
@@ -46,6 +47,7 @@ import javax.annotation.Nonnull;
  *
  * }</pre>
  */
+@InternalExtensionOnly
 public final class Filters {
   /** Entry point into the DSL. */
   public static final Filters FILTERS = new Filters();
@@ -148,7 +150,7 @@ public final class Filters {
    * Wraps protobuf representation of a filter.
    * <p>For advanced use only.
    */
-  public Filter raw(RowFilter rowFilter) {
+  public Filter fromProto(RowFilter rowFilter) {
     return new SimpleFilter(rowFilter);
   }
 
