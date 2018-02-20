@@ -162,7 +162,10 @@ public class BigtableAsyncTable implements AsyncTable {
     @Override
     public CheckAndMutateBuilder ifMatches(CompareOperator compareOp, byte[] value) {
       this.op = Preconditions.checkNotNull(compareOp, "compareOp is null");
-      this.value = Preconditions.checkNotNull(value, "value is null");
+      if (compareOp != CompareOperator.EQUAL && compareOp != CompareOperator.NOT_EQUAL) {
+        this.value =
+            Preconditions.checkNotNull(value, "value is null for compareOperator: " + compareOp);
+      }
       return this;
     }
 
@@ -173,7 +176,6 @@ public class BigtableAsyncTable implements AsyncTable {
 
     @Override
     public CompletableFuture<Boolean> thenPut(Put put) {
-      preCheck();
       try {
         return call(put.getRow(), hbaseAdapter.adapt(put));
       } catch (Exception e) {
@@ -181,8 +183,27 @@ public class BigtableAsyncTable implements AsyncTable {
       }
     }
 
+    @Override
+    public CompletableFuture<Boolean> thenDelete(Delete delete) {
+      try {
+        return call(delete.getRow(), hbaseAdapter.adapt(delete));
+      } catch (Exception e) {
+        return FutureUtils.failedFuture(e);
+      }
+    }
+
+    @Override
+    public CompletableFuture<Boolean> thenMutate(RowMutations mutation) {
+      try {
+        return call(mutation.getRow(), hbaseAdapter.adapt(mutation));
+      } catch (Exception e) {
+        return FutureUtils.failedFuture(e);
+      }
+    }
+
     private CompletableFuture<Boolean> call(byte[] actionRow, MutateRowRequest mutateRowRequest)
         throws IOException {
+      preCheck();
       CheckAndMutateRowRequest request =
           CheckAndMutateUtil.makeConditionalMutationRequest(
               hbaseAdapter,
@@ -195,26 +216,6 @@ public class BigtableAsyncTable implements AsyncTable {
               mutateRowRequest.getMutationsList());
       return client.checkAndMutateRowAsync(request).thenApply(
         response -> CheckAndMutateUtil.wasMutationApplied(request, response));
-    }
-
-    @Override
-    public CompletableFuture<Boolean> thenDelete(Delete delete) {
-      preCheck();
-      try {
-        return call(delete.getRow(), hbaseAdapter.adapt(delete));
-      } catch (Exception e) {
-        return FutureUtils.failedFuture(e);
-      }
-    }
-
-    @Override
-    public CompletableFuture<Boolean> thenMutate(RowMutations mutation) {
-      preCheck();
-      try {
-        return call(mutation.getRow(), hbaseAdapter.adapt(mutation));
-      } catch (Exception e) {
-        return FutureUtils.failedFuture(e);
-      }
     }
   }
 

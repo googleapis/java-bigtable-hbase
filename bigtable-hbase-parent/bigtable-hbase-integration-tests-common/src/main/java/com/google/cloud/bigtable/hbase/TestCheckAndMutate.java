@@ -351,7 +351,11 @@ public class TestCheckAndMutate extends AbstractTest {
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
       CompareOp.NOT_EQUAL, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertTrue("4000 != 2000 should succeed", success);
-  }
+
+    success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      CompareOp.NOT_EQUAL, null, someRandomPut);
+    Assert.assertTrue("4000 != null should succeed", success);
+}
 
   @Test
   public void testCompareOpsVersions() throws IOException {
@@ -373,6 +377,5 @@ public class TestCheckAndMutate extends AbstractTest {
     success = table.checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
       CompareOp.GREATER, Bytes.toBytes(3000l), someRandomPut);
     Assert.assertFalse("3000 > 4000 should fail", success);
-
   }
 }

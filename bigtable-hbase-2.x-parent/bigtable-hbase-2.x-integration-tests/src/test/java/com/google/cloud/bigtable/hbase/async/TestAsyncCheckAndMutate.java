@@ -39,6 +39,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -66,8 +67,6 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
    * the same row.
    *
    * Requirement 7.3 - Pass a null value to check for the non-existence of a column.
-   * @throws ExecutionException 
-   * @throws InterruptedException 
    */
   @Test
   public void testCheckAndPutSameQual() throws Exception {
@@ -77,7 +76,7 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
     byte[] qual = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value-");
     byte[] value2 = dataHelper.randomData("value-");
-    
+
     // Put with a bad check on a null value, then try with a good one
     Put put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value1);
     boolean success = checkandMutate(table, rowKey, qual)
@@ -91,7 +90,7 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
         .get();
 
     Assert.assertTrue(success);
-    
+
     // Fail on null check, now there's a value there
     put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value2);
     success = checkandMutate(table, rowKey, qual)
@@ -110,29 +109,27 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
         .get();
 
     Assert.assertTrue(success);
-    
+
     // Check results
     Get get = new Get(rowKey);
     get.readVersions(5);
-    Result result = table.get(get).get();
+    Result result = getDefaultTable().get(get);
     Assert.assertEquals("Should be two results", 2, result.size());
     List<Cell> cells = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, qual);
     Assert.assertArrayEquals(value2, CellUtil.cloneValue(cells.get(0)));
     Assert.assertArrayEquals(value1, CellUtil.cloneValue(cells.get(1)));
   }
 
-  private CheckAndMutateBuilder checkandMutate(AsyncTable table, 
+  private CheckAndMutateBuilder checkandMutate(AsyncTable table,
       byte[] rowKey, byte[] qual) {
     return table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY).qualifier(qual);
   }
 
   /**
    * Further tests for requirements 7.1 and 7.3.
-   * @throws ExecutionException 
-   * @throws InterruptedException 
    */
   @Test
-  public void testcheckAndMutateSameQual() throws Exception {
+  public void testCheckAndMutateSameQual() throws Exception {
     // Initialize
     AsyncTable table = getDefaultAsyncTable(executor);
     byte[] rowKey = dataHelper.randomData("rowKey-");
@@ -156,7 +153,7 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
 
     // Add a value and check again
     Put put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value1);
-    table.put(put);
+    getDefaultTable().put(put);
     success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY)
         .qualifier(qual)
         .ifEquals(value2)
@@ -169,13 +166,11 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
         .thenDelete(delete)
         .get();
     Assert.assertTrue(success);
-    Assert.assertFalse("Row should be gone", table.exists(new Get(rowKey)).get());
+    Assert.assertFalse("Row should be gone", getDefaultTable().exists(new Get(rowKey)));
   }
 
   /**
    * Further tests for requirements 7.1 and 7.3.
-   * @throws ExecutionException 
-   * @throws InterruptedException 
    */
   @Test
   public void testCheckAndPutDiffQual() throws Exception {
@@ -226,22 +221,20 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
     // Check results
     Get get = new Get(rowKey);
     get.readVersions(5);
-    Result result = table.get(get).get();
+    Result result = getDefaultTable().get(get);
     Assert.assertEquals("Should be two results", 2, result.size());
     Assert.assertArrayEquals(value1, CellUtil.cloneValue(result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual1)));
     Assert.assertArrayEquals(value2, CellUtil.cloneValue(result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY,
       qual2)));
 
-    
+
   }
 
   /**
    * Further tests for requirements 7.1 and 7.3.
-   * @throws ExecutionException 
-   * @throws InterruptedException 
    */
   @Test
-  public void testcheckAndMutateDiffQual() throws Exception {
+  public void testCheckAndMutateDiffQual() throws Exception {
     // Initialize
     AsyncTable table = getDefaultAsyncTable(executor);
     byte[] rowKey = dataHelper.randomData("rowKey-");
@@ -269,7 +262,7 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
     Put put = new Put(rowKey)
         .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, value1)
         .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2, value2);
-    table.put(put);
+    getDefaultTable().put(put);
 
     // Fail on null check, now there's a value there
     success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY)
@@ -297,19 +290,15 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
         .thenDelete(delete)
         .get();
     Assert.assertTrue(success);
-    Assert.assertFalse("Row should be gone", table.exists(new Get(rowKey)).get());
-
-    
+    Assert.assertFalse("Row should be gone", getDefaultTable().exists(new Get(rowKey)));
   }
 
   /**
    * Requirement 7.2 - Throws an IOException if the check is for a row other than the one in the
    * mutation attempt.
-   * @throws ExecutionException 
-   * @throws InterruptedException 
    */
   @Test
-  public void testCheckAndPutDiffRow() throws Exception {
+  public void testCheckAndPutDiffRow() throws Throwable {
     // Initialize
     AsyncTable table = getDefaultAsyncTable(executor);
     byte[] rowKey1 = dataHelper.randomData("rowKey-");
@@ -321,17 +310,20 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
     Put put = new Put(rowKey1).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value);
     //Fix behavior as a part of Async Impl
     expectedException.expect(DoNotRetryIOException.class);
-//    expectedException.expect(IOException.class);
     expectedException.expectMessage("Action's getRow must match");
-    table.checkAndMutate(rowKey2, SharedTestEnvRule.COLUMN_FAMILY)
-        .qualifier(qual)
-        .ifNotExists()
-        .thenPut(put)
-        .get();
+    try {
+      table.checkAndMutate(rowKey2, SharedTestEnvRule.COLUMN_FAMILY)
+          .qualifier(qual)
+          .ifNotExists()
+          .thenPut(put)
+          .get();
+    } catch (ExecutionException e) {
+      throw e.getCause();
+    }
   }
 
   @Test
-  public void testcheckAndMutateDiffRow() throws Exception {
+  public void testCheckAndMutateDiffRow() throws Throwable {
     // Initialize
     AsyncTable table = getDefaultAsyncTable(executor);
     byte[] rowKey1 = dataHelper.randomData("rowKey-");
@@ -341,13 +333,16 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
     // Put then again
     Delete delete = new Delete(rowKey1).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual);
     expectedException.expect(DoNotRetryIOException.class);
-//    expectedException.expect(IOException.class);
     expectedException.expectMessage("Action's getRow must match");
-    table.checkAndMutate(rowKey2, SharedTestEnvRule.COLUMN_FAMILY)
-        .ifEquals(qual)
-        .ifNotExists()
-        .thenDelete(delete)
-        .get();
+    try {
+      table.checkAndMutate(rowKey2, SharedTestEnvRule.COLUMN_FAMILY)
+          .ifEquals(qual)
+          .ifNotExists()
+          .thenDelete(delete)
+          .get();
+    } catch (ExecutionException e) {
+      throw e.getCause();
+    }
   }
 
   @Test
@@ -383,7 +378,7 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
     Put put = new Put(rowKey)
         .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualCheck, valueCheck)
         .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualDelete, Bytes.toBytes("todelete"));
-    table.put(put);
+    getDefaultTable().put(put);
     // Fail on null check, now there's a value there
     success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY)
        .qualifier(qualCheck)
@@ -405,7 +400,7 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
         .get();
     Assert.assertTrue(success);
 
-    Result row = table.get(new Get(rowKey).addFamily(SharedTestEnvRule.COLUMN_FAMILY)).get();
+    Result row = getDefaultTable().get(new Get(rowKey).addFamily(SharedTestEnvRule.COLUMN_FAMILY));
     // QualCheck and QualPut should exist
     Assert.assertEquals(2, row.size());
     Assert.assertFalse(
@@ -425,8 +420,8 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
 
     AsyncTable table = getDefaultAsyncTable(executor);
 
-    table.put(new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-      Bytes.toBytes(2000l)));
+    getDefaultTable().put(new Put(rowKey)
+      .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck, Bytes.toBytes(2000l)));
 
     Put someRandomPut =
         new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
@@ -514,6 +509,13 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
         .thenPut(someRandomPut)
         .get();
     Assert.assertTrue("4000 != 2000 should succeed", success);
+
+    success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY)
+        .qualifier(qualToCheck)
+        .ifMatches(CompareOperator.NOT_EQUAL, null)
+        .thenPut(someRandomPut)
+        .get();
+    Assert.assertTrue("4000 != null should succeed", success);
   }
 
   @Test
@@ -527,11 +529,13 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
     Put someRandomPut =
         new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
 
-    table.put(new Put(rowKey, System.currentTimeMillis() - 10000)
-        .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck, Bytes.toBytes(2000l)));
+    long now = System.currentTimeMillis();
+    Put put1 = new Put(rowKey, now - 10000).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      Bytes.toBytes(2000l));
+    Put put2 = new Put(rowKey, now).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+      Bytes.toBytes(4000l));
 
-    table.put(new Put(rowKey, System.currentTimeMillis()).addColumn(SharedTestEnvRule.COLUMN_FAMILY,
-      qualToCheck, Bytes.toBytes(4000l)));
+    getDefaultTable().put(Arrays.asList(put1, put2));
 
     success = table.checkAndMutate(rowKey, SharedTestEnvRule.COLUMN_FAMILY)
         .qualifier(qualToCheck)
@@ -539,6 +543,5 @@ public class TestAsyncCheckAndMutate extends AbstractAsyncTest {
         .thenPut(someRandomPut)
         .get();
     Assert.assertFalse("3000 > 4000 should fail", success);
-
   }
 }
