@@ -106,7 +106,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
     Optional<RowFilter> userFilter = createUserFilter(scan, hooks);
     if (userFilter.isPresent()) {
-      chain.filter(FILTERS.raw(userFilter.get()));
+      chain.filter(FILTERS.fromProto(userFilter.get()));
     }
 
     return chain.toProto();
