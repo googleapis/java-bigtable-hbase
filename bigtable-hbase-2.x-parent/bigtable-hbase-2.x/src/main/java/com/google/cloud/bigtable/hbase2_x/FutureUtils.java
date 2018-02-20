@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
 
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.util.concurrent.FutureCallback;
@@ -38,18 +37,7 @@ public class FutureUtils {
   static Logger logger = new Logger(FutureUtils.class);
 
   public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
-    return toCompletableFuture(listenableFuture, DIRECT_EXECUTOR);
-  }
-
-  public static <T> CompletableFuture<T> toCompletableFuture(
-      final ListenableFuture<T> listenableFuture, ExecutorService es) {
-    return toCompletableFuture(listenableFuture, (r -> r), es);
-  }
-
-  public static <BTType, HBType> CompletableFuture<HBType> toCompletableFuture(
-      final ListenableFuture<BTType> listenableFuture, final Function<BTType, HBType> converter,
-      ExecutorService es) {
-    CompletableFuture<HBType> completableFuture = new CompletableFuture<HBType>() {
+    CompletableFuture<T> completableFuture = new CompletableFuture<T>() {
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
         boolean result = listenableFuture.cancel(mayInterruptIfRunning);
@@ -58,20 +46,16 @@ public class FutureUtils {
       }
     };
 
-    FutureCallback<BTType> callback = new FutureCallback<BTType>() {
+    FutureCallback<T> callback = new FutureCallback<T>() {
       public void onFailure(Throwable throwable) {
         completableFuture.completeExceptionally(throwable);
       }
 
-      public void onSuccess(BTType s) {
-        try {
-          completableFuture.complete(converter.apply(s));
-        } catch (RuntimeException e) {
-          onFailure(e);
-        }
+      public void onSuccess(T t) {
+        completableFuture.complete(t);
       }
     };
-    Futures.addCallback(listenableFuture, callback, es);
+    Futures.addCallback(listenableFuture, callback);
 
     return completableFuture;
   }

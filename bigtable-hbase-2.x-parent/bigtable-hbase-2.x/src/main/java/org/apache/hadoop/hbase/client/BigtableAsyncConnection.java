@@ -269,12 +269,11 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
 
   @Override
   public AsyncTableBuilder<AsyncTable> getTableBuilder(TableName tableName,
-      final ExecutorService executorService) {
+      final ExecutorService ignored) {
     return new AsyncTableBuilder<AsyncTable>() {
       @Override
       public AsyncTable build() {
-        return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName),
-            executorService);
+        return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
       }
 
       @Override
