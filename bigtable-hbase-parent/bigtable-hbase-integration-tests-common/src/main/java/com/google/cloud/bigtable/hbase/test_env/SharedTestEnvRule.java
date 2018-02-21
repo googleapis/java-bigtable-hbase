@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -130,5 +131,9 @@ public abstract class SharedTestEnvRule extends ExternalResource {
 
   public TableName newTestTableName() {
     return TableName.valueOf("test_table-" + UUID.randomUUID().toString());
+  }
+
+  public ExecutorService getExecutor() {
+    return sharedTestEnv.getExecutor();
   }
 }

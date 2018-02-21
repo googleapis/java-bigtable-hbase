@@ -21,9 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.Cell;
@@ -38,15 +35,12 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Test to make sure that basic {@link AsyncTable} operations work
@@ -55,29 +49,13 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 @RunWith(JUnit4.class)
 public class TestBasicAsyncOps extends AbstractAsyncTest {
 
-  private static ExecutorService executor;
-
-  @BeforeClass
-  public static void setup() {
-    executor = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("table-deleter").build());
-  }
-
-  @AfterClass
-  public static void shutdown() {
-    if (executor != null) {
-      executor.shutdownNow();
-    }
-    executor = null;
-  }
-
   @Test
   public void testBasicAsyncOps() throws Exception {
     System.out.println("TestBasicAsyncOps");
     byte[] rowKey = dataHelper.randomData("TestBasicAsyncOps-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = dataHelper.randomData("testValue-");
-    AsyncTable table = getAsyncTable();
+    AsyncTable table = getDefaultAsyncTable();
 
     Stopwatch stopwatch = new Stopwatch();
     // Put
@@ -122,7 +100,7 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
     byte[] testValue1 = dataHelper.randomData("testValue-");
     byte[] testValue2 = dataHelper.randomData("testValue-");
     byte[] testValue3 = dataHelper.randomData("testValue-");
-    AsyncTable table = getAsyncTable();
+    AsyncTable table = getDefaultAsyncTable();
 
     RowMutations rowMutations1 = new RowMutations(rowKey);
     rowMutations1.add(new Put(rowKey)
@@ -155,7 +133,7 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
     table.put(put);
     Append append =
         new Append(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier, value2);
-    Result result = getAsyncTable().append(append).get();
+    Result result = getDefaultAsyncTable().append(append).get();
     Cell cell = result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
     Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
       CellUtil.cloneValue(cell));
@@ -195,7 +173,7 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
       Increment increment = new Increment(rowKey);
       increment.addColumn(COLUMN_FAMILY, qual1, incr1);
       increment.addColumn(COLUMN_FAMILY, qual2, incr2);
-      Result result = getAsyncTable().increment(increment).get();
+      Result result = getDefaultAsyncTable().increment(increment).get();
       Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
         Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
       Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
@@ -211,10 +189,6 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
       Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
         Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual2))));
     }
-  }
-
-   private AsyncTable getAsyncTable() throws InterruptedException, ExecutionException {
-    return getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), executor);
   }
 
   private class Stopwatch {

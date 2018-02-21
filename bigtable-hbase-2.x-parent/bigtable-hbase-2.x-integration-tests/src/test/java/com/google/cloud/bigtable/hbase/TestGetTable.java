@@ -19,23 +19,22 @@ import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.Executors;
-
 /**
  * These tests check various factory instantiations of the Table.
  */
 public class TestGetTable extends AbstractTest {
   @Test
   public void testGetTable1() throws Exception {
-    Table table = getDefaultTable();
-    Assert.assertEquals(sharedTestEnv.getDefaultTableName(), table.getName());
-    table.close();
+    try (Table table = getDefaultTable()) {
+      Assert.assertEquals(sharedTestEnv.getDefaultTableName(), table.getName());
+    }
   }
 
   @Test
   public void testGetTable2() throws Exception {
-    Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName(), Executors.newFixedThreadPool(1));
-    Assert.assertEquals(sharedTestEnv.getDefaultTableName(), table.getName());
-    table.close();
+    try (Table table = getConnection().getTable(sharedTestEnv.getDefaultTableName(),
+      sharedTestEnv.getExecutor())) {
+      Assert.assertEquals(sharedTestEnv.getDefaultTableName(), table.getName());
+    }
   }
 }

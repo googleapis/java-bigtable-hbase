@@ -27,16 +27,12 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.util.List;
 
 public abstract class AbstractTestCheckAndMutate extends AbstractTest {
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   /**
    * Requirement 7.1 - Atomically attempt a mutation, dependent on a successful value check within
@@ -219,11 +215,18 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
 
     // Put then again
     Put put = new Put(rowKey1).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value);
-    expectedException.expect(IOException.class);
-    expectedException.expectMessage("Action's getRow must match the passed row");
-    checkAndPut(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put);
+    try {
+      checkAndPut(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put);
+    } catch (IOException e) {
+      assertGetRowException(e);
+    } finally {
+      table.close();
+    }
+  }
 
-    table.close();
+  private static void assertGetRowException(IOException e) {
+    Assert.assertTrue(e.getMessage(),
+      e.getMessage().contains("Action's getRow must match"));
   }
 
   @Test
@@ -238,7 +241,7 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
       Delete delete = new Delete(rowKey1).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual);
       checkAndDelete(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, delete);
     } catch (IOException e) {
-      Assert.assertTrue(e.getMessage().contains("Action's getRow must match the passed row"));
+      assertGetRowException(e);
     }
   }
 

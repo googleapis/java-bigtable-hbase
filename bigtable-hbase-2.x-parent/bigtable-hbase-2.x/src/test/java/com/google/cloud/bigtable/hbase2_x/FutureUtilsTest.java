@@ -20,13 +20,14 @@ import static org.hamcrest.core.StringContains.containsString;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.hamcrest.core.IsInstanceOf;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -59,8 +60,8 @@ public class FutureUtilsTest {
   public void testToCompletableFuture() throws Exception {
     String result = "Result";
 
-    ListeningExecutorService service =
-        MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
+    ListeningExecutorService service = MoreExecutors
+        .listeningDecorator(BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
 
     ListenableFuture<String> listenableFuture = service.submit(new Callable<String>() {
       public String call() throws Exception {
@@ -84,8 +85,8 @@ public class FutureUtilsTest {
 
   @Test
   public void testToCompletableFuture_exception() throws Exception {
-    ListeningExecutorService service =
-        MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
+    ListeningExecutorService service = MoreExecutors
+        .listeningDecorator(BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
 
     ListenableFuture<String> listenableFuture = service.submit(new Callable<String>() {
       public String call() throws Exception {

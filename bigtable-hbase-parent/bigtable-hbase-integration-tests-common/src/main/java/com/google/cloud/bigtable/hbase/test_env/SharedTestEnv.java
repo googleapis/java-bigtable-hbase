@@ -16,7 +16,11 @@
 package com.google.cloud.bigtable.hbase.test_env;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -29,6 +33,7 @@ import org.apache.hadoop.conf.Configuration;
 abstract class SharedTestEnv {
 
   private static SharedTestEnv instance;
+  private ExecutorService executor;
   private long refCount = 0;
   protected Configuration configuration;
 
@@ -51,9 +56,15 @@ abstract class SharedTestEnv {
     }
   }
 
+  public ExecutorService getExecutor() {
+    return executor;
+  }
+
   private synchronized void retain() throws Exception {
     refCount++;
     if (refCount == 1) {
+      executor = Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setDaemon(true).setNameFormat("shared-test-env-rule").build());
       setup();
     }
   }
@@ -63,6 +74,7 @@ abstract class SharedTestEnv {
     refCount--;
     if (refCount == 0) {
       teardown();
+      executor.shutdownNow();
     }
   }
 
