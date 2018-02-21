@@ -165,6 +165,8 @@ public class BigtableAsyncTable implements AsyncTable {
       if (compareOp != CompareOperator.EQUAL && compareOp != CompareOperator.NOT_EQUAL) {
         this.value =
             Preconditions.checkNotNull(value, "value is null for compareOperator: " + compareOp);
+      } else {
+        this.value = value;
       }
       return this;
     }
