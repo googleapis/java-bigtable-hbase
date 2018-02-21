@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase.async;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.AsyncTable;
@@ -40,9 +39,9 @@ public abstract class AbstractAsyncTest extends AbstractTest {
     return conn;
   }
 
-  protected AsyncTable getDefaultAsyncTable(ExecutorService executor)
-      throws InterruptedException, ExecutionException {
-    return getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), executor);
+  protected AsyncTable getDefaultAsyncTable() throws InterruptedException, ExecutionException {
+    return getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(),
+      sharedTestEnv.getExecutor());
   }
 
 }

@@ -17,10 +17,12 @@ package com.google.cloud.bigtable.hbase.test_env;
 
 import java.io.IOException;
 import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -31,7 +33,10 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 
 import com.google.cloud.bigtable.hbase.Logger;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 class BigtableEnv extends SharedTestEnv {
   private final Logger LOG = new Logger(getClass());
@@ -76,13 +81,13 @@ class BigtableEnv extends SharedTestEnv {
       }
     }
 
-    ExecutorService executor = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("table-deleter").build());
+    ListeningExecutorService executor = MoreExecutors.listeningDecorator(getExecutor());
     try (Connection connection = ConnectionFactory.createConnection(configuration);
         Admin admin = connection.getAdmin()) {
+      List<ListenableFuture<?>> futures = new ArrayList<>();
       for (final TableName tableName : admin
           .listTableNames(Pattern.compile("(test_table|list_table[12]|TestTable).*"))) {
-        executor.execute(new Runnable() {
+        futures.add(executor.submit(new Runnable() {
           @Override
           public void run() {
             try {
@@ -92,14 +97,14 @@ class BigtableEnv extends SharedTestEnv {
               e.printStackTrace();
             }
           }
-        });
+        }));
+        Futures.allAsList(futures).get(2, TimeUnit.MINUTES);
       }
-      executor.shutdown();
-      try {
-        executor.awaitTermination(10, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IOException("Interrupted while deleting tables", e);
+    } catch (ExecutionException | TimeoutException e) {
+      throw new IOException("Exception while deleting tables", e);
     }
   }
 

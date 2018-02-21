@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -33,14 +31,10 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Test to make sure that basic {@link AsyncTable} operations work
@@ -48,22 +42,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  */
 @RunWith(JUnit4.class)
 public class TestAsyncBatch extends AbstractAsyncTest {
-
-  private static ExecutorService executor;
-
-  @BeforeClass
-  public static void setup() {
-    executor = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("table-deleter").build());
-  }
-
-  @AfterClass
-  public static void shutdown() {
-    if (executor != null) {
-      executor.shutdownNow();
-    }
-    executor = null;
-  }
 
   @Test
   public void testBasicAsyncOps() throws Exception {
@@ -81,7 +59,7 @@ public class TestAsyncBatch extends AbstractAsyncTest {
 
   private void testPutsGetsDeletes(boolean doGet, byte[][] rowKeys, byte[][] testQualifiers,
       byte[][] testValues) throws IOException, InterruptedException, ExecutionException {
-    AsyncTable table = getDefaultAsyncTable(executor);
+    AsyncTable table = getDefaultAsyncTable();
 
     // setup
     List<Get> gets = new ArrayList<>();

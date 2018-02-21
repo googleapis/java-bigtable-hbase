@@ -113,7 +113,7 @@ public class TestCreateTable extends AbstractTest {
     final TableName[] tableNames = admin.listTableNames();
 
     List<ListenableFuture<Void>> futures = new ArrayList<>();
-    ListeningExecutorService es = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+    ListeningExecutorService es = MoreExecutors.listeningDecorator(sharedTestEnv.getExecutor());
     for(final String goodName : goodNames) {
       futures.add(es.submit(new Callable<Void>() {
         @Override
@@ -124,13 +124,9 @@ public class TestCreateTable extends AbstractTest {
       }));
     }
     try {
-      try {
-        Futures.allAsList(futures).get(3, TimeUnit.MINUTES);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    } finally {
-      es.shutdownNow();
+      Futures.allAsList(futures).get(3, TimeUnit.MINUTES);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 

@@ -20,8 +20,6 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.hbase.CellUtil;
@@ -33,7 +31,6 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,7 +39,6 @@ import org.junit.runners.JUnit4;
 
 import com.google.bigtable.repackaged.com.google.common.util.concurrent.SettableFuture;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Test to make sure that basic {@link AsyncTable} operations work
@@ -51,7 +47,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 @RunWith(JUnit4.class)
 public class TestAsyncScan extends AbstractAsyncTest {
 
-  private static ExecutorService executor;
   private static String prefix = "TestAsyncScan-";
   private static byte[][] rowKeys;
   private static byte[][] quals;
@@ -75,17 +70,6 @@ public class TestAsyncScan extends AbstractAsyncTest {
       puts.add(put);
     }
     table.put(puts);
-
-    executor = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("table-deleter").build());
-  }
-
-  @AfterClass
-  public static void shutdown() {
-    if (executor != null) {
-      executor.shutdownNow();
-    }
-    executor = null;
   }
 
   @Test
@@ -93,7 +77,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
     Scan scan = new Scan();
     scan.setRowPrefixFilter(Bytes.toBytes(prefix));
 
-    ResultScanner resultScanner = getDefaultAsyncTable(executor).getScanner(scan);
+    ResultScanner resultScanner = getDefaultAsyncTable().getScanner(scan);
     Result[] results = resultScanner.next(3);
     resultScanner.close();
 
@@ -108,7 +92,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
     Scan scan = new Scan();
     scan.setRowPrefixFilter(Bytes.toBytes(prefix));
 
-    List<Result> results = getDefaultAsyncTable(executor)
+    List<Result> results = getDefaultAsyncTable()
         .scanAll(scan)
         .get(1, TimeUnit.MINUTES);
 
@@ -124,7 +108,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
     scan.setRowPrefixFilter(Bytes.toBytes(prefix));
 
     SettableFuture<Integer> lock = SettableFuture.create();
-    getDefaultAsyncTable(executor).scan(scan, new ScanResultConsumer() {
+    getDefaultAsyncTable().scan(scan, new ScanResultConsumer() {
       int count = 0;
       @Override
       public boolean onNext(Result result) {
