@@ -17,10 +17,10 @@ package com.google.cloud.bigtable.hbase.test_env;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,7 +56,7 @@ public abstract class SharedTestEnvRule extends ExternalResource {
   protected static final Log LOG = LogFactory.getLog(SharedTestEnvRule.class);
   private TableName defaultTableName;
   private SharedTestEnv sharedTestEnv;
-  private Map<String, Closeable> closeables = new HashMap<>();
+  private final Map<String, Closeable> closeables = new ConcurrentHashMap<>();
 
   @Override
   protected void before() throws Throwable {

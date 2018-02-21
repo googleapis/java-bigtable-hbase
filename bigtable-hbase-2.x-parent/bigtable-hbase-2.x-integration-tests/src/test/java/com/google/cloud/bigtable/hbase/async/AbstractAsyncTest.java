@@ -29,7 +29,7 @@ public abstract class AbstractAsyncTest extends AbstractTest {
 
   private static final String CONN_KEY = AbstractAsyncTest.class.getName() + "_asyncCon";
 
-  public static AsyncConnection getAsyncConnection()
+  public static synchronized AsyncConnection getAsyncConnection()
       throws InterruptedException, ExecutionException {
     SharedTestEnvRule sharedEnv = SharedTestEnvRule.getInstance();
     AsyncConnection conn = (AsyncConnection) sharedEnv.getClosable(CONN_KEY);
