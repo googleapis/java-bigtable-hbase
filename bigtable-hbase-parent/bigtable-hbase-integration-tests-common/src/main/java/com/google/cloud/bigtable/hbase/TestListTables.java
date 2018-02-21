@@ -66,7 +66,7 @@ public class TestListTables extends AbstractTest {
       Assert.assertFalse(admin.tableExists(tableName1));
       Assert.assertFalse(ArrayUtils.contains(admin.listTableNames(), tableName1));
 
-      createTable(admin, tableName1);
+      sharedTestEnv.createTable(tableName1);
       checkColumnFamilies(admin, tableName1);
 
       {
@@ -77,7 +77,7 @@ public class TestListTables extends AbstractTest {
         Assert.assertFalse(ArrayUtils.contains(tableList, tableName2));
       }
 
-      createTable(admin, tableName2);
+      sharedTestEnv.createTable(tableName2);
       checkColumnFamilies(admin, tableName2);
 
       {
@@ -132,14 +132,7 @@ public class TestListTables extends AbstractTest {
       IOException {
     HTableDescriptor descriptor = admin.getTableDescriptor(tableName);
     HColumnDescriptor[] columnFamilies = descriptor.getColumnFamilies();
-    Assert.assertEquals(1, columnFamilies.length);
+    Assert.assertEquals(2, columnFamilies.length);
     Assert.assertEquals(Bytes.toString(COLUMN_FAMILY), columnFamilies[0].getNameAsString());
-  }
-
-  private void createTable(Admin admin, TableName tableName) throws IOException {
-    HTableDescriptor descriptor = new HTableDescriptor(tableName);
-    tablesToDelete.add(tableName);
-    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-    admin.createTable(descriptor);
   }
 }
