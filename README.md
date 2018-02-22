@@ -34,13 +34,16 @@ which makes it easy for development teams to get started.
   * bigtable-hbase-1.x: use for standalone applications where you are in control your dependencies.
   * bigtable-hbase-1.x-hadoop: use in hadoop environments
   * bigtable-hbase-1.x-shaded: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
+  * bigtable-hbase-2.x: use for standalone applications where you are in control your dependencies.  This includes an HBase async client.
+  * bigtable-hbase-2.x-hadoop: use in hadoop environments
+  * bigtable-hbase-2.x-shaded: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
 
 * Example:
    ```xml
     <dependency>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-hbase-1.x</artifactId>
-        <version>1.1.0</version>
+        <version>1.2.0</version>
     </dependency>
   ```
 
@@ -63,7 +66,7 @@ infrequent product and client library announcements.
 1. Running `mvn clean install` will build and install Cloud Bigtable client artifacts to your local repository, and then run the unit tests.
 2. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above).
 
-   Use the following command to run the integration tests:
+   Use the following command to run the integration tests for HBase 1:
 
    ```sh
    mvn clean integration-test \
@@ -71,6 +74,20 @@ infrequent product and client library announcements.
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
    ```
+
+   Use the following command to run the integration tests for HBase 2:
+
+   ```sh
+   mvn clean integration-test \
+       -PbigtableIntegrationTestH2 \
+       -Dgoogle.bigtable.project.id=[your cloud project id] \
+       -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
+   ```
+   You can run those commands at the top of the project, or you can run then at the appropriate integration-tests project.  
+   
+   Developer's NOTE: You can build the project faster by running the following command, and then run the integration test command from the appropriate integration test directory:
+   
+   ```mvn -pl bigtable-hbase-parent/bigtable-hbase-integration-tests -am clean package```
 
 NOTE: This project uses extensive shading which IDEs have trouble with. To over come these issues,
 you can disable the `with-shaded` profile in your IDE to force it to resolve the dependencies from your local
