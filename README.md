@@ -97,7 +97,11 @@ infrequent product and client library announcements.
    
    Developer's NOTE: You can build the project faster by running the following command, and then run the integration test command from the appropriate integration test directory:
    
-   ```mvn -pl bigtable-hbase-parent/bigtable-hbase-integration-tests -am clean package```
+   ```sh
+   mvn -pl bigtable-hbase-parent/bigtable-hbase-1.x-integration-tests \
+   -pl bigtable-hbase-2.x-parent/bigtable-hbase-2.x-integration-tests \
+   -am clean package
+   ```
 
 NOTE: This project uses extensive shading which IDEs have trouble with. To over come these issues,
 you can disable the `with-shaded` profile in your IDE to force it to resolve the dependencies from your local
