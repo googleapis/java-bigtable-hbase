@@ -84,12 +84,14 @@ infrequent product and client library announcements.
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
    ```
    
-   There are also tests that perform compatibility tests against an HBase Minicluster, which can be invoked with the following commands
-   
+   There are also tests that perform compatibility tests against an HBase Minicluster, which can be invoked with the following commands for HBase 1 and HBase 2 respectively: 
    ```sh
-   mvn clean integration-test -PhbaseLocalMiniClusterTest     # for HBase 1.* 
-   mvn clean integration-test -PhbaseLocalMiniClusterTestH2   # for HBase 2.*
+   mvn clean integration-test -PhbaseLocalMiniClusterTest
    ```
+   ```sh
+   mvn clean integration-test -PhbaseLocalMiniClusterTestH2
+   ```
+
 
    You can run those commands at the top of the project, or you can run then at the appropriate integration-tests project.  
    
