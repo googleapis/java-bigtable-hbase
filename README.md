@@ -66,7 +66,7 @@ infrequent product and client library announcements.
 1. Running `mvn clean install` will build and install Cloud Bigtable client artifacts to your local repository, and then run the unit tests.
 2. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above).
 
-   Use the following command to run the integration tests for HBase 1:
+   Use the following command to run the Cloud Bigtable integration tests for HBase 1:
 
    ```sh
    mvn clean integration-test \
@@ -75,7 +75,7 @@ infrequent product and client library announcements.
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
    ```
 
-   Use the following command to run the integration tests for HBase 2:
+   Use the following command to run the Cloud Bigtable integration tests for HBase 2:
 
    ```sh
    mvn clean integration-test \
@@ -83,6 +83,14 @@ infrequent product and client library announcements.
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
    ```
+   
+   There are also tests that perform compatibility tests against an HBase Minicluster, which can be invoked with the following commands
+   
+   ```sh
+   mvn clean integration-test -PhbaseLocalMiniClusterTest     # for HBase 1.* 
+   mvn clean integration-test -PhbaseLocalMiniClusterTestH2   # for HBase 2.*
+   ```
+
    You can run those commands at the top of the project, or you can run then at the appropriate integration-tests project.  
    
    Developer's NOTE: You can build the project faster by running the following command, and then run the integration test command from the appropriate integration test directory:
