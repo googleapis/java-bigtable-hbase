@@ -31,7 +31,7 @@ limitations under the License.
   </description>
 
   <properties>
-     <hbase.version>${hbase.version.2.0}</hbase.version>
+     <hbase.version>${hbase.version.2}</hbase.version>
   </properties>
 
 <dependencies>

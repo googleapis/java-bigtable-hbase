@@ -20,9 +20,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.ipc.HBaseRpcController;
 
 class MiniClusterEnv extends SharedTestEnv {
   private static final Log LOG = LogFactory.getLog(MiniClusterEnv.class);
+
+  static {
+    try {
+      HBaseRpcController.class.getName();
+    } catch(Throwable t) {
+      t.printStackTrace();
+    }
+  }
 
   private HBaseTestingUtility helper;
 
