@@ -113,10 +113,67 @@ public class TestColumnFamilyAdmin extends AbstractTest {
     Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
 
   }
+  
+  @Test
+  public void testModifyColumnFamilyAsync() throws Exception {
+    HColumnDescriptor newColumn = new HColumnDescriptor("MODIFY_COLUMN");
+    newColumn.setMaxVersions(2);
+    admin.addColumnFamilyAsync(tableName, newColumn).get();
+
+    HTableDescriptor expectedDescriptor = new HTableDescriptor(descriptor);
+    expectedDescriptor.addFamily(newColumn);
+
+    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
+    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+
+    newColumn.setMaxVersions(100);
+    admin.modifyColumnFamilyAsync(tableName, newColumn).get();
+
+    expectedDescriptor = new HTableDescriptor(descriptor);
+    expectedDescriptor.addFamily(newColumn);
+
+    retrievedDescriptor = admin.getTableDescriptor(tableName);
+    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+
+  }
 
   @Test
   public void testRemoveColumn() throws IOException {
     admin.deleteColumn(tableName, DELETE_COLUMN_FAMILY);
+    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
+
+    HTableDescriptor expectedDescriptor = new HTableDescriptor(tableName);
+    expectedDescriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+
+    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+  }
+  
+  @Test
+  public void testAddAndCompareColumnFamily() throws IOException {
+    HColumnDescriptor newColumn = new HColumnDescriptor("NEW_COLUMN");
+    admin.addColumnFamily(tableName, newColumn);
+
+    HTableDescriptor expectedDescriptor = new HTableDescriptor(descriptor);
+    expectedDescriptor.addFamily(newColumn);
+
+    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
+    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+  }
+  
+  @Test
+  public void testDeleteColumnFamily() throws IOException {
+    admin.deleteColumnFamily(tableName, DELETE_COLUMN_FAMILY);
+    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
+
+    HTableDescriptor expectedDescriptor = new HTableDescriptor(tableName);
+    expectedDescriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+
+    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+  }
+  
+  @Test
+  public void testDeleteColumnFamilyAsync() throws Exception {
+    admin.deleteColumnFamilyAsync(tableName, DELETE_COLUMN_FAMILY).get();
     HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
 
     HTableDescriptor expectedDescriptor = new HTableDescriptor(tableName);
