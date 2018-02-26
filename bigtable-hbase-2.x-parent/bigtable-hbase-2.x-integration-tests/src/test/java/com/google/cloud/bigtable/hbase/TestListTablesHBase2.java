@@ -75,7 +75,7 @@ public class TestListTablesHBase2 extends AbstractTest {
       {
         Assert.assertTrue(admin.tableExists(tableName1));
         Assert.assertFalse(admin.tableExists(tableName2));
-        List<TableDescriptor> tableDescriptors = admin.listTableDescriptors();
+        List<TableDescriptor> tableDescriptors = admin.listTableDescriptors(Pattern.compile("list_tabledsc.*"));
         Assert.assertTrue(contains(tableDescriptors,tableName1));
         Assert.assertFalse(contains(tableDescriptors,tableName2));
       }
@@ -86,7 +86,7 @@ public class TestListTablesHBase2 extends AbstractTest {
       {
         Assert.assertTrue(admin.tableExists(tableName1));
         Assert.assertTrue(admin.tableExists(tableName2));
-        List<TableDescriptor> tableDescriptors = admin.listTableDescriptors();
+        List<TableDescriptor> tableDescriptors = admin.listTableDescriptors(Pattern.compile("list_tabledsc.*"));
         Assert.assertTrue(contains(tableDescriptors,tableName1));
         Assert.assertTrue(contains(tableDescriptors,tableName2));
       }
