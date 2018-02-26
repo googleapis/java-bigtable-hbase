@@ -57,6 +57,7 @@ import org.junit.runners.Suite;
     TestSnapshots.class,
     TestIncrement.class,
     TestListTables.class,
+    TestListTablesHBase2.class,
     TestPut.class,
     TestTimestamp.class,
     TestTruncateTable.class,
