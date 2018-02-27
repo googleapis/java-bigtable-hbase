@@ -31,7 +31,7 @@ limitations under the License.
     </description>
 
     <properties>
-        <hbase.version>${hbase.version.2.0}</hbase.version>
+        <hbase.version>${hbase.version.2}</hbase.version>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase2_x.BigtableConnection</google.bigtable.connection.impl>
         <google.bigtable.async.connection.impl>org.apache.hadoop.hbase.client.BigtableAsyncConnection</google.bigtable.async.connection.impl>
         <google.bigtable.registry.impl>org.apache.hadoop.hbase.client.BigtableAsyncRegistry</google.bigtable.registry.impl>
