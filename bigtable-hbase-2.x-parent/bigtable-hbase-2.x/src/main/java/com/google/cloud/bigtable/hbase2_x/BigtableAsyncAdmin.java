@@ -236,6 +236,13 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
+  public CompletableFuture<TableDescriptor> getTableDescriptor(TableName tableName) {
+    return listTables(Optional.of(Pattern.compile(tableName.getNameAsString())), false)
+        .thenApply(r -> r.stream().findFirst().get());
+
+  }
+
+  @Override
   public CompletableFuture<Boolean> abortProcedure(long arg0, boolean arg1) {
     throw new UnsupportedOperationException("abortProcedure"); // TODO
   }
@@ -447,11 +454,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<List<SecurityCapability>> getSecurityCapabilities() {
     throw new UnsupportedOperationException("getSecurityCapabilities"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<TableDescriptor> getTableDescriptor(TableName arg0) {
-    throw new UnsupportedOperationException("getTableDescriptor"); // TODO
   }
 
   @Override

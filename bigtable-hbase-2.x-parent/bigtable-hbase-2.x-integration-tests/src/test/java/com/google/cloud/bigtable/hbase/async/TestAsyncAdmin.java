@@ -118,6 +118,10 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
       //TODO: Verify why this test fails. getColumnFamilies() array is empyty 
       //assertEquals(10, patTableDescriptors.get(0).getColumnFamilies()[0].getTimeToLive()); 
 
+      // test getTableDescriptor
+      TableDescriptor tableDescriptor = asyncAdmin.getTableDescriptor(tableName).get();
+      assertEquals(tableName, tableDescriptor.getTableName());
+      
       // test isTableEnabled
       assertEquals(true, asyncAdmin.isTableEnabled(tableName).get());
 
