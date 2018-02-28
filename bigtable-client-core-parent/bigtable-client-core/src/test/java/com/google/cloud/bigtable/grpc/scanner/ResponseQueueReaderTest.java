@@ -57,7 +57,7 @@ public class ResponseQueueReaderTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    underTest = new ResponseQueueReader();
+    underTest = new ResponseQueueReader(10000);
     underTest.beforeStart(mockClientCallStreamObserver);
   }
 
