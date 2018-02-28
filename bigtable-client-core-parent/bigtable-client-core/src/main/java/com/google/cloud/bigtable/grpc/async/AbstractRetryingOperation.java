@@ -186,17 +186,20 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       } else {
         onError(status, trailers);
       }
-    } catch (IOException e) {
-      // Ignore. This is thrown Closable.close() from the TRACER.withSpan(), which actually doesn't
-      // throw anything
+    } catch (Exception e) {
+      setException(e);
     }
   }
 
   protected void finalizeStats(Status status) {
     operationTimerContext.close();
     if (operationSpan != null) {
-      io.opencensus.trace.Status ocensusStatus = StatusConverter.fromGrpcStatus(status);
-      operationSpan.end(EndSpanOptions.builder().setStatus(ocensusStatus).build());
+      try {
+        io.opencensus.trace.Status opencensusStatus = StatusConverter.fromGrpcStatus(status);
+        operationSpan.end(EndSpanOptions.builder().setStatus(opencensusStatus).build());
+      } catch (Exception e) {
+        LOG.info("Could not convert %s to an opencensus status", status);
+      }
     }
   }
 
@@ -310,9 +313,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         call = rpc.newCall(getCallOptions());
         rpc.start(getRetryRequest(), this, metadata, call);
       }
-    } catch (IOException e) {
-      // Ignore. This is thrown Closable.close() from the TRACER.withSpan(), which actually doesn't
-      // throw anything
+    } catch (Exception e) {
+      setException(e);
     }
   }
 

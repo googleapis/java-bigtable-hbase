@@ -454,15 +454,21 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
     final ResponseQueueReader reader = new ResponseQueueReader();
-    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, reader);
-    operation.setResultObserver(new StreamObserver<ReadRowsResponse>(){
+    final StreamObserver<ReadRowsResponse> responseObserver = new StreamObserver<ReadRowsResponse>() {
       @Override
       public void onNext(ReadRowsResponse value) {
         reader.addRequestResultMarker();
       }
-      @Override public void onError(Throwable t) {}
-      @Override public void onCompleted() {}
-    });
+
+      @Override
+      public void onError(Throwable t) {
+      }
+
+      @Override
+      public void onCompleted() {
+      }
+    };
+    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, reader, responseObserver);
 
     // Start the operation.
     operation.getAsyncResult();
@@ -472,12 +478,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   /** {@inheritDoc} */
   @Override
-  public ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> observer) {
+  public ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> rowObserver) {
     if (shouldOverrideAppProfile(request.getAppProfileId())) {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, observer);
+    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, rowObserver, null);
 
     // Start the operation.
     operation.getAsyncResult();
@@ -486,9 +492,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   private RetryingReadRowsOperation createReadRowsRetryListener(ReadRowsRequest request,
-      StreamObserver<FlatRow> observer) {
+      StreamObserver<FlatRow> rowObserver, StreamObserver<ReadRowsResponse> responseObserver) {
     return new RetryingReadRowsOperation(
-        observer,
+        rowObserver,
+        responseObserver,
         retryOptions,
         request,
         readRowsAsync,

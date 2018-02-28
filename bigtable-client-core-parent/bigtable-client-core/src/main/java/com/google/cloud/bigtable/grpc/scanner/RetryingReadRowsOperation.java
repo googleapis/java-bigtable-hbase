@@ -104,18 +104,21 @@ public class RetryingReadRowsOperation extends
   Clock clock = Clock.SYSTEM;
   private final ReadRowsRequestManager requestManager;
   private final StreamObserver<FlatRow> rowObserver;
-  private RowMerger rowMerger;
-  private long lastResponseMs;
+
+  private final RowMerger rowMerger;
+  private final CallToStreamObserverAdapter adapter;
+  private final StreamObserver<ReadRowsResponse> responseObserver;
+
+  private int totalRowsProcessed = 0;
 
   // The number of times we've retried after a timeout
-  private int timeoutRetryCount = 0;
-  private CallToStreamObserverAdapter adapter;
-  private StreamObserver<ReadRowsResponse> resultObserver;
-  private int totalRowsProcessed = 0;
+  private volatile int timeoutRetryCount = 0;
+  private volatile long lastResponseMs;
   private volatile ReadRowsRequest nextRequest;
 
   public RetryingReadRowsOperation(
-      StreamObserver<FlatRow> observer,
+      StreamObserver<FlatRow> rowObserver,
+      StreamObserver<ReadRowsResponse> responseObserver,
       RetryOptions retryOptions,
       ReadRowsRequest request,
       BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> retryableRpc,
@@ -123,14 +126,12 @@ public class RetryingReadRowsOperation extends
       ScheduledExecutorService retryExecutorService,
       Metadata originalMetadata) {
     super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata);
-    this.rowObserver = observer;
+    this.rowObserver = rowObserver;
+    this.responseObserver = responseObserver;
+    this.rowMerger = new RowMerger(rowObserver);
     this.requestManager = new ReadRowsRequestManager(request);
     this.nextRequest = request;
-  }
-
-  // This observer will be notified after ReadRowsResponse have been fully processed.
-  public void setResultObserver(StreamObserver<ReadRowsResponse> resultObserver) {
-    this.resultObserver = resultObserver;
+    this.adapter = new CallToStreamObserverAdapter();
   }
 
   /**
@@ -145,57 +146,64 @@ public class RetryingReadRowsOperation extends
   @Override
   public void run() {
     // restart the clock.
-    this.rowMerger = new RowMerger(rowObserver);
-    adapter = new CallToStreamObserverAdapter();
-    synchronized (callLock) {
-      super.run();
-      // pre-fetch one more result, for performance reasons.
-      adapter.request(1);
-      if (rowObserver instanceof ClientResponseObserver) {
-        ((ClientResponseObserver<ReadRowsRequest, FlatRow>) rowObserver).beforeStart(adapter);
-      }
-      lastResponseMs = clock.currentTimeMillis();
+    rowMerger.reset();
+    super.run();
+     // pre-fetch one more result, for performance reasons.
+    adapter.request(1);
+    if (rowObserver instanceof ClientResponseObserver) {
+      ((ClientResponseObserver<ReadRowsRequest, FlatRow>) rowObserver).beforeStart(adapter);
     }
+    lastResponseMs = clock.currentTimeMillis();
   }
 
   /** {@inheritDoc} */
   @Override
   public void onMessage(ReadRowsResponse message) {
-    resetStatusBasedBackoff();
-    lastResponseMs = clock.currentTimeMillis();
-    // We've had at least one successful RPC, reset the backoff and retry counter
-    timeoutRetryCount = 0;
+    try {
+      lastResponseMs = clock.currentTimeMillis();
+      resetStatusBasedBackoff();
+      // We've had at least one successful RPC, reset the backoff and retry counter
+      timeoutRetryCount = 0;
+      if (adapter.autoFlowControlEnabled) {
+        adapter.request(1);
+      }
+      operationSpan.addAnnotation("Got a response");
+      // This may take some time. This must not block so that gRPC worker threads don't leak.
+      rowMerger.onNext(message);
 
-    ByteString previouslyProcessedKey = rowMerger.getLastCompletedRowKey();
+      updateRowCounts();
+      updateLastProcessedKey(message);
 
-    operationSpan.addAnnotation("Got a response");
-    // This may take some time. This must not block so that gRPC worker threads don't leak.
-    rowMerger.onNext(message);
+      if (responseObserver != null) {
+        responseObserver.onNext(message);
+      }
+    } catch (Exception e) {
+      setException(e);
+    }
+  }
 
+  private void updateRowCounts() {
     // Add an annotation for the number of rows that were returned in the previous response.
     int rowCountInLastMessage = rowMerger.getRowCountInLastMessage();
     operationSpan.addAnnotation("Processed Response", ImmutableMap.of("rowCount",
-      AttributeValue.longAttributeValue(rowCountInLastMessage)));
+            AttributeValue.longAttributeValue(rowCountInLastMessage)));
 
     totalRowsProcessed += rowCountInLastMessage;
     requestManager.incrementRowCount(rowCountInLastMessage);
+  }
 
-    ByteString lastProcessedKey = rowMerger.getLastCompletedRowKey();
-    if (previouslyProcessedKey != lastProcessedKey) {
-      // There was a full row found in the response.
-      updateLastFoundKey(lastProcessedKey);
-    } else {
+  private void updateLastProcessedKey(ReadRowsResponse message) {
+    ByteString previouslyProcessedKey = null;
+    if (!message.getLastScannedRowKey().isEmpty()) {
       // The service indicates that it processed rows that did not match the filter, and will not
       // need to be reprocessed.
-      updateLastFoundKey(message.getLastScannedRowKey());
+      previouslyProcessedKey = message.getLastScannedRowKey();
+    } else {
+      previouslyProcessedKey = rowMerger.getLastCompletedRowKey();
     }
 
-    if (adapter.autoFlowControlEnabled) {
-      adapter.request(1);
-    }
-
-    if (resultObserver != null) {
-      resultObserver.onNext(message);
+    if (previouslyProcessedKey != null && !previouslyProcessedKey.isEmpty()) {
+      requestManager.updateLastFoundKey(previouslyProcessedKey);
     }
   }
 
@@ -205,12 +213,6 @@ public class RetryingReadRowsOperation extends
     // Add an annotation for the total number of rows that were returned across all responses.
     operationSpan.addAnnotation("Total Rows Processed",
       ImmutableMap.of("rowCount", AttributeValue.longAttributeValue(totalRowsProcessed)));
-  }
-
-  private void updateLastFoundKey(ByteString lastProcessedKey) {
-    if (lastProcessedKey != null && !lastProcessedKey.isEmpty()) {
-      requestManager.updateLastFoundKey(lastProcessedKey);
-    }
   }
 
   /** {@inheritDoc} */
@@ -232,7 +234,8 @@ public class RetryingReadRowsOperation extends
     rowObserver.onError(exception);
     // cleanup any state that was in RowMerger. There may be a partial row in progress which needs
     // to be reset.
-    rowMerger = new RowMerger(rowObserver);
+    rowMerger.reset();
+    super.setException(exception);
   }
 
   /**
@@ -247,7 +250,9 @@ public class RetryingReadRowsOperation extends
   @Override
   protected boolean onOK(Metadata trailers) {
     rowMerger.onCompleted();
-    completionFuture.set("");
+    if (!completionFuture.isDone()) {
+      completionFuture.set("");
+    }
     return true;
   }
 
