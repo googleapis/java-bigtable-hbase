@@ -158,7 +158,7 @@ public class TestBasicOps extends AbstractTest {
   @Test
   @Category(KnownEmulatorGap.class)
   public void testPutAlmostTooBigValue() throws IOException {
-    testPutGetDeleteExists(10 << 20, true, true); // 10 MB
+    testPutGetDeleteExists(10 << 20 - 4, true, true); // 10 MB
   }
 
   @Test
@@ -167,7 +167,7 @@ public class TestBasicOps extends AbstractTest {
   public void testPutAlmostTooBigValueTenTimes() throws IOException {
     for (int i = 0; i < 10; i++) {
       long start = System.currentTimeMillis();
-      testPutGetDeleteExists(10 << 20, true, true); // 10 MB
+      testPutGetDeleteExists(10 << 20 - 4, true, true); // 10 MB
       if (System.currentTimeMillis() - start > 5_000) {
         // If this is a slow connection, don't bother doing a performance test.
         break;

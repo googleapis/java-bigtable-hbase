@@ -28,6 +28,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.ProcedureInfo;
+import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
@@ -40,6 +42,7 @@ import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
+import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 
@@ -117,6 +120,16 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, HBaseSnapshotException, UnknownSnapshotException {
     throw new UnsupportedOperationException("isSnapshotFinished");  // TODO
+  }
+
+  @Override
+  public void restoreSnapshot(String s, boolean b, boolean b1) throws IOException, RestoreSnapshotException {
+
+  }
+
+  @Override
+  public void cloneSnapshot(String s, TableName tableName, boolean b) throws IOException, TableExistsException, RestoreSnapshotException {
+
   }
 
   /** {@inheritDoc} */
@@ -222,6 +235,26 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
+  public boolean setCleanerChoreRunning(boolean b) throws IOException {
+      throw new UnsupportedOperationException("setCleanerChoreRunning"); // TODO
+  }
+
+  @Override
+  public boolean runCleanerChore() throws IOException {
+      throw new UnsupportedOperationException("runCleanerChore"); // TODO
+  }
+
+  @Override
+  public boolean isCleanerChoreEnabled() throws IOException {
+      throw new UnsupportedOperationException("isCleanerChoreEnabled"); // TODO
+  }
+
+  @Override
+  public boolean isMasterInMaintenanceMode() throws IOException {
+      throw new UnsupportedOperationException("isMasterInMaintenanceMode"); // TODO
+  }
+
+  @Override
   public boolean abortProcedure(long procId, boolean mayInterruptIfRunning) throws IOException {
     throw new UnsupportedOperationException("abortProcedure"); // TODO
   }
@@ -250,6 +283,16 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public boolean isSplitOrMergeEnabled(MasterSwitchType arg0) throws IOException {
     throw new UnsupportedOperationException("isSplitOrMergeEnabled"); // TODO
+  }
+
+  @Override
+  public List<ServerName> listDeadServers() throws IOException {
+      throw new UnsupportedOperationException("listDeadServers"); // TODO
+  }
+
+  @Override
+  public List<ServerName> clearDeadServers(List<ServerName> list) throws IOException {
+      throw new UnsupportedOperationException("clearDeadServers"); // TODO
   }
 
   @Override

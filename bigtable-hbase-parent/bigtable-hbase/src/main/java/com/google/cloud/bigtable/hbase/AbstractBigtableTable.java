@@ -679,6 +679,26 @@ public abstract class AbstractBigtableTable implements Table {
   }
 
   @Override
+  public int getReadRpcTimeout() {
+    throw new UnsupportedOperationException("getReadRpcTimeout");
+  }
+
+  @Override
+  public void setReadRpcTimeout(int i) {
+    throw new UnsupportedOperationException("setReadRpcTimeout");
+  }
+
+  @Override
+  public int getWriteRpcTimeout() {
+    throw new UnsupportedOperationException("getWriteRpcTimeout");
+  }
+
+  @Override
+  public void setWriteRpcTimeout(int i) {
+    throw new UnsupportedOperationException("setWriteRpcTimeout");
+  }
+
+  @Override
   public int getRpcTimeout() {
     throw new UnsupportedOperationException("getRpcTimeout");
   }
