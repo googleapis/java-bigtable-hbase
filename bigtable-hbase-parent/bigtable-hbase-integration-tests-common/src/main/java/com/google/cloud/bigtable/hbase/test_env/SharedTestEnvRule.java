@@ -51,6 +51,16 @@ public abstract class SharedTestEnvRule extends ExternalResource {
   }
 
   public static SharedTestEnvRule getInstance() {
+    if(instance == null) {
+      try {
+        //Allows for integration tests to run independently in IDE 
+        Class.forName("com.google.cloud.bigtable.hbase.IntegrationTests").newInstance();
+        instance.before();
+      } catch (Throwable e) {
+        e.printStackTrace();
+      }
+    }
+    
     return instance;
   }
 
@@ -136,4 +146,5 @@ public abstract class SharedTestEnvRule extends ExternalResource {
   public ExecutorService getExecutor() {
     return sharedTestEnv.getExecutor();
   }
+  
 }

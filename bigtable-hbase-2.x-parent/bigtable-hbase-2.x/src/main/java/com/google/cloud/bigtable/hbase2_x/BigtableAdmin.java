@@ -15,6 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
+import com.google.bigtable.admin.v2.Snapshot;
+import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import com.google.common.util.concurrent.Futures;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,9 +65,8 @@ import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
+import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 
 /**
  * HBase 2.x specific implementation of {@link AbstractBigtableAdmin}.
@@ -119,6 +127,25 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     return response;
 
   }
+  
+  @Override
+  public List<SnapshotDescription> listSnapshots()
+      throws IOException {
+    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder()
+        .setParent(getSnapshotClusterName().toString())
+        .build();
+
+    ListSnapshotsResponse snapshotList = Futures.getChecked(bigtableTableAdminClient
+        .listSnapshotsAsync(request), IOException.class);
+    List<SnapshotDescription> response = new ArrayList<>();
+    for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
+      response.add(new SnapshotDescription(
+          snapshot.getName(), 
+          TableName.valueOf(snapshot.getSourceTable().getName())));
+    }
+    return response;
+  }
+
 
   /**
    * {@inheritDoc}
@@ -127,13 +154,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    * Copying the same code here. //TODO - need to find a better way
    */
   @Override
-  public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamily)
+  public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    String columnName = columnFamily.getNameAsString();
-    Modification.Builder modification = Modification.newBuilder().setId(columnName)
-        .setCreate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamily).build());
+    String columnName = columnFamilyDesc.getNameAsString();
+    Modification.Builder modification = Modification.newBuilder()
+        .setId(columnName)
+        .setCreate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamilyDesc)
+        .build());
     modifyColumn(tableName, columnName, "add", modification);
-
   }
 
   /**
@@ -143,11 +171,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    * Copying the same code here. //TODO - need to find a better way 
    */
   @Override
-  public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamily)
+  public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    String columnName = columnFamily.getNameAsString();
-    Modification.Builder modification = Modification.newBuilder().setId(columnName)
-        .setUpdate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamily).build());
+    String columnName = columnFamilyDesc.getNameAsString();
+    Modification.Builder modification = Modification.newBuilder()
+        .setId(columnName)
+        .setUpdate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamilyDesc)
+        .build());
     modifyColumn(tableName, columnName, "update", modification);
 
   }
@@ -213,76 +243,114 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public Future<Void> addColumnFamilyAsync(TableName arg0, ColumnFamilyDescriptor arg1)
+  public Future<Void> addColumnFamilyAsync(TableName tableName, ColumnFamilyDescriptor columnFamily)
       throws IOException {
-    throw new UnsupportedOperationException("addColumnFamilyAsync"); 
+    String columnName = columnFamily.getNameAsString();
+    Modification.Builder modification = Modification.newBuilder().setId(columnName)
+        .setCreate(new ColumnDescriptorAdapter()
+        .adapt((HColumnDescriptor) columnFamily).build());
+    return modifyColumnAsync(tableName, columnName, "add", modification);
   }
 
   @Override
-  public List<SnapshotDescription> listSnapshots()
+  public void deleteColumnFamily(TableName tableName, byte[] columnName) throws IOException {
+    deleteColumn(tableName, columnName);
+  }
+
+  @Override
+  public Future<Void> deleteColumnFamilyAsync(TableName tableName, byte[] columnName) 
       throws IOException {
-    throw new IllegalArgumentException("listSnapshots is not supported");
+    final String columnNameStr = Bytes.toString(columnName);
+    Modification.Builder modification = Modification.newBuilder().setId(columnNameStr)
+        .setDrop(true);
+    return modifyColumnAsync(tableName, columnNameStr, "delete", modification);
   }
 
 
-  @Override
-  public void deleteColumnFamily(TableName arg0, byte[] arg1) throws IOException {
-    throw new UnsupportedOperationException("deleteColumnFamily"); // TODO
+  protected CompletableFuture<Void> modifyColumnAsync(TableName tableName, String columnName,
+      String modificationType, Modification.Builder modification) {
+    ModifyColumnFamiliesRequest.Builder modifyColumnBuilder = ModifyColumnFamiliesRequest
+        .newBuilder().addModifications(modification).setName(toBigtableName(tableName));
+    return FutureUtils.toCompletableFuture(
+        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnBuilder.build()))
+        .thenApply(r -> null);
   }
 
-  @Override
-  public Future<Void> deleteColumnFamilyAsync(TableName arg0, byte[] arg1) throws IOException {
-    throw new UnsupportedOperationException("deleteColumnFamily"); // TODO
+  protected CompletableFuture<Void> deleteTableAsyncInternal(TableName tableName) {
+    DeleteTableRequest deleteTableRequest = DeleteTableRequest.newBuilder()
+        .setName(toBigtableName(tableName))
+        .build();
+    return FutureUtils.toCompletableFuture(
+        bigtableTableAdminClient.deleteTableAsync(deleteTableRequest))
+        .thenApply(r -> null);
   }
-
+  
   @Override
-  public Future<Void> deleteTableAsync(TableName arg0) throws IOException {
-    throw new UnsupportedOperationException("deleteTableAsync"); // TODO
+  public Future<Void> deleteTableAsync(TableName tableName) throws IOException {
+    return deleteTableAsyncInternal(tableName);
   }
 
   @Override
   public List<TableDescriptor> listTableDescriptors() throws IOException {
-    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
+    return Arrays.asList(listTables());
   }
 
   @Override
-  public List<TableDescriptor> listTableDescriptors(Pattern arg0) throws IOException {
-    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
+  public List<TableDescriptor> listTableDescriptors(Pattern pattern) throws IOException {
+    return Arrays.asList(listTables(pattern));
   }
 
   @Override
-  public List<TableDescriptor> listTableDescriptors(List<TableName> arg0) throws IOException {
-    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
+  public List<TableDescriptor> listTableDescriptors(List<TableName> tableNames) throws IOException {
+    List<TableDescriptor> response = new ArrayList<TableDescriptor>();
+    for (TableName tableName: tableNames) {
+      TableDescriptor desc = getTableDescriptor(tableName);
+      if (desc != null) {
+        response.add(desc);
+      }
+    }
+    return response;
   }
 
   @Override
-  public List<TableDescriptor> listTableDescriptors(Pattern arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
-  }
-
-  @Override
-  public List<TableDescriptor> listTableDescriptorsByNamespace(byte[] arg0) throws IOException {
-    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
-  }
-
-  @Override
-  public List<SnapshotDescription> listTableSnapshots(String arg0,
-      String arg1) throws IOException {
-    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
-  }
-
-  @Override
-  public List<SnapshotDescription> listTableSnapshots(Pattern arg0,
-      Pattern arg1) throws IOException {
-    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
-  }
-
-
-  @Override
-  public Future<Void> modifyColumnFamilyAsync(TableName arg0, ColumnFamilyDescriptor arg1)
+  public List<TableDescriptor> listTableDescriptors(Pattern pattern, boolean includeSysTables) 
       throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("modifyColumnFamilyAsync");
+    return Arrays.asList(listTables(pattern,includeSysTables));
+  }
+
+  @Override
+  public List<TableDescriptor> listTableDescriptorsByNamespace(byte[] namespace) 
+      throws IOException {
+    final String namespaceStr = Bytes.toString(namespace);
+    return Arrays.asList(listTableDescriptorsByNamespace(namespaceStr));
+  }
+
+  @Override
+  public List<SnapshotDescription> listTableSnapshots(String tableName,
+      String snapshotName) throws IOException {
+    return listTableSnapshots(Pattern.compile(tableName), Pattern.compile(snapshotName));
+  }
+
+  @Override
+  public List<SnapshotDescription> listTableSnapshots(Pattern tableName,
+      Pattern snapshotName) throws IOException {
+    List<SnapshotDescription> response = new ArrayList<SnapshotDescription>();
+    for (SnapshotDescription snapshot: listSnapshots(snapshotName)) {
+      if (tableName.matcher(snapshot.getTableNameAsString()).matches()) {
+        response.add(snapshot);
+      }
+    }
+    return response;
+  }
+
+
+  @Override
+  public Future<Void> modifyColumnFamilyAsync(TableName tableName, 
+      ColumnFamilyDescriptor columnFamily) throws IOException {
+    String columnName = columnFamily.getNameAsString();
+    Modification.Builder modification = Modification.newBuilder().setId(columnName)
+        .setUpdate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamily).build());
+    return modifyColumnAsync(tableName, columnName, "update", modification);
   }
 
   @Override

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -31,6 +32,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
@@ -45,9 +47,12 @@ public class TestSnapshots extends AbstractTest {
   final byte[] QUALIFIER = dataHelper.randomData("TestSnapshots");
 
   private final TableName tableName = sharedTestEnv.newTestTableName();
+  private final TableName anotherTableName = sharedTestEnv.newTestTableName();
   // The maximum size of a table id or snapshot id is 50. newTestTableName().size() can approach 50.
   // Make sure that the snapshot name and cloned table are within the 50 character limit
   private final String snapshotName = tableName.getNameAsString().substring(40) + "_snp";
+  private final String anotherSnapshotName = 
+      anotherTableName.getNameAsString().substring(40) + "_snp";
   private final TableName clonedTableName =
       TableName.valueOf(tableName.getNameAsString().substring(40) + "_clone");
 
@@ -58,9 +63,13 @@ public class TestSnapshots extends AbstractTest {
     }
     try (Admin admin = getConnection().getAdmin()) {
       delete(admin, tableName);
+      delete(admin, anotherTableName);
       delete(admin, clonedTableName);
-      if (!admin.listSnapshots(snapshotName).isEmpty()) {
-        admin.deleteSnapshot(snapshotName);
+      for (SnapshotDescription snapDesc : admin.listSnapshots(snapshotName + ".*")) {
+        admin.deleteSnapshot(snapDesc.getName());
+      }
+      for (SnapshotDescription snapDesc : admin.listSnapshots(anotherSnapshotName + ".*")) {
+        admin.deleteSnapshot(snapDesc.getName());
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -88,7 +97,7 @@ public class TestSnapshots extends AbstractTest {
       admin.createTable(
         new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
 
-      Map<String, Long> values = createAndPopulateTable();
+      Map<String, Long> values = createAndPopulateTable(tableName);
       checkSnapshotCount(admin, 0);
       admin.snapshot(snapshotName, tableName);
       checkSnapshotCount(admin, 1);
@@ -97,6 +106,79 @@ public class TestSnapshots extends AbstractTest {
       checkSnapshotCount(admin, 1);
       admin.deleteSnapshot(snapshotName);
       checkSnapshotCount(admin, 0);
+    }
+  }
+  
+  @Test
+  @Category(KnownGap.class)
+  public void testListSnapshots() throws IOException {
+    if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
+      return;
+    }
+    final Pattern allSnapshots = Pattern.compile(snapshotName + ".*");
+    try (Admin admin = getConnection().getAdmin()) {
+      admin.createTable(
+          new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
+
+      Map<String, Long> values = createAndPopulateTable(tableName);
+      Assert.assertEquals(0, admin.listSnapshots(allSnapshots).size());
+      admin.snapshot(snapshotName, tableName);
+      Assert.assertEquals(1, admin.listSnapshots(snapshotName).size());
+      admin.deleteSnapshot(snapshotName);
+      Assert.assertEquals(0, admin.listSnapshots(snapshotName).size());
+      admin.snapshot(snapshotName + 1, tableName);
+      admin.snapshot(snapshotName + 2,tableName);
+      Assert.assertEquals(2, admin.listSnapshots(allSnapshots).size());
+      Assert.assertEquals(1, admin.listSnapshots(Pattern.compile(snapshotName + 1)).size());
+      Assert.assertEquals(1, admin.listSnapshots(Pattern.compile(snapshotName + 2)).size());
+      admin.deleteSnapshots(allSnapshots);
+      Assert.assertEquals(0, admin.listSnapshots(allSnapshots));
+    }
+  }
+  
+  @Test
+  @Category(KnownGap.class)
+  public void testTableSnapshots() throws IOException {
+    if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
+      return;
+    }
+    final Pattern matchAll =  Pattern.compile(".*");
+    try (Admin admin = getConnection().getAdmin()) {
+      admin.createTable(
+          new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
+      admin.createTable(
+          new HTableDescriptor(anotherTableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
+
+      createAndPopulateTable(tableName);
+      createAndPopulateTable(anotherTableName);
+      Assert.assertEquals(0, 
+          admin.listTableSnapshots(Pattern.compile(tableName.getNameAsString()), matchAll).size());
+      Assert.assertEquals(0, admin.listTableSnapshots(
+              Pattern.compile(anotherTableName.getNameAsString()), matchAll).size());
+      admin.snapshot(snapshotName, tableName);
+      Assert.assertEquals(1, 
+          admin.listTableSnapshots(Pattern.compile(tableName.getNameAsString()), matchAll).size());
+      Assert.assertEquals(0, admin.listTableSnapshots(
+          Pattern.compile(anotherTableName.getNameAsString()), matchAll).size());
+      admin.snapshot(anotherSnapshotName, anotherTableName);
+      Assert.assertEquals(1, 
+          admin.listTableSnapshots(Pattern.compile(tableName.getNameAsString()), matchAll).size());
+      Assert.assertEquals(1, admin.listTableSnapshots(
+          Pattern.compile(anotherTableName.getNameAsString()), matchAll).size());
+      admin.deleteSnapshot(snapshotName);
+      Assert.assertEquals(0, 
+          admin.listTableSnapshots(tableName.getNameAsString(), snapshotName).size());
+      Assert.assertEquals(0, 
+          admin.listTableSnapshots(anotherTableName.getNameAsString(), snapshotName).size());
+      Assert.assertEquals(1, 
+          admin.listTableSnapshots(anotherTableName.getNameAsString(), anotherSnapshotName).size());
+      admin.deleteSnapshot(anotherSnapshotName);
+      Assert.assertEquals(0, 
+          admin.listTableSnapshots(tableName.getNameAsString(), snapshotName).size());
+      Assert.assertEquals(0, 
+          admin.listTableSnapshots(anotherTableName.getNameAsString(), snapshotName).size());
+      Assert.assertEquals(0, 
+          admin.listTableSnapshots(anotherTableName.getNameAsString(), anotherSnapshotName).size());
     }
   }
 
@@ -110,7 +192,7 @@ public class TestSnapshots extends AbstractTest {
    * @return A Map of the data that was added to the original table.
    * @throws IOException
    */
-  private Map<String, Long> createAndPopulateTable() throws IOException {
+  private Map<String, Long> createAndPopulateTable(TableName tableName) throws IOException {
     Map<String, Long> values = new HashMap<>();
     try (Table table = getConnection().getTable(tableName)) {
       values.clear();
@@ -129,7 +211,7 @@ public class TestSnapshots extends AbstractTest {
   protected void validateClone(Map<String, Long> values) throws IOException {
     try (Table clonedTable = getConnection().getTable(clonedTableName);
         ResultScanner scanner = clonedTable.getScanner(new Scan())){
-      for(Result result : scanner) {
+      for (Result result : scanner) {
         String row = Bytes.toString(result.getRow());
         Long expected = values.get(row);
         Long found = Bytes.toLong(result.getValue(COLUMN_FAMILY, QUALIFIER));

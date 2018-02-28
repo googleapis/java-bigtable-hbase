@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
@@ -118,6 +119,10 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
       //TODO: Verify why this test fails. getColumnFamilies() array is empyty 
       //assertEquals(10, patTableDescriptors.get(0).getColumnFamilies()[0].getTimeToLive()); 
 
+      // test getTableDescriptor
+      TableDescriptor tableDescriptor = asyncAdmin.getTableDescriptor(tableName).get();
+      assertEquals(tableName, tableDescriptor.getTableName());
+      
       // test isTableEnabled
       assertEquals(true, asyncAdmin.isTableEnabled(tableName).get());
 
@@ -134,6 +139,21 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
       deleteTestTable(tableName);
     }
   }
+
+  @Test
+  public void testgetTableDescriptor_nonExistingTable() throws Exception {
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
+    thrown.expect(ExecutionException.class);
+    thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(TableNotFoundException.class));
+    asyncAdmin.getTableDescriptor(tableName).get();
+  }  
+
+  @Test
+  public void testgetTableDescriptor_nullTable() throws Exception {
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    assertEquals(null, asyncAdmin.getTableDescriptor(null).get());
+  }  
 
   @Test
   public void testCreateTableWithNumRegions_exception() throws Exception {

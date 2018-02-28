@@ -27,17 +27,35 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-public class TestListTables extends AbstractTestListTables {
+public class TestListTablesHBase2 extends AbstractTestListTables {
 
+  private boolean enableAsyncDelete = false;
+  
+  @Before
+  public void setup()
+  {
+    enableAsyncDelete = false;
+  }
+
+  @Test
+  public void testDeleteTableAsync() throws Exception
+  {
+    enableAsyncDelete = true;
+    testDeleteTable();
+  }
+  
   @Override
   protected void checkColumnFamilies(Admin admin, TableName tableName) 
       throws TableNotFoundException,IOException {
     HTableDescriptor descriptor = admin.getTableDescriptor(tableName);
     HColumnDescriptor[] columnFamilies = descriptor.getColumnFamilies();
-    Assert.assertEquals(2, columnFamilies.length);
+    Assert.assertEquals(1, columnFamilies.length);
     Assert.assertEquals(Bytes.toString(COLUMN_FAMILY), columnFamilies[0].getNameAsString());
   }
   
@@ -49,27 +67,38 @@ public class TestListTables extends AbstractTestListTables {
   }
   
   @Override
+  protected void deleteTable(Admin admin, TableName tableName) throws Exception {
+    if (enableAsyncDelete) {
+      admin.deleteTableAsync(tableName).get();
+    } else {
+      admin.deleteTable(tableName);
+    }
+  }
+
+
+  @Override
+  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, Pattern pattern) 
+      throws IOException {
+    return toTableNames(admin.listTableDescriptors(pattern));
+  }
+
+  @Override
+  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, List<TableName> tableNames) 
+      throws IOException {
+    return toTableNames(admin.listTableDescriptors(tableNames));
+  }
+
+  @Override
   protected void checkTableDescriptor(Admin admin, TableName tableName) 
       throws TableNotFoundException, IOException {
-    admin.getTableDescriptor(tableName);
-  }
-
-  @Override
-  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, Pattern pattern) throws IOException {
-    return toTableNames(admin.listTables(pattern));
-  }
-
-  @Override
-  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, List<TableName> tableNames) throws IOException {
-    return toTableNames(admin.getTableDescriptorsByTableName(tableNames));
+    admin.getDescriptor(tableName);
   }
   
-  private List<TableName> toTableNames(HTableDescriptor[] descriptors)
-  {
-    List<TableName> tableList = new ArrayList<TableName>();
-    for (HTableDescriptor descriptor : descriptors) {
-      tableList.add(descriptor.getTableName());
+  private List<TableName> toTableNames(List<TableDescriptor> descriptors) {
+    List<TableName> tableNames = new ArrayList<TableName>();
+    for (TableDescriptor descriptor : descriptors) {
+      tableNames.add(descriptor.getTableName());
     }
-    return tableList;
+    return tableNames;
   }
 }
