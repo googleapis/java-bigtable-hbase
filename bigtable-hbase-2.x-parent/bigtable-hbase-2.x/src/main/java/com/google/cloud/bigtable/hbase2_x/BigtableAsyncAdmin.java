@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -42,6 +43,7 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.CompactionState;
 import org.apache.hadoop.hbase.client.RawAsyncTable.CoprocessorCallable;
 import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.replication.TableCFs;
@@ -55,16 +57,20 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest.Split;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
+import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.protobuf.ByteString;
+import io.grpc.Status;
 
 /**
  * Bigtable implementation of {@link AsyncAdmin}
@@ -237,9 +243,23 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<TableDescriptor> getTableDescriptor(TableName tableName) {
-    return listTables(Optional.of(Pattern.compile(tableName.getNameAsString())), false)
-        .thenApply(r -> r.stream().findFirst().get());
+    if (tableName == null) {
+     return CompletableFuture.completedFuture(null);
+    }
 
+    String bigtableTableName = bigtableInstanceName.toTableNameStr(tableName.getNameAsString());
+    GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
+
+    return FutureUtils.toCompletableFuture(bigtableTableAdminClient.getTableAsync(request))
+        .handle((resp, ex) -> {
+          if (ex != null) {
+            if (Status.fromThrowable(ex).getCode() == Status.Code.NOT_FOUND) {
+              throw new CompletionException(new TableNotFoundException(tableName));
+            }
+          }
+
+          return tableAdapter2x.adapt(resp);
+        });
   }
 
   @Override

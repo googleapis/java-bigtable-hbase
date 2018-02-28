@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
@@ -138,6 +139,21 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
       deleteTestTable(tableName);
     }
   }
+
+  @Test
+  public void testgetTableDescriptor_nonExistingTable() throws Exception {
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
+    thrown.expect(ExecutionException.class);
+    thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(TableNotFoundException.class));
+    asyncAdmin.getTableDescriptor(tableName).get();
+  }  
+
+  @Test
+  public void testgetTableDescriptor_nullTable() throws Exception {
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    assertEquals(null, asyncAdmin.getTableDescriptor(null).get());
+  }  
 
   @Test
   public void testCreateTableWithNumRegions_exception() throws Exception {
