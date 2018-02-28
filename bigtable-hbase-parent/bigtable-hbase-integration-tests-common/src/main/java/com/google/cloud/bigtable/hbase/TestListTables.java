@@ -19,120 +19,57 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
-public class TestListTables extends AbstractTest {
+public class TestListTables extends AbstractTestListTables {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-
-  private List<TableName> tablesToDelete = new ArrayList<>();
-
-  @After
-  public void deleteTables() throws IOException{
-    try (Admin admin = getConnection().getAdmin()) {
-      for (TableName tableName : tablesToDelete) {
-        admin.disableTable(tableName);
-        admin.deleteTable(tableName);
-      }
-    }
-  }
-
-  /**
-   * @throws IOException
-   */
-  @Test
-  public void testTableNames() throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      TableName tableName1 = TableName.valueOf("list_table1-" + UUID.randomUUID().toString());
-      TableName tableName2 = TableName.valueOf("list_table2-" + UUID.randomUUID().toString());
-
-      Assert.assertFalse(admin.tableExists(tableName1));
-      Assert.assertFalse(ArrayUtils.contains(admin.listTableNames(), tableName1));
-
-      sharedTestEnv.createTable(tableName1);
-      checkColumnFamilies(admin, tableName1);
-
-      {
-        Assert.assertTrue(admin.tableExists(tableName1));
-        Assert.assertFalse(admin.tableExists(tableName2));
-        TableName[] tableList = admin.listTableNames();
-        Assert.assertTrue(ArrayUtils.contains(tableList, tableName1));
-        Assert.assertFalse(ArrayUtils.contains(tableList, tableName2));
-      }
-
-      sharedTestEnv.createTable(tableName2);
-      checkColumnFamilies(admin, tableName2);
-
-      {
-        Assert.assertTrue(admin.tableExists(tableName1));
-        Assert.assertTrue(admin.tableExists(tableName2));
-        TableName[] tableList = admin.listTableNames();
-        Assert.assertTrue(ArrayUtils.contains(tableList, tableName1));
-        Assert.assertTrue(ArrayUtils.contains(tableList, tableName2));
-      }
-
-      {
-        TableName[] tableList = admin.listTableNames(Pattern.compile("list_table1-.*"));
-        Assert.assertTrue(ArrayUtils.contains(tableList, tableName1));
-        Assert.assertFalse(ArrayUtils.contains(tableList, tableName2));
-      }
-
-      {
-        HTableDescriptor[] descriptors = admin.listTables(Pattern.compile("list_table1-.*"));
-        Assert.assertTrue(contains(descriptors, tableName1));
-        Assert.assertFalse(contains(descriptors, tableName2));
-      }
-
-      {
-        HTableDescriptor[] descriptors =
-            admin.getTableDescriptorsByTableName(Collections.singletonList(tableName2));
-        Assert.assertFalse(contains(descriptors, tableName1));
-        Assert.assertTrue(contains(descriptors, tableName2));
-      }
-    }
-  }
-
-  private static boolean contains(HTableDescriptor[] descriptors, TableName tableName) {
-    for (HTableDescriptor descriptor : descriptors) {
-      if (descriptor.getTableName().equals(tableName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Test
-  public void testNotFound() throws IOException {
-    thrown.expect(TableNotFoundException.class);
-    try (Admin admin = getConnection().getAdmin()) {
-      TableName nonExistantTableName =
-          TableName.valueOf("list_table2-" + UUID.randomUUID().toString());
-      admin.getTableDescriptor(nonExistantTableName);
-    }
-  }
-
-  private void checkColumnFamilies(Admin admin, TableName tableName) throws TableNotFoundException,
-      IOException {
+  @Override
+  protected void checkColumnFamilies(Admin admin, TableName tableName) 
+      throws TableNotFoundException,IOException {
     HTableDescriptor descriptor = admin.getTableDescriptor(tableName);
     HColumnDescriptor[] columnFamilies = descriptor.getColumnFamilies();
     Assert.assertEquals(2, columnFamilies.length);
     Assert.assertEquals(Bytes.toString(COLUMN_FAMILY), columnFamilies[0].getNameAsString());
+  }
+  
+  @Override
+  protected void createTable(Admin admin, TableName tableName) throws IOException {
+    HTableDescriptor descriptor = new HTableDescriptor(tableName);
+    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+    admin.createTable(descriptor);
+  }
+  
+  @Override
+  protected void checkTableDescriptor(Admin admin, TableName tableName) 
+      throws TableNotFoundException, IOException {
+    admin.getTableDescriptor(tableName);
+  }
+
+  @Override
+  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, Pattern pattern) throws IOException {
+    return toTableNames(admin.listTables(pattern));
+  }
+
+  @Override
+  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, List<TableName> tableNames) throws IOException {
+    return toTableNames(admin.getTableDescriptorsByTableName(tableNames));
+  }
+  
+  private List<TableName> toTableNames(HTableDescriptor[] descriptors)
+  {
+    List<TableName> tableList = new ArrayList<TableName>();
+    for (HTableDescriptor descriptor : descriptors) {
+      tableList.add(descriptor.getTableName());
+    }
+    return tableList;
   }
 }

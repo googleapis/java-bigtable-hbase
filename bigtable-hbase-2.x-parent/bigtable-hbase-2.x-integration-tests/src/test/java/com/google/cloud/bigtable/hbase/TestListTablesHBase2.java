@@ -19,13 +19,9 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -33,189 +29,76 @@ import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Rule;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
-public class TestListTablesHBase2 extends AbstractTest {
+public class TestListTablesHBase2 extends AbstractTestListTables {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-
-  private List<TableName> tablesToDelete = new ArrayList<>();
-
-  @After
-  public void deleteTables() throws IOException{
-    try (Admin admin = getConnection().getAdmin()) {
-      for (TableName tableName : tablesToDelete) {
-        admin.disableTable(tableName);
-        admin.deleteTable(tableName);
-      }
-    }
+  private boolean enableAsyncDelete = false;
+  
+  @Before
+  public void setup()
+  {
+    enableAsyncDelete = false;
   }
 
   @Test
-  public void testListTableDescriptors() throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      TableName tableName1 = TableName.valueOf("list_tabledsc1" + UUID.randomUUID().toString());
-      TableName tableName2 = TableName.valueOf("list_tabledsc2" + UUID.randomUUID().toString());
-
-
-      Assert.assertFalse(admin.tableExists(tableName1));
-      Assert.assertEquals(0, 
-          admin.listTableDescriptors(Pattern.compile(tableName1.getNameAsString())).size());
-      Assert.assertEquals(0, 
-          admin.listTableDescriptors(Pattern.compile(tableName2.getNameAsString())).size());
-
-      createTable(admin, tableName1);
-      checkColumnFamilies(admin, tableName1);
-
-      {
-        Assert.assertTrue(admin.tableExists(tableName1));
-        Assert.assertFalse(admin.tableExists(tableName2));
-        List<TableDescriptor> tableDescriptors = admin.listTableDescriptors(Pattern.compile("list_tabledsc.*"));
-        Assert.assertTrue(contains(tableDescriptors,tableName1));
-        Assert.assertFalse(contains(tableDescriptors,tableName2));
-      }
-
-      createTable(admin, tableName2);
-      checkColumnFamilies(admin, tableName2);
-
-      {
-        Assert.assertTrue(admin.tableExists(tableName1));
-        Assert.assertTrue(admin.tableExists(tableName2));
-        List<TableDescriptor> tableDescriptors = admin.listTableDescriptors(Pattern.compile("list_tabledsc.*"));
-        Assert.assertTrue(contains(tableDescriptors,tableName1));
-        Assert.assertTrue(contains(tableDescriptors,tableName2));
-      }
-
-      {
-        List<TableDescriptor> tableDescriptors = 
-            admin.listTableDescriptors(Pattern.compile("list_tabledsc1.*"));
-        Assert.assertTrue(contains(tableDescriptors,tableName1));
-        Assert.assertFalse(contains(tableDescriptors,tableName2));
-      }
-
-      {
-        List<TableDescriptor> tableDescriptors = 
-            admin.listTableDescriptors(Pattern.compile("list_tabledsc.*"));
-        Assert.assertTrue(contains(tableDescriptors,tableName1));
-        Assert.assertTrue(contains(tableDescriptors,tableName2));
-        Assert.assertEquals(2, tableDescriptors.size());
-      }
-
-      {
-        List<TableDescriptor> tableDescriptors = 
-            admin.listTableDescriptors(Arrays.asList(tableName1));
-        Assert.assertTrue(contains(tableDescriptors, tableName1));
-        Assert.assertFalse(contains(tableDescriptors, tableName2));
-        Assert.assertEquals(1, tableDescriptors.size());
-      }
-
-      {
-        List<TableDescriptor> tableDescriptors = 
-            admin.listTableDescriptors(Arrays.asList(tableName1, tableName2));
-        Assert.assertTrue(contains(tableDescriptors, tableName1));
-        Assert.assertTrue(contains(tableDescriptors, tableName2));
-        Assert.assertEquals(2, tableDescriptors.size());
-      }
-    }
+  public void testDeleteTableAsync() throws Exception
+  {
+    enableAsyncDelete = true;
+    testDeleteTable();
   }
   
-  private static boolean contains(List<TableDescriptor> descriptors, TableName tableName) {
-    for (TableDescriptor descriptor : descriptors) {
-      if (descriptor.getTableName().equals(tableName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private void checkColumnFamilies(Admin admin, TableName tableName) throws TableNotFoundException,
-      IOException {
+  @Override
+  protected void checkColumnFamilies(Admin admin, TableName tableName) 
+      throws TableNotFoundException,IOException {
     HTableDescriptor descriptor = admin.getTableDescriptor(tableName);
     HColumnDescriptor[] columnFamilies = descriptor.getColumnFamilies();
     Assert.assertEquals(1, columnFamilies.length);
     Assert.assertEquals(Bytes.toString(COLUMN_FAMILY), columnFamilies[0].getNameAsString());
   }
-
-  private void createTable(Admin admin, TableName tableName) throws IOException {
+  
+  @Override
+  protected void createTable(Admin admin, TableName tableName) throws IOException {
     HTableDescriptor descriptor = new HTableDescriptor(tableName);
-    tablesToDelete.add(tableName);
     descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
     admin.createTable(descriptor);
   }
   
-  private void deleteTable(Admin admin, TableName tableName, boolean async) throws Exception {
-    if (async) {
+  @Override
+  protected void deleteTable(Admin admin, TableName tableName) throws Exception {
+    if (enableAsyncDelete) {
       admin.deleteTableAsync(tableName).get();
     } else {
       admin.deleteTable(tableName);
     }
-    tablesToDelete.remove(tableName);
+  }
+
+
+  @Override
+  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, Pattern pattern) 
+      throws IOException {
+    return toTableNames(admin.listTableDescriptors(pattern));
+  }
+
+  @Override
+  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, List<TableName> tableNames) 
+      throws IOException {
+    return toTableNames(admin.listTableDescriptors(tableNames));
+  }
+
+  @Override
+  protected void checkTableDescriptor(Admin admin, TableName tableName) 
+      throws TableNotFoundException, IOException {
+    admin.getDescriptor(tableName);
   }
   
-  private void deleteTableTest(boolean async) throws Exception {
-    try (Admin admin = getConnection().getAdmin()) {
-      TableName tableName1 = TableName.valueOf("list_table1-" + UUID.randomUUID().toString());
-      TableName tableName2 = TableName.valueOf("list_table2-" + UUID.randomUUID().toString());
-
-      Assert.assertFalse(admin.tableExists(tableName1));
-      Assert.assertFalse(ArrayUtils.contains(admin.listTableNames(), tableName1));
-
-      createTable(admin, tableName1);
-      
-
-      {
-        Assert.assertTrue(admin.tableExists(tableName1));
-        Assert.assertFalse(admin.tableExists(tableName2));
-        TableName[] tableList = admin.listTableNames();
-        Assert.assertTrue(ArrayUtils.contains(tableList, tableName1));
-        Assert.assertFalse(ArrayUtils.contains(tableList, tableName2));
-      }
-
-      createTable(admin, tableName2);
-
-      {
-        Assert.assertTrue(admin.tableExists(tableName1));
-        Assert.assertTrue(admin.tableExists(tableName2));
-        TableName[] tableList = admin.listTableNames();
-        Assert.assertTrue(ArrayUtils.contains(tableList, tableName1));
-        Assert.assertTrue(ArrayUtils.contains(tableList, tableName2));
-      }
-
-      deleteTable(admin,tableName1,async);
-
-      {
-        Assert.assertFalse(admin.tableExists(tableName1));
-        Assert.assertTrue(admin.tableExists(tableName2));
-        TableName[] tableList = admin.listTableNames();
-        Assert.assertFalse(ArrayUtils.contains(tableList, tableName1));
-        Assert.assertTrue(ArrayUtils.contains(tableList, tableName2));
-      }
-      
-      deleteTable(admin,tableName2,async);
-
-      {
-        Assert.assertFalse(admin.tableExists(tableName1));
-        Assert.assertFalse(admin.tableExists(tableName2));
-        TableName[] tableList = admin.listTableNames();
-        Assert.assertFalse(ArrayUtils.contains(tableList, tableName1));
-        Assert.assertFalse(ArrayUtils.contains(tableList, tableName2));
-      }
-     
+  private List<TableName> toTableNames(List<TableDescriptor> descriptors) {
+    List<TableName> tableNames = new ArrayList<TableName>();
+    for (TableDescriptor descriptor : descriptors) {
+      tableNames.add(descriptor.getTableName());
     }
-  }
-  
-  @Test
-  public void testDeleteTableAsync() throws Exception {
-    deleteTableTest(true);
-  }
-  
-  @Test
-  public void testDeleteTable() throws Exception {
-    deleteTableTest(false);
+    return tableNames;
   }
 }

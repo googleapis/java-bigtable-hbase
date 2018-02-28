@@ -16,19 +16,13 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.Snapshot;
-import com.google.bigtable.admin.v2.Table;
-import com.google.cloud.bigtable.grpc.BigtableSnapshotName;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.Empty;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,7 +34,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -65,7 +58,6 @@ import org.apache.hadoop.hbase.client.SnapshotType;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.replication.TableCFs;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
@@ -145,21 +137,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
     ListSnapshotsResponse snapshotList = Futures.getChecked(bigtableTableAdminClient
         .listSnapshotsAsync(request), IOException.class);
-
     List<SnapshotDescription> response = new ArrayList<>();
-
     for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
-      BigtableSnapshotName snapshotName = new BigtableSnapshotName(snapshot.getName());
-      BigtableTableName tableName = new BigtableTableName(snapshot.getSourceTable().getName());
-      HBaseProtos.SnapshotDescription snapDesc = HBaseProtos.SnapshotDescription.newBuilder()
-          .setName(snapshotName.getSnapshotId())
-          .setTable(tableName.getTableId())
-          .setCreationTime(TimeUnit.SECONDS.toMillis(snapshot.getCreateTime().getSeconds()))
-          .build();
-      response.add(new SnapshotDescription(snapDesc.getName(), 
-          TableName.valueOf(snapDesc.getTable()), 
-          SnapshotType.valueOf(snapDesc.getType().toString()) , 
-          snapDesc.getOwner(), snapDesc.getCreationTime(), snapDesc.getVersion()));
+      response.add(new SnapshotDescription(
+          snapshot.getName(), 
+          TableName.valueOf(snapshot.getSourceTable().getName())));
     }
     return response;
   }
@@ -172,13 +154,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    * Copying the same code here. //TODO - need to find a better way
    */
   @Override
-  public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamily)
+  public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    String columnName = columnFamily.getNameAsString();
-    Modification.Builder modification = Modification.newBuilder().setId(columnName)
-        .setCreate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamily).build());
+    String columnName = columnFamilyDesc.getNameAsString();
+    Modification.Builder modification = Modification.newBuilder()
+        .setId(columnName)
+        .setCreate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamilyDesc)
+        .build());
     modifyColumn(tableName, columnName, "add", modification);
-
   }
 
   /**
@@ -188,11 +171,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    * Copying the same code here. //TODO - need to find a better way 
    */
   @Override
-  public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamily)
+  public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    String columnName = columnFamily.getNameAsString();
-    Modification.Builder modification = Modification.newBuilder().setId(columnName)
-        .setUpdate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamily).build());
+    String columnName = columnFamilyDesc.getNameAsString();
+    Modification.Builder modification = Modification.newBuilder()
+        .setId(columnName)
+        .setUpdate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamilyDesc)
+        .build());
     modifyColumn(tableName, columnName, "update", modification);
 
   }
@@ -264,9 +249,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     Modification.Builder modification = Modification.newBuilder().setId(columnName)
         .setCreate(new ColumnDescriptorAdapter()
         .adapt((HColumnDescriptor) columnFamily).build());
-    return FutureUtils
-        .toCompletableFuture(modifyColumnAsync(tableName, columnName, "add", modification))
-        .thenApply(r -> null);
+    return modifyColumnAsync(tableName, columnName, "add", modification);
   }
 
   @Override
@@ -280,48 +263,31 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     final String columnNameStr = Bytes.toString(columnName);
     Modification.Builder modification = Modification.newBuilder().setId(columnNameStr)
         .setDrop(true);
-    return FutureUtils.toCompletableFuture(modifyColumnAsync(
-        tableName, 
-        columnNameStr, 
-        "delete", 
-        modification)).thenApply(r -> null);
+    return modifyColumnAsync(tableName, columnNameStr, "delete", modification);
   }
 
 
-  protected ListenableFuture<Table> modifyColumnAsync(TableName tableName, String columnName,
-      String modificationType, Modification.Builder modification) throws IOException {
+  protected CompletableFuture<Void> modifyColumnAsync(TableName tableName, String columnName,
+      String modificationType, Modification.Builder modification) {
     ModifyColumnFamiliesRequest.Builder modifyColumnBuilder = ModifyColumnFamiliesRequest
         .newBuilder().addModifications(modification).setName(toBigtableName(tableName));
-
-    try {
-      return bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnBuilder.build());
-    } catch (Throwable throwable) {
-      throw new IOException(
-          String.format(
-              "Failed to %s column '%s' in table '%s'",
-              modificationType,
-              columnName,
-              tableName.getNameAsString()),
-          throwable);
-    }
+    return FutureUtils.toCompletableFuture(
+        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnBuilder.build()))
+        .thenApply(r -> null);
   }
 
-  protected ListenableFuture<Empty> deleteTableAsyncInternal(TableName tableName) 
-      throws IOException {
-    Builder deleteBuilder = DeleteTableRequest.newBuilder();
-    deleteBuilder.setName(toBigtableName(tableName));
-    try {
-      return bigtableTableAdminClient.deleteTableAsync(deleteBuilder.build());
-    } catch (Throwable throwable) {
-      throw new IOException(String.format("Failed to delete table '%s'", 
-          tableName.getNameAsString()), throwable);
-    }
+  protected CompletableFuture<Void> deleteTableAsyncInternal(TableName tableName) {
+    DeleteTableRequest deleteTableRequest = DeleteTableRequest.newBuilder()
+        .setName(toBigtableName(tableName))
+        .build();
+    return FutureUtils.toCompletableFuture(
+        bigtableTableAdminClient.deleteTableAsync(deleteTableRequest))
+        .thenApply(r -> null);
   }
   
   @Override
   public Future<Void> deleteTableAsync(TableName tableName) throws IOException {
-    return FutureUtils.toCompletableFuture(deleteTableAsyncInternal(tableName))
-        .thenApply(r -> null);
+    return deleteTableAsyncInternal(tableName);
   }
 
   @Override
@@ -384,11 +350,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     String columnName = columnFamily.getNameAsString();
     Modification.Builder modification = Modification.newBuilder().setId(columnName)
         .setUpdate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamily).build());
-    return FutureUtils.toCompletableFuture(modifyColumnAsync(
-        tableName, 
-        columnName, 
-        "update", 
-        modification)).thenApply(r -> null);
+    return modifyColumnAsync(tableName, columnName, "update", modification);
   }
 
   @Override
