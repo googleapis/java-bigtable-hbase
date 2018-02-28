@@ -453,7 +453,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
-    final ResponseQueueReader reader = new ResponseQueueReader();
+    final ResponseQueueReader reader = new ResponseQueueReader(retryOptions.getReadPartialRowTimeoutMillis());
     RetryingReadRowsOperation operation = createReadRowsRetryListener(request, reader);
     operation.setResultObserver(new StreamObserver<ReadRowsResponse>(){
       @Override
