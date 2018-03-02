@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +28,11 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.ClusterStatus.Option;
+
+import org.apache.hadoop.hbase.CacheEvictionStats;
+import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.RegionLoad;
+import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotEnabledException;
@@ -40,10 +40,10 @@ import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.apache.hadoop.hbase.client.BigtableAsyncConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
-import org.apache.hadoop.hbase.client.RawAsyncTable.CoprocessorCallable;
 import org.apache.hadoop.hbase.client.RegionInfo;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.replication.TableCFs;
@@ -54,22 +54,22 @@ import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
+
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest.Split;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
-import com.google.bigtable.v2.ReadModifyWriteRowResponse;
+import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.protobuf.ByteString;
+
 import io.grpc.Status;
 
 /**
@@ -95,7 +95,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     this.tableAdapter2x = new TableAdapter2x(options, new ColumnDescriptorAdapter());
   }
 
-  @Override
   public CompletableFuture<Void> createTable(TableDescriptor desc, Optional<byte[][]> splitKeys) {
     // wraps exceptions in a CF (CompletableFuture). No null check here on desc to match Hbase impl
     if (desc.getTableName() == null) {
@@ -120,6 +119,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         r -> FutureUtils.toCompletableFuture(bigtableTableAdminClient.createTableAsync(r.build())))
         .thenAccept(r -> {
         });
+  }
+  
+  @Override
+  public CompletableFuture<Void> createTable(TableDescriptor desc, byte[][] splitKeys) {
+    return createTable(desc, Optional.of(splitKeys));
   }
 
   @Override
@@ -184,7 +188,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         .thenApply(r -> r.stream().anyMatch(e -> e.equals(tableName)));
   }
 
-  @Override
   public CompletableFuture<List<TableName>> listTableNames(Optional<Pattern> tableNamePattern,
       boolean includeSysTables) {
     return requestTableList().thenApply(r -> {
@@ -200,8 +203,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       return result.collect(Collectors.toList());
     });
   }
-
+  
   @Override
+  public CompletableFuture<List<TableName>> listTableNames(Pattern tableNamePattern, boolean includeSysTables) {
+    return listTableNames(Optional.of(tableNamePattern), includeSysTables);
+  }
+
   public CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern,
       boolean includeSysTables) {
     return requestTableList().thenApply(r -> {
@@ -219,6 +226,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       }
       return result;
     });
+  }
+  
+  @Override
+  public CompletableFuture<List<TableDescriptor>> listTableDescriptors(Pattern pattern, boolean includeSysTables) {
+    return listTables(Optional.of(pattern), includeSysTables);
   }
 
   private CompletableFuture<List<Table>> requestTableList() {
@@ -241,7 +253,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return CompletableFuture.completedFuture(!disabledTables.contains(tableName));
   }
 
-  @Override
   public CompletableFuture<TableDescriptor> getTableDescriptor(TableName tableName) {
     if (tableName == null) {
      return CompletableFuture.completedFuture(null);
@@ -261,6 +272,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
           return tableAdapter2x.adapt(resp);
         });
   }
+  
+  @Override
+  public CompletableFuture<TableDescriptor> getDescriptor(TableName tableName) {
+    return getTableDescriptor(tableName);
+  }
 
   @Override
   public CompletableFuture<Boolean> abortProcedure(long arg0, boolean arg1) {
@@ -276,12 +292,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> addReplicationPeer(String arg0, ReplicationPeerConfig arg1) {
     throw new UnsupportedOperationException("addReplicationPeer"); // TODO
 
-  }
-
-  @Override
-  public CompletableFuture<Void> appendReplicationPeerTableCFs(String arg0,
-      Map<TableName, ? extends Collection<String>> arg1) {
-    throw new UnsupportedOperationException("appendReplicationPeerTableCFs"); // TODO
   }
 
   @Override
@@ -311,31 +321,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Void> compact(TableName arg0, Optional<byte[]> arg1) {
-    throw new UnsupportedOperationException("compact"); // TODO
-
-  }
-
-  @Override
-  public CompletableFuture<Void> compactRegion(byte[] arg0, Optional<byte[]> arg1) {
-    throw new UnsupportedOperationException("compactRegion"); // TODO
-  }
-
-  @Override
   public CompletableFuture<Void> compactRegionServer(ServerName arg0) {
     throw new UnsupportedOperationException("compactRegionServer"); // TODO
-  }
-
-  @Override
-  public <S, R> CompletableFuture<R> coprocessorService(Function<RpcChannel, S> arg0,
-      CoprocessorCallable<S, R> arg1) {
-    throw new UnsupportedOperationException("coprocessorService"); // TODO
-  }
-
-  @Override
-  public <S, R> CompletableFuture<R> coprocessorService(Function<RpcChannel, S> arg0,
-      CoprocessorCallable<S, R> arg1, ServerName arg2) {
-    throw new UnsupportedOperationException("coprocessorService"); // TODO
   }
 
   @Override
@@ -390,12 +377,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<byte[]> execProcedureWithRet(String arg0, String arg1,
-      Map<String, String> arg2) {
-    throw new UnsupportedOperationException("execProcedureWithRet"); // TODO
-  }
-
-  @Override
   public CompletableFuture<Void> flush(TableName arg0) {
     throw new UnsupportedOperationException("flush"); // TODO
   }
@@ -403,16 +384,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> flushRegion(byte[] arg0) {
     throw new UnsupportedOperationException("flushRegion"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<ClusterStatus> getClusterStatus() {
-    throw new UnsupportedOperationException("getClusterStatus"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<ClusterStatus> getClusterStatus(EnumSet<Option> arg0) {
-    throw new UnsupportedOperationException("getClusterStatus"); // TODO
   }
 
   @Override
@@ -446,11 +417,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<List<RegionInfo>> getOnlineRegions(ServerName arg0) {
-    throw new UnsupportedOperationException("getOnlineRegions"); // TODO
-  }
-
-  @Override
   public CompletableFuture<String> getProcedures() {
     throw new UnsupportedOperationException("getProcedures"); // TODO
   }
@@ -458,12 +424,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<List<QuotaSettings>> getQuota(QuotaFilter arg0) {
     throw new UnsupportedOperationException("getQuota"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<List<RegionLoad>> getRegionLoads(ServerName arg0,
-      Optional<TableName> arg1) {
-    throw new UnsupportedOperationException("getRegionLoads"); // TODO
   }
 
   @Override
@@ -477,38 +437,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<List<RegionInfo>> getTableRegions(TableName arg0) {
-    throw new UnsupportedOperationException("getTableRegions"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isBalancerOn() {
-    throw new UnsupportedOperationException("isBalancerOn"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isCatalogJanitorOn() {
-    throw new UnsupportedOperationException("isCatalogJanitorOn"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isCleanerChoreOn() {
-    throw new UnsupportedOperationException("isCleanerChoreOn"); // TODO
-  }
-
-  @Override
   public CompletableFuture<Boolean> isMasterInMaintenanceMode() {
     throw new UnsupportedOperationException("isMasterInMaintenanceMode"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isMergeOn() {
-    throw new UnsupportedOperationException("isMergeOn"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isNormalizerOn() {
-    throw new UnsupportedOperationException("isNormalizerOn"); // TODO
   }
 
   @Override
@@ -520,11 +450,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Boolean> isSnapshotFinished(SnapshotDescription arg0) {
     throw new UnsupportedOperationException("isSnapshotFinished"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isSplitOn() {
-    throw new UnsupportedOperationException("isSplitOn"); // TODO
   }
 
   @Override
@@ -553,30 +478,9 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<List<ReplicationPeerDescription>> listReplicationPeers(
-      Optional<Pattern> arg0) {
-    throw new UnsupportedOperationException("listReplicationPeers"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<List<SnapshotDescription>> listSnapshots(Optional<Pattern> arg0) {
-    throw new UnsupportedOperationException("listSnapshots"); // TODO
-  }
-
-  @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern arg0,
       Pattern arg1) {
     throw new UnsupportedOperationException("listTableSnapshots"); // TODO ?
-  }
-
-  @Override
-  public CompletableFuture<Void> majorCompact(TableName arg0, Optional<byte[]> arg1) {
-    throw new UnsupportedOperationException("majorCompact"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Void> majorCompactRegion(byte[] arg0, Optional<byte[]> arg1) {
-    throw new UnsupportedOperationException("majorCompactRegion"); // TODO
   }
 
   @Override
@@ -600,11 +504,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Void> move(byte[] arg0, Optional<ServerName> arg1) {
-    throw new UnsupportedOperationException("move"); // TODO
-  }
-
-  @Override
   public CompletableFuture<Boolean> normalize() {
     throw new UnsupportedOperationException("normalize"); // TODO
   }
@@ -622,12 +521,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> removeReplicationPeer(String arg0) {
     throw new UnsupportedOperationException("removeReplicationPeer"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Void> removeReplicationPeerTableCFs(String arg0,
-      Map<TableName, ? extends Collection<String>> arg1) {
-    throw new UnsupportedOperationException("removeReplicationPeerTableCFs"); // TODO
   }
 
   @Override
@@ -656,38 +549,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Boolean> setBalancerOn(boolean arg0) {
-    throw new UnsupportedOperationException("setBalancerOn"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> setCatalogJanitorOn(boolean arg0) {
-    throw new UnsupportedOperationException("setCatalogJanitorOn"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> setCleanerChoreOn(boolean arg0) {
-    throw new UnsupportedOperationException("abosetCleanerChoreOnrtProcedure"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> setMergeOn(boolean arg0) {
-    throw new UnsupportedOperationException("setMergeOn"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> setNormalizerOn(boolean arg0) {
-    throw new UnsupportedOperationException("setNormalizerOn"); // TODO
-  }
-
-  @Override
   public CompletableFuture<Void> setQuota(QuotaSettings arg0) {
     throw new UnsupportedOperationException("setQuota"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Boolean> setSplitOn(boolean arg0) {
-    throw new UnsupportedOperationException("setSplitOn"); // TODO
   }
 
   @Override
@@ -708,11 +571,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> split(TableName arg0, byte[] arg1) {
     throw new UnsupportedOperationException("split"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Void> splitRegion(byte[] arg0, Optional<byte[]> arg1) {
-    throw new UnsupportedOperationException("splitRegion"); // TODO
   }
 
   @Override
@@ -749,5 +607,282 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> updateReplicationPeerConfig(String arg0,
       ReplicationPeerConfig arg1) {
     throw new UnsupportedOperationException("updateReplicationPeerConfig");
+  }
+
+  @Override
+  public CompletableFuture<Void> addReplicationPeer(String arg0, ReplicationPeerConfig arg1, boolean arg2) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> appendReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> balancerSwitch(boolean arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> catalogJanitorSwitch(boolean arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> cleanerChoreSwitch(boolean arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<CacheEvictionStats> clearBlockCache(TableName arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> compact(TableName arg0, CompactType arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> compact(TableName arg0, byte[] arg1, CompactType arg2) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> compactRegion(byte[] arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> compactRegion(byte[] arg0, byte[] arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public <S, R> CompletableFuture<R> coprocessorService(Function<RpcChannel, S> arg0, ServiceCaller<S, R> arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public <S, R> CompletableFuture<R> coprocessorService(Function<RpcChannel, S> arg0, ServiceCaller<S, R> arg1,
+      ServerName arg2) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> createTable(TableDescriptor arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> deleteSnapshots() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> deleteSnapshots(Pattern arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> deleteTableSnapshots(Pattern arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> disableTableReplication(TableName arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> enableTableReplication(TableName arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<byte[]> execProcedureWithReturn(String arg0, String arg1, Map<String, String> arg2) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<ClusterMetrics> getClusterMetrics() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<ClusterMetrics> getClusterMetrics(
+      EnumSet<org.apache.hadoop.hbase.ClusterMetrics.Option> arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<CompactionState> getCompactionState(TableName arg0, CompactType arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<RegionMetrics>> getRegionMetrics(ServerName arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<RegionMetrics>> getRegionMetrics(ServerName arg0, TableName arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<RegionInfo>> getRegions(ServerName arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<RegionInfo>> getRegions(TableName arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isBalancerEnabled() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isCatalogJanitorEnabled() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isCleanerChoreEnabled() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isMergeEnabled() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isNormalizerEnabled() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isSplitEnabled() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isTableAvailable(TableName arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<ReplicationPeerDescription>> listReplicationPeers() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<ReplicationPeerDescription>> listReplicationPeers(Pattern arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<SnapshotDescription>> listSnapshots() {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<SnapshotDescription>> listSnapshots(Pattern arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<TableDescriptor>> listTableDescriptors(boolean arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<TableDescriptor>> listTableDescriptorsByNamespace(String arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<TableName>> listTableNames(boolean arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<TableName>> listTableNamesByNamespace(String arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> majorCompact(TableName arg0, CompactType arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> majorCompact(TableName arg0, byte[] arg1, CompactType arg2) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> majorCompactRegion(byte[] arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> majorCompactRegion(byte[] arg0, byte[] arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> mergeSwitch(boolean arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> modifyTable(TableDescriptor arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> move(byte[] arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> move(byte[] arg0, ServerName arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> normalizerSwitch(boolean arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> removeReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> splitRegion(byte[] arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> splitRegion(byte[] arg0, byte[] arg1) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> splitSwitch(boolean arg0) {
+    throw new UnsupportedOperationException("updateConfiguration"); // TODO
   }
 }

@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,7 +60,7 @@ public class TestAsyncBatch extends AbstractAsyncTest {
 
   private void testPutsGetsDeletes(boolean doGet, byte[][] rowKeys, byte[][] testQualifiers,
       byte[][] testValues) throws IOException, InterruptedException, ExecutionException {
-    AsyncTable table = getDefaultAsyncTable();
+    AsyncTable<ScanResultConsumer> table = getDefaultAsyncTable();
 
     // setup
     List<Get> gets = new ArrayList<>();

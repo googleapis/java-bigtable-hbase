@@ -22,9 +22,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
+
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -211,53 +213,54 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
       ExecutorService es) {
     return getBufferedMutatorBuilder(tableName);
   }
-
+  
   @Override
-  public AsyncTableBuilder<RawAsyncTable> getRawTableBuilder(TableName tableName) {
-    return new AsyncTableBuilder<RawAsyncTable>() {
+  public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName arg0) {
+    return new AsyncTableBuilder<AdvancedScanResultConsumer>() {
+      
       @Override
-      public RawAsyncTable build() {
-      throw new UnsupportedOperationException("getRawTableBuilder"); // TODO
-      }
-
-      @Override
-      public AsyncTableBuilder<RawAsyncTable> setMaxAttempts(int arg0) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
-      public AsyncTableBuilder<RawAsyncTable> setOperationTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setStartLogErrorsCnt(int arg0) {
         return this;
       }
-
+      
       @Override
-      public AsyncTableBuilder<RawAsyncTable> setReadRpcTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setScanTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
-      public AsyncTableBuilder<RawAsyncTable> setRetryPause(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
-      public AsyncTableBuilder<RawAsyncTable> setRpcTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setRetryPause(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
-      public AsyncTableBuilder<RawAsyncTable> setScanTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setReadRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
-      public AsyncTableBuilder<RawAsyncTable> setStartLogErrorsCnt(int arg0) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setOperationTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
-      public AsyncTableBuilder<RawAsyncTable> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setMaxAttempts(int arg0) {
         return this;
+      }
+      
+      @Override
+      public AsyncTable<AdvancedScanResultConsumer> build() {
+        throw new UnsupportedOperationException("build");
       }
     };
   }
@@ -268,51 +271,51 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
   }
 
   @Override
-  public AsyncTableBuilder<AsyncTable> getTableBuilder(TableName tableName,
+  public AsyncTableBuilder<ScanResultConsumer> getTableBuilder(TableName tableName,
       final ExecutorService ignored) {
-    return new AsyncTableBuilder<AsyncTable>() {
+    return new AsyncTableBuilder<ScanResultConsumer>() {
       @Override
       public AsyncTable build() {
         return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
       }
 
       @Override
-      public AsyncTableBuilder<AsyncTable> setMaxAttempts(int arg0) {
+      public AsyncTableBuilder<ScanResultConsumer> setMaxAttempts(int arg0) {
         return this;
       }
 
       @Override
-      public AsyncTableBuilder<AsyncTable> setOperationTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<ScanResultConsumer> setOperationTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
 
       @Override
-      public AsyncTableBuilder<AsyncTable> setReadRpcTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<ScanResultConsumer> setReadRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
 
       @Override
-      public AsyncTableBuilder<AsyncTable> setRetryPause(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<ScanResultConsumer> setRetryPause(long arg0, TimeUnit arg1) {
         return this;
       }
 
       @Override
-      public AsyncTableBuilder<AsyncTable> setRpcTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<ScanResultConsumer> setRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
 
       @Override
-      public AsyncTableBuilder<AsyncTable> setScanTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<ScanResultConsumer> setScanTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
 
       @Override
-      public AsyncTableBuilder<AsyncTable> setStartLogErrorsCnt(int arg0) {
+      public AsyncTableBuilder<ScanResultConsumer> setStartLogErrorsCnt(int arg0) {
         return this;
       }
 
       @Override
-      public AsyncTableBuilder<AsyncTable> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<ScanResultConsumer> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
     };

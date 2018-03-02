@@ -64,9 +64,9 @@ public class TestAsyncConnection extends AbstractAsyncTest {
   @Test
   @Category(KnownGap.class)
   public void testRawTable() throws InterruptedException, ExecutionException {
-    Assert.assertNotNull(getAsyncConnection().getRawTable(sharedTestEnv.getDefaultTableName()));
+    Assert.assertNotNull(getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName()));
     Assert.assertNotNull(
-      getAsyncConnection().getRawTableBuilder(sharedTestEnv.getDefaultTableName()).build());
+      getAsyncConnection().getTableBuilder(sharedTestEnv.getDefaultTableName()).build());
   }
 
   @Test

@@ -133,4 +133,9 @@ public class BigtableTable extends AbstractBigtableTable {
 
   }
 
+  @Override
+  public CheckAndMutateBuilder checkAndMutate(byte[] arg0, byte[] arg1) {
+    throw new UnsupportedOperationException("checkAndMutate");
+  }
+
 }
