@@ -95,7 +95,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     this.tableAdapter2x = new TableAdapter2x(options, new ColumnDescriptorAdapter());
   }
 
-  public CompletableFuture<Void> createTable(TableDescriptor desc, Optional<byte[][]> splitKeys) {
+  private CompletableFuture<Void> createTable(TableDescriptor desc, Optional<byte[][]> splitKeys) {
     // wraps exceptions in a CF (CompletableFuture). No null check here on desc to match Hbase impl
     if (desc.getTableName() == null) {
       return FutureUtils.failedFuture(new IllegalArgumentException("TableName cannot be null"));
@@ -209,7 +209,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return listTableNames(Optional.of(tableNamePattern), includeSysTables);
   }
 
-  public CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern,
+  private CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern,
       boolean includeSysTables) {
     return requestTableList().thenApply(r -> {
       List<TableDescriptor> result = new ArrayList<>();
@@ -253,29 +253,24 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return CompletableFuture.completedFuture(!disabledTables.contains(tableName));
   }
 
-  public CompletableFuture<TableDescriptor> getTableDescriptor(TableName tableName) {
+  @Override
+  public CompletableFuture<TableDescriptor> getDescriptor(TableName tableName) {
     if (tableName == null) {
-     return CompletableFuture.completedFuture(null);
+      return CompletableFuture.completedFuture(null);
     }
 
     String bigtableTableName = bigtableInstanceName.toTableNameStr(tableName.getNameAsString());
     GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
 
-    return FutureUtils.toCompletableFuture(bigtableTableAdminClient.getTableAsync(request))
-        .handle((resp, ex) -> {
-          if (ex != null) {
-            if (Status.fromThrowable(ex).getCode() == Status.Code.NOT_FOUND) {
-              throw new CompletionException(new TableNotFoundException(tableName));
-            }
-          }
+    return FutureUtils.toCompletableFuture(bigtableTableAdminClient.getTableAsync(request)).handle((resp, ex) -> {
+      if (ex != null) {
+        if (Status.fromThrowable(ex).getCode() == Status.Code.NOT_FOUND) {
+          throw new CompletionException(new TableNotFoundException(tableName));
+        }
+      }
 
-          return tableAdapter2x.adapt(resp);
-        });
-  }
-  
-  @Override
-  public CompletableFuture<TableDescriptor> getDescriptor(TableName tableName) {
-    return getTableDescriptor(tableName);
+      return tableAdapter2x.adapt(resp);
+    });
   }
 
   @Override
@@ -593,11 +588,21 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     throw new UnsupportedOperationException("unassign"); // TODO
   }
 
+  /*
+   * This method should be implemented.
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#updateConfiguration()
+   */
   @Override
   public CompletableFuture<Void> updateConfiguration() {
     throw new UnsupportedOperationException("updateConfiguration"); // TODO
   }
 
+  /*
+   * This method should be implemented.
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#updateConfiguration(org.apache.hadoop.hbase.ServerName)
+   */
   @Override
   public CompletableFuture<Void> updateConfiguration(ServerName arg0) {
     throw new UnsupportedOperationException("updateConfiguration"); // TODO
@@ -611,278 +616,312 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<Void> addReplicationPeer(String arg0, ReplicationPeerConfig arg1, boolean arg2) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("addReplicationPeer"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> appendReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("appendReplicationPeerTableCFs"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> balancerSwitch(boolean arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("balancerSwitch"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> catalogJanitorSwitch(boolean arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("catalogJanitorSwitch"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> cleanerChoreSwitch(boolean arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("cleanerChoreSwitch"); // TODO
   }
 
   @Override
   public CompletableFuture<CacheEvictionStats> clearBlockCache(TableName arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("clearBlockCache"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> compact(TableName arg0, CompactType arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("compact"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> compact(TableName arg0, byte[] arg1, CompactType arg2) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("compact"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> compactRegion(byte[] arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("compactRegion"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> compactRegion(byte[] arg0, byte[] arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("compactRegion"); // TODO
   }
 
   @Override
   public <S, R> CompletableFuture<R> coprocessorService(Function<RpcChannel, S> arg0, ServiceCaller<S, R> arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("coprocessorService"); // TODO
   }
 
   @Override
   public <S, R> CompletableFuture<R> coprocessorService(Function<RpcChannel, S> arg0, ServiceCaller<S, R> arg1,
       ServerName arg2) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("coprocessorService"); // TODO
   }
 
+  /*
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#createTable(org.apache.hadoop.hbase.client.TableDescriptor)
+   */
   @Override
-  public CompletableFuture<Void> createTable(TableDescriptor arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+  public CompletableFuture<Void> createTable(TableDescriptor desc) {
+    return createTable(desc, Optional.empty());
   }
 
+  /*
+   * This method should be implemented.
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#deleteSnapshots()
+   */
   @Override
   public CompletableFuture<Void> deleteSnapshots() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("deleteSnapshots"); // TODO
   }
 
+  /*
+   * This method should be implemented.
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#deleteSnapshots(java.util.regex.Pattern)
+   */
   @Override
   public CompletableFuture<Void> deleteSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("deleteSnapshots"); // TODO
   }
 
+  /*
+   * This method should be implemented.
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#deleteTableSnapshots(java.util.regex.Pattern)
+   */
   @Override
   public CompletableFuture<Void> deleteTableSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("deleteTableSnapshots"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> disableTableReplication(TableName arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("disableTableReplication"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> enableTableReplication(TableName arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("enableTableReplication"); // TODO
   }
 
   @Override
   public CompletableFuture<byte[]> execProcedureWithReturn(String arg0, String arg1, Map<String, String> arg2) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("execProcedureWithReturn"); // TODO
   }
 
   @Override
   public CompletableFuture<ClusterMetrics> getClusterMetrics() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("getClusterMetrics"); // TODO
   }
 
   @Override
   public CompletableFuture<ClusterMetrics> getClusterMetrics(
       EnumSet<org.apache.hadoop.hbase.ClusterMetrics.Option> arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("getClusterMetrics"); // TODO
   }
 
   @Override
   public CompletableFuture<CompactionState> getCompactionState(TableName arg0, CompactType arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("getCompactionState"); // TODO
   }
 
   @Override
   public CompletableFuture<List<RegionMetrics>> getRegionMetrics(ServerName arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("getRegionMetrics"); // TODO
   }
 
   @Override
   public CompletableFuture<List<RegionMetrics>> getRegionMetrics(ServerName arg0, TableName arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("getRegionMetrics"); // TODO
   }
 
   @Override
   public CompletableFuture<List<RegionInfo>> getRegions(ServerName arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("getRegions"); // TODO
   }
 
   @Override
   public CompletableFuture<List<RegionInfo>> getRegions(TableName arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("getRegions"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> isBalancerEnabled() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("isBalancerEnabled"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> isCatalogJanitorEnabled() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("isCatalogJanitorEnabled"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> isCleanerChoreEnabled() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("isCleanerChoreEnabled"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> isMergeEnabled() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("isMergeEnabled"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> isNormalizerEnabled() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("isNormalizerEnabled"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> isSplitEnabled() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("isSplitEnabled"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> isTableAvailable(TableName arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("isTableAvailable"); // TODO
   }
 
   @Override
   public CompletableFuture<List<ReplicationPeerDescription>> listReplicationPeers() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("listReplicationPeers"); // TODO
   }
 
   @Override
   public CompletableFuture<List<ReplicationPeerDescription>> listReplicationPeers(Pattern arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("listReplicationPeers"); // TODO
   }
 
+  /*
+   * This method should be implemented.
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#listSnapshots()
+   */
   @Override
   public CompletableFuture<List<SnapshotDescription>> listSnapshots() {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("listSnapshots"); // TODO
   }
 
+  /*
+   * This method should be implemented.
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#listSnapshots(java.util.regex.Pattern)
+   */
   @Override
   public CompletableFuture<List<SnapshotDescription>> listSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("listSnapshots"); // TODO
   }
 
+  /*
+   * This method should be implemented.
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#listTableDescriptors(boolean)
+   */
   @Override
   public CompletableFuture<List<TableDescriptor>> listTableDescriptors(boolean arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
   }
 
   @Override
   public CompletableFuture<List<TableDescriptor>> listTableDescriptorsByNamespace(String arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("listTableDescriptorsByNamespace"); // TODO
   }
 
   @Override
   public CompletableFuture<List<TableName>> listTableNames(boolean arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("listTableNames"); // TODO
   }
 
   @Override
   public CompletableFuture<List<TableName>> listTableNamesByNamespace(String arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("listTableNamesByNamespace"); // TODO
   }
 
   @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> majorCompact(TableName arg0, CompactType arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("majorCompact"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> majorCompact(TableName arg0, byte[] arg1, CompactType arg2) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("majorCompact"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> majorCompactRegion(byte[] arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("majorCompactRegion"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> majorCompactRegion(byte[] arg0, byte[] arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("majorCompactRegion"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> mergeSwitch(boolean arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("mergeSwitch"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> modifyTable(TableDescriptor arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("modifyTable"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> move(byte[] arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("move"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> move(byte[] arg0, ServerName arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("move"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> normalizerSwitch(boolean arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("normalizerSwitch"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> removeReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("removeReplicationPeerTableCFs"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> splitRegion(byte[] arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("splitRegion"); // TODO
   }
 
   @Override
   public CompletableFuture<Void> splitRegion(byte[] arg0, byte[] arg1) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("splitRegion"); // TODO
   }
 
   @Override
   public CompletableFuture<Boolean> splitSwitch(boolean arg0) {
-    throw new UnsupportedOperationException("updateConfiguration"); // TODO
+    throw new UnsupportedOperationException("splitSwitch"); // TODO
   }
 }
