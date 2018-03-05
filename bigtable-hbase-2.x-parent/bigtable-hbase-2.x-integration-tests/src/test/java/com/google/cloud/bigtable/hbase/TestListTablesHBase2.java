@@ -55,23 +55,17 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
       throws TableNotFoundException,IOException {
     HTableDescriptor descriptor = admin.getTableDescriptor(tableName);
     HColumnDescriptor[] columnFamilies = descriptor.getColumnFamilies();
-    Assert.assertEquals(1, columnFamilies.length);
+    Assert.assertEquals(2, columnFamilies.length);
     Assert.assertEquals(Bytes.toString(COLUMN_FAMILY), columnFamilies[0].getNameAsString());
-  }
-  
-  @Override
-  protected void createTable(Admin admin, TableName tableName) throws IOException {
-    HTableDescriptor descriptor = new HTableDescriptor(tableName);
-    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-    admin.createTable(descriptor);
   }
   
   @Override
   protected void deleteTable(Admin admin, TableName tableName) throws Exception {
     if (enableAsyncDelete) {
+      admin.disableTableAsync(tableName).get();
       admin.deleteTableAsync(tableName).get();
     } else {
-      admin.deleteTable(tableName);
+      super.deleteTable(admin, tableName);
     }
   }
 
@@ -89,7 +83,7 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
   }
 
   @Override
-  protected void checkTableDescriptor(Admin admin, TableName tableName) 
+  protected void checkTableDescriptor(Admin admin, TableName tableName)
       throws TableNotFoundException, IOException {
     admin.getDescriptor(tableName);
   }
