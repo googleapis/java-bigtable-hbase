@@ -96,21 +96,21 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
       // test listTableNames by pattern
       String tNStr = tableName.getNameAsString();
       List<TableName> patTableNames = asyncAdmin
-          .listTableNames(Optional.of(Pattern.compile(tNStr.substring(0, 15).concat(".*"))), false)
+          .listTableNames(Pattern.compile(tNStr.substring(0, 15).concat(".*")), false)
           .get();
       assertTrue("listTableNames-pattern should list atleast one table", patTableNames.size() > 0);
       assertTrue("listTableNames-pattern should contain tableName" + tableName,
           patTableNames.stream().anyMatch(e -> tableName.equals(e)));
 
       // test listTables all
-      List<TableDescriptor> allTableDescriptors = asyncAdmin.listTables().get();
+      List<TableDescriptor> allTableDescriptors = asyncAdmin.listTableDescriptors().get();
       assertTrue("listTables-all should list atleast one table", allTableDescriptors.size() > 0);
       assertTrue("listTables-all should contain tableName" + tableName,
           allTableDescriptors.stream().anyMatch(e -> tableName.equals(e.getTableName())));
 
       // test listTables by pattern
       List<TableDescriptor> patTableDescriptors = asyncAdmin
-          .listTables(Optional.of(Pattern.compile(tNStr.substring(0, 15).concat(".*"))), false)
+          .listTableDescriptors(Pattern.compile(tNStr.substring(0, 15).concat(".*")), false)
           .get();
       assertTrue("listTables-pattern should list atleast one table",
           allTableDescriptors.size() > 0);
@@ -120,7 +120,7 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
       //assertEquals(10, patTableDescriptors.get(0).getColumnFamilies()[0].getTimeToLive()); 
 
       // test getTableDescriptor
-      TableDescriptor tableDescriptor = asyncAdmin.getTableDescriptor(tableName).get();
+      TableDescriptor tableDescriptor = asyncAdmin.getDescriptor(tableName).get();
       assertEquals(tableName, tableDescriptor.getTableName());
       
       // test isTableEnabled
@@ -146,13 +146,13 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
     TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
     thrown.expect(ExecutionException.class);
     thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(TableNotFoundException.class));
-    asyncAdmin.getTableDescriptor(tableName).get();
+    asyncAdmin.getDescriptor(tableName).get();
   }  
 
   @Test
   public void testgetTableDescriptor_nullTable() throws Exception {
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
-    assertEquals(null, asyncAdmin.getTableDescriptor(null).get());
+    assertEquals(null, asyncAdmin.getDescriptor(null).get());
   }  
 
   @Test
@@ -184,7 +184,7 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
       asyncAdmin.createTable(
           TableDescriptorBuilder.newBuilder(tableName2)
               .addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY)).build(),
-          Optional.of(splitKeys)).get();
+          splitKeys).get();
       assertEquals(true, asyncAdmin.tableExists(tableName2).get());
 
       // TODO - Add Region checks

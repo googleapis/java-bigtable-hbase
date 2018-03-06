@@ -15,15 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
-import com.google.common.util.concurrent.Futures;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,12 +27,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.hbase.CacheEvictionStats;
+import org.apache.hadoop.hbase.ClusterMetrics;
+import org.apache.hadoop.hbase.ClusterMetrics.Option;
 import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.ClusterStatus.Option;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionLoad;
+import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
@@ -61,11 +55,23 @@ import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
+import org.apache.hadoop.hbase.replication.ReplicationException;
+import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
+import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
+
+import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
+import com.google.bigtable.admin.v2.Snapshot;
+import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import com.google.common.util.concurrent.Futures;
 
 
 /**
@@ -478,11 +484,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public ClusterStatus getClusterStatus(EnumSet<Option> arg0) throws IOException {
-    return getClusterStatus(); // TODO
-  }
-
-  @Override
   public CompactionState getCompactionState(TableName arg0) throws IOException {
     throw new UnsupportedOperationException("getCompactionState");
   }
@@ -522,19 +523,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public QuotaRetriever getQuotaRetriever(QuotaFilter arg0) throws IOException {
     throw new UnsupportedOperationException("getQuotaRetriever");
-  }
-
-  @Override
-  public Map<byte[], RegionLoad> getRegionLoad(ServerName arg0) throws IOException {
-    // TODO : new in 2.0
-    throw new UnsupportedOperationException("getRegionLoad");
-  }
-
-  @Override
-  public Map<byte[], RegionLoad> getRegionLoad(ServerName arg0, TableName arg1) throws IOException {
-    // TODO : new in 2.0
-    throw new UnsupportedOperationException("getRegionLoad");
-
   }
 
   @Override
@@ -664,18 +652,109 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public boolean splitOrMergeEnabledSwitch(MasterSwitchType arg0) throws IOException {
-    throw new UnsupportedOperationException("splitOrMergeEnabledSwitch"); // TODO
-  }
-
-  @Override
-  public boolean[] splitOrMergeEnabledSwitch(boolean arg0, boolean arg1, MasterSwitchType... arg2)
-      throws IOException {
-    throw new UnsupportedOperationException("splitOrMergeEnabledSwitch"); // TODO
-  }
-
-  @Override
   public Future<Void> splitRegionAsync(byte[] arg0, byte[] arg1) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public void addReplicationPeer(String arg0, ReplicationPeerConfig arg1, boolean arg2) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public void appendReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1)
+      throws ReplicationException, IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public CacheEvictionStats clearBlockCache(TableName arg0) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODOv
+  }
+
+  @Override
+  public void compactRegionServer(ServerName arg0) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public void disableReplicationPeer(String arg0) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public void enableReplicationPeer(String arg0) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public ClusterMetrics getClusterMetrics(EnumSet<Option> arg0) throws IOException {
+    return getClusterStatus(); // TODO
+  }
+
+  @Override
+  public List<QuotaSettings> getQuota(QuotaFilter arg0) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public List<RegionMetrics> getRegionMetrics(ServerName arg0, TableName arg1) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public ReplicationPeerConfig getReplicationPeerConfig(String arg0) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public boolean isMergeEnabled() throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public boolean isSplitEnabled() throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public List<ReplicationPeerDescription> listReplicationPeers() throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public List<ReplicationPeerDescription> listReplicationPeers(Pattern arg0) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public void majorCompactRegionServer(ServerName arg0) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public boolean mergeSwitch(boolean arg0, boolean arg1) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public void removeReplicationPeer(String arg0) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public void removeReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1)
+      throws ReplicationException, IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public boolean splitSwitch(boolean arg0, boolean arg1) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+  }
+
+  @Override
+  public void updateReplicationPeerConfig(String arg0, ReplicationPeerConfig arg1) throws IOException {
     throw new UnsupportedOperationException("splitRegionAsync"); // TODO
   }
 }

@@ -21,12 +21,10 @@ import java.util.concurrent.ExecutorService;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.hbase.KnownGap;
 import com.google.common.util.concurrent.MoreExecutors;
 
 /**
@@ -59,14 +57,6 @@ public class TestAsyncConnection extends AbstractAsyncTest {
       getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), directExecutorService));
     Assert.assertNotNull(getAsyncConnection()
         .getTableBuilder(sharedTestEnv.getDefaultTableName(), directExecutorService).build());
-  }
-
-  @Test
-  @Category(KnownGap.class)
-  public void testRawTable() throws InterruptedException, ExecutionException {
-    Assert.assertNotNull(getAsyncConnection().getRawTable(sharedTestEnv.getDefaultTableName()));
-    Assert.assertNotNull(
-      getAsyncConnection().getRawTableBuilder(sharedTestEnv.getDefaultTableName()).build());
   }
 
   @Test
