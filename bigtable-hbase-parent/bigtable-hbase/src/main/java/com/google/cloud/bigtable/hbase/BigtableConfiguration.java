@@ -29,6 +29,11 @@ import com.google.common.base.Preconditions;
  */
 @SuppressWarnings("deprecation")
 public class BigtableConfiguration {
+  public static final String HBASE_CLIENT_ASYNC_CONNECTION_IMPL = "hbase.client.async.connection.impl";
+  public static final String HBASE_CLIENT_ASYNC_REGISTRY_IMPL = "hbase.client.registry.impl";
+  public static final String BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS = "org.apache.hadoop.hbase.client.BigtableAsyncConnection";
+  public static final String BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS = "org.apache.hadoop.hbase.client.BigtableAsyncRegistry";
+  
   private static final String[] CONNECTION_CLASS_NAMES = {
     "com.google.cloud.bigtable.hbase1_x.BigtableConnection",
     "com.google.cloud.bigtable.hbase2_x.BigtableConnection",
@@ -82,6 +87,18 @@ public class BigtableConfiguration {
     conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
     conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
     conf.set(HConnection.HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
+    return conf;
+  }
+
+  /**
+   * <p>Configuration for getting a org.apache.hadoop.hbase.client.AsyncConnection.</p>
+   * 
+   * @param conf a {@link org.apache.hadoop.conf.Configuration} object to configure.
+   * @return the modified {@link org.apache.hadoop.conf.Configuration} object.
+   */
+  public static Configuration asyncConfigure(Configuration conf) {
+    conf.set(HBASE_CLIENT_ASYNC_CONNECTION_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS);
+    conf.set(HBASE_CLIENT_ASYNC_REGISTRY_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS);
     return conf;
   }
 
