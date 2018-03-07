@@ -40,16 +40,9 @@ public class TestListTables extends AbstractTestListTables {
     Assert.assertEquals(2, columnFamilies.length);
     Assert.assertEquals(Bytes.toString(COLUMN_FAMILY), columnFamilies[0].getNameAsString());
   }
-  
+
   @Override
-  protected void createTable(Admin admin, TableName tableName) throws IOException {
-    HTableDescriptor descriptor = new HTableDescriptor(tableName);
-    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-    admin.createTable(descriptor);
-  }
-  
-  @Override
-  protected void checkTableDescriptor(Admin admin, TableName tableName) 
+  protected void checkTableDescriptor(Admin admin, TableName tableName)
       throws TableNotFoundException, IOException {
     admin.getTableDescriptor(tableName);
   }
@@ -64,9 +57,8 @@ public class TestListTables extends AbstractTestListTables {
     return toTableNames(admin.getTableDescriptorsByTableName(tableNames));
   }
   
-  private List<TableName> toTableNames(HTableDescriptor[] descriptors)
-  {
-    List<TableName> tableList = new ArrayList<TableName>();
+  private List<TableName> toTableNames(HTableDescriptor[] descriptors) {
+    List<TableName> tableList = new ArrayList<>();
     for (HTableDescriptor descriptor : descriptors) {
       tableList.add(descriptor.getTableName());
     }

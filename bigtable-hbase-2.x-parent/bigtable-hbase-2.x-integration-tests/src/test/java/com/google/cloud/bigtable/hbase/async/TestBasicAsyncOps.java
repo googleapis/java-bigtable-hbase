@@ -71,7 +71,8 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
     // Do the get on some tests, but not others.  The rationale for that is to do performance
     // testing on large values.
     if (true) {
-      Result result = table.get(get).get();
+      CompletableFuture<Result> cfResult = table.get(get);
+      Result result = cfResult.get();
       stopwatch.print("Get took %d ms");
       Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
       List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
@@ -113,7 +114,8 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
     rowMutations2.add(new Put(rowKey).addColumn(COLUMN_FAMILY, testQualifier1, testValue3));
     table.mutateRow(rowMutations2).get();
 
-    Result result = table.get(new Get(rowKey)).get();
+    CompletableFuture<Result> cfResult = table.get(new Get(rowKey));
+    Result result = cfResult.get();
     Assert.assertEquals(1, result.size());
     Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], testValue3));
   }

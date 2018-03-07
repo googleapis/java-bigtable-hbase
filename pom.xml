@@ -49,7 +49,7 @@ limitations under the License.
         <compileSource.1.8>1.8</compileSource.1.8>
         <!-- dependency versions -->
         <hbase.version.1>1.4.1</hbase.version.1>
-        <hbase.version.2>2.0.0-alpha4</hbase.version.2>
+        <hbase.version.2>2.0.0-beta-1</hbase.version.2>
         <hbase.version>${hbase.version.1}</hbase.version>
         <hadoop.version>2.5.1</hadoop.version>
         <junit.version>4.12</junit.version>

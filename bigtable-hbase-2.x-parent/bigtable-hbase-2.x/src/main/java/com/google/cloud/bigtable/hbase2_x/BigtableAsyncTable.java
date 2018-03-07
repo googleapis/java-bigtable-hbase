@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
+import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
@@ -49,8 +50,8 @@ import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
@@ -69,7 +70,7 @@ import io.opencensus.trace.Tracing;
  * 
  * @author spollapally
  */
-public class BigtableAsyncTable implements AsyncTable {
+public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   private static final Logger LOG = new Logger(AbstractBigtableTable.class);
   private static final Tracer TRACER = Tracing.getTracer();
@@ -398,7 +399,6 @@ public class BigtableAsyncTable implements AsyncTable {
     }
   }
 
-  @Override
   public void scan(Scan scan, final ScanResultConsumer consumer) {
     if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
       throw new UnsupportedOperationException(
@@ -420,5 +420,15 @@ public class BigtableAsyncTable implements AsyncTable {
         consumer.onComplete();
       }
     });
+  }
+
+  @Override
+  public CompletableFuture coprocessorService(Function arg0, ServiceCaller arg1, byte[] arg2) {
+    throw new UnsupportedOperationException("coprocessorService");
+  }
+
+  @Override
+  public CoprocessorServiceBuilder coprocessorService(Function arg0, ServiceCaller arg1, CoprocessorCallback arg2) {
+    throw new UnsupportedOperationException("coprocessorService");
   }
 }

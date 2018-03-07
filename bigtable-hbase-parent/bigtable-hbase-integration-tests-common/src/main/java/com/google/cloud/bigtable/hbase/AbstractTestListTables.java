@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,12 +23,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -57,11 +52,11 @@ public abstract class AbstractTestListTables extends AbstractTest {
   private void addTable(TableName tableName) {
     tablesToDelete.add(tableName);
   }
-  
+
   private void removeTable(TableName tableName) {
     tablesToDelete.remove(tableName);
   }
-  
+
   /**
    * @throws IOException
    */
@@ -74,7 +69,7 @@ public abstract class AbstractTestListTables extends AbstractTest {
       Assert.assertFalse(admin.tableExists(tableName1));
       Assert.assertFalse(listTableNames(admin).contains(tableName1));
 
-      createTable(admin,tableName1);
+      sharedTestEnv.createTable(tableName1);
       addTable(tableName1);
       checkColumnFamilies(admin, tableName1);
 
@@ -86,7 +81,7 @@ public abstract class AbstractTestListTables extends AbstractTest {
         Assert.assertFalse(tableList.contains(tableName2));
       }
 
-      createTable(admin,tableName2);
+      sharedTestEnv.createTable(tableName2);
       addTable(tableName2);
       checkColumnFamilies(admin, tableName2);
 
@@ -130,13 +125,13 @@ public abstract class AbstractTestListTables extends AbstractTest {
 
       Assert.assertFalse(admin.tableExists(tableName1));
       Assert.assertFalse(listTableNames(admin).contains(tableName1));
-      createTable(admin,tableName1);
+      sharedTestEnv.createTable(tableName1);
       addTable(tableName1);
       Assert.assertTrue(admin.tableExists(tableName1));
       
       Assert.assertFalse(admin.tableExists(tableName2));
       Assert.assertFalse(listTableNames(admin).contains(tableName2));
-      createTable(admin,tableName2);
+      sharedTestEnv.createTable(tableName2);
       addTable(tableName2);
       Assert.assertTrue(admin.tableExists(tableName2));
       
@@ -180,27 +175,26 @@ public abstract class AbstractTestListTables extends AbstractTest {
   
   protected abstract void checkColumnFamilies(Admin admin, TableName tableName) 
       throws TableNotFoundException,IOException;
-  
-  protected abstract void createTable(Admin admin, TableName tableName) throws IOException;
 
   protected void deleteTable(Admin admin, TableName tableName) throws Exception {
+    admin.disableTable(tableName);
     admin.deleteTable(tableName);
   }
-  
-  protected List<TableName> listTableNames(Admin admin) throws IOException {
+
+  protected final List<TableName> listTableNames(Admin admin) throws IOException {
     return Arrays.asList(admin.listTableNames());
   }
 
-  protected List<TableName> listTableNames(Admin admin, Pattern pattern) throws IOException {
+  protected final List<TableName> listTableNames(Admin admin, Pattern pattern) throws IOException {
     return Arrays.asList(admin.listTableNames(pattern));
   }
-  
-  protected abstract List<TableName> listTableNamesUsingDescriptors(Admin admin, Pattern pattern) 
+
+  protected abstract List<TableName> listTableNamesUsingDescriptors(Admin admin, Pattern pattern)
       throws IOException;
   
   protected abstract List<TableName> listTableNamesUsingDescriptors(Admin admin, 
       List<TableName> tableNames) throws IOException;
   
-  protected abstract void checkTableDescriptor(Admin admin, TableName tableName) 
-      throws TableNotFoundException,IOException;
+  protected abstract void checkTableDescriptor(Admin admin, TableName tableName)
+      throws TableNotFoundException, IOException;
 }
