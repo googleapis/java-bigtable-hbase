@@ -42,7 +42,7 @@ import io.grpc.stub.StreamObserver;
  *     information.
  */
 public class ResponseQueueReader
-    implements StreamObserver<FlatRow>, ClientResponseObserver<ReadRowsRequest, FlatRow> {
+    implements StreamObserver<FlatRow>, ClientResponseObserver<ReadRowsRequest, FlatRow>, ReadRowsResponseObserver {
 
   private static Timer firstResponseTimer;
 
@@ -95,7 +95,7 @@ public class ResponseQueueReader
     case CompletionMarker:
       lastResponseProcessed = true;
       markerCounter.decrementAndGet();
-      break;
+      return null;
     case Data:
       if (startTime != null) {
         getFirstResponseTimer().update(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
@@ -114,10 +114,6 @@ public class ResponseQueueReader
     default:
       throw new IllegalStateException("Cannot process type: " + queueEntry.getType());
     }
-
-    Preconditions.checkState(lastResponseProcessed,
-      "Should only exit merge loop with by returning a complete FlatRow or hitting end of stream.");
-    return null;
   }
 
   /**
@@ -178,7 +174,8 @@ public class ResponseQueueReader
    * enough, then gRPC will stop fetching rows, and will wait until more rows are requested. This
    * marker tells {@link #getNextMergedRow()} to read more rows.
    */
-  public void addRequestResultMarker() {
+  @Override
+  public void onReadRowsResponseComplete() {
     addEntry("setting request result marker", ResultQueueEntry.<FlatRow> requestResultMarker());
     markerCounter.incrementAndGet();
   }

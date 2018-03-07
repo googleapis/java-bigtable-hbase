@@ -104,10 +104,10 @@ public class RetryingReadRowsOperation extends
   Clock clock = Clock.SYSTEM;
   private final ReadRowsRequestManager requestManager;
   private final StreamObserver<FlatRow> rowObserver;
+  private final ReadRowsResponseObserver responseObserver;
 
   private final RowMerger rowMerger;
   private final CallToStreamObserverAdapter adapter;
-  private final StreamObserver<ReadRowsResponse> responseObserver;
 
   private int totalRowsProcessed = 0;
 
@@ -118,7 +118,6 @@ public class RetryingReadRowsOperation extends
 
   public RetryingReadRowsOperation(
       StreamObserver<FlatRow> rowObserver,
-      StreamObserver<ReadRowsResponse> responseObserver,
       RetryOptions retryOptions,
       ReadRowsRequest request,
       BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> retryableRpc,
@@ -127,11 +126,16 @@ public class RetryingReadRowsOperation extends
       Metadata originalMetadata) {
     super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata);
     this.rowObserver = rowObserver;
-    this.responseObserver = responseObserver;
     this.rowMerger = new RowMerger(rowObserver);
     this.requestManager = new ReadRowsRequestManager(request);
     this.nextRequest = request;
     this.adapter = new CallToStreamObserverAdapter();
+
+    if(rowObserver instanceof ReadRowsResponseObserver) {
+      this.responseObserver = (ReadRowsResponseObserver) rowObserver;
+    } else {
+      this.responseObserver = null;
+    }
   }
 
   /**
@@ -175,7 +179,7 @@ public class RetryingReadRowsOperation extends
       updateLastProcessedKey(message);
 
       if (responseObserver != null) {
-        responseObserver.onNext(message);
+        responseObserver.onReadRowsResponseComplete();
       }
     } catch (Exception e) {
       setException(e);

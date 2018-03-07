@@ -454,22 +454,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
     final ResponseQueueReader reader = new ResponseQueueReader(retryOptions.getReadPartialRowTimeoutMillis());
-    final StreamObserver<ReadRowsResponse> responseObserver = new StreamObserver<ReadRowsResponse>() {
-      @Override
-      public void onNext(ReadRowsResponse value) {
-        reader.addRequestResultMarker();
-      }
-
-      @Override
-      public void onError(Throwable t) {
-      }
-
-      @Override
-      public void onCompleted() {
-      }
-    };
-    RetryingReadRowsOperation operation = createReadRowsOperation(request, reader, responseObserver);
-
+    RetryingReadRowsOperation operation = createReadRowsOperation(request, reader);
     return new ResumingStreamingResultScanner(reader, operation);
   }
 
@@ -480,25 +465,24 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    RetryingReadRowsOperation operation = createReadRowsOperation(request, rowObserver, null);
-
-    // Start the operation.
-    operation.getAsyncResult();
-
-    return operation;
+    return createReadRowsOperation(request, rowObserver);
   }
 
   private RetryingReadRowsOperation createReadRowsOperation(ReadRowsRequest request,
-       StreamObserver<FlatRow> rowObserver, StreamObserver<ReadRowsResponse> responseObserver) {
-    return new RetryingReadRowsOperation(
+       StreamObserver<FlatRow> rowObserver) {
+    RetryingReadRowsOperation operation = new RetryingReadRowsOperation(
         rowObserver,
-        responseObserver,
         retryOptions,
         request,
         readRowsAsync,
         getCallOptions(readRowsAsync.getMethodDescriptor(), request),
         retryExecutorService,
         createMetadata(request.getTableName()));
+
+    // start the operation
+    operation.getAsyncResult();
+
+    return operation;
   }
 
   private boolean shouldOverrideAppProfile(String requestProfile) {

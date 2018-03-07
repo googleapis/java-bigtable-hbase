@@ -145,7 +145,7 @@ public class RetryingReadRowsOperationTest {
   }
 
   protected RetryingReadRowsOperation createOperation(StreamObserver<FlatRow> observer) {
-    return new RetryingReadRowsOperation(observer, null, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
+    return new RetryingReadRowsOperation(observer, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
         mockRetryableRpc, CallOptions.DEFAULT, mockRetryExecutorService, metaData);
   }
 
