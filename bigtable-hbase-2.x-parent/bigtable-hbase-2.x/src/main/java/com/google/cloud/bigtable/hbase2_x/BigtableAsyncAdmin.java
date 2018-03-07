@@ -74,7 +74,7 @@ import io.grpc.Status;
 
 /**
  * Bigtable implementation of {@link AsyncAdmin}
- * 
+ *
  * @author spollapally
  */
 public class BigtableAsyncAdmin implements AsyncAdmin {
@@ -120,7 +120,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         .thenAccept(r -> {
         });
   }
-  
+
   @Override
   public CompletableFuture<Void> createTable(TableDescriptor desc, byte[][] splitKeys) {
     return createTable(desc, Optional.of(splitKeys));
@@ -128,7 +128,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<Void> createTable(TableDescriptor desc, byte[] startKey, byte[] endKey,
-      int numRegions) {
+                                             int numRegions) {
 
     return CompletableFuture.supplyAsync(() -> {
       Optional<byte[][]> splitKeys = Optional.empty();
@@ -138,7 +138,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         throw new IllegalArgumentException("Start key must be smaller than end key");
       }
       if (numRegions == 3) {
-        splitKeys = Optional.ofNullable(new byte[][] {startKey, endKey});
+        splitKeys = Optional.ofNullable(new byte[][]{startKey, endKey});
       } else {
         splitKeys = Optional.ofNullable(Bytes.split(startKey, endKey, numRegions - 3));
         if (!splitKeys.isPresent() || splitKeys.get().length != numRegions - 1) {
@@ -147,6 +147,15 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       }
       return splitKeys;
     }).thenCompose(skeys -> createTable(desc, skeys));
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#createTable(org.apache.hadoop.hbase.client.TableDescriptor)
+   */
+  @Override
+  public CompletableFuture<Void> createTable(TableDescriptor desc) {
+    return createTable(desc, Optional.empty());
   }
 
   @Override
@@ -188,8 +197,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         .thenApply(r -> r.stream().anyMatch(e -> e.equals(tableName)));
   }
 
-  public CompletableFuture<List<TableName>> listTableNames(Optional<Pattern> tableNamePattern,
-      boolean includeSysTables) {
+  private CompletableFuture<List<TableName>> listTableNames(Optional<Pattern> tableNamePattern,
+                                                            boolean includeSysTables) {
     return requestTableList().thenApply(r -> {
       Stream<TableName> result;
       if (tableNamePattern.isPresent()) {
@@ -203,14 +212,19 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       return result.collect(Collectors.toList());
     });
   }
-  
+
+  @Override
+  public CompletableFuture<List<TableName>> listTableNames(boolean includeSysTables) {
+    return listTableNames(Optional.empty(), includeSysTables);
+  }
+
   @Override
   public CompletableFuture<List<TableName>> listTableNames(Pattern tableNamePattern, boolean includeSysTables) {
     return listTableNames(Optional.of(tableNamePattern), includeSysTables);
   }
 
   private CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern,
-      boolean includeSysTables) {
+                                                              boolean includeSysTables) {
     return requestTableList().thenApply(r -> {
       List<TableDescriptor> result = new ArrayList<>();
       Boolean hasNonEmptyPattern = tableNamePattern.isPresent();
@@ -227,7 +241,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       return result;
     });
   }
-  
+
+  @Override
+  public CompletableFuture<List<TableDescriptor>> listTableDescriptors(boolean includeSysTables) {
+    return listTables(Optional.empty(), includeSysTables);
+  }
+
   @Override
   public CompletableFuture<List<TableDescriptor>> listTableDescriptors(Pattern pattern, boolean includeSysTables) {
     return listTables(Optional.of(pattern), includeSysTables);
@@ -235,9 +254,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   private CompletableFuture<List<Table>> requestTableList() {
     return CompletableFuture.supplyAsync(() -> {
-      ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-      builder.setParent(bigtableInstanceName.toString());
-      return builder;
+      return ListTablesRequest.newBuilder().setParent(bigtableInstanceName.toString());
     }).thenCompose(
         b -> FutureUtils.toCompletableFuture(bigtableTableAdminClient.listTablesAsync(b.build())))
         .thenApply(r -> r.getTablesList());
@@ -251,6 +268,14 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Boolean> isTableEnabled(TableName tableName) {
     return CompletableFuture.completedFuture(!disabledTables.contains(tableName));
+  }
+
+  @Override
+  public CompletableFuture<Void> enableTable(TableName name) {
+    disabledTables.remove(name);
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    future.complete(null);
+    return future;
   }
 
   @Override
@@ -286,7 +311,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> addReplicationPeer(String arg0, ReplicationPeerConfig arg1) {
     throw new UnsupportedOperationException("addReplicationPeer"); // TODO
-
   }
 
   @Override
@@ -362,11 +386,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Void> enableTable(TableName arg0) {
-    throw new UnsupportedOperationException("enableTable"); // TODO
-  }
-
-  @Override
   public CompletableFuture<Void> execProcedure(String arg0, String arg1, Map<String, String> arg2) {
     throw new UnsupportedOperationException("execProcedure"); // TODO
   }
@@ -438,7 +457,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<Boolean> isProcedureFinished(String arg0, String arg1,
-      Map<String, String> arg2) {
+                                                        Map<String, String> arg2) {
     throw new UnsupportedOperationException("isProcedureFinished"); // TODO
   }
 
@@ -474,7 +493,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern arg0,
-      Pattern arg1) {
+                                                                         Pattern arg1) {
     throw new UnsupportedOperationException("listTableSnapshots"); // TODO ?
   }
 
@@ -610,7 +629,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<Void> updateReplicationPeerConfig(String arg0,
-      ReplicationPeerConfig arg1) {
+                                                             ReplicationPeerConfig arg1) {
     throw new UnsupportedOperationException("updateReplicationPeerConfig");
   }
 
@@ -671,17 +690,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public <S, R> CompletableFuture<R> coprocessorService(Function<RpcChannel, S> arg0, ServiceCaller<S, R> arg1,
-      ServerName arg2) {
+                                                        ServerName arg2) {
     throw new UnsupportedOperationException("coprocessorService"); // TODO
-  }
-
-  /*
-   * (non-Javadoc)
-   * @see org.apache.hadoop.hbase.client.AsyncAdmin#createTable(org.apache.hadoop.hbase.client.TableDescriptor)
-   */
-  @Override
-  public CompletableFuture<Void> createTable(TableDescriptor desc) {
-    return createTable(desc, Optional.empty());
   }
 
   /*
@@ -830,24 +840,9 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     throw new UnsupportedOperationException("listSnapshots"); // TODO
   }
 
-  /*
-   * This method should be implemented.
-   * (non-Javadoc)
-   * @see org.apache.hadoop.hbase.client.AsyncAdmin#listTableDescriptors(boolean)
-   */
-  @Override
-  public CompletableFuture<List<TableDescriptor>> listTableDescriptors(boolean arg0) {
-    throw new UnsupportedOperationException("listTableDescriptors"); // TODO
-  }
-
   @Override
   public CompletableFuture<List<TableDescriptor>> listTableDescriptorsByNamespace(String arg0) {
     throw new UnsupportedOperationException("listTableDescriptorsByNamespace"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<List<TableName>> listTableNames(boolean arg0) {
-    throw new UnsupportedOperationException("listTableNames"); // TODO
   }
 
   @Override
