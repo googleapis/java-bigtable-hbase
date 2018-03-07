@@ -71,7 +71,7 @@ public class ResponseQueueReaderTest {
   public void testSinglePostComplete() throws IOException {
     FlatRow row = new FlatRow(ByteString.EMPTY, null);
     underTest.onNext(row);
-    underTest.addRequestResultMarker();
+    underTest.onReadRowsResponseComplete();
     underTest.onCompleted();
     assertSame(row, underTest.getNextMergedRow());
     verify(mockClientCallStreamObserver, times(0)).request(anyInt());
@@ -81,7 +81,7 @@ public class ResponseQueueReaderTest {
   public void testSinglePrecomplete() throws IOException {
     FlatRow row = new FlatRow(ByteString.EMPTY, null);
     underTest.onNext(row);
-    underTest.addRequestResultMarker();
+    underTest.onReadRowsResponseComplete();
     assertSame(row, underTest.getNextMergedRow());
     // getNextMergedRow() will block until either a result is present or the operation is complete.
     BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().schedule(new Runnable() {

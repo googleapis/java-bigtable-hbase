@@ -231,9 +231,8 @@ public class RetryingReadRowsOperationTest {
     ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
     underTest.onMessage(buildResponse(key1));
-    RowMerger rw1 = underTest.getRowMerger();
     underTest.onClose(Status.ABORTED, new Metadata());
-    Assert.assertNotSame(rw1, underTest.getRowMerger());
+    Assert.assertNull(underTest.getRowMerger().getLastCompletedRowKey());
     underTest.onMessage(buildResponse(key2));
     verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
     checkRetryRequest(underTest, key2, 8);
@@ -253,9 +252,8 @@ public class RetryingReadRowsOperationTest {
     underTest.onMessage(buildResponse(key1));
 
     // a round of successful retries.
-    RowMerger rw1 = underTest.getRowMerger();
     performSuccessfulScanTimeouts(underTest, time);
-    Assert.assertNotSame(rw1, underTest.getRowMerger());
+    Assert.assertNull(underTest.getRowMerger().getLastCompletedRowKey());
     underTest.onClose(Status.ABORTED, new Metadata());
     checkRetryRequest(underTest, key1, 9);
 
@@ -404,7 +402,9 @@ public class RetryingReadRowsOperationTest {
   private static void checkRetryRequest(RetryingReadRowsOperation underTest, ByteString key,
       int rowCount) {
     ReadRowsRequest request = underTest.buildUpdatedRequst();
-    Assert.assertEquals(key, request.getRows().getRowRanges(0).getStartKeyOpen());
+    ByteString startKeyOpen = request.getRows().getRowRanges(0).getStartKeyOpen();
+    String message = String.format("%s and %s are not equal", key.toStringUtf8(), startKeyOpen.toStringUtf8());
+    Assert.assertEquals(message,  key, startKeyOpen);
     Assert.assertEquals(rowCount, request.getRowsLimit());
   }
 }

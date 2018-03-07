@@ -377,14 +377,22 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     this.observer = observer;
   }
 
+  public void reset() {
+    state = RowMergerState.NewRow;
+    lastCompletedRowKey = null;
+    rowInProgress = null;
+    complete = false;
+    rowCountInLastMessage = -1;
+  }
+
   /** {@inheritDoc} */
   @Override
   public final void onNext(ReadRowsResponse readRowsResponse) {
+    rowCountInLastMessage = 0;
     if (complete) {
       onError(new IllegalStateException("Adding partialRow after completion"));
       return;
     }
-    rowCountInLastMessage = 0;
     for (int i = 0; i < readRowsResponse.getChunksCount(); i++) {
       try {
         CellChunk chunk = readRowsResponse.getChunks(i);

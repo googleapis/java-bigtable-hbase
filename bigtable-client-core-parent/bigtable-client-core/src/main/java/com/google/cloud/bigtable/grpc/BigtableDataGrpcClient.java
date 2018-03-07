@@ -454,47 +454,35 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
     // during operation.
     final ResponseQueueReader reader = new ResponseQueueReader(retryOptions.getReadPartialRowTimeoutMillis());
-    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, reader);
-    operation.setResultObserver(new StreamObserver<ReadRowsResponse>(){
-      @Override
-      public void onNext(ReadRowsResponse value) {
-        reader.addRequestResultMarker();
-      }
-      @Override public void onError(Throwable t) {}
-      @Override public void onCompleted() {}
-    });
-
-    // Start the operation.
-    operation.getAsyncResult();
-
+    RetryingReadRowsOperation operation = createReadRowsOperation(request, reader);
     return new ResumingStreamingResultScanner(reader, operation);
   }
 
   /** {@inheritDoc} */
   @Override
-  public ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> observer) {
+  public ScanHandler readFlatRows(ReadRowsRequest request, StreamObserver<FlatRow> rowObserver) {
     if (shouldOverrideAppProfile(request.getAppProfileId())) {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, observer);
-
-    // Start the operation.
-    operation.getAsyncResult();
-
-    return operation;
+    return createReadRowsOperation(request, rowObserver);
   }
 
-  private RetryingReadRowsOperation createReadRowsRetryListener(ReadRowsRequest request,
-      StreamObserver<FlatRow> observer) {
-    return new RetryingReadRowsOperation(
-        observer,
+  private RetryingReadRowsOperation createReadRowsOperation(ReadRowsRequest request,
+       StreamObserver<FlatRow> rowObserver) {
+    RetryingReadRowsOperation operation = new RetryingReadRowsOperation(
+        rowObserver,
         retryOptions,
         request,
         readRowsAsync,
         getCallOptions(readRowsAsync.getMethodDescriptor(), request),
         retryExecutorService,
         createMetadata(request.getTableName()));
+
+    // start the operation
+    operation.getAsyncResult();
+
+    return operation;
   }
 
   private boolean shouldOverrideAppProfile(String requestProfile) {
