@@ -250,9 +250,7 @@ public class RetryingReadRowsOperation extends
   @Override
   protected boolean onOK(Metadata trailers) {
     rowMerger.onCompleted();
-    if (!completionFuture.isDone()) {
-      completionFuture.set("");
-    }
+    completionFuture.set("");
     return true;
   }
 
