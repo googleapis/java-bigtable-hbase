@@ -17,17 +17,17 @@ package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
@@ -195,30 +195,57 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
   }
 
   @Test
-  public void testDisbleTable_exceptions() throws Exception {
+  public void testEnableDisable() throws Exception {
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
 
     // test non existing table
-    Throwable th = null;
-    try {
-      asyncAdmin.disableTable(tableName).get();
-    } catch (ExecutionException e) {
-      th = e;
-    }
-    assertThat(th.getCause(), IsInstanceOf.<Throwable>instanceOf(TableNotFoundException.class));
+    checkThatNonExistingTableThrows(asyncAdmin, tableName);
 
     // test already disabled table
-    th = null;
     asyncAdmin.createTable(TableDescriptorBuilder.newBuilder(tableName)
         .addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY)).build()).get();
+    assertTrue(asyncAdmin.isTableEnabled(tableName).get());
+    assertFalse(asyncAdmin.isTableDisabled(tableName).get());
+
+    try {
+      asyncAdmin.enableTable(tableName).get();
+    } catch (ExecutionException e) {
+      assertThat(e.getCause(), IsInstanceOf.<Throwable>instanceOf(TableNotDisabledException.class));
+    }
+
     asyncAdmin.disableTable(tableName).get();
+    assertFalse(asyncAdmin.isTableEnabled(tableName).get());
+    assertTrue(asyncAdmin.isTableDisabled(tableName).get());
+
     try {
       asyncAdmin.disableTable(tableName).get();
     } catch (ExecutionException e) {
-      th = e;
+      assertThat(e.getCause(), IsInstanceOf.<Throwable>instanceOf(TableNotEnabledException.class));
     }
-    assertThat(th.getCause(), IsInstanceOf.<Throwable>instanceOf(TableNotEnabledException.class));
+    asyncAdmin.enableTable(tableName).get();
+
+    assertTrue(asyncAdmin.isTableEnabled(tableName).get());
+    assertFalse(asyncAdmin.isTableDisabled(tableName).get());
+
+    asyncAdmin.disableTable(tableName).get();
+    asyncAdmin.deleteTable(tableName).get();
+
+    checkThatNonExistingTableThrows(asyncAdmin, tableName);
+  }
+
+  private void checkThatNonExistingTableThrows(AsyncAdmin asyncAdmin, TableName tableName) throws InterruptedException {
+    try {
+      asyncAdmin.disableTable(tableName).get();
+    } catch (ExecutionException e) {
+      assertThat(e.getCause(), IsInstanceOf.<Throwable>instanceOf(TableNotFoundException.class));
+    }
+
+    try {
+      asyncAdmin.enableTable(tableName).get();
+    } catch (ExecutionException e) {
+      assertThat(e.getCause(), IsInstanceOf.<Throwable>instanceOf(TableNotFoundException.class));
+    }
   }
 
   private void deleteTestTable(TableName tableName) {

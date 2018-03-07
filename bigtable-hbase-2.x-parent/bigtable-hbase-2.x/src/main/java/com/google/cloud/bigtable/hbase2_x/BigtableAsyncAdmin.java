@@ -29,14 +29,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.hadoop.hbase.CacheEvictionStats;
-import org.apache.hadoop.hbase.ClusterMetrics;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.RegionMetrics;
-import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.TableNotEnabledException;
-import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.apache.hadoop.hbase.client.BigtableAsyncConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
@@ -164,15 +157,31 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     tableExists(tableName).thenAccept(exists -> {
       if (!exists) {
         cf.completeExceptionally(new TableNotFoundException(tableName));
-        return;
-      }
-      if (disabledTables.contains(tableName)) {
+      } else if (disabledTables.contains(tableName)) {
         cf.completeExceptionally(new TableNotEnabledException(tableName));
-        return;
+      } else {
+        disabledTables.add(tableName);
+        LOG.warn("Table " + tableName + " was disabled in memory only.");
+        cf.complete(null);
       }
-      disabledTables.add(tableName);
-      LOG.warn("Table " + tableName + " was disabled in memory only.");
-      cf.complete(null);
+    });
+
+    return cf;
+  }
+
+  @Override
+  public CompletableFuture<Void> enableTable(TableName tableName) {
+    CompletableFuture<Void> cf = new CompletableFuture<>();
+    tableExists(tableName).thenAccept(exists -> {
+      if (!exists) {
+        cf.completeExceptionally(new TableNotFoundException(tableName));
+      } else if (!disabledTables.contains(tableName)) {
+        cf.completeExceptionally(new TableNotDisabledException(tableName));
+      } else {
+        disabledTables.remove(tableName);
+        LOG.warn("Table " + tableName + " was enabled in memory only.");
+        cf.complete(null);
+      }
     });
 
     return cf;
@@ -268,14 +277,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Boolean> isTableEnabled(TableName tableName) {
     return CompletableFuture.completedFuture(!disabledTables.contains(tableName));
-  }
-
-  @Override
-  public CompletableFuture<Void> enableTable(TableName name) {
-    disabledTables.remove(name);
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    future.complete(null);
-    return future;
   }
 
   @Override
