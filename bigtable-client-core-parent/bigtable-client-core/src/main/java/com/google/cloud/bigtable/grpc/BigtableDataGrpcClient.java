@@ -468,10 +468,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       public void onCompleted() {
       }
     };
-    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, reader, responseObserver);
-
-    // Start the operation.
-    operation.getAsyncResult();
+    RetryingReadRowsOperation operation = createReadRowsOperation(request, reader, responseObserver);
 
     return new ResumingStreamingResultScanner(reader, operation);
   }
@@ -483,7 +480,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, rowObserver, null);
+    RetryingReadRowsOperation operation = createReadRowsOperation(request, rowObserver, null);
 
     // Start the operation.
     operation.getAsyncResult();
@@ -491,8 +488,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return operation;
   }
 
-  private RetryingReadRowsOperation createReadRowsRetryListener(ReadRowsRequest request,
-      StreamObserver<FlatRow> rowObserver, StreamObserver<ReadRowsResponse> responseObserver) {
+  private RetryingReadRowsOperation createReadRowsOperation(ReadRowsRequest request,
+       StreamObserver<FlatRow> rowObserver, StreamObserver<ReadRowsResponse> responseObserver) {
     return new RetryingReadRowsOperation(
         rowObserver,
         responseObserver,
