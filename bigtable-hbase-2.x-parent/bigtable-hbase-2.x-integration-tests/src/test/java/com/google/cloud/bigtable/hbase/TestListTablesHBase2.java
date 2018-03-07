@@ -61,7 +61,7 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
   
   @Override
   protected void deleteTable(Admin admin, TableName tableName) throws Exception {
-    if (enableAsyncDelete) {
+    if (enableAsyncDelete && sharedTestEnv.isBigtable()) {
       admin.disableTableAsync(tableName).get();
       admin.deleteTableAsync(tableName).get();
     } else {

@@ -116,6 +116,11 @@ public class TestColumnFamilyAdmin extends AbstractTest {
   
   @Test
   public void testModifyColumnFamilyAsync() throws Exception {
+    if (!sharedTestEnv.isBigtable()) {
+      // this fails in hbase
+      return;
+    }
+
     HColumnDescriptor newColumn = new HColumnDescriptor("MODIFY_COLUMN");
     newColumn.setMaxVersions(2);
     admin.addColumnFamilyAsync(tableName, newColumn).get();
@@ -173,6 +178,10 @@ public class TestColumnFamilyAdmin extends AbstractTest {
   
   @Test
   public void testDeleteColumnFamilyAsync() throws Exception {
+    if (!sharedTestEnv.isBigtable()) {
+      // this fails in hbase
+      return;
+    }
     admin.deleteColumnFamilyAsync(tableName, DELETE_COLUMN_FAMILY).get();
     HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
 
