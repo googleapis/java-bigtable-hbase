@@ -23,11 +23,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
+
+import static org.apache.commons.lang.RandomStringUtils.*;
 
 public abstract class AbstractTestListTables extends AbstractTest {
 
@@ -70,9 +73,9 @@ public abstract class AbstractTestListTables extends AbstractTest {
       // This prefix is required because there are regex checks on list_table1 and list_table2.
       // In HBase 2.* tests, there are multiple subclasses to AbstractTestListTables, and each subclass
       // needs a unique namespace on which to run the regex checks, since they might run in paralle.
-      String prefix = dataHelper.randomString("");
-      TableName tableName1 = TableName.valueOf("list_table1-" + prefix + UUID.randomUUID().toString());
-      TableName tableName2 = TableName.valueOf("list_table2-" + prefix + UUID.randomUUID().toString());
+      String prefix = randomAlphanumeric(8);
+      TableName tableName1 = TableName.valueOf("list_table1-" + prefix + randomAlphanumeric(8));
+      TableName tableName2 = TableName.valueOf("list_table2-" + prefix + randomAlphanumeric(8));
       addTable(tableName1);
       addTable(tableName2);
 
