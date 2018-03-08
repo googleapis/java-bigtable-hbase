@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
@@ -445,13 +446,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     return lastCompletedRowKey;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void onError(Throwable e) {
-    observer.onError(e);
-    complete = true;
-  }
-
+  @VisibleForTesting
   boolean isInNewState() {
     return state == RowMergerState.NewRow && rowInProgress == null;
   }
@@ -467,7 +462,14 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     state.handleOnComplete(observer);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void onError(Throwable e) {
+    complete = true;
+    observer.onError(e);
+  }
 
+  @VisibleForTesting
   boolean isComplete() {
     return complete;
   }
