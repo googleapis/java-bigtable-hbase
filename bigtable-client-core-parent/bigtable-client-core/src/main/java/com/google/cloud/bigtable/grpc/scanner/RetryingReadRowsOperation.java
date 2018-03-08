@@ -104,12 +104,12 @@ public class RetryingReadRowsOperation extends
   Clock clock = Clock.SYSTEM;
   private final ReadRowsRequestManager requestManager;
   private final StreamObserver<FlatRow> rowObserver;
-  private RowMerger rowMerger;
+  private final RowMerger rowMerger;
   private long lastResponseMs;
 
   // The number of times we've retried after a timeout
   private int timeoutRetryCount = 0;
-  private CallToStreamObserverAdapter adapter;
+  private final CallToStreamObserverAdapter adapter;
   private StreamObserver<ReadRowsResponse> resultObserver;
   private int totalRowsProcessed = 0;
   private volatile ReadRowsRequest nextRequest;
@@ -124,6 +124,8 @@ public class RetryingReadRowsOperation extends
       Metadata originalMetadata) {
     super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata);
     this.rowObserver = observer;
+    this.rowMerger = new RowMerger(rowObserver);
+    this.adapter = new CallToStreamObserverAdapter();
     this.requestManager = new ReadRowsRequestManager(request);
     this.nextRequest = request;
   }
@@ -146,8 +148,7 @@ public class RetryingReadRowsOperation extends
   public void run() {
     try {
       // restart the clock.
-      this.rowMerger = new RowMerger(rowObserver);
-      adapter = new CallToStreamObserverAdapter();
+      this.rowMerger.reset();
       synchronized (callLock) {
         super.run();
         // pre-fetch one more result, for performance reasons.
@@ -240,8 +241,8 @@ public class RetryingReadRowsOperation extends
     rowObserver.onError(exception);
     // cleanup any state that was in RowMerger. There may be a partial row in progress which needs
     // to be reset.
-    rowMerger = new RowMerger(rowObserver);
     super.setException(exception);
+    rowMerger.reset();
   }
 
   /**

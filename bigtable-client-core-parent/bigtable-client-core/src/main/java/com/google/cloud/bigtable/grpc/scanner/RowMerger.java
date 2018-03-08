@@ -364,8 +364,8 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
   private RowMergerState state = RowMergerState.NewRow;
   private ByteString lastCompletedRowKey = null;
-  private RowInProgress rowInProgress;
-  private boolean complete;
+  private RowInProgress rowInProgress = null;
+  private boolean complete = false;
   private int rowCountInLastMessage = -1;
 
   /**
@@ -375,6 +375,13 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    */
   public RowMerger(StreamObserver<FlatRow> observer) {
     this.observer = observer;
+  }
+
+  public void reset() {
+    state = RowMergerState.NewRow;
+    lastCompletedRowKey = null;
+    rowInProgress = null;
+    rowCountInLastMessage = -1;
   }
 
   /** {@inheritDoc} */

@@ -233,7 +233,7 @@ public class RetryingReadRowsOperationTest {
     underTest.onMessage(buildResponse(key1));
     RowMerger rw1 = underTest.getRowMerger();
     underTest.onClose(Status.ABORTED, new Metadata());
-    Assert.assertNotSame(rw1, underTest.getRowMerger());
+    Assert.assertEquals(-1, underTest.getRowMerger().getRowCountInLastMessage());
     underTest.onMessage(buildResponse(key2));
     verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
     checkRetryRequest(underTest, key2, 8);
@@ -255,7 +255,7 @@ public class RetryingReadRowsOperationTest {
     // a round of successful retries.
     RowMerger rw1 = underTest.getRowMerger();
     performSuccessfulScanTimeouts(underTest, time);
-    Assert.assertNotSame(rw1, underTest.getRowMerger());
+    Assert.assertEquals(-1, underTest.getRowMerger().getRowCountInLastMessage());
     underTest.onClose(Status.ABORTED, new Metadata());
     checkRetryRequest(underTest, key1, 9);
 
