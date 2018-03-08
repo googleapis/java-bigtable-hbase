@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import org.apache.hadoop.hbase.client.Get;
 
-public class TestDelete extends AbstractTest {
+public class TestDelete extends AbstractTestDelete {
   
   public Get readGetVersion(int version, byte[] rowKey) throws IOException {
     Get get = new Get(rowKey);

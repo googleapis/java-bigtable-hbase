@@ -47,7 +47,7 @@ public abstract class AbstractTestDelete extends AbstractTest{
 
     table.close();
   }
-
+  
   @Test
   public void testDeleteEmptyRow() throws IOException {
     // Initialize data
