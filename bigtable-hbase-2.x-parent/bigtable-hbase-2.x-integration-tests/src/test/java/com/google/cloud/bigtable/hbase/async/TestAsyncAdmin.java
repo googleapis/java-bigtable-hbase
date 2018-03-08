@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.hamcrest.core.IsInstanceOf;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -141,16 +142,21 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
   }
 
   @Test
-  public void testgetTableDescriptor_nonExistingTable() throws Exception {
+  public void testGetTableDescriptor_nonExistingTable() throws Exception {
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
-    TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
+    TableName tableName = sharedTestEnv.newTestTableName();
     thrown.expect(ExecutionException.class);
     thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(TableNotFoundException.class));
     asyncAdmin.getDescriptor(tableName).get();
   }  
 
   @Test
-  public void testgetTableDescriptor_nullTable() throws Exception {
+  public void testGetTableDescriptor_nullTable() throws Exception {
+    if (!sharedTestEnv.isBigtable()) {
+        // This condition gets the Minicluster into a really bad state as of HBase 2.0.0-beta1
+        // TODO: Attempt to add this test back one HBase versions increase.
+      return;
+    }
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     assertEquals(null, asyncAdmin.getDescriptor(null).get());
   }  
@@ -158,7 +164,7 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
   @Test
   public void testCreateTableWithNumRegions_exception() throws Exception {
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
-    TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
+    TableName tableName = sharedTestEnv.newTestTableName();
     thrown.expect(ExecutionException.class);
     thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(IllegalArgumentException.class));
     asyncAdmin.createTable(TableDescriptorBuilder.newBuilder(tableName).build(),
@@ -168,8 +174,8 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
   @Test
   public void testCreateTableWithSplits() throws Exception {
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
-    TableName tableName1 = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
-    TableName tableName2 = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
+    TableName tableName1 = sharedTestEnv.newTestTableName();
+    TableName tableName2 = sharedTestEnv.newTestTableName();
 
     try {
       asyncAdmin.createTable(
@@ -197,7 +203,7 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
   @Test
   public void testEnableDisable() throws Exception {
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
-    TableName tableName = TableName.valueOf("TestTable" + UUID.randomUUID().toString());
+    TableName tableName = sharedTestEnv.newTestTableName();
 
     // test non existing table
     checkThatNonExistingTableThrows(asyncAdmin, tableName);

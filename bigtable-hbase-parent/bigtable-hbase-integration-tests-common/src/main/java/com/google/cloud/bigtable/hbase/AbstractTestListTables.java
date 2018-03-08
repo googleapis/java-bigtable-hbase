@@ -26,10 +26,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 
 public abstract class AbstractTestListTables extends AbstractTest {
@@ -39,12 +36,19 @@ public abstract class AbstractTestListTables extends AbstractTest {
   
   private List<TableName> tablesToDelete = new ArrayList<>();
 
+  @Before
+  public void clearTables() {
+    tablesToDelete.clear();
+  }
+
   @After
   public void deleteTables() throws IOException{
     try (Admin admin = getConnection().getAdmin()) {
       for (TableName tableName : tablesToDelete) {
-        admin.disableTable(tableName);
-        admin.deleteTable(tableName);
+        if (admin.tableExists(tableName)) {
+          admin.disableTable(tableName);
+          admin.deleteTable(tableName);
+        }
       }
     }
   }
@@ -63,14 +67,19 @@ public abstract class AbstractTestListTables extends AbstractTest {
   @Test
   public void testTableNames() throws Exception {
     try (Admin admin = getConnection().getAdmin()) {
-      TableName tableName1 = TableName.valueOf("list_table1-" + UUID.randomUUID().toString());
-      TableName tableName2 = TableName.valueOf("list_table2-" + UUID.randomUUID().toString());
+      // This prefix is required because there are regex checks on list_table1 and list_table2.
+      // In HBase 2.* tests, there are multiple subclasses to AbstractTestListTables, and each subclass
+      // needs a unique namespace on which to run the regex checks, since they might run in paralle.
+      String prefix = dataHelper.randomString("");
+      TableName tableName1 = TableName.valueOf("list_table1-" + prefix + UUID.randomUUID().toString());
+      TableName tableName2 = TableName.valueOf("list_table2-" + prefix + UUID.randomUUID().toString());
+      addTable(tableName1);
+      addTable(tableName2);
 
       Assert.assertFalse(admin.tableExists(tableName1));
       Assert.assertFalse(listTableNames(admin).contains(tableName1));
 
       sharedTestEnv.createTable(tableName1);
-      addTable(tableName1);
       checkColumnFamilies(admin, tableName1);
 
       {
@@ -82,7 +91,6 @@ public abstract class AbstractTestListTables extends AbstractTest {
       }
 
       sharedTestEnv.createTable(tableName2);
-      addTable(tableName2);
       checkColumnFamilies(admin, tableName2);
 
       {
@@ -94,14 +102,14 @@ public abstract class AbstractTestListTables extends AbstractTest {
       }
 
       {
-        List<TableName> tableList = listTableNames(admin, Pattern.compile("list_table1-.*"));
+        List<TableName> tableList = listTableNames(admin, Pattern.compile("list_table1-" + prefix + ".*"));
         Assert.assertTrue(tableList.contains(tableName1));
         Assert.assertFalse(tableList.contains(tableName2));
       }
       
       {
         List<TableName> tableList = 
-            listTableNamesUsingDescriptors(admin, Pattern.compile("list_table1-.*"));
+            listTableNamesUsingDescriptors(admin, Pattern.compile("list_table1-" + prefix + ".*"));
         Assert.assertTrue(tableList.contains(tableName1));
         Assert.assertFalse(tableList.contains(tableName2));
         Assert.assertEquals(1, tableList.size());
@@ -123,16 +131,17 @@ public abstract class AbstractTestListTables extends AbstractTest {
       TableName tableName1 = TableName.valueOf("del_table1-" + UUID.randomUUID().toString());
       TableName tableName2 = TableName.valueOf("del_table2-" + UUID.randomUUID().toString());
 
+      addTable(tableName1);
+      addTable(tableName2);
+
       Assert.assertFalse(admin.tableExists(tableName1));
       Assert.assertFalse(listTableNames(admin).contains(tableName1));
       sharedTestEnv.createTable(tableName1);
-      addTable(tableName1);
       Assert.assertTrue(admin.tableExists(tableName1));
       
       Assert.assertFalse(admin.tableExists(tableName2));
       Assert.assertFalse(listTableNames(admin).contains(tableName2));
       sharedTestEnv.createTable(tableName2);
-      addTable(tableName2);
       Assert.assertTrue(admin.tableExists(tableName2));
       
       {
@@ -141,7 +150,7 @@ public abstract class AbstractTestListTables extends AbstractTest {
         Assert.assertTrue(tableList.contains(tableName2));
       }
      
-      deleteTable(admin,tableName2);
+      deleteTable(admin, tableName2);
       removeTable(tableName2);
       {
         Assert.assertTrue(admin.tableExists(tableName1));
@@ -151,7 +160,7 @@ public abstract class AbstractTestListTables extends AbstractTest {
         Assert.assertFalse(tableList.contains(tableName2));
       }
 
-      deleteTable(admin,tableName1);
+      deleteTable(admin, tableName1);
       removeTable(tableName1);
       {
         Assert.assertFalse(admin.tableExists(tableName1));

@@ -132,7 +132,7 @@ public class TestSnapshots extends AbstractTest {
       Assert.assertEquals(1, admin.listSnapshots(Pattern.compile(snapshotName + 1)).size());
       Assert.assertEquals(1, admin.listSnapshots(Pattern.compile(snapshotName + 2)).size());
       admin.deleteSnapshots(allSnapshots);
-      Assert.assertEquals(0, admin.listSnapshots(allSnapshots));
+      Assert.assertEquals(0, admin.listSnapshots(allSnapshots).size());
     }
   }
   
