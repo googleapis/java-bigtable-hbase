@@ -52,7 +52,11 @@ public class RetryingMutateRowsOperation extends
 
   @Override
   public void onMessage(MutateRowsResponse message) {
-    requestManager.onMessage(message);
+    try {
+      requestManager.onMessage(message);
+    } catch (Exception e) {
+      setException(e);
+    }
   }
 
   @Override
