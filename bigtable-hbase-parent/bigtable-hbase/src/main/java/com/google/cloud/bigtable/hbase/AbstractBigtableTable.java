@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -157,18 +158,8 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean exists(Get get) throws IOException {
     try (Closeable ss = TRACER.spanBuilder("BigtableTable.exists").startScopedSpan()) {
       LOG.trace("exists(Get)");
-      return !convertToResult(getResults(addKeyOnlyFilter(get), "exists")).isEmpty();
+      return !convertToResult(getResults(GetAdapter.setCheckExistenceOnly(get), "exists")).isEmpty();
     }
-  }
-
-  private Get addKeyOnlyFilter(Get get) {
-    Get existsGet = new Get(get);
-    if (get.getFilter() == null) {
-      existsGet.setFilter(new KeyOnlyFilter());
-    } else {
-      existsGet.setFilter(new FilterList(get.getFilter(), new KeyOnlyFilter()));
-    }
-    return existsGet;
   }
 
   /** {@inheritDoc} */
@@ -180,7 +171,7 @@ public abstract class AbstractBigtableTable implements Table {
       addBatchSizeAnnotation(gets);
       List<Get> existGets = new ArrayList<>(gets.size());
       for(Get get : gets ){
-        existGets.add(addKeyOnlyFilter(get));
+        existGets.add(GetAdapter.setCheckExistenceOnly(get));
       }
       return getBatchExecutor().exists(existGets);
     }

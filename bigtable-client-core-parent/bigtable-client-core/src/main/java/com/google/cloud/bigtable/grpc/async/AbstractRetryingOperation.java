@@ -186,9 +186,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       } else {
         onError(status, trailers);
       }
-    } catch (IOException e) {
-      // Ignore. This is thrown Closable.close() from the TRACER.withSpan(), which actually doesn't
-      // throw anything
+    } catch (Exception e) {
+      setException(e);
     }
   }
 
@@ -310,9 +309,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         call = rpc.newCall(getCallOptions());
         rpc.start(getRetryRequest(), this, metadata, call);
       }
-    } catch (IOException e) {
-      // Ignore. This is thrown Closable.close() from the TRACER.withSpan(), which actually doesn't
-      // throw anything
+    } catch (Exception e) {
+      setException(e);
     }
   }
 
