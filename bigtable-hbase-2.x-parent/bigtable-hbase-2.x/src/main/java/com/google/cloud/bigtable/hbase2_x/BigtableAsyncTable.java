@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableName;
@@ -42,8 +43,6 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -114,13 +113,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @SuppressWarnings("unchecked")
   @Override
   public <T> List<CompletableFuture<T>> batch(List<? extends Row> actions) {
-    List<? extends Row> updatedActions =
-        map(actions, row -> 
-            row instanceof Get 
-              ? fromHB2Get((Get) row)
-              : row);
     // TODO: The CompletableFutures need to return Void for Put/Delete.
-    return map(asyncRequests(updatedActions), f -> (CompletableFuture<T>) f);
+    return map(asyncRequests(actions), f -> (CompletableFuture<T>) f);
   }
 
   @Override
@@ -241,29 +235,13 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   @Override
   public CompletableFuture<Result> get(Get get) {
-    ReadRowsRequest request = hbaseAdapter.adapt(fromHB2Get(get));
+    ReadRowsRequest request = hbaseAdapter.adapt(get);
     return client.readFlatRowsAsync(request).thenApply(BigtableAsyncTable::toResult);
-  }
-  
-  private static Get fromHB2Get(Get get) {
-    return get.isCheckExistenceOnly()
-      ? addKeyOnlyFilter(get)
-      : get;
-  }
-
-  private static Get addKeyOnlyFilter(Get get) {
-    Get existsGet = new Get(get);
-    if (get.getFilter() == null) {
-      existsGet.setFilter(new KeyOnlyFilter());
-    } else {
-      existsGet.setFilter(new FilterList(get.getFilter(), new KeyOnlyFilter()));
-    }
-    return existsGet;
   }
 
   @Override
   public CompletableFuture<Boolean> exists(Get get) {
-    return get(addKeyOnlyFilter(get)).thenApply(r -> !r.isEmpty());
+    return get(GetAdapter.setCheckExistenceOnly(get)).thenApply(r -> !r.isEmpty());
   }
 
   private static Result toResult(List<FlatRow> list) {
@@ -284,14 +262,12 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @SuppressWarnings("unchecked")
   @Override
   public List<CompletableFuture<Result>> get(List<Get> gets) {
-    List<Get> hb1Gets = map(gets, BigtableAsyncTable::fromHB2Get);
-    return map(asyncRequests(hb1Gets), 
-      (f -> (CompletableFuture<Result>) f));
+    return map(asyncRequests(gets), (f -> (CompletableFuture<Result>) f));
   }
 
   @Override
   public List<CompletableFuture<Boolean>> exists(List<Get> gets) {
-    List<Get> existGets = map(gets, BigtableAsyncTable::addKeyOnlyFilter);
+    List<Get> existGets = map(gets, GetAdapter::setCheckExistenceOnly);
     return map(get(existGets), cf -> cf.thenApply(r -> !r.isEmpty()));
   }
 
