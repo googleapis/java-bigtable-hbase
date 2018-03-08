@@ -148,7 +148,6 @@ public class RetryingReadRowsOperation extends
   public void run() {
     try {
       // restart the clock.
-      this.rowMerger.reset();
       synchronized (callLock) {
         super.run();
         // pre-fetch one more result, for performance reasons.
@@ -238,11 +237,8 @@ public class RetryingReadRowsOperation extends
   /** {@inheritDoc} */
   @Override
   public void setException(Exception exception) {
-    rowObserver.onError(exception);
-    // cleanup any state that was in RowMerger. There may be a partial row in progress which needs
-    // to be reset.
+    rowMerger.onError(exception);
     super.setException(exception);
-    rowMerger.reset();
   }
 
   /**
@@ -314,12 +310,13 @@ public class RetryingReadRowsOperation extends
 
   @Override
   protected void performRetry(long nextBackOff) {
-    buildUpdatedRequst();
+    buildUpdatedRequest();
     super.performRetry(nextBackOff);
   }
 
   @VisibleForTesting
-  ReadRowsRequest buildUpdatedRequst() {
+  ReadRowsRequest buildUpdatedRequest() {
+    this.rowMerger.clearRowInProgress();
     return nextRequest = requestManager.buildUpdatedRequest();
   }
 

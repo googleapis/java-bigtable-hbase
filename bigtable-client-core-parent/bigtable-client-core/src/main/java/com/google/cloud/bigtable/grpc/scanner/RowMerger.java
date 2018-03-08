@@ -366,7 +366,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private ByteString lastCompletedRowKey = null;
   private RowInProgress rowInProgress = null;
   private boolean complete = false;
-  private int rowCountInLastMessage = -1;
+  private Integer rowCountInLastMessage = null;
 
   /**
    * <p>Constructor for RowMerger.</p>
@@ -377,11 +377,11 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     this.observer = observer;
   }
 
-  public void reset() {
+  public void clearRowInProgress() {
+    Preconditions.checkState(!complete, "Cannot reset Rowmerger after completion");
     state = RowMergerState.NewRow;
-    lastCompletedRowKey = null;
     rowInProgress = null;
-    rowCountInLastMessage = -1;
+    rowCountInLastMessage = null;
   }
 
   /** {@inheritDoc} */
@@ -391,7 +391,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       onError(new IllegalStateException("Adding partialRow after completion"));
       return;
     }
-    rowCountInLastMessage = 0;
+    int rowsProcessed = 0;
     for (int i = 0; i < readRowsResponse.getChunksCount(); i++) {
       try {
         CellChunk chunk = readRowsResponse.getChunks(i);
@@ -422,30 +422,38 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         if (chunk.getCommitRow()) {
           observer.onNext(rowInProgress.buildRow());
           lastCompletedRowKey = rowInProgress.getRowKey();
-          rowInProgress = null;
           state = RowMergerState.NewRow;
-          rowCountInLastMessage++;
+          rowInProgress = null;
+          rowsProcessed++;
         }
       } catch (Throwable e) {
         onError(e);
         return;
       }
     }
+    this.rowCountInLastMessage = rowsProcessed;
   }
 
   /**
    * @return the number of rows processed in the previous call to {@link #onNext(ReadRowsResponse)}.
    */
-  public int getRowCountInLastMessage() {
+  public Integer getRowCountInLastMessage() {
     return rowCountInLastMessage;
   }
 
+  public ByteString getLastCompletedRowKey() {
+    return lastCompletedRowKey;
+  }
 
   /** {@inheritDoc} */
   @Override
   public void onError(Throwable e) {
     observer.onError(e);
     complete = true;
+  }
+
+  boolean isInNewState() {
+    return state == RowMergerState.NewRow && rowInProgress == null;
   }
 
   /**
@@ -455,10 +463,12 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    */
   @Override
   public void onCompleted() {
+    complete = true;
     state.handleOnComplete(observer);
   }
 
-  public ByteString getLastCompletedRowKey() {
-    return lastCompletedRowKey;
+
+  boolean isComplete() {
+    return complete;
   }
 }

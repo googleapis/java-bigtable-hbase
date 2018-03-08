@@ -231,9 +231,8 @@ public class RetryingReadRowsOperationTest {
     ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
     underTest.onMessage(buildResponse(key1));
-    RowMerger rw1 = underTest.getRowMerger();
     underTest.onClose(Status.ABORTED, new Metadata());
-    Assert.assertEquals(-1, underTest.getRowMerger().getRowCountInLastMessage());
+    Assert.assertFalse(underTest.getRowMerger().isComplete());
     underTest.onMessage(buildResponse(key2));
     verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
     checkRetryRequest(underTest, key2, 8);
@@ -248,27 +247,44 @@ public class RetryingReadRowsOperationTest {
     start(underTest);
 
     final AtomicLong time = setupClock(underTest);
+    ByteString key0 = ByteString.copyFrom("SomeKey0", "UTF-8");
     ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
-    underTest.onMessage(buildResponse(key1));
+
+    ReadRowsResponse message0 = buildResponse(key0);
+    underTest.onMessage(message0);
+
+    ReadRowsResponse message1 = buildResponse(key1);
+
+    int lastIndex = message1.getChunksCount() - 1;
+    CellChunk lastChunk = message1.getChunks(lastIndex);
+    message1 = message1.toBuilder()
+        .setChunks(lastIndex, lastChunk.toBuilder().setCommitRow(false).build())
+        .build();
+
+    underTest.onMessage(message1);
+    Assert.assertFalse(underTest.getRowMerger().isInNewState());
 
     // a round of successful retries.
-    RowMerger rw1 = underTest.getRowMerger();
     performSuccessfulScanTimeouts(underTest, time);
-    Assert.assertEquals(-1, underTest.getRowMerger().getRowCountInLastMessage());
+    Assert.assertTrue(underTest.getRowMerger().isInNewState());
+
     underTest.onClose(Status.ABORTED, new Metadata());
-    checkRetryRequest(underTest, key1, 9);
+    Assert.assertFalse(underTest.getRowMerger().isComplete());
+    checkRetryRequest(underTest, key0, 9);
 
     // a message gets through
+    underTest.onMessage(buildResponse(key1));
     underTest.onMessage(buildResponse(key2));
-    verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
-    checkRetryRequest(underTest, key2, 8);
+    verify(mockFlatRowObserver, times(3)).onNext(any(FlatRow.class));
+    checkRetryRequest(underTest, key2, 7);
 
     // more successful retries
     performSuccessfulScanTimeouts(underTest, time);
 
-    checkRetryRequest(underTest, key2, 8);
-    verify(mockClientCall, times(RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 4)).request(eq(1));
+    checkRetryRequest(underTest, key2, 7);
+    verify(mockClientCall, times(RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 6))
+        .request(eq(1));
 
     // a succsesful finish.  There were 2 x RETRY_OPTIONS.getMaxScanTimeoutRetries() timeouts,
     // and 1 ABORTED status.
@@ -399,11 +415,12 @@ public class RetryingReadRowsOperationTest {
     verify(mockOperationTimerContext, times(1)).close();
     verify(mockRpcMetrics, times(expectedRetryCount)).markRetry();
     verify(mockRpcTimerContext, times(expectedRetryCount + 1)).close();
+    Assert.assertTrue(underTest.getRowMerger().isComplete());
   }
 
   private static void checkRetryRequest(RetryingReadRowsOperation underTest, ByteString key,
       int rowCount) {
-    ReadRowsRequest request = underTest.buildUpdatedRequst();
+    ReadRowsRequest request = underTest.buildUpdatedRequest();
     Assert.assertEquals(key, request.getRows().getRowRanges(0).getStartKeyOpen());
     Assert.assertEquals(rowCount, request.getRowsLimit());
   }
