@@ -211,7 +211,7 @@ limitations under the License.
                 </relocation>
                 <relocation>
                   <pattern>META-INF/native/netty</pattern>
-                  <shadedPattern>META-INFO/native/com_google_bigtable_repackaged_netty</shadedPattern>
+                  <shadedPattern>META-INF/native/com_google_bigtable_repackaged_netty</shadedPattern>
                 </relocation>
 
                 <relocation>
