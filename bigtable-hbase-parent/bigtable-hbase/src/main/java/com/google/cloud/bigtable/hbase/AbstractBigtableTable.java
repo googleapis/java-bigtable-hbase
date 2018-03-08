@@ -383,7 +383,8 @@ public abstract class AbstractBigtableTable implements Table {
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
-            .buildForPut(put);
+            .withPut(put)
+            .build();
 
     return checkAndMutate(row, request, "checkAndPut");
   }
@@ -425,7 +426,8 @@ public abstract class AbstractBigtableTable implements Table {
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
-            .buildForDelete(delete);
+            .withDelete(delete)
+            .build();
 
     return checkAndMutate(row, request, "checkAndDelete");
   }
@@ -442,7 +444,8 @@ public abstract class AbstractBigtableTable implements Table {
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
-            .buildForRowMutations(rm);
+            .withMutations(rm)
+            .build();
 
     return checkAndMutate(row, request, "checkAndMutate");
   }

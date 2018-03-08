@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,6 +33,8 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.common.base.Function;
 import com.google.protobuf.ByteString;
+
+import javax.annotation.Nullable;
 
 public class CheckAndMutateUtil {
 
@@ -80,6 +83,8 @@ public class CheckAndMutateUtil {
     private final CheckAndMutateRowRequest.Builder requestBuilder =
         CheckAndMutateRowRequest.newBuilder();
 
+    private final List<Mutation> mutations = new ArrayList<>();
+
     private final byte[] row;
     private final byte[] family;
     private byte[] qualifier;
@@ -119,11 +124,32 @@ public class CheckAndMutateUtil {
       return this;
     }
 
-    public RequestBuilder ifEquals(CompareOp compareOp, byte[] value) {
-      return ifMatches(CompareOp.EQUAL, value);
-    }
-
-    public RequestBuilder ifMatches(CompareOp compareOp, byte[] value) {
+    /**
+     * For non-null values, this produces a {@link Filter} equivalent to:
+     * <pre>
+     *   new ValueFilter(reverseCompareOp(compareOp), new BinaryComparator(value)
+     * </pre>
+     * <p>
+     * Null values are bit tricky. In HBase 1.* style check and mutate, value == null always means `check non-existence`
+     * regardless of compareOp.  That's semantically confusing for CompareOperators other than EQUALS.
+     * It's even more confusing if value == null and compareOp = NOT_EQUALS.
+     * <p>
+     * HBase 2.* APIs introduced an explicit method of checking for "Non-Existence" as an independent concept from
+     * compareOp, which is the inspiration for the {@link #ifNotExists()} method.
+     * <p>
+     * Checking for existence in HBase can be expressed as follows:
+     * <pre>
+     * compareOp = CompareOp.GREATER_OR_EQUAL, value = new byte[]{Byte.MIN_VALUE})
+     * </pre>
+     * <p>
+     * Bigtable decided that value == null with a compareOp of NOT_EQUALS actually means check for existence, even
+     * though HBase will still treat it as non-existence.
+     *
+     * @param compareOp a {@link CompareOp}
+     * @param value
+     * @return this
+     */
+    public RequestBuilder ifMatches(CompareOp compareOp, @Nullable byte[] value) {
       Preconditions.checkState(checkNonExistence == false,
           "ifNotExists and ifMatches are mutually exclusive");
 
@@ -134,45 +160,38 @@ public class CheckAndMutateUtil {
       return this;
     }
 
-    public CheckAndMutateRowRequest buildForPut(Put put) throws DoNotRetryIOException {
-      return buildForMutation(put.getRow(), hbaseAdapter.adapt(put).getMutationsList());
+    public RequestBuilder withPut(Put put) throws DoNotRetryIOException {
+      return addMutations(put.getRow(), hbaseAdapter.adapt(put).getMutationsList());
     }
 
-    public CheckAndMutateRowRequest buildForDelete(Delete delete) throws DoNotRetryIOException {
-      return buildForMutation(delete.getRow(), hbaseAdapter.adapt(delete).getMutationsList());
+    public RequestBuilder withDelete(Delete delete) throws DoNotRetryIOException {
+      return addMutations(delete.getRow(), hbaseAdapter.adapt(delete).getMutationsList());
     }
 
-    public CheckAndMutateRowRequest buildForRowMutations(RowMutations rm) throws DoNotRetryIOException {
-      return buildForMutation(rm.getRow(), hbaseAdapter.adapt(rm).getMutationsList());
+    public RequestBuilder withMutations(RowMutations rm) throws DoNotRetryIOException {
+      return addMutations(rm.getRow(), hbaseAdapter.adapt(rm).getMutationsList());
     }
 
-    private CheckAndMutateRowRequest buildForMutation(byte[] actionRow, List<Mutation> mutations)
-        throws DoNotRetryIOException {
-      Preconditions.checkState(checkNonExistence || compareOp != null,
-          "condition is null. You need to specify the condition by" +
-          " calling ifNotExists/ifEquals/ifMatches before executing the request");
-
+    private RequestBuilder addMutations(byte[] actionRow, List<Mutation> mutations) throws DoNotRetryIOException {
       if (!Arrays.equals(actionRow, row)) {
         // The following odd exception message is for compatibility with HBase.
         throw new DoNotRetryIOException("Action's getRow must match the passed row");
       }
+      this.mutations.addAll(mutations);
+      return this;
+    }
 
-      Scan scan = new Scan().addColumn(family, qualifier);
+    public CheckAndMutateRowRequest build() {
+      Preconditions.checkState(checkNonExistence || compareOp != null,
+          "condition is null. You need to specify the condition by" +
+          " calling ifNotExists/ifEquals/ifMatches before executing the request");
+
+      Scan scan = new Scan();
       scan.setMaxVersions(1);
-      if (value == null || checkNonExistence) {
-        // In HBase 1.* style check and mutate, value == null always means checkNonExistence regardless of compareOp.
-        // That's semantically confusing for CompareOperators other than EQUALS.  It's even more confusing
-        // if value == null and compareOp = NOT_EQUALS.
-        //
-        // HBase 2.* introduced a notion of checking for "Non-Existence" as an independent concept from compareOp
-        //
-        // Checking for existence in HBase can be
-        // expressed as follows:
-        //    compareOp = CompareOp.GREATER_OR_EQUAL, value = new byte[]{Byte.MIN_VALUE})
-        //
-        // Bigtable decided that value == null with a compareOp of NOT_EQUALS actually means check for existence, even
-        // though HBase will still treat it as non-existence.
+      scan.addColumn(family, qualifier);
 
+      if (value == null || checkNonExistence) {
+        // See ifMatches javadoc for more information on this
         if (CompareOp.NOT_EQUAL.equals(compareOp)) {
           // check for existence
           requestBuilder.addAllTrueMutations(mutations);

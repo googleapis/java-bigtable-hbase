@@ -66,7 +66,7 @@ import io.opencensus.trace.Tracing;
 
 /**
  * Bigtable implementation of {@link AsyncTable}.
- * 
+ *
  * @author spollapally
  */
 public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
@@ -103,7 +103,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Result> append(Append append) {
     ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
-    Function<? super ReadModifyWriteRowResponse, ? extends Result> adaptRowFunction = response -> 
+    Function<? super ReadModifyWriteRowResponse, ? extends Result> adaptRowFunction = response ->
         append.isReturnResults()
             ? Adapters.ROW_ADAPTER.adaptResponse(response.getRow())
             : null;
@@ -156,7 +156,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     @Override
     public CompletableFuture<Boolean> thenPut(Put put) {
       try {
-        return call(builder.buildForPut(put));
+        builder.withPut(put);
+        return call();
       } catch (Exception e) {
         return FutureUtils.failedFuture(e);
       }
@@ -165,7 +166,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     @Override
     public CompletableFuture<Boolean> thenDelete(Delete delete) {
       try {
-        return call(builder.buildForDelete(delete));
+        builder.withDelete(delete);
+        return call();
       } catch (Exception e) {
         return FutureUtils.failedFuture(e);
       }
@@ -174,14 +176,16 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     @Override
     public CompletableFuture<Boolean> thenMutate(RowMutations mutation) {
       try {
-        return call(builder.buildForRowMutations(mutation));
+        builder.withMutations(mutation);
+        return call();
       } catch (Exception e) {
         return FutureUtils.failedFuture(e);
       }
     }
 
-    private CompletableFuture<Boolean> call( CheckAndMutateRowRequest request)
+    private CompletableFuture<Boolean> call()
         throws IOException {
+      CheckAndMutateRowRequest request = builder.build();
       return client.checkAndMutateRowAsync(request).thenApply(
         response -> CheckAndMutateUtil.wasMutationApplied(request, response));
     }
