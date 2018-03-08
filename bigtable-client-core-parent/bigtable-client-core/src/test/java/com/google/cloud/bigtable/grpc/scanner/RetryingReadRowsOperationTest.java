@@ -82,12 +82,12 @@ public class RetryingReadRowsOperationTest {
     Builder builder = ReadRowsResponse.newBuilder();
     for (ByteString key : keys) {
       builder.addChunks(CellChunk.newBuilder()
-        .setRowKey(key)
-        .setFamilyName(StringValue.newBuilder().setValue("Family"))
-        .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFrom("qualifier", "UTF-8")))
-        .setValue(ByteString.copyFrom("value", "UTF-8"))
-        .setCommitRow(true)
-        .build());
+          .setRowKey(key)
+          .setFamilyName(StringValue.newBuilder().setValue("Family"))
+          .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFrom("qualifier", "UTF-8")))
+          .setValue(ByteString.copyFrom("value", "UTF-8"))
+          .setCommitRow(true)
+          .build());
     }
     return builder.build();
   }
@@ -251,18 +251,10 @@ public class RetryingReadRowsOperationTest {
     ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
 
-    ReadRowsResponse message0 = buildResponse(key0);
-    underTest.onMessage(message0);
+    underTest.onMessage(buildResponse(key0));
 
-    ReadRowsResponse message1 = buildResponse(key1);
-
-    int lastIndex = message1.getChunksCount() - 1;
-    CellChunk lastChunk = message1.getChunks(lastIndex);
-    message1 = message1.toBuilder()
-        .setChunks(lastIndex, lastChunk.toBuilder().setCommitRow(false).build())
-        .build();
-
-    underTest.onMessage(message1);
+    // A partial row is found
+    underTest.onMessage(setCommitToFalse(buildResponse(key1)));
     Assert.assertFalse(underTest.getRowMerger().isInNewState());
 
     // a round of successful retries.
@@ -274,21 +266,29 @@ public class RetryingReadRowsOperationTest {
     checkRetryRequest(underTest, key0, 9);
 
     // a message gets through
-    underTest.onMessage(buildResponse(key1));
     underTest.onMessage(buildResponse(key2));
-    verify(mockFlatRowObserver, times(3)).onNext(any(FlatRow.class));
-    checkRetryRequest(underTest, key2, 7);
+    verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
+    checkRetryRequest(underTest, key2, 8);
 
     // more successful retries
     performSuccessfulScanTimeouts(underTest, time);
 
-    checkRetryRequest(underTest, key2, 7);
-    verify(mockClientCall, times(RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 6))
+    checkRetryRequest(underTest, key2, 8);
+    verify(mockClientCall, times(RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 5))
         .request(eq(1));
 
     // a succsesful finish.  There were 2 x RETRY_OPTIONS.getMaxScanTimeoutRetries() timeouts,
     // and 1 ABORTED status.
     finishOK(underTest, RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 1);
+  }
+
+  private ReadRowsResponse setCommitToFalse(ReadRowsResponse message1) {
+    int lastIndex = message1.getChunksCount() - 1;
+    CellChunk lastChunk = message1.getChunks(lastIndex);
+    message1 = message1.toBuilder()
+        .setChunks(lastIndex, lastChunk.toBuilder().setCommitRow(false).build())
+        .build();
+    return message1;
   }
 
   @Test
