@@ -66,7 +66,7 @@ import io.opencensus.trace.Tracing;
 
 /**
  * Bigtable implementation of {@link AsyncTable}.
- * 
+ *
  * @author spollapally
  */
 public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
@@ -103,7 +103,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Result> append(Append append) {
     ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
-    Function<? super ReadModifyWriteRowResponse, ? extends Result> adaptRowFunction = response -> 
+    Function<? super ReadModifyWriteRowResponse, ? extends Result> adaptRowFunction = response ->
         append.isReturnResults()
             ? Adapters.ROW_ADAPTER.adaptResponse(response.getRow())
             : null;
@@ -125,56 +125,39 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   private final class CheckAndMutateBuilderImpl implements CheckAndMutateBuilder {
 
-    private final byte[] row;
-
-    private final byte[] family;
-
-    private byte[] qualifier;
-
-    private CompareOperator op;
-
-    private byte[] value;
+    private final CheckAndMutateUtil.RequestBuilder builder;
 
     CheckAndMutateBuilderImpl(byte[] row, byte[] family) {
-      this.row = Preconditions.checkNotNull(row, "row is null");
-      this.family = Preconditions.checkNotNull(family, "family is null");
+      this.builder = new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
     }
 
     @Override
     public CheckAndMutateBuilder qualifier(byte[] qualifier) {
-      this.qualifier = Preconditions.checkNotNull(qualifier, "qualifier is null. Consider using" +
-          " an empty byte array, or just do not call this method if you want a null qualifier");
+      builder.qualifier(qualifier);
       return this;
     }
 
     @Override
     public CheckAndMutateBuilder ifNotExists() {
-      this.op = CompareOperator.EQUAL;
-      this.value = null;
+      builder.ifNotExists();
       return this;
     }
 
     @Override
     public CheckAndMutateBuilder ifMatches(CompareOperator compareOp, byte[] value) {
-      this.op = Preconditions.checkNotNull(compareOp, "compareOp is null");
-      if (compareOp != CompareOperator.EQUAL && compareOp != CompareOperator.NOT_EQUAL) {
-        this.value =
-            Preconditions.checkNotNull(value, "value is null for compareOperator: " + compareOp);
-      } else {
-        this.value = value;
+      Preconditions.checkNotNull(compareOp, "compareOp is null");
+      if (compareOp != CompareOperator.NOT_EQUAL) {
+        Preconditions.checkNotNull(value, "value is null for compareOperator: " + compareOp);
       }
+      builder.ifMatches(BigtableTable.toCompareOp(compareOp), value);
       return this;
-    }
-
-    private void preCheck() {
-      Preconditions.checkNotNull(op, "condition is null. You need to specify the condition by" +
-          " calling ifNotExists/ifEquals/ifMatches before executing the request");
     }
 
     @Override
     public CompletableFuture<Boolean> thenPut(Put put) {
       try {
-        return call(put.getRow(), hbaseAdapter.adapt(put));
+        builder.withPut(put);
+        return call();
       } catch (Exception e) {
         return FutureUtils.failedFuture(e);
       }
@@ -183,7 +166,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     @Override
     public CompletableFuture<Boolean> thenDelete(Delete delete) {
       try {
-        return call(delete.getRow(), hbaseAdapter.adapt(delete));
+        builder.withDelete(delete);
+        return call();
       } catch (Exception e) {
         return FutureUtils.failedFuture(e);
       }
@@ -192,25 +176,16 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     @Override
     public CompletableFuture<Boolean> thenMutate(RowMutations mutation) {
       try {
-        return call(mutation.getRow(), hbaseAdapter.adapt(mutation));
+        builder.withMutations(mutation);
+        return call();
       } catch (Exception e) {
         return FutureUtils.failedFuture(e);
       }
     }
 
-    private CompletableFuture<Boolean> call(byte[] actionRow, MutateRowRequest mutateRowRequest)
+    private CompletableFuture<Boolean> call()
         throws IOException {
-      preCheck();
-      CheckAndMutateRowRequest request =
-          CheckAndMutateUtil.makeConditionalMutationRequest(
-              hbaseAdapter,
-              row,
-              family,
-              qualifier,
-              BigtableTable.toCompareOp(op),
-              value,
-              actionRow,
-              mutateRowRequest.getMutationsList());
+      CheckAndMutateRowRequest request = builder.build();
       return client.checkAndMutateRowAsync(request).thenApply(
         response -> CheckAndMutateUtil.wasMutationApplied(request, response));
     }

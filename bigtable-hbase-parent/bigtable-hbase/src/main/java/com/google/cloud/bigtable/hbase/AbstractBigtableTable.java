@@ -380,8 +380,11 @@ public abstract class AbstractBigtableTable implements Table {
       CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
     LOG.trace("checkAndPut(byte[], byte[], byte[], CompareOp, value, Put)");
     CheckAndMutateRowRequest request =
-        CheckAndMutateUtil.makeConditionalMutationRequest(hbaseAdapter, row, family, qualifier,
-          compareOp, value, put.getRow(), hbaseAdapter.adapt(put).getMutationsList());
+        new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
+            .qualifier(qualifier)
+            .ifMatches(compareOp, value)
+            .withPut(put)
+            .build();
 
     return checkAndMutate(row, request, "checkAndPut");
   }
@@ -420,8 +423,11 @@ public abstract class AbstractBigtableTable implements Table {
       CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
     LOG.trace("checkAndDelete(byte[], byte[], byte[], CompareOp, byte[], Delete)");
     CheckAndMutateRowRequest request =
-        CheckAndMutateUtil.makeConditionalMutationRequest(hbaseAdapter, row, family, qualifier,
-          compareOp, value, delete.getRow(), hbaseAdapter.adapt(delete).getMutationsList());
+        new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
+            .qualifier(qualifier)
+            .ifMatches(compareOp, value)
+            .withDelete(delete)
+            .build();
 
     return checkAndMutate(row, request, "checkAndDelete");
   }
@@ -435,8 +441,11 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("checkAndMutate(byte[], byte[], byte[], CompareOp, byte[], RowMutations)");
 
     CheckAndMutateRowRequest request =
-        CheckAndMutateUtil.makeConditionalMutationRequest(hbaseAdapter, row, family, qualifier,
-          compareOp, value, rm.getRow(), hbaseAdapter.adapt(rm).getMutationsList());
+        new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
+            .qualifier(qualifier)
+            .ifMatches(compareOp, value)
+            .withMutations(rm)
+            .build();
 
     return checkAndMutate(row, request, "checkAndMutate");
   }

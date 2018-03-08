@@ -358,12 +358,86 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
       CompareOp.NOT_EQUAL, Bytes.toBytes(4000l), someRandomPut);
     Assert.assertTrue("4000 != 2000 should succeed", success);
 
-    if (sharedTestEnv.isBigtable()) {
-      // This doesn't work in HBase, but we need this to work in CBT
-      success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
-        CompareOp.NOT_EQUAL, null, someRandomPut);
-      Assert.assertTrue("4000 != null should succeed", success);
+    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualToCheck,
+        CompareOp.GREATER_OR_EQUAL, new byte[]{Byte.MIN_VALUE}, someRandomPut);
+    Assert.assertTrue("4000 > MIN_BYTES should succeed", success);
+  }
+
+  @Test
+  public void testCompareOpsNull() throws Exception {
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] nullQual = dataHelper.randomData("null-");
+    byte[] popluatedQual = dataHelper.randomData("pupulated-");
+    byte[] otherQual = dataHelper.randomData("other-");
+    boolean success;
+
+    Table table = getDefaultTable();
+
+    table.put(new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, popluatedQual,
+        Bytes.toBytes(2000l)));
+
+    Put someRandomPut =
+        new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
+
+    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, nullQual,
+        CompareOp.LESS, null, someRandomPut);
+    Assert.assertTrue("< null should succeed", success);
+
+    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, nullQual,
+        CompareOp.GREATER, null, someRandomPut);
+    Assert.assertTrue("> null should succeed", success);
+
+    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, nullQual,
+        CompareOp.LESS_OR_EQUAL, null, someRandomPut);
+    Assert.assertTrue("<= null should succeed", success);
+
+    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, nullQual,
+        CompareOp.GREATER_OR_EQUAL, null, someRandomPut);
+    Assert.assertTrue(">= null should succeed", success);
+
+    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, nullQual,
+        CompareOp.EQUAL, null, someRandomPut);
+    Assert.assertTrue("== null should succeed", success);
+
+    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, nullQual,
+        CompareOp.GREATER_OR_EQUAL, new byte[]{Byte.MIN_VALUE}, someRandomPut);
+    Assert.assertFalse("> MIN_BYTES should fail", success);
+  }
+
+  /**
+   * Bigtable supports a notion of `NOT_EQUALS null` checks equating with `check for existence`.  HBase
+   * does not support this notion, and always uses `{any comparator} null` to mean `check for non-existence`.
+   */
+  @Test
+  public void testNotEqualsNull_BigtableOnly() throws Exception {
+    if (!sharedTestEnv.isBigtable()) {
+      return;
     }
+
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] nullQual = dataHelper.randomData("null-");
+    byte[] popluatedQual = dataHelper.randomData("pupulated-");
+    byte[] otherQual = dataHelper.randomData("other-");
+
+    Table table = getDefaultTable();
+
+    table.put(new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, popluatedQual,
+        Bytes.toBytes(2000l)));
+
+    Put someRandomPut =
+        new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
+
+    boolean success;
+
+    // This doesn't work in HBase, but we need this to work in CBT
+    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, nullQual,
+        CompareOp.NOT_EQUAL, null, someRandomPut);
+    Assert.assertFalse("!= null should fail", success);
+
+    // This doesn't work in HBase, but we need this to work in CBT
+    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, popluatedQual,
+        CompareOp.NOT_EQUAL, null, someRandomPut);
+    Assert.assertTrue("2000 != null should succeed", success);
   }
 
   @Test

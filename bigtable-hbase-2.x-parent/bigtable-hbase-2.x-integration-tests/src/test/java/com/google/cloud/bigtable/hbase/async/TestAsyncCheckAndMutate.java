@@ -98,12 +98,8 @@ public class TestAsyncCheckAndMutate extends AbstractTestCheckAndMutate {
       CompareOp op, byte[] value) throws InterruptedException, ExecutionException {
     CheckAndMutateBuilder builder = getDefaultAsyncTable().checkAndMutate(row,family)
         .qualifier(qualifier);
-    if (op == CompareOp.EQUAL) {
-      if (value == null) {
-        return builder.ifNotExists();
-      } else {
-        return builder.ifEquals(value);
-      }
+    if (value == null && op != CompareOp.NOT_EQUAL) {
+      return builder.ifNotExists();
     } else {
       return builder.ifMatches(TestCheckAndMutateHBase2.translate(op), value);
     }
