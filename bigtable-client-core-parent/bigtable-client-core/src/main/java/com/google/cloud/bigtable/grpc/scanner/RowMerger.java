@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
@@ -364,9 +365,9 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
   private RowMergerState state = RowMergerState.NewRow;
   private ByteString lastCompletedRowKey = null;
-  private RowInProgress rowInProgress;
-  private boolean complete;
-  private int rowCountInLastMessage = -1;
+  private RowInProgress rowInProgress = null;
+  private boolean complete = false;
+  private Integer rowCountInLastMessage = null;
 
   /**
    * <p>Constructor for RowMerger.</p>
@@ -377,6 +378,13 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     this.observer = observer;
   }
 
+  public void clearRowInProgress() {
+    Preconditions.checkState(!complete, "Cannot reset Rowmerger after completion");
+    state = RowMergerState.NewRow;
+    rowInProgress = null;
+    rowCountInLastMessage = null;
+  }
+
   /** {@inheritDoc} */
   @Override
   public final void onNext(ReadRowsResponse readRowsResponse) {
@@ -384,7 +392,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       onError(new IllegalStateException("Adding partialRow after completion"));
       return;
     }
-    rowCountInLastMessage = 0;
+    int rowsProcessed = 0;
     for (int i = 0; i < readRowsResponse.getChunksCount(); i++) {
       try {
         CellChunk chunk = readRowsResponse.getChunks(i);
@@ -415,30 +423,32 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         if (chunk.getCommitRow()) {
           observer.onNext(rowInProgress.buildRow());
           lastCompletedRowKey = rowInProgress.getRowKey();
-          rowInProgress = null;
           state = RowMergerState.NewRow;
-          rowCountInLastMessage++;
+          rowInProgress = null;
+          rowsProcessed++;
         }
       } catch (Throwable e) {
         onError(e);
         return;
       }
     }
+    this.rowCountInLastMessage = rowsProcessed;
   }
 
   /**
    * @return the number of rows processed in the previous call to {@link #onNext(ReadRowsResponse)}.
    */
-  public int getRowCountInLastMessage() {
+  public Integer getRowCountInLastMessage() {
     return rowCountInLastMessage;
   }
 
+  public ByteString getLastCompletedRowKey() {
+    return lastCompletedRowKey;
+  }
 
-  /** {@inheritDoc} */
-  @Override
-  public void onError(Throwable e) {
-    observer.onError(e);
-    complete = true;
+  @VisibleForTesting
+  boolean isInNewState() {
+    return state == RowMergerState.NewRow && rowInProgress == null;
   }
 
   /**
@@ -448,10 +458,19 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    */
   @Override
   public void onCompleted() {
+    complete = true;
     state.handleOnComplete(observer);
   }
 
-  public ByteString getLastCompletedRowKey() {
-    return lastCompletedRowKey;
+  /** {@inheritDoc} */
+  @Override
+  public void onError(Throwable e) {
+    complete = true;
+    observer.onError(e);
+  }
+
+  @VisibleForTesting
+  boolean isComplete() {
+    return complete;
   }
 }

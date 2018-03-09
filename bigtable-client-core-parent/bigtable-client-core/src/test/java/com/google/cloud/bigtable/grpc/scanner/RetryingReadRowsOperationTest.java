@@ -82,12 +82,12 @@ public class RetryingReadRowsOperationTest {
     Builder builder = ReadRowsResponse.newBuilder();
     for (ByteString key : keys) {
       builder.addChunks(CellChunk.newBuilder()
-        .setRowKey(key)
-        .setFamilyName(StringValue.newBuilder().setValue("Family"))
-        .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFrom("qualifier", "UTF-8")))
-        .setValue(ByteString.copyFrom("value", "UTF-8"))
-        .setCommitRow(true)
-        .build());
+          .setRowKey(key)
+          .setFamilyName(StringValue.newBuilder().setValue("Family"))
+          .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFrom("qualifier", "UTF-8")))
+          .setValue(ByteString.copyFrom("value", "UTF-8"))
+          .setCommitRow(true)
+          .build());
     }
     return builder.build();
   }
@@ -231,9 +231,8 @@ public class RetryingReadRowsOperationTest {
     ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
     underTest.onMessage(buildResponse(key1));
-    RowMerger rw1 = underTest.getRowMerger();
     underTest.onClose(Status.ABORTED, new Metadata());
-    Assert.assertNotSame(rw1, underTest.getRowMerger());
+    Assert.assertFalse(underTest.getRowMerger().isComplete());
     underTest.onMessage(buildResponse(key2));
     verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
     checkRetryRequest(underTest, key2, 8);
@@ -248,16 +247,23 @@ public class RetryingReadRowsOperationTest {
     start(underTest);
 
     final AtomicLong time = setupClock(underTest);
+    ByteString key0 = ByteString.copyFrom("SomeKey0", "UTF-8");
     ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
-    underTest.onMessage(buildResponse(key1));
+
+    underTest.onMessage(buildResponse(key0));
+
+    // A partial row is found
+    underTest.onMessage(setCommitToFalse(buildResponse(key1)));
+    Assert.assertFalse(underTest.getRowMerger().isInNewState());
 
     // a round of successful retries.
-    RowMerger rw1 = underTest.getRowMerger();
     performSuccessfulScanTimeouts(underTest, time);
-    Assert.assertNotSame(rw1, underTest.getRowMerger());
+    Assert.assertTrue(underTest.getRowMerger().isInNewState());
+
     underTest.onClose(Status.ABORTED, new Metadata());
-    checkRetryRequest(underTest, key1, 9);
+    Assert.assertFalse(underTest.getRowMerger().isComplete());
+    checkRetryRequest(underTest, key0, 9);
 
     // a message gets through
     underTest.onMessage(buildResponse(key2));
@@ -268,11 +274,21 @@ public class RetryingReadRowsOperationTest {
     performSuccessfulScanTimeouts(underTest, time);
 
     checkRetryRequest(underTest, key2, 8);
-    verify(mockClientCall, times(RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 4)).request(eq(1));
+    verify(mockClientCall, times(RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 5))
+        .request(eq(1));
 
     // a succsesful finish.  There were 2 x RETRY_OPTIONS.getMaxScanTimeoutRetries() timeouts,
     // and 1 ABORTED status.
     finishOK(underTest, RETRY_OPTIONS.getMaxScanTimeoutRetries() * 2 + 1);
+  }
+
+  private ReadRowsResponse setCommitToFalse(ReadRowsResponse message1) {
+    int lastIndex = message1.getChunksCount() - 1;
+    CellChunk lastChunk = message1.getChunks(lastIndex);
+    message1 = message1.toBuilder()
+        .setChunks(lastIndex, lastChunk.toBuilder().setCommitRow(false).build())
+        .build();
+    return message1;
   }
 
   @Test
@@ -399,11 +415,12 @@ public class RetryingReadRowsOperationTest {
     verify(mockOperationTimerContext, times(1)).close();
     verify(mockRpcMetrics, times(expectedRetryCount)).markRetry();
     verify(mockRpcTimerContext, times(expectedRetryCount + 1)).close();
+    Assert.assertTrue(underTest.getRowMerger().isComplete());
   }
 
   private static void checkRetryRequest(RetryingReadRowsOperation underTest, ByteString key,
       int rowCount) {
-    ReadRowsRequest request = underTest.buildUpdatedRequst();
+    ReadRowsRequest request = underTest.buildUpdatedRequest();
     Assert.assertEquals(key, request.getRows().getRowRanges(0).getStartKeyOpen());
     Assert.assertEquals(rowCount, request.getRowsLimit());
   }
