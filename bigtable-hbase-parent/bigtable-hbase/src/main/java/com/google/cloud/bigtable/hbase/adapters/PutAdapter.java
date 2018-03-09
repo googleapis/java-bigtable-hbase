@@ -72,6 +72,10 @@ public class PutAdapter extends MutationAdapter<Put> {
     this.setClientTimestamp = setClientTimestamp;
   }
 
+  PutAdapter withServerSideTimestamps() {
+    return new PutAdapter(maxKeyValueSize, false);
+  }
+
   @Override
   protected Collection<Mutation> adaptMutations(Put operation) {
     if (operation.isEmpty()) {
