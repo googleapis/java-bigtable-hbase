@@ -80,8 +80,7 @@ public class CheckAndMutateUtil {
    */
   public static class RequestBuilder {
     private final HBaseRequestAdapter hbaseAdapter;
-    private final CheckAndMutateRowRequest.Builder requestBuilder =
-        CheckAndMutateRowRequest.newBuilder();
+    private final CheckAndMutateRowRequest.Builder requestBuilder;
 
     private final List<Mutation> mutations = new ArrayList<>();
 
@@ -102,13 +101,16 @@ public class CheckAndMutateUtil {
      * @param family the family in which to check value matching.
      */
     public RequestBuilder(HBaseRequestAdapter hbaseAdapter, byte[] row, byte[] family) {
-      requestBuilder.setRowKey(ByteString.copyFrom(row));
       this.row = Preconditions.checkNotNull(row, "row is null");
       this.family = Preconditions.checkNotNull(family, "family is null");
 
-      // TODO (issue #1709): The hbaseAdapter used here should not set client-side timestamps.
-      this.hbaseAdapter = hbaseAdapter;
-      requestBuilder.setTableName(hbaseAdapter.getBigtableTableName().toString());
+      requestBuilder = CheckAndMutateRowRequest.newBuilder()
+          .setRowKey(ByteString.copyFrom(row))
+          .setTableName(hbaseAdapter.getBigtableTableName().toString());
+
+      // The hbaseAdapter used here should not set client-side timestamps, since that may cause strange contention
+      // issues.  See issue #1709.
+      this.hbaseAdapter = hbaseAdapter.withServerSideTimestamps();
     }
 
     public RequestBuilder qualifier(byte[] qualifier) {

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -48,9 +49,18 @@ public class HBaseRequestAdapter {
     protected final RowMutationsAdapter rowMutationsAdapter;
 
     public MutationAdapters(BigtableOptions options, Configuration config) {
-      this.putAdapter = Adapters.createPutAdapter(config, options);
+      this(Adapters.createPutAdapter(config, options));
+    }
+
+    @VisibleForTesting
+    MutationAdapters(PutAdapter putAdapter) {
+      this.putAdapter = putAdapter;
       this.hbaseMutationAdapter = Adapters.createMutationsAdapter(putAdapter);
       this.rowMutationsAdapter = new RowMutationsAdapter(hbaseMutationAdapter);
+    }
+
+    public MutationAdapters withServerSideTimestamps() {
+      return new MutationAdapters(putAdapter.withServerSideTimestamps());
     }
   }
 
@@ -72,16 +82,37 @@ public class HBaseRequestAdapter {
   /**
    * <p>Constructor for HBaseRequestAdapter.</p>
    *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @param mutationAdapters a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters} object.
+   * @param options a {@link BigtableOptions} object.
+   * @param tableName a {@link TableName} object.
+   * @param mutationAdapters a {@link MutationAdapters} object.
    */
-  public HBaseRequestAdapter(BigtableOptions options, TableName tableName,
-      MutationAdapters mutationAdapters) {
+  public HBaseRequestAdapter(BigtableOptions options,
+                             TableName tableName,
+                             MutationAdapters mutationAdapters) {
+    this(tableName,
+        options.getInstanceName().toTableName(tableName.getQualifierAsString()),
+        mutationAdapters);
+  }
+
+
+  /**
+   * <p>Constructor for HBaseRequestAdapter.</p>
+   *
+   * @param tableName a {@link TableName} object.
+   * @param bigtableTableName a {@link BigtableTableName} object.
+   * @param mutationAdapters a {@link MutationAdapters} object.
+   */
+  @VisibleForTesting
+  HBaseRequestAdapter(TableName tableName,
+                              BigtableTableName bigtableTableName,
+                              MutationAdapters mutationAdapters) {
     this.tableName = tableName;
-    this.bigtableTableName =
-        options.getInstanceName().toTableName(tableName.getQualifierAsString());
+    this.bigtableTableName = bigtableTableName;
     this.mutationAdapters = mutationAdapters;
+  }
+
+  public HBaseRequestAdapter withServerSideTimestamps(){
+    return new HBaseRequestAdapter(tableName, bigtableTableName, mutationAdapters.withServerSideTimestamps());
   }
 
   /**
