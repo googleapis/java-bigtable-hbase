@@ -17,16 +17,17 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
-import com.google.cloud.bigtable.beam.sequencefiles.Utils.StringToDirectoryResourceId;
+import java.io.Serializable;
 import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.DefaultFilenamePolicy;
-import org.apache.beam.sdk.io.LocalResources;
+import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.WriteFiles;
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
@@ -34,6 +35,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
 import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.beam.sdk.values.KV;
 import org.apache.commons.logging.Log;
@@ -125,7 +127,7 @@ public class ExportJob {
     void setBigtableFilter(String filter);
 
 
-    @Description("The destination path. Can either specify a directory ending with a / or a file prefix.")
+    @Description("The destination directory")
     ValueProvider<String> getDestinationPath();
     @SuppressWarnings("unused")
     void setDestinationPath(ValueProvider<String> destinationPath);
@@ -189,15 +191,17 @@ public class ExportJob {
       configBuilder.withAppProfileId(opts.getBigtableAppProfileId());
     }
 
+    // Use the base target directory to stage bundles
+    ValueProvider<ResourceId> destinationPath = NestedValueProvider
+        .of(opts.getDestinationPath(), new StringToDirResourceId());
 
-    ValueProvider<ResourceId> dest = NestedValueProvider.of(
-        opts.getDestinationPath(), new StringToDirectoryResourceId()
-    );
+    // Concat the destination path & prefix for the final path
+    FilePathPrefix filePathPrefix = new FilePathPrefix(destinationPath, opts.getFilenamePrefix());
 
     SequenceFileSink<ImmutableBytesWritable, Result> sink = new SequenceFileSink<>(
-        dest,
-        DefaultFilenamePolicy.constructUsingStandardParameters(
-            LocalResources.fromString(opts.getFilenamePrefix(), false),
+        destinationPath,
+        DefaultFilenamePolicy.fromStandardParameters(
+            filePathPrefix,
             null,
             "",
             false
@@ -223,4 +227,31 @@ public class ExportJob {
     }
   }
 
+  static class StringToDirResourceId implements SerializableFunction<String, ResourceId>, Serializable {
+    @Override
+    public ResourceId apply(String input) {
+      return FileSystems.matchNewResource(input, true);
+    }
+  }
+
+  static class FilePathPrefix implements ValueProvider<ResourceId>, Serializable {
+    private final ValueProvider<ResourceId> destinationPath;
+    private final ValueProvider<String> filenamePrefix;
+
+    FilePathPrefix(ValueProvider<ResourceId> destinationPath,
+        ValueProvider<String> filenamePrefix) {
+      this.destinationPath = destinationPath;
+      this.filenamePrefix = filenamePrefix;
+    }
+
+    @Override
+    public ResourceId get() {
+      return destinationPath.get().resolve(filenamePrefix.get(), StandardResolveOptions.RESOLVE_FILE);
+    }
+
+    @Override
+    public boolean isAccessible() {
+      return destinationPath.isAccessible() && filenamePrefix.isAccessible();
+    }
+  }
 }
