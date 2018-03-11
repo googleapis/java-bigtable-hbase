@@ -15,21 +15,36 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import com.google.bigtable.admin.v2.AppProfile;
 import com.google.bigtable.admin.v2.Cluster;
+import com.google.bigtable.admin.v2.CreateAppProfileRequest;
 import com.google.bigtable.admin.v2.CreateInstanceRequest;
+import com.google.bigtable.admin.v2.DeleteAppProfileRequest;
+import com.google.bigtable.admin.v2.DeleteClusterRequest;
 import com.google.bigtable.admin.v2.DeleteInstanceRequest;
+import com.google.bigtable.admin.v2.GetAppProfileRequest;
 import com.google.bigtable.admin.v2.GetClusterRequest;
 import com.google.bigtable.admin.v2.Instance;
+import com.google.bigtable.admin.v2.ListAppProfilesRequest;
+import com.google.bigtable.admin.v2.ListAppProfilesResponse;
 import com.google.bigtable.admin.v2.ListClustersRequest;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.admin.v2.ListInstancesRequest;
 import com.google.bigtable.admin.v2.ListInstancesResponse;
+import com.google.bigtable.admin.v2.PartialUpdateInstanceRequest;
+import com.google.bigtable.admin.v2.UpdateAppProfileRequest;
+import com.google.iam.v1.GetIamPolicyRequest;
+import com.google.iam.v1.Policy;
+import com.google.iam.v1.SetIamPolicyRequest;
+import com.google.iam.v1.TestIamPermissionsRequest;
+import com.google.iam.v1.TestIamPermissionsResponse;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * BigtableInstanceClient manages instances and clusters.
@@ -128,4 +143,121 @@ public interface BigtableInstanceClient {
    * @return a {@link com.google.longrunning.Operation} object.
    */
   Operation updateCluster(Cluster cluster);
+  
+  /**
+   * Deletes a cluster from an instance.
+   * 
+   * @param request a {@link com.google.bigtable.admin.v2.DeleteClusterRequest} object.
+   * @return a {@link com.google.protobuf.Empty} object.
+   */
+  Empty deleteCluster(DeleteClusterRequest request);
+
+  /**
+   * Partially updates an instance within a project.
+   * 
+   * @param request a {@link com.google.bigtable.admin.v2.PartialUpdateInstanceRequest} object.
+   * @return a {@link com.google.longrunning.Operation} object.
+   */
+  Operation partialUpdateInstance(PartialUpdateInstanceRequest request);
+
+  /**
+   * This is a private alpha release of Cloud Bigtable replication. This feature
+   * is not currently available to most Cloud Bigtable customers. This feature
+   * might be changed in backward-incompatible ways and is not recommended for
+   * production use. It is not subject to any SLA or deprecation policy.
+   * Creates an app profile within an instance.
+   * 
+   * @param request a {@link com.google.bigtable.admin.v2.CreateAppProfileRequest} object.
+   * @return a {@link com.google.bigtable.admin.v2.AppProfile} object.
+   */
+  AppProfile createAppProfile(CreateAppProfileRequest request);
+
+  /**
+   * This is a private alpha release of Cloud Bigtable replication. This feature
+   * is not currently available to most Cloud Bigtable customers. This feature
+   * might be changed in backward-incompatible ways and is not recommended for
+   * production use. It is not subject to any SLA or deprecation policy.
+   * Gets information about an app profile.
+   *  
+   * @param request a {@link com.google.bigtable.admin.v2.GetAppProfileRequest} object.
+   * @return a {@link com.google.bigtable.admin.v2.AppProfile} object.
+   */
+  AppProfile getAppProfile(GetAppProfileRequest request);
+
+  /**
+   * This is a private alpha release of Cloud Bigtable replication. This feature
+   * is not currently available to most Cloud Bigtable customers. This feature
+   * might be changed in backward-incompatible ways and is not recommended for
+   * production use. It is not subject to any SLA or deprecation policy.
+   * Lists information about app profiles in an instance.
+   * 
+   * @param request a {@link com.google.bigtable.admin.v2.ListAppProfilesRequest} object. 
+   * @return a {@link com.google.bigtable.admin.v2.ListAppProfilesResponse} object.
+   */
+  ListAppProfilesResponse listAppProfiles(ListAppProfilesRequest request);
+
+  /**
+   * This is a private alpha release of Cloud Bigtable replication. This feature
+   * is not currently available to most Cloud Bigtable customers. This feature
+   * might be changed in backward-incompatible ways and is not recommended for
+   * production use. It is not subject to any SLA or deprecation policy.
+   * Updates an app profile within an instance.
+   * 
+   * @param request a {@link com.google.longrunning.Operation} object.
+   * @return a {@link com.google.bigtable.admin.v2.UpdateAppProfileRequest} object.
+   */
+  Operation updateAppProfile(UpdateAppProfileRequest request);
+
+  /**
+   * This is a private alpha release of Cloud Bigtable replication. This feature
+   * is not currently available to most Cloud Bigtable customers. This feature
+   * might be changed in backward-incompatible ways and is not recommended for
+   * production use. It is not subject to any SLA or deprecation policy.
+   * Deletes an app profile from an instance.
+   * 
+   * @param request a {@link com.google.bigtable.admin.v2.DeleteAppProfileRequest} object. 
+   * @return a {@link com.google.protobuf.Empty} object.
+   */
+  Empty deleteAppProfile(DeleteAppProfileRequest request);
+
+  /**
+   * This is a private alpha release of Cloud Bigtable instance level
+   * permissions. This feature is not currently available to most Cloud Bigtable
+   * customers. This feature might be changed in backward-incompatible ways and
+   * is not recommended for production use. It is not subject to any SLA or
+   * deprecation policy.
+   * Gets the access control policy for an instance resource. Returns an empty
+   * policy if an instance exists but does not have a policy set.
+   * 
+   * @param request a {@link com.google.iam.v1.GetIamPolicyRequest} object.
+   * @return a {@link com.google.iam.v1.Policy} object.
+   */
+  Policy getIamPolicy(GetIamPolicyRequest request);
+
+  /**
+   * This is a private alpha release of Cloud Bigtable instance level
+   * permissions. This feature is not currently available to most Cloud Bigtable
+   * customers. This feature might be changed in backward-incompatible ways and
+   * is not recommended for production use. It is not subject to any SLA or
+   * deprecation policy.
+   * Sets the access control policy on an instance resource. Replaces any
+   * existing policy.
+   * 
+   * @param request a {@link com.google.iam.v1.SetIamPolicyRequest} object.
+   * @return a {@link com.google.iam.v1.Policy} object.
+   */
+  Policy setIamPolicy(SetIamPolicyRequest request);
+
+  /**
+   * This is a private alpha release of Cloud Bigtable instance level
+   * permissions. This feature is not currently available to most Cloud Bigtable
+   * customers. This feature might be changed in backward-incompatible ways and
+   * is not recommended for production use. It is not subject to any SLA or
+   * deprecation policy.
+   * Returns permissions that the caller has on the specified instance resource.
+   * 
+   * @param request a {@link com.google.iam.v1.TestIamPermissionsRequest} object.
+   * @return a {@link com.google.iam.v1.TestIamPermissionsResponse} object.
+   */
+  TestIamPermissionsResponse testIamPermissions(TestIamPermissionsRequest request);
 }
