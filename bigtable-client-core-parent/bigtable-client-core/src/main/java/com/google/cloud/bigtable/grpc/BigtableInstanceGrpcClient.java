@@ -15,19 +15,37 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.bigtable.admin.v2.AppProfile;
 import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
 import com.google.bigtable.admin.v2.Cluster;
+import com.google.bigtable.admin.v2.CreateAppProfileRequest;
 import com.google.bigtable.admin.v2.CreateInstanceRequest;
+import com.google.bigtable.admin.v2.DeleteAppProfileRequest;
+import com.google.bigtable.admin.v2.DeleteClusterRequest;
 import com.google.bigtable.admin.v2.DeleteInstanceRequest;
+import com.google.bigtable.admin.v2.GetAppProfileRequest;
 import com.google.bigtable.admin.v2.GetClusterRequest;
 import com.google.bigtable.admin.v2.Instance;
+import com.google.bigtable.admin.v2.ListAppProfilesRequest;
+import com.google.bigtable.admin.v2.ListAppProfilesResponse;
 import com.google.bigtable.admin.v2.ListClustersRequest;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.admin.v2.ListInstancesRequest;
 import com.google.bigtable.admin.v2.ListInstancesResponse;
+import com.google.bigtable.admin.v2.PartialUpdateInstanceRequest;
+import com.google.bigtable.admin.v2.UpdateAppProfileRequest;
 import com.google.common.primitives.Ints;
+import com.google.iam.v1.GetIamPolicyRequest;
+import com.google.iam.v1.Policy;
+import com.google.iam.v1.SetIamPolicyRequest;
+import com.google.iam.v1.TestIamPermissionsRequest;
+import com.google.iam.v1.TestIamPermissionsResponse;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc;
@@ -35,9 +53,6 @@ import com.google.protobuf.Empty;
 
 import io.grpc.Channel;
 import io.grpc.protobuf.StatusProto;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * <p>BigtableInstanceGrpcClient class.</p>
@@ -164,5 +179,65 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
   @Override
   public Operation updateCluster(Cluster cluster) {
     return instanceClient.updateCluster(cluster);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public Empty deleteCluster(DeleteClusterRequest request) {
+    return instanceClient.deleteCluster(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public Operation partialUpdateInstance(PartialUpdateInstanceRequest request) {
+      return instanceClient.partialUpdateInstance(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public AppProfile createAppProfile(CreateAppProfileRequest request) {
+      return instanceClient.createAppProfile(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public AppProfile getAppProfile(GetAppProfileRequest request) {
+      return instanceClient.getAppProfile(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public ListAppProfilesResponse listAppProfiles(ListAppProfilesRequest request) {
+      return instanceClient.listAppProfiles(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public Operation updateAppProfile(UpdateAppProfileRequest request) {
+      return instanceClient.updateAppProfile(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public Empty deleteAppProfile(DeleteAppProfileRequest request) {
+      return instanceClient.deleteAppProfile(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public Policy getIamPolicy(GetIamPolicyRequest request) {
+      return instanceClient.getIamPolicy(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public com.google.iam.v1.Policy setIamPolicy(SetIamPolicyRequest request) {
+      return instanceClient.setIamPolicy(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public TestIamPermissionsResponse testIamPermissions(TestIamPermissionsRequest request) {
+      return instanceClient.testIamPermissions(request);
   }
 }
