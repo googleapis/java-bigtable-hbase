@@ -135,8 +135,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected int failedCount = 0;
 
   protected final GrpcFuture<ResultT> completionFuture;
-  protected Object callLock = new String("");
-  protected ClientCall<RequestT, ResponseT> call = NULL_CALL;
+  private Object callLock = new String("");
+  private ClientCall<RequestT, ResponseT> call = NULL_CALL;
   protected Timer.Context operationTimerContext;
   protected Timer.Context rpcTimerContext;
 
@@ -312,6 +312,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     } catch (Exception e) {
       setException(e);
     }
+  }
+
+  protected ClientCall<RequestT, ResponseT> getCall() {
+    return call;
   }
 
   protected CallOptions getCallOptions() {

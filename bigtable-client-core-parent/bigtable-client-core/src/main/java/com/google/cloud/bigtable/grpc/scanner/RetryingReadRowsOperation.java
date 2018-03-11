@@ -57,22 +57,22 @@ public class RetryingReadRowsOperation extends
 
     @Override
     public void onNext(ReadRowsRequest value) {
-      call.sendMessage(value);
+      getCall().sendMessage(value);
     }
 
     @Override
     public void onError(Throwable t) {
-      call.cancel("Cancelled by client with StreamObserver.onError()", t);
+      getCall().cancel("Cancelled by client with StreamObserver.onError()", t);
     }
 
     @Override
     public void onCompleted() {
-      call.halfClose();
+      getCall().halfClose();
     }
 
     @Override
     public boolean isReady() {
-      return call.isReady();
+      return getCall().isReady();
     }
 
     @Override
@@ -86,17 +86,17 @@ public class RetryingReadRowsOperation extends
 
     @Override
     public void request(int count) {
-      call.request(count);
+      getCall().request(count);
     }
 
     @Override
     public void setMessageCompression(boolean enable) {
-      call.setMessageCompression(enable);
+      getCall().setMessageCompression(enable);
     }
 
     @Override
     public void cancel(@Nullable String s, @Nullable Throwable throwable) {
-      call.cancel(s, throwable);
+      getCall().cancel(s, throwable);
     }
   }
 
@@ -148,15 +148,13 @@ public class RetryingReadRowsOperation extends
   public void run() {
     try {
       // restart the clock.
-      synchronized (callLock) {
-        super.run();
-        // pre-fetch one more result, for performance reasons.
-        adapter.request(1);
-        if (rowObserver instanceof ClientResponseObserver) {
-          ((ClientResponseObserver<ReadRowsRequest, FlatRow>) rowObserver).beforeStart(adapter);
-        }
-        lastResponseMs = clock.currentTimeMillis();
+      super.run();
+      // pre-fetch one more result, for performance reasons.
+      adapter.request(1);
+      if (rowObserver instanceof ClientResponseObserver) {
+        ((ClientResponseObserver<ReadRowsRequest, FlatRow>) rowObserver).beforeStart(adapter);
       }
+      lastResponseMs = clock.currentTimeMillis();
     } catch (Exception e) {
       setException(e);
     }
