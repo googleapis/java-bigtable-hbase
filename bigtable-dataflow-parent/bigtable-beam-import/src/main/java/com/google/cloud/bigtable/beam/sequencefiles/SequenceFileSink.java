@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.beam.sdk.io.Compression;
+import org.apache.beam.sdk.io.DynamicFileDestinations;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.ValueProvider;
@@ -41,7 +43,7 @@ import org.apache.hadoop.io.serializer.Serialization;
  * @param <K> The type of the {@link SequenceFile} key.
  * @param <V> The type of the {@link SequenceFile} value.
  */
-class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
+class SequenceFileSink<K,V> extends FileBasedSink<KV<K,V>, Void, KV<K, V>> {
   private static final Log LOG = LogFactory.getLog(SequenceFileSink.class);
 
   private final Class<K> keyClass;
@@ -56,7 +58,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
       FilenamePolicy filenamePolicy,
       Class<K> keyClass, Class<? extends Serialization<? super K>> keySerializationClass,
       Class<V> valueClass, Class<? extends Serialization<? super V>> valueSerializationClass) {
-    super(baseOutputDirectoryProvider, filenamePolicy, CompressionType.UNCOMPRESSED);
+    super(baseOutputDirectoryProvider, DynamicFileDestinations.<KV<K,V>>constant(filenamePolicy), Compression.UNCOMPRESSED);
 
     this.keyClass = keyClass;
     this.valueClass = valueClass;
@@ -72,7 +74,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
    * {@inheritDoc}
    */
   @Override
-  public WriteOperation<KV<K, V>> createWriteOperation() {
+  public WriteOperation<Void, KV<K, V>> createWriteOperation() {
     return new SeqFileWriteOperation<>(this, keyClass, valueClass, serializationNames);
   }
 
@@ -84,7 +86,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
    * @param <K> The type of the {@link SequenceFile} key.
    * @param <V> The type of the {@link SequenceFile} value.
    */
-  private static class SeqFileWriteOperation<K,V> extends WriteOperation<KV<K,V>> {
+  private static class SeqFileWriteOperation<K,V> extends WriteOperation<Void, KV<K,V>> {
     private final Class<K> keyClass;
     private final Class<V> valueClass;
     private final String[] serializationNames;
@@ -114,7 +116,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
      * {@inheritDoc}
      */
     @Override
-    public Writer<KV<K, V>> createWriter() throws Exception {
+    public Writer<Void, KV<K, V>> createWriter() throws Exception {
       return new SeqFileWriter<>(this);
     }
   }
@@ -126,7 +128,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K, V>> {
    * @param <K> The type of the {@link SequenceFile} key.
    * @param <V> The type of the {@link SequenceFile} value.
    */
-  private static class SeqFileWriter<K,V> extends Writer<KV<K,V>> {
+  private static class SeqFileWriter<K,V> extends Writer<Void, KV<K,V>> {
     private final SeqFileWriteOperation<K,V> writeOperation;
     private SequenceFile.Writer sequenceFile;
     private final AtomicLong counter = new AtomicLong();

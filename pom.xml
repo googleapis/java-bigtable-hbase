@@ -67,7 +67,7 @@ limitations under the License.
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
 
 
-        <beam.version>2.1.0</beam.version>
+        <beam.version>2.3.0</beam.version>
         <commons-lang.version>2.6</commons-lang.version>
         <google-auto-service.version>1.0-rc2</google-auto-service.version>
         <auto-value.version>1.1</auto-value.version>
