@@ -66,6 +66,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   public static int TIMEOUT_SECONDS = 15;
 
   private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
+  private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
+
+  @VisibleForTesting
+  static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
+      "Authorization", Metadata.ASCII_STRING_MARSHALLER);
+
+  @VisibleForTesting
+  static Clock clock = Clock.SYSTEM;
 
   /**
    * <p>
@@ -93,12 +101,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
   }
 
-  private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
-      "Authorization", Metadata.ASCII_STRING_MARSHALLER);
-
-  @VisibleForTesting
-  static Clock clock = Clock.SYSTEM;
-
   @VisibleForTesting
   static class HeaderCacheElement {
 
@@ -119,7 +121,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     final String header;
     final long actualExpirationTimeMs;
 
-    HeaderCacheElement(AccessToken token) {
+    private HeaderCacheElement(AccessToken token) {
       this.status = Status.OK;
       if (token.getExpirationTime() == null) {
         actualExpirationTimeMs = Long.MAX_VALUE;
@@ -129,13 +131,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       header = "Bearer " + token.getTokenValue();
     }
 
-    HeaderCacheElement(String header, long actualExpirationTimeMs) {
+    private HeaderCacheElement(String header, long actualExpirationTimeMs) {
       this.status = Status.OK;
       this.header = header;
       this.actualExpirationTimeMs = actualExpirationTimeMs;
     }
 
-    HeaderCacheElement(Status errorStatus) {
+    private HeaderCacheElement(Status errorStatus) {
       Preconditions.checkArgument(!errorStatus.isOk(), "Error status can't be OK");
       this.status = errorStatus;
       this.header = null;
@@ -156,12 +158,31 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       }
     }
 
-    boolean isValid() {
+    private boolean isValid() {
       return getCacheState().isValid();
     }
   }
 
-  private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
+  private static class UnAuthResponseListener<RespT> extends SimpleForwardingClientCallListener<RespT> {
+
+    private final HeaderCacheElement origToken;
+    private final RefreshingOAuth2CredentialsInterceptor interceptor;
+
+    private UnAuthResponseListener(RefreshingOAuth2CredentialsInterceptor interceptor, Listener<RespT> delegate,
+                                   HeaderCacheElement origToken) {
+      super(delegate);
+      this.origToken = origToken;
+      this.interceptor = interceptor;
+    }
+
+    @Override
+    public void onClose(Status status, Metadata trailers) {
+      if (status == Status.UNAUTHENTICATED) {
+        interceptor.revokeUnauthToken(origToken);
+      }
+      super.onClose(status, trailers);
+    }
+  }
 
   private final ExecutorService executor;
   private final RateLimiter rateLimiter;
@@ -172,10 +193,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private Future<HeaderCacheElement> futureToken = null;
 
   // Note that the cache is volatile to allow us to peek for a Good value
-  @VisibleForTesting
   @GuardedBy("lock")
-  volatile HeaderCacheElement headerCache = EMPTY_HEADER;
-
+  private volatile HeaderCacheElement headerCache = EMPTY_HEADER;
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
@@ -218,7 +237,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
         headers.put(AUTHORIZATION_HEADER_KEY, headerCache.header);
 
-        delegate().start(new UnAuthResponseListener<>(responseListener, headerCache), headers);
+        delegate().start(new UnAuthResponseListener<>(RefreshingOAuth2CredentialsInterceptor.this,
+            responseListener, headerCache), headers);
       }
 
       @Override
@@ -252,6 +272,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   @VisibleForTesting
+  CacheState getCacheState() {
+    return headerCache.getCacheState();
+  }
+
+  @VisibleForTesting
   HeaderCacheElement getHeaderSafe() {
     try {
       return getHeader();
@@ -268,9 +293,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
-  @VisibleForTesting
-  HeaderCacheElement getHeader() {
-
+  private HeaderCacheElement getHeader() {
     // Optimize for the common case: do a volatile read to peek for a Good cache value
     HeaderCacheElement headerCacheUnsync = this.headerCache;
 
@@ -299,7 +322,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * been refreshed.
    * This method should not be called while holding the refresh lock
    */
-  HeaderCacheElement syncRefresh() {
+  private HeaderCacheElement syncRefresh() {
     try (Closeable ss = Tracing.getTracer().spanBuilder("CredentialsRefresh").startScopedSpan()) {
       return asyncRefresh().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
@@ -399,7 +422,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
   }
 
-
   private void revokeUnauthToken(HeaderCacheElement oldToken) {
     if (!rateLimiter.tryAcquire()) {
       LOG.trace("Rate limited");
@@ -413,24 +435,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       } else {
         LOG.info("Skipping revoke, since the revoked token has already changed");
       }
-    }
-  }
-
-  class UnAuthResponseListener<RespT> extends SimpleForwardingClientCallListener<RespT> {
-
-    private final HeaderCacheElement origToken;
-
-    UnAuthResponseListener(Listener<RespT> delegate, HeaderCacheElement origToken) {
-      super(delegate);
-      this.origToken = origToken;
-    }
-
-    @Override
-    public void onClose(Status status, Metadata trailers) {
-      if (status == Status.UNAUTHENTICATED) {
-        revokeUnauthToken(origToken);
-      }
-      super.onClose(status, trailers);
     }
   }
 
