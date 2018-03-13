@@ -36,18 +36,8 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
- * Client interceptor that authenticates all calls by binding header data provided by a credential.
- * Typically this will populate the Authorization header but other headers may also be filled out.
- * <p>
- * Uses the new and simplified Google auth library:
- * https://github.com/google/google-auth-library-java
- * </p>
- * <p>
- * TODO: COPIED FROM io.grpc.auth.ClientAuthInterceptor. The logic added here for initialization and
- * locking could be moved back to gRPC. This implementation takes advantage of the fact that all of
- * the Bigtable endpoints are OAuth2 based. It uses the OAuth AccessToken to get the token value and
- * next refresh time. The refresh is scheduled asynchronously.
- * </p>
+ * This class caches calls to {@link OAuth2Credentials#refreshAccessToken()}.  It asynchronously refreshes
+ * the token when it becomes stale.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -85,6 +75,8 @@ public class OAuthCredentialsStore {
       return isValid;
     }
   }
+
+  // TODO: this should split into cache type operations and a token used by RefreshingOAuth2CredentialsInterceptor
 
   static class HeaderCacheElement {
 
@@ -182,9 +174,9 @@ public class OAuthCredentialsStore {
     return headerCache;
   }
 
-  HeaderCacheElement getHeaderSafe(int timeoutSeconds) {
+  HeaderCacheElement getHeader(int timeoutSeconds) {
     try {
-      return getHeader(timeoutSeconds);
+      return getHeaderUnsafe(timeoutSeconds);
     } catch (Exception e) {
       LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
       return new HeaderCacheElement(
@@ -199,7 +191,7 @@ public class OAuthCredentialsStore {
    * Get the http credential header we need from a new oauth2 AccessToken.
    * @param timeoutSeconds
    */
-  private HeaderCacheElement getHeader(int timeoutSeconds) {
+  private HeaderCacheElement getHeaderUnsafe(int timeoutSeconds) {
     // Optimize for the common case: do a volatile read to peek for a Good cache value
     HeaderCacheElement headerCacheUnsync = this.headerCache;
 
@@ -265,7 +257,7 @@ public class OAuthCredentialsStore {
 
   /**
    * Refreshes the OAuth2 token asynchronously. This method will only start an async refresh if
-   * there isn't a currently running asynchronous refresh.
+   * there isn't a currently running asynchronous refresh and the current token is not "Good".
    */
   Future<HeaderCacheElement> asyncRefresh() {
     LOG.trace("asyncRefresh");
@@ -301,6 +293,10 @@ public class OAuthCredentialsStore {
     }
   }
 
+    /**
+     * Create a new token via {@link OAuth2Credentials#refreshAccessToken()}, and then update the cache.
+     * @return the new token
+     */
   private HeaderCacheElement updateToken() {
     HeaderCacheElement newToken;
     try {
@@ -328,6 +324,11 @@ public class OAuthCredentialsStore {
     }
   }
 
+    /**
+     * Clear the cache.
+     *
+     * @param oldToken for a comparison.  Only revoke the cache if the oldToken matches the current one.
+     */
   void revokeUnauthToken(HeaderCacheElement oldToken) {
     synchronized (lock) {
       if (headerCache == oldToken) {

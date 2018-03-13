@@ -119,7 +119,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
-        HeaderCacheElement headerCache = store.getHeaderSafe(TIMEOUT_SECONDS);
+        HeaderCacheElement headerCache = store.getHeader(TIMEOUT_SECONDS);
 
         if (!headerCache.getStatus().isOk()) {
           unauthorized = true;

@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.google.common.collect.Iterators;
 import io.grpc.*;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -88,7 +87,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
                 .thenReturn(mockClientCall);
         when(mockCacheElement.getHeader()).thenReturn(HEADER);
-        when(mockStore.getHeaderSafe(anyInt())).thenReturn(mockCacheElement);
+        when(mockStore.getHeader(anyInt())).thenReturn(mockCacheElement);
         underTest = new RefreshingOAuth2CredentialsInterceptor(mockStore);
     }
 
