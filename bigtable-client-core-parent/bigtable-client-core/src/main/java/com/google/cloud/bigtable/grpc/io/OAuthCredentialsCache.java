@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.RateLimiter;
 import io.opencensus.trace.Tracing;
 import io.grpc.Status;
 
@@ -42,9 +41,9 @@ import javax.annotation.concurrent.GuardedBy;
  * @author sduskis
  * @version $Id: $Id
  */
-public class OAuthCredentialsStore {
+public class OAuthCredentialsCache {
 
-  private static final Logger LOG = new Logger(OAuthCredentialsStore.class);
+  private static final Logger LOG = new Logger(OAuthCredentialsCache.class);
   private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
 
   @VisibleForTesting
@@ -78,6 +77,24 @@ public class OAuthCredentialsStore {
 
   // TODO: this should split into cache type operations and a token used by RefreshingOAuth2CredentialsInterceptor
 
+  static class HeaderToken {
+    private final Status status;
+    private final String header;
+
+    public HeaderToken(Status status, String header) {
+      this.status = status;
+      this.header = header;
+    }
+
+    Status getStatus() {
+      return status;
+    }
+
+    String getHeader() {
+      return header;
+    }
+  }
+
   static class HeaderCacheElement {
 
     /**
@@ -93,37 +110,33 @@ public class OAuthCredentialsStore {
     // 5 minutes as per https://github.com/google/google-auth-library-java/pull/95
     static final long TOKEN_EXPIRES_MS = TimeUnit.MINUTES.toMillis(5);
 
-    private final Status status;
-    private final String header;
+    private final HeaderToken token;
     private final long actualExpirationTimeMs;
 
     private HeaderCacheElement(AccessToken token) {
-      this.status = Status.OK;
       if (token.getExpirationTime() == null) {
         actualExpirationTimeMs = Long.MAX_VALUE;
       } else {
         actualExpirationTimeMs = token.getExpirationTime().getTime();
       }
-      header = "Bearer " + token.getTokenValue();
+      this.token = new HeaderToken(Status.OK, "Bearer " + token.getTokenValue());
     }
 
     private HeaderCacheElement(String header, long actualExpirationTimeMs) {
-      this.status = Status.OK;
-      this.header = header;
+      this.token = new HeaderToken(Status.OK, header);
       this.actualExpirationTimeMs = actualExpirationTimeMs;
     }
 
     private HeaderCacheElement(Status errorStatus) {
       Preconditions.checkArgument(!errorStatus.isOk(), "Error status can't be OK");
-      this.status = errorStatus;
-      this.header = null;
+      this.token = new HeaderToken(errorStatus, null);
       this.actualExpirationTimeMs = 0;
     }
 
     CacheState getCacheState() {
       long now = clock.currentTimeMillis();
 
-      if (!status.isOk()) {
+      if (!token.status.isOk()) {
         return CacheState.Exception;
       } else if (actualExpirationTimeMs - TOKEN_EXPIRES_MS <= now) {
         return CacheState.Expired;
@@ -138,12 +151,8 @@ public class OAuthCredentialsStore {
       return getCacheState().isValid();
     }
 
-    Status getStatus() {
-      return status;
-    }
-
-    String getHeader() {
-      return header;
+    HeaderToken getToken() {
+      return token;
     }
   }
 
@@ -164,7 +173,7 @@ public class OAuthCredentialsStore {
    * @param scheduler a {@link ExecutorService} object.
    * @param credentials a {@link OAuth2Credentials} object.
    */
-  public OAuthCredentialsStore(ExecutorService scheduler, OAuth2Credentials credentials) {
+  public OAuthCredentialsCache(ExecutorService scheduler, OAuth2Credentials credentials) {
     this.executor = Preconditions.checkNotNull(scheduler);
     this.credentials = Preconditions.checkNotNull(credentials);
   }
@@ -174,16 +183,15 @@ public class OAuthCredentialsStore {
     return headerCache;
   }
 
-  HeaderCacheElement getHeader(int timeoutSeconds) {
+  HeaderToken getHeader(int timeoutSeconds) {
     try {
-      return getHeaderUnsafe(timeoutSeconds);
+      return getHeaderUnsafe(timeoutSeconds).getToken();
     } catch (Exception e) {
       LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
+      Status status = Status.UNAUTHENTICATED
               .withDescription("Unexpected failure get auth token")
-              .withCause(e)
-      );
+              .withCause(e);
+      return new HeaderToken(status, null);
     }
   }
 
@@ -316,7 +324,7 @@ public class OAuthCredentialsStore {
         headerCache = newToken;
       } else {
         LOG.warn("Failed to refresh the access token. Falling back to existing token. "
-            + "New token state: {}, status: {}", newToken.getCacheState(), newToken.status);
+            + "New token state: {}, status: {}", newToken.getCacheState(), newToken.getToken().status);
       }
       futureToken = null;
 
@@ -329,9 +337,9 @@ public class OAuthCredentialsStore {
      *
      * @param oldToken for a comparison.  Only revoke the cache if the oldToken matches the current one.
      */
-  void revokeUnauthToken(HeaderCacheElement oldToken) {
+  void revokeUnauthToken(HeaderToken oldToken) {
     synchronized (lock) {
-      if (headerCache == oldToken) {
+      if (headerCache.getToken() == oldToken) {
         LOG.warn("Got unauthenticated response from server, revoking the current token");
         headerCache = EMPTY_HEADER;
       } else {

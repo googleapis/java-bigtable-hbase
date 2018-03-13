@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.grpc.io;
 
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.io.OAuthCredentialsStore.HeaderCacheElement;
+import com.google.cloud.bigtable.grpc.io.OAuthCredentialsCache.HeaderToken;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.RateLimiter;
 import io.grpc.CallOptions;
@@ -59,14 +59,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
       "Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
-  private final OAuthCredentialsStore store;
+  private final OAuthCredentialsCache store;
   private final RateLimiter rateLimiter;
 
   private class UnAuthResponseListener<RespT> extends SimpleForwardingClientCallListener<RespT> {
 
-    private final HeaderCacheElement origToken;
+    private final HeaderToken origToken;
 
-    private UnAuthResponseListener(Listener<RespT> delegate, HeaderCacheElement origToken) {
+    private UnAuthResponseListener(Listener<RespT> delegate, HeaderToken origToken) {
       super(delegate);
       this.origToken = origToken;
     }
@@ -91,11 +91,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    * @param credentials a {@link OAuth2Credentials} object.
    */
   public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials) {
-    this(new OAuthCredentialsStore(scheduler, credentials));
+    this(new OAuthCredentialsCache(scheduler, credentials));
   }
 
   @VisibleForTesting
-  RefreshingOAuth2CredentialsInterceptor(OAuthCredentialsStore store) {
+  RefreshingOAuth2CredentialsInterceptor(OAuthCredentialsCache store) {
     this.store = store;
 
     // Revoke credentials no more than every 10 seconds fo UNAUTHENTICATED statuses
@@ -119,17 +119,17 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
-        HeaderCacheElement headerCache = store.getHeader(TIMEOUT_SECONDS);
+        HeaderToken token = store.getHeader(TIMEOUT_SECONDS);
 
-        if (!headerCache.getStatus().isOk()) {
+        if (!token.getStatus().isOk()) {
           unauthorized = true;
-          responseListener.onClose(headerCache.getStatus(), new Metadata());
+          responseListener.onClose(token.getStatus(), new Metadata());
           return;
         }
 
-        headers.put(AUTHORIZATION_HEADER_KEY, headerCache.getHeader());
+        headers.put(AUTHORIZATION_HEADER_KEY, token.getHeader());
 
-        delegate().start(new UnAuthResponseListener<>(responseListener, headerCache), headers);
+        delegate().start(new UnAuthResponseListener<>(responseListener, token), headers);
       }
 
       @Override

@@ -22,8 +22,6 @@ import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.cloud.bigtable.grpc.io.OAuthCredentialsStore.CacheState;
-import com.google.cloud.bigtable.grpc.io.OAuthCredentialsStore.HeaderCacheElement;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -76,18 +74,13 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     private ClientCall.Listener mockListener;
 
     @Mock
-    private OAuthCredentialsStore mockStore;
-
-    @Mock
-    private HeaderCacheElement mockCacheElement;
+    private OAuthCredentialsCache mockStore;
 
     @Before
     public void setupMocks() {
         MockitoAnnotations.initMocks(this);
         when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
                 .thenReturn(mockClientCall);
-        when(mockCacheElement.getHeader()).thenReturn(HEADER);
-        when(mockStore.getHeader(anyInt())).thenReturn(mockCacheElement);
         underTest = new RefreshingOAuth2CredentialsInterceptor(mockStore);
     }
 
@@ -110,8 +103,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         Status grpcStatus = Status.UNAUTHENTICATED;
 
         // Something bad happened, and authentication could not be established
-        when(mockCacheElement.getCacheState()).thenReturn(CacheState.Exception);
-        when(mockCacheElement.getStatus()).thenReturn(grpcStatus);
+        when(mockStore.getHeader(anyInt()))
+                .thenReturn(new OAuthCredentialsCache.HeaderToken(grpcStatus, null));
 
         ClientCall<ReadRowsRequest, ReadRowsResponse> call = underTest.interceptCall(
                 BigtableGrpc.METHOD_READ_ROWS,
@@ -154,7 +147,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         }
 
         // only a single revoke should be submitted due to rate limiting
-        verify(mockStore, times(1)).revokeUnauthToken(same(mockCacheElement));
+        verify(mockStore, times(1)).revokeUnauthToken(
+                any(OAuthCredentialsCache.HeaderToken.class));
     }
 
     private ClientCall<ReadRowsRequest, ReadRowsResponse> sendRequest(CallOptions callOptions) {
@@ -186,8 +180,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     }
 
     private void initializeOk() {
-        when(mockCacheElement.getCacheState()).thenReturn(CacheState.Good);
-        when(mockCacheElement.getStatus()).thenReturn(Status.OK);
+        when(mockStore.getHeader(anyInt()))
+                .thenReturn(new OAuthCredentialsCache.HeaderToken(Status.OK, HEADER));
     }
 
     private void checkOKCompletedCorrectly() {

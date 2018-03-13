@@ -18,8 +18,8 @@ package com.google.cloud.bigtable.grpc.io;
 import com.google.api.client.util.Clock;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.cloud.bigtable.grpc.io.OAuthCredentialsStore.CacheState;
-import com.google.cloud.bigtable.grpc.io.OAuthCredentialsStore.HeaderCacheElement;
+import com.google.cloud.bigtable.grpc.io.OAuthCredentialsCache.CacheState;
+import com.google.cloud.bigtable.grpc.io.OAuthCredentialsCache.HeaderCacheElement;
 import com.google.common.util.concurrent.SettableFuture;
 import io.grpc.*;
 import org.junit.*;
@@ -41,10 +41,10 @@ import static org.mockito.Mockito.*;
 
 
 /**
- * Tests for {@link OAuthCredentialsStore}
+ * Tests for {@link OAuthCredentialsCache}
  */
 @RunWith(JUnit4.class)
-public class OAuthCredentialsStoreTest {
+public class OAuthCredentialsCacheTest {
   private static int TIMEOUT_SECONDS = 5;
 
   private static ExecutorService executorService;
@@ -59,7 +59,7 @@ public class OAuthCredentialsStoreTest {
     executorService.shutdownNow();
   }
 
-  private OAuthCredentialsStore underTest;
+  private OAuthCredentialsCache underTest;
 
   @Mock
   private OAuth2Credentials mockCredentials;
@@ -82,7 +82,7 @@ public class OAuthCredentialsStoreTest {
   }
 
   private void setTimeInMillieconds(final long timeMs) {
-    OAuthCredentialsStore.clock = new Clock() {
+    OAuthCredentialsCache.clock = new Clock() {
       @Override
       public long currentTimeMillis() {
         return timeMs;
@@ -101,8 +101,8 @@ public class OAuthCredentialsStoreTest {
   public void testExecutorProblem() throws Exception {
     ExecutorService mockExecutor = Mockito.mock(ExecutorService.class);
     when(mockExecutor.submit(any(Callable.class))).thenThrow(new RuntimeException(""));
-    underTest = new OAuthCredentialsStore(mockExecutor, mockCredentials);
-    Assert.assertEquals(CacheState.Exception, underTest.getHeader(TIMEOUT_SECONDS).getCacheState());
+    underTest = new OAuthCredentialsCache(mockExecutor, mockCredentials);
+    Assert.assertFalse(underTest.getHeader(TIMEOUT_SECONDS).getStatus().isOk());
   }
 
   @Test
@@ -124,7 +124,7 @@ public class OAuthCredentialsStoreTest {
     setTimeInMillieconds(100);
     Mockito.when(mockCredentials.refreshAccessToken()).thenReturn(
         new AccessToken("", null));
-    underTest = new OAuthCredentialsStore(executorService, mockCredentials);
+    underTest = new OAuthCredentialsCache(executorService, mockCredentials);
     underTest.asyncRefresh().get(100, TimeUnit.MILLISECONDS);
     Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
 
@@ -135,7 +135,7 @@ public class OAuthCredentialsStoreTest {
 
   @Test
   public void testRefreshAfterFailure() throws Exception {
-    underTest = new OAuthCredentialsStore(executorService, mockCredentials);
+    underTest = new OAuthCredentialsCache(executorService, mockCredentials);
 
     final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
 
@@ -147,20 +147,20 @@ public class OAuthCredentialsStoreTest {
         .thenReturn(accessToken);
 
     // First call
-    HeaderCacheElement firstResult = underTest.getHeader(TIMEOUT_SECONDS);
-    Assert.assertEquals(CacheState.Exception, firstResult.getCacheState());
+    OAuthCredentialsCache.HeaderToken token1 = underTest.getHeader(TIMEOUT_SECONDS);
+    Assert.assertFalse(token1.getStatus().isOk());
 
     // Now the second token should be available
-    HeaderCacheElement secondResult = underTest.getHeader(TIMEOUT_SECONDS);
-    Assert.assertEquals(CacheState.Good, secondResult.getCacheState());
-    Assert.assertThat(secondResult.getHeader(), containsString("hi"));
+    OAuthCredentialsCache.HeaderToken token2 = underTest.getHeader(TIMEOUT_SECONDS);
+    Assert.assertTrue(token2.getStatus().isOk());
+    Assert.assertThat(token2.getHeader(), containsString("hi"));
     // Make sure that the token was only requested twice: once for the first failure & second time for background recovery
     Mockito.verify(mockCredentials, times(2)).refreshAccessToken();
   }
 
   @Test
   public void testRefreshAfterStale() throws Exception {
-    underTest = new OAuthCredentialsStore(executorService, mockCredentials);
+    underTest = new OAuthCredentialsCache(executorService, mockCredentials);
 
     long expires = HeaderCacheElement.TOKEN_STALENESS_MS + 1;
     final AccessToken staleToken = new AccessToken("stale", new Date(expires));
@@ -175,24 +175,24 @@ public class OAuthCredentialsStoreTest {
         .thenReturn(goodToken);
 
     // First call - setup
-    HeaderCacheElement firstResult = underTest.getHeader(TIMEOUT_SECONDS);
-    Assert.assertEquals(CacheState.Good, firstResult.getCacheState());
+    OAuthCredentialsCache.HeaderToken firstResult = underTest.getHeader(TIMEOUT_SECONDS);
+    Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
     Assert.assertThat(firstResult.getHeader(), containsString("stale"));
 
     // Fast forward until token is stale
     setTimeInMillieconds(10);
 
     // Second call - return stale token, but schedule refresh
-    HeaderCacheElement secondResult = underTest.getHeader(TIMEOUT_SECONDS);
-    Assert.assertEquals(CacheState.Stale, secondResult.getCacheState());
+    OAuthCredentialsCache.HeaderToken secondResult = underTest.getHeader(TIMEOUT_SECONDS);
+    Assert.assertEquals(CacheState.Stale, underTest.getHeaderCache().getCacheState());
     Assert.assertThat(secondResult.getHeader(), containsString("stale"));
 
     // forward to expired
     setTimeInMillieconds(expires);
 
     // Third call - now returns good token
-    HeaderCacheElement thirdResult = underTest.getHeader(TIMEOUT_SECONDS);
-    Assert.assertEquals(CacheState.Good, thirdResult.getCacheState());
+    OAuthCredentialsCache.HeaderToken thirdResult = underTest.getHeader(TIMEOUT_SECONDS);
+    Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
     Assert.assertThat(thirdResult.getHeader(), containsString("good"));
 
     // Make sure that the token was only requested twice: once for the stale token & second time for the good token
@@ -220,16 +220,16 @@ public class OAuthCredentialsStoreTest {
     initialize(expiration);
     Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
 
-    underTest.revokeUnauthToken(underTest.getHeaderCache());
+    underTest.revokeUnauthToken(underTest.getHeaderCache().getToken());
     Assert.assertEquals(CacheState.Expired, underTest.getHeaderCache().getCacheState());
 
     underTest.getHeader(TIMEOUT_SECONDS);
     Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
 
-    underTest.revokeUnauthToken(underTest.getHeaderCache());
+    underTest.revokeUnauthToken(underTest.getHeaderCache().getToken());
     // Ensure that the revoke interceptor does not run so quickly after the previous revoke.
     // The cache state should stay good.
-    Assert.assertEquals(CacheState.Good, underTest.getHeader(5).getCacheState());
+    Assert.assertTrue(underTest.getHeader(5).getStatus().isOk());
   }
 
   private void testHanging()
@@ -250,7 +250,7 @@ public class OAuthCredentialsStoreTest {
     Mockito.when(mockCredentials.refreshAccessToken()).thenAnswer(answer);
 
     underTest =
-        new OAuthCredentialsStore(executorService, mockCredentials);
+        new OAuthCredentialsCache(executorService, mockCredentials);
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
@@ -315,7 +315,7 @@ public class OAuthCredentialsStoreTest {
   private void initialize(long expiration) throws Exception, ExecutionException, InterruptedException {
     Mockito.when(mockCredentials.refreshAccessToken()).thenReturn(
         new AccessToken("", new Date(expiration)));
-    underTest = new OAuthCredentialsStore(executorService, mockCredentials);
+    underTest = new OAuthCredentialsCache(executorService, mockCredentials);
     Assert.assertEquals(CacheState.Expired, underTest.getHeaderCache().getCacheState());
     underTest.asyncRefresh().get();
     Assert.assertFalse(underTest.isRefreshing());
