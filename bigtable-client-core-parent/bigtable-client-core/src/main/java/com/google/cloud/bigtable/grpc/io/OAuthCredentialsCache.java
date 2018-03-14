@@ -75,8 +75,6 @@ public class OAuthCredentialsCache {
     }
   }
 
-  // TODO: this should split into cache type operations and a token used by RefreshingOAuth2CredentialsInterceptor
-
   static class HeaderToken {
     private final Status status;
     private final String header;
