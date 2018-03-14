@@ -120,13 +120,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
-        int timeoutSeconds = TIMEOUT_SECONDS;
+        long timeoutMs = -1;
         if (callOptions.getDeadline() != null) {
-          long deadlineMs = callOptions.getDeadline().timeRemaining(TimeUnit.MILLISECONDS);
-          int deadlineSeconds = (int) Math.round(deadlineMs / 1000.0);
-          timeoutSeconds = Math.min(deadlineSeconds, timeoutSeconds);
+          timeoutMs = callOptions.getDeadline().timeRemaining(TimeUnit.MILLISECONDS);
+        } else {
+          timeoutMs = TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS);
         }
-        HeaderToken token = store.getHeader(timeoutSeconds);
+        HeaderToken token = store.getHeader(timeoutMs);
 
         if (!token.getStatus().isOk()) {
           unauthorized = true;

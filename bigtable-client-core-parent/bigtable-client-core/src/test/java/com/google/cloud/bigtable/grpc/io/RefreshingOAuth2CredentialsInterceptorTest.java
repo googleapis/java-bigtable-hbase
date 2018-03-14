@@ -95,21 +95,40 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         sendRequest(CallOptions.DEFAULT);
         receiveMessage();
         checkOKCompletedCorrectly();
-        assertEquals(RefreshingOAuth2CredentialsInterceptor.TIMEOUT_SECONDS, getDeadline());
     }
 
     @Test
     /**
-     * Basic test to make sure that the interceptor works properly
+     * Ensures that default deadline is honored
+     */
+    public void testDefaultDeadline() throws IOException {
+        initializeOk();
+        sendRequest(CallOptions.DEFAULT);
+        assertEquals(RefreshingOAuth2CredentialsInterceptor.TIMEOUT_SECONDS * 1000, getDeadlineMs());
+    }
+
+    @Test
+    /**
+     * Ensures that short deadlines in CallOptions are honored
      */
     public void testShortDeadline() throws IOException {
         initializeOk();
         sendRequest(CallOptions.DEFAULT.withDeadlineAfter(2, TimeUnit.SECONDS));
-        assertEquals(2, getDeadline());
+        assertTrue(getDeadlineMs() <= 2000);
     }
 
-    private int getDeadline() {
-        ArgumentCaptor<Integer> timeoutCaptor = ArgumentCaptor.forClass(Integer.class);
+    @Test
+    /**
+     * Ensures that long deadlines in CallOptions are honored
+     */
+    public void testLongDeadline() throws IOException {
+        initializeOk();
+        sendRequest(CallOptions.DEFAULT.withDeadlineAfter(60, TimeUnit.SECONDS));
+        assertTrue(getDeadlineMs() >= 59000);
+    }
+
+    private long getDeadlineMs() {
+        ArgumentCaptor<Long> timeoutCaptor = ArgumentCaptor.forClass(Long.class);
         verify(mockCache, times(1)).getHeader(timeoutCaptor.capture());
         return timeoutCaptor.getValue();
     }
