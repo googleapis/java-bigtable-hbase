@@ -32,6 +32,7 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Client interceptor that authenticates all calls by binding header data provided by a credential.
@@ -107,7 +108,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    */
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-      CallOptions callOptions, Channel next) {
+      final CallOptions callOptions, Channel next) {
     return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
 
       /**
@@ -119,7 +120,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
-        HeaderToken token = store.getHeader(TIMEOUT_SECONDS);
+        long timeoutMs = -1;
+        if (callOptions.getDeadline() != null) {
+          timeoutMs = callOptions.getDeadline().timeRemaining(TimeUnit.MILLISECONDS);
+        } else {
+          timeoutMs = TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS);
+        }
+        HeaderToken token = store.getHeader(timeoutMs);
 
         if (!token.getStatus().isOk()) {
           unauthorized = true;

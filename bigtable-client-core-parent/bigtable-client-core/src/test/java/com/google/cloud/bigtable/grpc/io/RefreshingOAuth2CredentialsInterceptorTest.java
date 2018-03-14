@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
+import static org.junit.Assert.*;
 
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -26,6 +26,7 @@ import com.google.auth.oauth2.OAuth2Credentials;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import io.grpc.*;
 import org.junit.AfterClass;
@@ -36,6 +37,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -74,14 +76,14 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     private ClientCall.Listener mockListener;
 
     @Mock
-    private OAuthCredentialsCache mockStore;
+    private OAuthCredentialsCache mockCache;
 
     @Before
     public void setupMocks() {
         MockitoAnnotations.initMocks(this);
         when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
                 .thenReturn(mockClientCall);
-        underTest = new RefreshingOAuth2CredentialsInterceptor(mockStore);
+        underTest = new RefreshingOAuth2CredentialsInterceptor(mockCache);
     }
 
     @Test
@@ -97,13 +99,49 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     @Test
     /**
+     * Ensures that default deadline is honored
+     */
+    public void testDefaultDeadline() throws IOException {
+        initializeOk();
+        sendRequest(CallOptions.DEFAULT);
+        assertEquals(RefreshingOAuth2CredentialsInterceptor.TIMEOUT_SECONDS * 1000, getDeadlineMs());
+    }
+
+    @Test
+    /**
+     * Ensures that short deadlines in CallOptions are honored
+     */
+    public void testShortDeadline() throws IOException {
+        initializeOk();
+        sendRequest(CallOptions.DEFAULT.withDeadlineAfter(2, TimeUnit.SECONDS));
+        assertTrue(getDeadlineMs() <= 2000);
+    }
+
+    @Test
+    /**
+     * Ensures that long deadlines in CallOptions are honored
+     */
+    public void testLongDeadline() throws IOException {
+        initializeOk();
+        sendRequest(CallOptions.DEFAULT.withDeadlineAfter(60, TimeUnit.SECONDS));
+        assertTrue(getDeadlineMs() >= 59000);
+    }
+
+    private long getDeadlineMs() {
+        ArgumentCaptor<Long> timeoutCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(mockCache, times(1)).getHeader(timeoutCaptor.capture());
+        return timeoutCaptor.getValue();
+    }
+
+    @Test
+    /**
      * Test to make sure that the interceptor revokes credentials if an RPC receives an UNAUTHENTICATED status.
      */
     public void testInvalidAuthToken() throws IOException {
         Status grpcStatus = Status.UNAUTHENTICATED;
 
         // Something bad happened, and authentication could not be established
-        when(mockStore.getHeader(anyInt()))
+        when(mockCache.getHeader(anyInt()))
                 .thenReturn(new OAuthCredentialsCache.HeaderToken(grpcStatus, null));
 
         ClientCall<ReadRowsRequest, ReadRowsResponse> call = underTest.interceptCall(
@@ -141,13 +179,13 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         initializeOk();
 
         // 10 requests come in around the same time, and all of them get UNAUTHENTICATED
-        for (int i = 0; i < 10; i++){
+        for (int i = 0; i < 10; i++) {
             sendRequest(CallOptions.DEFAULT);
             getListener().onClose(Status.UNAUTHENTICATED, new Metadata());
         }
 
         // only a single revoke should be submitted due to rate limiting
-        verify(mockStore, times(1)).revokeUnauthToken(
+        verify(mockCache, times(1)).revokeUnauthToken(
                 any(OAuthCredentialsCache.HeaderToken.class));
     }
 
@@ -180,7 +218,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     }
 
     private void initializeOk() {
-        when(mockStore.getHeader(anyInt()))
+        when(mockCache.getHeader(anyInt()))
                 .thenReturn(new OAuthCredentialsCache.HeaderToken(Status.OK, HEADER));
     }
 
