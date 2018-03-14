@@ -378,11 +378,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @param message
    */
   protected void cancel(final String message) {
-    synchronized (callLock) {
-      if (call != null) {
-        call.cancel(message, null);
-        call = null;
-      }
-    }
+    call.cancel(message, null);
   }
 }
