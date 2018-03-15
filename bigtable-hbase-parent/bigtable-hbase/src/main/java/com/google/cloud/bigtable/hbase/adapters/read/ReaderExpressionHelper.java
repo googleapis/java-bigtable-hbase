@@ -31,12 +31,16 @@ import java.io.OutputStream;
 public class ReaderExpressionHelper {
   /** Constant <code>ANY_BYTE="\\C"</code> */
   public static final String ANY_BYTE = "\\C";
+  /** Constant <code>ANY_BYTE="\\C"</code> */
+  public static final String ALL_BYTES = "\\C*";
   /** Constant <code>ANY_BYTE_BYTES=Bytes.toBytes(ANY_BYTE)</code> */
   public static final byte[] ANY_BYTE_BYTES = Bytes.toBytes(ANY_BYTE);
+  /** Constant <code>ANY_BYTE_BYTES=Bytes.toBytes(ANY_BYTE)</code> */
+  public static final byte[] ALL_BYTE_BYTES = Bytes.toBytes(ALL_BYTES);
   /** Constant <code>ALL_QUALIFIERS="\\C*"</code> */
-  public static final String ALL_QUALIFIERS = "\\C*";
+  public static final String ALL_QUALIFIERS = ALL_BYTES;
   /** Constant <code>ALL_QUALIFIERS_BYTES=Bytes.toBytes(ALL_QUALIFIERS)</code> */
-  public static final byte[] ALL_QUALIFIERS_BYTES = Bytes.toBytes(ALL_QUALIFIERS);
+  public static final byte[] ALL_QUALIFIERS_BYTES = ALL_BYTE_BYTES;
   /** Constant <code>ALL_FAMILIES=".*"</code> */
   public static final String ALL_FAMILIES = ".*";
   /** Constant <code>ALL_FAMILIES_BYTES=Bytes.toBytes(ALL_FAMILIES)</code> */
