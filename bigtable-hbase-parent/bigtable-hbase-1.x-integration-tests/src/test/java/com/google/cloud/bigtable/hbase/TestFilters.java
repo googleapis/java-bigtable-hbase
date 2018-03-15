@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.wrappers.Filters;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
@@ -113,7 +113,7 @@ public class TestFilters extends AbstractTest {
     Result result = table.get(get);
     Assert.assertEquals("Should have filtered to N columns", numColumnsToFilter, result.size());
     for (int i = 0 ; i < numColumnsToFilter; ++i) {
-      Assert.assertTrue("Should contain qual " + Bytes.toInt(quals[i]),
+      assertTrue("Should contain qual " + Bytes.toInt(quals[i]),
         result.containsColumn(COLUMN_FAMILY, quals[i]));
       List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, quals[i]);
       Assert.assertEquals("Should have only the latest version", 1, cells.size());
@@ -159,7 +159,7 @@ public class TestFilters extends AbstractTest {
     Result result = table.get(get);
     Assert.assertEquals("Should have filtered to N columns", numColumnsToFilter, result.size());
     for (int i = offset ; i < (numColumnsToFilter + offset); ++i) {
-      Assert.assertTrue("Should contain qual " + Bytes.toInt(quals[i]),
+      assertTrue("Should contain qual " + Bytes.toInt(quals[i]),
         result.containsColumn(COLUMN_FAMILY, quals[i]));
       List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, quals[i]);
       Assert.assertEquals("Should have only the latest version", 1, cells.size());
@@ -274,7 +274,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertEquals("Should only return good columns", numGoodCols, result.size());
     Cell[] cells = result.rawCells();
     for (Cell cell : cells) {
-      Assert.assertTrue("Should have good column prefix",
+      assertTrue("Should have good column prefix",
         Bytes.toString(CellUtil.cloneQualifier(cell)).startsWith(goodColPrefix));
     }
 
@@ -1346,7 +1346,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertEquals("Should only return good values", numGoodCols, result.size());
     Cell[] cells = result.rawCells();
     for (Cell cell : cells) {
-      Assert.assertTrue("Should have good value",
+      assertTrue("Should have good value",
           Bytes.toString(CellUtil.cloneValue(cell)).startsWith(goodValue));
     }
 
@@ -1429,11 +1429,11 @@ public class TestFilters extends AbstractTest {
     Cell[] cells = result.rawCells();
     Assert.assertEquals("Should have two cells, prefixes a- and b-.", 2, cells.length);
     byte[] qualifier0 = CellUtil.cloneQualifier(cells[0]);
-    Assert.assertTrue("qualifier0 should start with a-",
+    assertTrue("qualifier0 should start with a-",
         qualifier0[0] == 'a' && qualifier0[1] == '-');
 
     byte[] qualifier1 = CellUtil.cloneQualifier(cells[1]);
-    Assert.assertTrue("qualifier1 should start with b-",
+    assertTrue("qualifier1 should start with b-",
         qualifier1[0] == 'b' && qualifier1[1] == '-');
 
     table.close();
@@ -1602,7 +1602,7 @@ public class TestFilters extends AbstractTest {
     ResultScanner scanner = table.getScanner(scan);
     Result[] results = scanner.next(100);
 
-    Assert.assertTrue(
+    assertTrue(
         String.format("Using p=0.5, expected half of added rows, found %s", results.length),
         25 <= results.length && results.length <= 75);
   }
@@ -1673,7 +1673,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertEquals(1, results.length);
     Result result = results[0];
     Assert.assertEquals(1, result.size());
-    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qualifier2));
+    assertTrue(result.containsColumn(COLUMN_FAMILY, qualifier2));
     Assert.assertFalse(result.containsColumn(COLUMN_FAMILY, qualifier1));
     Assert.assertArrayEquals(
         value2_1,
@@ -1877,9 +1877,9 @@ public class TestFilters extends AbstractTest {
       Result result = table.get(get);
       Assert.assertEquals(1, result.size());
       Cell cell = result.rawCells()[0];
-      Assert.assertTrue(CellUtil.matchingFamily(cell, COLUMN_FAMILY));
-      Assert.assertTrue(CellUtil.matchingQualifier(cell, qualA));
-      Assert.assertTrue(CellUtil.matchingValue(cell, qualAValue));
+      assertTrue(CellUtil.matchingFamily(cell, COLUMN_FAMILY));
+      assertTrue(CellUtil.matchingQualifier(cell, qualA));
+      assertTrue(CellUtil.matchingValue(cell, qualAValue));
     }
 
     {
@@ -1888,9 +1888,9 @@ public class TestFilters extends AbstractTest {
       Result result = table.get(get);
       Assert.assertEquals(1, result.size());
       Cell cell = result.rawCells()[0];
-      Assert.assertTrue(CellUtil.matchingFamily(cell, COLUMN_FAMILY2));
-      Assert.assertTrue(CellUtil.matchingQualifier(cell, qualB));
-      Assert.assertTrue(CellUtil.matchingValue(cell, qualBValue));
+      assertTrue(CellUtil.matchingFamily(cell, COLUMN_FAMILY2));
+      assertTrue(CellUtil.matchingQualifier(cell, qualB));
+      assertTrue(CellUtil.matchingValue(cell, qualBValue));
     }
   }
 
@@ -2041,7 +2041,7 @@ public class TestFilters extends AbstractTest {
       Result result = table.get(new Get(rowKey).setFilter(bigtableFilter));
 
       Assert.assertEquals(1, result.size());
-      Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], valA));
+      assertTrue(CellUtil.matchingValue(result.rawCells()[0], valA));
     }
   }
 
@@ -2066,41 +2066,41 @@ public class TestFilters extends AbstractTest {
 
     return table;
   }
-  
+
   @Test
-  @Category(KnownGap.class)
-  public void run() throws Exception {
+  public void testFuzzyDifferentSizes() throws Exception {
     Table table = getDefaultTable();
     List<byte[]> keys = Collections.unmodifiableList(
         Arrays.asList(
-        createKey(1, 2, 3, 4, 5, 6), 
+        createKey(1, 2, 3, 4, 5, 6),
         createKey(1, 9, 9, 4, 9, 9),
         createKey(2, 3, 4, 5, 6, 7)));
-    
+
     List<Put> puts = new ArrayList<>();
     for(byte[] key : keys) {
-      puts.add(new Put(key).addColumn(SharedTestEnvRule.COLUMN_FAMILY, Bytes.toBytes(0), Bytes.toBytes(0)));
+      puts.add(new Put(key).addColumn(SharedTestEnvRule.COLUMN_FAMILY,
+          Bytes.toBytes(0), Bytes.toBytes(0)));
     }
-    
+
     table.put(puts);
 
     // match keys with 1 in the first position and 4 in the 4th position
-    Pair<byte[], byte[]> fuzzyData = Pair.newPair(createKey(1, 0, 0, 4), createKey(0, 1, 1, 0));
-    FuzzyRowFilter filter = new FuzzyRowFilter(ImmutableList.of(fuzzyData));
-    Scan scan = new Scan();
-    scan.setFilter(filter);
+    Pair<byte[], byte[]> fuzzyData = Pair
+        .newPair(
+            createKey(1, 0, 0, 4),
+            createKey(0, 1, 1, 0));
 
-    ResultScanner scanner = table.getScanner(scan);
-    
-    String expected1 = Arrays.toString(parseKey(createKey(1, 2, 3, 4, 5, 6)));
-    String expected2 = Arrays.toString(parseKey(createKey(1, 9, 9, 4, 9, 9)));
-    Result r1 = scanner.next();
-    assertEquals(expected1, Arrays.toString(parseKey(r1.getRow())));
-    Result r2 = scanner.next();
-    assertEquals(expected2, Arrays.toString(parseKey(r2.getRow())));
+    Scan scan = new Scan().setFilter(new FuzzyRowFilter(ImmutableList.of(fuzzyData)));
+
+    // only the first and second keys should be matched
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      assertMatchingRow(scanner.next(), keys.get(0));
+      assertMatchingRow(scanner.next(), keys.get(1));
+      assertNull(scanner.next());
+    }
   }
-  
-  private byte[] createKey(int... values) {
+
+  private static byte[] createKey(int... values) {
     byte[] bytes = new byte[4 * values.length];
     for (int i = 0; i < values.length; i++) {
       System.arraycopy(Bytes.toBytes(values[i]), 0, bytes, 4 * i, 4);
@@ -2108,11 +2108,9 @@ public class TestFilters extends AbstractTest {
     return bytes;
   }
 
-  private int[] parseKey(byte[] key) {
-    int[] values = new int[key.length / 4];
-    for (int i = 0; i < values.length; i++) {
-      values[i] = Bytes.toInt(key, 4 * i);
-    }
-    return values;
+  private static void assertMatchingRow(Result result, byte[] key) {
+    assertNotNull(result);
+    assertTrue(CellUtil.matchingRow(result.rawCells()[0], key));
   }
+
 }

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import com.google.cloud.bigtable.config.Logger;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
@@ -71,6 +72,7 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
           createSingleRowFilter(
               pair.getFirst(), pair.getSecond()));
     }
+    new Logger(FuzzyRowFilterAdapter.class).error("Adapted: " + interleave.toProto());
     return interleave.toProto();
   }
 
@@ -86,6 +88,8 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
         baos.write(ReaderExpressionHelper.ANY_BYTE_BYTES);
       }
     }
+    // match any trailing bytes
+    baos.write(ReaderExpressionHelper.ALL_BYTE_BYTES);
     quotingStream.close();
     return FILTERS.key().regex(Bytes.toString(baos.toByteArray()));
   }

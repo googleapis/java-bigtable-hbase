@@ -17,14 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.RandomStringUtils;
@@ -2064,37 +2060,42 @@ public class TestFilters extends AbstractTest {
 
     return table;
   }
-  
+
+
   @Test
-  @Category(KnownGap.class)
-  public void run() throws Exception {
+  public void testFuzzyDifferentSizes() throws Exception {
     Table table = getDefaultTable();
-    List<byte[]> keys = ImmutableList.of(
-        createKey(1, 2, 3, 4, 5, 6), 
-        createKey(1, 9, 9, 4, 9, 9),
-        createKey(2, 3, 4, 5, 6, 7));
-    List<Put> puts = keys.stream()
-        .map(key -> new Put(key).addColumn(SharedTestEnvRule.COLUMN_FAMILY, Bytes.toBytes(0), Bytes.toBytes(0)))
-        .collect(Collectors.toList());
+    List<byte[]> keys = Collections.unmodifiableList(
+        Arrays.asList(
+            createKey(1, 2, 3, 4, 5, 6),
+            createKey(1, 9, 9, 4, 9, 9),
+            createKey(2, 3, 4, 5, 6, 7)));
+
+    List<Put> puts = new ArrayList<>();
+    for(byte[] key : keys) {
+      puts.add(new Put(key).addColumn(SharedTestEnvRule.COLUMN_FAMILY,
+          Bytes.toBytes(0), Bytes.toBytes(0)));
+    }
+
     table.put(puts);
 
     // match keys with 1 in the first position and 4 in the 4th position
-    Pair<byte[], byte[]> fuzzyData = Pair.newPair(createKey(1, 0, 0, 4), createKey(0, 1, 1, 0));
-    FuzzyRowFilter filter = new FuzzyRowFilter(ImmutableList.of(fuzzyData));
-    Scan scan = new Scan();
-    scan.setFilter(filter);
+    Pair<byte[], byte[]> fuzzyData = Pair
+        .newPair(
+            createKey(1, 0, 0, 4),
+            createKey(0, 1, 1, 0));
 
-    ResultScanner scanner = table.getScanner(scan);
-    
-    String expected1 = Arrays.toString(parseKey(createKey(1, 2, 3, 4, 5, 6)));
-    String expected2 = Arrays.toString(parseKey(createKey(1, 9, 9, 4, 9, 9)));
-    Result r1 = scanner.next();
-    assertEquals(expected1, Arrays.toString(parseKey(r1.getRow())));
-    Result r2 = scanner.next();
-    assertEquals(expected2, Arrays.toString(parseKey(r2.getRow())));
+    Scan scan = new Scan().setFilter(new FuzzyRowFilter(ImmutableList.of(fuzzyData)));
+
+    // only the first and second keys should be matched
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      assertMatchingRow(scanner.next(), keys.get(0));
+      assertMatchingRow(scanner.next(), keys.get(1));
+      assertNull(scanner.next());
+    }
   }
-  
-  private byte[] createKey(int... values) {
+
+  private static byte[] createKey(int... values) {
     byte[] bytes = new byte[4 * values.length];
     for (int i = 0; i < values.length; i++) {
       System.arraycopy(Bytes.toBytes(values[i]), 0, bytes, 4 * i, 4);
@@ -2102,11 +2103,9 @@ public class TestFilters extends AbstractTest {
     return bytes;
   }
 
-  private int[] parseKey(byte[] key) {
-    int[] values = new int[key.length / 4];
-    for (int i = 0; i < values.length; i++) {
-      values[i] = Bytes.toInt(key, 4 * i);
-    }
-    return values;
+  private static void assertMatchingRow(Result result, byte[] key) {
+    assertNotNull(result);
+    assertTrue(CellUtil.matchingRows(result.rawCells()[0], key));
   }
+
 }
