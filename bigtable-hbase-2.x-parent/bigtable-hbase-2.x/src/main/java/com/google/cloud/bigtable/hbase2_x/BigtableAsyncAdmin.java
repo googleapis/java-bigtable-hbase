@@ -401,6 +401,10 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     throw new UnsupportedOperationException("flushRegion"); // TODO
   }
 
+  @Override public CompletableFuture<Void> flushRegionServer(ServerName serverName) {
+    throw new UnsupportedOperationException("flushRegionServer"); // TODO
+  }
+
   @Override
   public CompletableFuture<CompactionState> getCompactionState(TableName arg0) {
     throw new UnsupportedOperationException("getCompactionState"); // TODO
