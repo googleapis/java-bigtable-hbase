@@ -527,8 +527,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public List<RegionInfo> getRegions(ServerName arg0) throws IOException {
-    // TODO : new in 2.0
     throw new UnsupportedOperationException("getRegions");
+  }
+
+  @Override public void flushRegionServer(ServerName serverName) throws IOException {
+    throw new UnsupportedOperationException("flushRegionServer");
   }
 
   @Override
