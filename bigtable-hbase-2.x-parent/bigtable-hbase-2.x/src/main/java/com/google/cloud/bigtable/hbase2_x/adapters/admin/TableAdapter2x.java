@@ -17,7 +17,11 @@ package com.google.cloud.bigtable.hbase2_x.adapters.admin;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -36,9 +40,25 @@ import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
  * 
  * @author spollapally
  */
-public class TableAdapter2x extends TableAdapter {
+public class TableAdapter2x {
+  protected final BigtableInstanceName bigtableInstanceName;
+  protected final ColumnDescriptorAdapter columnDescriptorAdapter;
+
+  public TableAdapter2x(BigtableOptions options) {
+    this(options, new ColumnDescriptorAdapter());
+  }
+
   public TableAdapter2x(BigtableOptions options, ColumnDescriptorAdapter columnDescriptorAdapter) {
-    super(options, columnDescriptorAdapter);
+    bigtableInstanceName = options.getInstanceName();
+    this.columnDescriptorAdapter = columnDescriptorAdapter;
+  }
+
+  public CreateTableRequest.Builder adapt(TableDescriptor desc, byte[][] splitKeys) {
+    CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
+    builder.setTableId(desc.getTableName().getQualifierAsString());
+    builder.setTable(adapt(desc));
+    TableAdapter.addSplitKeys(builder, splitKeys);
+    return builder;
   }
 
   public Table adapt(TableDescriptor desc) {
@@ -60,5 +80,15 @@ public class TableAdapter2x extends TableAdapter {
       columnFamilies.put(columnName, columnFamily);
     }
     return Table.newBuilder().putAllColumnFamilies(columnFamilies).build();
+  }
+
+  /**
+   * <p>adapt.</p>
+   *
+   * @param table a {@link com.google.bigtable.admin.v2.Table} object.
+   * @return a {@link TableDescriptor} object.
+   */
+  public TableDescriptor adapt(Table table) {
+    return new TableAdapter(bigtableInstanceName, columnDescriptorAdapter).adapt(table);
   }
 }
