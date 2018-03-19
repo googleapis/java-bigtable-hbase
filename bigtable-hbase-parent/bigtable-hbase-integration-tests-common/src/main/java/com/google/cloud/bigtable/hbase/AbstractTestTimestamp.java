@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public abstract class AbstractTestTimestamp extends AbstractTest{
+  
   /**
    * Requirement 1.6 - Custom, arbitrary timestamps are supported.
    *
