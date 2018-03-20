@@ -349,7 +349,7 @@ public class BigtableOptionsFactory {
     // This is primarily used by Dataflow where connections open and close often. This is a
     // performance optimization that will reduce the cost to open connections.
     boolean useCachedDataPool =
-        configuration.getBoolean(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, false);
+        configuration.getBoolean(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, true);
     builder.setUseCachedDataPool(useCachedDataPool);
 
     // This information is in addition to bigtable-client-core version, and jdk version.

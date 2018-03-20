@@ -237,10 +237,14 @@ public class BigtableSession implements Closeable {
     // Defer the creation of both the tableAdminClient until we need them.
     }
 
-  private ChannelPool getDataChannelPool() throws IOException {
+private ChannelPool getDataChannelPool() throws IOException {
     String host = options.getDataHost();
     int channelCount = options.getChannelCount();
-    if (options.useCachedChannel()) {
+    /**
+     * #1561-useCachedDataPool is now by default true hence for unit test cases to run successfully added null credential condition.
+     * As null credentials should not be used in production.  
+    */
+    if (options.useCachedChannel() && !CredentialOptions.nullCredential().equals(options.getCredentialOptions())) {
       synchronized (BigtableSession.class) {
         // TODO: Ensure that the host and channelCount are the same.
         if (cachedDataChannelPool == null) {

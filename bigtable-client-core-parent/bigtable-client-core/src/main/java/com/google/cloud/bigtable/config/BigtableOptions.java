@@ -87,7 +87,7 @@ public class BigtableOptions implements Serializable {
 
     private BulkOptions bulkOptions;
     private boolean usePlaintextNegotiation = false;
-    private boolean useCachedDataPool = false;
+    private boolean useCachedDataPool = true;
 
     private RetryOptions retryOptions = new RetryOptions.Builder().build();
     private CallOptionsConfig callOptionsConfig = new CallOptionsConfig.Builder().build();
@@ -299,7 +299,7 @@ public class BigtableOptions implements Serializable {
       dataChannelCount = 1;
       instanceName = null;
       usePlaintextNegotiation = false;
-      useCachedDataPool = false;
+      useCachedDataPool = true;
 
       bulkOptions = null;
       callOptionsConfig = null;
