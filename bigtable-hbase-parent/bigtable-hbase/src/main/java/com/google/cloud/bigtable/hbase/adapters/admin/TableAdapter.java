@@ -16,10 +16,12 @@
 package com.google.cloud.bigtable.hbase.adapters.admin;
 
 import com.google.bigtable.admin.v2.ColumnFamily;
+import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 
+import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -44,8 +46,9 @@ public class TableAdapter {
    * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    * @param columnDescriptorAdapter a {@link com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter} object.
    */
-  public TableAdapter(BigtableOptions options, ColumnDescriptorAdapter columnDescriptorAdapter) {
-    this.bigtableInstanceName = options.getInstanceName();
+  public TableAdapter(BigtableInstanceName bigtableInstanceName,
+      ColumnDescriptorAdapter columnDescriptorAdapter) {
+    this.bigtableInstanceName = bigtableInstanceName;
     this.columnDescriptorAdapter = columnDescriptorAdapter;
   }
 
@@ -55,7 +58,7 @@ public class TableAdapter {
    * @param desc a {@link org.apache.hadoop.hbase.HTableDescriptor} object.
    * @return a {@link com.google.bigtable.admin.v2.Table} object.
    */
-  public Table adapt(HTableDescriptor desc) {
+  protected Table adapt(HTableDescriptor desc) {
     Map<String, ColumnFamily> columnFamilies = new HashMap<>();
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
       String columnName = column.getNameAsString();
@@ -63,6 +66,24 @@ public class TableAdapter {
       columnFamilies.put(columnName, columnFamily);
     }
     return Table.newBuilder().putAllColumnFamilies(columnFamilies).build();
+  }
+
+
+  public CreateTableRequest.Builder adapt(HTableDescriptor desc, byte[][] splitKeys) {
+    CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
+    builder.setTableId(desc.getTableName().getQualifierAsString());
+    builder.setTable(adapt(desc));
+    addSplitKeys(builder, splitKeys);
+    return builder;
+  }
+
+  public static void addSplitKeys(CreateTableRequest.Builder builder, byte[][] splitKeys) {
+    if (splitKeys != null) {
+      for (byte[] splitKey : splitKeys) {
+        builder.addInitialSplits(
+            CreateTableRequest.Split.newBuilder().setKey(ByteString.copyFrom(splitKey)).build());
+      }
+    }
   }
 
   /**

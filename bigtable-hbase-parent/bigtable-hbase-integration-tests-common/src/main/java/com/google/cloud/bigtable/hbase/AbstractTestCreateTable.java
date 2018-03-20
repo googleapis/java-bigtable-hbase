@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,74 +29,62 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 @SuppressWarnings("deprecation")
 public abstract class AbstractTestCreateTable extends AbstractTest {
 
+  /**
+   * This variable ensures that <pre>testTableNames()</pre> only runs once even if there are many subclasses
+   * of AbstractTestCreateTable.  HBase 2 will likely have 3+ subclasses, but <pre>testTableNames()</pre>
+   * should still run only once.  <pre>testTableNames()</pre> is more about a test of Cloud Bigtable
+   * than any specific client implementation.
+   */
+  private static final AtomicInteger testTableNames_Counter = new AtomicInteger();
   @Rule
   public ExpectedException thrown = ExpectedException.none();
+
+  @Test
+  public void testCreate()throws Exception {
+    TableName tableName = sharedTestEnv.newTestTableName();
+    createTable(tableName);
+    Assert.assertTrue(getConnection().getAdmin().tableExists(tableName));
+    deleteTable(tableName);
+    Assert.assertFalse(getConnection().getAdmin().tableExists(tableName));
+  }
 
   /**
    * Requirement 1.8 - Table names must match [_a-zA-Z0-9][-_.a-zA-Z0-9]*
    */
   @Test(timeout = 1000l * 60 * 4)
-  public void testTableNames() throws IOException {
+  public void testTableNames()throws Exception {
     String shouldTest = System.getProperty("bigtable.test.create.table", "true");
-    if (!"true".equals(shouldTest)) {
+    if (!"true".equals(shouldTest) || testTableNames_Counter.incrementAndGet() > 1) {
       return;
     }
-    String[] goodNames = {
-        "a",
-        "1",
-        "_", // Really?  Yuck.
-        "_x",
-        "a-._5x",
-        "_a-._5x",
+    // more than one subclass can run at the same time.  Ensure that this method is serial.
+    String[] goodNames = { "a", "1", "_", // Really?  Yuck.
+        "_x", "a-._5x", "_a-._5x",
         // TODO(sduskis): Join the last 2 strings once the Bigtable backend supports table names
         // longer than 50 characters.
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi",
-        "jklmnopqrstuvwxyz1234567890_-."
-    };
-    String[] badNames = {
-        "-x",
-        ".x",
-        "a!",
-        "a@",
-        "a#",
-        "a$",
-        "a%",
-        "a^",
-        "a&",
-        "a*",
-        "a(",
-        "a+",
-        "a=",
-        "a~",
-        "a`",
-        "a{",
-        "a[",
-        "a|",
-        "a\\",
-        "a/",
-        "a<",
-        "a,",
-        "a?",
-        "a" + RandomStringUtils.random(10, false, false)
-    };
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi", "jklmnopqrstuvwxyz1234567890_-." };
+    String[] badNames =
+        { "-x", ".x", "a!", "a@", "a#", "a$", "a%", "a^", "a&", "a*", "a(", "a+", "a=", "a~", "a`",
+            "a{", "a[", "a|", "a\\", "a/", "a<", "a,", "a?",
+            "a" + RandomStringUtils.random(10, false, false) };
 
     for (String badName : badNames) {
       boolean failed = false;
       try {
         createTable(TableName.valueOf(badName));
       } catch (Exception ex) {
-        //TODO verify - added RuntimeException check as RandomStringUtils seems to be generating a string server side doesn't like 
+        //TODO verify - added RuntimeException check as RandomStringUtils seems to be generating a string server side doesn't like
         failed = true;
       }
       Assert.assertTrue("Should fail as table name: '" + badName + "'", failed);
@@ -106,10 +94,9 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
 
     List<ListenableFuture<Void>> futures = new ArrayList<>();
     ListeningExecutorService es = MoreExecutors.listeningDecorator(sharedTestEnv.getExecutor());
-    for(final String goodName : goodNames) {
+    for (final String goodName : goodNames) {
       futures.add(es.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws IOException {
+        @Override public Void call()throws Exception {
           createTable(goodName, tableNames);
           return null;
         }
@@ -122,7 +109,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
     }
   }
 
-  private void createTable(String goodName, TableName[] tableNames) throws IOException {
+  private void createTable(String goodName, TableName[] tableNames)throws Exception {
     logger.info("Try create table for: %s", goodName);
     TableName tableName = TableName.valueOf(goodName);
 
@@ -148,7 +135,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   @Test
-  public void testSplitKeys() throws IOException {
+  public void testSplitKeys()throws Exception {
     byte[][] splits = new byte[][] {
         Bytes.toBytes("AAA"),
         Bytes.toBytes("BBB"),
@@ -164,33 +151,39 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
       }
       // The number of regions should be the number of splits + 1.
       Assert.assertEquals(splits.length + 1, regions.size());
-      for (int i = 0; i < regions.size(); i++) {
-        HRegionLocation region = regions.get(i);
-        String start_key = Bytes.toString(
-            region.getRegionInfo().getStartKey());
-        String end_key = Bytes.toString(region.getRegionInfo().getEndKey());
-        // Check start & end keys vs what was requested.
-        if (i == 0) {
-          // First split: the end key must be the first element of splits.
-          Assert.assertEquals(Bytes.toString(splits[0]), end_key);
-        } else if (i == regions.size() - 1) {
-          // Last split: the start key must be the last element of splits.
-          Assert.assertEquals(Bytes.toString(splits[splits.length - 1]),
-              start_key);
-        } else {
-          // For all others: start_key = splits[i-i], end_key = splits[i].
-          Assert.assertEquals(Bytes.toString(splits[i-1]), start_key);
-          Assert.assertEquals(Bytes.toString(splits[i]), end_key);
-        }
-      }
+      assertSplitsAndRegionsMatch(splits, regions);
     } finally {
       deleteTable(tableName);
     }
   }
 
+  /**
+   * Ensures that the requested splits and the actual list of {@link HRegionLocation} are the same.
+   */
+  public static void assertSplitsAndRegionsMatch(byte[][] splits, List<HRegionLocation> regions) {
+    for (int i = 0; i < regions.size(); i++) {
+      HRegionLocation region = regions.get(i);
+      String start_key = Bytes.toString(
+          region.getRegionInfo().getStartKey());
+      String end_key = Bytes.toString(region.getRegionInfo().getEndKey());
+      // Check start & end keys vs what was requested.
+      if (i == 0) {
+        // First split: the end key must be the first element of splits.
+        Assert.assertEquals(Bytes.toString(splits[0]), end_key);
+      } else if (i == regions.size() - 1) {
+        // Last split: the start key must be the last element of splits.
+        Assert.assertEquals(Bytes.toString(splits[splits.length - 1]),
+            start_key);
+      } else {
+        // For all others: start_key = splits[i-i], end_key = splits[i].
+        Assert.assertEquals(Bytes.toString(splits[i-1]), start_key);
+        Assert.assertEquals(Bytes.toString(splits[i]), end_key);
+      }
+    }
+  }
 
   @Test
-  public void testEvenSplitKeysFailures() throws IOException {
+  public void testEvenSplitKeysFailures()throws Exception {
     TableName tableName = sharedTestEnv.newTestTableName();
     byte[] startKey = Bytes.toBytes("AAA");
     byte[] endKey = Bytes.toBytes("ZZZ");
@@ -208,7 +201,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   @Test
-  public void testThreeRegionSplit() throws IOException {
+  public void testThreeRegionSplit()throws Exception {
 
     TableName tableName = sharedTestEnv.newTestTableName();
 
@@ -245,8 +238,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   @Test
-  public void testFiveRegionSplit() throws IOException {
-
+  public void testFiveRegionSplit()throws Exception {
     TableName tableName = sharedTestEnv.newTestTableName();
     byte[] startKey = Bytes.toBytes("AAA");
     byte[] endKey = Bytes.toBytes("ZZZ");
@@ -286,14 +278,16 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   @Test
-  public void testAlreadyExists() throws IOException {
+  public void testAlreadyExists()throws Exception {
     thrown.expect(TableExistsException.class);
     createTable(sharedTestEnv.getDefaultTableName());
   }
 
   protected void deleteTable(TableName tableName) {
     try (Admin admin = getConnection().getAdmin()) {
-      admin.disableTable(tableName);
+      if (admin.isTableEnabled(tableName)) {
+        admin.disableTable(tableName);
+      }
       admin.deleteTable(tableName);
     } catch (Throwable t) {
       // logger the error and ignore it.
@@ -301,10 +295,10 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
     }
   }
 
-  protected abstract void createTable(TableName name) throws IOException;
+  protected abstract void createTable(TableName name) throws Exception;
   protected abstract void createTable(TableName name, byte[] start, byte[] end, int splitCount)
-      throws IOException;
+      throws Exception;
   protected abstract void createTable(TableName name, byte[][] ranges)
-      throws IOException;
+      throws Exception;
 
 }

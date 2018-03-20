@@ -15,13 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.cloud.bigtable.hbase.async.TestAsyncAdmin;
-import com.google.cloud.bigtable.hbase.async.TestAsyncBatch;
-import com.google.cloud.bigtable.hbase.async.TestAsyncBufferedMutator;
-import com.google.cloud.bigtable.hbase.async.TestAsyncCheckAndMutate;
-import com.google.cloud.bigtable.hbase.async.TestAsyncConnection;
-import com.google.cloud.bigtable.hbase.async.TestAsyncScan;
-import com.google.cloud.bigtable.hbase.async.TestBasicAsyncOps;
+import com.google.cloud.bigtable.hbase.async.*;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
 import java.io.IOException;
@@ -46,6 +40,7 @@ import org.junit.runners.Suite;
     TestCheckAndMutateHBase2.class,
     TestColumnFamilyAdmin.class,
     TestCreateTable.class,
+    TestCreateTableHBase2.class,
     TestDisableTable.class,
     TestDelete.class,
     TestDurability.class,
@@ -65,6 +60,7 @@ import org.junit.runners.Suite;
     TestAsyncBatch.class,
     TestAsyncBufferedMutator.class,
     TestAsyncCheckAndMutate.class,
+    TestAsyncCreateTable.class,
     TestAsyncConnection.class,
     TestAsyncScan.class,
     TestBasicAsyncOps.class

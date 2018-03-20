@@ -27,6 +27,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
+import com.google.bigtable.admin.v2.*;
+import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
@@ -64,12 +68,7 @@ import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
-import com.google.bigtable.admin.v2.Snapshot;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.common.util.concurrent.Futures;
 
@@ -81,37 +80,40 @@ import com.google.common.util.concurrent.Futures;
 @SuppressWarnings("deprecation")
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
+  private final TableAdapter2x tableAdapter2x;
+
   public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
     super(connection);
+    tableAdapter2x = new TableAdapter2x(connection.getSession().getOptions());
   }
 
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc) throws IOException {
-    createTable((HTableDescriptor) desc);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable((HTableDescriptor) desc, splitKeys);
+    createTable(desc, null);
   }
 
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions)
       throws IOException {
-    createTable((HTableDescriptor) desc, startKey, endKey, numRegions);
+    createTable(desc, createSplitKeys(startKey, endKey, numRegions));
+  }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
+    createTable(desc.getTableName(), tableAdapter2x.adapt(desc, splitKeys));
   }
 
   /** {@inheritDoc} */
   @Override
   public Future<Void> createTableAsync(TableDescriptor desc, byte[][] splitKeys)
       throws IOException {
-    createTableAsync((HTableDescriptor) desc, splitKeys);
-    // TODO Consider better options after adding support for async hbase2
-    return CompletableFuture.runAsync(() -> {
-    });
+    CreateTableRequest.Builder builder = tableAdapter2x.adapt(desc, splitKeys);
+    ListenableFuture<Table> future = createTableAsync(builder, desc.getTableName());
+    return FutureUtils.toCompletableFuture(future).thenApply(r -> null);
   }
 
   /** {@inheritDoc} */

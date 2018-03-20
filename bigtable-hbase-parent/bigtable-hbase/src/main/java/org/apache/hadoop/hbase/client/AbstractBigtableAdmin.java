@@ -17,7 +17,6 @@ package org.apache.hadoop.hbase.client;
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
-import com.google.bigtable.admin.v2.CreateTableRequest.Split;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
@@ -38,8 +37,10 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.common.base.MoreObjects;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
@@ -52,7 +53,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
@@ -78,6 +78,7 @@ import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
+import javax.annotation.Nullable;
 
 /**
  * <p>Abstract AbstractBigtableAdmin class.</p>
@@ -123,7 +124,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     bigtableTableAdminClient = connection.getSession().getTableAdminClient();
     disabledTables = connection.getDisabledTables();
     bigtableInstanceName = options.getInstanceName();
-    tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
+    tableAdapter = new TableAdapter(bigtableInstanceName, columnDescriptorAdapter);
 
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
@@ -328,52 +329,73 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTable(HTableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions)
       throws IOException {
+    createTable(desc, createSplitKeys(startKey, endKey, numRegions));
+  }
+
+  public static byte[][] createSplitKeys(byte[] startKey, byte[] endKey, int numRegions) {
     if (numRegions < 3) {
       throw new IllegalArgumentException("Must create at least three regions");
     } else if (Bytes.compareTo(startKey, endKey) >= 0) {
       throw new IllegalArgumentException("Start key must be smaller than end key");
     }
+    byte[][] splitKeys;
     if (numRegions == 3) {
-      createTable(desc, new byte[][]{startKey, endKey});
-      return;
+      splitKeys = new byte[][]{startKey, endKey};
+    } else {
+      splitKeys = Bytes.split(startKey, endKey, numRegions - 3);
+      if (splitKeys == null || splitKeys.length != numRegions - 1) {
+        throw new IllegalArgumentException("Unable to split key range into enough regions");
+      }
     }
-    byte[][] splitKeys = Bytes.split(startKey, endKey, numRegions - 3);
-    if (splitKeys == null || splitKeys.length != numRegions - 1) {
-      throw new IllegalArgumentException("Unable to split key range into enough regions");
-    }
-    createTable(desc, splitKeys);
+    return splitKeys;
   }
 
   /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
+    createTable(desc.getTableName(), tableAdapter.adapt(desc, splitKeys));
+  }
+
+  protected void createTable(TableName tableName, CreateTableRequest.Builder builder) throws IOException {
     builder.setParent(bigtableInstanceName.toString());
-    builder.setTableId(desc.getTableName().getQualifierAsString());
-    builder.setTable(tableAdapter.adapt(desc));
-    if (splitKeys != null) {
-      for (byte[] splitKey : splitKeys) {
-        builder.addInitialSplits(Split.newBuilder().setKey(ByteString.copyFrom(splitKey)).build());
-      }
-    }
     try {
       bigtableTableAdminClient.createTable(builder.build());
     } catch (Throwable throwable) {
-      if (Status.fromThrowable(throwable).getCode() == Status.Code.ALREADY_EXISTS) {
-        throw new TableExistsException(desc.getTableName());
-      }
-
-      throw new IOException(
-          String.format("Failed to create table '%s'", desc.getTableName().getNameAsString()),
-          throwable);
+      throw convertToTableExistsException(tableName, throwable);
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public void createTableAsync(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
+  public void createTableAsync(final HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     LOG.warn("Creating the table synchronously");
-    createTable(desc, splitKeys);
+    CreateTableRequest.Builder builder = tableAdapter.adapt(desc, splitKeys);
+    createTableAsync(builder, desc.getTableName());
+  }
+
+  protected ListenableFuture<Table> createTableAsync(CreateTableRequest.Builder builder,
+      final TableName tableName) throws IOException {
+    builder.setParent(bigtableInstanceName.toString());
+    ListenableFuture<Table> future = bigtableTableAdminClient.createTableAsync(builder.build());
+    final SettableFuture<Table> settableFuture = SettableFuture.create();
+    Futures.addCallback(future, new FutureCallback<Table>() {
+      @Override public void onSuccess(@Nullable Table result) {
+        settableFuture.set(result);
+      }
+
+      @Override public void onFailure(Throwable t) {
+        settableFuture.setException(convertToTableExistsException(tableName, t));
+      }
+    });
+    return settableFuture;
+  }
+
+  public static IOException convertToTableExistsException(TableName tableName, Throwable throwable) {
+    if (Status.fromThrowable(throwable).getCode() == Status.Code.ALREADY_EXISTS) {
+      return new TableExistsException(tableName);
+    } else {
+      return new IOException(String.format("Failed to create table '%s'", tableName), throwable);
+    }
   }
 
   /** {@inheritDoc} */
