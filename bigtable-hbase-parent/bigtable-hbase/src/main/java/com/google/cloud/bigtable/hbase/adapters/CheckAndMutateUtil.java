@@ -127,7 +127,7 @@ public class CheckAndMutateUtil {
     }
 
     /**
-     * For non-null values, this produces a {@link Filter} equivalent to:
+     * For non-null values, this produces a {@link RowFilter} equivalent to:
      * <pre>
      *   new ValueFilter(reverseCompareOp(compareOp), new BinaryComparator(value)
      * </pre>
