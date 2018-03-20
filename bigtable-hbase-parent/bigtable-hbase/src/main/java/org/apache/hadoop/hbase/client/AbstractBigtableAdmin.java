@@ -361,7 +361,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     try {
       bigtableTableAdminClient.createTable(builder.build());
     } catch (Throwable throwable) {
-      throw toCreateTableThrowable(tableName, throwable);
+      throw convertToTableExistsException(tableName, throwable);
     }
   }
 
@@ -377,11 +377,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
       final TableName tableName) throws IOException {
     builder.setParent(bigtableInstanceName.toString());
     ListenableFuture<Table> future = bigtableTableAdminClient.createTableAsync(builder.build());
-    return toCreateTableSettableFuture(tableName, future);
-  }
-
-  public static ListenableFuture<Table> toCreateTableSettableFuture(final TableName tableName,
-      ListenableFuture<Table> future) {
     final SettableFuture<Table> settableFuture = SettableFuture.create();
     Futures.addCallback(future, new FutureCallback<Table>() {
       @Override public void onSuccess(@Nullable Table result) {
@@ -389,20 +384,18 @@ public abstract class AbstractBigtableAdmin implements Admin {
       }
 
       @Override public void onFailure(Throwable t) {
-        settableFuture.setException(toCreateTableThrowable(tableName, t));
+        settableFuture.setException(convertToTableExistsException(tableName, t));
       }
     });
     return settableFuture;
   }
 
-  public static IOException toCreateTableThrowable(TableName tableName, Throwable throwable) {
+  public static IOException convertToTableExistsException(TableName tableName, Throwable throwable) {
     if (Status.fromThrowable(throwable).getCode() == Status.Code.ALREADY_EXISTS) {
       return new TableExistsException(tableName);
+    } else {
+      return new IOException(String.format("Failed to create table '%s'", tableName), throwable);
     }
-
-    return new IOException(
-        String.format("Failed to create table '%s'", tableName),
-        throwable);
   }
 
   /** {@inheritDoc} */

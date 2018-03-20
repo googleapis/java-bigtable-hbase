@@ -39,10 +39,8 @@ import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.admin.v2.CreateTableRequest;
-import com.google.bigtable.admin.v2.CreateTableRequest.Split;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
 import com.google.bigtable.admin.v2.GetTableRequest;
@@ -54,7 +52,6 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
-import com.google.protobuf.ByteString;
 
 import io.grpc.Status;
 
@@ -91,11 +88,15 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
     CreateTableRequest.Builder builder = tableAdapter2x.adapt(desc, splitKeys);
     builder.setParent(bigtableInstanceName.toString());
-    ListenableFuture<Table> intermediateFuture =
-        bigtableTableAdminClient.createTableAsync(builder.build());
-    ListenableFuture<Table> finalFuture =
-        AbstractBigtableAdmin.toCreateTableSettableFuture(desc.getTableName(), intermediateFuture);
-    return FutureUtils.toCompletableFuture(finalFuture).thenApply(r -> null);
+    ListenableFuture<Table> future = bigtableTableAdminClient.createTableAsync(builder.build());
+    return FutureUtils.toCompletableFuture(future)
+        .handle((resp, ex) -> {
+          if (ex != null) {
+            throw new CompletionException(
+                AbstractBigtableAdmin.convertToTableExistsException(desc.getTableName(), ex));
+          }
+          return null;
+        });
   }
 
   /** {@inheritDoc} */
