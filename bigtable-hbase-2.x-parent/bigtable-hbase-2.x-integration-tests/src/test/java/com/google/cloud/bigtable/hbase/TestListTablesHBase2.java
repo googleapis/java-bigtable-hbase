@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -53,8 +54,8 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
   @Override
   protected void checkColumnFamilies(Admin admin, TableName tableName) 
       throws TableNotFoundException,IOException {
-    HTableDescriptor descriptor = admin.getTableDescriptor(tableName);
-    HColumnDescriptor[] columnFamilies = descriptor.getColumnFamilies();
+    TableDescriptor descriptor = admin.getDescriptor(tableName);
+    ColumnFamilyDescriptor[] columnFamilies = descriptor.getColumnFamilies();
     Assert.assertEquals(2, columnFamilies.length);
     Assert.assertEquals(Bytes.toString(COLUMN_FAMILY), columnFamilies[0].getNameAsString());
   }

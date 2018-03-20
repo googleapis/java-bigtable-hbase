@@ -119,15 +119,17 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   @Override
   public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
-    return new CheckAndMutateBuilderImpl(row, family);
+    return new CheckAndMutateBuilderImpl(client, hbaseAdapter, row, family);
   }
 
-
-  private final class CheckAndMutateBuilderImpl implements CheckAndMutateBuilder {
+  final static class CheckAndMutateBuilderImpl implements CheckAndMutateBuilder {
 
     private final CheckAndMutateUtil.RequestBuilder builder;
+    private final BigtableDataClient client;
 
-    CheckAndMutateBuilderImpl(byte[] row, byte[] family) {
+    public CheckAndMutateBuilderImpl(BigtableDataClient client, HBaseRequestAdapter hbaseAdapter,
+        byte[] row, byte[] family) {
+      this.client = client;
       this.builder = new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
     }
 

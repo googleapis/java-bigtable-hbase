@@ -38,6 +38,7 @@ import org.junit.runners.Suite;
     TestBufferedMutator.class,
     TestCheckAndMutate.class,
     TestCheckAndMutateHBase2.class,
+    TestCheckAndMutateHBase2Builder.class,
     TestColumnFamilyAdmin.class,
     TestCreateTable.class,
     TestCreateTableHBase2.class,

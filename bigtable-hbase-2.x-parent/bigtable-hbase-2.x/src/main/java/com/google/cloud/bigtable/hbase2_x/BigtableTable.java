@@ -17,15 +17,12 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.hbase.CompareOperator;
-import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 
@@ -67,7 +64,6 @@ public class BigtableTable extends AbstractBigtableTable {
     return super.checkAndDelete(row, family, qualifier, toCompareOp(compareOp), value, delete);
   }
 
-
   @Override
   public boolean checkAndMutate(final byte[] row, final byte[] family, final byte[] qualifier,
       final CompareOperator compareOp, final byte[] value, final RowMutations rm)
@@ -88,7 +84,7 @@ public class BigtableTable extends AbstractBigtableTable {
 
   @Override
   public TableDescriptor getDescriptor() throws IOException {
-    return null;
+    return super.getTableDescriptor();
   }
 
   @Override
@@ -124,18 +120,64 @@ public class BigtableTable extends AbstractBigtableTable {
   @Override
   public void setReadRpcTimeout(int arg0) {
     // TODO Auto-generated method stub
-
   }
 
   @Override
   public void setWriteRpcTimeout(int arg0) {
     // TODO Auto-generated method stub
-
   }
 
   @Override
-  public CheckAndMutateBuilder checkAndMutate(byte[] arg0, byte[] arg1) {
-    throw new UnsupportedOperationException("checkAndMutate");
+  public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
+    BigtableDataClient asyncClient = new BigtableDataClient(this.client);
+    final BigtableAsyncTable.CheckAndMutateBuilderImpl delegate =
+        new BigtableAsyncTable.CheckAndMutateBuilderImpl(asyncClient, hbaseAdapter, row, family);
+    return new CheckAndMutateBuilder() {
+
+      @Override public CheckAndMutateBuilder qualifier(byte[] qualifier) {
+        delegate.qualifier(qualifier);
+        return this;
+      }
+
+      @Override public CheckAndMutateBuilder ifNotExists() {
+        delegate.ifNotExists();
+        return this;
+      }
+
+      @Override
+      public CheckAndMutateBuilder ifMatches(CompareOperator compareOperator, byte[] value) {
+        delegate.ifMatches(compareOperator, value);
+        return this;
+      }
+
+      @Override public boolean thenPut(Put put) throws IOException {
+        return get(delegate.thenPut(put), "Put");
+      }
+
+      @Override public boolean thenDelete(Delete delete) throws IOException {
+        return get(delegate.thenDelete(delete), "Delete");
+      }
+
+      @Override public boolean thenMutate(RowMutations rowMutations) throws IOException {
+        return get(delegate.thenMutate(rowMutations), "RowMutations");
+      }
+
+      private boolean get(CompletableFuture<Boolean> future, String type) throws IOException {
+        try {
+          return future.get();
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+          throw new IOException(type + " was interrputed", e);
+        } catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof IOException) {
+            throw (IOException) cause;
+          }
+          throw new IOException("Exception occurred in " + type, cause);
+        }
+      }
+
+    };
   }
 
 }
