@@ -38,7 +38,8 @@ public class TestCheckAndMutateHBase2 extends AbstractTestCheckAndMutate {
   @Override
   protected boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, CompareOp op,
       byte[] value, Put put) throws IOException {
-    return getDefaultTable().checkAndPut(row, family, qualifier, translate(op), value, put);
+    return getDefaultTable()
+        .checkAndPut(row, family, qualifier, CompareOperator.valueOf(op.name()), value, put);
   }
 
   @Override
@@ -50,28 +51,8 @@ public class TestCheckAndMutateHBase2 extends AbstractTestCheckAndMutate {
   @Override
   protected boolean checkAndMutate(byte[] row, byte[] family, byte[] qualifier, CompareOp op,
       byte[] value, RowMutations rm) throws IOException {
-    return getDefaultTable().checkAndMutate(row, family, qualifier, translate(op), value, rm);
-  }
-
-  public static CompareOperator translate(CompareOp op) {
-    switch(op){
-    case EQUAL:
-      return CompareOperator.EQUAL;
-    case GREATER:
-      return CompareOperator.GREATER;
-    case GREATER_OR_EQUAL:
-      return CompareOperator.GREATER_OR_EQUAL;
-    case LESS:
-      return CompareOperator.LESS;
-    case LESS_OR_EQUAL:
-      return CompareOperator.LESS_OR_EQUAL;
-    case NO_OP:
-      return CompareOperator.NO_OP;
-    case NOT_EQUAL:
-      return CompareOperator.NOT_EQUAL;
-    default:
-      throw new IllegalStateException("Could not translate operator: " + op);
-    }
+    return getDefaultTable().checkAndMutate(row, family, qualifier,
+        CompareOperator.valueOf(op.name()), value, rm);
   }
 
 }
