@@ -119,7 +119,7 @@ public class EndToEndIT {
   }
 
   @Test
-  public void testExportImport() throws IOException {
+  public void testExportImport() throws Exception {
     // Create a table, populate it & export it
     final List<Put> testData = Arrays.asList(
         new Put(Bytes.toBytes("row_key_1"))
