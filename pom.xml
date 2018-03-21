@@ -65,6 +65,7 @@ limitations under the License.
         <guava.version>19.0</guava.version>
         <google.auth.library.version>0.9.0</google.auth.library.version>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
+        <threetenbp.version>1.3.3</threetenbp.version>
 
 
         <beam.version>2.3.0</beam.version>
