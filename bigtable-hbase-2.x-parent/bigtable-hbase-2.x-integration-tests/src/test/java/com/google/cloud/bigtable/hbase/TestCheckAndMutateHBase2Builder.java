@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.client.Table.CheckAndMutateBuilder;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
@@ -80,7 +81,7 @@ public class TestCheckAndMutateHBase2Builder extends AbstractTestCheckAndMutate 
     if (value == null && op != CompareOp.NOT_EQUAL) {
       return builder.ifNotExists();
     } else {
-      return builder.ifMatches(TestCheckAndMutateHBase2.translate(op), value);
+      return builder.ifMatches(CompareOperator.valueOf(op.name()), value);
     }
   }
 }
