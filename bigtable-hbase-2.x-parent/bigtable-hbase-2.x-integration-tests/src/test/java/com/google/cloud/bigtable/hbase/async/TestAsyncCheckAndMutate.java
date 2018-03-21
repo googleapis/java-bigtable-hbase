@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.AsyncTable.CheckAndMutateBuilder;
 import org.apache.hadoop.hbase.client.Delete;
@@ -33,7 +34,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.cloud.bigtable.hbase.AbstractTestCheckAndMutate;
-import com.google.cloud.bigtable.hbase.TestCheckAndMutateHBase2;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 @RunWith(JUnit4.class)
@@ -101,7 +101,7 @@ public class TestAsyncCheckAndMutate extends AbstractTestCheckAndMutate {
     if (value == null && op != CompareOp.NOT_EQUAL) {
       return builder.ifNotExists();
     } else {
-      return builder.ifMatches(TestCheckAndMutateHBase2.translate(op), value);
+      return builder.ifMatches(CompareOperator.valueOf(op.name()), value);
     }
   }
 
