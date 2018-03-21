@@ -118,8 +118,6 @@ public class ImportJob {
 
   @VisibleForTesting
   static Pipeline buildPipeline(ImportOptions opts) throws Exception {
-    System.out.println("building pipeline");
-
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
     SequenceFileSource<ImmutableBytesWritable, Result> source = new SequenceFileSource<>(
