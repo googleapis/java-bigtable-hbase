@@ -43,8 +43,8 @@ public class TableAdapter {
   /**
    * <p>Constructor for TableAdapter.</p>
    *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param columnDescriptorAdapter a {@link com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter} object.
+   * @param bigtableInstanceName a {@link BigtableInstanceName} object.
+   * @param columnDescriptorAdapter a {@link ColumnDescriptorAdapter} object.
    */
   public TableAdapter(BigtableInstanceName bigtableInstanceName,
       ColumnDescriptorAdapter columnDescriptorAdapter) {
