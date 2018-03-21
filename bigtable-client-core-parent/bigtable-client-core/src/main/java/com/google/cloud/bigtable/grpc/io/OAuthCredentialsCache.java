@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.concurrent.GuardedBy;
+import org.threeten.bp.Duration;
 
 /**
  * This class caches calls to {@link OAuth2Credentials#refreshAccessToken()}.  It asynchronously refreshes
@@ -181,9 +182,9 @@ public class OAuthCredentialsCache {
     return headerCache;
   }
 
-  HeaderToken getHeader(long timeoutMs) {
+  HeaderToken getHeader(Duration timeout) {
     try {
-      return getHeaderUnsafe(timeoutMs).getToken();
+      return getHeaderUnsafe(timeout).getToken();
     } catch (Exception e) {
       LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
       Status status = Status.UNAUTHENTICATED
@@ -195,9 +196,8 @@ public class OAuthCredentialsCache {
 
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
-   * @param timeoutMs
    */
-  private HeaderCacheElement getHeaderUnsafe(long timeoutMs) {
+  private HeaderCacheElement getHeaderUnsafe(Duration timeout) {
     // Optimize for the common case: do a volatile read to peek for a Good cache value
     HeaderCacheElement headerCacheUnsync = this.headerCache;
 
@@ -211,7 +211,7 @@ public class OAuthCredentialsCache {
       case Expired:
       case Exception:
         // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
-        return syncRefresh(timeoutMs);
+        return syncRefresh(timeout);
       default:
         String message = "Could not process state: " + headerCacheUnsync.getCacheState();
         LOG.warn(message);
@@ -226,9 +226,9 @@ public class OAuthCredentialsCache {
    * been refreshed.
    * This method should not be called while holding the refresh lock
    */
-  private HeaderCacheElement syncRefresh(long timeoutMs) {
+  private HeaderCacheElement syncRefresh(Duration timeout) {
     try (Closeable ss = Tracing.getTracer().spanBuilder("CredentialsRefresh").startScopedSpan()) {
-      return asyncRefresh().get(timeoutMs, TimeUnit.MILLISECONDS);
+      return asyncRefresh().get(timeout.toMillis(), TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       LOG.warn("Interrupted while trying to refresh google credentials.", e);
       Thread.currentThread().interrupt();

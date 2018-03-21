@@ -33,6 +33,7 @@ import io.grpc.Status;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.threeten.bp.Duration;
 
 /**
  * Client interceptor that authenticates all calls by binding header data provided by a credential.
@@ -54,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor {
   private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
 
-  public static int TIMEOUT_SECONDS = 15;
+  public static Duration TIMEOUT = Duration.ofSeconds(15);
 
   @VisibleForTesting
   static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
@@ -120,13 +121,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
-        long timeoutMs = -1;
+        final Duration timeout;
         if (callOptions.getDeadline() != null) {
-          timeoutMs = callOptions.getDeadline().timeRemaining(TimeUnit.MILLISECONDS);
+          timeout = Duration.ofMillis(callOptions.getDeadline().timeRemaining(TimeUnit.MILLISECONDS));
         } else {
-          timeoutMs = TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS);
+          timeout = TIMEOUT;
         }
-        HeaderToken token = store.getHeader(timeoutMs);
+        HeaderToken token = store.getHeader(timeout);
 
         if (!token.getStatus().isOk()) {
           unauthorized = true;

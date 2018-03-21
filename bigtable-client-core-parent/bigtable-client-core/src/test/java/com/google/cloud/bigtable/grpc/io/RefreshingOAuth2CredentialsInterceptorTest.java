@@ -40,6 +40,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.threeten.bp.Duration;
 
 
 /**
@@ -104,7 +105,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     public void testDefaultDeadline() throws IOException {
         initializeOk();
         sendRequest(CallOptions.DEFAULT);
-        assertEquals(RefreshingOAuth2CredentialsInterceptor.TIMEOUT_SECONDS * 1000, getDeadlineMs());
+        assertEquals(RefreshingOAuth2CredentialsInterceptor.TIMEOUT.toMillis(), getDeadlineMs());
     }
 
     @Test
@@ -128,9 +129,9 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     }
 
     private long getDeadlineMs() {
-        ArgumentCaptor<Long> timeoutCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Duration> timeoutCaptor = ArgumentCaptor.forClass(Duration.class);
         verify(mockCache, times(1)).getHeader(timeoutCaptor.capture());
-        return timeoutCaptor.getValue();
+        return timeoutCaptor.getValue().toMillis();
     }
 
     @Test
@@ -141,7 +142,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         Status grpcStatus = Status.UNAUTHENTICATED;
 
         // Something bad happened, and authentication could not be established
-        when(mockCache.getHeader(anyInt()))
+        when(mockCache.getHeader(any()))
                 .thenReturn(new OAuthCredentialsCache.HeaderToken(grpcStatus, null));
 
         ClientCall<ReadRowsRequest, ReadRowsResponse> call = underTest.interceptCall(
@@ -218,7 +219,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     }
 
     private void initializeOk() {
-        when(mockCache.getHeader(anyInt()))
+        when(mockCache.getHeader(any()))
                 .thenReturn(new OAuthCredentialsCache.HeaderToken(Status.OK, HEADER));
     }
 
