@@ -146,6 +146,8 @@ limitations under the License.
                   <exclude>junit:junit</exclude>
                   <exclude>org.hamcrest:hamcrest-core</exclude>
                   <exclude>javax.inject:javax.inject</exclude>
+                  <exclude>org.apache.htrace:htrace-core4</exclude>
+                  <exclude>org.apache.yetus:audience-annotations</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
