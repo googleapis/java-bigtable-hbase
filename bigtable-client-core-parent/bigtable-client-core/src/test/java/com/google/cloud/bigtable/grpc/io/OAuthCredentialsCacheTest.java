@@ -184,9 +184,9 @@ public class OAuthCredentialsCacheTest {
     setTimeInMillieconds(10);
 
     // Second call - return stale token, but schedule refresh
-    OAuthCredentialsCache.HeaderToken secondResult = underTest.getHeader(TIMEOUT);
-    Assert.assertEquals(CacheState.Stale, underTest.getHeaderCache().getCacheState());
-    Assert.assertThat(secondResult.getHeader(), containsString("stale"));
+    HeaderCacheElement secondResult = underTest.getHeaderUnsafe(TIMEOUT);
+    Assert.assertEquals(CacheState.Stale, secondResult.getCacheState());
+    Assert.assertThat(secondResult.getToken().getHeader(), containsString("stale"));
 
     // forward to expired
     setTimeInMillieconds(expires);
