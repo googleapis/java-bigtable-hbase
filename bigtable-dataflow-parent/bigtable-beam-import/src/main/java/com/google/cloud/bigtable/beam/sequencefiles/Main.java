@@ -15,9 +15,30 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.common.base.Throwables;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import javax.annotation.Nullable;
+import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
+import org.apache.beam.sdk.io.FileBasedSource;
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.options.Description;
+import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.values.KV;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.io.serializer.WritableSerialization;
 
 /**
  * Entry point for import/export job submission.
@@ -39,6 +60,9 @@ public class Main {
         break;
       case "import":
         ImportJob.main(subArgs);
+        break;
+      case "create-table":
+        CreateTableHelper.main(subArgs);
         break;
       default:
         usage();
