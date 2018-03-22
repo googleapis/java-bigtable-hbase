@@ -29,27 +29,21 @@ import java.util.regex.Pattern;
 
 import com.google.bigtable.admin.v2.*;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
-import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
-import org.apache.hadoop.hbase.client.MasterSwitchType;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.SnapshotType;
@@ -216,14 +210,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  public TableDescriptor getDescriptor(TableName tableName)
-      throws TableNotFoundException, IOException {
-    HTableDescriptor[] descriptors =
-        getTableDescriptorsByTableName(new ArrayList<TableName>(Arrays.asList(tableName)));
-    if (descriptors != null && descriptors.length > 0) {
-      return descriptors[0];
-    }
-    return null;
+  public TableDescriptor getDescriptor(TableName tableName) throws IOException {
+    return getTableDescriptor(tableName);
   }
 
   /** {@inheritDoc} */
@@ -257,7 +245,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     Modification.Builder modification = Modification.newBuilder().setId(columnName)
         .setCreate(new ColumnDescriptorAdapter()
         .adapt((HColumnDescriptor) columnFamily).build());
-    return modifyColumnAsync(tableName, columnName, "add", modification);
+    return modifyColumnAsync(tableName, modification);
   }
 
   @Override
@@ -271,12 +259,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     final String columnNameStr = Bytes.toString(columnName);
     Modification.Builder modification = Modification.newBuilder().setId(columnNameStr)
         .setDrop(true);
-    return modifyColumnAsync(tableName, columnNameStr, "delete", modification);
+    return modifyColumnAsync(tableName, modification);
   }
 
 
-  protected CompletableFuture<Void> modifyColumnAsync(TableName tableName, String columnName,
-      String modificationType, Modification.Builder modification) {
+  protected CompletableFuture<Void> modifyColumnAsync(TableName tableName, Modification.Builder modification) {
     ModifyColumnFamiliesRequest.Builder modifyColumnBuilder = ModifyColumnFamiliesRequest
         .newBuilder().addModifications(modification).setName(toBigtableName(tableName));
     return FutureUtils.toCompletableFuture(
@@ -351,14 +338,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     return response;
   }
 
-
   @Override
   public Future<Void> modifyColumnFamilyAsync(TableName tableName, 
       ColumnFamilyDescriptor columnFamily) throws IOException {
     String columnName = columnFamily.getNameAsString();
     Modification.Builder modification = Modification.newBuilder().setId(columnName)
         .setUpdate(new ColumnDescriptorAdapter().adapt((HColumnDescriptor) columnFamily).build());
-    return modifyColumnAsync(tableName, columnName, "update", modification);
+    return modifyColumnAsync(tableName, modification);
   }
 
   @Override
@@ -390,6 +376,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   /* ******* Unsupported methods *********** */
+
   @Override
   public boolean abortProcedure(long arg0, boolean arg1) throws IOException {
     throw new UnsupportedOperationException("abortProcedure");

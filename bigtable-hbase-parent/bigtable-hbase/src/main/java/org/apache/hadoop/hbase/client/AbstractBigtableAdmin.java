@@ -281,8 +281,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
-  public HTableDescriptor getTableDescriptor(TableName tableName)
-      throws TableNotFoundException, IOException {
+  public HTableDescriptor getTableDescriptor(TableName tableName) throws IOException {
     if (tableName == null) {
       return null;
     }

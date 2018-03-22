@@ -274,6 +274,96 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     });
   }
 
+  // ****** TO BE IMPLEMENTED [start] ******
+
+  @Override
+  public CompletableFuture<Void> deleteColumnFamily(TableName arg0, byte[] arg1) {
+    throw new UnsupportedOperationException("deleteColumnFamily"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> deleteSnapshot(String arg0) {
+    throw new UnsupportedOperationException("deleteSnapshot"); // TODO
+
+  }
+
+  @Override
+  public CompletableFuture<Void> deleteTableSnapshots(Pattern arg0, Pattern arg1) {
+    throw new UnsupportedOperationException("deleteTableSnapshots"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> modifyColumnFamily(TableName arg0, ColumnFamilyDescriptor arg1) {
+    throw new UnsupportedOperationException("modifyColumnFamily"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> restoreSnapshot(String arg0) {
+    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> restoreSnapshot(String arg0, boolean arg1) {
+    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> truncateTable(TableName arg0, boolean arg1) {
+    throw new UnsupportedOperationException("truncateTable"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> deleteSnapshots() {
+    throw new UnsupportedOperationException("deleteSnapshots"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> deleteSnapshots(Pattern arg0) {
+    throw new UnsupportedOperationException("deleteSnapshots"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> deleteTableSnapshots(Pattern arg0) {
+    throw new UnsupportedOperationException("deleteTableSnapshots"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> cloneSnapshot(String arg0, TableName arg1) {
+    throw new UnsupportedOperationException("cloneSnapshot"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<SnapshotDescription>> listSnapshots() {
+    throw new UnsupportedOperationException("listSnapshots"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<SnapshotDescription>> listSnapshots(Pattern arg0) {
+    throw new UnsupportedOperationException("listSnapshots"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern arg0) {
+    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Void> modifyTable(TableDescriptor arg0) {
+    throw new UnsupportedOperationException("modifyTable"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isTableAvailable(TableName arg0) {
+    throw new UnsupportedOperationException("isTableAvailable"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<RegionInfo>> getRegions(TableName arg0) {
+    throw new UnsupportedOperationException("getRegions"); // TODO
+  }
+
+  // ****** TO BE IMPLEMENTED [end] ******
+
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Boolean> abortProcedure(long arg0, boolean arg1) {
@@ -314,11 +404,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Void> cloneSnapshot(String arg0, TableName arg1) {
-    throw new UnsupportedOperationException("cloneSnapshot"); // TODO
-  }
-
-  @Override
   public CompletableFuture<Void> compactRegionServer(ServerName arg0) {
     throw new UnsupportedOperationException("compactRegionServer"); // TODO
   }
@@ -333,25 +418,10 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     throw new UnsupportedOperationException("decommissionRegionServers"); // TODO
   }
 
-  @Override
-  public CompletableFuture<Void> deleteColumnFamily(TableName arg0, byte[] arg1) {
-    throw new UnsupportedOperationException("deleteColumnFamily"); // TODO
-  }
 
   @Override
   public CompletableFuture<Void> deleteNamespace(String arg0) {
     throw new UnsupportedOperationException("deleteNamespace"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Void> deleteSnapshot(String arg0) {
-    throw new UnsupportedOperationException("deleteSnapshot"); // TODO
-
-  }
-
-  @Override
-  public CompletableFuture<Void> deleteTableSnapshots(Pattern arg0, Pattern arg1) {
-    throw new UnsupportedOperationException("deleteTableSnapshots"); // TODO
   }
 
   @Override
@@ -491,11 +561,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Void> modifyColumnFamily(TableName arg0, ColumnFamilyDescriptor arg1) {
-    throw new UnsupportedOperationException("modifyColumnFamily"); // TODO
-  }
-
-  @Override
   public CompletableFuture<Void> modifyNamespace(NamespaceDescriptor arg0) {
     throw new UnsupportedOperationException("modifyNamespace"); // TODO
   }
@@ -518,16 +583,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> removeReplicationPeer(String arg0) {
     throw new UnsupportedOperationException("removeReplicationPeer"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Void> restoreSnapshot(String arg0) {
-    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Void> restoreSnapshot(String arg0, boolean arg1) {
-    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
   }
 
   @Override
@@ -578,11 +633,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> stopRegionServer(ServerName arg0) {
     throw new UnsupportedOperationException("stopRegionServer"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Void> truncateTable(TableName arg0, boolean arg1) {
-    throw new UnsupportedOperationException("truncateTable"); // TODO
   }
 
   @Override
@@ -677,36 +727,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     throw new UnsupportedOperationException("coprocessorService"); // TODO
   }
 
-  /*
-   * This method should be implemented.
-   * (non-Javadoc)
-   * @see org.apache.hadoop.hbase.client.AsyncAdmin#deleteSnapshots()
-   */
-  @Override
-  public CompletableFuture<Void> deleteSnapshots() {
-    throw new UnsupportedOperationException("deleteSnapshots"); // TODO
-  }
-
-  /*
-   * This method should be implemented.
-   * (non-Javadoc)
-   * @see org.apache.hadoop.hbase.client.AsyncAdmin#deleteSnapshots(java.util.regex.Pattern)
-   */
-  @Override
-  public CompletableFuture<Void> deleteSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("deleteSnapshots"); // TODO
-  }
-
-  /*
-   * This method should be implemented.
-   * (non-Javadoc)
-   * @see org.apache.hadoop.hbase.client.AsyncAdmin#deleteTableSnapshots(java.util.regex.Pattern)
-   */
-  @Override
-  public CompletableFuture<Void> deleteTableSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("deleteTableSnapshots"); // TODO
-  }
-
   @Override
   public CompletableFuture<Void> disableTableReplication(TableName arg0) {
     throw new UnsupportedOperationException("disableTableReplication"); // TODO
@@ -754,11 +774,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<List<RegionInfo>> getRegions(TableName arg0) {
-    throw new UnsupportedOperationException("getRegions"); // TODO
-  }
-
-  @Override
   public CompletableFuture<Boolean> isBalancerEnabled() {
     throw new UnsupportedOperationException("isBalancerEnabled"); // TODO
   }
@@ -789,11 +804,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Boolean> isTableAvailable(TableName arg0) {
-    throw new UnsupportedOperationException("isTableAvailable"); // TODO
-  }
-
-  @Override
   public CompletableFuture<List<ReplicationPeerDescription>> listReplicationPeers() {
     throw new UnsupportedOperationException("listReplicationPeers"); // TODO
   }
@@ -801,26 +811,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<List<ReplicationPeerDescription>> listReplicationPeers(Pattern arg0) {
     throw new UnsupportedOperationException("listReplicationPeers"); // TODO
-  }
-
-  /*
-   * This method should be implemented.
-   * (non-Javadoc)
-   * @see org.apache.hadoop.hbase.client.AsyncAdmin#listSnapshots()
-   */
-  @Override
-  public CompletableFuture<List<SnapshotDescription>> listSnapshots() {
-    throw new UnsupportedOperationException("listSnapshots"); // TODO
-  }
-
-  /*
-   * This method should be implemented.
-   * (non-Javadoc)
-   * @see org.apache.hadoop.hbase.client.AsyncAdmin#listSnapshots(java.util.regex.Pattern)
-   */
-  @Override
-  public CompletableFuture<List<SnapshotDescription>> listSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("listSnapshots"); // TODO
   }
 
   @Override
@@ -831,11 +821,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<List<TableName>> listTableNamesByNamespace(String arg0) {
     throw new UnsupportedOperationException("listTableNamesByNamespace"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
   }
 
   @Override
@@ -861,11 +846,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Boolean> mergeSwitch(boolean arg0) {
     throw new UnsupportedOperationException("mergeSwitch"); // TODO
-  }
-
-  @Override
-  public CompletableFuture<Void> modifyTable(TableDescriptor arg0) {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
   }
 
   @Override
