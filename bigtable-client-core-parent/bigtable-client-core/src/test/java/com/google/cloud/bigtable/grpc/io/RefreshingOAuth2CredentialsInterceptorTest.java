@@ -142,7 +142,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         Status grpcStatus = Status.UNAUTHENTICATED;
 
         // Something bad happened, and authentication could not be established
-        when(mockCache.getHeader(any()))
+        when(mockCache.getHeader(any(Duration.class)))
                 .thenReturn(new OAuthCredentialsCache.HeaderToken(grpcStatus, null));
 
         ClientCall<ReadRowsRequest, ReadRowsResponse> call = underTest.interceptCall(
@@ -219,7 +219,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     }
 
     private void initializeOk() {
-        when(mockCache.getHeader(any()))
+        when(mockCache.getHeader(any(Duration.class)))
                 .thenReturn(new OAuthCredentialsCache.HeaderToken(Status.OK, HEADER));
     }
 
