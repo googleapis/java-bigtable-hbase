@@ -197,7 +197,8 @@ public class OAuthCredentialsCache {
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
-  private HeaderCacheElement getHeaderUnsafe(Duration timeout) {
+  @VisibleForTesting
+  HeaderCacheElement getHeaderUnsafe(Duration timeout) {
     // Optimize for the common case: do a volatile read to peek for a Good cache value
     HeaderCacheElement headerCacheUnsync = this.headerCache;
 
