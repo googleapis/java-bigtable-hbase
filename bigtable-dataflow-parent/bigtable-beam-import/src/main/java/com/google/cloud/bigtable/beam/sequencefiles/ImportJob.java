@@ -22,20 +22,27 @@ import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
+import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PDone;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
 public class ImportJob {
   private static final Log LOG = LogFactory.getLog(ImportJob.class);
+
+  static final long BUNDLE_SIZE = 100 * 1024 * 1024;
 
   public interface ImportOptions extends GcpOptions {
     //TODO: switch to ValueProviders
@@ -97,13 +104,24 @@ public class ImportJob {
   static Pipeline buildPipeline(ImportOptions opts) {
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
-    SequenceFileSource<ImmutableBytesWritable, Result> source = new SequenceFileSource<>(
+    pipeline
+        .apply("Read Sequence File", Read.from(new ShuffledSource<>(createSource(opts))))
+        .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
+        .apply("Write to Bigtable", createSink(opts));
+
+    return pipeline;
+  }
+
+  static SequenceFileSource<ImmutableBytesWritable, Result> createSource(ImportOptions opts) {
+    return new SequenceFileSource<>(
         opts.getSourcePattern(),
         ImmutableBytesWritable.class, WritableSerialization.class,
         Result.class, ResultSerialization.class,
-        100 * 1024 * 1024
+        BUNDLE_SIZE
     );
+  }
 
+  static PTransform<PCollection<Mutation>, PDone> createSink(ImportOptions opts) {
     CloudBigtableTableConfiguration.Builder configBuilder = new CloudBigtableTableConfiguration.Builder()
         .withProjectId(opts.getBigtableProject())
         .withInstanceId(opts.getBigtableInstanceId())
@@ -113,11 +131,6 @@ public class ImportJob {
       configBuilder.withAppProfileId(opts.getBigtableAppProfileId());
     }
 
-    pipeline
-        .apply("Read Sequence File", Read.from(new ShuffledSource<>(source)))
-        .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
-        .apply("Write to Bigtable", CloudBigtableIO.writeToTable(configBuilder.build()));
-
-    return pipeline;
+    return CloudBigtableIO.writeToTable(configBuilder.build());
   }
 }

@@ -20,7 +20,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 
 /**
- * Entry point for import/export job submission.
+ * Entry point for create-table/import/export job submission.
  *
  * @author igorbernstein2
  */
@@ -40,6 +40,9 @@ public class Main {
       case "import":
         ImportJob.main(subArgs);
         break;
+      case "create-table":
+        CreateTableHelper.main(subArgs);
+        break;
       default:
         usage();
         System.exit(1);
@@ -58,7 +61,7 @@ public class Main {
 
     System.out.printf(
         "java -jar %s <action> <action_params>\n"
-            + "Where <action> can be 'export' or 'import'. To get further help, run: \n"
+            + "Where <action> can be 'export', 'import' or 'create-table'. To get further help, run: \n"
             + "java -jar %s <action> --help\n",
         jarName,
         jarName

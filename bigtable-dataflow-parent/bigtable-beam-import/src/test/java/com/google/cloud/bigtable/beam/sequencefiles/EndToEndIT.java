@@ -17,10 +17,12 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.cloud.bigtable.beam.sequencefiles.CreateTableHelper.CreateTableOpts;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.testing.BigtableTableUtils;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
@@ -119,7 +121,7 @@ public class EndToEndIT {
   }
 
   @Test
-  public void testExportImport() throws IOException {
+  public void testExportImport() throws Exception {
     // Create a table, populate it & export it
     final List<Put> testData = Arrays.asList(
         new Put(Bytes.toBytes("row_key_1"))
@@ -167,7 +169,7 @@ public class EndToEndIT {
     final String destTableId = tableId + "-verify";
 
     try (BigtableTableUtils destTable = new BigtableTableUtils(connection, destTableId, CF)) {
-      destTable.createEmptyTable();
+      destTable.deleteTable();
 
       DataflowPipelineOptions pipelineOpts = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
       pipelineOpts.setRunner(DataflowRunner.class);
@@ -179,6 +181,10 @@ public class EndToEndIT {
       importOpts.setBigtableInstanceId(instanceId);
       importOpts.setBigtableTableId(destTableId);
       importOpts.setSourcePattern(StaticValueProvider.of(workDir + "/part-*"));
+
+      CreateTableHelper.CreateTableOpts createOpts = pipelineOpts.as(CreateTableHelper.CreateTableOpts.class);
+      createOpts.setFamilies(ImmutableList.of(CF));
+      CreateTableHelper.createTable(createOpts);
 
       State state = ImportJob.buildPipeline(importOpts).run().waitUntilFinish();
       Assert.assertEquals(State.DONE, state);

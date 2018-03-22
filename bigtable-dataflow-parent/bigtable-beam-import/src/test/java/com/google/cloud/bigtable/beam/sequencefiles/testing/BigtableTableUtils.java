@@ -67,6 +67,14 @@ public class BigtableTableUtils implements AutoCloseable {
     admin.createTable(tableDescriptor);
   }
 
+  /** Delete the table if it exists */
+  public void deleteTable() throws IOException {
+    if (admin.tableExists(tableName)) {
+      admin.disableTable(tableName);
+      admin.deleteTable(tableName);
+    }
+  }
+
   /**
    * Returns true if table already exists.
    */
