@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -95,6 +96,20 @@ public class TestFilters extends AbstractTestFilters {
       Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], valA));
     }
   }
+  
+  /**
+   * This test case is used to validate TimestampRangeFilter with Integer.MAX_VALUE #1552
+   * 
+   * @throws IOException
+   */
+  @Test
+  public void testTimestampRangeFilterWithMaxVal() throws IOException {
+	  FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL,
+			  new TimestampRangeFilter(10L, Integer.MAX_VALUE),
+			  new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("value"))));
+	  TimestampRangeFilter expected = new TimestampRangeFilter(10L, Integer.MAX_VALUE); 
+	  Assert.assertEquals(expected, filterList.getFilters().get(0));
+  }
 
   @Override
   protected void getGetAddVersion(Get get, int version) throws IOException {
@@ -105,5 +120,4 @@ public class TestFilters extends AbstractTestFilters {
   protected void scanAddVersion(Scan scan, int version){
     scan.setMaxVersions(version);
   }
-
 }
