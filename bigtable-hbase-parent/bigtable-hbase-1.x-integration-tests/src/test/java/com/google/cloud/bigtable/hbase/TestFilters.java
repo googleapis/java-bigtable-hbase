@@ -104,11 +104,34 @@ public class TestFilters extends AbstractTestFilters {
    */
   @Test
   public void testTimestampRangeFilterWithMaxVal() throws IOException {
-	  FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL,
-			  new TimestampRangeFilter(10L, Integer.MAX_VALUE),
-			  new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("value"))));
-	  TimestampRangeFilter expected = new TimestampRangeFilter(10L, Integer.MAX_VALUE); 
-	  Assert.assertEquals(expected, filterList.getFilters().get(0));
+	    // Initialize
+	    int numCols = Integer.MAX_VALUE;
+	    Long start = (long) (Integer.MAX_VALUE - 2);
+	    String goodValue = "includeThisValue";
+	    Table table = getDefaultTable();
+	    byte[] rowKey = dataHelper.randomData("testRow-TimestampRange-");
+	    Put put = new Put(rowKey);
+	    for (Long i = start; i < numCols; ++i) {
+	      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
+	    }
+	    table.put(put);
+
+	    // Filter for results
+	    FilterList filter = new FilterList(FilterList.Operator.MUST_PASS_ALL,
+				  new TimestampRangeFilter(start, Integer.MAX_VALUE),
+				  new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("test_family"))));
+		  
+	    Get get = new Get(rowKey).setFilter(filter);
+	    Result result = table.get(get);
+	    Cell[] cells = result.rawCells();
+	    Assert.assertEquals("Should have all cells.", 2, cells.length);
+
+	    long[] timestamps =
+	        new long[] { cells[0].getTimestamp(), cells[1].getTimestamp() };
+	    Arrays.sort(timestamps);
+	    Assert.assertArrayEquals(new long[] { start, Integer.MAX_VALUE-1 }, timestamps);
+
+	    table.close();
   }
 
   @Override
