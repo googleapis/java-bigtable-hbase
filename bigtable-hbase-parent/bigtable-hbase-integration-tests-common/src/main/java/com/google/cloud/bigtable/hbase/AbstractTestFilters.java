@@ -17,11 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1076,7 +1075,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     assertWhileMatchFilterResult(qualA, table, scan, expected);
   }
 
- 
+
 
   @Test
   public void testWhileMatchFilter_singleChained() throws IOException {
@@ -1979,24 +1978,42 @@ public abstract class AbstractTestFilters extends AbstractTest {
   }
 
   protected final void assertMatchingRow(Result result, byte[] key) {
-    assertNotNull(result);
-    assertTrue(CellUtil.matchingRow(result.rawCells()[0], key));
+    assertNotNull(String.format("Got null result for key %s", toFuzzyKeyString(key)), result);
+    byte[] actualKey = CellUtil.cloneRow(result.rawCells()[0]);
+    assertArrayEquals(String.format("Expected '%s', but was '%s'",
+            toFuzzyKeyString(key),
+            toFuzzyKeyString(actualKey)),
+        key, actualKey);
+  }
+
+  private final String toFuzzyKeyString(byte[] bytes) {
+    StringBuilder sb = new StringBuilder("[");
+    String prefix = "";
+    for (byte b : bytes) {
+      sb.append(prefix).append((int) b);
+      prefix = ", ";
+    }
+    return sb.append("]").toString();
   }
 
   private static byte[] createKey(int... values) {
-    byte[] bytes = new byte[4 * values.length];
+    byte[] bytes = new byte[values.length];
     for (int i = 0; i < values.length; i++) {
-      System.arraycopy(Bytes.toBytes(values[i]), 0, bytes, 4 * i, 4);
+      bytes[i] = (byte) values[i];
     }
     return bytes;
   }
 
-  protected Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
+  private static Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
       Filter f) throws IOException {
-    Scan scan = new Scan(startRow, endRow).setFilter(f).addColumn(COLUMN_FAMILY, qual);
-    ResultScanner scanner = t.getScanner(scan);
-    Result[] results = scanner.next(10);
-    return results;
+    Scan scan = new Scan()
+        .withStartRow(startRow)
+        .withStopRow(endRow)
+        .setFilter(f)
+        .addColumn(COLUMN_FAMILY, qual);
+    try (ResultScanner scanner = t.getScanner(scan)) {
+      return scanner.next(10);
+    }
   }
 
   protected Table addDataForTesting(String rowKeyPrefix, byte[] qualA)
