@@ -32,7 +32,8 @@ import com.google.common.base.Strings;
  * @version $Id: $Id
  */
 //TODO: Perhaps break this down into smaller options objects?
-public class BigtableOptions implements Serializable {
+//TODO: This should be @Autovalue + Builder
+public class BigtableOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
@@ -71,112 +72,97 @@ public class BigtableOptions implements Serializable {
    * A mutable builder for BigtableConnectionOptions.
    */
   public static class Builder {
-    // Configuration that a user is required to set.
-    private String projectId;
-    private String userAgent;
 
-    private String instanceId;
-    private String appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
-
-    // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
-    private String dataHost = BIGTABLE_DATA_HOST_DEFAULT;
-    private String adminHost = BIGTABLE_ADMIN_HOST_DEFAULT;
-    private int port = BIGTABLE_PORT_DEFAULT;
-
-    private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
-
-    private BulkOptions bulkOptions;
-    private boolean usePlaintextNegotiation = false;
-    private boolean useCachedDataPool = false;
-
-    private RetryOptions retryOptions = new RetryOptions.Builder().build();
-    private CallOptionsConfig callOptionsConfig = new CallOptionsConfig.Builder().build();
-    // CredentialOptions.defaultCredentials() gets credentials from well known locations, such as
-    // the Google Compute Engine metadata service or gcloud configuration in other environments. A
-    // user can also override the default behavior with P12 or JSON configuration.
-    private CredentialOptions credentialOptions = CredentialOptions.defaultCredentials();
+    private BigtableOptions options = new BigtableOptions();
 
     public Builder() {
+      options = new BigtableOptions();
+      options.appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
+
+      // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
+      options.dataHost = BIGTABLE_DATA_HOST_DEFAULT;
+      options.adminHost = BIGTABLE_ADMIN_HOST_DEFAULT;
+      options.port = BIGTABLE_PORT_DEFAULT;
+
+      options.dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
+      options.usePlaintextNegotiation = false;
+      options.useCachedDataPool = false;
+
+      options.retryOptions = new RetryOptions.Builder().build();
+      options.callOptionsConfig = new CallOptionsConfig.Builder().build();
+      // CredentialOptions.defaultCredentials() gets credentials from well known locations, such as
+      // the Google Compute Engine metadata service or gcloud configuration in other environments. A
+      // user can also override the default behavior with P12 or JSON configuration.
+      options.credentialOptions = CredentialOptions.defaultCredentials();
+
     }
 
-    private Builder(BigtableOptions original) {
-      this.projectId = original.projectId;
-      this.instanceId = original.instanceId;
-      this.appProfileId = original.appProfileId;
-      this.userAgent = original.userAgent;
-      this.dataHost = original.dataHost;
-      this.adminHost = original.adminHost;
-      this.port = original.port;
-      this.credentialOptions = original.credentialOptions;
-      this.retryOptions = original.retryOptions;
-      this.dataChannelCount = original.dataChannelCount;
-      this.bulkOptions = original.bulkOptions;
-      this.usePlaintextNegotiation = original.usePlaintextNegotiation;
-      this.callOptionsConfig = original.callOptionsConfig;
+    private Builder(BigtableOptions options) {
+      this.options = options;
     }
 
     public Builder setAdminHost(String adminHost) {
-      this.adminHost = adminHost;
+      options.adminHost = adminHost;
       return this;
     }
 
     public Builder setDataHost(String dataHost) {
-      this.dataHost = dataHost;
+      options.dataHost = dataHost;
       return this;
     }
 
     public Builder setPort(int port) {
-      this.port = port;
+      options.port = port;
       return this;
     }
 
     public Builder setProjectId(String projectId) {
-      this.projectId = projectId;
+      options.projectId = projectId;
       return this;
     }
 
     public Builder setInstanceId(String instanceId) {
-      this.instanceId = instanceId;
+      options.instanceId = instanceId;
       return this;
     }
 
     public Builder setAppProfileId(String appProfileId) {
       Preconditions.checkNotNull(appProfileId);
-      this.appProfileId = appProfileId;
+      options.appProfileId = appProfileId;
       return this;
     }
 
     public Builder setCredentialOptions(CredentialOptions credentialOptions) {
-      this.credentialOptions = credentialOptions;
+      options.credentialOptions = credentialOptions;
       return this;
     }
 
     public Builder setUserAgent(String userAgent) {
-      this.userAgent = userAgent;
+      options.userAgent = userAgent;
       return this;
     }
 
     public Builder setDataChannelCount(int dataChannelCount) {
-      this.dataChannelCount = dataChannelCount;
+      options.dataChannelCount = dataChannelCount;
       return this;
     }
 
     public int getDataChannelCount() {
-      return dataChannelCount;
+      return options.dataChannelCount;
     }
 
     public Builder setRetryOptions(RetryOptions retryOptions) {
-      this.retryOptions = retryOptions;
+      options.retryOptions = retryOptions;
       return this;
     }
 
     public Builder setBulkOptions(BulkOptions bulkOptions) {
-      this.bulkOptions = bulkOptions;
+      options.bulkOptions = bulkOptions;
       return this;
     }
 
     public Builder setUsePlaintextNegotiation(boolean usePlaintextNegotiation) {
-      this.usePlaintextNegotiation = usePlaintextNegotiation;
+      options.usePlaintextNegotiation = usePlaintextNegotiation;
       return this;
     }
 
@@ -188,12 +174,12 @@ public class BigtableOptions implements Serializable {
      * @return this
      */
     public Builder setUseCachedDataPool(boolean useCachedDataPool) {
-      this.useCachedDataPool = useCachedDataPool;
+      options.useCachedDataPool = useCachedDataPool;
       return this;
     }
 
     public Builder setCallOptionsConfig(CallOptionsConfig callOptionsConfig) {
-      this.callOptionsConfig = callOptionsConfig;
+      options.callOptionsConfig = callOptionsConfig;
       return this;
     }
 
@@ -241,117 +227,56 @@ public class BigtableOptions implements Serializable {
     }
 
     public BigtableOptions build() {
-      if (bulkOptions == null) {
+      if (options.bulkOptions == null) {
         int maxInflightRpcs =
-            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * dataChannelCount;
-        bulkOptions = new BulkOptions.Builder().setMaxInflightRpcs(maxInflightRpcs).build();
-      } else if (bulkOptions.getMaxInflightRpcs() <= 0) {
+            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
+        options.bulkOptions = new BulkOptions.Builder().setMaxInflightRpcs(maxInflightRpcs).build();
+      } else if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
         int maxInflightRpcs =
-            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * dataChannelCount;
-        bulkOptions = bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
+            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
+        options.bulkOptions = options.bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
       }
       applyEmulatorEnvironment();
-      return new BigtableOptions(
-          adminHost,
-          dataHost,
-          port,
-          projectId,
-          instanceId,
-          appProfileId,
-          userAgent,
-          usePlaintextNegotiation,
-          useCachedDataPool,
-          dataChannelCount,
-          bulkOptions,
-          callOptionsConfig,
-          credentialOptions,
-          retryOptions);
+      options.adminHost = Preconditions.checkNotNull(options.adminHost);
+      options.dataHost = Preconditions.checkNotNull(options.dataHost);
+      if (!Strings.isNullOrEmpty(options.projectId)
+          && !Strings.isNullOrEmpty(options.instanceId)) {
+        options.instanceName = new BigtableInstanceName(options.projectId, options.instanceId);
+      } else {
+        options.instanceName = null;
+      }
+
+      LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
+              + "admin host %s.",
+          options.projectId,
+          options.instanceId,
+          options.dataHost,
+          options.adminHost);
+
+      return options;
     }
   }
 
-  private final String adminHost;
-  private final String dataHost;
-  private final int port;
-  private final String projectId;
-  private final String instanceId;
-  private final String appProfileId;
-  private final String userAgent;
-  private final int dataChannelCount;
-  private final boolean usePlaintextNegotiation;
-  private final boolean useCachedDataPool;
+  private String adminHost;
+  private String dataHost;
+  private int port;
+  private String projectId;
+  private String instanceId;
+  private String appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
+  private String userAgent;
+  private int dataChannelCount;
+  private boolean usePlaintextNegotiation;
+  private boolean useCachedDataPool;
 
-  private final BigtableInstanceName instanceName;
+  private BigtableInstanceName instanceName;
 
-  private final BulkOptions bulkOptions;
-  private final CallOptionsConfig callOptionsConfig;
-  private final CredentialOptions credentialOptions;
-  private final RetryOptions retryOptions;
+  private BulkOptions bulkOptions;
+  private CallOptionsConfig callOptionsConfig;
+  private CredentialOptions credentialOptions;
+  private RetryOptions retryOptions;
 
   @VisibleForTesting
   BigtableOptions() {
-      adminHost = null;
-      dataHost = null;
-      port = 0;
-      projectId = null;
-      instanceId = null;
-      appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
-      userAgent = null;
-      dataChannelCount = 1;
-      instanceName = null;
-      usePlaintextNegotiation = false;
-      useCachedDataPool = false;
-
-      bulkOptions = null;
-      callOptionsConfig = null;
-      credentialOptions = null;
-      retryOptions = null;
-  }
-
-  private BigtableOptions(
-      String adminHost,
-      String dataHost,
-      int port,
-      String projectId,
-      String instanceId,
-      String appProfileId,
-      String userAgent,
-      boolean usePlaintextNegotiation,
-      boolean useCachedChannel,
-      int channelCount,
-      BulkOptions bulkOptions,
-      CallOptionsConfig callOptionsConfig,
-      CredentialOptions credentialOptions,
-      RetryOptions retryOptions) {
-    Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
-
-    this.adminHost = Preconditions.checkNotNull(adminHost);
-    this.dataHost = Preconditions.checkNotNull(dataHost);
-    this.port = port;
-    this.projectId = projectId;
-    this.instanceId = instanceId;
-    this.appProfileId = appProfileId;
-    this.credentialOptions = credentialOptions;
-    this.userAgent = userAgent;
-    this.retryOptions = retryOptions;
-    this.dataChannelCount = channelCount;
-    this.bulkOptions = bulkOptions;
-    this.usePlaintextNegotiation = usePlaintextNegotiation;
-    this.useCachedDataPool = useCachedChannel;
-    this.callOptionsConfig = callOptionsConfig;
-
-    if (!Strings.isNullOrEmpty(projectId)
-        && !Strings.isNullOrEmpty(instanceId)) {
-      this.instanceName = new BigtableInstanceName(projectId, instanceId);
-    } else {
-      this.instanceName = null;
-    }
-
-    LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
-        + "admin host %s.",
-        projectId,
-        instanceId,
-        dataHost,
-        adminHost);
   }
 
   /**
@@ -533,7 +458,7 @@ public class BigtableOptions implements Serializable {
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions.Builder} object.
    */
   public Builder toBuilder() {
-    return new Builder(this);
+    return new Builder(this.clone());
   }
 
   /**
@@ -543,5 +468,13 @@ public class BigtableOptions implements Serializable {
    */
   public boolean useCachedChannel() {
     return useCachedDataPool;
+  }
+
+  protected BigtableOptions clone() {
+    try {
+      return (BigtableOptions) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Could not cloe BigtableOptions");
+    }
   }
 }
