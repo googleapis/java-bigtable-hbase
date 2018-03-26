@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -95,6 +96,40 @@ public class TestFilters extends AbstractTestFilters {
       Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], valA));
     }
   }
+  
+  /**
+   * This test case is used to validate TimestampRangeFilter with Integer.MAX_VALUE #1552
+   * 
+   * @throws IOException
+   */
+  @Test
+  public void testTimestampRangeFilterWithMaxVal() throws IOException {
+	    // Initialize
+	    long numCols = Integer.MAX_VALUE;
+	    long start = Integer.MAX_VALUE - 2;
+	    String goodValue = "includeThisValue";
+	    Table table = getDefaultTable();
+	    byte[] rowKey = dataHelper.randomData("testRow-TimestampRange-");
+	    Put put = new Put(rowKey);
+	    for (long i = start; i < numCols; ++i) {
+	      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
+	    }
+	    table.put(put);
+
+	    Filter filter = new TimestampRangeFilter(start, Integer.MAX_VALUE);
+	    
+	    Get get = new Get(rowKey).setFilter(filter);
+	    Result result = table.get(get);
+	    Cell[] cells = result.rawCells();
+	    Assert.assertEquals("Should have all cells.", 2, cells.length);
+
+	    long[] timestamps =
+	        new long[] { cells[0].getTimestamp(), cells[1].getTimestamp() };
+	    Arrays.sort(timestamps);
+	    Assert.assertArrayEquals(new long[] { start, Integer.MAX_VALUE-1 }, timestamps);
+
+	    table.close();
+  }
 
   @Override
   protected void getGetAddVersion(Get get, int version) throws IOException {
@@ -105,5 +140,4 @@ public class TestFilters extends AbstractTestFilters {
   protected void scanAddVersion(Scan scan, int version){
     scan.setMaxVersions(version);
   }
-
 }
