@@ -105,22 +105,19 @@ public class TestFilters extends AbstractTestFilters {
   @Test
   public void testTimestampRangeFilterWithMaxVal() throws IOException {
 	    // Initialize
-	    int numCols = Integer.MAX_VALUE;
-	    Long start = (long) (Integer.MAX_VALUE - 2);
+	    long numCols = Integer.MAX_VALUE;
+	    long start = Integer.MAX_VALUE - 2;
 	    String goodValue = "includeThisValue";
 	    Table table = getDefaultTable();
 	    byte[] rowKey = dataHelper.randomData("testRow-TimestampRange-");
 	    Put put = new Put(rowKey);
-	    for (Long i = start; i < numCols; ++i) {
+	    for (long i = start; i < numCols; ++i) {
 	      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
 	    }
 	    table.put(put);
 
-	    // Filter for results
-	    FilterList filter = new FilterList(FilterList.Operator.MUST_PASS_ALL,
-				  new TimestampRangeFilter(start, Integer.MAX_VALUE),
-				  new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("test_family"))));
-		  
+	    Filter filter = new TimestampRangeFilter(start, Integer.MAX_VALUE);
+	    
 	    Get get = new Get(rowKey).setFilter(filter);
 	    Result result = table.get(get);
 	    Cell[] cells = result.rawCells();
