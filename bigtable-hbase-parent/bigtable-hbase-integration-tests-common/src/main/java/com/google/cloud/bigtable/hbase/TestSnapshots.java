@@ -1,18 +1,19 @@
 /*
- * Copyright 2016 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */package com.google.cloud.bigtable.hbase;
+ */
+package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
@@ -32,7 +33,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
@@ -40,11 +40,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-
 @SuppressWarnings("deprecation")
-public class TestSnapshots extends AbstractTest {
-
-  final byte[] QUALIFIER = dataHelper.randomData("TestSnapshots");
+public class TestSnapshots extends AbstractTest{
+  
+  final byte[] QUALIFIER = dataHelper.randomData("AbstractTestSnapshots");
 
   private final TableName tableName = sharedTestEnv.newTestTableName();
   private final TableName anotherTableName = sharedTestEnv.newTestTableName();
@@ -65,19 +64,15 @@ public class TestSnapshots extends AbstractTest {
       delete(admin, tableName);
       delete(admin, anotherTableName);
       delete(admin, clonedTableName);
-      for (SnapshotDescription snapDesc : admin.listSnapshots(snapshotName + ".*")) {
-        admin.deleteSnapshot(snapDesc.getName());
-      }
-      for (SnapshotDescription snapDesc : admin.listSnapshots(anotherSnapshotName + ".*")) {
-        admin.deleteSnapshot(snapDesc.getName());
-      }
+      admin.deleteSnapshots(snapshotName + ".*");
+      admin.deleteSnapshots(anotherSnapshotName + ".*");
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
   protected boolean enableTestForBigtable() {
-    return false;
+    return Boolean.getBoolean("perform.snapshot.test");
   }
 
   private void delete(Admin admin, TableName tableName) throws IOException {
@@ -120,7 +115,6 @@ public class TestSnapshots extends AbstractTest {
       admin.createTable(
           new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
 
-      Map<String, Long> values = createAndPopulateTable(tableName);
       Assert.assertEquals(0, admin.listSnapshots(allSnapshots).size());
       admin.snapshot(snapshotName, tableName);
       Assert.assertEquals(1, admin.listSnapshots(snapshotName).size());
@@ -220,6 +214,5 @@ public class TestSnapshots extends AbstractTest {
       }
     }
     Assert.assertTrue("There were missing keys.", values.isEmpty());
-  }
-
-}
+  }  
+ }
