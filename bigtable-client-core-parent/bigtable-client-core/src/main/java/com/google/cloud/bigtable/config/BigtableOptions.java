@@ -61,6 +61,8 @@ public class BigtableOptions implements Serializable, Cloneable {
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
+  public static final Boolean USE_CACHE_DATA_POOL_DEFAULT = true;
+  
   private static int getDefaultDataChannelCount() {
     // 20 Channels seemed to work well on a 4 CPU machine, and this ratio seems to scale well for
     // higher CPU machines. Use no more than 250 Channels by default.
@@ -86,7 +88,7 @@ public class BigtableOptions implements Serializable, Cloneable {
 
       options.dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
       options.usePlaintextNegotiation = false;
-      options.useCachedDataPool = false;
+      options.useCachedDataPool = USE_CACHE_DATA_POOL_DEFAULT;
 
       options.retryOptions = new RetryOptions.Builder().build();
       options.callOptionsConfig = new CallOptionsConfig.Builder().build();
