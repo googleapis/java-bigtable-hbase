@@ -419,6 +419,7 @@ public class BigtableOptions implements Serializable, Cloneable {
     return (port == other.port)
         && (dataChannelCount == other.dataChannelCount)
         && (usePlaintextNegotiation == other.usePlaintextNegotiation)
+        && (useCachedDataPool == other.useCachedDataPool)
         && Objects.equals(adminHost, other.adminHost)
         && Objects.equals(dataHost, other.dataHost)
         && Objects.equals(projectId, other.projectId)
@@ -438,17 +439,18 @@ public class BigtableOptions implements Serializable, Cloneable {
         .omitNullValues()
         .add("dataHost", dataHost)
         .add("adminHost", adminHost)
+        .add("port", port)
         .add("projectId", projectId)
         .add("instanceId", instanceId)
         .add("appProfileId", appProfileId)
         .add("userAgent", userAgent)
         .add("credentialType", credentialOptions.getCredentialType())
-        .add("port", port)
         .add("dataChannelCount", dataChannelCount)
         .add("retryOptions", retryOptions)
         .add("bulkOptions", bulkOptions)
         .add("callOptionsConfig", callOptionsConfig)
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
+        .add("useCachedDataPool", useCachedDataPool)
         .toString();
   }
 
