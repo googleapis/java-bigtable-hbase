@@ -190,10 +190,6 @@ limitations under the License.
                   <shadedPattern>com.google.bigtable.repackaged.org.json</shadedPattern>
                 </relocation>
                 <relocation>
-                  <pattern>org.threeten</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.org.threeten</shadedPattern>
-                </relocation>
-                <relocation>
                   <pattern>com.lmax</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.com.lmax</shadedPattern>
                 </relocation>
