@@ -53,17 +53,10 @@ public class SharedTestEnvRule extends ExternalResource {
       e.printStackTrace();
     }
   }
-  /**
-   * This class is generally a singleton, where implementation can change.  Some startup utility
-   * will set this instance.
-   */
-  public synchronized static void setInstance(SharedTestEnvRule instance) {
-    SharedTestEnvRule.instance = instance;
-  }
 
   public synchronized static SharedTestEnvRule getInstance() {
     if(instance == null) {
-      setInstance(new SharedTestEnvRule());
+      instance = new SharedTestEnvRule();
     }
     
     return instance;
