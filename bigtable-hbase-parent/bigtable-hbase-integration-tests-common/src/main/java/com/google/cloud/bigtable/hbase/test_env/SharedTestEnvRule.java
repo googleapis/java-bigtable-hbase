@@ -34,7 +34,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.rules.ExternalResource;
 
-public abstract class SharedTestEnvRule extends ExternalResource {
+public class SharedTestEnvRule extends ExternalResource {
   private static final String HBASE_CONN_KEY = "hbase_conn";
 
   public static final int MAX_VERSIONS = 6;
@@ -42,23 +42,28 @@ public abstract class SharedTestEnvRule extends ExternalResource {
   public static final byte[] COLUMN_FAMILY2 = Bytes.toBytes("test_family2");
   private static SharedTestEnvRule instance;
 
+  private static TableCreator tableCreator = null;
+
+  static {
+    try {
+      Class<? extends TableCreator> clazz = (Class<? extends TableCreator>) Class
+          .forName("com.google.cloud.bigtable.hbase.test_env.TableCreatorImpl");
+      tableCreator = clazz.getDeclaredConstructor().newInstance();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
   /**
    * This class is generally a singleton, where implementation can change.  Some startup utility
    * will set this instance.
    */
-  public static void setInstance(SharedTestEnvRule instance) {
+  public synchronized static void setInstance(SharedTestEnvRule instance) {
     SharedTestEnvRule.instance = instance;
   }
 
-  public static SharedTestEnvRule getInstance() {
+  public synchronized static SharedTestEnvRule getInstance() {
     if(instance == null) {
-      try {
-        //Allows for integration tests to run independently in IDE 
-        Class.forName("com.google.cloud.bigtable.hbase.IntegrationTests").newInstance();
-        instance.before();
-      } catch (Throwable e) {
-        e.printStackTrace();
-      }
+      setInstance(new SharedTestEnvRule());
     }
     
     return instance;
@@ -82,7 +87,10 @@ public abstract class SharedTestEnvRule extends ExternalResource {
     closeables.put(key, c);
   }
 
-  public abstract void createTable(TableName defaultTableName) throws IOException;
+  public void createTable(TableName tableName) throws IOException {
+    LOG.info("Creating table " + tableName.getNameAsString());
+    tableCreator.createTable(getConnection().getAdmin(), tableName);
+  }
 
   @Override
   protected void after() {
