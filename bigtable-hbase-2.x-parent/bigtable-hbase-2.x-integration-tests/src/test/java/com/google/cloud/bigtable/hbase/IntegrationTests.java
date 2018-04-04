@@ -64,7 +64,8 @@ import org.junit.runners.Suite;
     TestAsyncCreateTable.class,
     TestAsyncConnection.class,
     TestAsyncScan.class,
-    TestBasicAsyncOps.class
+    TestBasicAsyncOps.class,
+    TestAsyncTruncateTable.class
 })
 public class IntegrationTests {
 

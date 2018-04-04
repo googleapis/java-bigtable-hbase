@@ -29,9 +29,25 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.apache.hadoop.hbase.*;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.CacheEvictionStats;
+import org.apache.hadoop.hbase.ClusterMetrics;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.RegionMetrics;
+import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotDisabledException;
+import org.apache.hadoop.hbase.TableNotEnabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
+import org.apache.hadoop.hbase.client.AsyncAdmin;
+import org.apache.hadoop.hbase.client.BigtableAsyncConnection;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.client.CompactType;
+import org.apache.hadoop.hbase.client.CompactionState;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.ServiceCaller;
+import org.apache.hadoop.hbase.client.SnapshotDescription;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.replication.TableCFs;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
@@ -43,6 +59,7 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
+import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.Table;
@@ -52,6 +69,7 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.Status;
 
@@ -307,9 +325,18 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     throw new UnsupportedOperationException("restoreSnapshot"); // TODO
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.AsyncAdmin#truncateTable(org.apache.hadoop.hbase.TableName, boolean)
+   */
   @Override
-  public CompletableFuture<Void> truncateTable(TableName arg0, boolean arg1) {
-    throw new UnsupportedOperationException("truncateTable"); // TODO
+  public CompletableFuture<Void> truncateTable(TableName tableName, boolean preserveSplits) {
+  	return CompletableFuture.supplyAsync(() -> {
+      DropRowRangeRequest.Builder dropBuilder = DropRowRangeRequest.newBuilder().setDeleteAllDataFromTable(true);
+      dropBuilder.setName(bigtableInstanceName.toTableNameStr(tableName.getNameAsString()));
+      return dropBuilder;
+    }).thenCompose(
+        d -> FutureUtils.toCompletableFuture(bigtableTableAdminClient.dropRowRangeAsync(d.build())))
+        .thenApply(r -> null);
   }
 
   @Override
