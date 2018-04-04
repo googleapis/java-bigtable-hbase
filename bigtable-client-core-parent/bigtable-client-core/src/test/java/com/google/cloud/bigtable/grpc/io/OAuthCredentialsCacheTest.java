@@ -34,7 +34,6 @@ import org.mockito.stubbing.Answer;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.*;
-import org.threeten.bp.Duration;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.any;
@@ -46,7 +45,7 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(JUnit4.class)
 public class OAuthCredentialsCacheTest {
-  private static Duration TIMEOUT = Duration.ofSeconds(5);
+  private static long TIMEOUT_SECONDS = 5;
 
   private static ExecutorService executorService;
 
@@ -65,21 +64,10 @@ public class OAuthCredentialsCacheTest {
   @Mock
   private OAuth2Credentials mockCredentials;
 
-  @Mock
-  private Channel mockChannel;
-
-  @Mock
-  private ClientCall mockClientCall;
-
-  @Mock
-  private ClientCall.Listener mockListener;
-
   @Before
   public void setupMocks() {
     MockitoAnnotations.initMocks(this);
     setTimeInMillieconds(0L);
-    when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
-        .thenReturn(mockClientCall);
   }
 
   private void setTimeInMillieconds(final long timeMs) {
@@ -103,7 +91,7 @@ public class OAuthCredentialsCacheTest {
     ExecutorService mockExecutor = Mockito.mock(ExecutorService.class);
     when(mockExecutor.submit(any(Callable.class))).thenThrow(new RuntimeException(""));
     underTest = new OAuthCredentialsCache(mockExecutor, mockCredentials);
-    Assert.assertFalse(underTest.getHeader(TIMEOUT).getStatus().isOk());
+    Assert.assertFalse(underTest.getHeader(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus().isOk());
   }
 
   @Test
@@ -138,7 +126,8 @@ public class OAuthCredentialsCacheTest {
   public void testRefreshAfterFailure() throws Exception {
     underTest = new OAuthCredentialsCache(executorService, mockCredentials);
 
-    final AccessToken accessToken = new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
+    final AccessToken accessToken =
+        new AccessToken("hi", new Date(HeaderCacheElement.TOKEN_STALENESS_MS + 1));
 
     //noinspection unchecked
     Mockito.when(mockCredentials.refreshAccessToken())
@@ -148,11 +137,13 @@ public class OAuthCredentialsCacheTest {
         .thenReturn(accessToken);
 
     // First call
-    OAuthCredentialsCache.HeaderToken token1 = underTest.getHeader(TIMEOUT);
+    OAuthCredentialsCache.HeaderToken token1 =
+        underTest.getHeader(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     Assert.assertFalse(token1.getStatus().isOk());
 
     // Now the second token should be available
-    OAuthCredentialsCache.HeaderToken token2 = underTest.getHeader(TIMEOUT);
+    OAuthCredentialsCache.HeaderToken token2 =
+        underTest.getHeader(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     Assert.assertTrue(token2.getStatus().isOk());
     Assert.assertThat(token2.getHeader(), containsString("hi"));
     // Make sure that the token was only requested twice: once for the first failure & second time for background recovery
@@ -176,7 +167,8 @@ public class OAuthCredentialsCacheTest {
         .thenReturn(goodToken);
 
     // First call - setup
-    OAuthCredentialsCache.HeaderToken firstResult = underTest.getHeader(TIMEOUT);
+    OAuthCredentialsCache.HeaderToken firstResult =
+        underTest.getHeader(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
     Assert.assertThat(firstResult.getHeader(), containsString("stale"));
 
@@ -184,7 +176,7 @@ public class OAuthCredentialsCacheTest {
     setTimeInMillieconds(10);
 
     // Second call - return stale token, but schedule refresh
-    HeaderCacheElement secondResult = underTest.getHeaderUnsafe(TIMEOUT);
+    HeaderCacheElement secondResult = underTest.getHeaderUnsafe(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     Assert.assertEquals(CacheState.Stale, secondResult.getCacheState());
     Assert.assertThat(secondResult.getToken().getHeader(), containsString("stale"));
 
@@ -192,7 +184,8 @@ public class OAuthCredentialsCacheTest {
     setTimeInMillieconds(expires);
 
     // Third call - now returns good token
-    OAuthCredentialsCache.HeaderToken thirdResult = underTest.getHeader(TIMEOUT);
+    OAuthCredentialsCache.HeaderToken thirdResult =
+        underTest.getHeader(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
     Assert.assertThat(thirdResult.getHeader(), containsString("good"));
 
@@ -224,13 +217,13 @@ public class OAuthCredentialsCacheTest {
     underTest.revokeUnauthToken(underTest.getHeaderCache().getToken());
     Assert.assertEquals(CacheState.Expired, underTest.getHeaderCache().getCacheState());
 
-    underTest.getHeader(TIMEOUT);
+    underTest.getHeader(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
 
     underTest.revokeUnauthToken(underTest.getHeaderCache().getToken());
     // Ensure that the revoke interceptor does not run so quickly after the previous revoke.
     // The cache state should stay good.
-    Assert.assertTrue(underTest.getHeader(TIMEOUT).getStatus().isOk());
+    Assert.assertTrue(underTest.getHeader(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus().isOk());
   }
 
   private void testHanging()

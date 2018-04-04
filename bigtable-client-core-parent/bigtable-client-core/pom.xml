@@ -107,11 +107,6 @@ limitations under the License.
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.threeten</groupId>
-            <artifactId>threetenbp</artifactId>
-            <version>${threetenbp.version}</version>
-        </dependency>
 
         <!-- Auth -->
         <dependency>
