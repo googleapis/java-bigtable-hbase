@@ -25,7 +25,6 @@ import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -38,16 +37,6 @@ public class TestAsyncTruncateTable extends AbstractTestTruncateTable {
     return AbstractAsyncTest.getAsyncConnection().getAdmin();
   }
 	
-	/**
-   * @throws Exception 
-   */
-  @Test
-  public void testTruncateTableAsync() throws Exception{
-  	TableName newTestTableName = sharedTestEnv.newTestTableName();
-  	getAsyncAdmin().createTable(createDescriptor(newTestTableName)).get();
-    getAsyncAdmin().truncateTable(newTestTableName, true);
-  }
-  
   private TableDescriptor createDescriptor(TableName tableName) {
     return TableDescriptorBuilder.newBuilder(tableName)
         .addColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder(COLUMN_FAMILY).build())
@@ -62,4 +51,10 @@ public class TestAsyncTruncateTable extends AbstractTestTruncateTable {
 			e.printStackTrace();
 		}
   }
+
+	@Override
+	protected void doTruncate(TableName tableName) throws Exception {
+		getAsyncAdmin().createTable(createDescriptor(tableName)).get();
+    getAsyncAdmin().truncateTable(tableName, true).get();
+	}
 }

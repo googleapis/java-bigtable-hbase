@@ -330,13 +330,13 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
    */
   @Override
   public CompletableFuture<Void> truncateTable(TableName tableName, boolean preserveSplits) {
-  	return CompletableFuture.supplyAsync(() -> {
-      DropRowRangeRequest.Builder dropBuilder = DropRowRangeRequest.newBuilder().setDeleteAllDataFromTable(true);
-      dropBuilder.setName(bigtableInstanceName.toTableNameStr(tableName.getNameAsString()));
-      return dropBuilder;
-    }).thenCompose(
-        d -> FutureUtils.toCompletableFuture(bigtableTableAdminClient.dropRowRangeAsync(d.build())))
-        .thenApply(r -> null);
+  	if (!preserveSplits) {
+      LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
+  	}
+  	DropRowRangeRequest.Builder deleteRequest = DropRowRangeRequest.newBuilder().setDeleteAllDataFromTable(true);
+    return FutureUtils.toCompletableFuture(
+         bigtableTableAdminClient.dropRowRangeAsync(deleteRequest.setName(bigtableInstanceName.toTableNameStr(tableName.getNameAsString())).build()))
+         .thenApply(r -> null);
   }
 
   @Override

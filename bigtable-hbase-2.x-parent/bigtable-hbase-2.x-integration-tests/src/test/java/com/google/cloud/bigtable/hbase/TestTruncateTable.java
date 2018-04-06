@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class TestTruncateTable extends AbstractTestAsyncTruncateTable {
+public class TestTruncateTable extends AbstractTestTruncateTable {
 
   @Override
   protected void createTable(TableName tableName, byte[][] splits) throws IOException {
@@ -38,4 +38,12 @@ public class TestTruncateTable extends AbstractTestAsyncTruncateTable {
     }
   }
 
+	@Override
+	protected void doTruncate(TableName tableName) throws Exception {
+		TableName newTestTableName = sharedTestEnv.newTestTableName();
+    sharedTestEnv.createTable(newTestTableName);
+		try(Admin admin = getConnection().getAdmin()) {
+    	admin.truncateTableAsync(newTestTableName, true).get();	
+    }
+	}
 }
