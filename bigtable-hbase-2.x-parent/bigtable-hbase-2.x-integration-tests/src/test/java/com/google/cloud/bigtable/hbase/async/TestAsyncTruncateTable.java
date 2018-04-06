@@ -45,7 +45,7 @@ public class TestAsyncTruncateTable extends AbstractTestTruncateTable {
 
 	@Override
 	protected void createTable(TableName tableName, byte[][] ranges) throws IOException {
-    try {
+		try{
 			getAsyncAdmin().createTable(createDescriptor(tableName), ranges).get();
 		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
@@ -55,6 +55,6 @@ public class TestAsyncTruncateTable extends AbstractTestTruncateTable {
 	@Override
 	protected void doTruncate(TableName tableName) throws Exception {
 		getAsyncAdmin().createTable(createDescriptor(tableName)).get();
-    getAsyncAdmin().truncateTable(tableName, true).get();
+		getAsyncAdmin().truncateTable(tableName, true).get();
 	}
 }
