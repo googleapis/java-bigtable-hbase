@@ -38,11 +38,11 @@ public class TestTruncateTable extends AbstractTestTruncateTable {
     }
   }
 
-	@Override
-	protected void doTruncate(TableName tableName) throws Exception {
-		try(Admin admin = getConnection().getAdmin()) {
-			admin.truncateTable(tableName,true);
-			}
-		}
+  @Override
+  protected void doTruncate(TableName tableName) throws Exception {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.truncateTable(tableName,true);
+    }
+  }
 
 }
