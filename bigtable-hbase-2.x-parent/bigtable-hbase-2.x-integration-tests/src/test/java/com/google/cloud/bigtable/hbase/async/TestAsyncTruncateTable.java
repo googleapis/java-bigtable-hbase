@@ -33,7 +33,7 @@ import com.google.cloud.bigtable.hbase.AbstractTestTruncateTable;
 @RunWith(JUnit4.class)
 public class TestAsyncTruncateTable extends AbstractTestTruncateTable {
 
-	private AsyncAdmin getAsyncAdmin() throws InterruptedException, ExecutionException {
+  private AsyncAdmin getAsyncAdmin() throws InterruptedException, ExecutionException {
     return AbstractAsyncTest.getAsyncConnection().getAdmin();
   }
 	
@@ -43,18 +43,18 @@ public class TestAsyncTruncateTable extends AbstractTestTruncateTable {
         .build();
   }
 
-	@Override
-	protected void createTable(TableName tableName, byte[][] ranges) throws IOException {
-		try{
-			getAsyncAdmin().createTable(createDescriptor(tableName), ranges).get();
-		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
-		}
-  }
-
-	@Override
-	protected void doTruncate(TableName tableName) throws Exception {
-		getAsyncAdmin().createTable(createDescriptor(tableName)).get();
-		getAsyncAdmin().truncateTable(tableName, true).get();
+  @Override
+  protected void createTable(TableName tableName, byte[][] ranges) throws IOException {
+    try{
+	  getAsyncAdmin().createTable(createDescriptor(tableName), ranges).get();
+	} catch (InterruptedException | ExecutionException e) {
+	  e.printStackTrace();
 	}
+   }
+
+  @Override
+  protected void doTruncate(TableName tableName) throws Exception {
+    getAsyncAdmin().createTable(createDescriptor(tableName)).get();
+    getAsyncAdmin().truncateTable(tableName, true).get();
+  }
 }
