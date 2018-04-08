@@ -320,17 +320,16 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   // ****** TO BE IMPLEMENTED [start] ******
 
   @Override
-  public CompletableFuture<Void> deleteColumnFamily(TableName tableName, byte[] columnName) {
-    return CompletableFuture.supplyAsync(() -> {
-      Modification.Builder modification = Modification.newBuilder().setId(Bytes.toString(columnName))
-          .setDrop(true);
-      ModifyColumnFamiliesRequest.Builder modifyColumnBuilder = ModifyColumnFamiliesRequest
-          .newBuilder().addModifications(modification).setName(toBigtableName(tableName));
-      return modifyColumnBuilder;
-    }).thenCompose(
-        d -> FutureUtils.toCompletableFuture(
-            bigtableTableAdminClient.modifyColumnFamilyAsync(d.build()))
-            .thenApply(r -> null));
+  public CompletableFuture<Void> deleteColumnFamily(TableName tableName,
+      byte[] columnName) {
+    Modification.Builder modification = Modification.newBuilder().setId(Bytes.toString(columnName))
+        .setDrop(true);
+    ModifyColumnFamiliesRequest request = ModifyColumnFamiliesRequest
+        .newBuilder().addModifications(modification).setName(toBigtableName(tableName)).build();
+    return FutureUtils.toCompletableFuture(
+        bigtableTableAdminClient.
+        modifyColumnFamilyAsync(request)).
+        thenApply(r -> null);
   }
 
   @Override
@@ -425,26 +424,26 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return future;
   }
 
-	/**
-	 * To check Snapshot exists or not.
-	 * 
-	 * @param snapshotName
-	 * @param snapshotDescriptions
-	 * @return
-	 */
-	private TableName snapshotExists(String snapshotName,
-			List<SnapshotDescription> snapshotDescriptions) {
-		TableName tableName = null;
-		if (snapshotDescriptions != null && !snapshotDescriptions.isEmpty()) {
-		  for (SnapshotDescription snap : snapshotDescriptions) {
-		    if (snap.getName().equals(snapshotName)) {
-		      tableName = snap.getTableName();
-		      break;
-		    }
-		  }
-		}
-		return tableName;
-	}
+  /**
+   * To check Snapshot exists or not.
+   * 
+   * @param snapshotName
+   * @param snapshotDescriptions
+   * @return
+   */
+  private TableName snapshotExists(String snapshotName,
+      List<SnapshotDescription> snapshotDescriptions) {
+    TableName tableName = null;
+    if (snapshotDescriptions != null && !snapshotDescriptions.isEmpty()) {
+      for (SnapshotDescription snap : snapshotDescriptions) {
+        if (snap.getName().equals(snapshotName)) {
+          tableName = snap.getTableName();
+          break;
+        }
+      }
+    }
+    return tableName;
+  }
 
   private <T> void completeConditionalOnFuture(CompletableFuture<T> dependentFuture,
       CompletableFuture<T> parentFuture) {
