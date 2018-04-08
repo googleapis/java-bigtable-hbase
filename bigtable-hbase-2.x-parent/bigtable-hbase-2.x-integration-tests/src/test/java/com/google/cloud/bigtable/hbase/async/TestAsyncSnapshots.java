@@ -98,14 +98,14 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       
     } catch (Exception e) {
         e.printStackTrace();
-      }
+    }
   }
   
-	private void checkSnapshotCount(AsyncAdmin asyncAdmin, int count) {
-			asyncAdmin.listSnapshots().thenApply(r->{
-			logger.info("Count from CheckSnapshot :: ", count);
-			Assert.assertEquals(count,r.size());
-    	return null;
-		});
-	}
+private void checkSnapshotCount(AsyncAdmin asyncAdmin, int count) {
+  asyncAdmin.listSnapshots().thenApply(r->{
+     logger.info("Count from CheckSnapshot :: ", count);
+     Assert.assertEquals(count,r.size());
+     return null;
+   });
+ }
 }
