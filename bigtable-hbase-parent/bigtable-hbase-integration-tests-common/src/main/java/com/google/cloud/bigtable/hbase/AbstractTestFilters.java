@@ -1965,7 +1965,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Pair<byte[], byte[]> fuzzyData = Pair
         .newPair(
             createKey(1, 0, 0, 4),
-            createKey(0, 1, 1, 0));
+            createFuzzyMask(0, 1, 1, 0));
 
     Scan scan = new Scan().setFilter(new FuzzyRowFilter(ImmutableList.of(fuzzyData)));
 
@@ -1973,6 +1973,51 @@ public abstract class AbstractTestFilters extends AbstractTest {
     try (ResultScanner scanner = table.getScanner(scan)) {
       assertMatchingRow(scanner.next(), keys.get(0));
       assertMatchingRow(scanner.next(), keys.get(1));
+      assertNull(scanner.next());
+    }
+  }
+
+  @Test
+  public void testFuzzyWithIntKeys() throws Exception {
+    Table table = getDefaultTable();
+    List<byte[]> keys = Collections.unmodifiableList(
+        Arrays.asList(
+            createKey(5, 10, 126, 5),
+            createKey(5, 10, 127, 5),
+            createKey(5, 10, 128, 5),
+            createKey(5, 10, 129, 5),
+            createKey(5, 11, 126, 7),
+            createKey(5, 11, 127, 7),
+            createKey(5, 11, 128, 7),
+            createKey(5, 11, 129, 7)));
+
+    List<Put> puts = new ArrayList<>();
+    for(byte[] key : keys) {
+      puts.add(new Put(key).addColumn(SharedTestEnvRule.COLUMN_FAMILY,
+          Bytes.toBytes(0), Bytes.toBytes(0)));
+    }
+
+    table.put(puts);
+
+    // match keys with 5 in the first position and 126/127/128/129 in the 3rd position
+    FuzzyRowFilter filter = new FuzzyRowFilter(ImmutableList.of(
+        Pair.newPair(createKey(5, 0, 126, 0), createFuzzyMask(0, 1, 0, 1)),
+        Pair.newPair(createKey(5, 0, 127, 0), createFuzzyMask(0, 1, 0, 1)),
+        Pair.newPair(createKey(5, 0, 128, 0), createFuzzyMask(0, 1, 0, 1)),
+        Pair.newPair(createKey(5, 0, 129, 0), createFuzzyMask(0, 1, 0, 1))));
+
+    Scan scan = new Scan().setFilter(filter);
+
+    // all 8 keys should be matched
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      assertMatchingRow(scanner.next(), keys.get(0));
+      assertMatchingRow(scanner.next(), keys.get(1));
+      assertMatchingRow(scanner.next(), keys.get(2));
+      assertMatchingRow(scanner.next(), keys.get(3));
+      assertMatchingRow(scanner.next(), keys.get(4));
+      assertMatchingRow(scanner.next(), keys.get(5));
+      assertMatchingRow(scanner.next(), keys.get(6));
+      assertMatchingRow(scanner.next(), keys.get(7));
       assertNull(scanner.next());
     }
   }
@@ -1989,17 +2034,26 @@ public abstract class AbstractTestFilters extends AbstractTest {
   private final String toFuzzyKeyString(byte[] bytes) {
     StringBuilder sb = new StringBuilder("[");
     String prefix = "";
-    for (byte b : bytes) {
-      sb.append(prefix).append((int) b);
+    int nValues = bytes.length / 4;
+    for (int i = 0; i < nValues; i++) {
+      sb.append(prefix).append(Bytes.toInt(bytes, 4 * i));
       prefix = ", ";
     }
     return sb.append("]").toString();
   }
 
   private static byte[] createKey(int... values) {
-    byte[] bytes = new byte[values.length];
+    byte[] bytes = new byte[4 * values.length];
     for (int i = 0; i < values.length; i++) {
-      bytes[i] = (byte) values[i];
+      System.arraycopy(Bytes.toBytes(values[i]), 0, bytes, 4 * i, 4);
+    }
+    return bytes;
+  }
+
+  private static byte[] createFuzzyMask(int... values) {
+    byte[] bytes = new byte[4 * values.length];
+    for (int i = 0; i < values.length; i++) {
+      Arrays.fill(bytes, i * 4, (i + 1) * 4, (byte) (values[i] == 0 ? 0 : 1));
     }
     return bytes;
   }
