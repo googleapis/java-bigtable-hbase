@@ -16,15 +16,12 @@ d * Copyright 2017 Google Inc. All Rights Reserved.
 package com.google.cloud.bigtable.hbase2_x;
 
 import static java.util.stream.Collectors.toList;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-
-import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableName;
@@ -43,9 +40,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
-
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -57,8 +52,8 @@ import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import com.google.common.base.Preconditions;
-
 import io.grpc.stub.StreamObserver;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
@@ -79,6 +74,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   }
 
   private final BigtableAsyncConnection asyncConnection;
+  private final BigtableDataClient throttlingClient;
   private final BigtableDataClient client;
   private final HBaseRequestAdapter hbaseAdapter;
   private final TableName tableName;
@@ -88,7 +84,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       HBaseRequestAdapter hbaseAdapter) {
     this.asyncConnection = asyncConnection;
     BigtableSession session = asyncConnection.getSession();
-    this.client = new BigtableDataClient(session.getthrottlingDataClient());
+    this.throttlingClient = new BigtableDataClient(session.getThrottlingDataClient());
+    this.client = new BigtableDataClient(session.getDataClient());
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
   }
@@ -107,7 +104,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
         append.isReturnResults()
             ? Adapters.ROW_ADAPTER.adaptResponse(response.getRow())
             : null;
-    return client.readModifyWriteRowAsync(request).thenApply(adaptRowFunction);
+    return throttlingClient.readModifyWriteRowAsync(request).thenApply(adaptRowFunction);
   }
 
   @SuppressWarnings("unchecked")
@@ -119,17 +116,17 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   @Override
   public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
-    return new CheckAndMutateBuilderImpl(client, hbaseAdapter, row, family);
+    return new CheckAndMutateBuilderImpl(throttlingClient, hbaseAdapter, row, family);
   }
 
   final static class CheckAndMutateBuilderImpl implements CheckAndMutateBuilder {
 
     private final CheckAndMutateUtil.RequestBuilder builder;
-    private final BigtableDataClient client;
+    private final BigtableDataClient throttlingClient;
 
     public CheckAndMutateBuilderImpl(BigtableDataClient client, HBaseRequestAdapter hbaseAdapter,
         byte[] row, byte[] family) {
-      this.client = client;
+      this.throttlingClient = client;
       this.builder = new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
     }
 
@@ -188,7 +185,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     private CompletableFuture<Boolean> call()
         throws IOException {
       CheckAndMutateRowRequest request = builder.build();
-      return client.checkAndMutateRowAsync(request).thenApply(
+      return throttlingClient.checkAndMutateRowAsync(request).thenApply(
         response -> CheckAndMutateUtil.wasMutationApplied(request, response));
     }
   }
@@ -196,7 +193,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Void> delete(Delete delete) {
     // figure out how to time this with Opencensus
-    return client.mutateRowAsync(hbaseAdapter.adapt(delete))
+    return throttlingClient.mutateRowAsync(hbaseAdapter.adapt(delete))
         .thenApply(r -> null);
   }
 
@@ -213,7 +210,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Result> get(Get get) {
     ReadRowsRequest request = hbaseAdapter.adapt(get);
-    return client.readFlatRowsAsync(request).thenApply(BigtableAsyncTable::toResult);
+    return throttlingClient.readFlatRowsAsync(request).thenApply(BigtableAsyncTable::toResult);
   }
 
   @Override
@@ -285,20 +282,20 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   @Override
   public CompletableFuture<Result> increment(Increment increment) {
-    return client.readModifyWriteRowAsync(hbaseAdapter.adapt(increment))
+    return throttlingClient.readModifyWriteRowAsync(hbaseAdapter.adapt(increment))
         .thenApply(response -> Adapters.ROW_ADAPTER.adaptResponse(response.getRow()));
   }
 
   @Override
   public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
-    return client.mutateRowAsync(hbaseAdapter.adapt(rowMutations))
+    return throttlingClient.mutateRowAsync(hbaseAdapter.adapt(rowMutations))
         .thenApply(r -> null);
   }
 
   @Override
   public CompletableFuture<Void> put(Put put) {
     // figure out how to time this with Opencensus
-    return client.mutateRowAsync(hbaseAdapter.adapt(put))
+    return throttlingClient.mutateRowAsync(hbaseAdapter.adapt(put))
         .thenApply(r -> null);
   }
 
