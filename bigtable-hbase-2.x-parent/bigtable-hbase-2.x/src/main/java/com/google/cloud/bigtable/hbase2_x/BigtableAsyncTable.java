@@ -88,7 +88,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       HBaseRequestAdapter hbaseAdapter) {
     this.asyncConnection = asyncConnection;
     BigtableSession session = asyncConnection.getSession();
-    this.client = new BigtableDataClient(session.getDataClient());
+    this.client = new BigtableDataClient(session.getthrottlingDataClient());
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
   }
