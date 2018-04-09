@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -28,7 +29,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.AbstractBigtbleRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
@@ -40,19 +40,10 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 public class BigtableAsyncTableRegionLocator extends AbstractBigtbleRegionLocator implements AsyncTableRegionLocator {
   private final Logger LOG = new Logger(getClass());
 
-  private final TableName tableName;
-  private final BigtableDataClient client;
-  private final SampledRowKeysAdapter adapter;
-  private final BigtableTableName bigtableTableName;
 
   public BigtableAsyncTableRegionLocator(TableName tableName, BigtableOptions options,
       BigtableDataClient client) {
     super(tableName,options,client);
-    this.tableName = tableName;
-    this.client = client;
-    this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
-    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
-    this.adapter = getSampledRowKeysAdapter(tableName, serverName);
   }
 
   @Override
