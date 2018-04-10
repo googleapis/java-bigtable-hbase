@@ -329,7 +329,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return FutureUtils.toCompletableFuture(
         bigtableTableAdminClient.
         modifyColumnFamilyAsync(request)).
-        thenApply(r -> null);
+        thenApply(response -> null);
   }
 
   @Override
@@ -385,7 +385,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
    *  
    * {@inheritDoc} */
   @Override
-<<<<<<< Upstream, based on origin/master
   public CompletableFuture<Void> restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot) {
   	CompletableFuture<Void> future = new CompletableFuture<>();
     listSnapshots(Pattern.compile(snapshotName)).whenComplete(
@@ -407,35 +406,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
               } else if (!exists) {
                 // if table does not exist, then just clone snapshot into new table.
               completeConditionalOnFuture(future,cloneSnapshot(snapshotName, tableName));
-=======
-  public CompletableFuture<Void> restoreSnapshot(String snapshotName,
-      boolean takeFailSafeSnapshot) {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    listSnapshots(Pattern.compile(snapshotName))
-        .whenComplete((snapshotDescriptions, err) -> {
-          if (err != null) {
-            future.completeExceptionally(err);
-            return;
-          }
-          TableName tableName = snapshotExists(snapshotName,
-              snapshotDescriptions);
-          if (tableName == null) {
-            future.completeExceptionally(new RestoreSnapshotException(
-                "Unable to find the table name for snapshot=" + snapshotName));
-            return;
-          }
-          final TableName finalTableName = tableName;
-          tableExists(finalTableName).whenComplete((exists, err2) -> {
-            if (err2 != null) {
-              future.completeExceptionally(err2);
-            } else if (!exists) {
-              // if table does not exist, then just clone snapshot into new
-              // table.
-              completeConditionalOnFuture(future,
-                  cloneSnapshot(snapshotName, finalTableName));
->>>>>>> cf73ca1 Corrected spacing.
             } else {
-<<<<<<< Upstream, based on origin/master
               isTableDisabled(tableName).whenComplete(
                 (disabled, err4) -> {
                   if (err4 != null) {
@@ -447,19 +418,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
                       restoreSnapshot(snapshotName,takeFailSafeSnapshot));
                   }
                 });
-=======
-              isTableDisabled(finalTableName).whenComplete((disabled, err4) -> {
-                if (err4 != null) {
-                  future.completeExceptionally(err4);
-                } else if (!disabled) {
-                  future.completeExceptionally(
-                      new TableNotDisabledException(finalTableName));
-                } else {
-                  completeConditionalOnFuture(future,
-                      restoreSnapshot(snapshotName, takeFailSafeSnapshot));
-                }
-              });
->>>>>>> cf73ca1 Corrected spacing.
             }
           });
         });

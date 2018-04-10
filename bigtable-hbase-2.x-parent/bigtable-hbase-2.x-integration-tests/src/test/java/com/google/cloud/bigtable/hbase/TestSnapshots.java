@@ -33,4 +33,13 @@ public class TestSnapshots extends AbstractTestSnapshot {
       admin.createTable(descriptor);
     }
   }
+
+  @Override
+  protected void snapshot(String snapshotName, TableName tableName)
+      throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.snapshot(snapshotName, tableName);
+    }
+    
+  }
 }

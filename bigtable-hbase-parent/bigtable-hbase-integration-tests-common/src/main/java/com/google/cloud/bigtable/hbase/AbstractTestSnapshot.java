@@ -105,13 +105,14 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
       Map<String, Long> values = createAndPopulateTable(tableName);
       checkSnapshotCount(admin, 0);
-      admin.snapshot(snapshotName, tableName);
+      snapshot(snapshotName, tableName);
       checkSnapshotCount(admin, 1);
       admin.cloneSnapshot(snapshotName, clonedTableName);
       validateClone(values);
       checkSnapshotCount(admin, 1);
       admin.deleteSnapshot(snapshotName);
       checkSnapshotCount(admin, 0);
+      admin.restoreSnapshot(snapshotName);
     }
   }
   
@@ -127,12 +128,12 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
       Map<String, Long> values = createAndPopulateTable(tableName);
       Assert.assertEquals(0, admin.listSnapshots(allSnapshots).size());
-      admin.snapshot(snapshotName, tableName);
+      snapshot(snapshotName, tableName);
       Assert.assertEquals(1, admin.listSnapshots(snapshotName).size());
       admin.deleteSnapshot(snapshotName);
       Assert.assertEquals(0, admin.listSnapshots(snapshotName).size());
-      admin.snapshot(snapshotName + 1, tableName);
-      admin.snapshot(snapshotName + 2,tableName);
+      snapshot(snapshotName + 1, tableName);
+      snapshot(snapshotName + 2,tableName);
       Assert.assertEquals(2, admin.listSnapshots(allSnapshots).size());
       Assert.assertEquals(1, admin.listSnapshots(Pattern.compile(snapshotName + 1)).size());
       Assert.assertEquals(1, admin.listSnapshots(Pattern.compile(snapshotName + 2)).size());
@@ -158,12 +159,12 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
           admin.listTableSnapshots(Pattern.compile(tableName.getNameAsString()), matchAll).size());
       Assert.assertEquals(0, admin.listTableSnapshots(
               Pattern.compile(anotherTableName.getNameAsString()), matchAll).size());
-      admin.snapshot(snapshotName, tableName);
+      snapshot(snapshotName, tableName);
       Assert.assertEquals(1, 
           admin.listTableSnapshots(Pattern.compile(tableName.getNameAsString()), matchAll).size());
       Assert.assertEquals(0, admin.listTableSnapshots(
           Pattern.compile(anotherTableName.getNameAsString()), matchAll).size());
-      admin.snapshot(anotherSnapshotName, anotherTableName);
+      snapshot(anotherSnapshotName, anotherTableName);
       Assert.assertEquals(1, 
           admin.listTableSnapshots(Pattern.compile(tableName.getNameAsString()), matchAll).size());
       Assert.assertEquals(1, admin.listTableSnapshots(
@@ -226,4 +227,5 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   }
 
   protected abstract void createTable(TableName tableName) throws IOException;
+  protected abstract void snapshot(String snapshotName, TableName tableName) throws IOException;
 }

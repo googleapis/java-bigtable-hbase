@@ -17,9 +17,7 @@
 package com.google.cloud.bigtable.hbase.async;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -29,9 +27,7 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -63,7 +59,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     try{
       getAsyncAdmin().createTable(createDescriptor(tableName)).get();
     } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
+      throw new IOException("Error while creating table: "+e.getCause());
     }
   }  
   
@@ -73,39 +69,14 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
         .build();
   }
 
-  @Test
-  public void testAsyncSnapshot() throws IOException {
-    if (sharedTestEnv.isBigtable() && !Boolean.getBoolean("perform.snapshot.test")) {
-      return;
+  @Override
+  protected void snapshot(String snapshotName, TableName tableName)
+      throws IOException {
+    try {
+      getAsyncAdmin().snapshot(snapshotName,tableName).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while creating snapshot: "+e.getCause());
     }
     
-    try {
-    	AsyncAdmin asyncAdmin = getAsyncAdmin();    
-    	asyncAdmin.createTable(
-        new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY)));
-
-      Map<String, Long> values = createAndPopulateTable(tableName);
-      checkSnapshotCount(asyncAdmin, 0);
-      asyncAdmin.snapshot(snapshotName, tableName);
-      checkSnapshotCount(asyncAdmin, 1);
-      asyncAdmin.cloneSnapshot(snapshotName, clonedTableName);
-      validateClone(values);
-      checkSnapshotCount(asyncAdmin, 1);
-      asyncAdmin.deleteSnapshot(snapshotName);
-      checkSnapshotCount(asyncAdmin, 0);
-      asyncAdmin.restoreSnapshot(snapshotName);
-      checkSnapshotCount(asyncAdmin, 1);
-      
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
   }
-  
-private void checkSnapshotCount(AsyncAdmin asyncAdmin, int count) {
-  asyncAdmin.listSnapshots().thenApply(r->{
-     logger.info("Count from CheckSnapshot :: ", count);
-     Assert.assertEquals(count,r.size());
-     return null;
-   });
- }
 }
