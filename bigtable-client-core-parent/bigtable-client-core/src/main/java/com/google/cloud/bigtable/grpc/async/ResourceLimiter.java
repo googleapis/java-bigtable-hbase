@@ -262,7 +262,7 @@ public class ResourceLimiter {
             maxHeapSize, currentWriteBufferSize, currentInFlightMaxRpcs,
             pendingOperationsWithSize.size(), bulkMutationRpcTargetMs, meanLatencyMs);
 
-        if (meanLatencyMs >= bulkMutationRpcTargetMs * 2) {
+        if (meanLatencyMs >= bulkMutationRpcTargetMs * 3) {
           // decrease at 30% of the maximum RPCs, with a minimum of 2.5%
           reduceParallelism(meanLatencyMs, absoluteMaxInFlightRpcs * 3 / 10);
 
