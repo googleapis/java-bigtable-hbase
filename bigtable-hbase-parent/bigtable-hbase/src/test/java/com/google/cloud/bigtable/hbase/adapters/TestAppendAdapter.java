@@ -69,7 +69,7 @@ public class TestAppendAdapter {
 
     Assert.assertEquals("family2", rules.get(1).getFamilyName());
     Assert.assertEquals("qualifier2", rules.get(1).getColumnQualifier().toStringUtf8());
-    Assert.assertNotEquals("value2", rules.get(1).getAppendValue().toStringUtf8());
+    Assert.assertEquals("value2", rules.get(1).getAppendValue().toStringUtf8());
   }
 
   @Test
