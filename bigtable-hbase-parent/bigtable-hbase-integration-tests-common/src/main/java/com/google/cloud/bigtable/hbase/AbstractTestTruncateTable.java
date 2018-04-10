@@ -15,27 +15,31 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.List;
+
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.RegionLocator;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-import java.util.List;
-
-import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 @RunWith(JUnit4.class)
 public abstract class AbstractTestTruncateTable extends AbstractTest {
 
   @Test
-  public void testTruncate() throws IOException {
+  public void testTruncate() throws Exception {
     TableName newTestTableName = sharedTestEnv.newTestTableName();
     sharedTestEnv.createTable(newTestTableName);
     try {
@@ -111,4 +115,6 @@ public abstract class AbstractTestTruncateTable extends AbstractTest {
     Assert.assertEquals(splits.length + 1, regions.size());
     AbstractTestCreateTable.assertSplitsAndRegionsMatch(splits, regions);
   }
+  
+  protected abstract void doTruncate(TableName tableName) throws Exception;
 }

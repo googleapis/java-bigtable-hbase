@@ -38,4 +38,12 @@ public class TestTruncateTable extends AbstractTestTruncateTable {
     }
   }
 
+  @Override
+  protected void doTruncate(TableName tableName) throws Exception {
+    TableName newTestTableName = sharedTestEnv.newTestTableName();
+    sharedTestEnv.createTable(newTestTableName);
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.truncateTableAsync(newTestTableName, true).get();
+    }
+  }
 }

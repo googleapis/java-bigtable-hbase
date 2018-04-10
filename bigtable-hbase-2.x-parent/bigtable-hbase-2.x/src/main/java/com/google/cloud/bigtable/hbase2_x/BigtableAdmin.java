@@ -369,12 +369,20 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     throw new UnsupportedOperationException("modifyTableAsync");
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.Admin#truncateTableAsync(org.apache.hadoop.hbase.TableName, boolean)
+   */
   @Override
-  public Future<Void> truncateTableAsync(TableName arg0, boolean arg1) throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("truncateTableAsync");
+  public Future<Void> truncateTableAsync(TableName tableName, boolean preserveSplits) throws IOException {
+   if (!preserveSplits) {
+      LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
+   }
+   DropRowRangeRequest.Builder deleteRequest = DropRowRangeRequest.newBuilder().setDeleteAllDataFromTable(true);
+   return FutureUtils.toCompletableFuture(
+        bigtableTableAdminClient
+          .dropRowRangeAsync(deleteRequest.setName(toBigtableName(tableName)).build()))
+        .thenApply(r -> null);
   }
-
   /* ******* Unsupported methods *********** */
 
   @Override
