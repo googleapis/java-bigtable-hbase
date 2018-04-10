@@ -83,6 +83,7 @@ public class TestAppProfile {
         .setInstanceId("fake-instance")
         .setUserAgent("fake-agent")
         .setUsePlaintextNegotiation(true)
+        .setUseCachedDataPool(false)
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
 
