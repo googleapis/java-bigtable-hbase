@@ -55,7 +55,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
 
   @VisibleForTesting
-  static long TIMEOUT_MILLISECONDS = TimeUnit.SECONDS.toMillis(15);
+  static final long TIMEOUT_MILLISECONDS = TimeUnit.SECONDS.toMillis(15);
 
   @VisibleForTesting
   static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
