@@ -53,4 +53,6 @@ public class BigtableConstants {
    * TimeUnit in which Bigtable requires messages to be sent and received.
    */
   public static final TimeUnit BIGTABLE_TIMEUNIT = TimeUnit.MICROSECONDS;
+  
+  public static final boolean DEFAULT_SNAPSHOT_RESTORE_TAKE_FAILSAFE_SNAPSHOT = true;
 }
