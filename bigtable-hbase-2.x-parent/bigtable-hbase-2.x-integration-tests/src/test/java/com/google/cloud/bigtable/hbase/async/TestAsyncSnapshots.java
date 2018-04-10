@@ -37,19 +37,6 @@ import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 @RunWith(JUnit4.class)
 public class TestAsyncSnapshots extends AbstractTestSnapshot {
 
-  @Before
-  public void setup() throws Exception {
-    descriptor = new HTableDescriptor(anotherTableName);
-    descriptor.addFamily(new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY));
-    createTable(anotherTableName);
-  }
-
-  @After
-  public void tearDown() throws IOException, InterruptedException, ExecutionException {
-    getAsyncAdmin().disableTable(anotherTableName).get();
-    getAsyncAdmin().deleteTable(anotherTableName).get();
-  }
-  
   private AsyncAdmin getAsyncAdmin() throws InterruptedException, ExecutionException {
     return AbstractAsyncTest.getAsyncConnection().getAdmin();
   }

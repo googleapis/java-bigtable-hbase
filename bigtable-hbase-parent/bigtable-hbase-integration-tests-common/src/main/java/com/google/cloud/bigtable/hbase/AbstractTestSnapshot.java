@@ -112,7 +112,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       checkSnapshotCount(admin, 1);
       admin.deleteSnapshot(snapshotName);
       checkSnapshotCount(admin, 0);
-      admin.restoreSnapshot(snapshotName);
     }
   }
   
