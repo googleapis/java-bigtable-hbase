@@ -77,7 +77,10 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
     String[] badNames =
         { "-x", ".x", "a!", "a@", "a#", "a$", "a%", "a^", "a&", "a*", "a(", "a+", "a=", "a~", "a`",
             "a{", "a[", "a|", "a\\", "a/", "a<", "a,", "a?",
-            "a" + RandomStringUtils.random(10, false, false) };
+            // TODO(issue #1785): this always fails in Cloud Bigtable, but fails intermittently in
+            // HBase.  We need to find the difference, document it, and create a better test.
+            //            "a" + RandomStringUtils.random(10, false, false)
+        };
 
     for (String badName : badNames) {
       boolean failed = false;
