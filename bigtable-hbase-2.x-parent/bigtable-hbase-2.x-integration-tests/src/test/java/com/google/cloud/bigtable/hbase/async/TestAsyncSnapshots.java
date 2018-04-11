@@ -18,16 +18,15 @@ package com.google.cloud.bigtable.hbase.async;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
 
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
-import org.junit.After;
-import org.junit.Before;
+import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -65,5 +64,102 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       throw new IOException("Error while creating snapshot: "+e.getCause());
     }
     
+  }
+
+
+  @Override
+  protected void deleteSnapshot(String snapshotName) throws IOException {
+    try {
+      getAsyncAdmin().deleteSnapshot(snapshotName).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while deleting snapshot: "+e.getCause());
+    }
+  }
+
+  @Override
+  protected boolean tableExists(TableName tableName) throws IOException {
+    try {
+      return getAsyncAdmin().tableExists(tableName).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while checking table exists: "+e.getCause());
+    }
+  }
+
+  @Override
+  protected void disableTable(TableName tableName) throws IOException {
+    try {
+      getAsyncAdmin().disableTable(tableName).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while disabling table: "+e.getCause());
+    }
+  }
+
+  @Override
+  protected void cloneSnapshot(String snapshotName, TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    try {
+      getAsyncAdmin().cloneSnapshot(snapshotName,tableName).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while creating clone of snapshot: "+e.getCause());
+    }
+  }
+
+  @Override
+  protected void deleteSnapshots(Pattern pattern) throws IOException {
+    try {
+      getAsyncAdmin().deleteSnapshots(pattern).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while deleting snapshots: "+e.getCause());
+    }
+  }
+
+  @Override
+  protected int listSnapshotsSize(String regEx) throws IOException {
+    try {
+      Pattern pattern = Pattern.compile(regEx);
+      return getAsyncAdmin().listSnapshots(pattern).get().size();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while listing snapshots size: "+e.getCause());
+    }
+  }
+
+  @Override
+  protected int listTableSnapshotsSize(String tableNameRegex,
+      String snapshotNameRegex) throws IOException {
+    try {
+      Pattern tableNamePattern = Pattern.compile(tableNameRegex);
+      Pattern snapshotNamePattern = Pattern.compile(snapshotNameRegex);
+      return getAsyncAdmin().listTableSnapshots(tableNamePattern, snapshotNamePattern).get().size();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while listing table snapshot size: "+e.getCause());
+    }
+  }
+
+  @Override
+  protected int listSnapshotsSize(Pattern pattern) throws IOException {
+    try {
+      return getAsyncAdmin().listSnapshots(pattern).get().size();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while listing snapshots size: "+e.getCause());
+    }
+  }
+
+  @Override
+  protected int listTableSnapshotsSize(Pattern tableNamePattern,
+      Pattern snapshotNamePattern) throws IOException {
+    try {
+      return getAsyncAdmin().listTableSnapshots(tableNamePattern, snapshotNamePattern).get().size();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while listing table snapshot size: "+e.getCause());
+    }
+  }
+
+  @Override
+  protected void deleteTable(TableName tableName) throws IOException {
+    try {
+      getAsyncAdmin().deleteTable(tableName).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while deleting table: "+e.getCause());
+    }
   }
 }

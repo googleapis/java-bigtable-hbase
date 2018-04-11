@@ -17,6 +17,7 @@
 package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Put;
@@ -35,6 +37,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
+import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
@@ -73,10 +76,10 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       delete(admin, anotherTableName);
       delete(admin, clonedTableName);
       for (SnapshotDescription snapDesc : admin.listSnapshots(snapshotName + ".*")) {
-        admin.deleteSnapshot(snapDesc.getName());
+        deleteSnapshot(snapDesc.getName());
       }
       for (SnapshotDescription snapDesc : admin.listSnapshots(anotherSnapshotName + ".*")) {
-        admin.deleteSnapshot(snapDesc.getName());
+        deleteSnapshot(snapDesc.getName());
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -88,9 +91,9 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   }
 
   private void delete(Admin admin, TableName tableName) throws IOException {
-    if (admin.tableExists(tableName)) {
-      admin.disableTable(tableName);
-      admin.deleteTable(tableName);
+    if (tableExists(tableName)) {
+      disableTable(tableName);
+      deleteTable(tableName);
     }
   }
 
@@ -107,10 +110,10 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       checkSnapshotCount(admin, 0);
       snapshot(snapshotName, tableName);
       checkSnapshotCount(admin, 1);
-      admin.cloneSnapshot(snapshotName, clonedTableName);
+      cloneSnapshot(snapshotName, clonedTableName);
       validateClone(values);
       checkSnapshotCount(admin, 1);
-      admin.deleteSnapshot(snapshotName);
+      deleteSnapshot(snapshotName);
       checkSnapshotCount(admin, 0);
     }
   }
@@ -126,18 +129,18 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       createTable(tableName);
 
       Map<String, Long> values = createAndPopulateTable(tableName);
-      Assert.assertEquals(0, admin.listSnapshots(allSnapshots).size());
+      Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
       snapshot(snapshotName, tableName);
-      Assert.assertEquals(1, admin.listSnapshots(snapshotName).size());
-      admin.deleteSnapshot(snapshotName);
-      Assert.assertEquals(0, admin.listSnapshots(snapshotName).size());
+      Assert.assertEquals(1, listSnapshotsSize(snapshotName));
+      deleteSnapshot(snapshotName);
+      Assert.assertEquals(0, listSnapshotsSize(snapshotName));
       snapshot(snapshotName + 1, tableName);
       snapshot(snapshotName + 2,tableName);
-      Assert.assertEquals(2, admin.listSnapshots(allSnapshots).size());
-      Assert.assertEquals(1, admin.listSnapshots(Pattern.compile(snapshotName + 1)).size());
-      Assert.assertEquals(1, admin.listSnapshots(Pattern.compile(snapshotName + 2)).size());
-      admin.deleteSnapshots(allSnapshots);
-      Assert.assertEquals(0, admin.listSnapshots(allSnapshots).size());
+      Assert.assertEquals(2, listSnapshotsSize(allSnapshots));
+      Assert.assertEquals(1, listSnapshotsSize(Pattern.compile(snapshotName + 1)));
+      Assert.assertEquals(1, listSnapshotsSize(Pattern.compile(snapshotName + 2)));
+      deleteSnapshots(allSnapshots);
+      Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
     }
   }
   
@@ -155,38 +158,38 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       createAndPopulateTable(tableName);
       createAndPopulateTable(anotherTableName);
       Assert.assertEquals(0, 
-          admin.listTableSnapshots(Pattern.compile(tableName.getNameAsString()), matchAll).size());
-      Assert.assertEquals(0, admin.listTableSnapshots(
-              Pattern.compile(anotherTableName.getNameAsString()), matchAll).size());
+          listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString()), matchAll));
+      Assert.assertEquals(0, listTableSnapshotsSize(
+              Pattern.compile(anotherTableName.getNameAsString()), matchAll));
       snapshot(snapshotName, tableName);
       Assert.assertEquals(1, 
-          admin.listTableSnapshots(Pattern.compile(tableName.getNameAsString()), matchAll).size());
-      Assert.assertEquals(0, admin.listTableSnapshots(
-          Pattern.compile(anotherTableName.getNameAsString()), matchAll).size());
+          listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString()), matchAll));
+      Assert.assertEquals(0, listTableSnapshotsSize(
+          Pattern.compile(anotherTableName.getNameAsString()), matchAll));
       snapshot(anotherSnapshotName, anotherTableName);
       Assert.assertEquals(1, 
-          admin.listTableSnapshots(Pattern.compile(tableName.getNameAsString()), matchAll).size());
-      Assert.assertEquals(1, admin.listTableSnapshots(
-          Pattern.compile(anotherTableName.getNameAsString()), matchAll).size());
-      admin.deleteSnapshot(snapshotName);
+          listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString()), matchAll));
+      Assert.assertEquals(1, listTableSnapshotsSize(
+          Pattern.compile(anotherTableName.getNameAsString()), matchAll));
+      deleteSnapshot(snapshotName);
       Assert.assertEquals(0, 
-          admin.listTableSnapshots(tableName.getNameAsString(), snapshotName).size());
+          listTableSnapshotsSize(tableName.getNameAsString(), snapshotName));
       Assert.assertEquals(0, 
-          admin.listTableSnapshots(anotherTableName.getNameAsString(), snapshotName).size());
+          listTableSnapshotsSize(anotherTableName.getNameAsString(), snapshotName));
       Assert.assertEquals(1, 
-          admin.listTableSnapshots(anotherTableName.getNameAsString(), anotherSnapshotName).size());
-      admin.deleteSnapshot(anotherSnapshotName);
+          listTableSnapshotsSize(anotherTableName.getNameAsString(), anotherSnapshotName));
+      deleteSnapshot(anotherSnapshotName);
       Assert.assertEquals(0, 
-          admin.listTableSnapshots(tableName.getNameAsString(), snapshotName).size());
+          listTableSnapshotsSize(tableName.getNameAsString(), snapshotName));
       Assert.assertEquals(0, 
-          admin.listTableSnapshots(anotherTableName.getNameAsString(), snapshotName).size());
+          listTableSnapshotsSize(anotherTableName.getNameAsString(), snapshotName));
       Assert.assertEquals(0, 
-          admin.listTableSnapshots(anotherTableName.getNameAsString(), anotherSnapshotName).size());
+          listTableSnapshotsSize(anotherTableName.getNameAsString(), anotherSnapshotName));
     }
   }
 
   private void checkSnapshotCount(Admin admin, int count) throws IOException {
-    Assert.assertEquals(count, admin.listSnapshots(snapshotName).size());
+    Assert.assertEquals(count,listSnapshotsSize(snapshotName));
   }
 
   /**
@@ -227,4 +230,17 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   protected abstract void createTable(TableName tableName) throws IOException;
   protected abstract void snapshot(String snapshotName, TableName tableName) throws IOException;
+  protected abstract int listSnapshotsSize(String regEx) throws IOException;
+  protected abstract int listSnapshotsSize(Pattern pattern) throws IOException;
+  protected abstract void deleteSnapshot(String snapshotName) throws IOException;
+  protected abstract boolean tableExists(final TableName tableName) throws IOException;
+  protected abstract void disableTable(final TableName tableName) throws IOException;
+  protected abstract void cloneSnapshot(final String snapshotName, final TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException;
+  protected abstract int listTableSnapshotsSize(String tableNameRegex,
+      String snapshotNameRegex) throws IOException;
+  protected abstract int listTableSnapshotsSize(Pattern tableNamePattern,
+      Pattern snapshotNamePattern) throws IOException;
+  protected abstract void deleteSnapshots(final Pattern pattern) throws IOException;
+  protected abstract void deleteTable(final TableName tableName) throws IOException;
 }
