@@ -39,7 +39,7 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
  */
 public class BigtableDataClient {
 
-  private com.google.cloud.bigtable.grpc.BigtableDataClient dataClient;
+  private final com.google.cloud.bigtable.grpc.BigtableDataClient dataClient;
 
   public BigtableDataClient(com.google.cloud.bigtable.grpc.BigtableDataClient dataClient) {
     this.dataClient = dataClient;
