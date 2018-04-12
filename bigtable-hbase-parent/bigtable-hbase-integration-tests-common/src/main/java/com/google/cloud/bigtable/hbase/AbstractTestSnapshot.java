@@ -98,7 +98,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testSnapshot() throws IOException {
     if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
       return;
@@ -119,7 +118,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   }
   
   @Test
-  @Category(KnownGap.class)
   public void testListSnapshots() throws IOException {
     if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
       return;
@@ -145,7 +143,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   }
   
   @Test
-  @Category(KnownGap.class)
   public void testTableSnapshots() throws IOException {
     if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
       return;
