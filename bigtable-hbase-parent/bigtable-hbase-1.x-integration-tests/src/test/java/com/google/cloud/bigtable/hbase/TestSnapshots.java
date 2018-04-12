@@ -12,124 +12,112 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */package com.google.cloud.bigtable.hbase;
+ */
+package com.google.cloud.bigtable.hbase;
 
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
+import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 
+public class TestSnapshots extends AbstractTestSnapshot {
 
-public class TestSnapshots extends AbstractTest {
-
-  final byte[] QUALIFIER = dataHelper.randomData("TestSnapshots");
-
-  private final TableName tableName = sharedTestEnv.newTestTableName();
-  // The maximum size of a table id or snapshot id is 50. newTestTableName().size() can approach 50.
-  // Make sure that the snapshot name and cloned table are within the 50 character limit
-  private final String snapshotName = tableName.getNameAsString().substring(40) + "_snp";
-  private final TableName clonedTableName =
-      TableName.valueOf(tableName.getNameAsString().substring(40) + "_clone");
-
-  @After
-  public void cleanup() throws IOException {
-    if (sharedTestEnv.isBigtable() && !Boolean.getBoolean("perform.snapshot.test")) {
-      return;
+  @Override
+  protected void createTable(TableName tableName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      HTableDescriptor descriptor = new HTableDescriptor(tableName);
+      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+      admin.createTable(descriptor);
     }
-    try (Admin admin = getConnection().getAdmin()) {
-      delete(admin, tableName);
-      delete(admin, clonedTableName);
-      if (!admin.listSnapshots(snapshotName).isEmpty()) {
-        admin.deleteSnapshot(snapshotName);
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+    
+  }
+
+  @Override
+  protected void snapshot(String snapshotName, TableName tableName)
+      throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.snapshot(snapshotName, tableName);
     }
   }
 
-  private void delete(Admin admin, TableName tableName) throws IOException {
-    if (admin.tableExists(tableName)) {
+  @Override
+  protected int listSnapshotsSize(String regEx) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.listSnapshots(regEx).size();
+    }
+  }
+
+  @Override
+  protected void deleteSnapshot(String snapshotName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.deleteSnapshot(snapshotName);
+    }
+    
+  }
+
+  @Override
+  protected boolean tableExists(TableName tableName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.tableExists(tableName);
+    }
+  }
+
+  @Override
+  protected void disableTable(TableName tableName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
       admin.disableTable(tableName);
+    }
+  }
+
+  @Override
+  protected void cloneSnapshot(String snapshotName, TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.cloneSnapshot(snapshotName, tableName);
+    }
+  }
+
+  @Override
+  protected void deleteSnapshots(Pattern pattern) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.deleteSnapshots(pattern);
+    }
+  }
+
+  @Override
+  protected int listTableSnapshotsSize(String tableNameRegex,
+      String snapshotNameRegex) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.listTableSnapshots(tableNameRegex, snapshotNameRegex).size();
+    }
+  }
+
+  @Override
+  protected int listSnapshotsSize(Pattern pattern) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.listSnapshots(pattern).size();
+    }
+  }
+
+  @Override
+  protected int listTableSnapshotsSize(Pattern tableNamePattern,
+      Pattern snapshotNamePattern) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.listTableSnapshots(tableNamePattern, snapshotNamePattern).size();
+    }
+  }
+
+  @Override
+  protected void deleteTable(TableName tableName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
       admin.deleteTable(tableName);
     }
   }
-
-  @Test
-  public void testSnapshot() throws IOException {
-    if (sharedTestEnv.isBigtable() && !Boolean.getBoolean("perform.snapshot.test")) {
-      return;
-    }
-    try (Admin admin = getConnection().getAdmin()) {
-      admin.createTable(
-        new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY)));
-
-      Map<String, Long> values = createAndPopulateTable();
-      checkSnapshotCount(admin, 0);
-      admin.snapshot(snapshotName, tableName);
-      checkSnapshotCount(admin, 1);
-      admin.cloneSnapshot(snapshotName, clonedTableName);
-      validateClone(values);
-      checkSnapshotCount(admin, 1);
-      admin.deleteSnapshot(snapshotName);
-      checkSnapshotCount(admin, 0);
-    }
-  }
-
-  private void checkSnapshotCount(Admin admin, int count) throws IOException {
-    Assert.assertEquals(count, admin.listSnapshots(snapshotName).size());
-  }
-
-  /**
-   * Create a test table, and add a small number of rows to the table.
-   *
-   * @return A Map of the data that was added to the original table.
-   * @throws IOException
-   */
-  private Map<String, Long> createAndPopulateTable() throws IOException {
-    Map<String, Long> values = new HashMap<>();
-    try (Table table = getConnection().getTable(tableName)) {
-      values.clear();
-      List<Put> puts = new ArrayList<>();
-      for (long i = 0; i < 10; i++) {
-        final UUID rowKey = UUID.randomUUID();
-        byte[] row = Bytes.toBytes(rowKey.toString());
-        values.put(rowKey.toString(), i);
-        puts.add(new Put(row).addColumn(SharedTestEnvRule.COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i)));
-      }
-      table.put(puts);
-    }
-    return values;
-  }
-
-  protected void validateClone(Map<String, Long> values) throws IOException {
-    try (Table clonedTable = getConnection().getTable(clonedTableName);
-        ResultScanner scanner = clonedTable.getScanner(new Scan())){
-      for(Result result : scanner) {
-        String row = Bytes.toString(result.getRow());
-        Long expected = values.get(row);
-        Long found = Bytes.toLong(result.getValue(SharedTestEnvRule.COLUMN_FAMILY, QUALIFIER));
-        Assert.assertEquals("row " + row + " not equal", expected, found);
-        values.remove(row);
-      }
-    }
-    Assert.assertTrue("There were missing keys.", values.isEmpty());
-  }
-
 }
