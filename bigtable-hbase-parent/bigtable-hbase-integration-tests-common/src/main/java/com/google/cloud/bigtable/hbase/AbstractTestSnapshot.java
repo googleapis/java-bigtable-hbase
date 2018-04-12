@@ -43,6 +43,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * <p>AbstractTestSnapshot class.</p>
@@ -51,6 +53,7 @@ import org.junit.experimental.categories.Category;
  *
  */
 @SuppressWarnings("deprecation")
+@RunWith(JUnit4.class)
 public abstract class AbstractTestSnapshot extends AbstractTest {
 
   protected final byte[] QUALIFIER = dataHelper.randomData("TestSnapshots");
