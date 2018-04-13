@@ -1,5 +1,6 @@
 /*
- * Copyright 2018 Google Inc. All Rights Reserved.
+
+ * Copyright 2018 Google LLC. All Rights Reserved.
 
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,12 +53,11 @@ public abstract class AbstractBigtbleRegionLocator {
   protected static final Logger LOG = new Logger(AbstractBigtbleRegionLocator.class);
 
   protected final TableName tableName;
-  protected final BigtableDataClient client;
-  protected final SampledRowKeysAdapter adapter;
-  protected final BigtableTableName bigtableTableName;
-  protected List<HRegionLocation> regions;
-  protected long regionsFetchTimeMillis;
   protected ListenableFuture<List<HRegionLocation>> regionsFuture;
+  private final BigtableDataClient client;
+  private final SampledRowKeysAdapter adapter;
+  private final BigtableTableName bigtableTableName;
+  private long regionsFetchTimeMillis;
   
   public AbstractBigtbleRegionLocator (TableName tableName, BigtableOptions options, BigtableDataClient client) {
     this.tableName = tableName;
