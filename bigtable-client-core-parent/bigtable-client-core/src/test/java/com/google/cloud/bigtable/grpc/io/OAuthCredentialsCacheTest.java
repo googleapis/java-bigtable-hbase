@@ -303,7 +303,7 @@ public class OAuthCredentialsCacheTest {
     Assert.assertTrue(underTest.isRefreshing());
 
     answer.set(new AccessToken("hi", expirationTime));
-    underTest.asyncRefresh().get(100, TimeUnit.MILLISECONDS);
+    underTest.asyncRefresh().get(500, TimeUnit.MILLISECONDS);
   }
 
   private void initialize(long expiration) throws Exception, ExecutionException, InterruptedException {
