@@ -19,6 +19,8 @@ package com.google.cloud.bigtable.hbase;
 import java.io.IOException;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -30,6 +32,10 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * <p> AbstractBigtbleRegionLocator class. </p>
@@ -51,7 +57,8 @@ public abstract class AbstractBigtbleRegionLocator {
   protected final BigtableTableName bigtableTableName;
   protected List<HRegionLocation> regions;
   protected long regionsFetchTimeMillis;
-
+  protected ListenableFuture<List<HRegionLocation>> regionsFuture;
+  
   public AbstractBigtbleRegionLocator (TableName tableName, BigtableOptions options, BigtableDataClient client) {
     this.tableName = tableName;
     this.client = client;
@@ -66,11 +73,11 @@ public abstract class AbstractBigtbleRegionLocator {
   /**
    * The list of regions will be sorted and cover all the possible rows.
    */
-  protected synchronized List<HRegionLocation> getRegions(boolean reload) throws IOException {
+  protected synchronized ListenableFuture<List<HRegionLocation>> getRegionsAsync(boolean reload) throws IOException {
     // If we don't need to refresh and we have a recent enough version, just use that.
-    if (!reload && regions != null &&
+    if (!reload && regionsFuture != null &&
         regionsFetchTimeMillis + MAX_REGION_AGE_MILLIS > System.currentTimeMillis()) {
-      return regions;
+      return this.regionsFuture;
     }
 
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
@@ -78,12 +85,27 @@ public abstract class AbstractBigtbleRegionLocator {
     LOG.debug("Sampling rowkeys for table %s", request.getTableName());
 
     try {
-      List<SampleRowKeysResponse> responses = client.sampleRowKeys(request.build());
-      regions = adapter.adaptResponse(responses);
+      ListenableFuture<List<SampleRowKeysResponse>> future = client.sampleRowKeysAsync(request.build());
+      this.regionsFuture = Futures
+          .transform(future, new Function<List<SampleRowKeysResponse>, List<HRegionLocation>>() {
+            @Override
+            public List<HRegionLocation> apply(@Nullable List<SampleRowKeysResponse> input) {
+              return adapter.adaptResponse(input);
+            }
+          });
+      Futures.addCallback(this.regionsFuture, new FutureCallback<List<HRegionLocation>>() {
+        @Override public void onSuccess(@Nullable List<HRegionLocation> result) {
+        }
+        @Override public void onFailure(Throwable t) {
+          synchronized (AbstractBigtbleRegionLocator.this) {
+            regionsFuture = null;
+          }
+        }
+      });
       regionsFetchTimeMillis = System.currentTimeMillis();
-      return regions;
+      return this.regionsFuture;
     } catch(Throwable throwable) {
-      regions = null;
+      regionsFuture = null;
       throw new IOException("Error sampling rowkeys.", throwable);
     }
   }

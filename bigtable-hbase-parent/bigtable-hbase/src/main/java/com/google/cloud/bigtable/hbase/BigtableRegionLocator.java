@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
@@ -67,6 +68,21 @@ public abstract class BigtableRegionLocator extends AbstractBigtbleRegionLocator
     throw new IOException("Region not found for row: " + Bytes.toStringBinary(row));
   }
 
+  private List<HRegionLocation> getRegions(boolean reload) throws IOException {
+    try {
+      return getRegionsAsync(reload).get();
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw new IOException("getRegionLocation was interrupted");
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof  IOException) {
+        throw (IOException) e.getCause();
+      } else {
+        throw new IOException("getRegionLocation ExecutionException", e);
+      }
+    }
+  }
+  
   /** {@inheritDoc} */
   @Override
   public List<HRegionLocation> getAllRegionLocations() throws IOException {

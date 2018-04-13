@@ -15,18 +15,26 @@
  */
 package com.google.cloud.bigtable.hbase.async;
 
-import com.google.cloud.bigtable.hbase.AbstractTestCreateTable;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.AsyncAdmin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
+import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
+
+import com.google.cloud.bigtable.hbase.AbstractTestCreateTable;
+import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 
 @SuppressWarnings("deprecation")
 public class TestAsyncCreateTable extends AbstractTestCreateTable {
 
+  protected static DataGenerationHelper dataHelper = new DataGenerationHelper();
   @Override
   protected void createTable(TableName tableName) throws Exception {
     try {
@@ -64,5 +72,14 @@ public class TestAsyncCreateTable extends AbstractTestCreateTable {
 
   private AsyncAdmin getAsyncAdmin() throws InterruptedException, ExecutionException {
     return AbstractAsyncTest.getAsyncConnection().getAdmin();
+  }
+
+  @Override
+  protected List<HRegionLocation> getRegions(TableName tableName) throws Exception {
+    byte[] rowKey = dataHelper.randomData("TestAsyncCreateTable-");
+    List<HRegionLocation> regionLocationList = new ArrayList<>();
+    HRegionLocation hRegionLocation = AbstractAsyncTest.getAsyncConnection().getRegionLocator(tableName).getRegionLocation(rowKey, true).get();
+    regionLocationList.add(hRegionLocation);
+    return regionLocationList;
   }
 }

@@ -15,12 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.lang.RandomStringUtils;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.TableExistsException;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -29,13 +33,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 @SuppressWarnings("deprecation")
 public abstract class AbstractTestCreateTable extends AbstractTest {
@@ -298,10 +299,19 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
     }
   }
 
+  @Test
+  public void testGetRegionLocation() throws Exception{
+    TableName tableName = sharedTestEnv.newTestTableName();
+    createTable(tableName);
+    List<HRegionLocation> regions = getRegions(tableName);
+    Assert.assertEquals(1, regions.size());
+  }
+  
   protected abstract void createTable(TableName name) throws Exception;
   protected abstract void createTable(TableName name, byte[] start, byte[] end, int splitCount)
       throws Exception;
   protected abstract void createTable(TableName name, byte[][] ranges)
       throws Exception;
+  protected abstract List<HRegionLocation> getRegions(TableName tableName) throws Exception;
 
 }

@@ -16,7 +16,10 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import javax.annotation.Nullable;
 
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
@@ -31,6 +34,8 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.hbase.AbstractBigtbleRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 
 /**
  * Bigtable implementation of {@link AsyncTableRegionLocator}
@@ -39,7 +44,7 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
  */
 public class BigtableAsyncTableRegionLocator extends AbstractBigtbleRegionLocator implements AsyncTableRegionLocator {
   private final Logger LOG = new Logger(getClass());
-
+  HRegionLocation hRegionLocation = null;
 
   public BigtableAsyncTableRegionLocator(TableName tableName, BigtableOptions options,
       BigtableDataClient client) {
@@ -54,16 +59,31 @@ public class BigtableAsyncTableRegionLocator extends AbstractBigtbleRegionLocato
   @Override
   public CompletableFuture<HRegionLocation> getRegionLocation(byte[] row, boolean reload){
     try {
-      for(HRegionLocation region : getRegions(reload)) {
-        if (region.getRegion().containsRow(row)) {
-            return CompletableFuture.completedFuture(region);
-          }
-        }
+      this.regionsFuture = getRegionsAsync(reload);
     } catch (IOException e) {
-        LOG.error(e.getMessage(),e);
+      //As getRegionLocation() method is not throwing any exception hence needs to handle following way.
+      e.getCause();
     }
-    LOG.info("Region not found for row: ", Bytes.toStringBinary(row));
-    return null;
+    Futures.addCallback(this.regionsFuture, new FutureCallback<List<HRegionLocation>>() {
+      @Override 
+      public void onSuccess(@Nullable List<HRegionLocation> result) {
+        for(HRegionLocation region : result) {
+          if (region.getRegion().containsRow(row)) {
+            hRegionLocation = region;
+          } 
+        }
+      }
+      @Override 
+      public void onFailure(Throwable t) {
+        synchronized (BigtableAsyncTableRegionLocator.this) {
+          regionsFuture = null;
+        }
+      }
+    });
+    if(hRegionLocation == null) {
+      LOG.info("Region not found for row: ", Bytes.toStringBinary(row));
+    }
+    return CompletableFuture.completedFuture(hRegionLocation);
   }
 
   @Override
