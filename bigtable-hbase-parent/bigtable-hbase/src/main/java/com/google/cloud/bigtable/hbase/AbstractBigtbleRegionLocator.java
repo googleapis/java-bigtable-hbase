@@ -17,7 +17,6 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import java.io.IOException;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -50,10 +49,10 @@ public abstract class AbstractBigtbleRegionLocator {
   public static long MAX_REGION_AGE_MILLIS = 60 * 1000;
 
   /** Constant <code>LOG</code> */
-  protected static final Logger LOG = new Logger(AbstractBigtbleRegionLocator.class);
+  private static final Logger LOG = new Logger(AbstractBigtbleRegionLocator.class);
 
   protected final TableName tableName;
-  protected ListenableFuture<List<HRegionLocation>> regionsFuture;
+  private ListenableFuture<List<HRegionLocation>> regionsFuture;
   private final BigtableDataClient client;
   private final SampledRowKeysAdapter adapter;
   private final BigtableTableName bigtableTableName;
@@ -73,7 +72,7 @@ public abstract class AbstractBigtbleRegionLocator {
   /**
    * The list of regions will be sorted and cover all the possible rows.
    */
-  protected synchronized ListenableFuture<List<HRegionLocation>> getRegionsAsync(boolean reload) throws IOException {
+  protected synchronized ListenableFuture<List<HRegionLocation>> getRegionsAsync(boolean reload) {
     // If we don't need to refresh and we have a recent enough version, just use that.
     if (!reload && regionsFuture != null &&
         regionsFetchTimeMillis + MAX_REGION_AGE_MILLIS > System.currentTimeMillis()) {
@@ -106,7 +105,8 @@ public abstract class AbstractBigtbleRegionLocator {
       return this.regionsFuture;
     } catch(Throwable throwable) {
       regionsFuture = null;
-      throw new IOException("Error sampling rowkeys.", throwable);
+      Futures.immediateFailedFuture(throwable);
     }
+    return regionsFuture;
   }
 }
