@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.util.concurrent.CompletableFuture;
+
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -24,9 +25,8 @@ import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.hbase.AbstractBigtbleRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
 /**
@@ -34,28 +34,12 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
  * 
  * @author spollapally
  */
-public class BigtableAsyncTableRegionLocator implements AsyncTableRegionLocator {
-  private final Logger LOG = new Logger(getClass());
-
-  private final TableName tableName;
-  private final BigtableDataClient client;
-  private final SampledRowKeysAdapter adapter;
-  private final BigtableTableName bigtableTableName;
+public class BigtableAsyncTableRegionLocator extends AbstractBigtbleRegionLocator implements AsyncTableRegionLocator {
+  HRegionLocation hRegionLocation = null;
 
   public BigtableAsyncTableRegionLocator(TableName tableName, BigtableOptions options,
       BigtableDataClient client) {
-    this.tableName = tableName;
-    this.client = client;
-    this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
-    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
-    this.adapter = new SampledRowKeysAdapter(tableName, serverName) {
-      @Override
-      protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
-        RegionInfo regionInfo =
-            RegionInfoBuilder.newBuilder(tableName).setStartKey(startKey).setEndKey(endKey).build();
-        return new HRegionLocation(regionInfo, serverName);
-      }
-    };
+    super(tableName,options,client);
   }
 
   @Override
@@ -64,7 +48,29 @@ public class BigtableAsyncTableRegionLocator implements AsyncTableRegionLocator 
   }
 
   @Override
-  public CompletableFuture<HRegionLocation> getRegionLocation(byte[] arg0, boolean arg1) {
-    throw new UnsupportedOperationException("getRegionLocation"); // TODO
+  public CompletableFuture<HRegionLocation> getRegionLocation(byte[] row, boolean reload) {
+    return FutureUtils.toCompletableFuture(getRegionsAsync(reload))
+        .thenApplyAsync(result -> {
+          for (HRegionLocation region : result) {
+            if (region.getRegion().containsRow(row)) {
+              hRegionLocation = region;
+              break;
+            }
+          }
+          return hRegionLocation;
+     });
+  }
+
+  @Override
+  public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
+      ServerName serverName) {
+    return new SampledRowKeysAdapter(tableName, serverName) {
+      @Override
+      protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
+        RegionInfo regionInfo =
+            RegionInfoBuilder.newBuilder(tableName).setStartKey(startKey).setEndKey(endKey).build();
+        return new HRegionLocation(regionInfo, serverName);
+        }
+      };
   }
 }

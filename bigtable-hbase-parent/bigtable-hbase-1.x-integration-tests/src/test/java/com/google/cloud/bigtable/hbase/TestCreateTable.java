@@ -18,12 +18,14 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.IOException;
+import java.util.List;
 
 @RunWith(JUnit4.class)
 public class TestCreateTable extends AbstractTestCreateTable {
@@ -48,5 +50,11 @@ public class TestCreateTable extends AbstractTestCreateTable {
   private HTableDescriptor createDescriptor(TableName tableName) {
     return new HTableDescriptor(tableName)
         .addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+  }
+
+  @Override
+  protected List<HRegionLocation> getRegions(TableName tableName)
+      throws Exception {
+    return getConnection().getRegionLocator(tableName).getAllRegionLocations();
   }
 }

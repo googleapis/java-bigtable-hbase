@@ -15,16 +15,17 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+
+import java.io.IOException;
+import java.util.List;
+
+import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 
-import java.io.IOException;
-
-import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
-
-@SuppressWarnings("deprecation")
 public class TestCreateTableHBase2 extends AbstractTestCreateTable {
 
   @Override
@@ -48,6 +49,12 @@ public class TestCreateTableHBase2 extends AbstractTestCreateTable {
     return TableDescriptorBuilder.newBuilder(tableName)
         .addColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder(COLUMN_FAMILY).build())
         .build();
+  }
+
+  @Override
+  protected List<HRegionLocation> getRegions(TableName tableName)
+      throws Exception {
+    return getConnection().getRegionLocator(tableName).getAllRegionLocations();
   }
 
 }

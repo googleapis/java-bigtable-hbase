@@ -17,21 +17,17 @@ package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.hadoop.hbase.HRegionLocation;
-import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
 /**
  * <p>BigtableRegionLocator class.</p>
@@ -39,20 +35,10 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
  * @author sduskis
  * @version $Id: $Id
  */
-public abstract class BigtableRegionLocator implements RegionLocator {
-  // Reuse the results from previous calls during this time.
-  /** Constant <code>MAX_REGION_AGE_MILLIS=60 * 1000</code> */
-  public static long MAX_REGION_AGE_MILLIS = 60 * 1000;
+public abstract class BigtableRegionLocator extends AbstractBigtbleRegionLocator implements RegionLocator {
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableRegionLocator.class);
-
-  private final TableName tableName;
-  private final BigtableDataClient client;
-  private final SampledRowKeysAdapter adapter;
-  private final BigtableTableName bigtableTableName;
-  private List<HRegionLocation> regions;
-  private long regionsFetchTimeMillis;
 
   /**
    * <p>Constructor for BigtableRegionLocator.</p>
@@ -62,39 +48,7 @@ public abstract class BigtableRegionLocator implements RegionLocator {
    * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
    */
   public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableDataClient client) {
-    this.tableName = tableName;
-    this.client = client;
-    this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
-    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
-    this.adapter = getSampledRowKeysAdapter(tableName, serverName);
-  }
-
-  public abstract SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
-      ServerName serverName);
-  
-  /**
-   * The list of regions will be sorted and cover all the possible rows.
-   */
-  private synchronized List<HRegionLocation> getRegions(boolean reload) throws IOException {
-    // If we don't need to refresh and we have a recent enough version, just use that.
-    if (!reload && regions != null &&
-        regionsFetchTimeMillis + MAX_REGION_AGE_MILLIS > System.currentTimeMillis()) {
-      return regions;
-    }
-
-    SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setTableName(bigtableTableName.toString());
-    LOG.debug("Sampling rowkeys for table %s", request.getTableName());
-
-    try {
-      List<SampleRowKeysResponse> responses = client.sampleRowKeys(request.build());
-      regions = adapter.adaptResponse(responses);
-      regionsFetchTimeMillis = System.currentTimeMillis();
-      return regions;
-    } catch(Throwable throwable) {
-      regions = null;
-      throw new IOException("Error sampling rowkeys.", throwable);
-    }
+    super(tableName,options,client);
   }
 
   /** {@inheritDoc} */
@@ -114,6 +68,21 @@ public abstract class BigtableRegionLocator implements RegionLocator {
     throw new IOException("Region not found for row: " + Bytes.toStringBinary(row));
   }
 
+  private List<HRegionLocation> getRegions(boolean reload) throws IOException {
+    try {
+      return getRegionsAsync(reload).get();
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw new IOException("getRegionLocation was interrupted");
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof  IOException) {
+        throw (IOException) e.getCause();
+      } else {
+        throw new IOException("getRegionLocation ExecutionException", e);
+      }
+    }
+  }
+  
   /** {@inheritDoc} */
   @Override
   public List<HRegionLocation> getAllRegionLocations() throws IOException {
