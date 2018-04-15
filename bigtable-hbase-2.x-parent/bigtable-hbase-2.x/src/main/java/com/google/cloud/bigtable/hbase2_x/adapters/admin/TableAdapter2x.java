@@ -64,22 +64,23 @@ public class TableAdapter2x {
   public Table adapt(TableDescriptor desc) {
     Map<String, ColumnFamily> columnFamilies = new HashMap<>();
     for (ColumnFamilyDescriptor column : desc.getColumnFamilies()) {
-      String columnName = column.getNameAsString();
-
-      //TODO: verify if this copy is sufficient
-      HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(columnName);
-      // TODO - copy the config and value Maps
-      for (Map.Entry<String, String> entry : column.getConfiguration().entrySet()) {
-        hColumnDescriptor.setConfiguration(entry.getKey(), entry.getValue());
-      }
-      for (Map.Entry<Bytes, Bytes> entry : column.getValues().entrySet()) {
-        hColumnDescriptor.setValue(entry.getKey().get(), entry.getValue().get());
-      }
-
-      ColumnFamily columnFamily = columnDescriptorAdapter.adapt(hColumnDescriptor).build();
-      columnFamilies.put(columnName, columnFamily);
+      columnFamilies.put(column.getNameAsString(),
+          columnDescriptorAdapter.adapt(toHColumnDescriptor(column)).build());
     }
     return Table.newBuilder().putAllColumnFamilies(columnFamilies).build();
+  }
+
+  public static HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor column) {
+    //TODO: verify if this copy is sufficient
+    HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(column.getNameAsString());
+    // TODO - copy the config and value Maps
+    for (Map.Entry<String, String> entry : column.getConfiguration().entrySet()) {
+      hColumnDescriptor.setConfiguration(entry.getKey(), entry.getValue());
+    }
+    for (Map.Entry<Bytes, Bytes> entry : column.getValues().entrySet()) {
+      hColumnDescriptor.setValue(entry.getKey().get(), entry.getValue().get());
+    }
+    return hColumnDescriptor;
   }
 
   /**

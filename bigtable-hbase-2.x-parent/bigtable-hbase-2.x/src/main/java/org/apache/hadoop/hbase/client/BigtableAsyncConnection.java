@@ -18,6 +18,7 @@ package org.apache.hadoop.hbase.client;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -48,11 +49,11 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
   private final Logger LOG = new Logger(getClass());
 
   private final Configuration conf;
-  private BigtableSession session;
-  private BigtableOptions options;
+  private final BigtableSession session;
+  private final BigtableOptions options;
   private volatile boolean closed = false;
 
-  private Set<TableName> disabledTables = new HashSet<>();
+  private final Set<TableName> disabledTables = Collections.synchronizedSet(new HashSet<>());
   private MutationAdapters mutationAdapters;
 
   static {
