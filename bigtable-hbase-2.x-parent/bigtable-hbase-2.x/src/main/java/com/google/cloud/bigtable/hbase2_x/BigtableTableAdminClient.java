@@ -54,7 +54,7 @@ public class BigtableTableAdminClient {
    * Gets the details of a table asynchronously.
    *
    * @param request a {@link GetTableRequest} object.
-   * @return a {@link public CompletableFuture} that returns a {@link Table} object.
+   * @return a {@link CompletableFuture} that returns a {@link Table} object.
    */
   public CompletableFuture<Table> getTableAsync(GetTableRequest request) {
     return toCompletableFuture(adminClient.getTableAsync(request));
@@ -64,7 +64,7 @@ public class BigtableTableAdminClient {
    * Lists the names of all tables in an instance asynchronously.
    *
    * @param request a {@link ListTablesRequest} object.
-   * @return a {@link public CompletableFuture} that returns a {@link ListTablesResponse} object.
+   * @return a {@link CompletableFuture} that returns a {@link ListTablesResponse} object.
    */
   public CompletableFuture<ListTablesResponse> listTablesAsync(ListTablesRequest request) {
     return toCompletableFuture(adminClient.listTablesAsync(request));
@@ -74,7 +74,7 @@ public class BigtableTableAdminClient {
    * Permanently deletes a specified table and all of its data.
    *
    * @param request a {@link DeleteTableRequest} object.
-   * @return a {@link public CompletableFuture} that returns {@link Empty} object.
+   * @return a {@link CompletableFuture} that returns {@link Empty} object.
    */
   public CompletableFuture<Empty> deleteTableAsync(DeleteTableRequest request){
     return toCompletableFuture(adminClient.deleteTableAsync(request));
@@ -84,7 +84,7 @@ public class BigtableTableAdminClient {
    * Creates, modifies or deletes a new column family within a specified table.
    *
    * @param request a {@link ModifyColumnFamiliesRequest} object.
-   * @return a {@link public CompletableFuture} that returns {@link Table} object that contains the updated
+   * @return a {@link CompletableFuture} that returns {@link Table} object that contains the updated
    *         table structure.
    */
   public CompletableFuture<Table> modifyColumnFamilyAsync(ModifyColumnFamiliesRequest request) {
@@ -95,7 +95,7 @@ public class BigtableTableAdminClient {
    * Permanently deletes all rows in a range.
    *
    * @param request a {@link DropRowRangeRequest} object.
-   * @return a {@link public CompletableFuture} that returns {@link Empty} object.
+   * @return a {@link CompletableFuture} that returns {@link Empty} object.
    */
   public CompletableFuture<Empty> dropRowRangeAsync(DropRowRangeRequest request) {
     return toCompletableFuture(adminClient.dropRowRangeAsync(request));
