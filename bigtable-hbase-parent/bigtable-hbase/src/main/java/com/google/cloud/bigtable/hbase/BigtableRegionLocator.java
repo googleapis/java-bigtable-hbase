@@ -35,7 +35,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
  * @author sduskis
  * @version $Id: $Id
  */
-public abstract class BigtableRegionLocator extends AbstractBigtbleRegionLocator implements RegionLocator {
+public abstract class BigtableRegionLocator extends AbstractBigtableRegionLocator implements RegionLocator {
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableRegionLocator.class);

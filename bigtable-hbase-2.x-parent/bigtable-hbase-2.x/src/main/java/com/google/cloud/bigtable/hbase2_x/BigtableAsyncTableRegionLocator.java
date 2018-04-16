@@ -26,7 +26,7 @@ import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.hbase.AbstractBigtbleRegionLocator;
+import com.google.cloud.bigtable.hbase.AbstractBigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
 /**
@@ -34,7 +34,7 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
  * 
  * @author spollapally
  */
-public class BigtableAsyncTableRegionLocator extends AbstractBigtbleRegionLocator implements AsyncTableRegionLocator {
+public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocator implements AsyncTableRegionLocator {
   HRegionLocation hRegionLocation = null;
 
   public BigtableAsyncTableRegionLocator(TableName tableName, BigtableOptions options,

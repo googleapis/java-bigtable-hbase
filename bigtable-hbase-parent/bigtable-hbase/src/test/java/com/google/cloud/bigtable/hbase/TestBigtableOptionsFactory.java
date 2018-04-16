@@ -83,7 +83,7 @@ public class TestBigtableOptionsFactory {
   public void testAdminHostKeyIsUsed() throws IOException {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, TEST_HOST);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
     Assert.assertEquals(TEST_HOST, options.getDataHost());
@@ -92,7 +92,7 @@ public class TestBigtableOptionsFactory {
   @Test
   public void testOptionsAreConstructedWithValidInput() throws IOException {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
     Assert.assertEquals(TEST_HOST, options.getDataHost());
