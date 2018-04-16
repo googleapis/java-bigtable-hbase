@@ -43,13 +43,13 @@ import com.google.common.util.concurrent.ListenableFuture;
  * @author rupeshit
  *
  */
-public abstract class AbstractBigtbleRegionLocator {
+public abstract class AbstractBigtableRegionLocator {
   // Reuse the results from previous calls during this time.
   /** Constant <code>MAX_REGION_AGE_MILLIS=60 * 1000</code> */
   public static long MAX_REGION_AGE_MILLIS = 60 * 1000;
 
   /** Constant <code>LOG</code> */
-  private static final Logger LOG = new Logger(AbstractBigtbleRegionLocator.class);
+  private static final Logger LOG = new Logger(AbstractBigtableRegionLocator.class);
 
   protected final TableName tableName;
   private ListenableFuture<List<HRegionLocation>> regionsFuture;
@@ -58,7 +58,7 @@ public abstract class AbstractBigtbleRegionLocator {
   private final BigtableTableName bigtableTableName;
   private long regionsFetchTimeMillis;
   
-  public AbstractBigtbleRegionLocator (TableName tableName, BigtableOptions options, BigtableDataClient client) {
+  public AbstractBigtableRegionLocator (TableName tableName, BigtableOptions options, BigtableDataClient client) {
     this.tableName = tableName;
     this.client = client;
     this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
@@ -96,7 +96,7 @@ public abstract class AbstractBigtbleRegionLocator {
         @Override public void onSuccess(@Nullable List<HRegionLocation> result) {
         }
         @Override public void onFailure(Throwable t) {
-          synchronized (AbstractBigtbleRegionLocator.this) {
+          synchronized (AbstractBigtableRegionLocator.this) {
             regionsFuture = null;
           }
         }

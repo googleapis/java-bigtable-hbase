@@ -89,7 +89,7 @@ public class BigtableOptionsFactory {
    * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
    * Defaults to enabled.
    */
-  public static final String BIGTABE_USE_SERVICE_ACCOUNTS_KEY =
+  public static final String BIGTABLE_USE_SERVICE_ACCOUNTS_KEY =
       "google.bigtable.auth.service.account.enable";
   /** Constant <code>BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT=true</code> */
   public static final boolean BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT = true;
@@ -408,7 +408,7 @@ public class BigtableOptionsFactory {
   private static void setCredentialOptions(BigtableOptions.Builder builder,
       Configuration configuration) throws FileNotFoundException {
     if (configuration.getBoolean(
-        BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
+        BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
       LOG.debug("Using service accounts");
 
       if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY) != null) {
