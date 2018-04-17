@@ -327,7 +327,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return modifyColumn(tableName, Modification
         .newBuilder()
         .setId(columnFamilyDesc.getNameAsString())
-        .setCreate(new ColumnDescriptorAdapter().adapt(
+        .setUpdate(new ColumnDescriptorAdapter().adapt(
             TableAdapter2x.toHColumnDescriptor(columnFamilyDesc))));
   }
 
@@ -552,8 +552,16 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Boolean> isTableAvailable(TableName arg0) {
-    throw new UnsupportedOperationException("isTableAvailable"); // TODO
+  public CompletableFuture<Boolean> isTableAvailable(TableName tableName) {
+    CompletableFuture<Boolean> cf = new CompletableFuture<>();
+    tableExists(tableName).thenAccept(exists -> {
+      if (!exists) {
+        cf.completeExceptionally(new TableNotFoundException(tableName));
+      } else {
+        cf.complete(true);
+      }
+    });
+    return cf;
   }
 
   @Override
@@ -571,8 +579,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   /** {@inheritDoc} */
   @Override
-  public CompletableFuture<Void> addColumnFamily(TableName arg0, ColumnFamilyDescriptor arg1) {
-    throw new UnsupportedOperationException("addColumnFamily"); // TODO
+  public CompletableFuture<Void> addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc) {
+    return modifyColumn(tableName, Modification
+        .newBuilder()
+        .setId(columnFamilyDesc.getNameAsString())
+        .setCreate(new ColumnDescriptorAdapter().adapt(
+            TableAdapter2x.toHColumnDescriptor(columnFamilyDesc))));
   }
 
   /** {@inheritDoc} */
