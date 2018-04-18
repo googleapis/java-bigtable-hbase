@@ -21,11 +21,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -38,7 +36,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
-@SuppressWarnings("deprecation")
 public abstract class AbstractTestCreateTable extends AbstractTest {
 
   /**
@@ -55,9 +52,9 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   public void testCreate()throws Exception {
     TableName tableName = sharedTestEnv.newTestTableName();
     createTable(tableName);
-    Assert.assertTrue(getConnection().getAdmin().tableExists(tableName));
+    Assert.assertTrue(tableExists(tableName));
     deleteTable(tableName);
-    Assert.assertFalse(getConnection().getAdmin().tableExists(tableName));
+    Assert.assertFalse(tableExists(tableName));
   }
 
   /**
@@ -288,11 +285,11 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   protected void deleteTable(TableName tableName) {
-    try (Admin admin = getConnection().getAdmin()) {
-      if (admin.isTableEnabled(tableName)) {
-        admin.disableTable(tableName);
+    try{
+      if (isTableEnabled(tableName)) {
+          disableTable(tableName);
       }
-      admin.deleteTable(tableName);
+      adminDeleteTable(tableName);
     } catch (Throwable t) {
       // logger the error and ignore it.
       logger.warn("Error cleaning up the table", t);
@@ -307,11 +304,22 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
     Assert.assertEquals(1, regions.size());
   }
   
+  @Test
+  public void testAsyncGetRegions() throws Exception{
+    TableName tableName = sharedTestEnv.newTestTableName();
+    createTable(tableName,null);
+    Assert.assertEquals(true, asyncGetRegions(tableName));
+  }
+  
   protected abstract void createTable(TableName name) throws Exception;
   protected abstract void createTable(TableName name, byte[] start, byte[] end, int splitCount)
       throws Exception;
   protected abstract void createTable(TableName name, byte[][] ranges)
       throws Exception;
   protected abstract List<HRegionLocation> getRegions(TableName tableName) throws Exception;
-
+  protected abstract boolean isTableEnabled(TableName tableName) throws Exception;
+  protected abstract void disableTable(final TableName tableName) throws Exception;
+  protected abstract boolean asyncGetRegions(TableName tableName) throws Exception;
+  protected abstract void adminDeleteTable(final TableName tableName) throws Exception;
+  protected abstract boolean tableExists(final TableName tableName) throws Exception;
 }
