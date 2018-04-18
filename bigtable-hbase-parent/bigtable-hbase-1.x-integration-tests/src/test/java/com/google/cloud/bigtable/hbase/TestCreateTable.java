@@ -17,15 +17,15 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import java.io.IOException;
+import java.util.List;
+
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.io.IOException;
-import java.util.List;
 
 @RunWith(JUnit4.class)
 public class TestCreateTable extends AbstractTestCreateTable {
@@ -56,5 +56,30 @@ public class TestCreateTable extends AbstractTestCreateTable {
   protected List<HRegionLocation> getRegions(TableName tableName)
       throws Exception {
     return getConnection().getRegionLocator(tableName).getAllRegionLocations();
+  }
+
+  @Override
+  protected boolean asyncGetRegions(TableName tableName) throws Exception {
+    return true;//This method does not exists in 1.x version.
+  }
+
+  @Override
+  protected boolean isTableEnabled(TableName tableName) throws Exception {
+    return getConnection().getAdmin().isTableEnabled(tableName);
+  }
+
+  @Override
+  protected void disableTable(TableName tableName) throws Exception {
+    getConnection().getAdmin().disableTable(tableName);
+  }
+
+  @Override
+  protected void adminDeleteTable(TableName tableName) throws Exception {
+    getConnection().getAdmin().deleteTable(tableName);
+  }
+
+  @Override
+  protected boolean tableExists(TableName tableName) throws Exception {
+    return getConnection().getAdmin().tableExists(tableName);
   }
 }
