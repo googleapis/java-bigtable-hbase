@@ -43,7 +43,7 @@ which makes it easy for development teams to get started.
     <dependency>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-hbase-1.x</artifactId>
-        <version>1.2.0</version>
+        <version>1.3.0</version>
     </dependency>
   ```
 
@@ -100,7 +100,7 @@ infrequent product and client library announcements.
    ```sh
    mvn -pl bigtable-hbase-parent/bigtable-hbase-1.x-integration-tests \
    -pl bigtable-hbase-2.x-parent/bigtable-hbase-2.x-integration-tests \
-   -am clean package
+   -am clean install
    ```
 
 NOTE: This project uses extensive shading which IDEs have trouble with. To over come these issues,
