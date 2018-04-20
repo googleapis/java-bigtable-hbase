@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.beam;
 
 import java.util.Map;
 import java.util.Objects;
-
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 
 /**
@@ -32,9 +32,19 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * Builds a {@link CloudBigtableTableConfiguration}.
    */
   public static class Builder extends CloudBigtableConfiguration.Builder {
-    protected String tableId;
+    protected ValueProvider<String> tableId;
 
     public Builder() {
+    }
+    
+    /**
+     * Specifies the table to connect to.
+     * @param tableId The table to connect to.
+     * @return The {@link CloudBigtableTableConfiguration.Builder} for chaining convenience.
+     */
+    public Builder withTableId(ValueProvider<String> tableId) {
+      this.tableId = tableId;
+      return this;
     }
 
     /**
@@ -43,30 +53,40 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * @return The {@link CloudBigtableTableConfiguration.Builder} for chaining convenience.
      */
     public Builder withTableId(String tableId) {
-      this.tableId = tableId;
-      return this;
+      return withTableId(ValueProvider.StaticValueProvider.of(tableId));
     }
 
     /**
      * {@inheritDoc}
-     * 
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withProjectId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
+     *
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withProjectId(ValueProvider)} so that
+     * it returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
-    public Builder withProjectId(String projectId) {
+    public Builder withProjectId(ValueProvider<String> projectId) {
       super.withProjectId(projectId);
       return this;
     }
 
     /**
      * {@inheritDoc}
-     * 
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withInstanceId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
+     *
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withProjectId(String)} so that it
+     * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
-    public Builder withInstanceId(String instanceId) {
+    public Builder withProjectId(String projectId) {
+      return withProjectId(ValueProvider.StaticValueProvider.of(projectId));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withInstanceId(ValueProvider)} so that
+     * it returns {@link CloudBigtableTableConfiguration.Builder}.
+     */
+    @Override
+    public Builder withInstanceId(ValueProvider<String> instanceId) {
       super.withInstanceId(instanceId);
       return this;
     }
@@ -74,13 +94,35 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      *
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withConfiguration(String, String)} so
-     * that it returns {@link CloudBigtableScanConfiguration.Builder}.
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withInstanceId(String)} so that it
+     * returns {@link CloudBigtableTableConfiguration.Builder}.
+     */
+    @Override
+    public Builder withInstanceId(String instanceId) {
+      return withInstanceId(ValueProvider.StaticValueProvider.of(instanceId));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withConfiguration(String,
+     * ValueProvider)} so that it returns {@link CloudBigtableTableConfiguration.Builder}.
+     */
+    @Override
+    public Builder withConfiguration(String key, ValueProvider<String> value) {
+      super.withConfiguration(key, value);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withConfiguration(String, String)} so
+     * that it returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
     public Builder withConfiguration(String key, String value) {
-      super.withConfiguration(key, value);
-      return this;
+      return withConfiguration(key, ValueProvider.StaticValueProvider.of(value));
     }
 
     /**
@@ -94,7 +136,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     }
   }
 
-  protected String tableId;
+  protected ValueProvider<String> tableId;
 
   // This is required for serialization of CloudBigtableScanConfiguration.
   CloudBigtableTableConfiguration() {
@@ -109,10 +151,10 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
   protected CloudBigtableTableConfiguration(
-      String projectId,
-      String instanceId,
-      String tableId,
-      Map<String, String> additionalConfiguration) {
+      ValueProvider<String> projectId,
+      ValueProvider<String> instanceId,
+      ValueProvider<String> tableId,
+      Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, additionalConfiguration);
     this.tableId = tableId;
   }
@@ -122,7 +164,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * @return The table ID.
    */
   public String getTableId() {
-    return tableId;
+    return tableId.get();
   }
 
   @Override
@@ -140,7 +182,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)
-        && Objects.equals(tableId, ((CloudBigtableTableConfiguration) obj).tableId);
+        && Objects.equals(getTableId(), ((CloudBigtableTableConfiguration) obj).getTableId());
   }
 
   @Override

@@ -15,11 +15,12 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Assert;
 import org.junit.Test;
-
+import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 
 /**
@@ -72,6 +73,40 @@ public class CloudBigtableScanConfigurationTest {
     CloudBigtableScanConfiguration copy = config.toBuilder().build();
     Assert.assertNotSame(config, copy);
     Assert.assertEquals(config, copy);
+  }
+
+  /**
+   * This ensures that the config built from regular parameters are the same as the config built
+   * from runtime parameters, so that we don't have to use runtime parameters to repeat the same
+   * tests.
+   */
+  @Test
+  public void testRegularAndRuntimeParametersAreEqual() {
+    CloudBigtableScanConfiguration withRegularParameters =
+        config.toBuilder().withConfiguration("somekey", "somevalue").build();
+    CloudBigtableScanConfiguration withRuntimeParameters =
+        new CloudBigtableScanConfiguration.Builder()
+            .withTableId(ValueProvider.StaticValueProvider.of(TABLE))
+            .withProjectId(ValueProvider.StaticValueProvider.of(PROJECT))
+            .withInstanceId(ValueProvider.StaticValueProvider.of(INSTANCE))
+            .withScan(
+                ValueProvider.StaticValueProvider.of(
+                    new SerializableScan(new Scan(START_ROW, STOP_ROW))))
+            .withConfiguration("somekey", ValueProvider.StaticValueProvider.of("somevalue"))
+            .build();
+    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+
+    // Verify with requests.
+    ReadRowsRequest request = withRegularParameters.getRequest();
+    withRegularParameters = withRegularParameters.toBuilder().withRequest(request).build();
+    withRuntimeParameters =
+        withRuntimeParameters
+            .toBuilder()
+            .withRequest(ValueProvider.StaticValueProvider.of(request))
+            .build();
+    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
   }
 }
 
