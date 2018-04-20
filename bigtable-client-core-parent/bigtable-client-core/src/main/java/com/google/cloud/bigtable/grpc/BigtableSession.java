@@ -373,6 +373,18 @@ public class BigtableSession implements Closeable {
         return createNettyChannel(hostString, options, clientInterceptors);
       }
     };
+    return createChannelPool(channelFactory, count);
+  }
+
+  /**
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   *
+   * @param channelFactory a {@link ChannelPool.ChannelFactory} object.
+   * @param count The number of channels in the pool.
+   * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
+   * @throws java.io.IOException if any.
+   */
+  protected ChannelPool createChannelPool(final ChannelPool.ChannelFactory channelFactory, int count) throws IOException {
     return new ChannelPool(channelFactory, count);
   }
 
