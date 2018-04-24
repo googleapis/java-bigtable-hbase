@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.beam;
 
 import static org.junit.Assert.assertEquals;
 
-import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
@@ -108,13 +108,12 @@ public class CloudBigtableTableConfigurationTest {
         buildConfiguration().toBuilder().withConfiguration("somekey", "somevalue").build();
     CloudBigtableTableConfiguration withRuntimeParameters =
         new CloudBigtableTableConfiguration.Builder()
-            .withTableId(ValueProvider.StaticValueProvider.of(TABLE))
-            .withProjectId(ValueProvider.StaticValueProvider.of(PROJECT))
-            .withInstanceId(ValueProvider.StaticValueProvider.of(INSTANCE))
-            .withConfiguration("somekey", ValueProvider.StaticValueProvider.of("somevalue"))
+            .withTableId(StaticValueProvider.of(TABLE))
+            .withProjectId(StaticValueProvider.of(PROJECT))
+            .withInstanceId(StaticValueProvider.of(INSTANCE))
+            .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
             .build();
     Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
   }
 }
-

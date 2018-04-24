@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.Map.Entry;
 
 import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
 import org.apache.beam.sdk.repackaged.com.google.common.collect.ImmutableMap;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -74,7 +75,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
     public Builder withProjectId(String projectId) {
-      return withProjectId(ValueProvider.StaticValueProvider.of(projectId));
+      return withProjectId(StaticValueProvider.of(projectId));
     }
 
     /**
@@ -93,7 +94,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
     public Builder withInstanceId(String instanceId) {
-      return withInstanceId(ValueProvider.StaticValueProvider.of(instanceId));
+      return withInstanceId(StaticValueProvider.of(instanceId));
     }
 
     /**
@@ -106,7 +107,7 @@ public class CloudBigtableConfiguration implements Serializable {
      */
     public Builder withAppProfileId(ValueProvider<String> appProfileId) {
       return withConfiguration(BigtableOptionsFactory.APP_PROFILE_ID_KEY, appProfileId);
-    }    
+    }
 
     /**
      * Specifies the AppProfile to use.
@@ -117,7 +118,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * production use. It is not subject to any SLA or deprecation policy.
      */
     public Builder withAppProfileId(String appProfileId) {
-      return withAppProfileId(ValueProvider.StaticValueProvider.of(appProfileId));
+      return withAppProfileId(StaticValueProvider.of(appProfileId));
     }
  
     /**
@@ -139,7 +140,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
     public Builder withConfiguration(String key, String value) {
-      return withConfiguration(key, ValueProvider.StaticValueProvider.of(value));
+      return withConfiguration(key, StaticValueProvider.of(value));
     }
 
     /**

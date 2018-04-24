@@ -22,6 +22,7 @@ import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
@@ -49,11 +50,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * CloudBigtableScanConfiguration} that will perform the specified {@link Scan} on the table.
    *
    * @param config The {@link CloudBigtableTableConfiguration} object.
-   * @param scan The {@link SerializableScan} to add to the configuration.
+   * @param scan The {@link Scan} to add to the configuration.
    * @return The new {@link CloudBigtableScanConfiguration}.
    */
   public static CloudBigtableScanConfiguration fromConfig(
-      CloudBigtableTableConfiguration config, SerializableScan scan) {
+      CloudBigtableTableConfiguration config, Scan scan) {
     CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
     config.copyConfig(builder);
     return builder.withScan(scan).build();
@@ -105,7 +106,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withScan(SerializableScan scan) {
-      return withScan(ValueProvider.StaticValueProvider.of(scan));
+      return withScan(StaticValueProvider.of(scan));
     }
 
     /**
@@ -135,7 +136,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withRequest(ReadRowsRequest request) {
-      return withRequest(ValueProvider.StaticValueProvider.of(request));
+      return withRequest(StaticValueProvider.of(request));
     }
 
     /**
@@ -149,7 +150,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       final ByteString start = ByteStringer.wrap(startKey);
       final ByteString stop = ByteStringer.wrap(stopKey);
       request =
-          ValueProvider.StaticValueProvider.of(
+          StaticValueProvider.of(
               request
                   .get()
                   .toBuilder()
@@ -181,7 +182,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public Builder withProjectId(String projectId) {
-      return withProjectId(ValueProvider.StaticValueProvider.of(projectId));
+      return withProjectId(StaticValueProvider.of(projectId));
     }
 
     /**
@@ -204,7 +205,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public Builder withInstanceId(String instanceId) {
-      return withInstanceId(ValueProvider.StaticValueProvider.of(instanceId));
+      return withInstanceId(StaticValueProvider.of(instanceId));
     }
 
     /**
@@ -227,7 +228,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public Builder withConfiguration(String key, String value) {
-      return withConfiguration(key, ValueProvider.StaticValueProvider.of(value));
+      return withConfiguration(key, StaticValueProvider.of(value));
     }
 
     /**
@@ -250,7 +251,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public Builder withTableId(String tableId) {
-      return withTableId(ValueProvider.StaticValueProvider.of(tableId));
+      return withTableId(StaticValueProvider.of(tableId));
     }
 
     /**
@@ -262,7 +263,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     public CloudBigtableScanConfiguration build() {
       if (request == null) {
         if (scan == null) {
-          scan = ValueProvider.StaticValueProvider.of(new SerializableScan(new Scan()));
+          scan = StaticValueProvider.of(new SerializableScan(new Scan()));
         }
         request = NestedValueProvider.of(scan, new ScanToRequestAdapter());
       }
@@ -304,8 +305,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
           new BigtableInstanceName(getProjectId(), getInstanceId());
       String fullTableName = bigtableInstanceName.toTableNameStr(getTableId());
       request =
-          ValueProvider.StaticValueProvider.of(
-              request.get().toBuilder().setTableName(fullTableName).build());
+          StaticValueProvider.of(request.get().toBuilder().setTableName(fullTableName).build());
     }
     return request.get();
   }

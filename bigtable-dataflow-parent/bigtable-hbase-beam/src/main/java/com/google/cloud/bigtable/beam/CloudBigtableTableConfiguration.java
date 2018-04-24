@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 
 /**
@@ -53,7 +54,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * @return The {@link CloudBigtableTableConfiguration.Builder} for chaining convenience.
      */
     public Builder withTableId(String tableId) {
-      return withTableId(ValueProvider.StaticValueProvider.of(tableId));
+      return withTableId(StaticValueProvider.of(tableId));
     }
 
     /**
@@ -76,7 +77,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      */
     @Override
     public Builder withProjectId(String projectId) {
-      return withProjectId(ValueProvider.StaticValueProvider.of(projectId));
+      return withProjectId(StaticValueProvider.of(projectId));
     }
 
     /**
@@ -99,7 +100,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      */
     @Override
     public Builder withInstanceId(String instanceId) {
-      return withInstanceId(ValueProvider.StaticValueProvider.of(instanceId));
+      return withInstanceId(StaticValueProvider.of(instanceId));
     }
 
     /**
@@ -122,7 +123,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      */
     @Override
     public Builder withConfiguration(String key, String value) {
-      return withConfiguration(key, ValueProvider.StaticValueProvider.of(value));
+      return withConfiguration(key, StaticValueProvider.of(value));
     }
 
     /**

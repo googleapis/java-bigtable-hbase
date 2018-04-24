@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Assert;
@@ -86,13 +86,11 @@ public class CloudBigtableScanConfigurationTest {
         config.toBuilder().withConfiguration("somekey", "somevalue").build();
     CloudBigtableScanConfiguration withRuntimeParameters =
         new CloudBigtableScanConfiguration.Builder()
-            .withTableId(ValueProvider.StaticValueProvider.of(TABLE))
-            .withProjectId(ValueProvider.StaticValueProvider.of(PROJECT))
-            .withInstanceId(ValueProvider.StaticValueProvider.of(INSTANCE))
-            .withScan(
-                ValueProvider.StaticValueProvider.of(
-                    new SerializableScan(new Scan(START_ROW, STOP_ROW))))
-            .withConfiguration("somekey", ValueProvider.StaticValueProvider.of("somevalue"))
+            .withTableId(StaticValueProvider.of(TABLE))
+            .withProjectId(StaticValueProvider.of(PROJECT))
+            .withInstanceId(StaticValueProvider.of(INSTANCE))
+            .withScan(StaticValueProvider.of(new SerializableScan(new Scan(START_ROW, STOP_ROW))))
+            .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
             .build();
     Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
@@ -103,10 +101,9 @@ public class CloudBigtableScanConfigurationTest {
     withRuntimeParameters =
         withRuntimeParameters
             .toBuilder()
-            .withRequest(ValueProvider.StaticValueProvider.of(request))
+            .withRequest(StaticValueProvider.of(request))
             .build();
     Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
   }
 }
-
