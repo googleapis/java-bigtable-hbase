@@ -19,21 +19,21 @@ package com.google.cloud.bigtable.hbase.util;
 
 import java.util.Arrays;
 
-import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
+import org.apache.hadoop.hbase.Cell;
 
 /**
- * <p> RowCellUtil class to provide utilities related to RowCell class. </p>
+ * <p> Utility methods helpful for slinging {@link Cell} instances.CellUtils class to provide utilities related to RowCell class. </p>
  * 
  * @author rupeshit
  *
  */
-public class RowCellUtil {
+public class CellUtils {
 
-  public static byte[] getValueArray(RowCell rowCell,byte[] valueArray) {
-    if(rowCell.getValueLength() >= valueArray.length) {
+  public static byte[] getValue(Cell cell,byte[] valueArray) {
+    if(cell.getValueLength() >= valueArray.length) {
       return valueArray;
-    }else if(rowCell.getValueLength() < valueArray.length) {
-      return Arrays.copyOfRange(valueArray, 0, rowCell.getValueLength());
+    }else if(cell.getValueLength() < valueArray.length) {
+      return Arrays.copyOfRange(valueArray, 0, cell.getValueLength());
     }
     return valueArray;
   }

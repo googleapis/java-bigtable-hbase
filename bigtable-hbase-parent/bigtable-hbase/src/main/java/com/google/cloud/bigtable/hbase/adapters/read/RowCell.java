@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.cloud.bigtable.hbase.util.RowCellUtil;
+import com.google.cloud.bigtable.hbase.util.CellUtils;
 
 /**
  * This implementation of {@link org.apache.hadoop.hbase.Cell} is more efficient for Bigtable scanning than {@link org.apache.hadoop.hbase.KeyValue}
@@ -141,7 +141,7 @@ public class RowCell implements Cell {
   /** {@inheritDoc} */
   @Override
   public byte[] getValueArray() {
-    return RowCellUtil.getValueArray(this, this.valueArray);
+    return CellUtils.getValue(this, this.valueArray);
   }
 
   /** {@inheritDoc} */
