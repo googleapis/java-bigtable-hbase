@@ -307,7 +307,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   @Test
   public void testAsyncGetRegions() throws Exception{
     TableName tableName = sharedTestEnv.newTestTableName();
-    createTable(tableName,null);
+    createTable(tableName);
     Assert.assertEquals(true, asyncGetRegions(tableName));
   }
   
