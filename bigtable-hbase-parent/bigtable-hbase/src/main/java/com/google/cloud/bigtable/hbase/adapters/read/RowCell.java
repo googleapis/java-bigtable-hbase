@@ -21,8 +21,6 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.cloud.bigtable.hbase.util.CellUtils;
-
 /**
  * This implementation of {@link org.apache.hadoop.hbase.Cell} is more efficient for Bigtable scanning than {@link org.apache.hadoop.hbase.KeyValue}
  * . RowCell is pretty straight forward. Each *Array() method returns the array passed in in the
