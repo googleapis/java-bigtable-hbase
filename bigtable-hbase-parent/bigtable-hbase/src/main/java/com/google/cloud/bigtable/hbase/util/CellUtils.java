@@ -29,12 +29,12 @@ import org.apache.hadoop.hbase.Cell;
  */
 public class CellUtils {
 
-  public static byte[] getValue(Cell cell,byte[] valueArray) {
-    if(cell.getValueLength() >= valueArray.length) {
-      return valueArray;
-    }else if(cell.getValueLength() < valueArray.length) {
-      return Arrays.copyOfRange(valueArray, 0, cell.getValueLength());
+  public static byte[] getValue(Cell cell) {
+    if(cell.getValueLength() >= cell.getValueArray().length) {
+      return cell.getValueArray();
+    }else if(cell.getValueLength() < cell.getValueArray().length) {
+      return Arrays.copyOfRange(cell.getValueArray(), 0, cell.getValueLength());
     }
-    return valueArray;
+    return cell.getValueArray();
   }
 }

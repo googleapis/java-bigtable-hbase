@@ -141,7 +141,7 @@ public class RowCell implements Cell {
   /** {@inheritDoc} */
   @Override
   public byte[] getValueArray() {
-    return CellUtils.getValue(this, this.valueArray);
+    return this.valueArray;
   }
 
   /** {@inheritDoc} */
