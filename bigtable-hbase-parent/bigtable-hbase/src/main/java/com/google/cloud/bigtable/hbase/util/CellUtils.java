@@ -30,11 +30,10 @@ import org.apache.hadoop.hbase.Cell;
 public class CellUtils {
 
   public static byte[] getValue(Cell cell) {
-    if(cell.getValueLength() >= cell.getValueArray().length) {
+    if (cell.getValueLength() >= cell.getValueArray().length) {
       return cell.getValueArray();
-    }else if(cell.getValueLength() < cell.getValueArray().length) {
+    } else {
       return Arrays.copyOfRange(cell.getValueArray(), 0, cell.getValueLength());
     }
-    return cell.getValueArray();
   }
 }
