@@ -21,9 +21,7 @@ import java.util.Objects;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.options.ValueProvider;
-import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
-import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
@@ -61,53 +59,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   /**
-   * A {@link SerializableFunction} that creates a {@link ReadRowsRequest} from a {@link Scan}. This
-   * cannot be a anonymous class of {@link CloudBigtableScanConfiguration.Builder} because it would
-   * require the builder class to be serializable.
-   */
-  private static class ScanToRequestAdapter
-      implements SerializableFunction<SerializableScan, ReadRowsRequest> {
-    @Override
-    public ReadRowsRequest apply(SerializableScan scan) {
-      ReadHooks readHooks = new DefaultReadHooks();
-      ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan.get(), readHooks);
-      return readHooks.applyPreSendHook(builder.build());
-    }
-  }
-
-  /**
    * Builds a {@link CloudBigtableScanConfiguration}.
    */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
-    private ValueProvider<SerializableScan> scan;
+    private Scan scan;
     private ValueProvider<ReadRowsRequest> request;
 
-    public Builder() {
-    }
-
-    /**
-     * Specifies the {@link SerializableScan} that will be used to filter the table.
-     * TODO(kevinsi4508): We may not want pass {@link SerializableScan} runtime parameter because it
-     * is not easy to construct.
-     *
-     * @param scan The {@link SerializableScan} to add to the configuration.
-     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
-     */
-    public Builder withScan(ValueProvider<SerializableScan> scan) {
-      this.scan = scan;
-      this.request = null;
-      return this;
-    }
-  
-    /**
-     * Specifies the {@link SerializableScan} that will be used to filter the table.
-     * 
-     * @param scan The {@link SerializableScan} to add to the configuration.
-     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
-     */
-    public Builder withScan(SerializableScan scan) {
-      return withScan(StaticValueProvider.of(scan));
-    }
+    public Builder() {}
 
     /**
      * Specifies the {@link Scan} that will be used to filter the table.
@@ -116,7 +74,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withScan(Scan scan) {
-      return withScan(new SerializableScan(scan));
+      this.scan = scan;
+      this.request = null;
+      return this;
     }
 
     /**
@@ -262,10 +222,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     @Override
     public CloudBigtableScanConfiguration build() {
       if (request == null) {
+        ReadHooks readHooks = new DefaultReadHooks();
         if (scan == null) {
-          scan = StaticValueProvider.of(new SerializableScan(new Scan()));
+          scan = new Scan();
         }
-        request = NestedValueProvider.of(scan, new ScanToRequestAdapter());
+        ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
+        request = StaticValueProvider.of(readHooks.applyPreSendHook(builder.build()));
       }
       return new CloudBigtableScanConfiguration(
           projectId, instanceId, tableId, request, additionalConfiguration);

@@ -89,7 +89,7 @@ public class CloudBigtableScanConfigurationTest {
             .withTableId(StaticValueProvider.of(TABLE))
             .withProjectId(StaticValueProvider.of(PROJECT))
             .withInstanceId(StaticValueProvider.of(INSTANCE))
-            .withScan(StaticValueProvider.of(new SerializableScan(new Scan(START_ROW, STOP_ROW))))
+            .withScan(new Scan(START_ROW, STOP_ROW))
             .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
             .build();
     Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
