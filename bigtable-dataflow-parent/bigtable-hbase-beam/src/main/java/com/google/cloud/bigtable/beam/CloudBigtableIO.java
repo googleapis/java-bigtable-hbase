@@ -1003,18 +1003,21 @@ public class CloudBigtableIO {
    * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
    * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
-   * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
+   * Re-running a Delete will not cause any differences. Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
-   * family is greater than one.  In a case where multiple versions could be a problem, it's best to
+   * family is greater than one. In a case where multiple versions could be a problem, it's best to
    * add a timestamp to the {@link Put}.
    */
   public static PTransform<PCollection<Mutation>, PDone> writeToTable(
-      CloudBigtableTableConfiguration config) {
-    validateTableConfig(config);
-
+      final CloudBigtableTableConfiguration config) {
     DoFn<Mutation, Void> writeFn = new CloudBigtableSingleTableBufferedWriteFn(config);
 
-    return new CloudBigtableWriteTransform<>(writeFn);
+    return new CloudBigtableWriteTransform<Mutation>(writeFn) {
+      @Override
+      public void validate(PipelineOptions options) {
+        validateTableConfig(config);
+      }
+    };
   }
 
   private static Coder<Result> getResultCoder() {
@@ -1034,15 +1037,20 @@ public class CloudBigtableIO {
    * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
    * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
-   * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
+   * Re-running a Delete will not cause any differences. Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
-   * family is greater than one.  In a case where multiple versions could be a problem, it's best to
+   * family is greater than one. In a case where multiple versions could be a problem, it's best to
    * add a timestamp to the {@link Put}.
    */
-   public static PTransform<PCollection<KV<String, Iterable<Mutation>>>, PDone>
-      writeToMultipleTables(CloudBigtableConfiguration config) {
-    validateConfig(config);
-    return new CloudBigtableWriteTransform<>(new CloudBigtableMultiTableWriteFn(config));
+  public static PTransform<PCollection<KV<String, Iterable<Mutation>>>, PDone>
+      writeToMultipleTables(final CloudBigtableConfiguration config) {
+    return new CloudBigtableWriteTransform<KV<String, Iterable<Mutation>>>(
+        new CloudBigtableMultiTableWriteFn(config)) {
+      @Override
+      public void validate(PipelineOptions options) {
+        validateConfig(config);
+      }
+    };
   }
 
   /**
