@@ -860,7 +860,7 @@ public class CloudBigtableIO {
     }
 
     @StartBundle
-    public synchronized void getBufferedMutator(StartBundleContext context) throws IOException {
+    public void setupBufferedMutator(StartBundleContext context) throws IOException {
       mutator =
           createBufferedMutator(
               context, ((CloudBigtableTableConfiguration) getConfig()).getTableId());

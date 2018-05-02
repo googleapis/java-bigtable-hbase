@@ -264,10 +264,10 @@ public class CloudBigtableConfiguration implements Serializable {
     }
   }
 
-  protected static void checkNotNullOrEmpty(String value, String type) {
+  protected static void checkNotNullOrEmpty(String value, String name) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(value),
-        "A " + type + " must be set to configure Bigtable properly.");
+        "A " + name + " must be set to configure Bigtable properly.");
   }
 
   public void validate() {
