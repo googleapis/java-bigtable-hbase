@@ -216,7 +216,7 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
   }
   
   @Override
-  public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName arg0) {
+  public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName tableName) {
     return new AsyncTableBuilder<AdvancedScanResultConsumer>() {
       
       @Override
@@ -260,8 +260,8 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
       }
       
       @Override
-      public AsyncTable<AdvancedScanResultConsumer> build() {
-        throw new UnsupportedOperationException("build");
+      public AsyncTable build() {
+        return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
       }
     };
   }

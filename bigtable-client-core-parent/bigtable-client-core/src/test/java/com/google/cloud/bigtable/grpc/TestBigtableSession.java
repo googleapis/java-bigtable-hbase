@@ -71,9 +71,29 @@ public class TestBigtableSession {
   }
 
   @Test
-  public void testOpenSSL() throws Throwable{
-    if(!OpenSsl.isAvailable()){
+  public void testOpenSSL() throws Throwable {
+    if (!OpenSsl.isAvailable()) {
       throw OpenSsl.unavailabilityCause();
     }
   }
+
+  /**
+   * Test to make sure that {@link BigtableSession#createInstanceClient()} can be created.
+   * @throws Throwable
+   */
+  @Test
+  public void testCreateInstanceClient() throws Throwable {
+    try {
+      BigtableSession.createInstanceClient();
+    } catch (IOException e) {
+      if (e.getMessage().toLowerCase().contains("credentials")) {
+        // ignore;  This is running on a system that doesn't have default credentails,
+        // and this test is to ensure that openssl works well.  Travis isn't sent up with
+        // credentials, so this test should pass in those conditions.
+      } else {
+        throw e;
+      }
+    }
+  }
+
 }

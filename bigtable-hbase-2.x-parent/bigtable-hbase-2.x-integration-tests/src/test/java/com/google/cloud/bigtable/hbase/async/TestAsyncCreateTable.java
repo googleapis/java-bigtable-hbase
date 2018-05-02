@@ -31,7 +31,6 @@ import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import com.google.cloud.bigtable.hbase.AbstractTestCreateTable;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 
-@SuppressWarnings("deprecation")
 public class TestAsyncCreateTable extends AbstractTestCreateTable {
 
   protected static DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -81,5 +80,31 @@ public class TestAsyncCreateTable extends AbstractTestCreateTable {
     HRegionLocation hRegionLocation = AbstractAsyncTest.getAsyncConnection().getRegionLocator(tableName).getRegionLocation(rowKey, true).get();
     regionLocationList.add(hRegionLocation);
     return regionLocationList;
+  }
+  
+  @Override
+  protected boolean asyncGetRegions(TableName tableName) throws Exception {
+    return getAsyncAdmin().getRegions(tableName).get().size() == 1 ? true : false;
+  }
+
+  @Override
+  protected boolean isTableEnabled(TableName tableName) throws Exception {
+    return getAsyncAdmin().isTableEnabled(tableName).get();
+  }
+
+  @Override
+  protected void disableTable(TableName tableName) throws Exception {
+    getAsyncAdmin().disableTable(tableName).get();
+    
+  }
+
+  @Override
+  protected void adminDeleteTable(TableName tableName) throws Exception {
+    getAsyncAdmin().deleteTable(tableName).get();
+  }
+
+  @Override
+  protected boolean tableExists(TableName tableName) throws Exception {
+    return getAsyncAdmin().tableExists(tableName).get();
   }
 }

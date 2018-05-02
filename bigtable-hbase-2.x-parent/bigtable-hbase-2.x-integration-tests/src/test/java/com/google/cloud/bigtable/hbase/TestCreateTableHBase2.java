@@ -57,4 +57,29 @@ public class TestCreateTableHBase2 extends AbstractTestCreateTable {
     return getConnection().getRegionLocator(tableName).getAllRegionLocations();
   }
 
+  @Override
+  protected boolean asyncGetRegions(TableName tableName) throws Exception {
+    return getConnection().getAdmin().getRegions(tableName).size() == 1 ? true : false;
+  }
+
+  @Override
+  protected boolean isTableEnabled(TableName tableName) throws Exception {
+    return getConnection().getAdmin().isTableEnabled(tableName);
+  }
+
+  @Override
+  protected void disableTable(TableName tableName) throws Exception {
+    getConnection().getAdmin().disableTable(tableName);
+  }
+
+  @Override
+  protected void adminDeleteTable(TableName tableName) throws Exception {
+    getConnection().getAdmin().deleteTable(tableName);
+  }
+
+  @Override
+  protected boolean tableExists(TableName tableName) throws Exception {
+    return getConnection().getAdmin().tableExists(tableName);
+  }
+
 }

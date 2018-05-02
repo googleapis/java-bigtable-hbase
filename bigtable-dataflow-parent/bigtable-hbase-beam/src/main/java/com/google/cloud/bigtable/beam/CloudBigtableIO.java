@@ -296,7 +296,7 @@ public class CloudBigtableIO {
      */
     @Override
     public void validate() {
-      CloudBigtableIO.validateTableConfig(getConfiguration());
+      getConfiguration().validate();
     }
 
     /**
@@ -817,8 +817,12 @@ public class CloudBigtableIO {
 
     public BufferedMutatorDoFn(CloudBigtableConfiguration config) {
       super(config);
+    }
+
+    @Setup
+    public synchronized void setup() {
       MutationStatsExporter.initializeMutationStatsExporter(
-        new BigtableInstanceName(config.getProjectId(), config.getInstanceId()));
+          new BigtableInstanceName(config.getProjectId(), config.getInstanceId()));
     }
 
     protected BufferedMutator createBufferedMutator(Object context, String tableName)
@@ -850,17 +854,16 @@ public class CloudBigtableIO {
       extends BufferedMutatorDoFn<Mutation> {
     private static final long serialVersionUID = 2L;
     private transient BufferedMutator mutator;
-    private final String tableName;
 
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
-      tableName = config.getTableId();
     }
 
     @StartBundle
-    public synchronized void getBufferedMutator(StartBundleContext context)
-        throws IOException {
-      mutator = createBufferedMutator(context, tableName);
+    public void setupBufferedMutator(StartBundleContext context) throws IOException {
+      mutator =
+          createBufferedMutator(
+              context, ((CloudBigtableTableConfiguration) getConfig()).getTableId());
     }
 
     /**
@@ -972,19 +975,27 @@ public class CloudBigtableIO {
    * A {@link PTransform} that wraps around a {@link DoFn} that will write {@link Mutation}s to
    * Cloud Bigtable.
    */
-  public static class CloudBigtableWriteTransform<T> extends PTransform<PCollection<T>, PDone> {
+  private static class CloudBigtableWriteTransform<T> extends PTransform<PCollection<T>, PDone> {
     private static final long serialVersionUID = -2888060194257930027L;
 
     private final DoFn<T, Void> function;
+    private final CloudBigtableConfiguration configuration;
 
-    public CloudBigtableWriteTransform(DoFn<T, Void> function) {
+    public CloudBigtableWriteTransform(
+        DoFn<T, Void> function, CloudBigtableConfiguration configuration) {
       this.function = function;
+      this.configuration = configuration;
     }
 
     @Override
     public PDone expand(PCollection<T> input) {
       input.apply(ParDo.of(function));
       return PDone.in(input.getPipeline());
+    }
+
+    @Override
+    public void validate(PipelineOptions options) {
+      configuration.validate();
     }
 
     @Override
@@ -1002,18 +1013,15 @@ public class CloudBigtableIO {
    * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
    * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
-   * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
+   * Re-running a Delete will not cause any differences. Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
-   * family is greater than one.  In a case where multiple versions could be a problem, it's best to
+   * family is greater than one. In a case where multiple versions could be a problem, it's best to
    * add a timestamp to the {@link Put}.
    */
   public static PTransform<PCollection<Mutation>, PDone> writeToTable(
       CloudBigtableTableConfiguration config) {
-    validateTableConfig(config);
-
     DoFn<Mutation, Void> writeFn = new CloudBigtableSingleTableBufferedWriteFn(config);
-
-    return new CloudBigtableWriteTransform<>(writeFn);
+    return new CloudBigtableWriteTransform<>(writeFn, config);
   }
 
   private static Coder<Result> getResultCoder() {
@@ -1033,15 +1041,14 @@ public class CloudBigtableIO {
    * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
    * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
-   * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
+   * Re-running a Delete will not cause any differences. Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
-   * family is greater than one.  In a case where multiple versions could be a problem, it's best to
+   * family is greater than one. In a case where multiple versions could be a problem, it's best to
    * add a timestamp to the {@link Put}.
    */
-   public static PTransform<PCollection<KV<String, Iterable<Mutation>>>, PDone>
+  public static PTransform<PCollection<KV<String, Iterable<Mutation>>>, PDone>
       writeToMultipleTables(CloudBigtableConfiguration config) {
-    validateConfig(config);
-    return new CloudBigtableWriteTransform<>(new CloudBigtableMultiTableWriteFn(config));
+    return new CloudBigtableWriteTransform<>(new CloudBigtableMultiTableWriteFn(config), config);
   }
 
   /**
@@ -1050,20 +1057,5 @@ public class CloudBigtableIO {
    */
   public static BoundedSource<Result> read(CloudBigtableScanConfiguration config) {
     return new Source(config);
-  }
-
-  private static void checkNotNullOrEmpty(String value, String type) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(value),
-      "A " + type + " must be set to configure Bigtable properly.");
-  }
-
-  private static void validateTableConfig(CloudBigtableTableConfiguration configuration) {
-    validateConfig(configuration);
-    checkNotNullOrEmpty(configuration.getTableId(), "tableid");
-  }
-
-  private static void validateConfig(CloudBigtableConfiguration configuration) {
-    checkNotNullOrEmpty(configuration.getProjectId(), "projectId");
-    checkNotNullOrEmpty(configuration.getInstanceId(), "instanceId");
   }
 }

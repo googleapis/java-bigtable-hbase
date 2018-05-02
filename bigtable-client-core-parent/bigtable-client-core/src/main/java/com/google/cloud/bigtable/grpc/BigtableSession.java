@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 
 import com.google.api.client.util.Strings;
+import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
@@ -373,6 +374,18 @@ public class BigtableSession implements Closeable {
         return createNettyChannel(hostString, options, clientInterceptors);
       }
     };
+    return createChannelPool(channelFactory, count);
+  }
+
+  /**
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   *
+   * @param channelFactory a {@link ChannelPool.ChannelFactory} object.
+   * @param count The number of channels in the pool.
+   * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
+   * @throws java.io.IOException if any.
+   */
+  protected ChannelPool createChannelPool(final ChannelPool.ChannelFactory channelFactory, int count) throws IOException {
     return new ChannelPool(channelFactory, count);
   }
 
@@ -390,6 +403,12 @@ public class BigtableSession implements Closeable {
     return channelPool;
   }
 
+  public static BigtableInstanceClient createInstanceClient()
+      throws IOException, GeneralSecurityException {
+    BigtableOptions options = new BigtableOptions.Builder().build();
+    Channel channel = createChannelPool(BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT, options);
+    return new BigtableInstanceGrpcClient(channel);
+  }
   /**
    * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
    *
@@ -414,19 +433,23 @@ public class BigtableSession implements Closeable {
    * @throws IOException if any.
    * @throws GeneralSecurityException
    */
-  public static ChannelPool createChannelPool(final String host, final BigtableOptions options, int count)
-      throws IOException, GeneralSecurityException {
-    final ClientInterceptor credentialsInterceptor = CredentialInterceptorCache.getInstance()
-        .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
-    final ClientInterceptor prefixInterceptor =
-        new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString());
-    return new ChannelPool(
-        new ChannelPool.ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return createNettyChannel(host, options, credentialsInterceptor, prefixInterceptor);
-          }
-        }, count);
+  public static ChannelPool createChannelPool(final String host, final BigtableOptions options,
+      int count) throws IOException, GeneralSecurityException {
+    final List<ClientInterceptor> interceptorList = new ArrayList<>();
+    interceptorList.add(CredentialInterceptorCache.getInstance()
+        .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions()));
+    if (options.getInstanceName() != null) {
+      interceptorList
+          .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
+    }
+    final ClientInterceptor[] interceptors =
+        interceptorList.toArray(new ClientInterceptor[interceptorList.size()]);
+    ChannelPool.ChannelFactory factory = new ChannelPool.ChannelFactory() {
+      @Override public ManagedChannel create() throws IOException {
+        return createNettyChannel(host, options, interceptors);
+      }
+    };
+    return new ChannelPool(factory, count);
   }
 
   /**

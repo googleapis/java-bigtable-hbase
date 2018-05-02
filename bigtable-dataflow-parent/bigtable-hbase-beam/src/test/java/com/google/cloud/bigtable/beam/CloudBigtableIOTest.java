@@ -30,6 +30,9 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderRegistry;
 import org.apache.beam.sdk.io.BoundedSource;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PDone;
 import org.apache.beam.sdk.values.TypeDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
@@ -67,7 +70,7 @@ public class CloudBigtableIOTest {
 
   private static final CoderRegistry registry = CoderRegistry.createDefault();
 
-  private CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
+  private CloudBigtableScanConfiguration scanConfig = new CloudBigtableScanConfiguration.Builder()
       .withProjectId("project")
       .withInstanceId("instanceId")
       .withTableId("table")
@@ -94,7 +97,7 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSourceToString() throws Exception {
-    Source source = (Source) CloudBigtableIO.read(config);
+    Source source = (Source) CloudBigtableIO.read(scanConfig);
     byte[] startKey = "abc d".getBytes();
     byte[] stopKey = "def g".getBytes();
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
@@ -128,7 +131,7 @@ public class CloudBigtableIOTest {
         return;
       }
     }
-    Source source = (Source) CloudBigtableIO.read(config);
+    Source source = (Source) CloudBigtableIO.read(scanConfig);
     source.setSampleRowKeys(sampleRowKeys);
     List<SourceWithKeys> splits = source.getSplits(20000);
     Collections.sort(splits, new Comparator<SourceWithKeys>() {
@@ -154,5 +157,65 @@ public class CloudBigtableIOTest {
       last = current;
     }
     // check first and last
+  }
+
+  @Test
+  public void testWriteToTableValidateConfig() throws Exception {
+    // No error.
+    CloudBigtableIO.writeToTable(scanConfig).validate(null);
+
+    // Empty project ID.
+    try {
+      CloudBigtableIO.writeToTable(scanConfig.toBuilder().withProjectId("").build()).validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A projectId must be set"));
+    }
+
+    // Empty instance ID.
+    try {
+      CloudBigtableIO.writeToTable(scanConfig.toBuilder().withInstanceId("").build()).validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A instanceId must be set"));
+    }
+
+    // Empty table ID.
+    try {
+      CloudBigtableIO.writeToTable(scanConfig.toBuilder().withTableId("").build()).validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A tableid must be set"));
+    }
+  }
+
+  @Test
+  public void testWriteToMultipleTablesValidateConfig() throws Exception {
+    CloudBigtableConfiguration config =
+        new CloudBigtableConfiguration.Builder()
+            .withProjectId("project")
+            .withInstanceId("instanceId")
+            .build();
+
+    // No error.
+    CloudBigtableIO.writeToMultipleTables(config).validate(null);
+
+    // Empty project ID.
+    try {
+      CloudBigtableIO.writeToMultipleTables(config.toBuilder().withProjectId("").build())
+          .validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A projectId must be set"));
+    }
+
+    // Empty instance ID.
+    try {
+      CloudBigtableIO.writeToMultipleTables(config.toBuilder().withInstanceId("").build())
+          .validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A instanceId must be set"));
+    }
   }
 }

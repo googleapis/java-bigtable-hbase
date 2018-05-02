@@ -101,7 +101,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   private final Configuration configuration;
   private final BigtableOptions options;
-  private final AbstractBigtableConnection connection;
+  protected final AbstractBigtableConnection connection;
   protected final BigtableTableAdminClient bigtableTableAdminClient;
 
   private BigtableInstanceName bigtableInstanceName;

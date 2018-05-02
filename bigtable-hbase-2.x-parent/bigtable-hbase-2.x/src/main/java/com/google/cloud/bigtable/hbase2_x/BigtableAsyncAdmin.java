@@ -15,8 +15,17 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
+
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
@@ -27,7 +36,7 @@ import java.util.stream.Collectors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
-import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
@@ -42,6 +51,7 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
 import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.TableDescriptor;
@@ -68,18 +78,19 @@ import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 
 import io.grpc.Status;
-
-import static com.google.cloud.bigtable.hbase2_x.FutureUtils.*;
 
 /**
  * Bigtable implementation of {@link AsyncAdmin}
@@ -97,6 +108,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final BigtableAsyncConnection asyncConnection;
   private BigtableClusterName bigtableSnapshotClusterName;
   private final Configuration configuration;
+  private final BigtableSession bigtableSession;
   
   
   public BigtableAsyncAdmin(BigtableAsyncConnection asyncConnection) throws IOException {
@@ -114,6 +126,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
+    this.bigtableSession = asyncConnection.getSession();
   }
 
   /** {@inheritDoc} */
@@ -327,7 +340,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return modifyColumn(tableName, Modification
         .newBuilder()
         .setId(columnFamilyDesc.getNameAsString())
-        .setCreate(new ColumnDescriptorAdapter().adapt(
+        .setUpdate(new ColumnDescriptorAdapter().adapt(
             TableAdapter2x.toHColumnDescriptor(columnFamilyDesc))));
   }
 
@@ -552,13 +565,50 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Boolean> isTableAvailable(TableName arg0) {
-    throw new UnsupportedOperationException("isTableAvailable"); // TODO
+  public CompletableFuture<Boolean> isTableAvailable(TableName tableName) {
+    CompletableFuture<Boolean> cf = new CompletableFuture<>();
+    tableExists(tableName).thenAccept(exists -> {
+      if (!exists) {
+        cf.completeExceptionally(new TableNotFoundException(tableName));
+      } else {
+        cf.complete(true);
+      }
+    });
+    return cf;
   }
 
   @Override
-  public CompletableFuture<List<RegionInfo>> getRegions(TableName arg0) {
-    throw new UnsupportedOperationException("getRegions"); // TODO
+  public CompletableFuture<List<RegionInfo>> getRegions(TableName tableName) {
+    ServerName serverName = ServerName.valueOf(options.getDataHost(),
+        options.getPort(), 0);
+    SampledRowKeysAdapter sampledRowKeysAdapter = getSampledRowKeysAdapter(
+        tableName, serverName);
+    SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
+    request.setTableName(options.getInstanceName().toTableName(tableName.toString()).toString());
+    return FutureUtils
+        .toCompletableFuture(
+            bigtableSession.getDataClient().sampleRowKeysAsync(request.build()))
+        .thenApplyAsync(result -> {
+          List<RegionInfo> regionInfos = new ArrayList<>();
+          for (HRegionLocation hRegionLocation : sampledRowKeysAdapter
+              .adaptResponse(result)) {
+            regionInfos.add(hRegionLocation.getRegion());
+          }
+          return regionInfos;
+        });
+  }
+  
+  private SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableNameAdapter,
+      ServerName serverNameAdapter) {
+    return new SampledRowKeysAdapter(tableNameAdapter, serverNameAdapter) {
+      @Override
+      protected HRegionLocation createRegionLocation(byte[] startKey,
+          byte[] endKey) {
+        RegionInfo regionInfo = RegionInfoBuilder.newBuilder(tableNameAdapter)
+            .setStartKey(startKey).setEndKey(endKey).build();
+        return new HRegionLocation(regionInfo, serverNameAdapter);
+      }
+    };
   }
 
   // ****** TO BE IMPLEMENTED [end] ******
@@ -571,8 +621,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   /** {@inheritDoc} */
   @Override
-  public CompletableFuture<Void> addColumnFamily(TableName arg0, ColumnFamilyDescriptor arg1) {
-    throw new UnsupportedOperationException("addColumnFamily"); // TODO
+  public CompletableFuture<Void> addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc) {
+    return modifyColumn(tableName, Modification
+        .newBuilder()
+        .setId(columnFamilyDesc.getNameAsString())
+        .setCreate(new ColumnDescriptorAdapter().adapt(
+            TableAdapter2x.toHColumnDescriptor(columnFamilyDesc))));
   }
 
   /** {@inheritDoc} */
