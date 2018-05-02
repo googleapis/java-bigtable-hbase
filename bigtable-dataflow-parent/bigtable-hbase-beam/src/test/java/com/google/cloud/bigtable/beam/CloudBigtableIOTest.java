@@ -70,7 +70,7 @@ public class CloudBigtableIOTest {
 
   private static final CoderRegistry registry = CoderRegistry.createDefault();
 
-  private CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
+  private CloudBigtableScanConfiguration scanConfig = new CloudBigtableScanConfiguration.Builder()
       .withProjectId("project")
       .withInstanceId("instanceId")
       .withTableId("table")
@@ -97,7 +97,7 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSourceToString() throws Exception {
-    Source source = (Source) CloudBigtableIO.read(config);
+    Source source = (Source) CloudBigtableIO.read(scanConfig);
     byte[] startKey = "abc d".getBytes();
     byte[] stopKey = "def g".getBytes();
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
@@ -131,7 +131,7 @@ public class CloudBigtableIOTest {
         return;
       }
     }
-    Source source = (Source) CloudBigtableIO.read(config);
+    Source source = (Source) CloudBigtableIO.read(scanConfig);
     source.setSampleRowKeys(sampleRowKeys);
     List<SourceWithKeys> splits = source.getSplits(20000);
     Collections.sort(splits, new Comparator<SourceWithKeys>() {
@@ -162,11 +162,11 @@ public class CloudBigtableIOTest {
   @Test
   public void testWriteToTableValidateConfig() throws Exception {
     // No error.
-    CloudBigtableIO.writeToTable(config).validate(null);
+    CloudBigtableIO.writeToTable(scanConfig).validate(null);
 
     // Empty project ID.
     try {
-      CloudBigtableIO.writeToTable(config.toBuilder().withProjectId("").build()).validate(null);
+      CloudBigtableIO.writeToTable(scanConfig.toBuilder().withProjectId("").build()).validate(null);
       Assert.fail("Expect IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(e.getMessage().contains("A projectId must be set"));
@@ -174,7 +174,7 @@ public class CloudBigtableIOTest {
 
     // Empty instance ID.
     try {
-      CloudBigtableIO.writeToTable(config.toBuilder().withInstanceId("").build()).validate(null);
+      CloudBigtableIO.writeToTable(scanConfig.toBuilder().withInstanceId("").build()).validate(null);
       Assert.fail("Expect IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(e.getMessage().contains("A instanceId must be set"));
@@ -182,7 +182,7 @@ public class CloudBigtableIOTest {
 
     // Empty table ID.
     try {
-      CloudBigtableIO.writeToTable(config.toBuilder().withTableId("").build()).validate(null);
+      CloudBigtableIO.writeToTable(scanConfig.toBuilder().withTableId("").build()).validate(null);
       Assert.fail("Expect IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(e.getMessage().contains("A tableid must be set"));
@@ -191,12 +191,14 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testWriteToMultipleTablesValidateConfig() throws Exception {
+    CloudBigtableConfiguration config =
+        new CloudBigtableConfiguration.Builder()
+            .withProjectId("project")
+            .withInstanceId("instanceId")
+            .build();
+
     // No error.
     CloudBigtableIO.writeToMultipleTables(config).validate(null);
-
-    // Table ID is not needed.
-    CloudBigtableIO.writeToMultipleTables(config.toBuilder().withTableId("").build())
-        .validate(null);
 
     // Empty project ID.
     try {

@@ -296,7 +296,7 @@ public class CloudBigtableIO {
      */
     @Override
     public void validate() {
-      CloudBigtableIO.validateTableConfig(getConfiguration());
+      getConfiguration().validate();
     }
 
     /**
@@ -976,19 +976,27 @@ public class CloudBigtableIO {
    * A {@link PTransform} that wraps around a {@link DoFn} that will write {@link Mutation}s to
    * Cloud Bigtable.
    */
-  public static class CloudBigtableWriteTransform<T> extends PTransform<PCollection<T>, PDone> {
+  private static class CloudBigtableWriteTransform<T> extends PTransform<PCollection<T>, PDone> {
     private static final long serialVersionUID = -2888060194257930027L;
 
     private final DoFn<T, Void> function;
+    private final CloudBigtableConfiguration configuration;
 
-    public CloudBigtableWriteTransform(DoFn<T, Void> function) {
+    public CloudBigtableWriteTransform(
+        DoFn<T, Void> function, CloudBigtableConfiguration configuration) {
       this.function = function;
+      this.configuration = configuration;
     }
 
     @Override
     public PDone expand(PCollection<T> input) {
       input.apply(ParDo.of(function));
       return PDone.in(input.getPipeline());
+    }
+
+    @Override
+    public void validate(PipelineOptions options) {
+      configuration.validate();
     }
 
     @Override
@@ -1012,15 +1020,9 @@ public class CloudBigtableIO {
    * add a timestamp to the {@link Put}.
    */
   public static PTransform<PCollection<Mutation>, PDone> writeToTable(
-      final CloudBigtableTableConfiguration config) {
+      CloudBigtableTableConfiguration config) {
     DoFn<Mutation, Void> writeFn = new CloudBigtableSingleTableBufferedWriteFn(config);
-
-    return new CloudBigtableWriteTransform<Mutation>(writeFn) {
-      @Override
-      public void validate(PipelineOptions options) {
-        validateTableConfig(config);
-      }
-    };
+    return new CloudBigtableWriteTransform<>(writeFn, config);
   }
 
   private static Coder<Result> getResultCoder() {
@@ -1046,14 +1048,8 @@ public class CloudBigtableIO {
    * add a timestamp to the {@link Put}.
    */
   public static PTransform<PCollection<KV<String, Iterable<Mutation>>>, PDone>
-      writeToMultipleTables(final CloudBigtableConfiguration config) {
-    return new CloudBigtableWriteTransform<KV<String, Iterable<Mutation>>>(
-        new CloudBigtableMultiTableWriteFn(config)) {
-      @Override
-      public void validate(PipelineOptions options) {
-        validateConfig(config);
-      }
-    };
+      writeToMultipleTables(CloudBigtableConfiguration config) {
+    return new CloudBigtableWriteTransform<>(new CloudBigtableMultiTableWriteFn(config), config);
   }
 
   /**
@@ -1062,20 +1058,5 @@ public class CloudBigtableIO {
    */
   public static BoundedSource<Result> read(CloudBigtableScanConfiguration config) {
     return new Source(config);
-  }
-
-  private static void checkNotNullOrEmpty(String value, String type) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(value),
-      "A " + type + " must be set to configure Bigtable properly.");
-  }
-
-  private static void validateTableConfig(CloudBigtableTableConfiguration configuration) {
-    validateConfig(configuration);
-    checkNotNullOrEmpty(configuration.getTableId(), "tableid");
-  }
-
-  private static void validateConfig(CloudBigtableConfiguration configuration) {
-    checkNotNullOrEmpty(configuration.getProjectId(), "projectId");
-    checkNotNullOrEmpty(configuration.getInstanceId(), "instanceId");
   }
 }
