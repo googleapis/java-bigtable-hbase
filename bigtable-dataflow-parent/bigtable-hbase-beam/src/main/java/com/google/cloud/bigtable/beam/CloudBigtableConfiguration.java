@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.Map.Entry;
 
 import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
+import org.apache.beam.sdk.repackaged.com.google.common.base.Strings;
 import org.apache.beam.sdk.repackaged.com.google.common.collect.ImmutableMap;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.conf.Configuration;
@@ -263,4 +264,14 @@ public class CloudBigtableConfiguration implements Serializable {
     }
   }
 
+  protected static void checkNotNullOrEmpty(String value, String name) {
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(value),
+        "A " + name + " must be set to configure Bigtable properly.");
+  }
+
+  public void validate() {
+    checkNotNullOrEmpty(getProjectId(), "projectId");
+    checkNotNullOrEmpty(getInstanceId(), "instanceId");
+  }
 }
