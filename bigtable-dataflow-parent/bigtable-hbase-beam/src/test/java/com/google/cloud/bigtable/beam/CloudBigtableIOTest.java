@@ -188,4 +188,32 @@ public class CloudBigtableIOTest {
       Assert.assertTrue(e.getMessage().contains("A tableid must be set"));
     }
   }
+
+  @Test
+  public void testWriteToMultipleTablesValidateConfig() throws Exception {
+    // No error.
+    CloudBigtableIO.writeToMultipleTables(config).validate(null);
+
+    // Table ID is not needed.
+    CloudBigtableIO.writeToMultipleTables(config.toBuilder().withTableId("").build())
+        .validate(null);
+
+    // Empty project ID.
+    try {
+      CloudBigtableIO.writeToMultipleTables(config.toBuilder().withProjectId("").build())
+          .validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A projectId must be set"));
+    }
+
+    // Empty instance ID.
+    try {
+      CloudBigtableIO.writeToMultipleTables(config.toBuilder().withInstanceId("").build())
+          .validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A instanceId must be set"));
+    }
+  }
 }
