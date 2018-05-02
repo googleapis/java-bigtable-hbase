@@ -30,6 +30,9 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderRegistry;
 import org.apache.beam.sdk.io.BoundedSource;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PDone;
 import org.apache.beam.sdk.values.TypeDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
@@ -154,5 +157,35 @@ public class CloudBigtableIOTest {
       last = current;
     }
     // check first and last
+  }
+
+  @Test
+  public void testWriteToTableValidateConfig() throws Exception {
+    // No error.
+    CloudBigtableIO.writeToTable(config).validate(null);
+
+    // Empty project ID.
+    try {
+      CloudBigtableIO.writeToTable(config.toBuilder().withProjectId("").build()).validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A projectId must be set"));
+    }
+
+    // Empty instance ID.
+    try {
+      CloudBigtableIO.writeToTable(config.toBuilder().withInstanceId("").build()).validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A instanceId must be set"));
+    }
+
+    // Empty table ID.
+    try {
+      CloudBigtableIO.writeToTable(config.toBuilder().withTableId("").build()).validate(null);
+      Assert.fail("Expect IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("A tableid must be set"));
+    }
   }
 }

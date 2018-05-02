@@ -817,8 +817,12 @@ public class CloudBigtableIO {
 
     public BufferedMutatorDoFn(CloudBigtableConfiguration config) {
       super(config);
+    }
+
+    @Setup
+    public synchronized void setup() {
       MutationStatsExporter.initializeMutationStatsExporter(
-        new BigtableInstanceName(config.getProjectId(), config.getInstanceId()));
+          new BigtableInstanceName(config.getProjectId(), config.getInstanceId()));
     }
 
     protected BufferedMutator createBufferedMutator(Object context, String tableName)
@@ -850,17 +854,16 @@ public class CloudBigtableIO {
       extends BufferedMutatorDoFn<Mutation> {
     private static final long serialVersionUID = 2L;
     private transient BufferedMutator mutator;
-    private final String tableName;
 
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
-      tableName = config.getTableId();
     }
 
     @StartBundle
-    public synchronized void getBufferedMutator(StartBundleContext context)
-        throws IOException {
-      mutator = createBufferedMutator(context, tableName);
+    public synchronized void getBufferedMutator(StartBundleContext context) throws IOException {
+      mutator =
+          createBufferedMutator(
+              context, ((CloudBigtableTableConfiguration) getConfig()).getTableId());
     }
 
     /**
