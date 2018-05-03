@@ -61,8 +61,15 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Builds a {@link CloudBigtableScanConfiguration}.
    */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
+    @Deprecated
     private Scan scan;
+    @Deprecated
     private ReadRowsRequest request;
+
+    private String startRow;
+    private String stopRow;
+    private String filter;
+    private int maxVersion;  // Should this be int or long?
 
     public Builder() {
     }
@@ -72,6 +79,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @param scan The {@link Scan} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
+    @Deprecated
     public Builder withScan(Scan scan) {
       this.scan = scan;
       this.request = null;
@@ -83,6 +91,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @param request The {@link ReadRowsRequest} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
+    @Deprecated
     public Builder withRequest(ReadRowsRequest request) {
       this.request = request;
       this.scan = null;
@@ -95,6 +104,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @param stopKey The last key, exclusive.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
+    @Deprecated
     Builder withKeys(byte[] startKey, byte[] stopKey) {
       final ByteString start = ByteStringer.wrap(startKey);
       final ByteString stop = ByteStringer.wrap(stopKey);
@@ -103,6 +113,42 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
               .setRows(RowSet.newBuilder().addRowRanges(
                 RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(stop).build()))
               .build();
+      return this;
+    }
+
+    /**
+     * @param startRow
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    Builder withStartRow(String startRow) {
+      this.startRow = startRow;
+      return this;
+    }
+
+    /**
+     * @param stopRow
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    Builder withStopRow(String stopRow) {
+      this.stopRow = stopRow;
+      return this;
+    }
+
+    /**
+     * @param filter
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    Builder withFilter(String filter) {
+      this.filter = filter;
+      return this;
+    }
+
+    /**
+     * @param maxVersion
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    Builder withMaxVersion(int maxVersion) {
+      this.maxVersion = maxVersion;
       return this;
     }
 
@@ -150,48 +196,83 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     @Override
     public CloudBigtableScanConfiguration build() {
       if (request == null) {
-        ReadHooks readHooks = new DefaultReadHooks();
-        if (scan == null) {
+        if (scan == null
+            && startRow == null
+            && stopRow == null
+            && filter == null
+            && maxVersion == 0) {
           scan = new Scan();
         }
+        ReadHooks readHooks = new DefaultReadHooks();
         ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
         request = readHooks.applyPreSendHook(builder.build());
       }
       return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
-          request, additionalConfiguration);
+          request, startRow, stopRow, filter, maxVersion, additionalConfiguration);
     }
   }
 
+  @Deprecated
   private final ReadRowsRequest request;
+
+  private String startRow;
+  private String stopRow;
+  private String filter;
+  private int maxVersion;  // Should this be int or long?
 
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
    * table ID, {@link Scan} and additional connection configuration.
+   *
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
    * @param tableId The table to connect to in the instance.
    * @param request The {@link ReadRowsRequest} that will be used to filter the table.
+   * @param startRow
+   * @param stopRow
+   * @param filter
+   * @param maxVersion
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  protected CloudBigtableScanConfiguration(String projectId, String instanceId, String tableId,
-      ReadRowsRequest request, Map<String, String> additionalConfiguration) {
-    super(projectId, instanceId,  tableId, additionalConfiguration);
-    if (request.getTableName().isEmpty()) {
-      BigtableInstanceName bigtableInstanceName =
-          new BigtableInstanceName(projectId, this.getInstanceId());
-      String fullTableName = bigtableInstanceName.toTableNameStr(tableId);
-      this.request = request.toBuilder().setTableName(fullTableName).build();
-    } else {
-      this.request = request;
-    }
+  protected CloudBigtableScanConfiguration(
+      String projectId,
+      String instanceId,
+      String tableId,
+      ReadRowsRequest request,
+      String startRow,
+      String stopRow,
+      String filter,
+      int maxVersion,
+      Map<String, String> additionalConfiguration) {
+    super(projectId, instanceId, tableId, additionalConfiguration);
+    this.request = request;
+    this.startRow = startRow;
+    this.stopRow = stopRow;
+    this.filter = filter;
+    this.maxVersion = maxVersion;
   }
 
   /**
    * Gets the {@link Scan} used to filter the table.
+   *
    * @return The {@link Scan}.
    */
   public ReadRowsRequest getRequest() {
-    return request;
+    ReadRowsRequest toBeReturnedRequest;
+    if (request == null) {
+      // TODO: Build request based on startRow, stopeRow, filter and maxVersion.
+      toBeReturnedRequest = ReadRowsRequest.getDefaultInstance();
+    } else {
+      toBeReturnedRequest = request;
+    }
+
+    if (toBeReturnedRequest.getTableName().isEmpty()) {
+      BigtableInstanceName bigtableInstanceName =
+          new BigtableInstanceName(getProjectId(), getInstanceId());
+      String fullTableName = bigtableInstanceName.toTableNameStr(tableId);
+      toBeReturnedRequest = toBeReturnedRequest.toBuilder().setTableName(fullTableName).build();
+    }
+    return toBeReturnedRequest;
   }
 
   /**
@@ -231,14 +312,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   RowRange getRowRange() {
-    RowSet rows = request.getRows();
+    RowSet rows = getRequest().getRows();
     return rows.getRowRanges(0);
   }
 
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)
-        && Objects.equals(request, ((CloudBigtableScanConfiguration) obj).request);
+        && Objects.equals(getRequest(), ((CloudBigtableScanConfiguration) obj).getRequest());
   }
 
   @Override
@@ -251,6 +332,10 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public void copyConfig(Builder builder) {
     super.copyConfig(builder);
     builder.withRequest(request);
+    builder.withStartRow(startRow);
+    builder.withStopRow(stopRow);
+    builder.withFilter(filter);
+    builder.withMaxVersion(maxVersion);
   }
 
   /**
@@ -265,8 +350,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-    builder
-        .add(DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+    builder.add(
+        DisplayData.item("readRowsRequest", getRequest().toString()).withLabel("ReadRowsRequest"));
   }
-
 }
