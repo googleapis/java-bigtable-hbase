@@ -89,7 +89,7 @@ public class TestBigtableOptions {
 
   @Test
   public void testEmulator() {
-    Map<String, String> oldEnv = System.getenv();`
+    Map<String, String> oldEnv = System.getenv();
     Map<String, String> testEnv = new HashMap<>();
     testEnv.put(BigtableOptions.BIGTABLE_EMULATOR_HOST_ENV_VAR, "localhost:1234");
     setTestEnv(testEnv);

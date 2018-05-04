@@ -409,7 +409,7 @@ public class BigtableSession implements Closeable {
    * Create a {@link BigtableInstanceClient}.  {@link BigtableSession} objects assume that
    * {@link BigtableOptions} have a project and instance.  A {@link BigtableInstanceClient} does not
    * require project id or instance id, so {@link BigtableOptions#getDefaultOptions()} may be used
-   * if
+   * if there are no service account credentials settings.
    *
    * @return a fully formed {@link BigtableInstanceClient}
    * @throws IOException
