@@ -20,6 +20,7 @@ import java.util.Objects;
 
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
 
@@ -61,8 +62,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Builds a {@link CloudBigtableScanConfiguration}.
    */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
-    private Scan scan;
-    private ReadRowsRequest request;
+    private ValueProvider<ReadRowsRequest> request;
 
     public Builder() {
     }
@@ -73,9 +73,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withScan(Scan scan) {
-      this.scan = scan;
-      this.request = null;
-      return this;
+      ReadHooks readHooks = new DefaultReadHooks();
+      ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
+      return withRequest(builder.build());
     }
 
     /**
@@ -84,8 +84,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withRequest(ReadRowsRequest request) {
+      return withRequest(staticProvider(request));
+    }
+
+    Builder withRequest(ValueProvider<ReadRowsRequest> request) {
       this.request = request;
-      this.scan = null;
       return this;
     }
 
@@ -98,12 +101,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     Builder withKeys(byte[] startKey, byte[] stopKey) {
       final ByteString start = ByteStringer.wrap(startKey);
       final ByteString stop = ByteStringer.wrap(stopKey);
-      request =
-          request.toBuilder()
+      ReadRowsRequest request = this.request == null
+          ? ReadRowsRequest.getDefaultInstance()
+          : this.request.get();
+      return withRequest(staticProvider(request.toBuilder()
               .setRows(RowSet.newBuilder().addRowRanges(
                 RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(stop).build()))
-              .build();
-      return this;
+              .build()));
     }
 
     /**
@@ -149,20 +153,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public CloudBigtableScanConfiguration build() {
-      if (request == null) {
-        ReadHooks readHooks = new DefaultReadHooks();
-        if (scan == null) {
-          scan = new Scan();
-        }
-        ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-        request = readHooks.applyPreSendHook(builder.build());
-      }
+
       return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
           request, additionalConfiguration);
     }
   }
 
-  private final ReadRowsRequest request;
+  private final ValueProvider<ReadRowsRequest> request;
 
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
@@ -173,17 +170,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @param request The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  protected CloudBigtableScanConfiguration(String projectId, String instanceId, String tableId,
-      ReadRowsRequest request, Map<String, String> additionalConfiguration) {
-    super(projectId, instanceId,  tableId, additionalConfiguration);
-    if (request.getTableName().isEmpty()) {
-      BigtableInstanceName bigtableInstanceName =
-          new BigtableInstanceName(projectId, this.getInstanceId());
-      String fullTableName = bigtableInstanceName.toTableNameStr(tableId);
-      this.request = request.toBuilder().setTableName(fullTableName).build();
-    } else {
-      this.request = request;
-    }
+  protected CloudBigtableScanConfiguration(ValueProvider<String> projectId,
+      ValueProvider<String> instanceId, ValueProvider<String> tableId,
+      ValueProvider<ReadRowsRequest> request,
+      Map<String, ValueProvider<String>> additionalConfiguration) {
+    super(projectId, instanceId, tableId, additionalConfiguration);
+    this.request = request;
+
   }
 
   /**
@@ -191,7 +184,19 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @return The {@link Scan}.
    */
   public ReadRowsRequest getRequest() {
-    return request;
+    if (request == null) {
+      return ReadRowsRequest.newBuilder()
+          .setRows(RowSet.newBuilder().addRowRanges(RowRange.getDefaultInstance()).build()).build();
+    }
+    ReadRowsRequest requestValue = request.get();
+    if (requestValue.getTableName().isEmpty()) {
+      BigtableInstanceName bigtableInstanceName =
+              new BigtableInstanceName(getProjectId(), getInstanceId());
+      String fullTableName = bigtableInstanceName.toTableNameStr(getTableId());
+      return requestValue.toBuilder().setTableName(fullTableName).build();
+    } else {
+      return requestValue;
+    }
   }
 
   /**
@@ -231,14 +236,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   RowRange getRowRange() {
-    RowSet rows = request.getRows();
+    RowSet rows = getRequest().getRows();
     return rows.getRowRanges(0);
   }
 
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)
-        && Objects.equals(request, ((CloudBigtableScanConfiguration) obj).request);
+        && Objects.equals(getRequest(), ((CloudBigtableScanConfiguration) obj).getRequest());
   }
 
   @Override
@@ -266,7 +271,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
     builder
-        .add(DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+        .add(DisplayData.item("readRowsRequest", getRequest().toString())
+            .withLabel("ReadRowsRequest"));
   }
 
 }
