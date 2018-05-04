@@ -81,7 +81,7 @@ public class BigtableSession implements Closeable {
 
   private static final Logger LOG = new Logger(BigtableSession.class);
   // TODO: Consider caching channel pools per instance.
-  private static ChannelPool cachedDataChannelPool;
+  private static ManagedChannel cachedDataChannelPool;
   private static final Map<String, ResourceLimiter> resourceLimiterMap = new HashMap<>();
 
   // 256 MB, server has 256 MB limit.
@@ -238,7 +238,7 @@ public class BigtableSession implements Closeable {
     // Defer the creation of both the tableAdminClient until we need them.
     }
 
-  private ChannelPool getDataChannelPool() throws IOException {
+  private ManagedChannel getDataChannelPool() throws IOException {
     String host = options.getDataHost();
     int channelCount = options.getChannelCount();
     if (options.useCachedChannel()) {
@@ -367,7 +367,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
    * @throws java.io.IOException if any.
    */
-  protected ChannelPool createChannelPool(final String hostString, int count) throws IOException {
+  protected ManagedChannel createChannelPool(final String hostString, int count) throws IOException {
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
@@ -378,14 +378,16 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.  This
+   * method allows users to override the default implementation with their own.
    *
    * @param channelFactory a {@link ChannelPool.ChannelFactory} object.
    * @param count The number of channels in the pool.
    * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
    * @throws java.io.IOException if any.
    */
-  protected ChannelPool createChannelPool(final ChannelPool.ChannelFactory channelFactory, int count) throws IOException {
+  protected ManagedChannel createChannelPool(final ChannelPool.ChannelFactory channelFactory, int count)
+      throws IOException {
     return new ChannelPool(channelFactory, count);
   }
 
@@ -397,18 +399,27 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
    * @throws java.io.IOException if any.
    */
-  protected ChannelPool createManagedPool(String host, int channelCount) throws IOException {
-    ChannelPool channelPool = createChannelPool(host, channelCount);
+  protected ManagedChannel createManagedPool(String host, int channelCount) throws IOException {
+    ManagedChannel channelPool = createChannelPool(host, channelCount);
     managedChannels.add(channelPool);
     return channelPool;
   }
 
-  public static BigtableInstanceClient createInstanceClient()
+  /**
+   * Create a {@link BigtableInstanceClient}.  {@link BigtableSession} objects assume that
+   * {@link BigtableOptions} have a project and instance.  A {@link BigtableInstanceClient} does not
+   * require project id or instance id, so {@link BigtableOptions#getDefaultOptions()} may be used
+   * if
+   *
+   * @return a fully formed {@link BigtableInstanceClient}
+   * @throws IOException
+   * @throws GeneralSecurityException
+   */
+  public static BigtableInstanceClient createInstanceClient(BigtableOptions options)
       throws IOException, GeneralSecurityException {
-    BigtableOptions options = new BigtableOptions.Builder().build();
-    Channel channel = createChannelPool(BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT, options);
-    return new BigtableInstanceGrpcClient(channel);
+    return new BigtableInstanceGrpcClient(createChannelPool(options.getAdminHost(), options));
   }
+
   /**
    * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
    *
@@ -418,7 +429,7 @@ public class BigtableSession implements Closeable {
    * @throws IOException if any.
    * @throws GeneralSecurityException
    */
-  public static ChannelPool createChannelPool(final String host, final BigtableOptions options)
+  public static ManagedChannel createChannelPool(final String host, final BigtableOptions options)
       throws IOException, GeneralSecurityException {
     return createChannelPool(host, options, 1);
   }
@@ -433,19 +444,26 @@ public class BigtableSession implements Closeable {
    * @throws IOException if any.
    * @throws GeneralSecurityException
    */
-  public static ChannelPool createChannelPool(final String host, final BigtableOptions options,
+  public static ManagedChannel createChannelPool(final String host, final BigtableOptions options,
       int count) throws IOException, GeneralSecurityException {
     final List<ClientInterceptor> interceptorList = new ArrayList<>();
-    interceptorList.add(CredentialInterceptorCache.getInstance()
-        .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions()));
+
+    ClientInterceptor credentialsInterceptor = CredentialInterceptorCache.getInstance()
+            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+    if (credentialsInterceptor != null) {
+      interceptorList.add(credentialsInterceptor);
+    }
+
     if (options.getInstanceName() != null) {
       interceptorList
           .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
     }
     final ClientInterceptor[] interceptors =
         interceptorList.toArray(new ClientInterceptor[interceptorList.size()]);
+
     ChannelPool.ChannelFactory factory = new ChannelPool.ChannelFactory() {
-      @Override public ManagedChannel create() throws IOException {
+      @Override
+      public ManagedChannel create() throws IOException {
         return createNettyChannel(host, options, interceptors);
       }
     };
