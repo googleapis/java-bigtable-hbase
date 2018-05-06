@@ -274,7 +274,7 @@ public class BigtableOptionsFactory {
   /**
    * Allow namespace methods to be no-ops
    */
-  public static final String BIGTABLE_NAMESAPCE_WARNING_KEY = "google.bigtable.namespace.warnings";
+  public static final String BIGTABLE_NAMESPACE_WARNING_KEY = "google.bigtable.namespace.warnings";
 
   /**
    * <p>fromConfiguration.</p>

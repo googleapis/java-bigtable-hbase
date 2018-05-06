@@ -1318,7 +1318,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   private boolean provideWarningsForNamespaces() {
-    return configuration.getBoolean(BigtableOptionsFactory.BIGTABLE_NAMESAPCE_WARNING_KEY, false);
+    return configuration.getBoolean(BigtableOptionsFactory.BIGTABLE_NAMESPACE_WARNING_KEY, false);
   }
 
   /** {@inheritDoc} */
