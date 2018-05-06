@@ -56,7 +56,7 @@ public class PutMicroBenchmark {
     String instanceId = args.length > 1 ? args[1] : "instanceId";
     String tableId = args.length > 2 ? args[2] : "table";
 
-    options = new BigtableOptions.Builder()
+    options = BigtableOptions.Builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
         .setUserAgent("put_microbenchmark")
@@ -64,7 +64,7 @@ public class PutMicroBenchmark {
     boolean useRealConnection = args.length >= 2;
     int putCount = useRealConnection ? REAL_CHANNEL_PUT_COUNT : FAKE_CHANNEL_PUT_COUNT;
     HBaseRequestAdapter hbaseAdapter =
-        new HBaseRequestAdapter(options, TableName.valueOf(tableId), new Configuration(false));
+        new HBaseRequestAdapter(options.toBuilder(), TableName.valueOf(tableId), new Configuration(false));
 
     testCreatePuts(10_000);
 
@@ -77,7 +77,7 @@ public class PutMicroBenchmark {
   protected static ChannelPool getChannelPool(final boolean useRealConnection)
       throws IOException, GeneralSecurityException {
     if (useRealConnection) {
-      return BigtableSession.createChannelPool(options.getDataHost(), options);
+      return BigtableSession.createChannelPool(options.dataHost(), options);
     } else {
       return new ChannelPool(createFakeChannels(), 1);
     }

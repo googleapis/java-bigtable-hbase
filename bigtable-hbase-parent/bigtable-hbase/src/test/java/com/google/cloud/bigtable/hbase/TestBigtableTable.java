@@ -91,7 +91,7 @@ public class TestBigtableTable {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    BigtableOptions options = new BigtableOptions.Builder()
+    BigtableOptions.Builder options = BigtableOptions.Builder()
         .setAdminHost("localhost")
         .setDataHost("localhost")
         .setPort(0)
@@ -99,8 +99,7 @@ public class TestBigtableTable {
         .setInstanceId(TEST_INSTANCE)
         .setRetryOptions(new RetryOptions.Builder().setEnableRetries(false).build())
         .setCredentialOptions(null)
-        .setUserAgent("testAgent")
-        .build();
+        .setUserAgent("testAgent");
 
     Configuration config = new Configuration(false);
     TableName tableName = TableName.valueOf(TEST_TABLE);

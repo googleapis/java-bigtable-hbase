@@ -84,7 +84,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBatchExecutor {
 
-  BigtableOptions DEFAULT_OPTIONS = new BigtableOptions.Builder().build();
+  BigtableOptions.Builder DEFAULT_OPTIONS = BigtableOptions.Builder();
 
   private static Put randomPut() {
     return new Put(randomBytes(8))
@@ -136,10 +136,9 @@ public class TestBatchExecutor {
   private HBaseRequestAdapter requestAdapter;
   @Before
   public void setup() throws InterruptedException {
-    final BigtableOptions options = new BigtableOptions.Builder()
+    final BigtableOptions.Builder options = BigtableOptions.Builder()
         .setProjectId("projectId")
-        .setInstanceId("instanceId")
-        .build();
+        .setInstanceId("instanceId");
     requestAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
 
@@ -320,7 +319,7 @@ public class TestBatchExecutor {
     when(mockFuture.isDone()).thenReturn(true);
   }
 
-  private BatchExecutor createExecutor(BigtableOptions options) {
+  private BatchExecutor createExecutor(BigtableOptions.Builder options) {
     when(mockBigtableSession.getOptions()).thenReturn(options);
     return new BatchExecutor(mockBigtableSession, requestAdapter);
   }

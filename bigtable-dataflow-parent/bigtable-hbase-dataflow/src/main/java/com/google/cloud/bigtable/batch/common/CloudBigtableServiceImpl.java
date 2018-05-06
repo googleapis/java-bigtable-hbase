@@ -30,9 +30,9 @@ public class CloudBigtableServiceImpl implements CloudBigtableService {
   public List<SampleRowKeysResponse> getSampleRowKeys(CloudBigtableTableConfiguration config)
       throws IOException {
     BigtableOptions bigtableOptions = config.toBigtableOptions();
-    try (BigtableSession session = new BigtableSession(bigtableOptions)) {
+    try (BigtableSession session = new BigtableSession(bigtableOptions.toBuilder())) {
       BigtableTableName tableName =
-          bigtableOptions.getInstanceName().toTableName(config.getTableId());
+          bigtableOptions.instanceName().toTableName(config.getTableId());
       SampleRowKeysRequest request =
           SampleRowKeysRequest.newBuilder().setTableName(tableName.toString()).build();
       return session.getDataClient().sampleRowKeys(request);

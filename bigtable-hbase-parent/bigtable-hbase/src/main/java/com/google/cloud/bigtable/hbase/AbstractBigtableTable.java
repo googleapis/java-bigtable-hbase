@@ -106,7 +106,7 @@ public abstract class AbstractBigtableTable implements Table {
   }
 
   protected final TableName tableName;
-  protected final BigtableOptions options;
+  protected final BigtableOptions.Builder options;
   protected final HBaseRequestAdapter hbaseAdapter;
 
   protected final BigtableDataClient client;
@@ -249,7 +249,7 @@ public abstract class AbstractBigtableTable implements Table {
   private RetriesExhaustedWithDetailsException
       createRetriesExhaustedWithDetailsException(Throwable e, Row action) {
     return new RetriesExhaustedWithDetailsException(Arrays.asList(e), Arrays.asList(action),
-        Arrays.asList(options.getDataHost().toString()));
+        Arrays.asList(options.build().dataHost().toString()));
   }
 
   /** {@inheritDoc} */
@@ -300,7 +300,7 @@ public abstract class AbstractBigtableTable implements Table {
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner",
-              options.getProjectId(),
+              options.build().projectId(),
               tableName.getQualifierAsString()),
           throwable);
     }
@@ -511,7 +511,7 @@ public abstract class AbstractBigtableTable implements Table {
     return new DoNotRetryIOException(
         makeGenericExceptionMessage(
             type,
-            options.getProjectId(),
+            options.build().projectId(),
             tableName.getQualifierAsString(),
             row),
         t);
@@ -534,7 +534,7 @@ public abstract class AbstractBigtableTable implements Table {
         throw new IOException(
             makeGenericExceptionMessage(
                 "increment",
-                options.getProjectId(),
+                options.build().projectId(),
                 tableName.getQualifierAsString(),
                 row));
       }
@@ -622,10 +622,10 @@ public abstract class AbstractBigtableTable implements Table {
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableTable.class)
         .add("hashCode", "0x" + Integer.toHexString(hashCode()))
-        .add("project", options.getProjectId())
-        .add("instance", options.getInstanceId())
+        .add("project", options.build().projectId())
+        .add("instance", options.build().instanceId())
         .add("table", tableName.getNameAsString())
-        .add("host", options.getDataHost())
+        .add("host", options.build().dataHost())
         .toString();
   }
 

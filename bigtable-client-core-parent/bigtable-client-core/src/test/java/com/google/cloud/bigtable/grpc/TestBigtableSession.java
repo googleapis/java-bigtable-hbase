@@ -39,11 +39,10 @@ public class TestBigtableSession {
   private static void createSession(String projectId, String instanceId, String userAgent)
       throws IOException {
     BigtableSession ignored =
-        new BigtableSession(new BigtableOptions.Builder()
+        new BigtableSession(BigtableOptions.Builder()
           .setProjectId(projectId)
           .setInstanceId(instanceId)
-          .setUserAgent(userAgent)
-          .build());
+          .setUserAgent(userAgent));
   }
 
   @Rule

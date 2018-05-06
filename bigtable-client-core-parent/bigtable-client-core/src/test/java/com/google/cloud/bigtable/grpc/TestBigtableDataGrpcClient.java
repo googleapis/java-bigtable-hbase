@@ -95,7 +95,7 @@ public class TestBigtableDataGrpcClient {
   protected BigtableDataGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
     RetryOptions retryOptions =
         RetryOptionsUtil.createTestRetryOptions(nanoClock, allowRetriesWithoutTimestamp);
-    BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
+    BigtableOptions options = BigtableOptions.Builder().setRetryOptions(retryOptions).build();
     doAnswer(new Answer<Void>(){
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {

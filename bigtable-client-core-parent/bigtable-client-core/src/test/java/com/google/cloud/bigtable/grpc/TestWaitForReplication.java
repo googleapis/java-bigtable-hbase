@@ -105,7 +105,7 @@ public class TestWaitForReplication {
     service = new ConsistencyServiceImpl();
     grpcServerRule.getServiceRegistry().addService(service);
 
-    BigtableOptions options = new BigtableOptions.Builder().build();
+    BigtableOptions options = BigtableOptions.Builder().build();
 
     tableAdminClient = new BigtableTableAdminGrpcClient(grpcServerRule.getChannel(), null, options);
     backoff = new MockBackOff();

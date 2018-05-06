@@ -100,7 +100,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final Set<TableName> disabledTables;
 
   private final Configuration configuration;
-  private final BigtableOptions options;
+  private final BigtableOptions.Builder options;
   protected final AbstractBigtableConnection connection;
   protected final BigtableTableAdminClient bigtableTableAdminClient;
 
@@ -123,7 +123,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     this.connection = connection;
     bigtableTableAdminClient = connection.getSession().getTableAdminClient();
     disabledTables = connection.getDisabledTables();
-    bigtableInstanceName = options.getInstanceName();
+    bigtableInstanceName = options.build().instanceName();
     tableAdapter = new TableAdapter(bigtableInstanceName, columnDescriptorAdapter);
 
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
@@ -727,9 +727,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(getClass())
-        .add("project", options.getProjectId())
-        .add("instance", options.getInstanceId())
-        .add("adminHost", options.getAdminHost())
+        .add("project", options.build().projectId())
+        .add("instance", options.build().instanceId())
+        .add("adminHost", options.build().adminHost())
         .toString();
   }
 
@@ -863,7 +863,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     SnapshotTableRequest.Builder requestBuilder = SnapshotTableRequest.newBuilder()
         .setCluster(getSnapshotClusterName().toString())
         .setSnapshotId(snapshotName)
-        .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
+        .setName(options.build().instanceName().toTableNameStr(tableName.getNameAsString()));
 
     int ttlSecs = configuration.getInt(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY, -1);
     if (ttlSecs > 0) {
@@ -909,7 +909,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     CreateTableFromSnapshotRequest request = CreateTableFromSnapshotRequest.newBuilder()
-        .setParent(options.getInstanceName().toString())
+        .setParent(options.build().instanceName().toString())
         .setTableId(tableName.getNameAsString())
         .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
         .build();

@@ -41,11 +41,11 @@ public class IntegrationBigtableSessionTest {
     String projectId = System.getProperty("google.bigtable.project.id");
     String instanceId = System.getProperty("google.bigtable.instance.id");
 
-    BigtableOptions options = new BigtableOptions.Builder().setProjectId(projectId)
+    BigtableOptions options = BigtableOptions.Builder().setProjectId(projectId)
         .setInstanceId(instanceId).setUserAgent("Test").build();
-    try (BigtableSession bs = new BigtableSession(options)) {
+    try (BigtableSession bs = new BigtableSession(options.toBuilder())) {
       ListTablesRequest request = ListTablesRequest.newBuilder()
-          .setParent(options.getInstanceName().getInstanceName()).build();
+          .setParent(options.instanceName().getInstanceName()).build();
       bs.getTableAdminClient().listTables(request);
     } catch (Exception e) {
       e.printStackTrace();

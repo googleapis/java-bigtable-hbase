@@ -85,8 +85,8 @@ public class TestBigtableOptionsFactory {
     configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
-    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals(TEST_HOST, options.getDataHost());
+    BigtableOptions.Builder options = BigtableOptionsFactory.fromConfiguration(configuration);
+    Assert.assertEquals(TEST_HOST, options.build().dataHost());
   }
 
   @Test
@@ -94,16 +94,16 @@ public class TestBigtableOptionsFactory {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
-    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals(TEST_HOST, options.getDataHost());
-    Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
-    Assert.assertEquals(TEST_INSTANCE_ID, options.getInstanceId());
+    BigtableOptions.Builder options = BigtableOptionsFactory.fromConfiguration(configuration);
+    Assert.assertEquals(TEST_HOST, options.build().dataHost());
+    Assert.assertEquals(TEST_PROJECT_ID, options.build().projectId());
+    Assert.assertEquals(TEST_INSTANCE_ID, options.build().instanceId());
   }
 
   @Test
   public void testDefaultRetryOptions() throws IOException {
     RetryOptions retryOptions =
-        BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
+        BigtableOptionsFactory.fromConfiguration(configuration).build().retryOptions();
     assertEquals(
       RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES,
       retryOptions.enableRetries());
@@ -125,7 +125,7 @@ public class TestBigtableOptionsFactory {
     configuration.set(BigtableOptionsFactory.MAX_ELAPSED_BACKOFF_MILLIS_KEY, "111");
     configuration.set(BigtableOptionsFactory.READ_PARTIAL_ROW_TIMEOUT_MS, "123");
     RetryOptions retryOptions =
-        BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
+        BigtableOptionsFactory.fromConfiguration(configuration).build().retryOptions();
     assertEquals(false, retryOptions.enableRetries());
     assertEquals(false, retryOptions.retryOnDeadlineExceeded());
     assertEquals(111, retryOptions.getMaxElapsedBackoffMillis());

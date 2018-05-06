@@ -48,7 +48,7 @@ public class HBaseRequestAdapter {
     protected final HBaseMutationAdapter hbaseMutationAdapter;
     protected final RowMutationsAdapter rowMutationsAdapter;
 
-    public MutationAdapters(BigtableOptions options, Configuration config) {
+    public MutationAdapters(BigtableOptions.Builder options, Configuration config) {
       this(Adapters.createPutAdapter(config, options));
     }
 
@@ -75,7 +75,7 @@ public class HBaseRequestAdapter {
    * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
    * @param config a {@link org.apache.hadoop.conf.Configuration} object.
    */
-  public HBaseRequestAdapter(BigtableOptions options, TableName tableName, Configuration config) {
+  public HBaseRequestAdapter(BigtableOptions.Builder options, TableName tableName, Configuration config) {
     this(options, tableName, new MutationAdapters(options, config));
   }
 
@@ -86,11 +86,11 @@ public class HBaseRequestAdapter {
    * @param tableName a {@link TableName} object.
    * @param mutationAdapters a {@link MutationAdapters} object.
    */
-  public HBaseRequestAdapter(BigtableOptions options,
+  public HBaseRequestAdapter(BigtableOptions.Builder options,
                              TableName tableName,
                              MutationAdapters mutationAdapters) {
     this(tableName,
-        options.getInstanceName().toTableName(tableName.getQualifierAsString()),
+        options.build().instanceName().toTableName(tableName.getQualifierAsString()),
         mutationAdapters);
   }
 

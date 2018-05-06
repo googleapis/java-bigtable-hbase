@@ -170,9 +170,9 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       Channel channel,
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions) {
-    this.clientDefaultAppProfileId = bigtableOptions.getAppProfileId();
+    this.clientDefaultAppProfileId = bigtableOptions.appProfileId();
     this.retryExecutorService = retryExecutorService;
-    this.retryOptions = bigtableOptions.getRetryOptions();
+    this.retryOptions = bigtableOptions.retryOptions();
 
     BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
     this.sampleRowKeysAsync =

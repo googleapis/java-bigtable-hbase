@@ -21,7 +21,7 @@ package com.google.cloud.bigtable.config;
  */
 public class BigtableOptionsTestFactory {
 
-  public static BigtableOptions build() {
-    return new BigtableOptions();
+  public static BigtableOptions.Builder build() {
+    return BigtableOptions.Builder();
   }
 }

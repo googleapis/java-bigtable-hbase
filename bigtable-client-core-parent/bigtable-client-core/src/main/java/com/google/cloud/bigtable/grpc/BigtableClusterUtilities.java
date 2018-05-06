@@ -51,7 +51,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
   public static BigtableClusterUtilities forInstance(String projectId, String instanceId)
       throws IOException, GeneralSecurityException {
     return new BigtableClusterUtilities(
-        new BigtableOptions.Builder().setProjectId(projectId).setInstanceId(instanceId).build());
+        BigtableOptions.Builder().setProjectId(projectId).setInstanceId(instanceId).build());
   }
 
   /**
@@ -67,7 +67,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
       throws IOException, GeneralSecurityException {
     // '-' means all instanceids.
     return new BigtableClusterUtilities(
-        new BigtableOptions.Builder().setProjectId(projectId).setInstanceId("-").build());
+        BigtableOptions.Builder().setProjectId(projectId).setInstanceId("-").build());
   }
 
   /**
@@ -150,9 +150,9 @@ public class BigtableClusterUtilities implements AutoCloseable {
       throws IOException, GeneralSecurityException {
     this.instanceName =
         Preconditions.checkNotNull(
-            options.getInstanceName(),
+            options.instanceName(),
             "ProjectId and instanceId have to be set in the options.  Use '-' for all instanceIds.");
-    channel = BigtableSession.createChannelPool(options.getAdminHost(), options);
+    channel = BigtableSession.createChannelPool(options.adminHost(), options);
     client = new BigtableInstanceGrpcClient(channel);
   }
 
