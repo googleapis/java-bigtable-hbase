@@ -87,7 +87,7 @@ public class TestBigtableOptions {
      BigtableOptions.Builder().autoBuild();
   }
 
-//  @Test
+  @Test
   public void testEmulator() {
     Map<String, String> oldEnv = System.getenv();
     Map<String, String> testEnv = new HashMap<>();

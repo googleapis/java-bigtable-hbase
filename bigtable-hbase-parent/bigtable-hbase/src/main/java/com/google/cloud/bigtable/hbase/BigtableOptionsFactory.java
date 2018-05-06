@@ -309,7 +309,7 @@ public class BigtableOptionsFactory {
 
     String emulatorHost = configuration.get(BIGTABLE_EMULATOR_HOST_KEY);
     if (emulatorHost != null) {
-      bigtableOptionsBuilder.build().enableEmulator(emulatorHost);
+      bigtableOptionsBuilder.enableEmulator(emulatorHost);
     }
 
     setBulkOptions(configuration, bigtableOptionsBuilder);

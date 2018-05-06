@@ -153,9 +153,11 @@ public abstract class BigtableOptions implements Serializable, Cloneable {
     public abstract Builder setBigtableOptions(BigtableOptions options);
 
     abstract BigtableOptions autoBuild();
+    BigtableOptions options;
 
     public BigtableOptions build() {
-      BigtableOptions options = autoBuild();
+      applyEmulatorEnvironment(); 
+      options = this.autoBuild();
       if (options.bulkOptions() == null) {
         int maxInflightRpcs = BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
             * options.dataChannelCount();
@@ -167,7 +169,6 @@ public abstract class BigtableOptions implements Serializable, Cloneable {
         setBulkOptions(options.bulkOptions().toBuilder()
             .setMaxInflightRpcs(maxInflightRpcs).build());
       }
-      options.applyEmulatorEnvironment();
       setAdminHost(Preconditions.checkNotNull(options.adminHost()));
       setDataHost(Preconditions.checkNotNull(options.dataHost()));
       if (!Strings.isNullOrEmpty(options.projectId())
@@ -177,13 +178,59 @@ public abstract class BigtableOptions implements Serializable, Cloneable {
       } else {
         setInstanceName(null);
       }
-
+      
       LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
               + "admin host %s.",
-          options.projectId(), options.instanceId(), options.dataHost(),
+          options.projectId(),
+          options.instanceId(),
+          options.dataHost(),
           options.adminHost());
 
       return options;
+    }
+    
+    /**
+     * Apply emulator settings from the relevant environment variable, if set.
+     * @param builder 
+     */
+    private void applyEmulatorEnvironment() {
+      // Look for a host:port for the emulator.
+      String emulatorHost = System.getenv(BIGTABLE_EMULATOR_HOST_ENV_VAR);
+      if (emulatorHost == null) {
+        return;
+      }
+
+      enableEmulator(emulatorHost);
+    }
+
+    public Builder enableEmulator(String emulatorHostAndPort) {
+      String[] hostPort = emulatorHostAndPort.split(":");
+      Preconditions.checkArgument(hostPort.length == 2,
+          "Malformed " + BIGTABLE_EMULATOR_HOST_ENV_VAR + " environment variable: " +
+          emulatorHostAndPort + ". Expecting host:port.");
+
+      int port;
+      try {
+        port = Integer.parseInt(hostPort[1]);
+      } catch (NumberFormatException e) {
+        throw new RuntimeException("Invalid port in " + BIGTABLE_EMULATOR_HOST_ENV_VAR +
+            " environment variable: " + emulatorHostAndPort);
+      }
+      enableEmulator(hostPort[0], port);
+      return this;
+    }
+
+    public Builder enableEmulator(String host, int port) {
+      Preconditions.checkArgument(host != null && !host.isEmpty(), "Host cannot be null or empty");
+      Preconditions.checkArgument(port > 0, "Port must be positive");
+      this.setUsePlaintextNegotiation(true);
+      this.setCredentialOptions(CredentialOptions.nullCredential());
+      this.setDataHost(host);
+      this.setAdminHost(host);
+      this.setPort(port);
+
+      LOG.info("Connecting to the Bigtable emulator at " + host + ":" + port);
+      return this;
     }
   }
 
@@ -200,61 +247,7 @@ public abstract class BigtableOptions implements Serializable, Cloneable {
         .setCredentialOptions(CredentialOptions.defaultCredentials());
   }
 
-  /**
-   * Apply emulator settings from the relevant environment variable, if set.
-   */
-  private void applyEmulatorEnvironment() {
-    // Look for a host:port for the emulator.
-    String emulatorHost = System.getenv(BIGTABLE_EMULATOR_HOST_ENV_VAR);
-    if (emulatorHost == null) {
-      return;
-    }
-
-    enableEmulator(emulatorHost);
-  }
-
-  public Builder enableEmulator(String emulatorHostAndPort) {
-
-    BigtableOptions.Builder effectiveOptions = bigtableOptions() != null
-        ? bigtableOptions().toBuilder()
-        : BigtableOptions.Builder();
-
-    String[] hostPort = emulatorHostAndPort.split(":");
-    Preconditions.checkArgument(hostPort.length == 2,
-        "Malformed " + BIGTABLE_EMULATOR_HOST_ENV_VAR
-            + " environment variable: " + emulatorHostAndPort
-            + ". Expecting host:port.");
-
-    int port;
-    try {
-      port = Integer.parseInt(hostPort[1]);
-    } catch (NumberFormatException e) {
-      throw new RuntimeException(
-          "Invalid port in " + BIGTABLE_EMULATOR_HOST_ENV_VAR
-              + " environment variable: " + emulatorHostAndPort);
-    }
-    enableEmulator(hostPort[0], port);
-    return effectiveOptions;
-  }
-
-  public Builder enableEmulator(String host, int port) {
-
-    BigtableOptions.Builder effectiveOptions = bigtableOptions() != null
-        ? bigtableOptions().toBuilder()
-        : BigtableOptions.Builder();
-
-    Preconditions.checkArgument(host != null && !host.isEmpty(),
-        "Host cannot be null or empty");
-    Preconditions.checkArgument(port > 0, "Port must be positive");
-    effectiveOptions.setUsePlaintextNegotiation(true);
-    effectiveOptions.setCredentialOptions(CredentialOptions.nullCredential());
-    effectiveOptions.setDataHost(host);
-    effectiveOptions.setAdminHost(host);
-    effectiveOptions.setPort(port);
-
-    LOG.info("Connecting to the Bigtable emulator at " + host + ":" + port);
-    return effectiveOptions;
-  }
+  
 
   @VisibleForTesting
   BigtableOptions() {
