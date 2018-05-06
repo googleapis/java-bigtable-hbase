@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 import com.google.bigtable.admin.v2.AppProfile;
 import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.CreateAppProfileRequest;
+import com.google.bigtable.admin.v2.CreateClusterRequest;
 import com.google.bigtable.admin.v2.CreateInstanceRequest;
 import com.google.bigtable.admin.v2.DeleteAppProfileRequest;
 import com.google.bigtable.admin.v2.DeleteClusterRequest;
@@ -203,8 +204,8 @@ public interface BigtableInstanceClient {
    * production use. It is not subject to any SLA or deprecation policy.
    * Updates an app profile within an instance.
    * 
-   * @param request a {@link com.google.longrunning.Operation} object.
-   * @return a {@link com.google.bigtable.admin.v2.UpdateAppProfileRequest} object.
+   * @param request a {@link com.google.bigtable.admin.v2.UpdateAppProfileRequest} object.
+   * @return a {@link @link com.google.longrunning.Operation} object.
    */
   Operation updateAppProfile(UpdateAppProfileRequest request);
 
@@ -260,4 +261,12 @@ public interface BigtableInstanceClient {
    * @return a {@link com.google.iam.v1.TestIamPermissionsResponse} object.
    */
   TestIamPermissionsResponse testIamPermissions(TestIamPermissionsRequest request);
+  
+  /**
+   * Create an instance within a project.
+   * 
+   * @param request a {@link com.google.bigtable.admin.v2.CreateClusterRequest} object.
+   * @return a {@link com.google.longrunning.Operation} object.
+   */
+  Operation createCluster(CreateClusterRequest request);
 }
