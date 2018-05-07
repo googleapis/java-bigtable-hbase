@@ -76,12 +76,12 @@ public class CloudBigtableScanConfigurationTest {
   }
 
   /**
-   * This ensures that the config built from regular parameters are the same as the config built
-   * from runtime parameters, so that we don't have to use runtime parameters to repeat the same
-   * tests.
+   * This ensures that the config built from regular parameters with a scan are the same as the
+   * config built from runtime parameters, so that we don't have to use runtime parameters to repeat
+   * the same tests.
    */
   @Test
-  public void testRegularAndRuntimeParametersAreEqual() {
+  public void testRegularAndRuntimeParametersAreEqualWithScan() {
     CloudBigtableScanConfiguration withRegularParameters =
         config.toBuilder().withConfiguration("somekey", "somevalue").build();
     CloudBigtableScanConfiguration withRuntimeParameters =
@@ -99,9 +99,45 @@ public class CloudBigtableScanConfigurationTest {
     ReadRowsRequest request = withRegularParameters.getRequest();
     withRegularParameters = withRegularParameters.toBuilder().withRequest(request).build();
     withRuntimeParameters =
+        withRuntimeParameters.toBuilder().withRequest(StaticValueProvider.of(request)).build();
+    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+  }
+
+  /**
+   * This ensures that the config built from regular parameters with a request are the same as the
+   * config built from runtime parameters, so that we don't have to use runtime parameters to repeat
+   * the same tests.
+   */
+  @Test
+  public void testRegularAndRuntimeParametersAreEqualWithRequest() {
+    ReadRowsRequest request = ReadRowsRequest.newBuilder().setRowsLimit(10).build();
+    CloudBigtableScanConfiguration withRegularParameters =
+        config
+            .toBuilder()
+            .withRequest(request)
+            .withKeys(START_ROW, STOP_ROW)
+            .withConfiguration("somekey", "somevalue")
+            .build();
+    CloudBigtableScanConfiguration withRuntimeParameters =
+        new CloudBigtableScanConfiguration.Builder()
+            .withTableId(StaticValueProvider.of(TABLE))
+            .withProjectId(StaticValueProvider.of(PROJECT))
+            .withInstanceId(StaticValueProvider.of(INSTANCE))
+            .withRequest(StaticValueProvider.of(request))
+            .withKeys(START_ROW, STOP_ROW)
+            .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
+            .build();
+    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+
+    // Verify with requests.
+    ReadRowsRequest updatedRequest = withRegularParameters.getRequest();
+    withRegularParameters = withRegularParameters.toBuilder().withRequest(updatedRequest).build();
+    withRuntimeParameters =
         withRuntimeParameters
             .toBuilder()
-            .withRequest(StaticValueProvider.of(request))
+            .withRequest(StaticValueProvider.of(updatedRequest))
             .build();
     Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);

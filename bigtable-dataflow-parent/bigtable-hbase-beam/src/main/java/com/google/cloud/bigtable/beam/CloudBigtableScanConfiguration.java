@@ -21,7 +21,9 @@ import java.util.Objects;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
+import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
@@ -84,7 +86,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @param request The {@link ReadRowsRequest} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
-    public Builder withRequest(ValueProvider<ReadRowsRequest> request) {
+    Builder withRequest(ValueProvider<ReadRowsRequest> request) {
       this.request = request;
       this.scan = null;
       return this;
@@ -109,17 +111,27 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     Builder withKeys(byte[] startKey, byte[] stopKey) {
       final ByteString start = ByteStringer.wrap(startKey);
       final ByteString stop = ByteStringer.wrap(stopKey);
-      request =
-          StaticValueProvider.of(
-              request
-                  .get()
-                  .toBuilder()
-                  .setRows(
-                      RowSet.newBuilder()
-                          .addRowRanges(
-                              RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(stop)))
-                  .build());
-      return this;
+      ValueProvider<ReadRowsRequest> request =
+          this.request == null
+              ? StaticValueProvider.of(ReadRowsRequest.getDefaultInstance())
+              : this.request;
+      return withRequest(
+          NestedValueProvider.of(
+              request,
+              new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
+                @Override
+                public ReadRowsRequest apply(ReadRowsRequest request) {
+                  return request
+                      .toBuilder()
+                      .setRows(
+                          RowSet.newBuilder()
+                              .addRowRanges(
+                                  RowRange.newBuilder()
+                                      .setStartKeyClosed(start)
+                                      .setEndKeyOpen(stop)))
+                      .build();
+                }
+              }));
     }
 
     /**
@@ -129,7 +141,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    public Builder withProjectId(ValueProvider<String> projectId) {
+    Builder withProjectId(ValueProvider<String> projectId) {
       super.withProjectId(projectId);
       return this;
     }
@@ -152,7 +164,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    public Builder withInstanceId(ValueProvider<String> instanceId) {
+    Builder withInstanceId(ValueProvider<String> instanceId) {
       super.withInstanceId(instanceId);
       return this;
     }
@@ -175,7 +187,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * ValueProvider)} so that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    public Builder withConfiguration(String key, ValueProvider<String> value) {
+    Builder withConfiguration(String key, ValueProvider<String> value) {
       super.withConfiguration(key, value);
       return this;
     }
@@ -198,7 +210,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    public Builder withTableId(ValueProvider<String> tableId) {
+    Builder withTableId(ValueProvider<String> tableId) {
       super.withTableId(tableId);
       return this;
     }

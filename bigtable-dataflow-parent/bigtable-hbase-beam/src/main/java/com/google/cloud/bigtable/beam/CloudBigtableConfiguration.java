@@ -65,7 +65,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * @param projectId The project ID for the instance.
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
-    public Builder withProjectId(ValueProvider<String> projectId) {
+    Builder withProjectId(ValueProvider<String> projectId) {
       this.projectId = projectId;
       return this;
     }
@@ -84,7 +84,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * @param instanceId The Cloud Bigtable instanceId.
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
-    public Builder withInstanceId(ValueProvider<String> instanceId) {
+    Builder withInstanceId(ValueProvider<String> instanceId) {
       this.instanceId = instanceId;
       return this;
     }
@@ -106,7 +106,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * might be changed in backward-incompatible ways and is not recommended for
      * production use. It is not subject to any SLA or deprecation policy.
      */
-    public Builder withAppProfileId(ValueProvider<String> appProfileId) {
+    Builder withAppProfileId(ValueProvider<String> appProfileId) {
       return withConfiguration(BigtableOptionsFactory.APP_PROFILE_ID_KEY, appProfileId);
     }
 
@@ -128,7 +128,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * configuration options.
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
-    public Builder withConfiguration(String key, ValueProvider<String> value) {
+    Builder withConfiguration(String key, ValueProvider<String> value) {
       Preconditions.checkArgument(value != null, "Value cannot be null");
       this.additionalConfiguration.put(key, value);
       return this;
