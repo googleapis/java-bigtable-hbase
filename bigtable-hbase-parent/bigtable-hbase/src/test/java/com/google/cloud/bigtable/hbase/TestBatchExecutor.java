@@ -84,8 +84,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBatchExecutor {
 
-  BigtableOptions DEFAULT_OPTIONS = new BigtableOptions.Builder().build();
-
   private static Put randomPut() {
     return new Put(randomBytes(8))
         .addColumn(Bytes.toBytes("cf"), Bytes.toBytes("qual"), Bytes.toBytes("SomeValue"));
@@ -240,7 +238,7 @@ public class TestBatchExecutor {
     Object[] results = new Object[2];
 
     try {
-      createExecutor(DEFAULT_OPTIONS).batch(gets, results);
+      createExecutor(BigtableOptions.getDefaultOptions()).batch(gets, results);
     } catch(RetriesExhaustedWithDetailsException ignored) {
     }
     Assert.assertTrue("first result is a result", results[0] instanceof Result);
@@ -256,7 +254,7 @@ public class TestBatchExecutor {
     setFuture(ImmutableList.of(response));
     final Callback<Result> callback = Mockito.mock(Callback.class);
     List<Get> gets = Arrays.asList(new Get(key));
-    createExecutor(DEFAULT_OPTIONS).batchCallback(gets, new Object[1], callback);
+    createExecutor(BigtableOptions.getDefaultOptions()).batchCallback(gets, new Object[1], callback);
 
     verify(callback, times(1)).update(same(BatchExecutor.NO_REGION), same(key),
       argThat(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response))));
@@ -294,7 +292,7 @@ public class TestBatchExecutor {
         .addCell("family", ByteString.EMPTY, System.nanoTime() / 1000, cellValue).build();
     when(mockFuture.get()).thenReturn(row);
 
-    BatchExecutor underTest = createExecutor(DEFAULT_OPTIONS);
+    BatchExecutor underTest = createExecutor(BigtableOptions.getDefaultOptions());
     Result[] results = underTest.batch(gets);
     verify(mockBulkRead, times(10)).add(any(ReadRowsRequest.class));
     verify(mockBulkRead, times(1)).flush();
@@ -327,6 +325,6 @@ public class TestBatchExecutor {
 
   private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)
       throws Exception {
-    return createExecutor(DEFAULT_OPTIONS).batch(actions);
+    return createExecutor(BigtableOptions.getDefaultOptions()).batch(actions);
   }
 }

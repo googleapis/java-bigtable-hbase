@@ -15,8 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import java.util.concurrent.TimeoutException;
-
+import com.google.api.client.testing.util.MockBackOff;
+import com.google.bigtable.admin.v2.*;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import io.grpc.Status;
+import io.grpc.StatusException;
+import io.grpc.stub.StreamObserver;
+import io.grpc.testing.GrpcServerRule;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -24,18 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.api.client.testing.util.MockBackOff;
-import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
-import com.google.bigtable.admin.v2.CheckConsistencyRequest;
-import com.google.bigtable.admin.v2.CheckConsistencyResponse;
-import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
-import com.google.bigtable.admin.v2.GenerateConsistencyTokenResponse;
-import com.google.cloud.bigtable.config.BigtableOptions;
-
-import io.grpc.Status;
-import io.grpc.testing.GrpcServerRule;
-import io.grpc.stub.StreamObserver;
-import io.grpc.StatusException;
+import java.util.concurrent.TimeoutException;
 
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -105,9 +99,7 @@ public class TestWaitForReplication {
     service = new ConsistencyServiceImpl();
     grpcServerRule.getServiceRegistry().addService(service);
 
-    BigtableOptions options = new BigtableOptions.Builder().build();
-
-    tableAdminClient = new BigtableTableAdminGrpcClient(grpcServerRule.getChannel(), null, options);
+    tableAdminClient = new BigtableTableAdminGrpcClient(grpcServerRule.getChannel(), null, BigtableOptions.getDefaultOptions());
     backoff = new MockBackOff();
   }
 

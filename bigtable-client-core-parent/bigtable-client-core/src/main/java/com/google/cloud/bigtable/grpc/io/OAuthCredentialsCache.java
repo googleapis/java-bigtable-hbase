@@ -279,7 +279,7 @@ public class OAuthCredentialsCache {
 
         Future<HeaderCacheElement> future = executor.submit(new Callable<HeaderCacheElement>() {
           @Override
-          public HeaderCacheElement call() throws Exception {
+          public HeaderCacheElement call() {
             return updateToken();
           }
         });

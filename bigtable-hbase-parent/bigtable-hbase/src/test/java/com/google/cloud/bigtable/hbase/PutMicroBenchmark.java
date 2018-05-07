@@ -74,7 +74,7 @@ public class PutMicroBenchmark {
     run(hbaseAdapter, put, getChannelPool(useRealConnection), putCount);
   }
 
-  protected static ChannelPool getChannelPool(final boolean useRealConnection)
+  protected static ManagedChannel getChannelPool(final boolean useRealConnection)
       throws IOException, GeneralSecurityException {
     if (useRealConnection) {
       return BigtableSession.createChannelPool(options.getDataHost(), options);
@@ -118,7 +118,7 @@ public class PutMicroBenchmark {
     return put;
   }
 
-  protected static void run(final HBaseRequestAdapter hbaseAdapter, final Put put, ChannelPool cp,
+  protected static void run(final HBaseRequestAdapter hbaseAdapter, final Put put, ManagedChannel cp,
       final int putCount) throws InterruptedException {
     final BigtableDataClient client = new BigtableDataGrpcClient(cp,
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);

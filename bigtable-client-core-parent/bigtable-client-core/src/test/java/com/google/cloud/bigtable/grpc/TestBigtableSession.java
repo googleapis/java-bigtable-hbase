@@ -19,6 +19,7 @@ package com.google.cloud.bigtable.grpc;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
+import com.google.cloud.bigtable.config.CredentialOptions;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -84,7 +85,8 @@ public class TestBigtableSession {
   @Test
   public void testCreateInstanceClient() throws Throwable {
     try {
-      BigtableSession.createInstanceClient();
+      BigtableSession.createInstanceClient(new BigtableOptions.Builder().setCredentialOptions(
+          CredentialOptions.nullCredential()).build());
     } catch (IOException e) {
       if (e.getMessage().toLowerCase().contains("credentials")) {
         // ignore;  This is running on a system that doesn't have default credentails,

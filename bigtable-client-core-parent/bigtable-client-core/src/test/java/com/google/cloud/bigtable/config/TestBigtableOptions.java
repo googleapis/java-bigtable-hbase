@@ -84,7 +84,7 @@ public class TestBigtableOptions {
 
   @Test
   public void testNullStringsDontThrowExceptions() {
-     new BigtableOptions.Builder().build();
+    BigtableOptions.getDefaultOptions();
   }
 
   @Test

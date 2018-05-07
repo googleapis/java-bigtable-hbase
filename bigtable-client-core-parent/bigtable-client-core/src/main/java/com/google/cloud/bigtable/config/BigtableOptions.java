@@ -68,6 +68,10 @@ public class BigtableOptions implements Serializable, Cloneable {
     return (int) Math.min(250, Math.max(1, availableProcessors * 4));
   }
 
+  public static BigtableOptions getDefaultOptions() {
+    return new Builder().build();
+  }
+
   /**
    * A mutable builder for BigtableConnectionOptions.
    */
@@ -94,7 +98,6 @@ public class BigtableOptions implements Serializable, Cloneable {
       // the Google Compute Engine metadata service or gcloud configuration in other environments. A
       // user can also override the default behavior with P12 or JSON configuration.
       options.credentialOptions = CredentialOptions.defaultCredentials();
-
     }
 
     private Builder(BigtableOptions options) {

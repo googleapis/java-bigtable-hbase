@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BufferedMutator;
@@ -45,21 +46,13 @@ public class TestBigtableConnection {
 
   @Test
   public void testTable() throws IOException {
-    try {
-      Connection connection = new BigtableConnection(BigtableConfiguration.configure("projectId", "instanceId"));
-      Admin admin = connection.getAdmin();
-      Table table = connection.getTable(TableName.valueOf("someTable"));
-      BufferedMutator mutator = connection.getBufferedMutator(TableName.valueOf("someTable"));
-      connection.close();
-    } catch (IOException e) {
-      if (e.getMessage().toLowerCase().contains("credentials")) {
-        // ignore;  This is running on a system that doesn't have default credentails,
-        // and this test is to ensure that openssl works well.  Travis isn't sent up with
-        // credentials, so this test should pass in those conditions.
-      } else {
-        throw e;
-      }
-    }
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId");
+    conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
+    conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
+    BigtableConnection connection = new BigtableConnection(conf);
+    Admin admin = connection.getAdmin() ;
+    Table table = connection.getTable(TableName.valueOf("someTable"));
+    BufferedMutator mutator = connection.getBufferedMutator(TableName.valueOf("someTable"));
   }
 
   @Test
