@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 
 /**
@@ -32,7 +33,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * Builds a {@link CloudBigtableTableConfiguration}.
    */
   public static class Builder extends CloudBigtableConfiguration.Builder {
-    protected String tableId;
+    protected ValueProvider<String> tableId;
 
     public Builder() {
     }
@@ -43,7 +44,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * @return The {@link CloudBigtableTableConfiguration.Builder} for chaining convenience.
      */
     public Builder withTableId(String tableId) {
-      this.tableId = tableId;
+      this.tableId = staticProvider(tableId);
       return this;
     }
 
@@ -94,7 +95,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     }
   }
 
-  protected String tableId;
+  protected ValueProvider<String> tableId;
 
   // This is required for serialization of CloudBigtableScanConfiguration.
   CloudBigtableTableConfiguration() {
@@ -109,10 +110,10 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
   protected CloudBigtableTableConfiguration(
-      String projectId,
-      String instanceId,
-      String tableId,
-      Map<String, String> additionalConfiguration) {
+      ValueProvider<String> projectId,
+      ValueProvider<String> instanceId,
+      ValueProvider<String> tableId,
+      Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, additionalConfiguration);
     this.tableId = tableId;
   }
@@ -122,7 +123,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * @return The table ID.
    */
   public String getTableId() {
-    return tableId;
+    return tableId.get();
   }
 
   @Override
@@ -140,13 +141,13 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)
-        && Objects.equals(tableId, ((CloudBigtableTableConfiguration) obj).tableId);
+        && Objects.equals(getTableId(), ((CloudBigtableTableConfiguration) obj).getTableId());
   }
 
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-    builder.add(DisplayData.item("tableId", tableId).withLabel("Table ID"));
+    builder.add(DisplayData.item("tableId", getTableId()).withLabel("Table ID"));
   }
 
   @Override

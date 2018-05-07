@@ -171,7 +171,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Coder<Result> getDefaultOutputCoder() {
+    public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
 
@@ -488,7 +488,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Coder<Result> getDefaultOutputCoder() {
+    public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
   }
@@ -570,7 +570,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Coder<Result> getDefaultOutputCoder() {
+    public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
 

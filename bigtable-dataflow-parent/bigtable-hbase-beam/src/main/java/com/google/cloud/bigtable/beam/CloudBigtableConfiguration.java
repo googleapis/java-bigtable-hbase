@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.Map.Entry;
 
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
 import org.apache.beam.sdk.repackaged.com.google.common.base.Strings;
 import org.apache.beam.sdk.repackaged.com.google.common.collect.ImmutableMap;
@@ -44,14 +45,18 @@ public class CloudBigtableConfiguration implements Serializable {
    * Builds a {@link CloudBigtableConfiguration}.
    */
   public static class Builder {
-    protected String projectId;
-    protected String instanceId;
-    protected Map<String, String> additionalConfiguration = new HashMap<>();
+    protected ValueProvider<String> projectId;
+    protected ValueProvider<String> instanceId;
+    protected Map<String, ValueProvider<String>> additionalConfiguration = new HashMap<>();
+
+    protected static <T> ValueProvider<T> staticProvider(T t) {
+      return ValueProvider.StaticValueProvider.of(t);
+    }
 
     public Builder() {
     }
 
-    protected void copyFrom(Map<String, String> configuration) {
+    protected void copyFrom(Map<String, ValueProvider<String>> configuration) {
       this.additionalConfiguration.putAll(configuration);
 
       this.projectId = this.additionalConfiguration.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
@@ -64,7 +69,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
     public Builder withProjectId(String projectId) {
-      this.projectId = projectId;
+      this.projectId = staticProvider(projectId);
       return this;
     }
 
@@ -74,7 +79,7 @@ public class CloudBigtableConfiguration implements Serializable {
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
     public Builder withInstanceId(String instanceId) {
-      this.instanceId = instanceId;
+      this.instanceId = staticProvider(instanceId);
       return this;
     }
 
@@ -99,7 +104,7 @@ public class CloudBigtableConfiguration implements Serializable {
      */
     public Builder withConfiguration(String key, String value) {
       Preconditions.checkArgument(value != null, "Value cannot be null");
-      this.additionalConfiguration.put(key, value);
+      this.additionalConfiguration.put(key, staticProvider(value));
       return this;
     }
 
@@ -117,7 +122,7 @@ public class CloudBigtableConfiguration implements Serializable {
   }
 
   // Not final due to serialization of CloudBigtableScanConfiguration.
-  private Map<String, String> configuration;
+  protected Map<String, ValueProvider<String>> configuration;
 
   // Used for serialization of CloudBigtableScanConfiguration.
   CloudBigtableConfiguration() {
@@ -132,16 +137,16 @@ public class CloudBigtableConfiguration implements Serializable {
    *          {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information
    *          about configuration options.
    */
-  protected CloudBigtableConfiguration(String projectId, String instanceId,
-      Map<String, String> additionalConfiguration) {
+  protected CloudBigtableConfiguration(ValueProvider<String> projectId, ValueProvider<String> instanceId,
+      Map<String, ValueProvider<String>> additionalConfiguration) {
     this.configuration = new HashMap<>(additionalConfiguration);
-    setValue(BigtableOptionsFactory.PROJECT_ID_KEY, projectId, "Project ID");
-    setValue(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId, "Instance ID");
+    setValue(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
+    setValue(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
   }
 
-  private void setValue(String key, String value, String type) {
-    Preconditions.checkArgument(!configuration.containsKey(key), "%s was set twice", key);
-    Preconditions.checkArgument(value != null, "%s must be set.", type);
+  private void setValue(String key, ValueProvider<String> value) {
+//    Preconditions.checkArgument(!configuration.containsKey(key), "%s was set twice", key);
+//    Preconditions.checkArgument(value != null, "%s must be set.", type);
     configuration.put(key, value);
   }
 
@@ -150,7 +155,7 @@ public class CloudBigtableConfiguration implements Serializable {
    * @return The project ID for the instance.
    */
   public String getProjectId() {
-    return configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY);
+    return configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY).get();
   }
 
   /**
@@ -158,14 +163,14 @@ public class CloudBigtableConfiguration implements Serializable {
    * @return The Cloud Bigtable instance id.
    */
   public String getInstanceId() {
-    return configuration.get(BigtableOptionsFactory.INSTANCE_ID_KEY);
+    return configuration.get(BigtableOptionsFactory.INSTANCE_ID_KEY).get();
   }
 
   /**
    * Get the Cloud Bigtable App Profile id.
    */
   public String getAppProfileId() {
-    return configuration.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY);
+    return configuration.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY).get();
   }
 
   /**
@@ -201,8 +206,8 @@ public class CloudBigtableConfiguration implements Serializable {
     //    Builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, 
     //                              BigtableOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
     config.set(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, "0");
-    for (Entry<String, String> entry : configuration.entrySet()) {
-      config.set(entry.getKey(), entry.getValue());
+    for (Entry<String, ValueProvider<String>> entry : configuration.entrySet()) {
+      config.set(entry.getKey(), entry.getValue().get());
     }
     setUserAgent(config);
     return config;
@@ -229,7 +234,7 @@ public class CloudBigtableConfiguration implements Serializable {
   /**
    * Gets an immutable copy of the configuration map.
    */
-  protected ImmutableMap<String, String> getConfiguration() {
+  protected ImmutableMap<String, ValueProvider<String>> getConfiguration() {
     return ImmutableMap.copyOf(configuration);
   }
 
@@ -244,7 +249,15 @@ public class CloudBigtableConfiguration implements Serializable {
       return false;
     }
     CloudBigtableConfiguration other = (CloudBigtableConfiguration) obj;
-    return Objects.equals(configuration, other.configuration);
+    return Objects.equals(toStringMap(configuration), toStringMap(other.configuration));
+  }
+
+  private static Map<String, String> toStringMap(Map<String, ValueProvider<String>> map) {
+    Map<String, String> result = new HashMap<>();
+    for(Entry<String, ValueProvider<String>> entry : map.entrySet()) {
+      result.put(entry.getKey(), entry.getValue().get());
+    }
+    return result;
   }
 
   public void copyConfig(Builder builder) {
@@ -256,10 +269,10 @@ public class CloudBigtableConfiguration implements Serializable {
       .withLabel("Project ID"));
     builder.add(DisplayData.item("instanceId", getInstanceId())
       .withLabel("Instance ID"));
-    Map<String, String> hashMap = new HashMap<String, String>(configuration);
+    HashMap<String, ValueProvider<String>> hashMap = new HashMap<>(configuration);
     hashMap.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
     hashMap.remove(BigtableOptionsFactory.INSTANCE_ID_KEY);
-    for (Entry<String, String> entry : configuration.entrySet()) {
+    for (Entry<String, ValueProvider<String>> entry : configuration.entrySet()) {
       builder.add(DisplayData.item(entry.getKey(), entry.getValue()).withLabel(entry.getKey()));
     }
   }
