@@ -246,7 +246,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
   }
 
-  private ValueProvider<ReadRowsRequest> request;
+  private final ValueProvider<ReadRowsRequest> request;
 
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
@@ -264,8 +264,22 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<String> tableId,
       ValueProvider<ReadRowsRequest> request,
       Map<String, ValueProvider<String>> additionalConfiguration) {
-    super(projectId, instanceId,  tableId, additionalConfiguration);
-    this.request = request;
+    super(projectId, instanceId, tableId, additionalConfiguration);
+    this.request =
+        NestedValueProvider.of(
+            request,
+            new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
+              @Override
+              public ReadRowsRequest apply(ReadRowsRequest request) {
+                if (request.getTableName().isEmpty()) {
+                  BigtableInstanceName bigtableInstanceName =
+                      new BigtableInstanceName(getProjectId(), getInstanceId());
+                  String fullTableName = bigtableInstanceName.toTableNameStr(getTableId());
+                  request = request.toBuilder().setTableName(fullTableName).build();
+                }
+                return request;
+              }
+            });
   }
 
   /**
@@ -274,13 +288,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @return The {@link ReadRowsRequest}.
    */
   public ReadRowsRequest getRequest() {
-    if (request.get().getTableName().isEmpty()) {
-      BigtableInstanceName bigtableInstanceName =
-          new BigtableInstanceName(getProjectId(), getInstanceId());
-      String fullTableName = bigtableInstanceName.toTableNameStr(getTableId());
-      request =
-          StaticValueProvider.of(request.get().toBuilder().setTableName(fullTableName).build());
-    }
     return request.get();
   }
 
