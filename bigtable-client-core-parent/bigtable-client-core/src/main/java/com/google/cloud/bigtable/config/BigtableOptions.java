@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.auto.value.AutoValue;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -31,9 +32,8 @@ import com.google.common.base.Strings;
  * @author sduskis
  * @version $Id: $Id
  */
-//TODO: Perhaps break this down into smaller options objects?
-//TODO: This should be @Autovalue + Builder
-public class BigtableOptions implements Serializable, Cloneable {
+@AutoValue
+public abstract class BigtableOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
@@ -60,6 +60,43 @@ public class BigtableOptions implements Serializable, Cloneable {
   public static final String BIGTABLE_APP_PROFILE_DEFAULT = "";
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
+  @Nullable
+  public abstract String appProfileId();
+  @Nullable
+  public abstract String adminHost();
+  @Nullable
+  public abstract String dataHost();
+
+  public abstract int port();
+  @Nullable
+  public abstract String projectId();
+  @Nullable
+  public abstract String instanceId();
+  @Nullable
+  public abstract String userAgent();
+
+  public abstract int dataChannelCount();
+
+  public abstract boolean usePlaintextNegotiation();
+
+  public abstract boolean useCachedDataPool();
+  @Nullable
+  public abstract BigtableInstanceName instanceName();
+  @Nullable
+  public abstract BulkOptions bulkOptions();
+  @Nullable
+  public abstract CallOptionsConfig callOptionsConfig();
+  @Nullable
+  public abstract CredentialOptions credentialOptions();
+  @Nullable
+  public abstract RetryOptions retryOptions();
+  @Nullable
+  public abstract BigtableOptions bigtableOptions();
+
+  public BigtableOptions withProjectId(String projectId) {
+    return toBuilder().setProjectId(projectId).build();
+  }
+  public abstract Builder toBuilder();
 
   private static int getDefaultDataChannelCount() {
     // 20 Channels seemed to work well on a 4 CPU machine, and this ratio seems to scale well for
@@ -68,126 +105,78 @@ public class BigtableOptions implements Serializable, Cloneable {
     return (int) Math.min(250, Math.max(1, availableProcessors * 4));
   }
 
-  public static BigtableOptions getDefaultOptions() {
-    return new Builder().build();
-  }
-
   /**
    * A mutable builder for BigtableConnectionOptions.
    */
-  public static class Builder {
+  @AutoValue.Builder
+  public abstract static class Builder implements Serializable {
 
-    private BigtableOptions options = new BigtableOptions();
+    private static final long serialVersionUID = 1L;
 
-    public Builder() {
-      options = new BigtableOptions();
-      options.appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
+    public abstract Builder setAppProfileId(String appProfileId);
+    public abstract Builder setAdminHost(String adminHost);
+    public abstract Builder setDataHost(String dataHost);
+    public abstract Builder setPort(int port);
+    public abstract Builder setProjectId(String projectId);
+    public abstract Builder setInstanceId(String instanceId);
 
-      // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
-      options.dataHost = BIGTABLE_DATA_HOST_DEFAULT;
-      options.adminHost = BIGTABLE_ADMIN_HOST_DEFAULT;
-      options.port = BIGTABLE_PORT_DEFAULT;
+    public abstract Builder setUserAgent(String userAgent);
+    public abstract Builder setDataChannelCount(int dataChannelCount);
+    public abstract Builder setUsePlaintextNegotiation(
+        boolean usePlaintextNegotiation);
+    public abstract Builder setUseCachedDataPool(boolean useCachedDataPool);
 
-      options.dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
-      options.usePlaintextNegotiation = false;
-      options.useCachedDataPool = false;
+    public abstract Builder setInstanceName(BigtableInstanceName instanceName);
 
-      options.retryOptions = new RetryOptions.Builder().build();
-      options.callOptionsConfig = new CallOptionsConfig.Builder().build();
-      // CredentialOptions.defaultCredentials() gets credentials from well known locations, such as
-      // the Google Compute Engine metadata service or gcloud configuration in other environments. A
-      // user can also override the default behavior with P12 or JSON configuration.
-      options.credentialOptions = CredentialOptions.defaultCredentials();
+    public abstract Builder setBulkOptions(BulkOptions bulkOptions);
+    public abstract Builder setCallOptionsConfig(
+        CallOptionsConfig callOptionsConfig);
+    public abstract Builder setCredentialOptions(
+        CredentialOptions credentialOptions);
+    public abstract Builder setRetryOptions(RetryOptions retryOptions);
+
+    public abstract Builder setBigtableOptions(BigtableOptions options);
+
+    abstract BigtableOptions autoBuild();
+    BigtableOptions options;
+
+    public BigtableOptions build() {
+      applyEmulatorEnvironment(); 
+      options = this.autoBuild();
+      if (options.bulkOptions() == null) {
+        int maxInflightRpcs = BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
+            * options.dataChannelCount();
+        setBulkOptions(new BulkOptions.Builder()
+            .setMaxInflightRpcs(maxInflightRpcs).build());
+      } else if (options.bulkOptions().getMaxInflightRpcs() <= 0) {
+        int maxInflightRpcs = BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
+            * options.dataChannelCount();
+        setBulkOptions(options.bulkOptions().toBuilder()
+            .setMaxInflightRpcs(maxInflightRpcs).build());
+      }
+      setAdminHost(Preconditions.checkNotNull(options.adminHost()));
+      setDataHost(Preconditions.checkNotNull(options.dataHost()));
+      if (!Strings.isNullOrEmpty(options.projectId())
+          && !Strings.isNullOrEmpty(options.instanceId())) {
+        setInstanceName(new BigtableInstanceName(options.projectId(),
+            options.instanceId()));
+      } else {
+        setInstanceName(null);
+      }
+      
+      LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
+              + "admin host %s.",
+          options.projectId(),
+          options.instanceId(),
+          options.dataHost(),
+          options.adminHost());
+
+      return options;
     }
-
-    private Builder(BigtableOptions options) {
-      this.options = options;
-    }
-
-    public Builder setAdminHost(String adminHost) {
-      options.adminHost = adminHost;
-      return this;
-    }
-
-    public Builder setDataHost(String dataHost) {
-      options.dataHost = dataHost;
-      return this;
-    }
-
-    public Builder setPort(int port) {
-      options.port = port;
-      return this;
-    }
-
-    public Builder setProjectId(String projectId) {
-      options.projectId = projectId;
-      return this;
-    }
-
-    public Builder setInstanceId(String instanceId) {
-      options.instanceId = instanceId;
-      return this;
-    }
-
-    public Builder setAppProfileId(String appProfileId) {
-      Preconditions.checkNotNull(appProfileId);
-      options.appProfileId = appProfileId;
-      return this;
-    }
-
-    public Builder setCredentialOptions(CredentialOptions credentialOptions) {
-      options.credentialOptions = credentialOptions;
-      return this;
-    }
-
-    public Builder setUserAgent(String userAgent) {
-      options.userAgent = userAgent;
-      return this;
-    }
-
-    public Builder setDataChannelCount(int dataChannelCount) {
-      options.dataChannelCount = dataChannelCount;
-      return this;
-    }
-
-    public int getDataChannelCount() {
-      return options.dataChannelCount;
-    }
-
-    public Builder setRetryOptions(RetryOptions retryOptions) {
-      options.retryOptions = retryOptions;
-      return this;
-    }
-
-    public Builder setBulkOptions(BulkOptions bulkOptions) {
-      options.bulkOptions = bulkOptions;
-      return this;
-    }
-
-    public Builder setUsePlaintextNegotiation(boolean usePlaintextNegotiation) {
-      options.usePlaintextNegotiation = usePlaintextNegotiation;
-      return this;
-    }
-
-    /**
-     * This enables an experimental {@link BigtableSession} feature that caches datapools for cases
-     * where there are many HBase Connections / BigtableSessions opened. This happens frequently in
-     * Dataflow
-     * @param useCachedDataPool
-     * @return this
-     */
-    public Builder setUseCachedDataPool(boolean useCachedDataPool) {
-      options.useCachedDataPool = useCachedDataPool;
-      return this;
-    }
-
-    public Builder setCallOptionsConfig(CallOptionsConfig callOptionsConfig) {
-      options.callOptionsConfig = callOptionsConfig;
-      return this;
-    }
-
+    
     /**
      * Apply emulator settings from the relevant environment variable, if set.
+     * @param builder 
      */
     private void applyEmulatorEnvironment() {
       // Look for a host:port for the emulator.
@@ -219,149 +208,34 @@ public class BigtableOptions implements Serializable, Cloneable {
     public Builder enableEmulator(String host, int port) {
       Preconditions.checkArgument(host != null && !host.isEmpty(), "Host cannot be null or empty");
       Preconditions.checkArgument(port > 0, "Port must be positive");
-      setUsePlaintextNegotiation(true);
-      setCredentialOptions(CredentialOptions.nullCredential());
-      setDataHost(host);
-      setAdminHost(host);
-      setPort(port);
+      this.setUsePlaintextNegotiation(true);
+      this.setCredentialOptions(CredentialOptions.nullCredential());
+      this.setDataHost(host);
+      this.setAdminHost(host);
+      this.setPort(port);
 
       LOG.info("Connecting to the Bigtable emulator at " + host + ":" + port);
       return this;
     }
-
-    public BigtableOptions build() {
-      if (options.bulkOptions == null) {
-        int maxInflightRpcs =
-            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
-        options.bulkOptions = new BulkOptions.Builder().setMaxInflightRpcs(maxInflightRpcs).build();
-      } else if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
-        int maxInflightRpcs =
-            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
-        options.bulkOptions = options.bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
-      }
-      applyEmulatorEnvironment();
-      options.adminHost = Preconditions.checkNotNull(options.adminHost);
-      options.dataHost = Preconditions.checkNotNull(options.dataHost);
-      if (!Strings.isNullOrEmpty(options.projectId)
-          && !Strings.isNullOrEmpty(options.instanceId)) {
-        options.instanceName = new BigtableInstanceName(options.projectId, options.instanceId);
-      } else {
-        options.instanceName = null;
-      }
-
-      LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
-              + "admin host %s.",
-          options.projectId,
-          options.instanceId,
-          options.dataHost,
-          options.adminHost);
-
-      return options;
-    }
   }
 
-  private String adminHost;
-  private String dataHost;
-  private int port;
-  private String projectId;
-  private String instanceId;
-  private String appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
-  private String userAgent;
-  private int dataChannelCount;
-  private boolean usePlaintextNegotiation;
-  private boolean useCachedDataPool;
+  public static Builder Builder() {
+    return new AutoValue_BigtableOptions.Builder()
+        .setAppProfileId(BIGTABLE_APP_PROFILE_DEFAULT)
+        .setDataHost(BIGTABLE_DATA_HOST_DEFAULT)
+        .setAdminHost(BIGTABLE_ADMIN_HOST_DEFAULT)
+        .setPort(BIGTABLE_PORT_DEFAULT)
+        .setDataChannelCount(BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT)
+        .setUsePlaintextNegotiation(false).setUseCachedDataPool(false)
+        .setRetryOptions(new RetryOptions.Builder().build())
+        .setCallOptionsConfig(new CallOptionsConfig.Builder().build())
+        .setCredentialOptions(CredentialOptions.defaultCredentials());
+  }
 
-  private BigtableInstanceName instanceName;
-
-  private BulkOptions bulkOptions;
-  private CallOptionsConfig callOptionsConfig;
-  private CredentialOptions credentialOptions;
-  private RetryOptions retryOptions;
+  
 
   @VisibleForTesting
   BigtableOptions() {
-  }
-
-  /**
-   * <p>Getter for the field <code>projectId</code>.</p>
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  public String getProjectId() {
-    return projectId;
-  }
-
-  /**
-   * <p>Getter for the field <code>dataHost</code>.</p>
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  public String getDataHost() {
-    return dataHost;
-  }
-
-  /**
-   * <p>Getter for the field <code>tableAdminHost</code>.</p>
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  public String getAdminHost() {
-    return adminHost;
-  }
-
-  /**
-   * <p>Getter for the field <code>instanceId</code>.</p>
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  public String getInstanceId() {
-    return instanceId;
-  }
-
-  /**
-   * <p>Getter for the field <code>appProfileId</code>.</p>
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  public String getAppProfileId() {
-    return appProfileId;
-  }
-
-  /**
-   * <p>Getter for the field <code>port</code>.</p>
-   *
-   * @return a int.
-   */
-  public int getPort() {
-    return port;
-  }
-
-  /**
-   * Get the credential this object was constructed with. May be null.
-   *
-   * @return Null to indicate no credentials, otherwise, the Credentials object.
-   */
-  public CredentialOptions getCredentialOptions() {
-    return credentialOptions;
-  }
-
-  /**
-   * Gets the user-agent to be appended to User-Agent header when creating new streams
-   * for the channel.
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  public String getUserAgent() {
-    return userAgent;
-  }
-
-  /**
-   * Options controlling retries.
-   *
-   * @return a {@link com.google.cloud.bigtable.config.RetryOptions} object.
-   */
-  public RetryOptions getRetryOptions() {
-    return retryOptions;
   }
 
   /**
@@ -370,116 +244,134 @@ public class BigtableOptions implements Serializable, Cloneable {
    * @return a int.
    */
   public int getChannelCount() {
-    return dataChannelCount;
+    return dataChannelCount();
   }
 
   /**
-   * <p>Getter for the field <code>instanceName</code>.</p>
-   *
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableInstanceName} object.
-   */
-  public BigtableInstanceName getInstanceName() {
-    return instanceName;
-  }
-
-  /**
-   * <p>Getter for the field <code>bulkOptions</code>.</p>
-   *
-   * @return a {@link com.google.cloud.bigtable.config.BulkOptions} object.
-   */
-  public BulkOptions getBulkOptions() {
-    return bulkOptions;
-  }
-
-  /**
-   * <p>usePlaintextNegotiation.</p>
-   *
-   * @return a boolean.
-   */
-  public boolean usePlaintextNegotiation() {
-    return usePlaintextNegotiation;
-  }
-
-  /**
-   * <p>Getter for the field <code>callOptionsConfig</code>.</p>
-   *
-   * @return a {@link com.google.cloud.bigtable.config.CallOptionsConfig} object.
-   */
-  public CallOptionsConfig getCallOptionsConfig() {
-    return callOptionsConfig;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == null || obj.getClass() != BigtableOptions.class) {
-      return false;
-    }
-    if (obj == this) {
-      return true;
-    }
-    BigtableOptions other = (BigtableOptions) obj;
-    return (port == other.port)
-        && (dataChannelCount == other.dataChannelCount)
-        && (usePlaintextNegotiation == other.usePlaintextNegotiation)
-        && (useCachedDataPool == other.useCachedDataPool)
-        && Objects.equals(adminHost, other.adminHost)
-        && Objects.equals(dataHost, other.dataHost)
-        && Objects.equals(projectId, other.projectId)
-        && Objects.equals(instanceId, other.instanceId)
-        && Objects.equals(appProfileId, other.appProfileId)
-        && Objects.equals(userAgent, other.userAgent)
-        && Objects.equals(credentialOptions, other.credentialOptions)
-        && Objects.equals(retryOptions, other.retryOptions)
-        && Objects.equals(bulkOptions, other.bulkOptions)
-        && Objects.equals(callOptionsConfig, other.callOptionsConfig);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .omitNullValues()
-        .add("dataHost", dataHost)
-        .add("adminHost", adminHost)
-        .add("port", port)
-        .add("projectId", projectId)
-        .add("instanceId", instanceId)
-        .add("appProfileId", appProfileId)
-        .add("userAgent", userAgent)
-        .add("credentialType", credentialOptions.getCredentialType())
-        .add("dataChannelCount", dataChannelCount)
-        .add("retryOptions", retryOptions)
-        .add("bulkOptions", bulkOptions)
-        .add("callOptionsConfig", callOptionsConfig)
-        .add("usePlaintextNegotiation", usePlaintextNegotiation)
-        .add("useCachedDataPool", useCachedDataPool)
-        .toString();
-  }
-
-  /**
-   * <p>toBuilder.</p>
-   *
-   * @return a {@link com.google.cloud.bigtable.config.BigtableOptions.Builder} object.
-   */
-  public Builder toBuilder() {
-    return new Builder(this.clone());
-  }
-
-  /**
-   * Experimental feature to allow situations with multiple connections to optimize their startup
-   * time.
-   * @return true if this feature should be turned on in {@link BigtableSession}.
+   * Experimental feature to allow situations with multiple connections to
+   * optimize their startup time.
+   * 
+   * @return true if this feature should be turned on in
+   *         {@link BigtableSession}.
    */
   public boolean useCachedChannel() {
-    return useCachedDataPool;
+    return useCachedDataPool();
   }
 
-  protected BigtableOptions clone() {
-    try {
-      return (BigtableOptions) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Could not cloe BigtableOptions");
-    }
+  protected BigtableOptions.Builder clone() {
+    return toBuilder();
+  }
+  
+  /**
+   *  
+   * @return
+   */
+  public String getAppPofileId() {
+    return appProfileId();
+  }
+  
+  /**
+   * @return
+   */
+  public String getAdminHost() {
+    return adminHost();
+  }
+  
+  /**
+   * @return
+   */
+  public String getDataHost() {
+    return dataHost();
+  }
+  
+  /**
+   * @return
+   */
+  public int getPort() {
+    return port();
+  }
+  
+  /**
+   * @return
+   */
+  public String getProjectId() {
+    return projectId();
+  }
+  
+  /**
+   * @return
+   */
+  public String getInstanceId() {
+    return instanceId();
+  }
+  
+  /**
+   * @return
+   */
+  public String getUserAgent() {
+    return userAgent();
+  }
+  
+  /**
+   * @return
+   */
+  public int getDataChannelCount() {
+    return dataChannelCount();
+  }
+  
+  /**
+   * @return
+   */
+  public boolean getUsePlaintextNegotiation() {
+    return usePlaintextNegotiation();
+  }
+  
+  /**
+   * @return
+   */
+  public boolean getUseCachedDataPool() {
+    return useCachedDataPool();
+  }
+  
+  /**
+   * @return
+   */
+  public BigtableInstanceName getInstanceName() {
+    return instanceName();
+  }
+
+  /**
+   * @return
+   */
+  public BulkOptions getBulkOptions() {
+    return bulkOptions();
+  }
+
+  /**
+   * @return
+   */
+  public CallOptionsConfig getCallOptionsConfig() {
+    return callOptionsConfig();
+  }
+
+  /**
+   * @return
+   */
+  public CredentialOptions getCredentialOptions() {
+    return credentialOptions();
+  }
+  
+  /**
+   * @return
+   */
+  public RetryOptions getRetryOptions() {
+    return retryOptions();
+  }
+
+  /**
+   * @return
+   */
+  public BigtableOptions getBigtableOptions() {
+    return bigtableOptions();
   }
 }

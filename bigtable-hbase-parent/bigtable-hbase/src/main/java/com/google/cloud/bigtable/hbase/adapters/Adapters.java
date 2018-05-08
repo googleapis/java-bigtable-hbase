@@ -85,8 +85,8 @@ public final class Adapters {
    * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    * @return a {@link com.google.cloud.bigtable.hbase.adapters.PutAdapter} object.
    */
-  public static PutAdapter createPutAdapter(Configuration config, BigtableOptions options) {
-    boolean setClientTimestamp = !options.getRetryOptions().allowRetriesWithoutTimestamp();
+  public static PutAdapter createPutAdapter(Configuration config, BigtableOptions.Builder options) {
+    boolean setClientTimestamp = !options.build().getRetryOptions().allowRetriesWithoutTimestamp();
     return new PutAdapter(config.getInt("hbase.client.keyvalue.maxsize", -1), setClientTimestamp);
   }
 

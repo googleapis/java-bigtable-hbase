@@ -154,7 +154,7 @@ public class BatchExecutor {
 
   protected final BigtableSession session;
   protected final AsyncExecutor asyncExecutor;
-  protected final BigtableOptions options;
+  protected final BigtableOptions.Builder options;
   protected final HBaseRequestAdapter requestAdapter;
   protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Info, "batch.latency");
 
@@ -308,7 +308,7 @@ public class BatchExecutor {
         } catch (ExecutionException e) {
           problemActions.add(actions.get(i));
           problems.add(e.getCause());
-          hosts.add(options.getDataHost().toString());
+          hosts.add(options.build().getDataHost().toString());
         }
       }
       if (problems.size() > 0) {

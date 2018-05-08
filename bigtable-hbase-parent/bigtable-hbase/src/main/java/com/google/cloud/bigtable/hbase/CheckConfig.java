@@ -57,7 +57,7 @@ public class CheckConfig {
         new GenericOptionsParser(HBaseConfiguration.create(), args);
     Configuration fullConfiguration = optionsParser.getConfiguration();
 
-    BigtableOptions options;
+    BigtableOptions.Builder options;
     try {
       options = BigtableOptionsFactory.fromConfiguration(fullConfiguration);
     } catch (IOException | RuntimeException exc) {
@@ -65,13 +65,13 @@ public class CheckConfig {
       return;
     }
 
-    System.out.println(String.format("User Agent: %s", options.getUserAgent()));
-    System.out.println(String.format("Project ID: %s", options.getProjectId()));
-    System.out.println(String.format("Instance Id: %s", options.getInstanceId()));
-    System.out.println(String.format("Admin host: %s", options.getAdminHost()));
-    System.out.println(String.format("Data host: %s", options.getDataHost()));
+    System.out.println(String.format("User Agent: %s", options.build().getUserAgent()));
+    System.out.println(String.format("Project ID: %s", options.build().getProjectId()));
+    System.out.println(String.format("Instance Id: %s", options.build().getInstanceId()));
+    System.out.println(String.format("Admin host: %s", options.build().getAdminHost()));
+    System.out.println(String.format("Data host: %s", options.build().getDataHost()));
 
-    Credentials credentials = CredentialFactory.getCredentials(options.getCredentialOptions());
+    Credentials credentials = CredentialFactory.getCredentials(options.build().getCredentialOptions());
     try {
       System.out.println("Attempting credential refresh...");
       credentials.refresh();
@@ -104,7 +104,7 @@ public class CheckConfig {
     System.out.println("Opening table admin connection...");
     try (Connection conn = ConnectionFactory.createConnection(fullConfiguration)) {
       try (Admin admin = conn.getAdmin()) {
-        System.out.println(String.format("Tables in cluster %s:", options.getInstanceId()));
+        System.out.println(String.format("Tables in cluster %s:", options.build().getInstanceId()));
         TableName[] tableNames = admin.listTableNames();
         if (tableNames.length == 0) {
           System.out.println("No tables found.");
