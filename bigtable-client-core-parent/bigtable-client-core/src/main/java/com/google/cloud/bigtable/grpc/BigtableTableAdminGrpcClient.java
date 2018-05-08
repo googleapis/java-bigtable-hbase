@@ -131,7 +131,7 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     this.createTableFromSnapshotRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_CREATE_TABLE_FROM_SNAPSHOT,
         Predicates.<CreateTableFromSnapshotRequest>alwaysFalse());
 
-    this.retryOptions = bigtableOptions.retryOptions();
+    this.retryOptions = bigtableOptions.getRetryOptions();
     this.retryExecutorService = retryExecutorService;
   }
 

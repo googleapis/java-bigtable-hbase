@@ -129,15 +129,15 @@ public class BigtableSession implements Closeable {
   }
 
   private synchronized static ResourceLimiter initializeResourceLimiter(BigtableOptions options) {
-    BigtableInstanceName instanceName = options.instanceName();
+    BigtableInstanceName instanceName = options.getInstanceName();
     String key = instanceName.toString();
     ResourceLimiter resourceLimiter = resourceLimiterMap.get(key);
     if (resourceLimiter == null) {
-      int maxInflightRpcs = options.bulkOptions().getMaxInflightRpcs();
-      long maxMemory = options.bulkOptions().getMaxMemory();
+      int maxInflightRpcs = options.getBulkOptions().getMaxInflightRpcs();
+      long maxMemory = options.getBulkOptions().getMaxMemory();
       ResourceLimiterStats stats = ResourceLimiterStats.getInstance(instanceName);
       resourceLimiter = new ResourceLimiter(stats, maxMemory, maxInflightRpcs);
-      BulkOptions bulkOptions = options.bulkOptions();
+      BulkOptions bulkOptions = options.getBulkOptions();
       if (bulkOptions.isEnableBulkMutationThrottling()) {
         resourceLimiter.throttle(bulkOptions.getBulkMutationRpcTargetMs());
       }
@@ -175,27 +175,27 @@ public class BigtableSession implements Closeable {
   public BigtableSession(BigtableOptions.Builder opts) throws IOException {
     this.options = opts;
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(options.build().projectId()), PROJECT_ID_EMPTY_OR_NULL);
+        !Strings.isNullOrEmpty(options.build().getProjectId()), PROJECT_ID_EMPTY_OR_NULL);
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(options.build().instanceId()), INSTANCE_ID_EMPTY_OR_NULL);
+        !Strings.isNullOrEmpty(options.build().getInstanceId()), INSTANCE_ID_EMPTY_OR_NULL);
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(options.build().userAgent()), USER_AGENT_EMPTY_OR_NULL);
+        !Strings.isNullOrEmpty(options.build().getUserAgent()), USER_AGENT_EMPTY_OR_NULL);
     LOG.info(
         "Opening connection for projectId %s, instanceId %s, "
         + "on data host %s, admin host %s.",
-        options.build().projectId(), options.build().instanceId(), options.build().dataHost(),
-        options.build().adminHost());
+        options.build().getProjectId(), options.build().getInstanceId(), options.build().getDataHost(),
+        options.build().getAdminHost());
     LOG.info("Bigtable options.build(): %s.", options.build());
 
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
     clientInterceptorsList
-        .add(new GoogleCloudResourcePrefixInterceptor(options.build().instanceName().toString()));
+        .add(new GoogleCloudResourcePrefixInterceptor(options.build().getInstanceName().toString()));
     // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
     // take as long, but still take time. Get the credentials on one thread, and start up the elg
     // and scheduledRetries thread pools on another thread.
     CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
-    RetryOptions retryOptions = options.build().retryOptions();
-    CredentialOptions credentialOptions = options.build().credentialOptions();
+    RetryOptions retryOptions = options.build().getRetryOptions();
+    CredentialOptions credentialOptions = options.build().getCredentialOptions();
     try {
       ClientInterceptor credentialsInterceptor =
           credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
@@ -215,7 +215,7 @@ public class BigtableSession implements Closeable {
 
     // More often than not, users want the dataClient. Create a new one in the constructor.
     CallOptionsFactory.ConfiguredCallOptionsFactory callOptionsFactory =
-        new CallOptionsFactory.ConfiguredCallOptionsFactory(options.build().callOptionsConfig());
+        new CallOptionsFactory.ConfiguredCallOptionsFactory(options.build().getCallOptionsConfig());
     dataClient =
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options.build());
     dataClient.setCallOptionsFactory(callOptionsFactory);
@@ -238,7 +238,7 @@ public class BigtableSession implements Closeable {
     }
 
   private ChannelPool getDataChannelPool() throws IOException {
-    String host = options.build().dataHost();
+    String host = options.build().getDataHost();
     int channelCount = options.build().getChannelCount();
     if (options.build().useCachedChannel()) {
       synchronized (BigtableSession.class) {
@@ -264,7 +264,7 @@ public class BigtableSession implements Closeable {
         Preconditions.checkState(clusters.getClustersCount() == 1,
           String.format(
             "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
-            options.build().projectId(), options.build().instanceId(), clusters.getClustersCount()));
+            options.build().getProjectId(), options.build().getInstanceId(), clusters.getClustersCount()));
         clusterName = new BigtableClusterName(clusters.getClusters(0).getName());
       } catch (GeneralSecurityException e) {
         throw new IOException("Could not get cluster Id.", e);
@@ -315,7 +315,7 @@ public class BigtableSession implements Closeable {
         tableName,
         throttlingDataClient,
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-        options.build().bulkOptions());
+        options.build().getBulkOptions());
   }
 
   /**
@@ -325,7 +325,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkRead} object.
    */
   public BulkRead createBulkRead(BigtableTableName tableName) {
-    return new BulkRead(dataClient, tableName, options.build().bulkOptions().getBulkMaxRowKeyCount(),
+    return new BulkRead(dataClient, tableName, options.build().getBulkOptions().getBulkMaxRowKeyCount(),
         BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool()
     );
   }
@@ -338,7 +338,7 @@ public class BigtableSession implements Closeable {
    */
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
-      ManagedChannel channel = createManagedPool(options.build().adminHost(), 1);
+      ManagedChannel channel = createManagedPool(options.build().getAdminHost(), 1);
       tableAdminClient = new BigtableTableAdminGrpcClient(channel,
           BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options.build());
     }
@@ -353,7 +353,7 @@ public class BigtableSession implements Closeable {
    */
   public synchronized BigtableInstanceClient getInstanceAdminClient() throws IOException {
     if (instanceAdminClient == null) {
-      ManagedChannel channel = createManagedPool(options.build().adminHost(), 1);
+      ManagedChannel channel = createManagedPool(options.build().getAdminHost(), 1);
       instanceAdminClient = new BigtableInstanceGrpcClient(channel);
     }
     return instanceAdminClient;
@@ -373,6 +373,18 @@ public class BigtableSession implements Closeable {
         return createNettyChannel(hostString, options.build(), clientInterceptors);
       }
     };
+    return createChannelPool(channelFactory, count);
+  }
+
+  /**
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   *
+   * @param channelFactory a {@link ChannelPool.ChannelFactory} object.
+   * @param count The number of channels in the pool.
+   * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
+   * @throws java.io.IOException if any.
+   */
+  protected ChannelPool createChannelPool(final ChannelPool.ChannelFactory channelFactory, int count) throws IOException {
     return new ChannelPool(channelFactory, count);
   }
 
@@ -424,10 +436,10 @@ public class BigtableSession implements Closeable {
       int count) throws IOException, GeneralSecurityException {
     final List<ClientInterceptor> interceptorList = new ArrayList<>();
     interceptorList.add(CredentialInterceptorCache.getInstance()
-        .getCredentialsInterceptor(options.credentialOptions(), options.retryOptions()));
-    if (options.instanceName() != null) {
+        .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions()));
+    if (options.getInstanceName() != null) {
       interceptorList
-          .add(new GoogleCloudResourcePrefixInterceptor(options.instanceName().toString()));
+          .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
     }
     final ClientInterceptor[] interceptors =
         interceptorList.toArray(new ClientInterceptor[interceptorList.size()]);
@@ -453,16 +465,16 @@ public class BigtableSession implements Closeable {
     // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
     // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
     ManagedChannelBuilder<?> builder = ManagedChannelBuilder
-        .forAddress(host, options.port());
+        .forAddress(host, options.getPort());
 
-    if (options.usePlaintextNegotiation()) {
+    if (options.getUsePlaintextNegotiation()) {
       builder.usePlaintext(true);
     }
 
     return builder
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
-        .userAgent(BigtableVersionInfo.CORE_UESR_AGENT + "," + options.userAgent())
+        .userAgent(BigtableVersionInfo.CORE_UESR_AGENT + "," + options.getUserAgent())
         .intercept(interceptors)
         .build();
   }

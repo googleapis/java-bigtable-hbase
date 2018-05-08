@@ -61,8 +61,8 @@ public abstract class AbstractBigtableRegionLocator {
   public AbstractBigtableRegionLocator (TableName tableName, BigtableOptions options, BigtableDataClient client) {
     this.tableName = tableName;
     this.client = client;
-    this.bigtableTableName = options.instanceName().toTableName(tableName.getNameAsString());
-    ServerName serverName = ServerName.valueOf(options.dataHost(), options.port(), 0);
+    this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
+    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     this.adapter = getSampledRowKeysAdapter(tableName, serverName);
   }
   

@@ -97,21 +97,21 @@ public class TestBigtableOptions {
         .setPort(443)
         .setDataHost("xxx")
         .build();
-    Assert.assertEquals(1234, options.port());
-    Assert.assertEquals("localhost", options.dataHost());
-    Assert.assertEquals("localhost", options.adminHost());
-    Assert.assertTrue(options.usePlaintextNegotiation());
-    Assert.assertEquals(CredentialOptions.nullCredential(), options.credentialOptions());
+    Assert.assertEquals(1234, options.getPort());
+    Assert.assertEquals("localhost", options.getDataHost());
+    Assert.assertEquals("localhost", options.getAdminHost());
+    Assert.assertTrue(options.getUsePlaintextNegotiation());
+    Assert.assertEquals(CredentialOptions.nullCredential(), options.getCredentialOptions());
 
     setTestEnv(oldEnv);
     options = BigtableOptions.Builder()
         .setDataHost("override")
         .build();
-    Assert.assertEquals(BigtableOptions.BIGTABLE_PORT_DEFAULT, options.port());
-    Assert.assertEquals("override", options.dataHost());
-    Assert.assertEquals(BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT, options.adminHost());
-    Assert.assertFalse(options.usePlaintextNegotiation());
-    Assert.assertEquals(CredentialOptions.defaultCredentials(), options.credentialOptions());
+    Assert.assertEquals(BigtableOptions.BIGTABLE_PORT_DEFAULT, options.getPort());
+    Assert.assertEquals("override", options.getDataHost());
+    Assert.assertEquals(BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT, options.getAdminHost());
+    Assert.assertFalse(options.getUsePlaintextNegotiation());
+    Assert.assertEquals(CredentialOptions.defaultCredentials(), options.getCredentialOptions());
   }
 
   /**

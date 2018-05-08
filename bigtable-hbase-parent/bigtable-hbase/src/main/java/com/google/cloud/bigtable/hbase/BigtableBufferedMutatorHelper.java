@@ -132,7 +132,7 @@ public class BigtableBufferedMutatorHelper {
   }
 
   public long getWriteBufferSize() {
-    return this.options.build().bulkOptions().getMaxMemory();
+    return this.options.build().getBulkOptions().getMaxMemory();
   }
 
   public List<ListenableFuture<?>> mutate(List<? extends Mutation> mutations) {

@@ -385,7 +385,7 @@ public class BigtableOptionsFactory {
             BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT));
 
     int defaultRpcCount = BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
-        * bigtableOptionsBuilder.build().dataChannelCount();
+        * bigtableOptionsBuilder.build().getDataChannelCount();
     int maxInflightRpcs = configuration.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
     bulkOptionsBuilder.setMaxInflightRpcs(maxInflightRpcs);
 

@@ -307,10 +307,10 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableConnection.class)
-      .add("project", options.build().projectId())
-      .add("instance", options.build().instanceId())
-      .add("dataHost", options.build().dataHost())
-      .add("tableAdminHost", options.build().adminHost())
+      .add("project", options.build().getProjectId())
+      .add("instance", options.build().getInstanceId())
+      .add("dataHost", options.build().getDataHost())
+      .add("tableAdminHost", options.build().getAdminHost())
       .toString();
   }
 

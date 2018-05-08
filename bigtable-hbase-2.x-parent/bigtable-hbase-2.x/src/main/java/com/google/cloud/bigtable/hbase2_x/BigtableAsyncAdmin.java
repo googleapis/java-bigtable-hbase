@@ -117,7 +117,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     this.bigtableTableAdminClient = new BigtableTableAdminClient(
         asyncConnection.getSession().getTableAdminClient());
     this.disabledTables = asyncConnection.getDisabledTables();
-    this.bigtableInstanceName = options.build().instanceName();
+    this.bigtableInstanceName = options.build().getInstanceName();
     this.tableAdapter2x = new TableAdapter2x(options, new ColumnDescriptorAdapter());
     this.asyncConnection = asyncConnection;
     this.configuration = asyncConnection.getConfiguration();
@@ -484,7 +484,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 	    	  return SnapshotTableRequest.newBuilder()
 	    		        .setCluster(getSnapshotClusterName().toString())
 	    		        .setSnapshotId(snapshotName)
-	    		        .setName(options.build().instanceName().toTableNameStr(tableName.getNameAsString())).build();
+	    		        .setName(options.build().getInstanceName().toTableNameStr(tableName.getNameAsString())).build();
 	      } catch (IOException e) {
 	        throw new CompletionException(e); 
 	      }
@@ -497,7 +497,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 	  return CompletableFuture.supplyAsync(() -> {
 	      try {
 	    	  return CreateTableFromSnapshotRequest.newBuilder()
-	    		        .setParent(options.build().instanceName().toString())
+	    		        .setParent(options.build().getInstanceName().toString())
 	    		        .setTableId(tableName.getNameAsString())
 	    		        .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName)).build();
 	      } catch (IOException e) {
@@ -579,12 +579,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<List<RegionInfo>> getRegions(TableName tableName) {
-    ServerName serverName = ServerName.valueOf(options.build().dataHost(),
-        options.build().port(), 0);
+    ServerName serverName = ServerName.valueOf(options.build().getDataHost(),
+        options.build().getPort(), 0);
     SampledRowKeysAdapter sampledRowKeysAdapter = getSampledRowKeysAdapter(
         tableName, serverName);
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setTableName(options.build().instanceName().toTableName(tableName.toString()).toString());
+    request.setTableName(options.build().getInstanceName().toTableName(tableName.toString()).toString());
     return FutureUtils
         .toCompletableFuture(
             bigtableSession.getDataClient().sampleRowKeysAsync(request.build()))

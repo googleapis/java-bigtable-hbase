@@ -308,7 +308,7 @@ public class BatchExecutor {
         } catch (ExecutionException e) {
           problemActions.add(actions.get(i));
           problems.add(e.getCause());
-          hosts.add(options.build().dataHost().toString());
+          hosts.add(options.build().getDataHost().toString());
         }
       }
       if (problems.size() > 0) {

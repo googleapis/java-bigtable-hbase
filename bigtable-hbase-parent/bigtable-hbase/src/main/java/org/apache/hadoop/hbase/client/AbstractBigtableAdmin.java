@@ -123,7 +123,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     this.connection = connection;
     bigtableTableAdminClient = connection.getSession().getTableAdminClient();
     disabledTables = connection.getDisabledTables();
-    bigtableInstanceName = options.build().instanceName();
+    bigtableInstanceName = options.build().getInstanceName();
     tableAdapter = new TableAdapter(bigtableInstanceName, columnDescriptorAdapter);
 
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
@@ -727,9 +727,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(getClass())
-        .add("project", options.build().projectId())
-        .add("instance", options.build().instanceId())
-        .add("adminHost", options.build().adminHost())
+        .add("project", options.build().getProjectId())
+        .add("instance", options.build().getInstanceId())
+        .add("adminHost", options.build().getAdminHost())
         .toString();
   }
 
@@ -863,7 +863,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     SnapshotTableRequest.Builder requestBuilder = SnapshotTableRequest.newBuilder()
         .setCluster(getSnapshotClusterName().toString())
         .setSnapshotId(snapshotName)
-        .setName(options.build().instanceName().toTableNameStr(tableName.getNameAsString()));
+        .setName(options.build().getInstanceName().toTableNameStr(tableName.getNameAsString()));
 
     int ttlSecs = configuration.getInt(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY, -1);
     if (ttlSecs > 0) {
@@ -909,7 +909,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     CreateTableFromSnapshotRequest request = CreateTableFromSnapshotRequest.newBuilder()
-        .setParent(options.build().instanceName().toString())
+        .setParent(options.build().getInstanceName().toString())
         .setTableId(tableName.getNameAsString())
         .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
         .build();

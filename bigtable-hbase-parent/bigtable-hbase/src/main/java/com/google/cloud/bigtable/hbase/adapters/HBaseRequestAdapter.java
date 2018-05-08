@@ -90,7 +90,7 @@ public class HBaseRequestAdapter {
                              TableName tableName,
                              MutationAdapters mutationAdapters) {
     this(tableName,
-        options.build().instanceName().toTableName(tableName.getQualifierAsString()),
+        options.build().getInstanceName().toTableName(tableName.getQualifierAsString()),
         mutationAdapters);
   }
 

@@ -276,4 +276,117 @@ public abstract class BigtableOptions implements Serializable, Cloneable {
   protected BigtableOptions.Builder clone() {
     return toBuilder();
   }
+  
+  /**
+   *  
+   * @return
+   */
+  public String getAppPofileId() {
+    return appProfileId();
+  }
+  
+  /**
+   * @return
+   */
+  public String getAdminHost() {
+    return adminHost();
+  }
+  
+  /**
+   * @return
+   */
+  public String getDataHost() {
+    return dataHost();
+  }
+  
+  /**
+   * @return
+   */
+  public int getPort() {
+    return port();
+  }
+  
+  /**
+   * @return
+   */
+  public String getProjectId() {
+    return projectId();
+  }
+  
+  /**
+   * @return
+   */
+  public String getInstanceId() {
+    return instanceId();
+  }
+  
+  /**
+   * @return
+   */
+  public String getUserAgent() {
+    return userAgent();
+  }
+  
+  /**
+   * @return
+   */
+  public int getDataChannelCount() {
+    return dataChannelCount();
+  }
+  
+  /**
+   * @return
+   */
+  public boolean getUsePlaintextNegotiation() {
+    return usePlaintextNegotiation();
+  }
+  
+  /**
+   * @return
+   */
+  public boolean getUseCachedDataPool() {
+    return useCachedDataPool();
+  }
+  
+  /**
+   * @return
+   */
+  public BigtableInstanceName getInstanceName() {
+    return instanceName();
+  }
+  
+  /**
+   * @return
+   */
+  public BulkOptions getBulkOptions() {
+    return bulkOptions();
+  }
+  
+  /**
+   * @return
+   */
+  public CallOptionsConfig getCallOptionsConfig() {
+    return callOptionsConfig();
+  }
+  
+  /**
+   * @return
+   */
+  public CredentialOptions getCredentialOptions() {
+    return credentialOptions();
+  }
+  
+  /**
+   * @return
+   */
+  public RetryOptions getRetryOptions() {
+    return retryOptions();
+  }
+  
+  /**
+   * @return
+   */
+  public BigtableOptions getBigtableOptions() {
+    return bigtableOptions();
+  }
 }

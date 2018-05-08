@@ -78,7 +78,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       BufferedMutator.ExceptionListener listener) {
     helper = new BigtableBufferedMutatorHelper(adapter, configuration, session);
     this.listener = listener;
-    this.host = session.getOptions().build().dataHost().toString();
+    this.host = session.getOptions().build().getDataHost().toString();
   }
 
   /** {@inheritDoc} */

@@ -65,13 +65,13 @@ public class CheckConfig {
       return;
     }
 
-    System.out.println(String.format("User Agent: %s", options.build().userAgent()));
-    System.out.println(String.format("Project ID: %s", options.build().projectId()));
-    System.out.println(String.format("Instance Id: %s", options.build().instanceId()));
-    System.out.println(String.format("Admin host: %s", options.build().adminHost()));
-    System.out.println(String.format("Data host: %s", options.build().dataHost()));
+    System.out.println(String.format("User Agent: %s", options.build().getUserAgent()));
+    System.out.println(String.format("Project ID: %s", options.build().getProjectId()));
+    System.out.println(String.format("Instance Id: %s", options.build().getInstanceId()));
+    System.out.println(String.format("Admin host: %s", options.build().getAdminHost()));
+    System.out.println(String.format("Data host: %s", options.build().getDataHost()));
 
-    Credentials credentials = CredentialFactory.getCredentials(options.build().credentialOptions());
+    Credentials credentials = CredentialFactory.getCredentials(options.build().getCredentialOptions());
     try {
       System.out.println("Attempting credential refresh...");
       credentials.refresh();
@@ -104,7 +104,7 @@ public class CheckConfig {
     System.out.println("Opening table admin connection...");
     try (Connection conn = ConnectionFactory.createConnection(fullConfiguration)) {
       try (Admin admin = conn.getAdmin()) {
-        System.out.println(String.format("Tables in cluster %s:", options.build().instanceId()));
+        System.out.println(String.format("Tables in cluster %s:", options.build().getInstanceId()));
         TableName[] tableNames = admin.listTableNames();
         if (tableNames.length == 0) {
           System.out.println("No tables found.");

@@ -77,7 +77,7 @@ public class PutMicroBenchmark {
   protected static ChannelPool getChannelPool(final boolean useRealConnection)
       throws IOException, GeneralSecurityException {
     if (useRealConnection) {
-      return BigtableSession.createChannelPool(options.dataHost(), options);
+      return BigtableSession.createChannelPool(options.getDataHost(), options);
     } else {
       return new ChannelPool(createFakeChannels(), 1);
     }

@@ -65,7 +65,7 @@ public class TestAppProfile {
   @Before
   public void setUp() throws IOException {
     fakeDataService = new FakeDataService();
-
+  
     final int port;
     try(ServerSocket s = new ServerSocket(0)) {
       port = s.getLocalPort();
@@ -74,8 +74,8 @@ public class TestAppProfile {
         .addService(fakeDataService)
         .build();
     server.start();
-
-
+  
+  
     BigtableOptions.Builder opts = BigtableOptions.Builder()
         .setDataHost("localhost")
         .setAdminHost("locahost")
@@ -85,9 +85,9 @@ public class TestAppProfile {
         .setUserAgent("fake-agent")
         .setUsePlaintextNegotiation(true)
         .setCredentialOptions(CredentialOptions.nullCredential());
-
+  
     defaultSession = new BigtableSession(opts);
-
+  
     profileSession = new BigtableSession(
         opts.setAppProfileId("my-app-profile"));
   }
