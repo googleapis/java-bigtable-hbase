@@ -271,13 +271,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
             new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
               @Override
               public ReadRowsRequest apply(ReadRowsRequest request) {
-                if (request.getTableName().isEmpty()) {
-                  BigtableInstanceName bigtableInstanceName =
-                      new BigtableInstanceName(getProjectId(), getInstanceId());
-                  String fullTableName = bigtableInstanceName.toTableNameStr(getTableId());
-                  request = request.toBuilder().setTableName(fullTableName).build();
+                if (!request.getTableName().isEmpty()) {
+                  return request;
                 }
-                return request;
+
+                BigtableInstanceName bigtableInstanceName =
+                    new BigtableInstanceName(getProjectId(), getInstanceId());
+                String fullTableName = bigtableInstanceName.toTableNameStr(getTableId());
+                return request.toBuilder().setTableName(fullTableName).build();
               }
             });
   }
