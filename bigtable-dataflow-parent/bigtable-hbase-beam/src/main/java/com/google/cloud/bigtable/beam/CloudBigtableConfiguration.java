@@ -303,7 +303,19 @@ public class CloudBigtableConfiguration implements Serializable {
     builder.copyFrom(configuration);
   }
 
+  /**
+   * Checks if the parameters are accessible. Runtime parameters are not accessible at pipeline
+   * construction time.
+   */
+  protected boolean areParametersAccessible() {
+    return configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY).isAccessible();
+  }
+
   public void populateDisplayData(DisplayData.Builder builder) {
+    if (!areParametersAccessible()) {
+      return;
+    }
+
     builder.add(DisplayData.item("projectId", getProjectId())
       .withLabel("Project ID"));
     builder.add(DisplayData.item("instanceId", getInstanceId())
@@ -325,7 +337,9 @@ public class CloudBigtableConfiguration implements Serializable {
   }
 
   public void validate() {
-    checkNotNullOrEmpty(getProjectId(), "projectId");
-    checkNotNullOrEmpty(getInstanceId(), "instanceId");
+    if (areParametersAccessible()) {
+      checkNotNullOrEmpty(getProjectId(), "projectId");
+      checkNotNullOrEmpty(getInstanceId(), "instanceId");
+    }
   }
 }

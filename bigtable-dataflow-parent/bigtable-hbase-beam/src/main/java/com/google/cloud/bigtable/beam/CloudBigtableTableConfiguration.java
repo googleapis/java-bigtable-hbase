@@ -187,14 +187,18 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   }
 
   @Override
-  public void populateDisplayData(DisplayData.Builder builder) {
+  public void populateDisplayData(DisplayData.Builder builder) {    
     super.populateDisplayData(builder);
-    builder.add(DisplayData.item("tableId", tableId).withLabel("Table ID"));
+    if (areParametersAccessible()) {
+      builder.add(DisplayData.item("tableId", tableId).withLabel("Table ID"));
+    }
   }
 
   @Override
   public void validate() {
     super.validate();
-    checkNotNullOrEmpty(getTableId(), "tableid");
+    if (areParametersAccessible()) {
+      checkNotNullOrEmpty(getTableId(), "tableid");
+    }
   }
 }

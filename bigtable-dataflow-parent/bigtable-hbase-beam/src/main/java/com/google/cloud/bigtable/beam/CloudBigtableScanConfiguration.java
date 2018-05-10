@@ -363,8 +363,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-    builder
-        .add(DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+    if (areParametersAccessible()) {
+      builder.add(
+          DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+    }
   }
-
 }
