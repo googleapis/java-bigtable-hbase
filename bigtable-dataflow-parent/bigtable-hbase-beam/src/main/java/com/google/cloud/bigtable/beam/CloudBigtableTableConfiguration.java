@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.beam;
 
 import java.util.Map;
 import java.util.Objects;
-
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 
 /**
@@ -109,10 +109,10 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
   protected CloudBigtableTableConfiguration(
-      String projectId,
-      String instanceId,
+      ValueProvider<String> projectId,
+      ValueProvider<String> instanceId,
       String tableId,
-      Map<String, String> additionalConfiguration) {
+      Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, additionalConfiguration);
     this.tableId = tableId;
   }
