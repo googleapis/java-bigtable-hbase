@@ -173,7 +173,7 @@ public class CloudBigtableConfiguration implements Serializable {
    * @return The {@link BigtableOptions} object.
    */
   public BigtableOptions toBigtableOptions() throws IOException {
-    return BigtableOptionsFactory.fromConfiguration(toHBaseConfig());
+    return BigtableOptionsFactory.fromConfiguration(toHBaseConfig()).build();
   }
 
   /**

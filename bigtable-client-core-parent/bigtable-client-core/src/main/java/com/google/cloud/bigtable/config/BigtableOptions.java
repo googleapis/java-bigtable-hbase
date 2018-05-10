@@ -15,16 +15,13 @@
  */
 package com.google.cloud.bigtable.config;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.auto.value.AutoValue;
+import java.io.Serializable;
+import javax.annotation.Nullable;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -36,13 +33,13 @@ import com.google.auto.value.AutoValue;
 public abstract class BigtableOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
-
+  
   // If set to a host:port address, this environment variable will configure the client to connect
   // to a Bigtable emulator running at the given address with plaintext negotiation.
   // TODO: Link to emulator documentation when available.
   /** Constant <code>BIGTABLE_EMULATOR_HOST_ENV_VAR="bigtableadmin.googleapis.com"</code> */
   public static final String BIGTABLE_EMULATOR_HOST_ENV_VAR = "BIGTABLE_EMULATOR_HOST";
-
+  
   /** Constant <code>BIGTABLE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
   public static final String BIGTABLE_ADMIN_HOST_DEFAULT =
       "bigtableadmin.googleapis.com";
@@ -104,7 +101,10 @@ public abstract class BigtableOptions implements Serializable, Cloneable {
     int availableProcessors = Runtime.getRuntime().availableProcessors();
     return (int) Math.min(250, Math.max(1, availableProcessors * 4));
   }
-
+  
+  public static BigtableOptions getDefaultOptions() {
+    return Builder().build();
+  }
   /**
    * A mutable builder for BigtableConnectionOptions.
    */
@@ -360,7 +360,7 @@ public abstract class BigtableOptions implements Serializable, Cloneable {
   public CredentialOptions getCredentialOptions() {
     return credentialOptions();
   }
-  
+
   /**
    * @return
    */
