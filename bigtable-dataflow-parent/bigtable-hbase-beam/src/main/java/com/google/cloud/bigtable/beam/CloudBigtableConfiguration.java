@@ -316,6 +316,8 @@ public class CloudBigtableConfiguration implements Serializable {
       return;
     }
 
+    // TODO(kevinsi): For each field, if it is not accessible, set of dummy value of
++   // "Unavailable during pipeline construction". This is for debugging purpose.
     builder.add(DisplayData.item("projectId", getProjectId())
       .withLabel("Project ID"));
     builder.add(DisplayData.item("instanceId", getInstanceId())
