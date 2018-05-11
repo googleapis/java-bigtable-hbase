@@ -20,9 +20,12 @@ import java.util.Objects;
 
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
+import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
+import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
-
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
@@ -69,6 +72,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     /**
      * Specifies the {@link Scan} that will be used to filter the table.
+     *
      * @param scan The {@link Scan} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
@@ -108,6 +112,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withProjectId(String)} so that it
+     * returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
     public Builder withProjectId(String projectId) {
@@ -162,7 +169,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
   }
 
-  private final ReadRowsRequest request;
+  // 'request' needs to be a runtime parameter because it depends on runtime parameters: project ID
+  // and instance ID.
+  private final ValueProvider<ReadRowsRequest> request;
 
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
@@ -173,17 +182,32 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @param request The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  protected CloudBigtableScanConfiguration(String projectId, String instanceId, String tableId,
-      ReadRowsRequest request, Map<String, String> additionalConfiguration) {
-    super(projectId, instanceId,  tableId, additionalConfiguration);
-    if (request.getTableName().isEmpty()) {
-      BigtableInstanceName bigtableInstanceName =
-          new BigtableInstanceName(projectId, this.getInstanceId());
-      String fullTableName = bigtableInstanceName.toTableNameStr(tableId);
-      this.request = request.toBuilder().setTableName(fullTableName).build();
-    } else {
-      this.request = request;
-    }
+  protected CloudBigtableScanConfiguration(
+      ValueProvider<String> projectId,
+      ValueProvider<String> instanceId,
+      String tableId,
+      ReadRowsRequest request,
+      Map<String, ValueProvider<String>> additionalConfiguration) {
+    super(projectId, instanceId, tableId, additionalConfiguration);
+    this.request =
+        NestedValueProvider.of(
+            // Eventually the input request will be ValueProvider<ReadRowsRequest>.
+            // TODO(kevinsi): Make sure that the resulting request object is accessible only when
+            // all dependent runtime parameters are accessible.
+            StaticValueProvider.of(request),
+            new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
+              @Override
+              public ReadRowsRequest apply(ReadRowsRequest request) {
+                if (!request.getTableName().isEmpty()) {
+                  return request;
+                }
+
+                BigtableInstanceName bigtableInstanceName =
+                    new BigtableInstanceName(getProjectId(), getInstanceId());
+                String fullTableName = bigtableInstanceName.toTableNameStr(getTableId());
+                return request.toBuilder().setTableName(fullTableName).build();
+              }
+            });
   }
 
   /**
@@ -191,7 +215,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @return The {@link Scan}.
    */
   public ReadRowsRequest getRequest() {
-    return request;
+    return request.get();
   }
 
   /**
@@ -231,14 +255,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   RowRange getRowRange() {
-    RowSet rows = request.getRows();
+    RowSet rows = getRequest().getRows();
     return rows.getRowRanges(0);
   }
 
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)
-        && Objects.equals(request, ((CloudBigtableScanConfiguration) obj).request);
+        && Objects.equals(getRequest(), ((CloudBigtableScanConfiguration) obj).getRequest());
   }
 
   @Override
@@ -250,7 +274,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   public void copyConfig(Builder builder) {
     super.copyConfig(builder);
-    builder.withRequest(request);
+    builder.withRequest(getRequest());
   }
 
   /**
@@ -265,8 +289,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-    builder
-        .add(DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+    // TODO(kevinsi): For each field, if it is not accessible, set of dummy value of
+    // "Unavailable during pipeline construction". This is for debugging purpose.
+    if (areParametersAccessible()) {
+      builder.add(
+          DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+    }
   }
-
 }
