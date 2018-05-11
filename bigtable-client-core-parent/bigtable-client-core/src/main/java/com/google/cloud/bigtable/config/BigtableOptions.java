@@ -263,50 +263,64 @@ public abstract class BigtableOptions implements Serializable, Cloneable {
   }
   
   /**
-   *  
-   * @return
+   * <p>Getter for the field <code>appProfileId</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
    */
   public String getAppPofileId() {
     return appProfileId();
   }
   
   /**
-   * @return
+   * <p>Getter for the field <code>tableAdminHost</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
    */
   public String getAdminHost() {
     return adminHost();
   }
   
   /**
-   * @return
-   */
+  * <p>Getter for the field <code>dataHost</code>.</p>
+  *
+  * @return a {@link java.lang.String} object.
+  */
   public String getDataHost() {
     return dataHost();
   }
   
   /**
-   * @return
+   * <p>Getter for the field <code>port</code>.</p>
+   *
+   * @return a int.
    */
   public int getPort() {
     return port();
   }
   
   /**
-   * @return
+   * <p>Getter for the field <code>projectId</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
    */
   public String getProjectId() {
     return projectId();
   }
   
   /**
-   * @return
+   * <p>Getter for the field <code>instanceId</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
    */
   public String getInstanceId() {
     return instanceId();
   }
   
   /**
-   * @return
+   * Gets the user-agent to be appended to User-Agent header when creating new streams
+   * for the channel.
+   *
+   * @return a {@link java.lang.String} object.
    */
   public String getUserAgent() {
     return userAgent();
@@ -320,49 +334,63 @@ public abstract class BigtableOptions implements Serializable, Cloneable {
   }
   
   /**
-   * @return
+   * <p>usePlaintextNegotiation.</p>
+   *
+   * @return a boolean.
    */
   public boolean getUsePlaintextNegotiation() {
     return usePlaintextNegotiation();
   }
   
   /**
-   * @return
+   * Experimental feature to allow situations with multiple connections to optimize their startup
+   * time.
+   * @return true if this feature should be turned on in {@link BigtableSession}.
    */
   public boolean getUseCachedDataPool() {
     return useCachedDataPool();
   }
   
   /**
-   * @return
+   * <p>Getter for the field <code>instanceName</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.grpc.BigtableInstanceName} object.
    */
   public BigtableInstanceName getInstanceName() {
     return instanceName();
   }
 
   /**
-   * @return
+   * <p>Getter for the field <code>bulkOptions</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.BulkOptions} object.
    */
   public BulkOptions getBulkOptions() {
     return bulkOptions();
   }
 
   /**
-   * @return
+   * <p>Getter for the field <code>callOptionsConfig</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.CallOptionsConfig} object.
    */
   public CallOptionsConfig getCallOptionsConfig() {
     return callOptionsConfig();
   }
 
   /**
-   * @return
+   * Get the credential this object was constructed with. May be null.
+   *
+   * @return Null to indicate no credentials, otherwise, the Credentials object.
    */
   public CredentialOptions getCredentialOptions() {
     return credentialOptions();
   }
 
   /**
-   * @return
+   * Options controlling retries.
+   *
+   * @return a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    */
   public RetryOptions getRetryOptions() {
     return retryOptions();
