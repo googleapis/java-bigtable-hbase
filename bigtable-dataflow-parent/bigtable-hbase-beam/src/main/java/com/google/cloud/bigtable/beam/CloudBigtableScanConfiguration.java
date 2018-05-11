@@ -20,9 +20,12 @@ import java.util.Objects;
 
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
+import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
+import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
-
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
@@ -43,15 +46,15 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   private static final long serialVersionUID = 2435897354284600685L;
 
   /**
-   * Converts a {@link CloudBigtableTableConfiguration} object to a
-   * {@link CloudBigtableScanConfiguration} that will perform the specified {@link Scan} on the
-   * table.
+   * Converts a {@link CloudBigtableTableConfiguration} object to a {@link
+   * CloudBigtableScanConfiguration} that will perform the specified {@link Scan} on the table.
+   *
    * @param config The {@link CloudBigtableTableConfiguration} object.
    * @param scan The {@link Scan} to add to the configuration.
    * @return The new {@link CloudBigtableScanConfiguration}.
    */
-  public static CloudBigtableScanConfiguration fromConfig(CloudBigtableTableConfiguration config,
-      Scan scan) {
+  public static CloudBigtableScanConfiguration fromConfig(
+      CloudBigtableTableConfiguration config, Scan scan) {
     CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
     config.copyConfig(builder);
     return builder.withScan(scan).build();
@@ -62,13 +65,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
     private Scan scan;
-    private ReadRowsRequest request;
+    private ValueProvider<ReadRowsRequest> request;
 
-    public Builder() {
-    }
+    public Builder() {}
 
     /**
      * Specifies the {@link Scan} that will be used to filter the table.
+     *
      * @param scan The {@link Scan} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
@@ -83,14 +86,24 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @param request The {@link ReadRowsRequest} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
-    public Builder withRequest(ReadRowsRequest request) {
+    Builder withRequest(ValueProvider<ReadRowsRequest> request) {
       this.request = request;
       this.scan = null;
       return this;
     }
 
     /**
+     * Specifies the {@link ReadRowsRequest} that will be used to filter the table.
+     * @param request The {@link ReadRowsRequest} to add to the configuration.
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    public Builder withRequest(ReadRowsRequest request) {
+      return withRequest(StaticValueProvider.of(request));
+    }
+
+    /**
      * Internal API that allows a Source to configure the request with a new start/stop row range.
+     *
      * @param startKey The first key, inclusive.
      * @param stopKey The last key, exclusive.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
@@ -98,53 +111,124 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     Builder withKeys(byte[] startKey, byte[] stopKey) {
       final ByteString start = ByteStringer.wrap(startKey);
       final ByteString stop = ByteStringer.wrap(stopKey);
-      request =
-          request.toBuilder()
-              .setRows(RowSet.newBuilder().addRowRanges(
-                RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(stop).build()))
-              .build();
-      return this;
+      ValueProvider<ReadRowsRequest> request =
+          this.request == null
+              ? StaticValueProvider.of(ReadRowsRequest.getDefaultInstance())
+              : this.request;
+      return withRequest(
+          NestedValueProvider.of(
+              request,
+              new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
+                @Override
+                public ReadRowsRequest apply(ReadRowsRequest request) {
+                  return request
+                      .toBuilder()
+                      .setRows(
+                          RowSet.newBuilder()
+                              .addRowRanges(
+                                  RowRange.newBuilder()
+                                      .setStartKeyClosed(start)
+                                      .setEndKeyOpen(stop)))
+                      .build();
+                }
+              }));
     }
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withProjectId(ValueProvider)} so
+     * that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    public Builder withProjectId(String projectId) {
+    Builder withProjectId(ValueProvider<String> projectId) {
       super.withProjectId(projectId);
       return this;
     }
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withProjectId(String)} so that it
+     * returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    public Builder withInstanceId(String instanceId) {
+    public Builder withProjectId(String projectId) {
+      return withProjectId(StaticValueProvider.of(projectId));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withInstanceId(ValueProvider)} so
+     * that it returns {@link CloudBigtableScanConfiguration.Builder}.
+     */
+    @Override
+    Builder withInstanceId(ValueProvider<String> instanceId) {
       super.withInstanceId(instanceId);
       return this;
     }
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withInstanceId(String)} so that
+     * it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    public Builder withConfiguration(String key, String value) {
+    public Builder withInstanceId(String instanceId) {
+      return withInstanceId(StaticValueProvider.of(instanceId));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withConfiguration(String,
+     * ValueProvider)} so that it returns {@link CloudBigtableScanConfiguration.Builder}.
+     */
+    @Override
+    Builder withConfiguration(String key, ValueProvider<String> value) {
       super.withConfiguration(key, value);
       return this;
     }
 
     /**
-     * {@inheritDoc} Overrides {@link CloudBigtableScanConfiguration.Builder#withTableId(String)} so
+     * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withConfiguration(String,
+     * String)} so that it returns {@link CloudBigtableScanConfiguration.Builder}.
+     */
+    @Override
+    public Builder withConfiguration(String key, String value) {
+      return withConfiguration(key, StaticValueProvider.of(value));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withTableId(ValueProvider)} so
      * that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    public Builder withTableId(String tableId) {
+    Builder withTableId(ValueProvider<String> tableId) {
       super.withTableId(tableId);
       return this;
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withTableId(String)} so that it
+     * returns {@link CloudBigtableScanConfiguration.Builder}.
+     */
+    @Override
+    public Builder withTableId(String tableId) {
+      return withTableId(StaticValueProvider.of(tableId));
+    }
+
+    /**
      * Builds the {@link CloudBigtableScanConfiguration}.
+     *
      * @return The new {@link CloudBigtableScanConfiguration}.
      */
     @Override
@@ -155,43 +239,57 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
           scan = new Scan();
         }
         ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-        request = readHooks.applyPreSendHook(builder.build());
+        request = StaticValueProvider.of(readHooks.applyPreSendHook(builder.build()));
       }
-      return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
-          request, additionalConfiguration);
+      return new CloudBigtableScanConfiguration(
+          projectId, instanceId, tableId, request, additionalConfiguration);
     }
   }
 
-  private final ReadRowsRequest request;
+  private final ValueProvider<ReadRowsRequest> request;
 
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
    * table ID, {@link Scan} and additional connection configuration.
+   *
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
    * @param tableId The table to connect to in the instance.
    * @param request The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  protected CloudBigtableScanConfiguration(String projectId, String instanceId, String tableId,
-      ReadRowsRequest request, Map<String, String> additionalConfiguration) {
-    super(projectId, instanceId,  tableId, additionalConfiguration);
-    if (request.getTableName().isEmpty()) {
-      BigtableInstanceName bigtableInstanceName =
-          new BigtableInstanceName(projectId, this.getInstanceId());
-      String fullTableName = bigtableInstanceName.toTableNameStr(tableId);
-      this.request = request.toBuilder().setTableName(fullTableName).build();
-    } else {
-      this.request = request;
-    }
+  protected CloudBigtableScanConfiguration(
+      ValueProvider<String> projectId,
+      ValueProvider<String> instanceId,
+      ValueProvider<String> tableId,
+      ValueProvider<ReadRowsRequest> request,
+      Map<String, ValueProvider<String>> additionalConfiguration) {
+    super(projectId, instanceId, tableId, additionalConfiguration);
+    this.request =
+        NestedValueProvider.of(
+            request,
+            new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
+              @Override
+              public ReadRowsRequest apply(ReadRowsRequest request) {
+                if (!request.getTableName().isEmpty()) {
+                  return request;
+                }
+
+                BigtableInstanceName bigtableInstanceName =
+                    new BigtableInstanceName(getProjectId(), getInstanceId());
+                String fullTableName = bigtableInstanceName.toTableNameStr(getTableId());
+                return request.toBuilder().setTableName(fullTableName).build();
+              }
+            });
   }
 
   /**
-   * Gets the {@link Scan} used to filter the table.
-   * @return The {@link Scan}.
+   * Gets the {@link ReadRowsRequest}. Sets the table name if it is not yet set.
+   *
+   * @return The {@link ReadRowsRequest}.
    */
   public ReadRowsRequest getRequest() {
-    return request;
+    return request.get();
   }
 
   /**
@@ -231,14 +329,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   RowRange getRowRange() {
-    RowSet rows = request.getRows();
+    RowSet rows = getRequest().getRows();
     return rows.getRowRanges(0);
   }
 
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)
-        && Objects.equals(request, ((CloudBigtableScanConfiguration) obj).request);
+        && Objects.equals(getRequest(), ((CloudBigtableScanConfiguration) obj).getRequest());
   }
 
   @Override
@@ -265,8 +363,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-    builder
-        .add(DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+    if (areParametersAccessible()) {
+      builder.add(
+          DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
+    }
   }
-
 }

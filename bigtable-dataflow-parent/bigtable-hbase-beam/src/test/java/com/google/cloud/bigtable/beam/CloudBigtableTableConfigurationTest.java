@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam;
 
 import static org.junit.Assert.assertEquals;
 
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
@@ -95,5 +96,24 @@ public class CloudBigtableTableConfigurationTest {
     Assert.assertNotSame(underTest, copy);
     Assert.assertEquals(underTest, copy);
   }
-}
 
+  /**
+   * This ensures that the config built from regular parameters are the same as the config built
+   * from runtime parameters, so that we don't have to use runtime parameters to repeat the same
+   * tests.
+   */
+  @Test
+  public void testRegularAndRuntimeParametersAreEqual() {
+    CloudBigtableTableConfiguration withRegularParameters =
+        buildConfiguration().toBuilder().withConfiguration("somekey", "somevalue").build();
+    CloudBigtableTableConfiguration withRuntimeParameters =
+        new CloudBigtableTableConfiguration.Builder()
+            .withTableId(StaticValueProvider.of(TABLE))
+            .withProjectId(StaticValueProvider.of(PROJECT))
+            .withInstanceId(StaticValueProvider.of(INSTANCE))
+            .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
+            .build();
+    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+  }
+}

@@ -48,7 +48,6 @@ limitations under the License.
       <version>${guava.version}</version>
     </dependency>
 
-
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-file-system</artifactId>

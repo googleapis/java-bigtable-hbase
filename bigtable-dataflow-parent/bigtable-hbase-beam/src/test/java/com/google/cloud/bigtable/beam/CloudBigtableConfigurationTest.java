@@ -23,7 +23,7 @@ import org.junit.Assert;
 import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableConfiguration.Builder;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +36,25 @@ import org.junit.runners.JUnit4;
 public class CloudBigtableConfigurationTest {
 
   private static final String PROJECT = "my_project";
-  private static final String INSTANCE = "instance";
+
+  private static final String INSTANCE = "instance_id";
+
+  private Builder createBaseBuilder() {
+    return createBaseBuilder(PROJECT, INSTANCE);
+  }
+
+  private Builder createBaseBuilder(String project, String instance) {
+    return new CloudBigtableConfiguration.Builder().withProjectId(project).withInstanceId(instance);
+  }
+
+  @Test
+  public void testToBuilder() {
+    CloudBigtableConfiguration underTest =
+        createBaseBuilder().withConfiguration("somekey", "somevalue").build();
+    CloudBigtableConfiguration copy = underTest.toBuilder().build();
+    Assert.assertNotSame(underTest, copy);
+    Assert.assertEquals(underTest, copy);
+  }
 
   @Test
   public void testHBaseConfig() {
@@ -69,23 +87,24 @@ public class CloudBigtableConfigurationTest {
 
     // Test CloudBigtableConfiguration with the same extended parameters are equal.
     Assert.assertEquals(underTest3, underTest5);
-}
-
-  private Builder createBaseBuilder() {
-    return createBaseBuilder(PROJECT, INSTANCE);
   }
 
-  private Builder createBaseBuilder(String project, String instance) {
-    return new CloudBigtableConfiguration.Builder().withProjectId(project).withInstanceId(instance);
-  }
-
+  /**
+   * This ensures that the config built from regular parameters are the same as the config built
+   * from runtime parameters, so that we don't have to use runtime parameters to repeat the same
+   * tests.
+   */
   @Test
-  public void testToBuilder() {
-    CloudBigtableConfiguration underTest =
+  public void testRegularAndRuntimeParametersAreEqual() {
+    CloudBigtableConfiguration withRegularParameters =
         createBaseBuilder().withConfiguration("somekey", "somevalue").build();
-    CloudBigtableConfiguration copy = underTest.toBuilder().build();
-    Assert.assertNotSame(underTest, copy);
-    Assert.assertEquals(underTest, copy);
+    CloudBigtableConfiguration withRuntimeParameters =
+        new CloudBigtableConfiguration.Builder()
+            .withProjectId(StaticValueProvider.of(PROJECT))
+            .withInstanceId(StaticValueProvider.of(INSTANCE))
+            .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
+            .build();
+    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
   }
 }
-
