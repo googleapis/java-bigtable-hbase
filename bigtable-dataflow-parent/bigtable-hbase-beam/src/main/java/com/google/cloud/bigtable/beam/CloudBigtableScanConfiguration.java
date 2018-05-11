@@ -192,6 +192,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     this.request =
         NestedValueProvider.of(
             // Eventually the input request will be ValueProvider<ReadRowsRequest>.
+            // TODO(kevinsi): Make sure that the resulting request object is accessible only when
+            // all dependent runtime parameters are accessible.
             StaticValueProvider.of(request),
             new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
               @Override
