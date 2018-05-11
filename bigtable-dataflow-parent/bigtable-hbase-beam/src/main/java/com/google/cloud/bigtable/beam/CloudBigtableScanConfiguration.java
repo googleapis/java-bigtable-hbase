@@ -290,7 +290,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
     // TODO(kevinsi): For each field, if it is not accessible, set of dummy value of
-    // "Unavailable during pipeline construction". This is debugging purpose.
+    // "Unavailable during pipeline construction". This is for debugging purpose.
     if (areParametersAccessible()) {
       builder.add(
           DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
