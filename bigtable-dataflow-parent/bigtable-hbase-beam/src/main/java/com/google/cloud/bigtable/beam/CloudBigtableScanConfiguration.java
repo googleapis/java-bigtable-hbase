@@ -46,15 +46,15 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   private static final long serialVersionUID = 2435897354284600685L;
 
   /**
-   * Converts a {@link CloudBigtableTableConfiguration} object to a {@link
-   * CloudBigtableScanConfiguration} that will perform the specified {@link Scan} on the table.
-   *
+   * Converts a {@link CloudBigtableTableConfiguration} object to a
+   * {@link CloudBigtableScanConfiguration} that will perform the specified {@link Scan} on the
+   * table.
    * @param config The {@link CloudBigtableTableConfiguration} object.
    * @param scan The {@link Scan} to add to the configuration.
    * @return The new {@link CloudBigtableScanConfiguration}.
    */
-  public static CloudBigtableScanConfiguration fromConfig(
-      CloudBigtableTableConfiguration config, Scan scan) {
+  public static CloudBigtableScanConfiguration fromConfig(CloudBigtableTableConfiguration config,
+      Scan scan) {
     CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
     config.copyConfig(builder);
     return builder.withScan(scan).build();
@@ -67,7 +67,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     private Scan scan;
     private ReadRowsRequest request;
 
-    public Builder() {}
+    public Builder() {
+    }
 
     /**
      * Specifies the {@link Scan} that will be used to filter the table.
@@ -123,9 +124,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     /**
      * {@inheritDoc}
-     *
-     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withInstanceId(String)} so that
-     * it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
     public Builder withInstanceId(String instanceId) {
@@ -135,9 +133,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     /**
      * {@inheritDoc}
-     *
-     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withConfiguration(String,
-     * String)} so that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
     public Builder withConfiguration(String key, String value) {
@@ -146,10 +141,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withTableId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
+     * {@inheritDoc} Overrides {@link CloudBigtableScanConfiguration.Builder#withTableId(String)} so
+     * that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
     public Builder withTableId(String tableId) {
@@ -183,7 +176,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
    * table ID, {@link Scan} and additional connection configuration.
-   *
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
    * @param tableId The table to connect to in the instance.
@@ -217,9 +209,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   /**
-   * Gets the {@link ReadRowsRequest}. Sets the table name if it is not yet set.
-   *
-   * @return The {@link ReadRowsRequest}.
+   * Gets the {@link Scan} used to filter the table.
+   * @return The {@link Scan}.
    */
   public ReadRowsRequest getRequest() {
     return request.get();
@@ -281,7 +272,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   public void copyConfig(Builder builder) {
     super.copyConfig(builder);
-    builder.withRequest(request.get());
+    builder.withRequest(getRequest());
   }
 
   /**

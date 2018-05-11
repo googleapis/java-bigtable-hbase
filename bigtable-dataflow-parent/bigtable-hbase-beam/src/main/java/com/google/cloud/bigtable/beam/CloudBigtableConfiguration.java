@@ -170,8 +170,8 @@ public class CloudBigtableConfiguration implements Serializable {
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
    * @param additionalConfiguration A {@link Map} with additional connection configuration. See
-   *     {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
-   *     configuration options.
+   *          {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information
+   *          about configuration options.
    */
   protected CloudBigtableConfiguration(
       ValueProvider<String> projectId,
