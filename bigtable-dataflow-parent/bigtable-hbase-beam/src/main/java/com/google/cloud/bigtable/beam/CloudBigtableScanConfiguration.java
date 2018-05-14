@@ -32,6 +32,7 @@ import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ByteStringer;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
@@ -289,11 +290,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-    // TODO(kevinsi): For each field, if it is not accessible, set of dummy value of
-    // "Unavailable during pipeline construction". This is for debugging purpose.
-    if (areParametersAccessible()) {
-      builder.add(
-          DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
-    }
+    builder.add(
+        DisplayData.item("readRowsRequest", getDisplayValue(request)).withLabel("ReadRowsRequest"));
   }
 }
