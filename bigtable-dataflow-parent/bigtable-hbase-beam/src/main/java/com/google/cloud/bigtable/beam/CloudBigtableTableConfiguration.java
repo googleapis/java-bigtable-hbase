@@ -72,8 +72,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      * 
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withProjectId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
+     * Overrides {@link CloudBigtableConfiguration.Builder#withProjectId(String)} so that it
+     * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
     public Builder withProjectId(ValueProvider<String> projectId) {
@@ -96,8 +96,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      * 
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withInstanceId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
+     * Overrides {@link CloudBigtableConfiguration.Builder#withInstanceId(String)} so that it
+     * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
     public Builder withInstanceId(ValueProvider<String> instanceId) {
@@ -120,8 +120,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      *
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withConfiguration(String, String)} so
-     * that it returns {@link CloudBigtableScanConfiguration.Builder}.
+     * Overrides {@link CloudBigtableConfiguration.Builder#withConfiguration(String, String)} so
+     * that it returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
     public Builder withConfiguration(String key, ValueProvider<String> value) {
