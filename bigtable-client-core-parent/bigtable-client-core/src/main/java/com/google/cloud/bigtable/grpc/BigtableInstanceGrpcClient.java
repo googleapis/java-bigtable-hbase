@@ -25,6 +25,7 @@ import com.google.bigtable.admin.v2.AppProfile;
 import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
 import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.CreateAppProfileRequest;
+import com.google.bigtable.admin.v2.CreateClusterRequest;
 import com.google.bigtable.admin.v2.CreateInstanceRequest;
 import com.google.bigtable.admin.v2.DeleteAppProfileRequest;
 import com.google.bigtable.admin.v2.DeleteClusterRequest;
@@ -239,5 +240,11 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
   @Override
   public TestIamPermissionsResponse testIamPermissions(TestIamPermissionsRequest request) {
       return instanceClient.testIamPermissions(request);
+  }
+  
+  /** {@inheritDoc} */
+  @Override
+  public Operation createCluster(CreateClusterRequest request) {
+      return instanceClient.createCluster(request);
   }
 }

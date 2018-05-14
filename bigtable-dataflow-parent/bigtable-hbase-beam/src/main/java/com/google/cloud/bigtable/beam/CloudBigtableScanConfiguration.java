@@ -185,13 +185,15 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   protected CloudBigtableScanConfiguration(
       ValueProvider<String> projectId,
       ValueProvider<String> instanceId,
-      String tableId,
+      ValueProvider<String> tableId,
       ReadRowsRequest request,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
     this.request =
         NestedValueProvider.of(
             // Eventually the input request will be ValueProvider<ReadRowsRequest>.
+            // TODO(kevinsi): Make sure that the resulting request object is accessible only when
+            // all dependent runtime parameters are accessible.
             StaticValueProvider.of(request),
             new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
               @Override
@@ -287,6 +289,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
+    // TODO(kevinsi): For each field, if it is not accessible, set of dummy value of
+    // "Unavailable during pipeline construction". This is for debugging purpose.
     if (areParametersAccessible()) {
       builder.add(
           DisplayData.item("readRowsRequest", request.toString()).withLabel("ReadRowsRequest"));
