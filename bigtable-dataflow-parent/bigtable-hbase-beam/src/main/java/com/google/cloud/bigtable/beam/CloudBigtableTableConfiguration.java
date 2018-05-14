@@ -192,10 +192,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-
-    if (areParametersAccessible()) {
-      builder.add(DisplayData.item("tableId", tableId).withLabel("Table ID"));
-    }
+    builder.add(DisplayData.item("tableId", getDisplayValue(tableId)).withLabel("Table ID"));
   }
 
   @Override
