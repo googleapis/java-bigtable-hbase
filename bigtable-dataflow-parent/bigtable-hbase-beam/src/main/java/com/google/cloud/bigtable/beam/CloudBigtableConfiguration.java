@@ -311,24 +311,37 @@ public class CloudBigtableConfiguration implements Serializable {
     return configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY).isAccessible();
   }
 
-  public void populateDisplayData(DisplayData.Builder builder) {
-    if (!areParametersAccessible()) {
-      return;
+  /**
+   * @param <T> parameter The runtime parameter.
+   * @return the String value of runtime parameter if the parameter is accessible, returns
+   *     "Unavailable during pipeline construction" otherwise for debugging purpose.
+   */
+  protected static <T> String getDisplayValue(ValueProvider<T> parameter) {
+    if (parameter.isAccessible()) {
+      return String.valueOf(parameter.get());
     }
+    return "Unavailable during pipeline construction";
+  }
 
-    // TODO(kevinsi): For each field, if it is not accessible, set of dummy value of
-    // "Unavailable during pipeline construction". This is for debugging purpose.
-    builder.add(DisplayData.item("projectId", getProjectId())
-      .withLabel("Project ID"));
-    builder.add(DisplayData.item("instanceId", getInstanceId())
-      .withLabel("Instance ID"));
+  public void populateDisplayData(DisplayData.Builder builder) {
+    builder.add(
+        DisplayData.item(
+                "projectId",
+                getDisplayValue(configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY)))
+            .withLabel("Project ID"));
+    builder.add(
+        DisplayData.item(
+                "instanceId",
+                getDisplayValue(configuration.get(BigtableOptionsFactory.INSTANCE_ID_KEY)))
+            .withLabel("Instance ID"));
     Map<String, ValueProvider<String>> hashMap =
         new HashMap<String, ValueProvider<String>>(configuration);
     hashMap.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
     hashMap.remove(BigtableOptionsFactory.INSTANCE_ID_KEY);
     for (Entry<String, ValueProvider<String>> entry : configuration.entrySet()) {
       builder.add(
-          DisplayData.item(entry.getKey(), entry.getValue().get()).withLabel(entry.getKey()));
+          DisplayData.item(entry.getKey(), getDisplayValue(entry.getValue()))
+              .withLabel(entry.getKey()));
     }
   }
 
