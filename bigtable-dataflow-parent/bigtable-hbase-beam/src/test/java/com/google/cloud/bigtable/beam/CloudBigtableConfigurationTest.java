@@ -16,6 +16,7 @@
 
 package com.google.cloud.bigtable.beam;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Assert;
@@ -23,7 +24,14 @@ import org.junit.Assert;
 import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableConfiguration.Builder;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Nullable;
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
+import org.apache.beam.sdk.transforms.display.DisplayData;
+import org.apache.beam.sdk.transforms.display.DisplayData.ItemSpec;
+import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +46,49 @@ public class CloudBigtableConfigurationTest {
   private static final String PROJECT = "my_project";
 
   private static final String INSTANCE = "instance";
+
+  private static class TestDisplayDataBuilder implements DisplayData.Builder {
+    private List<String> itemStrings = new ArrayList<>();
+
+    @Override
+    public DisplayData.Builder include(String path, HasDisplayData subComponent) {
+      return this;
+    }
+
+    @Override
+    public DisplayData.Builder delegate(HasDisplayData component) {
+      return this;
+    }
+
+    @Override
+    public DisplayData.Builder add(ItemSpec<?> item) {
+      itemStrings.add(item.toString());
+      return this;
+    }
+
+    @Override
+    public DisplayData.Builder addIfNotNull(ItemSpec<?> item) {
+      return this;
+    }
+
+    @Override
+    public <T> DisplayData.Builder addIfNotDefault(ItemSpec<T> item, @Nullable T defaultValue) {
+      return this;
+    }
+  }
+
+  private static class InaccessibleValueProvider implements ValueProvider<String> {
+
+    @Override
+    public String get() {
+      return null;
+    }
+
+    @Override
+    public boolean isAccessible() {
+      return false;
+    }
+  }
 
   private Builder createBaseBuilder() {
     return createBaseBuilder(PROJECT, INSTANCE);
@@ -106,5 +157,27 @@ public class CloudBigtableConfigurationTest {
             .build();
     Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+  }
+
+  @Test
+  public void testPopulateDisplayData() {
+    CloudBigtableConfiguration config =
+        createBaseBuilder()
+            .withConfiguration("somekey", "somevalue")
+            .withConfiguration("inaccessible", new InaccessibleValueProvider())
+            .build();
+    TestDisplayDataBuilder builder = new TestDisplayDataBuilder();
+
+    config.populateDisplayData(builder);
+
+    List<String> expected = new ArrayList<>();
+    expected.add("null:projectId=my_project");
+    expected.add("null:instanceId=instance");
+    expected.add("null:somekey=somevalue");
+    expected.add("null:google.bigtable.project.id=my_project");
+    expected.add("null:google.bigtable.instance.id=instance");
+    expected.add("null:inaccessible=Unavailable during pipeline construction");
+
+    Assert.assertThat(builder.itemStrings, containsInAnyOrder(expected.toArray()));
   }
 }
