@@ -40,7 +40,6 @@ import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.repackaged.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
-import org.apache.beam.sdk.repackaged.com.google.common.base.Strings;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
