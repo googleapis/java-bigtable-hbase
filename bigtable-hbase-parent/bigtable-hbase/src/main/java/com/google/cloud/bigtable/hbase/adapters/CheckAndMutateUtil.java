@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.google.bigtable.v2.*;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters;
+import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.client.Delete;
@@ -27,6 +29,8 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 
@@ -53,7 +57,6 @@ public class CheckAndMutateUtil {
           "We built a bad Filter for conditional mutation.");
     }
   };
-
 
   /**
    * <p>wasMutationApplied.</p>
@@ -90,6 +93,7 @@ public class CheckAndMutateUtil {
     private CompareOp compareOp;
     private byte[] value;
     private boolean checkNonExistence = false;
+    private Filter timeFilter = null;
 
     /**
      * <p>
@@ -162,6 +166,15 @@ public class CheckAndMutateUtil {
       return this;
     }
 
+    public RequestBuilder timeRange(long start, long end) {
+      if (start == 0L && end == Long.MAX_VALUE) {
+        return this;
+      }
+      Preconditions.checkArgument(start < 0L || (start >= end), "Invalid start/end");
+      this.timeFilter = new TimestampRangeFilter(start, end);
+      return this;
+    }
+
     public RequestBuilder withPut(Put put) throws DoNotRetryIOException {
       return addMutations(put.getRow(), hbaseAdapter.adapt(put).getMutationsList());
     }
@@ -201,10 +214,17 @@ public class CheckAndMutateUtil {
           // check for non-existence
           requestBuilder.addAllFalseMutations(mutations);
         }
+        if (timeFilter != null) {
+          scan.setFilter(timeFilter);
+        }
       } else {
         ValueFilter valueFilter =
             new ValueFilter(reverseCompareOp(compareOp), new BinaryComparator(value));
-        scan.setFilter(valueFilter);
+        if (timeFilter != null) {
+          scan.setFilter(new FilterList(timeFilter, valueFilter));
+        } else {
+          scan.setFilter(valueFilter);
+        }
         requestBuilder.addAllTrueMutations(mutations);
       }
       requestBuilder.setPredicateFilter(

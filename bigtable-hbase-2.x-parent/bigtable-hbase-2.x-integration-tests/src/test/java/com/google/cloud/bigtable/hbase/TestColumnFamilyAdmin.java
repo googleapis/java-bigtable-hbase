@@ -68,10 +68,6 @@ public class TestColumnFamilyAdmin extends AbstractTestColumnFamilyAdmin {
 
   @Test
   public void testModifyColumnFamilyAsync() throws Exception {
-    if (!sharedTestEnv.isBigtable()) {
-      return;
-    }
-
     HColumnDescriptor newColumn = new HColumnDescriptor("MODIFY_COLUMN");
     newColumn.setMaxVersions(2);
     admin.addColumnFamilyAsync(tableName, newColumn).get();
@@ -125,9 +121,6 @@ public class TestColumnFamilyAdmin extends AbstractTestColumnFamilyAdmin {
   
   @Test
   public void testDeleteColumnFamilyAsync() throws Exception {
-    if (!sharedTestEnv.isBigtable()) {
-      return;
-    }
   //Count column before delete.
     TableDescriptor tblDesc = admin.getDescriptor(tableName);
     ColumnFamilyDescriptor colDescArr[] = tblDesc.getColumnFamilies();

@@ -152,11 +152,6 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
 
   @Test
   public void testGetTableDescriptor_nullTable() throws Exception {
-    if (!sharedTestEnv.isBigtable()) {
-        // This condition gets the Minicluster into a really bad state as of HBase 2.0.0-beta1
-        // TODO: Attempt to add this test back one HBase versions increase.
-      return;
-    }
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     assertEquals(null, asyncAdmin.getDescriptor(null).get());
   }  
