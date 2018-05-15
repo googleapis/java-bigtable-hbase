@@ -205,7 +205,7 @@ public interface BigtableInstanceClient {
    * Updates an app profile within an instance.
    * 
    * @param request a {@link com.google.bigtable.admin.v2.UpdateAppProfileRequest} object.
-   * @return a {@link @link com.google.longrunning.Operation} object.
+   * @return a {@link com.google.longrunning.Operation} object.
    */
   Operation updateAppProfile(UpdateAppProfileRequest request);
 
