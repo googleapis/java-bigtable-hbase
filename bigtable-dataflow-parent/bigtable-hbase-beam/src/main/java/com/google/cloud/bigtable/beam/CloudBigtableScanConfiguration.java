@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
@@ -235,9 +236,59 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
   }
 
-  // 'request' needs to be a runtime parameter because it depends on runtime parameters: project ID
-  // and instance ID.
   private final ValueProvider<ReadRowsRequest> request;
+
+  /**
+   * Provides an updated request by setting the table name in the existing request if the table name
+   * wasn't set.
+   */
+  static class RequestWithTableNameValueProvider
+      implements ValueProvider<ReadRowsRequest>, Serializable {
+    private final ValueProvider<String> projectId;
+    private final ValueProvider<String> instanceId;
+    private final ValueProvider<String> tableId;
+    private final ValueProvider<ReadRowsRequest> request;
+    private transient volatile ReadRowsRequest cachedRequest;
+
+    RequestWithTableNameValueProvider(
+        ValueProvider<String> projectId,
+        ValueProvider<String> instanceId,
+        ValueProvider<String> tableId,
+        ValueProvider<ReadRowsRequest> request) {
+      this.projectId = projectId;
+      this.instanceId = instanceId;
+      this.tableId = tableId;
+      this.request = request;
+    }
+
+    @Override
+    public ReadRowsRequest get() {
+      if (cachedRequest == null) {
+        if (request.get().getTableName().isEmpty()) {
+          BigtableInstanceName bigtableInstanceName =
+              new BigtableInstanceName(projectId.get(), instanceId.get());
+          String fullTableName = bigtableInstanceName.toTableNameStr(tableId.get());
+          cachedRequest = request.get().toBuilder().setTableName(fullTableName).build();
+        } else {
+          cachedRequest = request.get();
+        }
+      }
+      return cachedRequest;
+    }
+
+    @Override
+    public boolean isAccessible() {
+      return projectId.isAccessible()
+          && instanceId.isAccessible()
+          && tableId.isAccessible()
+          && request.isAccessible();
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(get());
+    }
+  }
 
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
@@ -255,22 +306,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<ReadRowsRequest> request,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    this.request =
-        NestedValueProvider.of(
-            request,
-            new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
-              @Override
-              public ReadRowsRequest apply(ReadRowsRequest request) {
-                if (!request.getTableName().isEmpty()) {
-                  return request;
-                }
-
-                BigtableInstanceName bigtableInstanceName =
-                    new BigtableInstanceName(getProjectId(), getInstanceId());
-                String fullTableName = bigtableInstanceName.toTableNameStr(getTableId());
-                return request.toBuilder().setTableName(fullTableName).build();
-              }
-            });
+    this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, request);
   }
 
   /**
