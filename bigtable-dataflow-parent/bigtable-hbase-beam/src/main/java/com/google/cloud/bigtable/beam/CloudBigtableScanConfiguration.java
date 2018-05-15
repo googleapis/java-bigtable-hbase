@@ -187,7 +187,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   protected CloudBigtableScanConfiguration(
       ValueProvider<String> projectId,
       ValueProvider<String> instanceId,
-      String tableId,
+      ValueProvider<String> tableId,
       ReadRowsRequest request,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
