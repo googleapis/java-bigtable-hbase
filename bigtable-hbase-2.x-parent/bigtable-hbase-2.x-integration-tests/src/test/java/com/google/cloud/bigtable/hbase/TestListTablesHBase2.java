@@ -39,21 +39,18 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
   private boolean enableAsyncDelete = false;
   
   @Before
-  public void setup()
-  {
+  public void setup() {
     enableAsyncDelete = false;
   }
 
   @Test
-  public void testDeleteTableAsync() throws Exception
-  {
+  public void testDeleteTableAsync() throws Exception {
     enableAsyncDelete = true;
     testDeleteTable();
   }
   
   @Override
-  protected void checkColumnFamilies(Admin admin, TableName tableName) 
-      throws TableNotFoundException,IOException {
+  protected void checkColumnFamilies(Admin admin, TableName tableName) throws IOException {
     TableDescriptor descriptor = admin.getDescriptor(tableName);
     ColumnFamilyDescriptor[] columnFamilies = descriptor.getColumnFamilies();
     Assert.assertEquals(2, columnFamilies.length);
@@ -62,7 +59,7 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
   
   @Override
   protected void deleteTable(Admin admin, TableName tableName) throws Exception {
-    if (enableAsyncDelete && sharedTestEnv.isBigtable()) {
+    if (enableAsyncDelete) {
       admin.disableTableAsync(tableName).get();
       admin.deleteTableAsync(tableName).get();
     } else {
@@ -85,12 +82,12 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
 
   @Override
   protected void checkTableDescriptor(Admin admin, TableName tableName)
-      throws TableNotFoundException, IOException {
+      throws IOException {
     admin.getDescriptor(tableName);
   }
   
   private List<TableName> toTableNames(List<TableDescriptor> descriptors) {
-    List<TableName> tableNames = new ArrayList<TableName>();
+    List<TableName> tableNames = new ArrayList<>();
     for (TableDescriptor descriptor : descriptors) {
       tableNames.add(descriptor.getTableName());
     }

@@ -61,7 +61,7 @@ public abstract class AbstractTestTruncateTable extends AbstractTest {
       table.put(put);
       assertTrue(table.exists(new Get(rowKey)));
       admin.disableTable(tableName);
-      admin.truncateTable(tableName, false);
+      admin.truncateTable(tableName, true);
       assertTrue(admin.tableExists(tableName));
       assertFalse(table.exists(new Get(rowKey)));
     }
@@ -77,14 +77,11 @@ public abstract class AbstractTestTruncateTable extends AbstractTest {
 
 
     TableName tableName = sharedTestEnv.newTestTableName();
-    try(Admin admin = getConnection().getAdmin()) {
+    try {
       createTable(tableName, splits);
       testSplits(tableName, splits);
       testTruncate(tableName);
-      if (sharedTestEnv.isBigtable()) {
-        // The splits are only preserved by Cloud Bigtable, and not by HBase.
-        testSplits(tableName, splits);
-      }
+      testSplits(tableName, splits);
     } finally {
       deleteTable(tableName);
     }

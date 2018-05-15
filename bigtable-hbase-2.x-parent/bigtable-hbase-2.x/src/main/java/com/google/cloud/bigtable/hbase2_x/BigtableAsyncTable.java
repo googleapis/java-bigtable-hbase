@@ -63,6 +63,7 @@ import io.grpc.stub.StreamObserver;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
+import org.apache.hadoop.hbase.io.TimeRange;
 
 /**
  * Bigtable implementation of {@link AsyncTable}.
@@ -100,6 +101,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     return batchExecutor;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CompletableFuture<Result> append(Append append) {
     ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
@@ -110,6 +114,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     return client.readModifyWriteRowAsync(request).thenApply(adaptRowFunction);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @SuppressWarnings("unchecked")
   @Override
   public <T> List<CompletableFuture<T>> batch(List<? extends Row> actions) {
@@ -117,6 +124,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     return map(asyncRequests(actions), f -> (CompletableFuture<T>) f);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
     return new CheckAndMutateBuilderImpl(client, hbaseAdapter, row, family);
@@ -133,18 +143,27 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       this.builder = new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CheckAndMutateBuilder qualifier(byte[] qualifier) {
       builder.qualifier(qualifier);
       return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CheckAndMutateBuilder ifNotExists() {
       builder.ifNotExists();
       return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CheckAndMutateBuilder ifMatches(CompareOperator compareOp, byte[] value) {
       Preconditions.checkNotNull(compareOp, "compareOp is null");
@@ -155,6 +174,17 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public CheckAndMutateBuilder timeRange(TimeRange timeRange) {
+      builder.timeRange(timeRange.getMin(), timeRange.getMax());
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CompletableFuture<Boolean> thenPut(Put put) {
       try {
@@ -165,6 +195,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CompletableFuture<Boolean> thenDelete(Delete delete) {
       try {
@@ -175,6 +208,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CompletableFuture<Boolean> thenMutate(RowMutations mutation) {
       try {
@@ -193,6 +229,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CompletableFuture<Void> delete(Delete delete) {
     // figure out how to time this with Opencensus
@@ -200,6 +239,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
         .thenApply(r -> null);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<CompletableFuture<Void>> delete(List<Delete> deletes) {
     return map(asyncRequests(deletes), cf -> cf.thenApply(r -> null));
@@ -210,12 +252,18 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       FutureUtils::toCompletableFuture);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CompletableFuture<Result> get(Get get) {
     ReadRowsRequest request = hbaseAdapter.adapt(get);
     return client.readFlatRowsAsync(request).thenApply(BigtableAsyncTable::toResult);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CompletableFuture<Boolean> exists(Get get) {
     return get(GetAdapter.setCheckExistenceOnly(get)).thenApply(r -> !r.isEmpty());
@@ -236,23 +284,35 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @SuppressWarnings("unchecked")
   @Override
   public List<CompletableFuture<Result>> get(List<Get> gets) {
     return map(asyncRequests(gets), (f -> (CompletableFuture<Result>) f));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<CompletableFuture<Boolean>> exists(List<Get> gets) {
     List<Get> existGets = map(gets, GetAdapter::setCheckExistenceOnly);
     return map(get(existGets), cf -> cf.thenApply(r -> !r.isEmpty()));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Configuration getConfiguration() {
     return this.asyncConnection.getConfiguration(); // TODO
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public TableName getName() {
     return this.tableName;
@@ -283,18 +343,27 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     throw new UnsupportedOperationException("getWriteRpcTimeout"); // TODO
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CompletableFuture<Result> increment(Increment increment) {
     return client.readModifyWriteRowAsync(hbaseAdapter.adapt(increment))
         .thenApply(response -> Adapters.ROW_ADAPTER.adaptResponse(response.getRow()));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
     return client.mutateRowAsync(hbaseAdapter.adapt(rowMutations))
         .thenApply(r -> null);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CompletableFuture<Void> put(Put put) {
     // figure out how to time this with Opencensus
@@ -302,11 +371,17 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
         .thenApply(r -> null);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<CompletableFuture<Void>> put(List<Put> puts) {
     return map(asyncRequests(puts), f -> f.thenApply(r -> null));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CompletableFuture<List<Result>> scanAll(Scan scan) {
     if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
@@ -352,6 +427,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void scan(Scan scan, final ScanResultConsumer consumer) {
     if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
       throw new UnsupportedOperationException(
@@ -375,11 +453,17 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     });
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CompletableFuture coprocessorService(Function arg0, ServiceCaller arg1, byte[] arg2) {
     throw new UnsupportedOperationException("coprocessorService");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CoprocessorServiceBuilder coprocessorService(Function arg0, ServiceCaller arg1, CoprocessorCallback arg2) {
     throw new UnsupportedOperationException("coprocessorService");

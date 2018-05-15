@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import org.apache.hadoop.hbase.io.TimeRange;
 
 public class BigtableTable extends AbstractBigtableTable {
 
@@ -58,12 +59,18 @@ public class BigtableTable extends AbstractBigtableTable {
     super(bigtableConnection, hbaseAdapter);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
       CompareOperator compareOp, byte[] value, Delete delete) throws IOException {
     return super.checkAndDelete(row, family, qualifier, toCompareOp(compareOp), value, delete);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean checkAndMutate(final byte[] row, final byte[] family, final byte[] qualifier,
       final CompareOperator compareOp, final byte[] value, final RowMutations rm)
@@ -71,17 +78,26 @@ public class BigtableTable extends AbstractBigtableTable {
     return super.checkAndMutate(row, family, qualifier, toCompareOp(compareOp), value, rm);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
       CompareOperator compareOp, byte[] value, Put put) throws IOException {
     return super.checkAndPut(row, family, qualifier, toCompareOp(compareOp), value, put);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean[] exists(List<Get> gets) throws IOException {
     return existsAll(gets);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public TableDescriptor getDescriptor() throws IOException {
     return super.getTableDescriptor();
@@ -134,31 +150,62 @@ public class BigtableTable extends AbstractBigtableTable {
         new BigtableAsyncTable.CheckAndMutateBuilderImpl(asyncClient, hbaseAdapter, row, family);
     return new CheckAndMutateBuilder() {
 
-      @Override public CheckAndMutateBuilder qualifier(byte[] qualifier) {
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public CheckAndMutateBuilder qualifier(byte[] qualifier) {
         delegate.qualifier(qualifier);
         return this;
       }
 
-      @Override public CheckAndMutateBuilder ifNotExists() {
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public CheckAndMutateBuilder ifNotExists() {
         delegate.ifNotExists();
         return this;
       }
 
+      /**
+       * {@inheritDoc}
+       */
       @Override
       public CheckAndMutateBuilder ifMatches(CompareOperator compareOperator, byte[] value) {
         delegate.ifMatches(compareOperator, value);
         return this;
       }
 
-      @Override public boolean thenPut(Put put) throws IOException {
+      /**
+       * {@inheritDoc}
+       */
+      public CheckAndMutateBuilder timeRange(TimeRange timeRange) {
+        delegate.timeRange(timeRange);
+        return this;
+      }
+
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public boolean thenPut(Put put) throws IOException {
         return get(delegate.thenPut(put), "Put");
       }
 
-      @Override public boolean thenDelete(Delete delete) throws IOException {
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public boolean thenDelete(Delete delete) throws IOException {
         return get(delegate.thenDelete(delete), "Delete");
       }
 
-      @Override public boolean thenMutate(RowMutations rowMutations) throws IOException {
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public boolean thenMutate(RowMutations rowMutations) throws IOException {
         return get(delegate.thenMutate(rowMutations), "RowMutations");
       }
 
