@@ -242,7 +242,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Provides an updated request by setting the table name in the existing request if the table name
    * wasn't set.
    */
-  static class RequestWithTableNameValueProvider
+  private static class RequestWithTableNameValueProvider
       implements ValueProvider<ReadRowsRequest>, Serializable {
     private final ValueProvider<String> projectId;
     private final ValueProvider<String> instanceId;

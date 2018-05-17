@@ -92,7 +92,6 @@ public class CloudBigtableScanConfigurationTest {
             .withScan(new Scan(START_ROW, STOP_ROW))
             .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
             .build();
-    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
 
     // Verify with requests.
@@ -100,7 +99,6 @@ public class CloudBigtableScanConfigurationTest {
     withRegularParameters = withRegularParameters.toBuilder().withRequest(request).build();
     withRuntimeParameters =
         withRuntimeParameters.toBuilder().withRequest(StaticValueProvider.of(request)).build();
-    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
   }
 
@@ -128,7 +126,6 @@ public class CloudBigtableScanConfigurationTest {
             .withKeys(START_ROW, STOP_ROW)
             .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
             .build();
-    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
 
     // Verify with requests.
@@ -139,7 +136,6 @@ public class CloudBigtableScanConfigurationTest {
             .toBuilder()
             .withRequest(StaticValueProvider.of(updatedRequest))
             .build();
-    Assert.assertNotSame(withRegularParameters, withRuntimeParameters);
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
   }
 }
