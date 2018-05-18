@@ -42,6 +42,8 @@ public class CloudBigtableConfiguration implements Serializable {
 
   private static final long serialVersionUID = 1655181275627002133L;
 
+  protected static final String VALUE_UNAVAILABLE = "Unavailable during pipeline construction";
+
   /**
    * Builds a {@link CloudBigtableConfiguration}.
    */
@@ -320,7 +322,7 @@ public class CloudBigtableConfiguration implements Serializable {
     if (parameter.isAccessible()) {
       return String.valueOf(parameter.get());
     }
-    return "Unavailable during pipeline construction";
+    return VALUE_UNAVAILABLE;
   }
 
   public void populateDisplayData(DisplayData.Builder builder) {

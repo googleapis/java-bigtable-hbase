@@ -242,7 +242,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Provides an updated request by setting the table name in the existing request if the table name
    * wasn't set.
    */
-  private static class RequestWithTableNameValueProvider
+  private static class RequestValueProvider
       implements ValueProvider<ReadRowsRequest>, Serializable {
     private final ValueProvider<String> projectId;
     private final ValueProvider<String> instanceId;
@@ -250,7 +250,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     private final ValueProvider<ReadRowsRequest> request;
     private transient volatile ReadRowsRequest cachedRequest;
 
-    RequestWithTableNameValueProvider(
+    RequestValueProvider(
         ValueProvider<String> projectId,
         ValueProvider<String> instanceId,
         ValueProvider<String> tableId,
@@ -286,7 +286,10 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     @Override
     public String toString() {
-      return String.valueOf(get());
+      if (isAccessible()) {
+        return String.valueOf(get());
+      }
+      return VALUE_UNAVAILABLE;
     }
   }
 
@@ -306,7 +309,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<ReadRowsRequest> request,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, request);
+    this.request = new RequestValueProvider(projectId, instanceId, tableId, request);
   }
 
   /**
