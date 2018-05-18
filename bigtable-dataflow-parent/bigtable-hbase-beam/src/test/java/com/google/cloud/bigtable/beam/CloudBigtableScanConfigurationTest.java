@@ -15,11 +15,12 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Assert;
 import org.junit.Test;
-
+import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 
 /**
@@ -73,5 +74,68 @@ public class CloudBigtableScanConfigurationTest {
     Assert.assertNotSame(config, copy);
     Assert.assertEquals(config, copy);
   }
-}
 
+  /**
+   * This ensures that the config built from regular parameters with a scan are the same as the
+   * config built from runtime parameters, so that we don't have to use runtime parameters to repeat
+   * the same tests.
+   */
+  @Test
+  public void testRegularAndRuntimeParametersAreEqualWithScan() {
+    CloudBigtableScanConfiguration withRegularParameters =
+        config.toBuilder().withConfiguration("somekey", "somevalue").build();
+    CloudBigtableScanConfiguration withRuntimeParameters =
+        new CloudBigtableScanConfiguration.Builder()
+            .withTableId(StaticValueProvider.of(TABLE))
+            .withProjectId(StaticValueProvider.of(PROJECT))
+            .withInstanceId(StaticValueProvider.of(INSTANCE))
+            .withScan(new Scan(START_ROW, STOP_ROW))
+            .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
+            .build();
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+
+    // Verify with requests.
+    ReadRowsRequest request = withRegularParameters.getRequest();
+    withRegularParameters = withRegularParameters.toBuilder().withRequest(request).build();
+    withRuntimeParameters =
+        withRuntimeParameters.toBuilder().withRequest(StaticValueProvider.of(request)).build();
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+  }
+
+  /**
+   * This ensures that the config built from regular parameters with a request are the same as the
+   * config built from runtime parameters, so that we don't have to use runtime parameters to repeat
+   * the same tests.
+   */
+  @Test
+  public void testRegularAndRuntimeParametersAreEqualWithRequest() {
+    ReadRowsRequest request = ReadRowsRequest.newBuilder().setRowsLimit(10).build();
+    CloudBigtableScanConfiguration withRegularParameters =
+        config
+            .toBuilder()
+            .withRequest(request)
+            .withKeys(START_ROW, STOP_ROW)
+            .withConfiguration("somekey", "somevalue")
+            .build();
+    CloudBigtableScanConfiguration withRuntimeParameters =
+        new CloudBigtableScanConfiguration.Builder()
+            .withTableId(StaticValueProvider.of(TABLE))
+            .withProjectId(StaticValueProvider.of(PROJECT))
+            .withInstanceId(StaticValueProvider.of(INSTANCE))
+            .withRequest(StaticValueProvider.of(request))
+            .withKeys(START_ROW, STOP_ROW)
+            .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
+            .build();
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+
+    // Verify with requests.
+    ReadRowsRequest updatedRequest = withRegularParameters.getRequest();
+    withRegularParameters = withRegularParameters.toBuilder().withRequest(updatedRequest).build();
+    withRuntimeParameters =
+        withRuntimeParameters
+            .toBuilder()
+            .withRequest(StaticValueProvider.of(updatedRequest))
+            .build();
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+  }
+}
