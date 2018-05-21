@@ -104,6 +104,54 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     /**
+     * Provides an updated request by adding a row range with start and end keys in the existing
+     * request.
+     */
+    private static class RequestWithKeysValueProvider
+        implements ValueProvider<ReadRowsRequest>, Serializable {
+      private final ByteString start;
+      private final ByteString stop;
+      private final ValueProvider<ReadRowsRequest> request;
+      private transient volatile ReadRowsRequest cachedRequest;
+
+      RequestWithKeysValueProvider(
+          ByteString start, ByteString stop, ValueProvider<ReadRowsRequest> request) {
+        this.start = start;
+        this.stop = stop;
+        this.request = request;
+      }
+
+      @Override
+      public ReadRowsRequest get() {
+        if (cachedRequest == null) {
+          cachedRequest =
+              request
+                  .get()
+                  .toBuilder()
+                  .setRows(
+                      RowSet.newBuilder()
+                          .addRowRanges(
+                              RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(stop)))
+                  .build();
+        }
+        return cachedRequest;
+      }
+
+      @Override
+      public boolean isAccessible() {
+        return request.isAccessible();
+      }
+
+      @Override
+      public String toString() {
+        if (isAccessible()) {
+          return String.valueOf(get());
+        }
+        return VALUE_UNAVAILABLE;
+      }
+    }
+
+    /**
      * Internal API that allows a Source to configure the request with a new start/stop row range.
      * @param startKey The first key, inclusive.
      * @param stopKey The last key, exclusive.
@@ -116,23 +164,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
           this.request == null
               ? StaticValueProvider.of(ReadRowsRequest.getDefaultInstance())
               : this.request;
-      return withRequest(
-          NestedValueProvider.of(
-              request,
-              new SerializableFunction<ReadRowsRequest, ReadRowsRequest>() {
-                @Override
-                public ReadRowsRequest apply(ReadRowsRequest request) {
-                  return request
-                      .toBuilder()
-                      .setRows(
-                          RowSet.newBuilder()
-                              .addRowRanges(
-                                  RowRange.newBuilder()
-                                      .setStartKeyClosed(start)
-                                      .setEndKeyOpen(stop)))
-                      .build();
-                }
-              }));
+      return withRequest(new RequestWithKeysValueProvider(start, stop, request));
     }
 
     /**
@@ -242,7 +274,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Provides an updated request by setting the table name in the existing request if the table name
    * wasn't set.
    */
-  private static class RequestValueProvider
+  private static class RequestWithTableNameValueProvider
       implements ValueProvider<ReadRowsRequest>, Serializable {
     private final ValueProvider<String> projectId;
     private final ValueProvider<String> instanceId;
@@ -250,7 +282,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     private final ValueProvider<ReadRowsRequest> request;
     private transient volatile ReadRowsRequest cachedRequest;
 
-    RequestValueProvider(
+    RequestWithTableNameValueProvider(
         ValueProvider<String> projectId,
         ValueProvider<String> instanceId,
         ValueProvider<String> tableId,
@@ -309,7 +341,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<ReadRowsRequest> request,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    this.request = new RequestValueProvider(projectId, instanceId, tableId, request);
+    this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, request);
   }
 
   /**
