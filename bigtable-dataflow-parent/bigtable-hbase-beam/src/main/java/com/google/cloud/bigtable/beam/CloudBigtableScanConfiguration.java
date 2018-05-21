@@ -104,15 +104,15 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     /**
-     * Provides an updated request by adding a row range with start and end keys in the existing
-     * request.
+     * Provides an updated request by replacing the row set and adding a row range with start and
+     * end keys in the existing request.
      */
     private static class RequestWithKeysValueProvider
         implements ValueProvider<ReadRowsRequest>, Serializable {
       private final ByteString start;
       private final ByteString stop;
       private final ValueProvider<ReadRowsRequest> request;
-      private transient volatile ReadRowsRequest cachedRequest;
+      private ReadRowsRequest cachedRequest;
 
       RequestWithKeysValueProvider(
           ByteString start, ByteString stop, ValueProvider<ReadRowsRequest> request) {
@@ -280,7 +280,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     private final ValueProvider<String> instanceId;
     private final ValueProvider<String> tableId;
     private final ValueProvider<ReadRowsRequest> request;
-    private transient volatile ReadRowsRequest cachedRequest;
+    private ReadRowsRequest cachedRequest;
 
     RequestWithTableNameValueProvider(
         ValueProvider<String> projectId,
