@@ -95,10 +95,11 @@ class CreateTableHelper {
     LOG.info(String.format("Creating a new table with %d splits and the families: %s",
         splits.length, opts.getFamilies()));
 
-    try (Connection connection = BigtableConfiguration
-        .connect(opts.getBigtableProject(), opts.getBigtableInstanceId())) {
+    try (Connection connection =
+        BigtableConfiguration.connect(
+            opts.getBigtableProject().get(), opts.getBigtableInstanceId().get())) {
 
-      TableName tableName = TableName.valueOf(opts.getBigtableTableId());
+      TableName tableName = TableName.valueOf(opts.getBigtableTableId().get());
       HTableDescriptor descriptor = new HTableDescriptor(tableName);
 
       for (String family : opts.getFamilies()) {
