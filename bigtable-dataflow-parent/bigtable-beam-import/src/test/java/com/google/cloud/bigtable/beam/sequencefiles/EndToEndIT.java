@@ -178,8 +178,12 @@ public class EndToEndIT {
       pipelineOpts.setProject(projectId);
 
       ImportJob.ImportOptions importOpts = pipelineOpts.as(ImportJob.ImportOptions.class);
-      importOpts.setBigtableInstanceId(instanceId);
-      importOpts.setBigtableTableId(destTableId);
+      importOpts.setBigtableProject(StaticValueProvider.of(projectId));
+      importOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
+      importOpts.setBigtableTableId(StaticValueProvider.of(destTableId));
+      // Have to set bigtableAppProfileId to null, otherwise importOpts will return a non-null
+      // value.
+      importOpts.setBigtableAppProfileId(null);
       importOpts.setSourcePattern(StaticValueProvider.of(workDir + "/part-*"));
 
       CreateTableHelper.CreateTableOpts createOpts = pipelineOpts.as(CreateTableHelper.CreateTableOpts.class);

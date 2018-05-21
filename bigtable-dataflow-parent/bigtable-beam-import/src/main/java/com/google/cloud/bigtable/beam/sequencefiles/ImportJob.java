@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
+import com.google.cloud.bigtable.beam.TemplateUtils;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
@@ -39,40 +40,78 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
+/**
+ * A job that imports data from GCS bucket with SequenceFile format into Cloud Bigtable. This job
+ * can be run directly or as a Dataflow template.
+ *
+ * <p>Execute the following command to run the job directly:
+ *
+ * <pre>
+ * mvn compile exec:java \
+ *   -DmainClass=com.google.cloud.bigtable.beam.sequencefiles.ImportJob \
+ *   -Dexec.args="--runner=DataflowRunner \
+ *                --stagingLocation=gs://$STAGING_PATH \
+ *                --project=$PROJECT \
+ *                --bigtableInstanceId=$INSTANCE \
+ *                --bigtableTableId=$TABLE \
+ *                --sourcePattern=gs://$SOURCE_PATTERN"
+ * </pre>
+ *
+ * <p>Execute the following command to create the Dataflow template:
+ *
+ * <pre>
+ * mvn compile exec:java \
+ *   -DmainClass=com.google.cloud.bigtable.beam.sequencefiles.ImportJob \
+ *   -Dexec.args="--runner=DataflowRunner \
+ *                --project=$PROJECT \
+ *                --stagingLocation=gs://$STAGING_PATH \
+ *                --templateLocation=gs://$TEMPLATE_PATH \
+ *                --wait=false"
+ * </pre>
+ *
+ * <p>There are a few ways to run the pipeline using the template. See Dataflow doc for details:
+ * https://cloud.google.com/dataflow/docs/templates/executing-templates. An example using gcloud
+ * command line:
+ *
+ * <pre>
+ * gcloud beta dataflow jobs run $JOB_NAME \
+ *   --gcs-location gs://$TEMPLATE_PATH \
+ *   --parameters bigtableProject=$PROJECT,bigtableInstanceId=$INSTANCE,bigtableTableId=$TABLE,sourcePattern=gs://$SOURCE_PATTERN
+ * </pre>
+ */
 public class ImportJob {
   private static final Log LOG = LogFactory.getLog(ImportJob.class);
 
   static final long BUNDLE_SIZE = 100 * 1024 * 1024;
 
   public interface ImportOptions extends GcpOptions {
-    //TODO: switch to ValueProviders
-
     @Description("This Bigtable App Profile id. (Replication alpha feature).")
-    String getBigtableAppProfileId();
+    ValueProvider<String> getBigtableAppProfileId();
     @SuppressWarnings("unused")
-    void setBigtableAppProfileId(String appProfileId);
+    void setBigtableAppProfileId(ValueProvider<String> appProfileId);
 
     @Description("The project that contains the table to export. Defaults to --project.")
     @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
-    String getBigtableProject();
+    ValueProvider<String> getBigtableProject();
     @SuppressWarnings("unused")
-    void setBigtableProject(String projectId);
+    void setBigtableProject(ValueProvider<String> projectId);
 
     @Description("The Bigtable instance id that contains the table to export.")
-    String getBigtableInstanceId();
+    ValueProvider<String> getBigtableInstanceId();
     @SuppressWarnings("unused")
-    void setBigtableInstanceId(String instanceId);
+    void setBigtableInstanceId(ValueProvider<String> instanceId);
 
     @Description("The Bigtable table id to export.")
-    String getBigtableTableId();
+    ValueProvider<String> getBigtableTableId();
     @SuppressWarnings("unused")
-    void setBigtableTableId(String tableId);
+    void setBigtableTableId(ValueProvider<String> tableId);
 
     @Description("The fully qualified file pattern to import. Should of the form '[destinationPath]/part-*'")
     ValueProvider<String> getSourcePattern();
     @SuppressWarnings("unused")
     void setSourcePattern(ValueProvider<String> sourcePath);
 
+    // When creating a template, this flag must be set to false.
     @Description("Wait for pipeline to finish.")
     @Default.Boolean(true)
     boolean getWait();
@@ -122,15 +161,7 @@ public class ImportJob {
   }
 
   static PTransform<PCollection<Mutation>, PDone> createSink(ImportOptions opts) {
-    CloudBigtableTableConfiguration.Builder configBuilder = new CloudBigtableTableConfiguration.Builder()
-        .withProjectId(opts.getBigtableProject())
-        .withInstanceId(opts.getBigtableInstanceId())
-        .withTableId(opts.getBigtableTableId());
-
-    if (opts.getBigtableAppProfileId() != null) {
-      configBuilder.withAppProfileId(opts.getBigtableAppProfileId());
-    }
-
-    return CloudBigtableIO.writeToTable(configBuilder.build());
+    CloudBigtableTableConfiguration config = TemplateUtils.BuildImportConfig(opts);
+    return CloudBigtableIO.writeToTable(config);
   }
 }
