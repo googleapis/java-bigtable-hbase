@@ -50,7 +50,7 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
 
   private final Configuration conf;
   private final BigtableSession session;
-  private final BigtableOptions options;
+  private final BigtableOptions.Builder options;
   private volatile boolean closed = false;
 
   private final Set<TableName> disabledTables = Collections.synchronizedSet(new HashSet<>());
@@ -71,7 +71,7 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
     LOG.debug("Creating BigtableAsyncConnection");
     this.conf = conf;
 
-    BigtableOptions opts;
+    BigtableOptions.Builder opts;
     try {
       opts = BigtableOptionsFactory.fromConfiguration(conf);
     } catch (IOException ioe) {
@@ -99,7 +99,7 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
     return this.session;
   }
 
-  public BigtableOptions getOptions() {
+  public BigtableOptions.Builder getOptions() {
     return this.options;
   }
 
@@ -268,7 +268,7 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
 
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
-    return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getDataClient());
+    return new BigtableAsyncTableRegionLocator(tableName, options.build(), this.session.getDataClient());
   }
 
   @Override

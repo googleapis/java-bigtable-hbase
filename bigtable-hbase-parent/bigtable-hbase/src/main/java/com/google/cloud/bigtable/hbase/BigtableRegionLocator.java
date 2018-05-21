@@ -47,8 +47,8 @@ public abstract class BigtableRegionLocator extends AbstractBigtableRegionLocato
    * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
    */
-  public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableDataClient client) {
-    super(tableName,options,client);
+  public BigtableRegionLocator(TableName tableName, BigtableOptions.Builder options, BigtableDataClient client) {
+    super(tableName,options.build(),client);
   }
 
   /** {@inheritDoc} */

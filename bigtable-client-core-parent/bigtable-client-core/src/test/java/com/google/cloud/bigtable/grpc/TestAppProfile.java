@@ -31,6 +31,7 @@ import com.google.bigtable.v2.RowSet;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
@@ -73,9 +74,9 @@ public class TestAppProfile {
         .addService(fakeDataService)
         .build();
     server.start();
-
-
-    BigtableOptions opts = new BigtableOptions.Builder()
+  
+  
+    BigtableOptions.Builder opts = BigtableOptions.Builder()
         .setDataHost("localhost")
         .setAdminHost("locahost")
         .setPort(port)
@@ -83,16 +84,12 @@ public class TestAppProfile {
         .setInstanceId("fake-instance")
         .setUserAgent("fake-agent")
         .setUsePlaintextNegotiation(true)
-        .setCredentialOptions(CredentialOptions.nullCredential())
-        .build();
-
+        .setCredentialOptions(CredentialOptions.nullCredential());
+  
     defaultSession = new BigtableSession(opts);
 
     profileSession = new BigtableSession(
-        opts.toBuilder()
-        .setAppProfileId("my-app-profile")
-        .build()
-    );
+        opts.setAppProfileId("my-app-profile"));
   }
 
   @After

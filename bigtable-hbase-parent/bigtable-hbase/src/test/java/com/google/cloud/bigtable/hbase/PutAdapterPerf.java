@@ -37,12 +37,12 @@ public class PutAdapterPerf {
     byte[] value = RandomStringUtils.randomAlphanumeric(10000).getBytes();
     put.addColumn(Bytes.toBytes("Family1"), Bytes.toBytes("Qaulifier"), value);
 
-    BigtableOptions options = new BigtableOptions.Builder()
+    BigtableOptions options = BigtableOptions.Builder()
         .setInstanceId("instanceId")
         .setProjectId("projectId")
         .build();
     HBaseRequestAdapter adapter =
-        new HBaseRequestAdapter(options,
+        new HBaseRequestAdapter(options.toBuilder(),
             TableName.valueOf("tableName"), new Configuration());
     for (int i = 0; i < 10; i++) {
       putAdapterPerf(adapter, put);

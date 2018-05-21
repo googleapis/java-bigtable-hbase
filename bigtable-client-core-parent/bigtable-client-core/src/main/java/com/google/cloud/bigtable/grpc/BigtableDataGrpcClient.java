@@ -170,7 +170,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       Channel channel,
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions) {
-    this.clientDefaultAppProfileId = bigtableOptions.getAppProfileId();
+    this.clientDefaultAppProfileId = bigtableOptions.getAppPofileId();
     this.retryExecutorService = retryExecutorService;
     this.retryOptions = bigtableOptions.getRetryOptions();
 

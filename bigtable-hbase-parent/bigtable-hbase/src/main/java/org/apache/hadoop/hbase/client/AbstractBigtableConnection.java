@@ -95,7 +95,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private BigtableSession session;
 
   private volatile boolean cleanupPool = false;
-  private final BigtableOptions options;
+  private final BigtableOptions.Builder options;
 
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
@@ -131,7 +131,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     }
     this.conf = conf;
 
-    BigtableOptions opts;
+    BigtableOptions.Builder opts;
     try {
       opts = BigtableOptionsFactory.fromConfiguration(conf);
     } catch (IOException ioe) {
@@ -307,10 +307,10 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableConnection.class)
-      .add("project", options.getProjectId())
-      .add("instance", options.getInstanceId())
-      .add("dataHost", options.getDataHost())
-      .add("tableAdminHost", options.getAdminHost())
+      .add("project", options.build().getProjectId())
+      .add("instance", options.build().getInstanceId())
+      .add("dataHost", options.build().getDataHost())
+      .add("tableAdminHost", options.build().getAdminHost())
       .toString();
   }
 
@@ -349,7 +349,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
    *
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
-  protected BigtableOptions getOptions() {
+  protected BigtableOptions.Builder getOptions() {
     return options;
   }
 

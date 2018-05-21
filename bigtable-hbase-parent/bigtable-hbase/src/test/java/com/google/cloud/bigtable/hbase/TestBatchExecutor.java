@@ -134,10 +134,9 @@ public class TestBatchExecutor {
   private HBaseRequestAdapter requestAdapter;
   @Before
   public void setup() throws InterruptedException {
-    final BigtableOptions options = new BigtableOptions.Builder()
+    final BigtableOptions.Builder options = BigtableOptions.Builder()
         .setProjectId("projectId")
-        .setInstanceId("instanceId")
-        .build();
+        .setInstanceId("instanceId");
     requestAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
 
@@ -319,7 +318,7 @@ public class TestBatchExecutor {
   }
 
   private BatchExecutor createExecutor(BigtableOptions options) {
-    when(mockBigtableSession.getOptions()).thenReturn(options);
+    when(mockBigtableSession.getOptions()).thenReturn(options.toBuilder());
     return new BatchExecutor(mockBigtableSession, requestAdapter);
   }
 

@@ -102,7 +102,7 @@ public class TestBigtableBufferedMutator {
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
 
-    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+    BigtableOptions.Builder options = BigtableOptionsFactory.fromConfiguration(configuration);
     HBaseRequestAdapter adapter =
         new HBaseRequestAdapter(options, TableName.valueOf("TABLE"), configuration);
 

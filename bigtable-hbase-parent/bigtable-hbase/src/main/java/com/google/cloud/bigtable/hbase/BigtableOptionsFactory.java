@@ -283,10 +283,10 @@ public class BigtableOptionsFactory {
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    * @throws java.io.IOException if any.
    */
-  public static BigtableOptions fromConfiguration(final Configuration configuration)
+  public static BigtableOptions.Builder fromConfiguration(final Configuration configuration)
       throws IOException {
 
-    BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
+    BigtableOptions.Builder bigtableOptionsBuilder = BigtableOptions.Builder();
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
     bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
@@ -316,7 +316,7 @@ public class BigtableOptionsFactory {
     setChannelOptions(configuration, bigtableOptionsBuilder);
     setClientCallOptions(configuration, bigtableOptionsBuilder);
 
-    return bigtableOptionsBuilder.build();
+    return bigtableOptionsBuilder;
   }
 
   private static String getValue(final Configuration configuration, String key, String type) {
@@ -385,7 +385,7 @@ public class BigtableOptionsFactory {
             BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT));
 
     int defaultRpcCount = BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
-        * bigtableOptionsBuilder.getDataChannelCount();
+        * bigtableOptionsBuilder.build().getDataChannelCount();
     int maxInflightRpcs = configuration.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
     bulkOptionsBuilder.setMaxInflightRpcs(maxInflightRpcs);
 

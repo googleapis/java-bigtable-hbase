@@ -44,12 +44,12 @@ public class TableAdapter2x {
   protected final BigtableInstanceName bigtableInstanceName;
   protected final ColumnDescriptorAdapter columnDescriptorAdapter;
 
-  public TableAdapter2x(BigtableOptions options) {
+  public TableAdapter2x(BigtableOptions.Builder options) {
     this(options, new ColumnDescriptorAdapter());
   }
 
-  public TableAdapter2x(BigtableOptions options, ColumnDescriptorAdapter columnDescriptorAdapter) {
-    bigtableInstanceName = options.getInstanceName();
+  public TableAdapter2x(BigtableOptions.Builder options, ColumnDescriptorAdapter columnDescriptorAdapter) {
+    bigtableInstanceName = options.build().getInstanceName();
     this.columnDescriptorAdapter = columnDescriptorAdapter;
   }
 
