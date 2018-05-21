@@ -57,7 +57,7 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  *                --sourcePattern=gs://$SOURCE_PATTERN"
  * </pre>
  *
- * Execute the following command to create the Dataflow template:
+ * <p>Execute the following command to create the Dataflow template:
  *
  * <pre>
  * mvn compile exec:java \
