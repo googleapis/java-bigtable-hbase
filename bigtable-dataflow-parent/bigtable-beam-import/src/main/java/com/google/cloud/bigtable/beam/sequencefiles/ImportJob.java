@@ -144,20 +144,24 @@ public class ImportJob {
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
     pipeline
-        .apply("Read Sequence File", Read.from(new ShuffledSource<>(createSource(opts))))
+        .apply(
+            "Read Sequence File",
+            Read.from(new ShuffledSource<>(createSource(opts.getSourcePattern()))))
         .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
         .apply("Write to Bigtable", createSink(opts));
 
     return pipeline;
   }
 
-  static SequenceFileSource<ImmutableBytesWritable, Result> createSource(ImportOptions opts) {
+  static SequenceFileSource<ImmutableBytesWritable, Result> createSource(
+      ValueProvider<String> sourcePattern) {
     return new SequenceFileSource<>(
-        opts.getSourcePattern(),
-        ImmutableBytesWritable.class, WritableSerialization.class,
-        Result.class, ResultSerialization.class,
-        BUNDLE_SIZE
-    );
+        sourcePattern,
+        ImmutableBytesWritable.class,
+        WritableSerialization.class,
+        Result.class,
+        ResultSerialization.class,
+        BUNDLE_SIZE);
   }
 
   static PTransform<PCollection<Mutation>, PDone> createSink(ImportOptions opts) {

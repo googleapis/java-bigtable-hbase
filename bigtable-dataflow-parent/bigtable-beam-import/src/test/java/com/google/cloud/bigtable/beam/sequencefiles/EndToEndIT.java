@@ -171,13 +171,25 @@ public class EndToEndIT {
     try (BigtableTableUtils destTable = new BigtableTableUtils(connection, destTableId, CF)) {
       destTable.deleteTable();
 
-      DataflowPipelineOptions pipelineOpts = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
-      pipelineOpts.setRunner(DataflowRunner.class);
-      pipelineOpts.setGcpTempLocation(dataflowStagingLocation);
-      pipelineOpts.setNumWorkers(1);
-      pipelineOpts.setProject(projectId);
+      DataflowPipelineOptions createTablePipelineOpts = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
+      createTablePipelineOpts.setRunner(DataflowRunner.class);
+      createTablePipelineOpts.setProject(projectId);
 
-      ImportJob.ImportOptions importOpts = pipelineOpts.as(ImportJob.ImportOptions.class);
+      CreateTableHelper.CreateTableOpts createOpts = createTablePipelineOpts.as(CreateTableHelper.CreateTableOpts.class);
+      createOpts.setBigtableProject(projectId);
+      createOpts.setBigtableInstanceId(instanceId);
+      createOpts.setBigtableTableId(destTableId);
+      createOpts.setSourcePattern(workDir + "/part-*");
+      createOpts.setFamilies(ImmutableList.of(CF));
+      CreateTableHelper.createTable(createOpts);
+
+      DataflowPipelineOptions importPipelineOpts = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
+      importPipelineOpts.setRunner(DataflowRunner.class);
+      importPipelineOpts.setGcpTempLocation(dataflowStagingLocation);
+      importPipelineOpts.setNumWorkers(1);
+      importPipelineOpts.setProject(projectId);
+
+      ImportJob.ImportOptions importOpts = importPipelineOpts.as(ImportJob.ImportOptions.class);
       importOpts.setBigtableProject(StaticValueProvider.of(projectId));
       importOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
       importOpts.setBigtableTableId(StaticValueProvider.of(destTableId));
@@ -185,11 +197,6 @@ public class EndToEndIT {
       // value.
       importOpts.setBigtableAppProfileId(null);
       importOpts.setSourcePattern(StaticValueProvider.of(workDir + "/part-*"));
-
-      CreateTableHelper.CreateTableOpts createOpts = pipelineOpts.as(CreateTableHelper.CreateTableOpts.class);
-      createOpts.setFamilies(ImmutableList.of(CF));
-      CreateTableHelper.createTable(createOpts);
-
       State state = ImportJob.buildPipeline(importOpts).run().waitUntilFinish();
       Assert.assertEquals(State.DONE, state);
 
