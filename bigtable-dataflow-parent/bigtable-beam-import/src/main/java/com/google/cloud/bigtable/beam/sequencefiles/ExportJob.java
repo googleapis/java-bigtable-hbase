@@ -45,10 +45,11 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
 /**
- * Beam job to export a Bigtable table to a set of SequenceFiles. Afterwards, the files can be
- * either imported into another Bigtable or HBase table. You can limit the rows and columns exported
- * using the options in {@link ExportOptions}. Please note that the rows in SequenceFiles will not
- * be sorted.
+ * <p>
+ * Beam job to export a Bigtable table to a set of SequenceFiles.
+ * Afterwards, the files can be either imported into another Bigtable or HBase table.
+ * You can limit the rows and columns exported using the options in {@link ExportOptions}.
+ * Please note that the rows in SequenceFiles will not be sorted.
  *
  * Furthermore, you can export a subset of the data using a combination of --bigtableStartRow,
  * --bigtableStopRow and --bigtableFilter.
