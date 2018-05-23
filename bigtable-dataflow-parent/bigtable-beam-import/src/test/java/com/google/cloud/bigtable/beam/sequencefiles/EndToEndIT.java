@@ -157,8 +157,8 @@ public class EndToEndIT {
       pipelineOpts.setProject(projectId);
 
       ExportOptions exportOpts = pipelineOpts.as(ExportOptions.class);
-      exportOpts.setBigtableInstanceId(instanceId);
-      exportOpts.setBigtableTableId(tableId);
+      exportOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
+      exportOpts.setBigtableTableId(StaticValueProvider.of(tableId));
       exportOpts.setDestinationPath(StaticValueProvider.of(workDir));
 
       State state = ExportJob.buildPipeline(exportOpts).run().waitUntilFinish();

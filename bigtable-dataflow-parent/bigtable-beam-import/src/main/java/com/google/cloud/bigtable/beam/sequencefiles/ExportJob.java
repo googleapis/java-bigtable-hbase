@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
+import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
+import com.google.cloud.bigtable.beam.TemplateUtils;
 import java.io.Serializable;
 import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.Pipeline;
@@ -47,14 +49,15 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
 /**
- * <p>
- * Beam job to export a Bigtable table to a set of SequenceFiles.
- * Afterwards, the files can be either imported into another Bigtable or HBase table.
- * You can limit the rows and columns exported using the options in {@link ExportOptions}.
- * Please note that the rows in SequenceFiles will not be sorted.
+ * Beam job to export a Bigtable table to a set of SequenceFiles. Afterwards, the files can be
+ * either imported into another Bigtable or HBase table. You can limit the rows and columns exported
+ * using the options in {@link ExportOptions}. Please note that the rows in SequenceFiles will not
+ * be sorted.
  *
- * Example usage:
- * </p>
+ * Furthermore, you can export a subset of the data using a combination of --bigtableStartRow,
+ * --bigtableStopRow and --bigtableFilter.
+ *
+ * <p>Execute the following command to run the job directly:
  *
  * <pre>
  * {@code mvn compile exec:java \
@@ -70,8 +73,30 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  * }
  * </pre>
  *
- * Furthermore, you can export a subset of the data using a combination of --bigtableStartRow,
- * --bigtableStopRow and --bigtableFilter.
+ *  TODO: need update.....
+ * <p>Execute the following command to create the Dataflow template:
+ *
+ * <pre>
+ * mvn compile exec:java \
+ *   -DmainClass=com.google.cloud.bigtable.beam.sequencefiles.ExportJob \
+ *   -Dexec.args="--runner=DataflowRunner \
+ *                --project=[PROJECT_ID] \
+ *                --stagingLocation=gs://[STAGING_PATH] \
+ *                --templateLocation=gs://[TEMPLATE_PATH] \
+ *                --wait=false"
+ * </pre>
+ *
+ *
+ *
+ * <p>There are a few ways to run the pipeline using the template. See Dataflow doc for details:
+ * https://cloud.google.com/dataflow/docs/templates/executing-templates. An example using gcloud
+ * command line:
+ *
+ * <pre>
+ * gcloud beta dataflow jobs run [JOB_NAME] \
+ *   --gcs-location gs://[TEMPLATE_PATH] \
+ *   --parameters bigtableProject=[PROJECT_ID],bigtableInstanceId=[INSTANCE],bigtableTableId=[TABLE],destinationPath=gs://[DESTINATION_PATH],filenamePrefix=[FILENAME_PREFIX]
+ * </pre>
  *
  * @author igorbernstein2
  */
@@ -79,52 +104,50 @@ public class ExportJob {
   private static final Log LOG = LogFactory.getLog(ExportJob.class);
 
   public interface ExportOptions extends GcpOptions {
-    //TODO: switch to ValueProviders
-
     @Description("This Bigtable App Profile id. (Replication alpha feature).")
-    String getBigtableAppProfileId();
+    ValueProvider<String> getBigtableAppProfileId();
     @SuppressWarnings("unused")
-    void setBigtableAppProfileId(String appProfileId);
+    void setBigtableAppProfileId(ValueProvider<String> appProfileId);
 
     @Description("The project that contains the table to export. Defaults to --project.")
     @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
-    String getBigtableProject();
+    ValueProvider<String> getBigtableProject();
     @SuppressWarnings("unused")
-    void setBigtableProject(String projectId);
+    void setBigtableProject(ValueProvider<String> projectId);
 
     @Description("The Bigtable instance id that contains the table to export.")
-    String getBigtableInstanceId();
+    ValueProvider<String> getBigtableInstanceId();
     @SuppressWarnings("unused")
-    void setBigtableInstanceId(String instanceId);
+    void setBigtableInstanceId(ValueProvider<String> instanceId);
 
     @Description("The Bigtable table id to export.")
-    String getBigtableTableId();
+    ValueProvider<String> getBigtableTableId();
     @SuppressWarnings("unused")
-    void setBigtableTableId(String tableId);
+    void setBigtableTableId(ValueProvider<String> tableId);
 
     @Description("The row where to start the export from, defaults to the first row.")
     @Default.String("")
-    String getBigtableStartRow();
+    ValueProvider<String> getBigtableStartRow();
     @SuppressWarnings("unused")
-    void setBigtableStartRow(String startRow);
+    void setBigtableStartRow(ValueProvider<String> startRow);
 
     @Description("The row where to stop the export, defaults to last row.")
     @Default.String("")
-    String getBigtableStopRow();
+    ValueProvider<String> getBigtableStopRow();
     @SuppressWarnings("unused")
-    void setBigtableStopRow(String stopRow);
+    void setBigtableStopRow(ValueProvider<String> stopRow);
 
     @Description("Maximum number of cell versions.")
     @Default.Integer(Integer.MAX_VALUE)
-    int getBigtableMaxVersions();
+    ValueProvider<Integer> getBigtableMaxVersions();
     @SuppressWarnings("unused")
-    void setBigtableMaxVersions(int maxVersions);
+    void setBigtableMaxVersions(ValueProvider<Integer> maxVersions);
 
     @Description("Filter string. See: http://hbase.apache.org/book.html#thrift.")
     @Default.String("")
-    String getBigtableFilter();
+    ValueProvider<String> getBigtableFilter();
     @SuppressWarnings("unused")
-    void setBigtableFilter(String filter);
+    void setBigtableFilter(ValueProvider<String> filter);
 
 
     @Description("The destination directory")
@@ -165,32 +188,7 @@ public class ExportJob {
     }
   }
 
-  static Pipeline buildPipeline(ExportOptions opts) throws CharacterCodingException {
-    Scan scan = new Scan();
-
-    if (!opts.getBigtableStartRow().isEmpty()) {
-      scan.setStartRow(opts.getBigtableStartRow().getBytes());
-    }
-    if (!opts.getBigtableStopRow().isEmpty()) {
-      scan.setStopRow(opts.getBigtableStopRow().getBytes());
-    }
-
-    scan.setMaxVersions(opts.getBigtableMaxVersions());
-
-    if (!opts.getBigtableFilter().isEmpty()) {
-      scan.setFilter(new ParseFilter().parseFilterString(opts.getBigtableFilter()));
-    }
-
-    CloudBigtableScanConfiguration.Builder configBuilder = new CloudBigtableScanConfiguration.Builder()
-        .withProjectId(opts.getBigtableProject())
-        .withInstanceId(opts.getBigtableInstanceId())
-        .withTableId(opts.getBigtableTableId())
-        .withScan(scan);
-
-    if (opts.getBigtableAppProfileId() != null) {
-      configBuilder.withAppProfileId(opts.getBigtableAppProfileId());
-    }
-
+  static Pipeline buildPipeline(ExportOptions opts) {
     // Use the base target directory to stage bundles
     ValueProvider<ResourceId> destinationPath = NestedValueProvider
         .of(opts.getDestinationPath(), new StringToDirResourceId());
@@ -212,8 +210,9 @@ public class ExportJob {
 
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
+    CloudBigtableScanConfiguration config = TemplateUtils.BuildExportConfig(opts);
     pipeline
-        .apply("Read table", Read.from(CloudBigtableIO.read(configBuilder.build())))
+        .apply("Read table", Read.from(CloudBigtableIO.read(config)))
         .apply("Format results", MapElements.via(new ResultToKV()))
         .apply("Write", WriteFiles.to(sink));
 
