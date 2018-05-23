@@ -73,7 +73,7 @@ public class TemplateUtils {
       if (cachedRequest == null) {
         Scan scan = new Scan();
         if (start.get() != null && !start.get().isEmpty()) {
-          scan.setStartRow(stop.get().getBytes());
+          scan.setStartRow(start.get().getBytes());
         }
         if (stop.get() != null && !stop.get().isEmpty()) {
           scan.setStopRow(stop.get().getBytes());
@@ -85,7 +85,6 @@ public class TemplateUtils {
           try {
             scan.setFilter(new ParseFilter().parseFilterString(filter.get()));
           } catch (CharacterCodingException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
           }
         }
