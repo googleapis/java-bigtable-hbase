@@ -213,6 +213,24 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * {@inheritDoc}
      */
     @Override
+    public Builder withAppProfileId(String appProfileId) {
+      super.withAppProfileId(appProfileId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    Builder withAppProfileId(ValueProvider<String> appProfileId) {
+      super.withAppProfileId(appProfileId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Builder withConfiguration(String key, String value) {
       super.withConfiguration(key, value);
       return this;

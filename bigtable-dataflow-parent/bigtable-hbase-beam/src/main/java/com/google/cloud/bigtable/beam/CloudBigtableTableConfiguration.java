@@ -108,6 +108,30 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      *
+     * Overrides {@link CloudBigtableConfiguration.Builder#withAppProfileId(String)} so that it
+     * returns {@link CloudBigtableTableConfiguration.Builder}.
+     */
+    @Override
+    public Builder withAppProfileId(String appProfileId) {
+      super.withAppProfileId(appProfileId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Overrides {@link CloudBigtableConfiguration.Builder#withAppProfileId(String)} so that it
+     * returns {@link CloudBigtableTableConfiguration.Builder}.
+     */
+    @Override
+    Builder withAppProfileId(ValueProvider<String> appProfileId) {
+      super.withAppProfileId(appProfileId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
      * Overrides {@link CloudBigtableConfiguration.Builder#withConfiguration(String, String)} so
      * that it returns {@link CloudBigtableTableConfiguration.Builder}.
      */
