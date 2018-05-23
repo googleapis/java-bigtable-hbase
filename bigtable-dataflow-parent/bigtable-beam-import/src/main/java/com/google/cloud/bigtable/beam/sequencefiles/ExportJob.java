@@ -70,7 +70,6 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  * }
  * </pre>
  *
- *  TODO: need update.....
  * <p>Execute the following command to create the Dataflow template:
  *
  * <pre>
