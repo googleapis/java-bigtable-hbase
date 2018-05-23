@@ -48,10 +48,8 @@ public class TemplateUtils {
     return builder.build();
   }
 
-  /**
-   * Provides a request that is constructed using a {@link Scan} object.
-   */
-  private static class RequestWithScanValueProvider
+  /** Provides a request that is constructed with some attributes. */
+  private static class RequestValueProvider
       implements ValueProvider<ReadRowsRequest>, Serializable {
     private final ValueProvider<String> start;
     private final ValueProvider<String> stop;
@@ -59,7 +57,7 @@ public class TemplateUtils {
     private final ValueProvider<String> filter;
     private ReadRowsRequest cachedRequest;
 
-    RequestWithScanValueProvider(
+    RequestValueProvider(
         ValueProvider<String> start,
         ValueProvider<String> stop,
         ValueProvider<Integer> maxVersion,
@@ -119,7 +117,7 @@ public class TemplateUtils {
   /** Builds CloudBigtableScanConfiguration from input runtime parameters for export job. */
   public static CloudBigtableScanConfiguration BuildExportConfig(ExportOptions opts) {
     ValueProvider<ReadRowsRequest> request =
-        new RequestWithScanValueProvider(
+        new RequestValueProvider(
             opts.getBigtableStartRow(),
             opts.getBigtableStopRow(),
             opts.getBigtableMaxVersions(),
