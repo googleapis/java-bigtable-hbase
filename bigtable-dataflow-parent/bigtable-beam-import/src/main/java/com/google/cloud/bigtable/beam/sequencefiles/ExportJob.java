@@ -17,10 +17,8 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
-import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
 import java.io.Serializable;
-import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
@@ -43,8 +41,6 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.ParseFilter;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
@@ -168,7 +164,7 @@ public class ExportJob {
     void setWait(boolean wait);
   }
 
-  public static void main(String[] args) throws CharacterCodingException {
+  public static void main(String[] args) {
     PipelineOptionsFactory.register(ExportOptions.class);
 
     ExportOptions opts = PipelineOptionsFactory
