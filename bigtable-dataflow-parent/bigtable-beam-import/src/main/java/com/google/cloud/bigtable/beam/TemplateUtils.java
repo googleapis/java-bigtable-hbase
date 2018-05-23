@@ -127,11 +127,8 @@ public class TemplateUtils {
             .withProjectId(opts.getBigtableProject())
             .withInstanceId(opts.getBigtableInstanceId())
             .withTableId(opts.getBigtableTableId())
+            .withAppProfileId(opts.getBigtableAppProfileId())
             .withRequest(request);
-
-    if (opts.getBigtableAppProfileId() != null) {
-      configBuilder.withAppProfileId(opts.getBigtableAppProfileId());
-    }
 
     return configBuilder.build();
   }
