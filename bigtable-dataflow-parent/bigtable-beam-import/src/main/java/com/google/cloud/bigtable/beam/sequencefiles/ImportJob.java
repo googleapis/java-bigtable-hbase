@@ -70,8 +70,12 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  * </pre>
  *
  * <p>There are a few ways to run the pipeline using the template. See Dataflow doc for details:
- * https://cloud.google.com/dataflow/docs/templates/executing-templates. An example using gcloud
- * command line:
+ * https://cloud.google.com/dataflow/docs/templates/executing-templates. Optionally, you can upload
+ * a metadata file that contains information about the runtime parameters that can be used for
+ * parameter validation purpose and more. A sample metadata file can be found at
+ * "src/main/resources/ImportJob_metadata".
+ *
+ * <p>An example using gcloud command line:
  *
  * <pre>
  * gcloud beta dataflow jobs run $JOB_NAME \
