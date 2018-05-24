@@ -1,0 +1,41 @@
+{
+  "name": "ExportJob",
+  "description": "A pipeline that exports data from Cloud Bigtable to GCS in SequenceFile format.",
+  "parameters": [{
+    "name": "bigtableProject",
+    "label": "Project ID",
+    "help_text": "Project ID.",
+    "regexes": ["[a-z0-9\\-\\.\\:]+"],
+    "is_optional": true
+  },
+  {
+    "name": "bigtableInstanceId",
+    "label": "Instance ID",
+    "help_text": "Instance ID.",
+    "regexes": ["[a-z][a-z0-9\\-]+[a-z0-9]"]
+  },
+  {
+    "name": "bigtableTableId",
+    "label": "Table ID",
+    "help_text": "Table ID.",
+    "regexes": ["[_a-zA-Z0-9][-_.a-zA-Z0-9]*"]
+  },
+  {
+    "name": "bigtableAppProfileId",
+    "label": "AppProfile ID",
+    "help_text": "AppProfile ID.",
+    "regexes": ["[_a-zA-Z0-9][-_.a-zA-Z0-9]*"],
+    "is_optional": true
+  },
+  {
+    "name": "destinationPath",
+    "label": "Destination Path",
+    "help_text": "Destination Path.",
+    "regexes": ["^gs:\/\/[^\n\r]+$"]
+  },
+  {
+    "name": "filenamePrefix",
+    "label": "Filename Prefix",
+    "help_text": "Filename Prefix."
+  }]
+}
