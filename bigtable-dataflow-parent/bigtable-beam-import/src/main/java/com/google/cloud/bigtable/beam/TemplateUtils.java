@@ -15,7 +15,17 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
+import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
+import java.io.Serializable;
+import java.nio.charset.CharacterCodingException;
+import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.ParseFilter;
 
 /**
  * !!! DO NOT TOUCH THIS CLASS !!!
@@ -36,5 +46,89 @@ public class TemplateUtils {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
     return builder.build();
+  }
+
+  /** Provides a request that is constructed with some attributes. */
+  private static class RequestValueProvider
+      implements ValueProvider<ReadRowsRequest>, Serializable {
+    private final ValueProvider<String> start;
+    private final ValueProvider<String> stop;
+    private final ValueProvider<Integer> maxVersion;
+    private final ValueProvider<String> filter;
+    private ReadRowsRequest cachedRequest;
+
+    RequestValueProvider(
+        ValueProvider<String> start,
+        ValueProvider<String> stop,
+        ValueProvider<Integer> maxVersion,
+        ValueProvider<String> filter) {
+      this.start = start;
+      this.stop = stop;
+      this.maxVersion = maxVersion;
+      this.filter = filter;
+    }
+
+    @Override
+    public ReadRowsRequest get() {
+      if (cachedRequest == null) {
+        Scan scan = new Scan();
+        if (start.get() != null && !start.get().isEmpty()) {
+          scan.setStartRow(start.get().getBytes());
+        }
+        if (stop.get() != null && !stop.get().isEmpty()) {
+          scan.setStopRow(stop.get().getBytes());
+        }
+        if (maxVersion.get() != null) {
+          scan.setMaxVersions(maxVersion.get());
+        }
+        if (filter.get() != null && !filter.get().isEmpty()) {
+          try {
+            scan.setFilter(new ParseFilter().parseFilterString(filter.get()));
+          } catch (CharacterCodingException e) {
+            throw new RuntimeException(e);
+          }
+        }
+
+        ReadHooks readHooks = new DefaultReadHooks();
+        ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
+        cachedRequest = readHooks.applyPreSendHook(builder.build());
+      }
+      return cachedRequest;
+    }
+
+    @Override
+    public boolean isAccessible() {
+      return start.isAccessible()
+          && stop.isAccessible()
+          && maxVersion.isAccessible()
+          && filter.isAccessible();
+    }
+
+    @Override
+    public String toString() {
+      if (isAccessible()) {
+        return String.valueOf(get());
+      }
+      return CloudBigtableConfiguration.VALUE_UNAVAILABLE;
+    }
+  }
+
+  /** Builds CloudBigtableScanConfiguration from input runtime parameters for export job. */
+  public static CloudBigtableScanConfiguration BuildExportConfig(ExportOptions opts) {
+    ValueProvider<ReadRowsRequest> request =
+        new RequestValueProvider(
+            opts.getBigtableStartRow(),
+            opts.getBigtableStopRow(),
+            opts.getBigtableMaxVersions(),
+            opts.getBigtableFilter());
+    CloudBigtableScanConfiguration.Builder configBuilder =
+        new CloudBigtableScanConfiguration.Builder()
+            .withProjectId(opts.getBigtableProject())
+            .withInstanceId(opts.getBigtableInstanceId())
+            .withTableId(opts.getBigtableTableId())
+            .withAppProfileId(opts.getBigtableAppProfileId())
+            .withRequest(request);
+
+    return configBuilder.build();
   }
 }

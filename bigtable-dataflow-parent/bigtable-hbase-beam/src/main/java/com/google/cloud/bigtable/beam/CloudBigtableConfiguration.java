@@ -42,7 +42,8 @@ public class CloudBigtableConfiguration implements Serializable {
 
   private static final long serialVersionUID = 1655181275627002133L;
 
-  protected static final String VALUE_UNAVAILABLE = "Unavailable during pipeline construction";
+  // TODO(kevinsi): Rename to RUNTIME_VARIABLE_UNAVAILABLE?
+  public static final String VALUE_UNAVAILABLE = "Unavailable during pipeline construction";
 
   /**
    * Builds a {@link CloudBigtableConfiguration}.
