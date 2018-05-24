@@ -15,85 +15,34 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
-
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 
 /**
  * Tests creation and deletion of column families.
  */
-public class TestColumnFamilyAdmin extends AbstractTest {
+public class TestColumnFamilyAdmin extends AbstractTestColumnFamilyAdmin {
 
-  private static byte[] DELETE_COLUMN_FAMILY =
-      Bytes.toBytes(Bytes.toString(COLUMN_FAMILY) + "_remove");
-
-  private Admin admin;
-  private TableName tableName;
-  private HTableDescriptor descriptor;
-
-  @Before
-  public void setup() throws IOException {
-    admin = getConnection().getAdmin();
-    tableName = sharedTestEnv.newTestTableName();
-
-    descriptor = new HTableDescriptor(tableName);
-    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-    descriptor.addFamily(new HColumnDescriptor(DELETE_COLUMN_FAMILY));
-    admin.createTable(descriptor);
+  @Override
+  protected HTableDescriptor getTableDescriptor(TableName tableName) throws IOException {
+    return admin.getTableDescriptor(tableName);
   }
 
-  @After
-  public void tearDown() throws IOException {
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
+  @Override
+  protected void addColumn(byte[] columnName, int versions) throws Exception {
+    admin.addColumn(tableName, new HColumnDescriptor(columnName).setMaxVersions(versions));
   }
 
-  @Test
-  public void testCreate() throws IOException {
-    Assert.assertEquals(descriptor, admin.getTableDescriptor(tableName));
+  @Override
+  protected void modifyColumn(byte[] columnName, int versions) throws Exception {
+    admin.modifyColumn(tableName, new HColumnDescriptor(columnName).setMaxVersions(versions));
   }
 
-  @Test
-  public void testAddColumn() throws IOException {
-    HColumnDescriptor newColumn = new HColumnDescriptor("NEW_COLUMN");
-    admin.addColumn(tableName, newColumn);
-
-    Assert.assertEquals(new HTableDescriptor(descriptor).addFamily(newColumn),
-      admin.getTableDescriptor(tableName));
-  }
-
-  @Test
-  public void testModifyColumn() throws IOException {
-    HColumnDescriptor newColumn = new HColumnDescriptor("MODIFY_COLUMN");
-    newColumn.setMaxVersions(2);
-    admin.addColumn(tableName, newColumn);
-
-    Assert.assertEquals(new HTableDescriptor(descriptor).addFamily(newColumn),
-      admin.getTableDescriptor(tableName));
-
-    newColumn.setMaxVersions(100);
-    admin.modifyColumn(tableName, newColumn);
-
-    Assert.assertEquals(new HTableDescriptor(descriptor).addFamily(newColumn),
-      admin.getTableDescriptor(tableName));
-  }
-
-  @Test
-  public void testRemoveColumn() throws IOException {
-    admin.deleteColumn(tableName, DELETE_COLUMN_FAMILY);
-    HTableDescriptor expectedDescriptor = new HTableDescriptor(tableName)
-        .addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-
-    Assert.assertEquals(expectedDescriptor, admin.getTableDescriptor(tableName));
+  @Override
+  protected void deleteColumn(byte[] columnName) throws Exception {
+    admin.deleteColumn(tableName, columnName);
   }
 }

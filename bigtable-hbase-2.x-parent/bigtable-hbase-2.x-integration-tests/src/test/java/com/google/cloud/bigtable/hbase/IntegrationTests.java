@@ -18,13 +18,8 @@ package com.google.cloud.bigtable.hbase;
 import com.google.cloud.bigtable.hbase.async.*;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
 import org.junit.ClassRule;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
@@ -40,6 +35,8 @@ import org.junit.runners.Suite;
     TestCheckAndMutateHBase2.class,
     TestCheckAndMutateHBase2Builder.class,
     TestColumnFamilyAdmin.class,
+    TestColumnFamilyAdminHBase2.class,
+    TestColumnFamilyAdminAsync.class,
     TestCreateTable.class,
     TestCreateTableHBase2.class,
     TestDisableTable.class,

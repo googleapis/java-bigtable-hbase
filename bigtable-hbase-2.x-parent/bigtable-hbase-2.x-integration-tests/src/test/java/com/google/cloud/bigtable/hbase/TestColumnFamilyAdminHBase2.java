@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2018 Google LLC All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,70 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.async;
+package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.AsyncAdmin;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.cloud.bigtable.hbase.AbstractTestColumnFamilyAdmin;
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import java.io.IOException;
 
-public class TestAsyncColumnFamily extends AbstractTestColumnFamilyAdmin {
-  private AsyncAdmin asyncAdmin = null;
-
-  public TestAsyncColumnFamily () {
-    try {
-      asyncAdmin =  AbstractAsyncTest.getAsyncConnection().getAdmin();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-    }
-  }
+/**
+ * Tests creation and deletion of column families.
+ */
+public class TestColumnFamilyAdminHBase2 extends AbstractTestColumnFamilyAdmin {
 
   @Override
   protected HTableDescriptor getTableDescriptor(TableName tableName) throws Exception {
-    try {
-      return (HTableDescriptor) asyncAdmin.getDescriptor(tableName).get();
-    } catch(ExecutionException e) {
-      throw (Exception) e.getCause();
-    }
+    return admin.getTableDescriptor(tableName);
   }
 
   @Override
   protected void addColumn(byte[] columnName, int version) throws Exception {
-    ColumnFamilyDescriptorBuilder colFamilyDescBuilder =
-        ColumnFamilyDescriptorBuilder.newBuilder(columnName);
-    colFamilyDescBuilder.setMaxVersions(version);
-    asyncAdmin.addColumnFamily(tableName, colFamilyDescBuilder.build()).get();
+    ColumnFamilyDescriptor descriptor =
+        ColumnFamilyDescriptorBuilder.newBuilder(columnName).setMaxVersions(version)
+            .build();
+    admin.addColumnFamily(tableName, descriptor);
   }
-  
+
   @Override
   protected void modifyColumn(byte[] columnName, int version) throws Exception {
-    ColumnFamilyDescriptorBuilder colFamilyDescBuilder =
-        ColumnFamilyDescriptorBuilder.newBuilder(columnName);
-    colFamilyDescBuilder.setMaxVersions(version);
-    asyncAdmin.modifyColumnFamily(tableName, colFamilyDescBuilder.build()).get();
+    ColumnFamilyDescriptor descriptor =
+        ColumnFamilyDescriptorBuilder.newBuilder(columnName).setMaxVersions(version)
+            .build();
+    admin.modifyColumnFamily(tableName, descriptor);
   }
 
   @Override
   protected void deleteColumn(byte[] columnName) throws Exception {
-    asyncAdmin.deleteColumnFamily(tableName, columnName).get();
+    admin.deleteColumnFamily(tableName, columnName);
   }
-  
 }
