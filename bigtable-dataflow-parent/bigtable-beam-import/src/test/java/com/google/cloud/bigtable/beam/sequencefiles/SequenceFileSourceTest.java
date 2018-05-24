@@ -57,7 +57,7 @@ public class SequenceFileSourceTest {
   @Rule
   public final TemporaryFolder workDir = new TemporaryFolder();
 
-  public SequenceFileSourceTest() throws IOException {
+  public SequenceFileSourceTest() {
   }
 
   @Test
@@ -311,6 +311,7 @@ public class SequenceFileSourceTest {
       BoundedReader<KV<Text, Text>> origReader = subSource.createReader(null);
       assertThat(origReader, instanceOf(SequenceFileSource.SeqFileReader.class));
 
+      @SuppressWarnings("unchecked")
       SequenceFileSource.SeqFileReader<Text, Text> reader = (SequenceFileSource.SeqFileReader<Text, Text>) origReader;
 
       reader.start();

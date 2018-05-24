@@ -22,7 +22,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -77,7 +76,6 @@ class HBaseResultToMutationFn
     logger = log;
   }
 
-  /** {@inheritDoc} */
   @ProcessElement
   public void processElement(ProcessContext context) throws Exception {
     KV<ImmutableBytesWritable, Result> kv = context.element();
@@ -115,7 +113,7 @@ class HBaseResultToMutationFn
   }
 
   // Process
-  private List<Cell> preprocessDeleteMarkers(List<Cell> cells) throws IOException {
+  private List<Cell> preprocessDeleteMarkers(List<Cell> cells) {
     List<Cell> resultCells = Lists.newArrayList();
 
     // Group cells by column family, since DeleteMarkers do not apply across families.
@@ -133,8 +131,7 @@ class HBaseResultToMutationFn
   }
 
   private void processOneColumnFamily(
-      List<Cell> resultCells, Collection<Cell> dataCells, Collection<Cell> deleteMarkers)
-      throws IOException {
+      List<Cell> resultCells, Collection<Cell> dataCells, Collection<Cell> deleteMarkers) {
     if (deleteMarkers == null) {
       // No markers for this column family
       resultCells.addAll(dataCells);

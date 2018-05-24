@@ -878,11 +878,10 @@ public class CloudBigtableIO {
       mutationsCounter.inc();
     }
 
-    /**
-     * Closes the {@link BufferedMutator} and {@link Connection}.
-     */
+    /** Closes the {@link BufferedMutator} and {@link Connection}. */
     @FinishBundle
-    public synchronized void finishBundle(FinishBundleContext context) throws Exception {
+    public synchronized void finishBundle(@SuppressWarnings("unused") FinishBundleContext context)
+        throws Exception {
       try {
         if (mutator != null) {
           mutator.close();

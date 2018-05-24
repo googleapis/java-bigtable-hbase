@@ -32,6 +32,7 @@ import java.util.Set;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.io.FileBasedSource;
+import org.apache.beam.sdk.io.FileBasedSource.FileBasedReader;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -164,7 +165,7 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
   }
 
   /**
-   * A {@link FileBasedSource.FileBasedReader} for reading records from a {@link SequenceFile}.
+   * A {@link FileBasedReader} for reading records from a {@link SequenceFile}.
    *
    * @param <K> The type of the record keys.
    * @param <V> The type of the record values.

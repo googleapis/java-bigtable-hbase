@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.cloud.bigtable.beam.sequencefiles.CreateTableHelper.CreateTableOpts;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.testing.BigtableTableUtils;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
