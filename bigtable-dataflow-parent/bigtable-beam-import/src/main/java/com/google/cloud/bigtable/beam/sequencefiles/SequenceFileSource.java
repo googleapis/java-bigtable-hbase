@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
@@ -367,7 +368,8 @@ class SequenceFileSource<K, V> extends FileBasedSource<KV<K, V>> {
     public int read() throws IOException {
       int numRead = 0;
 
-      singleByteBuffer.clear();
+      // Workaround Java 9 overridden methods with covariant return types
+      ((Buffer)singleByteBuffer).clear();
       while (numRead == 0) {
         numRead = inner.read(singleByteBuffer);
       }
