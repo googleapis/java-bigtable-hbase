@@ -214,7 +214,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K,V>, Void, KV<K, V>> {
       while (written < len) {
         // Workaround Java 9 overridden methods with covariant return types
         ((Buffer)byteBuffer).position(written + off);
-        written += this.inner.write((ByteBuffer) byteBuffer);
+        written += this.inner.write(byteBuffer);
       }
     }
 
