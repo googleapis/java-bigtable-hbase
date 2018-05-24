@@ -82,8 +82,6 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  *                --wait=false"
  * </pre>
  *
- *
- *
  * <p>There are a few ways to run the pipeline using the template. See Dataflow doc for details:
  * https://cloud.google.com/dataflow/docs/templates/executing-templates. An example using gcloud
  * command line:
