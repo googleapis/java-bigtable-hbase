@@ -18,9 +18,9 @@ package com.google.cloud.bigtable.hbase.adapters.admin;
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.Table;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -48,7 +48,8 @@ public class TableAdapter {
    */
   public TableAdapter(BigtableInstanceName bigtableInstanceName,
       ColumnDescriptorAdapter columnDescriptorAdapter) {
-    this.bigtableInstanceName = bigtableInstanceName;
+    this.bigtableInstanceName = Preconditions
+        .checkNotNull(bigtableInstanceName, "bigtableInstanceName cannot be null.");
     this.columnDescriptorAdapter = columnDescriptorAdapter;
   }
 

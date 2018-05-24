@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -45,12 +46,8 @@ public class TableAdapter2x {
   protected final ColumnDescriptorAdapter columnDescriptorAdapter;
 
   public TableAdapter2x(BigtableOptions options) {
-    this(options, new ColumnDescriptorAdapter());
-  }
-
-  public TableAdapter2x(BigtableOptions options, ColumnDescriptorAdapter columnDescriptorAdapter) {
     bigtableInstanceName = options.getInstanceName();
-    this.columnDescriptorAdapter = columnDescriptorAdapter;
+    this.columnDescriptorAdapter = new ColumnDescriptorAdapter();
   }
 
   public CreateTableRequest.Builder adapt(TableDescriptor desc, byte[][] splitKeys) {
@@ -64,13 +61,16 @@ public class TableAdapter2x {
   public Table adapt(TableDescriptor desc) {
     Map<String, ColumnFamily> columnFamilies = new HashMap<>();
     for (ColumnFamilyDescriptor column : desc.getColumnFamilies()) {
-      columnFamilies.put(column.getNameAsString(),
-          columnDescriptorAdapter.adapt(toHColumnDescriptor(column)).build());
+      columnFamilies.put(column.getNameAsString(), toColumnFamily(column));
     }
     return Table.newBuilder().putAllColumnFamilies(columnFamilies).build();
   }
 
-  public static HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor column) {
+  public ColumnFamily toColumnFamily(ColumnFamilyDescriptor column) {
+    return columnDescriptorAdapter.adapt(toHColumnDescriptor(column)).build();
+  }
+
+  private HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor column) {
     //TODO: verify if this copy is sufficient
     HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(column.getNameAsString());
     // TODO - copy the config and value Maps

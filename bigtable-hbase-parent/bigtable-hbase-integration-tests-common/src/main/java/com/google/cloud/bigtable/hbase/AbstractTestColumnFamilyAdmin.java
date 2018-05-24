@@ -16,19 +16,26 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Assert;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import org.junit.rules.ExpectedException;
 
 /**
  * Tests creation and deletion of column families.
@@ -37,53 +44,71 @@ public abstract class AbstractTestColumnFamilyAdmin extends AbstractTest {
   protected static byte[] DELETE_COLUMN_FAMILY =
       Bytes.toBytes(Bytes.toString(COLUMN_FAMILY) + "_remove");
 
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
   protected Admin admin;
   protected TableName tableName;
-  protected HTableDescriptor descriptor;
-  
+
+  @Before
+  public void setup() throws Exception {
+    admin = getConnection().getAdmin();
+    tableName = sharedTestEnv.newTestTableName();
+    sharedTestEnv.createTable(tableName);
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    admin.disableTable(tableName);
+    admin.deleteTable(tableName);
+  }
+
   @Test
-  public void testCreateTableFull() throws IOException {
-    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
-    Assert.assertEquals(descriptor, retrievedDescriptor);
+  public void testCreateTableFull() throws Exception {
+    HTableDescriptor retrievedDescriptor = getTableDescriptor(tableName);
+    assertEquals(2, retrievedDescriptor.getFamilies().size());
+    assertNotNull(retrievedDescriptor.getFamily(COLUMN_FAMILY));
+    assertNotNull(retrievedDescriptor.getFamily(COLUMN_FAMILY2));
+    assertEquals(SharedTestEnvRule.MAX_VERSIONS, retrievedDescriptor.getFamily(COLUMN_FAMILY).getMaxVersions());
+    assertEquals(SharedTestEnvRule.MAX_VERSIONS, retrievedDescriptor.getFamily(COLUMN_FAMILY2).getMaxVersions());
   }
   
   @Test
   public void testAddColumn() throws Exception {
-    addColumn("NEW_COLUMN");
-    HTableDescriptor tblDesc = admin.getTableDescriptor(tableName);
-    HColumnDescriptor colDesc = tblDesc.getFamily(Bytes.toBytes("NEW_COLUMN"));
-    String retrievedColumnName = colDesc.getNameAsString();
-    assertEquals("NEW_COLUMN", retrievedColumnName);
+    byte[] new_column = Bytes.toBytes("NEW_COLUMN");
+    addColumn(new_column, 2);
+    HTableDescriptor tblDesc = getTableDescriptor(tableName);
+    assertNotNull(tblDesc.getFamily(new_column));
   }
   
   @Test
   public void testModifyColumnFamily() throws Exception {
-    addColumn("MODIFY_COLUMN", 2);
+    byte[] modifyColumn = Bytes.toBytes("MODIFY_COLUMN");
+    addColumn(modifyColumn, 2);
 
-    HTableDescriptor tblDesc = admin.getTableDescriptor(tableName);
-    HColumnDescriptor colDesc = tblDesc.getFamily(Bytes.toBytes("MODIFY_COLUMN"));
-    assertEquals(2, colDesc.getMaxVersions());
-
-    modifyColumn("MODIFY_COLUMN", 100);
-    
-    tblDesc = admin.getTableDescriptor(tableName);
-    colDesc = tblDesc.getFamily(Bytes.toBytes("MODIFY_COLUMN"));
-    assertEquals(100, colDesc.getMaxVersions());
-
+    assertEquals(2, getTableDescriptor(tableName).getFamily(modifyColumn).getMaxVersions());
+    modifyColumn(modifyColumn, 100);
+    assertEquals(100, getTableDescriptor(tableName).getFamily(modifyColumn).getMaxVersions());
   }
   
   @Test
   public void testRemoveColumn() throws Exception {
-    deleteColumn();
-    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
-    HTableDescriptor expectedDescriptor = new HTableDescriptor(tableName);
-    expectedDescriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-
-    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+    addColumn(DELETE_COLUMN_FAMILY, 2);
+    HTableDescriptor descriptorBefore = getTableDescriptor(tableName);
+    deleteColumn(DELETE_COLUMN_FAMILY);
+    HTableDescriptor descriptorAfter = getTableDescriptor(tableName);
+    assertEquals(descriptorBefore.getFamilies().size() - 1, descriptorAfter.getFamilies().size());
+    assertNull(descriptorAfter.getFamily(DELETE_COLUMN_FAMILY));
   }
-  
-  protected abstract void addColumn(String columnName) throws Exception;
-  protected abstract void addColumn(String columnName, int version) throws Exception;
-  protected abstract void modifyColumn(String newColumn, int version) throws Exception;
-  protected abstract void deleteColumn() throws Exception;
+
+  @Test
+  public void testGetOnNonExistantTable() throws Exception {
+    expectedException.expect(TableNotFoundException.class);
+    getTableDescriptor(TableName.valueOf("does-not-exist"));
+  }
+
+  protected abstract HTableDescriptor getTableDescriptor(TableName tableName) throws Exception;
+  protected abstract void addColumn(byte[] columnName, int version) throws Exception;
+  protected abstract void modifyColumn(byte[] columnName, int version) throws Exception;
+  protected abstract void deleteColumn(byte[] columnName) throws Exception;
 }

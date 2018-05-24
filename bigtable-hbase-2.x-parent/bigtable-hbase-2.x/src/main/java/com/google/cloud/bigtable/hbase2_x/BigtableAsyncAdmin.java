@@ -18,14 +18,7 @@ package com.google.cloud.bigtable.hbase2_x;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
@@ -118,7 +111,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         asyncConnection.getSession().getTableAdminClient());
     this.disabledTables = asyncConnection.getDisabledTables();
     this.bigtableInstanceName = options.getInstanceName();
-    this.tableAdapter2x = new TableAdapter2x(options, new ColumnDescriptorAdapter());
+    this.tableAdapter2x = new TableAdapter2x(options);
     this.asyncConnection = asyncConnection;
     this.configuration = asyncConnection.getConfiguration();
     
@@ -307,7 +300,9 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return modifyColumn(tableName, Modification
         .newBuilder()
         .setId(Bytes.toString(columnName))
-        .setDrop(true));
+        .setDrop(true)
+        .build()
+    );
   }
 
   @Override
@@ -340,8 +335,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return modifyColumn(tableName, Modification
         .newBuilder()
         .setId(columnFamilyDesc.getNameAsString())
-        .setUpdate(new ColumnDescriptorAdapter().adapt(
-            TableAdapter2x.toHColumnDescriptor(columnFamilyDesc))));
+        .setUpdate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
+        .build());
   }
 
   /**
@@ -625,8 +620,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return modifyColumn(tableName, Modification
         .newBuilder()
         .setId(columnFamilyDesc.getNameAsString())
-        .setCreate(new ColumnDescriptorAdapter().adapt(
-            TableAdapter2x.toHColumnDescriptor(columnFamilyDesc))));
+        .setCreate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
+        .build());
   }
 
   /** {@inheritDoc} */
@@ -1147,11 +1142,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
    * <p>modifyColumn.</p>
    *
    * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @param modification a {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder} object.
+   * @param modification an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} objectss
    */
-  private CompletableFuture<Void> modifyColumn(TableName tableName, Modification.Builder modification) {
-    ModifyColumnFamiliesRequest request = ModifyColumnFamiliesRequest.newBuilder()
-        .addModifications(modification)
+  private CompletableFuture<Void> modifyColumn(TableName tableName, Modification... modifications) {
+    ModifyColumnFamiliesRequest request = ModifyColumnFamiliesRequest
+        .newBuilder()
+        .addAllModifications(Arrays.asList(modifications))
         .setName(toBigtableName(tableName))
         .build();
     return bigtableTableAdminClient.modifyColumnFamilyAsync(request).thenApply(r -> null);
