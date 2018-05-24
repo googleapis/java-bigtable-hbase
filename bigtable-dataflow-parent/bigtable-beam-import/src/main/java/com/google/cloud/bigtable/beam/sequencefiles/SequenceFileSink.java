@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Set;
@@ -211,8 +212,9 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K,V>, Void, KV<K, V>> {
       ByteBuffer byteBuffer = ByteBuffer.wrap(b, off, len);
 
       while (written < len) {
-        byteBuffer.position(written + off);
-        written += this.inner.write(byteBuffer);
+        // Workaround Java 9 overridden methods with covariant return types
+        ((Buffer)byteBuffer).position(written + off);
+        written += this.inner.write((ByteBuffer) byteBuffer);
       }
     }
 
@@ -221,13 +223,15 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K,V>, Void, KV<K, V>> {
      */
     @Override
     public void write(int b) throws IOException {
-      singleByteBuffer.clear();
+      // Workaround Java 9 overridden methods with covariant return types
+      ((Buffer)singleByteBuffer).clear();
       singleByteBuffer.put((byte)b);
 
       int written = 0;
 
       while (written == 0) {
-        singleByteBuffer.position(0);
+        // Workaround Java 9 overridden methods with covariant return types
+        ((Buffer)singleByteBuffer).position(0);
         written = this.inner.write(singleByteBuffer);
       }
     }
