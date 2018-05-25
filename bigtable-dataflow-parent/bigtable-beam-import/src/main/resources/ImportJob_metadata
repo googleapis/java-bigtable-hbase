@@ -1,0 +1,36 @@
+{
+  "name": "ImportJob",
+  "description": "A pipeline that import data from GCS in SequenceFile format to Cloud Bigtable.",
+  "parameters": [{
+    "name": "bigtableProject",
+    "label": "Project ID",
+    "help_text": "Project ID.",
+    "regexes": ["[a-z0-9\\-\\.\\:]+"],
+    "is_optional": true
+  },
+  {
+    "name": "bigtableInstanceId",
+    "label": "Instance ID",
+    "help_text": "Instance ID.",
+    "regexes": ["[a-z][a-z0-9\\-]+[a-z0-9]"]
+  },
+  {
+    "name": "bigtableTableId",
+    "label": "Table ID",
+    "help_text": "Table ID.",
+    "regexes": ["[_a-zA-Z0-9][-_.a-zA-Z0-9]*"]
+  },
+  {
+    "name": "bigtableAppProfileId",
+    "label": "AppProfile ID",
+    "help_text": "AppProfile ID.",
+    "regexes": ["[_a-zA-Z0-9][-_.a-zA-Z0-9]*"],
+    "is_optional": true
+  },
+  {
+    "name": "sourcePattern",
+    "label": "Source Pattern",
+    "help_text": "Source Pattern.",
+    "regexes": ["^gs:\/\/[^\n\r]+$"]
+  }]
+}
