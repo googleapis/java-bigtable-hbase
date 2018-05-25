@@ -19,6 +19,7 @@ import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InvalidObjectException;
 import java.io.OutputStream;
 import org.apache.beam.sdk.coders.CoderException;
 import org.apache.beam.sdk.coders.CustomCoder;
@@ -67,6 +68,21 @@ class HadoopSerializationCoder<T> extends CustomCoder<T> {
       throw new RuntimeException(
           "Failed to deserialize " + HadoopSerializationCoder.class.getSimpleName());
     }
+  }
+
+  /**
+   * !!! DO NOT DELETE !!!
+   *
+   * See readObjectNoData method in:
+   * https://docs.oracle.com/javase/7/docs/platform/serialization/spec/input.html#6053.
+   *
+   * Disable backwards compatibility with previous versions that were serialized.
+   *
+   * @throws InvalidObjectException
+   */
+  @SuppressWarnings("unused")
+  private void readObjectNoData() throws InvalidObjectException {
+    throw new InvalidObjectException("Stream data required");
   }
 
   /** {@inheritDoc} */
