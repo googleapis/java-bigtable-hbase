@@ -26,6 +26,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.DynamicFileDestinations;
 import org.apache.beam.sdk.io.FileBasedSink;
+import org.apache.beam.sdk.io.FileBasedSink.Writer;
+import org.apache.beam.sdk.io.FileBasedSink.WriteOperation;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.MimeTypes;
@@ -123,7 +125,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K,V>, Void, KV<K, V>> {
   }
 
   /**
-   * Wrapper for {@link SequenceFile.Writer} that adapts hadoop's {@link SequenceFile} api to Beam's
+   * Wrapper for {@link Writer} that adapts hadoop's {@link SequenceFile} api to Beam's
    * {@link org.apache.beam.sdk.io.FileBasedSink.Writer} api.
    *
    * @param <K> The type of the {@link SequenceFile} key.
@@ -135,7 +137,7 @@ class SequenceFileSink<K,V> extends FileBasedSink<KV<K,V>, Void, KV<K, V>> {
     private final AtomicLong counter = new AtomicLong();
 
     /**
-     * Constructs a new {@link SeqFileWriter}.
+     * Constructs a new instance.
      *
      * @param writeOperation The parent operation.
      */

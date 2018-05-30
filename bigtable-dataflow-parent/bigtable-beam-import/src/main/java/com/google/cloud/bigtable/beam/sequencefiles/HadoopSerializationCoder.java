@@ -71,13 +71,19 @@ class HadoopSerializationCoder<T> extends CustomCoder<T> {
   }
 
   /**
-   * Disable backwards compatibility with previous versions that were serialized
+   * !!! DO NOT DELETE !!!
+   *
+   * See readObjectNoData method in:
+   * https://docs.oracle.com/javase/7/docs/platform/serialization/spec/input.html#6053.
+   *
+   * Disable backwards compatibility with previous versions that were serialized.
+   *
    * @throws InvalidObjectException
    */
+  @SuppressWarnings("unused")
   private void readObjectNoData() throws InvalidObjectException {
     throw new InvalidObjectException("Stream data required");
   }
-
 
   /** {@inheritDoc} */
   @Override
