@@ -284,6 +284,15 @@ public class BigtableSession implements Closeable {
   }
 
   /**
+   * <p>Getter for the field <code>throttlingDataClient</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
+   */
+  public BigtableDataClient getThrottlingDataClient() {
+    return throttlingDataClient;
+  }
+
+  /**
    * <p>createAsyncExecutor.</p>
    *
    * @return a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.

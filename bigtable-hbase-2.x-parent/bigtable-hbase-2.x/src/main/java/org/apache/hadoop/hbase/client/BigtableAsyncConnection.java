@@ -268,7 +268,7 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
 
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
-    return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getDataClient());
+    return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getThrottlingDataClient());
   }
 
   @Override

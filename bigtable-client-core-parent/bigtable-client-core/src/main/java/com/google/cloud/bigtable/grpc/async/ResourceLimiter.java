@@ -5,7 +5,6 @@ import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.common.annotations.VisibleForTesting;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 /**
  * This class limits access by RPCs to system resources
@@ -37,6 +37,7 @@ public class ResourceLimiter {
   private long currentWriteBufferSize;
   private boolean isThrottling = false;
   private int currentInFlightMaxRpcs;
+  private DescriptiveStatistics serverStats = new DescriptiveStatistics(1000);
 
   @VisibleForTesting
   NanoClock clock = NanoClock.SYSTEM;
@@ -92,6 +93,7 @@ public class ResourceLimiter {
     Long start = starTimes.remove(opId);
     if (start != null) {
       stats.markRpcComplete(clock.nanoTime() - start);
+      serverStats.addValue(clock.nanoTime() - start);
     }
   }
 
@@ -137,7 +139,7 @@ public class ResourceLimiter {
   public long getHeapSize() {
     return currentWriteBufferSize;
   }
-
+  
   /**
    * <p>isFull.</p>
    *
@@ -254,7 +256,12 @@ public class ResourceLimiter {
     Runnable r = new Runnable() {
       @Override
       public void run() {
-        long meanLatencyMs = getMeanMs(stats.getMutationTimer());
+        long meanLatencyMs = getMeanServerLatency();
+        LOG.debug(
+            "ThrottleCheck [configured : observed] (heap=[%d : %d], rpc = [%d : %d], latency =[%d : %d]",
+            maxHeapSize, currentWriteBufferSize, currentInFlightMaxRpcs,
+            pendingOperationsWithSize.size(), bulkMutationRpcTargetMs, meanLatencyMs);
+
         if (meanLatencyMs >= bulkMutationRpcTargetMs * 3) {
           // decrease at 30% of the maximum RPCs, with a minimum of 2.5%
           reduceParallelism(meanLatencyMs, absoluteMaxInFlightRpcs * 3 / 10);
@@ -285,24 +292,27 @@ public class ResourceLimiter {
         return TimeUnit.NANOSECONDS.toMillis((long) timer.getSnapshot().getMean());
       }
 
-      private void reduceParallelism(long meanLatencyNanos, int step) {
+      private long getMeanServerLatency() {
+        return TimeUnit.NANOSECONDS.toMillis((long) serverStats.getMean());
+      }
+ 
+      private void reduceParallelism(long meanLatencyMillis, int step) {
         int minimumRpcCount = Math.max(absoluteMaxInFlightRpcs / 100, 1);
         int newValue = Math.max(currentInFlightMaxRpcs - step, minimumRpcCount);
-        setParallelism(meanLatencyNanos, "Reducing", newValue);
+        setParallelism(meanLatencyMillis, "Reducing", newValue);
       }
 
-      private void increaseParallelism(long meanLatencyNanos, int incrementStep) {
+      private void increaseParallelism(long meanLatencyMillis, int incrementStep) {
         int newValue = Math.min(currentInFlightMaxRpcs + incrementStep, absoluteMaxInFlightRpcs);
-        setParallelism(meanLatencyNanos, "Increasing", newValue);
+        setParallelism(meanLatencyMillis, "Increasing", newValue);
       }
 
-      private void setParallelism(long meanLatencyNanos, String type, int newValue) {
+      private void setParallelism(long meanLatencyMillis, String type, int newValue) {
         int currentValue = getCurrentInFlightMaxRpcs();
         if (newValue != currentValue) {
           setCurrentInFlightMaxRpcs(newValue);
-          LOG.debug("Latency is at %d ms. %s paralellelism from %d to %d.",
-            TimeUnit.NANOSECONDS.toMillis(meanLatencyNanos), type, currentValue,
-            newValue);
+          LOG.info("Latency is at %d ms. %s paralellelism from %d to %d.", meanLatencyMillis, type,
+              currentValue, newValue);
         }
       }
     };
