@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,6 +47,7 @@ import io.grpc.Status;
  * @version $Id: $Id
  */
 public class ChannelPool extends ManagedChannel {
+  private static final Random RANDOM = new Random();
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(ChannelPool.class);
@@ -110,6 +112,7 @@ public class ChannelPool extends ManagedChannel {
 
     private final AtomicBoolean active = new AtomicBoolean(true);
     private final int channelId;
+    private final AtomicInteger openStreamCount = new AtomicInteger();
 
     public InstrumentedChannel(ManagedChannel channel) {
       this.delegate = channel;
@@ -124,6 +127,10 @@ public class ChannelPool extends ManagedChannel {
       if (previouslyActive) {
         getStats().ACTIVE_CHANNEL_COUNTER.dec();
       }
+    }
+
+    int getOpenStreamCount() {
+      return openStreamCount.get();
     }
 
     @Override
@@ -166,6 +173,7 @@ public class ChannelPool extends ManagedChannel {
           ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext, decremented);
           getStats().ACTIVE_RPC_COUNTER.inc();
           getStats().RPC_METER.mark();
+          openStreamCount.incrementAndGet();
           delegate().start(timingListener, headers);
         }
 
@@ -209,6 +217,7 @@ public class ChannelPool extends ManagedChannel {
             }
             delegate.onClose(status, trailers);
           } finally {
+            openStreamCount.decrementAndGet();
             timeContext.close();
           }
         }
@@ -226,12 +235,13 @@ public class ChannelPool extends ManagedChannel {
     }
   }
 
-  private final ImmutableList<ManagedChannel> channels;
+  private final ImmutableList<InstrumentedChannel> channels;
   private final AtomicInteger requestCount = new AtomicInteger();
   private final String authority;
+  private final int repickThreshold;
+  private final int repickChances;
 
   private boolean shutdown = false;
-
 
   /**
    * <p>Constructor for ChannelPool.</p>
@@ -240,13 +250,25 @@ public class ChannelPool extends ManagedChannel {
    * @throws java.io.IOException if any.
    */
   public ChannelPool(ChannelFactory factory, int count) throws IOException {
+    this(factory, count, Integer.MAX_VALUE, 0);
+  }
+
+  /**
+   * <p>Constructor for ChannelPool.</p>
+   *
+   * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
+   * @throws java.io.IOException if any.
+   */
+  public ChannelPool(ChannelFactory factory, int count, int repickThreshold, int repickChances) throws IOException {
     Preconditions.checkArgument(count > 0, "Channel count has to be a positive number.");
-    ImmutableList.Builder<ManagedChannel> channeListBuilder = ImmutableList.builder();
+    ImmutableList.Builder<InstrumentedChannel> channeListBuilder = ImmutableList.builder();
     for (int i = 0; i < count; i++) {
       channeListBuilder.add(new InstrumentedChannel(factory.create()));
     }
     this.channels = channeListBuilder.build();
     authority = channels.get(0).authority();
+    this.repickThreshold = repickThreshold;
+    this.repickChances = repickChances;
   }
 
   /**
@@ -258,8 +280,23 @@ public class ChannelPool extends ManagedChannel {
   private ManagedChannel getNextChannel() {
     int currentRequestNum = requestCount.getAndIncrement();
     int index = Math.abs(currentRequestNum % channels.size());
+
+    int minLoad = channels.get(index).getOpenStreamCount();
+
+    if (minLoad > repickThreshold) {
+      for (int i = 0; i < repickThreshold; i++) {
+        int alternativeI = RANDOM.nextInt(channels.size());
+        int alternativeLoad = channels.get(alternativeI).getOpenStreamCount();
+        if (alternativeLoad < minLoad) {
+          minLoad = alternativeLoad;
+          index = alternativeI;
+        }
+      }
+    }
+
     return channels.get(index);
   }
+
 
   /** {@inheritDoc} */
   @Override
@@ -279,6 +316,7 @@ public class ChannelPool extends ManagedChannel {
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
     Preconditions.checkState(!shutdown, "Cannot perform operations on a closed connection");
+
     return getNextChannel().newCall(methodDescriptor, callOptions);
   }
 
