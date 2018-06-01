@@ -287,10 +287,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       if (ex != null) {
         if (Status.fromThrowable(ex).getCode() == Status.Code.NOT_FOUND) {
           throw new CompletionException(new TableNotFoundException(tableName));
+        } else {
+          throw new CompletionException(ex);
         }
+      } else {
+        return tableAdapter2x.adapt(resp);
       }
-
-      return tableAdapter2x.adapt(resp);
     });
   }
 
