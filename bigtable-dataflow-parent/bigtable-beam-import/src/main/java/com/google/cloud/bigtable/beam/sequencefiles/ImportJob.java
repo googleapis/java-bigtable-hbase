@@ -21,7 +21,6 @@ import com.google.cloud.bigtable.beam.TemplateUtils;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
-import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.options.Default;
@@ -32,8 +31,6 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -83,8 +80,6 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  * </pre>
  */
 public class ImportJob {
-  private static final Log LOG = LogFactory.getLog(ImportJob.class);
-
   static final long BUNDLE_SIZE = 100 * 1024 * 1024;
 
   public interface ImportOptions extends GcpOptions {
@@ -134,11 +129,7 @@ public class ImportJob {
     PipelineResult result = pipeline.run();
 
     if (opts.getWait()) {
-      State state = result.waitUntilFinish();
-      LOG.info("Job finished with state: " + state.name());
-      if (state != State.DONE) {
-        System.exit(1);
-      }
+      Utils.waitForPipelineToFinish(result);
     }
   }
 

@@ -17,14 +17,20 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
+import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.DefaultValueFactory;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.SimpleFunction;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 class Utils {
+  private static final Log LOG = LogFactory.getLog(Utils.class);
+
   /**
    * Helper to tweak default pipelineOptions for import/export jobs
    * @param opts
@@ -62,6 +68,28 @@ class Utils {
     @Override
     public ResourceId apply(String input) {
       return FileSystems.matchNewResource(input, true);
+    }
+  }
+
+  /**
+   * Wait for the pipeline to finish if we are not creating a template. Exit with error if the
+   * pipeline finishes, but not in {@link State#DONE} state. Log a warning if creating a template.
+   *
+   * @param result
+   */
+  static void waitForPipelineToFinish(PipelineResult result) {
+    try {
+      // Check to see if we are creating a template.
+      // This should throw {@link UnsupportedOperationException} when creating a template.
+      result.getState();
+
+      State state = result.waitUntilFinish();
+      LOG.info("Job finished with state: " + state.name());
+      if (state != State.DONE) {
+        System.exit(1);
+      }
+    } catch (UnsupportedOperationException e) {
+      LOG.warn("Unable to wait for pipeline to finish.", e);
     }
   }
 }
