@@ -21,7 +21,6 @@ import com.google.cloud.bigtable.beam.TemplateUtils;
 import java.io.Serializable;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
-import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.DefaultFilenamePolicy;
 import org.apache.beam.sdk.io.FileSystems;
@@ -38,8 +37,6 @@ import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.beam.sdk.values.KV;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
@@ -99,8 +96,6 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  * @author igorbernstein2
  */
 public class ExportJob {
-  private static final Log LOG = LogFactory.getLog(ExportJob.class);
-
   public interface ExportOptions extends GcpOptions {
     @Description("This Bigtable App Profile id. (Replication alpha feature).")
     ValueProvider<String> getBigtableAppProfileId();
@@ -178,11 +173,7 @@ public class ExportJob {
     PipelineResult result = pipeline.run();
 
     if (opts.getWait()) {
-      State state = result.waitUntilFinish();
-      LOG.info("Job finished with state: " + state.name());
-      if (state != State.DONE) {
-        System.exit(1);
-      }
+      Utils.waitForPipelineToFinish(result);
     }
   }
 
