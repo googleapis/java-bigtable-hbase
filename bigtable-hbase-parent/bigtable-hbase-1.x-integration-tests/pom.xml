@@ -277,6 +277,7 @@ limitations under the License.
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-integration-tests-common</artifactId>
             <version>${project.version}</version>
+            <type>test-jar</type>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
