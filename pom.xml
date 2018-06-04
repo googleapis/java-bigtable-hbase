@@ -57,8 +57,6 @@ limitations under the License.
         <com.google.api.grpc.version>0.11.0</com.google.api.grpc.version>
         <grpc.version>1.11.0</grpc.version>
         <opencensus.version>0.13.0</opencensus.version>
-        <netty.version>4.1.22.Final</netty.version>
-        <netty-tcnative-boringssl-static.version>2.0.7.Final</netty-tcnative-boringssl-static.version>
         <protobuff-java.version>3.5.1</protobuff-java.version>
         <google.api.client.version>1.23.0</google.api.client.version>
         <google.http.client.version>1.23.0</google.http.client.version>
