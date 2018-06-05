@@ -158,6 +158,14 @@ limitations under the License.
                   <pattern>com.twitter</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.com.twitter</shadedPattern>
                 </relocation>
+                <!-- Take special care of grpc-netty-shaded, it uses the package
+                     io.grpc.netty.shaded.io.grpc.netty, which will cause the
+                     ServicesResourceTransformer to replace both occurrences of io.grpc
+                 -->
+                <relocation>
+                  <pattern>io.grpc.netty.shaded.io.grpc.netty</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.grpc.netty</shadedPattern>
+                </relocation>
                 <relocation>
                   <pattern>io.grpc</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
