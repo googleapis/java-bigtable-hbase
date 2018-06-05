@@ -15,16 +15,19 @@
  */
 package com.google.cloud.bigtable.metrics;
 
-import static org.mockito.Mockito.*;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-import java.util.Arrays;
-import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 public class TestBigtableClientMetrics {
 

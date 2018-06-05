@@ -15,30 +15,31 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import com.google.bigtable.v2.*;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters;
+import com.google.bigtable.v2.CheckAndMutateRowRequest;
+import com.google.bigtable.v2.CheckAndMutateRowResponse;
+import com.google.bigtable.v2.Mutation;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.ValueFilter;
-import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
-
-import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
-import com.google.common.base.Function;
-import com.google.protobuf.ByteString;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class CheckAndMutateUtil {
 

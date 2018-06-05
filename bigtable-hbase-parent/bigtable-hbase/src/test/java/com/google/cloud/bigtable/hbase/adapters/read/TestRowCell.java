@@ -15,13 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
 
 @RunWith(JUnit4.class)
 public class TestRowCell {

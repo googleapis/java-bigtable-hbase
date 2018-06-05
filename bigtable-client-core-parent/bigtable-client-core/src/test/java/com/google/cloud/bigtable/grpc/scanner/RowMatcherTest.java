@@ -15,19 +15,20 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
-import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
-
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
 import com.google.protobuf.ByteString;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
+import static org.hamcrest.CoreMatchers.any;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertThat;
 
 /**
  * Basic unit tests for the {@link RowMatcher} utility class.

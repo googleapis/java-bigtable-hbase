@@ -15,16 +15,9 @@
  */
  package com.google.cloud.bigtable.beam;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -43,24 +36,26 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.junit.Ignore;
-import org.junit.runners.JUnit4;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
-import com.google.cloud.bigtable.beam.CloudBigtableIO;
-import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
-import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
-import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(JUnit4.class)
 public class CloudBigtableIOIntegrationTest {

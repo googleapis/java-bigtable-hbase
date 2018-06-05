@@ -21,8 +21,11 @@ import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.grpc.io.OAuthCredentialsCache.CacheState;
 import com.google.cloud.bigtable.grpc.io.OAuthCredentialsCache.HeaderCacheElement;
 import com.google.common.util.concurrent.SettableFuture;
-import io.grpc.*;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
@@ -33,11 +36,18 @@ import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 
 /**
