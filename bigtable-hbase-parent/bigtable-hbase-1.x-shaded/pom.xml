@@ -158,6 +158,14 @@ limitations under the License.
                   <pattern>com.twitter</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.com.twitter</shadedPattern>
                 </relocation>
+                <!-- Take special care of grpc-netty-shaded, it uses the package
+                     io.grpc.netty.shaded.io.grpc.netty, which will cause the
+                     ServicesResourceTransformer to replace both occurrences of io.grpc
+                 -->
+                <relocation>
+                  <pattern>io.grpc.netty.shaded.io.grpc.netty</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.grpc.netty</shadedPattern>
+                </relocation>
                 <relocation>
                   <pattern>io.grpc</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
@@ -183,16 +191,12 @@ limitations under the License.
                     https://github.com/grpc/grpc-java/pull/2485
                 -->
                 <relocation>
-                  <pattern>io.netty</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
+                  <pattern>META-INF/native/libio_grpc_netty_shaded_netty</pattern>
+                  <shadedPattern>META-INF/native/libcom_google_bigtable_repackaged_io_grpc_netty_shaded_netty</shadedPattern>
                 </relocation>
                 <relocation>
-                  <pattern>META-INF/native/libnetty</pattern>
-                  <shadedPattern>META-INF/native/libcom_google_bigtable_repackaged_netty</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>META-INF/native/netty</pattern>
-                  <shadedPattern>META-INF/native/com_google_bigtable_repackaged_netty</shadedPattern>
+                  <pattern>META-INF/native/io_grpc_netty_shaded_netty</pattern>
+                  <shadedPattern>META-INF/native/com_google_bigtable_repackaged_io_grpc_netty_shaded_netty</shadedPattern>
                 </relocation>
 
                 <relocation>
