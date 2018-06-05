@@ -15,14 +15,20 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.repackaged.io.netty.handler.ssl.OpenSsl;
+import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
 
+import java.io.IOException;
 
 /**
  * This is a test to ensure that BigtableConnection can find {@link BigtableConnection}
@@ -38,10 +44,20 @@ public class TestBigtableConnection {
 
 
   @Test
+  public void testTable() throws IOException {
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId");
+    conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
+    conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
+    BigtableConnection connection = new BigtableConnection(conf);
+    Admin admin = connection.getAdmin() ;
+    Table table = connection.getTable(TableName.valueOf("someTable"));
+    BufferedMutator mutator = connection.getBufferedMutator(TableName.valueOf("someTable"));
+  }
+
+  @Test
   public void testOpenSSL() throws Throwable{
     if(!OpenSsl.isAvailable()){
       throw OpenSsl.unavailabilityCause();
     }
   }
-
 }

@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.repackaged.io.netty.handler.ssl.OpenSsl;
+import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import com.google.cloud.bigtable.hbase2_x.BigtableConnection;
 
 

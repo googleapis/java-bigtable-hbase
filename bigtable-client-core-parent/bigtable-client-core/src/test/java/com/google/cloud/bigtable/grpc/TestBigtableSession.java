@@ -17,18 +17,14 @@
 package com.google.cloud.bigtable.grpc;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 
 import com.google.cloud.bigtable.config.CredentialOptions;
-import org.junit.Assert;
+import io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
-
-import io.netty.handler.ssl.OpenSsl;
-import io.netty.util.Recycler;
 
 @SuppressWarnings({"resource","unused"})
 public class TestBigtableSession {
