@@ -54,7 +54,7 @@ limitations under the License.
         <hadoop.version>2.7.4</hadoop.version>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
-        <com.google.api.grpc.version>0.11.0</com.google.api.grpc.version>
+        <google-cloud-bom.version>0.50.0-alpha</google-cloud-bom.version>
         <grpc.version>1.11.0</grpc.version>
         <opencensus.version>0.13.0</opencensus.version>
         <netty.version>4.1.22.Final</netty.version>
