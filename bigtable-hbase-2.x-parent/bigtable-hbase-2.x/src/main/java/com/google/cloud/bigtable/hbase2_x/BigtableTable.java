@@ -15,20 +15,23 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import org.apache.hadoop.hbase.CompareOperator;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.io.TimeRange;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.hadoop.hbase.CompareOperator;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
-
-import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
-import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import org.apache.hadoop.hbase.io.TimeRange;
 
 public class BigtableTable extends AbstractBigtableTable {
 

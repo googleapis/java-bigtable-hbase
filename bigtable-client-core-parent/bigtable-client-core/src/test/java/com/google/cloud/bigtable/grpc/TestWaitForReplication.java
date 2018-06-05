@@ -16,7 +16,11 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.testing.util.MockBackOff;
-import com.google.bigtable.admin.v2.*;
+import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
+import com.google.bigtable.admin.v2.CheckConsistencyRequest;
+import com.google.bigtable.admin.v2.CheckConsistencyResponse;
+import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
+import com.google.bigtable.admin.v2.GenerateConsistencyTokenResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import io.grpc.Status;
 import io.grpc.StatusException;

@@ -15,6 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.Admin;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,14 +33,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.RandomStringUtils;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Admin;
-import org.junit.*;
-import org.junit.rules.ExpectedException;
-
-import static org.apache.commons.lang.RandomStringUtils.*;
+import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 
 public abstract class AbstractTestListTables extends AbstractTest {
 
