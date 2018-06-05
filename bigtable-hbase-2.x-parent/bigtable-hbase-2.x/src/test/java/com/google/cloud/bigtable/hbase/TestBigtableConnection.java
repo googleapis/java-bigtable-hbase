@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import io.netty.handler.ssl.OpenSsl;
+import io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
