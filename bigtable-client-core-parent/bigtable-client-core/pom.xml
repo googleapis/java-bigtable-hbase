@@ -30,12 +30,23 @@ limitations under the License.
        This project contains artifacts bigtable client needs to interact with grpc.
     </description>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>google-cloud-bom</artifactId>
+                <version>${google-cloud-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <!-- Protos -->
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>grpc-google-common-protos</artifactId>
-            <version>1.11.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.grpc</groupId>
@@ -50,7 +61,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>proto-google-cloud-bigtable-v2</artifactId>
-            <version>${com.google.api.grpc.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.grpc</groupId>
@@ -61,7 +71,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>proto-google-cloud-bigtable-admin-v2</artifactId>
-            <version>${com.google.api.grpc.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.grpc</groupId>
@@ -72,7 +81,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
-            <version>${com.google.api.grpc.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.grpc</groupId>
@@ -83,7 +91,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>grpc-google-cloud-bigtable-admin-v2</artifactId>
-            <version>${com.google.api.grpc.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.grpc</groupId>
@@ -112,8 +119,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-core-http</artifactId>
-            <!-- TODO(sduskis) remove explicit versioning when the BOM is used. -->
-            <version>1.32.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.threeten</groupId>
