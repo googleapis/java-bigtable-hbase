@@ -115,12 +115,16 @@ limitations under the License.
             <artifactId>google-http-client</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.api-client</groupId>
-            <artifactId>google-api-client</artifactId>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-core-http</artifactId>
             <exclusions>
                 <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava-jdk5</artifactId>
+                    <groupId>org.threeten</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.codehaus.jackson</groupId>
+                    <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
