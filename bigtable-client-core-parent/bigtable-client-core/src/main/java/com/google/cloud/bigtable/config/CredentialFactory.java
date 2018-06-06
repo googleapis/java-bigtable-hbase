@@ -33,6 +33,7 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.bigtable.config.CredentialOptions.JsonCredentialsOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.P12CredentialOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.UserSuppliedCredentialOptions;
+import com.google.cloud.http.HttpTransportOptions;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -91,16 +92,7 @@ public class CredentialFactory {
 
   public static HttpTransportFactory getHttpTransportFactory() {
     if (httpTransportFactory == null) {
-      httpTransportFactory = new HttpTransportFactory() {
-        @Override
-        public HttpTransport create() {
-          try {
-            return GoogleNetHttpTransport.newTrustedTransport();
-          } catch (Exception e) {
-            throw new RuntimeException("Could not create a GoogleNetHttpTransport: " + e.getMessage(), e);
-          }
-        }
-      };
+      httpTransportFactory = new HttpTransportOptions.DefaultHttpTransportFactory();
     }
     return httpTransportFactory;
   }
