@@ -78,18 +78,47 @@ limitations under the License.
     <groupId>io.opencensus</groupId>
     <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
     <version>${opencensus.version}</version>
+    <!--
+        This exporter depends on com.google.cloud:google-cloud-trace
+        which in turn depends on other com.google.cloud artifacts.  Open Census
+        can depend on a different vrsion of those com.google.cloud artifacts
+        that what Cloud Bigtable uses.  Exclude google-cloud-core and
+        google-cloud-core-grpc, but allow the com-cloud-core and tracing specific inclusions.
+        There are a few additional exclusions that may cause discrepancies.
+
+        The goal is something like:
+
+[INFO] \- io.opencensus:opencensus-exporter-trace-stackdriver:jar:0.11.1:compile
+[INFO]    \- com.google.cloud:google-cloud-trace:jar:0.33.0-beta:compile
+[INFO]       +- com.google.api.grpc:proto-google-cloud-trace-v1:jar:0.1.28:compile
+[INFO]       \- com.google.api.grpc:proto-google-cloud-trace-v2:jar:0.1.28:compile
+     -->
     <exclusions>
+        <exclusion>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-core</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-core-grpc</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.google.api.grpc</groupId>
+            <artifactId>proto-google-common-protos</artifactId>
+        </exclusion>
+        <!-- This is required to remove tcnative -->
         <exclusion>
             <groupId>io.netty</groupId>
             <artifactId>*</artifactId>
         </exclusion>
+        <!-- com.google.cloud:google-cloud-trace directly depends on io.grpc artifacts -->
         <exclusion>
             <groupId>io.grpc</groupId>
             <artifactId>*</artifactId>
         </exclusion>
         <exclusion>
-            <groupId>com.google.auto.value</groupId>
-            <artifactId>auto-value</artifactId>
+            <groupId>com.google.auth</groupId>
+            <artifactId>*</artifactId>
         </exclusion>
     </exclusions>
   </dependency>

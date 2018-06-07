@@ -47,41 +47,33 @@ limitations under the License.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <compileSource>1.7</compileSource>
         <compileSource.1.8>1.8</compileSource.1.8>
-        <!-- dependency versions -->
+
+        <!-- core dependency versions -->
+        <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
+        <slf4j.version>1.7.7</slf4j.version>
+        <commons-lang.version>2.6</commons-lang.version>
+        <commons-logging.version>1.2</commons-logging.version>
+        <google-auto-service.version>1.0-rc2</google-auto-service.version>
+        <auto-value.version>1.1</auto-value.version>
+        <jsr305.version>3.0.2</jsr305.version>
+        <hamcrest.version>1.3</hamcrest.version>
+
+        <!-- google-cloud-java related dependency versions -->
+        <google-cloud.version>0.50.0-alpha</google-cloud.version>
+        <opencensus.version>0.11.1</opencensus.version>
+        <guava.version>20.0</guava.version>
+
+        <!-- hbase dependency versions -->
         <hbase.version.1>1.4.3</hbase.version.1>
         <hbase.version.2>2.0.0</hbase.version.2>
         <hbase.version>${hbase.version.1}</hbase.version>
         <hadoop.version>2.7.4</hadoop.version>
+
+        <!-- testing dependency versions -->
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
-        <google-cloud-bom.version>0.50.0-alpha</google-cloud-bom.version>
-        <grpc.version>1.11.0</grpc.version>
-        <opencensus.version>0.13.0</opencensus.version>
-        <protobuff-java.version>3.5.1</protobuff-java.version>
-        <google.api.client.version>1.23.0</google.api.client.version>
-        <google.http.client.version>1.23.0</google.http.client.version>
-        <guava.version>20.0</guava.version>
-        <google.auth.library.version>0.9.1</google.auth.library.version>
-        <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
-
 
         <beam.version>2.4.0</beam.version>
-        <commons-lang.version>2.6</commons-lang.version>
-        <google-auto-service.version>1.0-rc2</google-auto-service.version>
-        <auto-value.version>1.1</auto-value.version>
-
-        <jsr305.version>3.0.2</jsr305.version>
-        <commons-logging.version>1.2</commons-logging.version>
-        <hamcrest.version>1.3</hamcrest.version>
-
-        <!-- Values for integration testing. Set these in ~/.m2/settings.xml or
-             via command-line -D flags. -->
-        <google.bigtable.instance.id />
-        <google.bigtable.cluster.name />
-        <google.bigtable.zone.name />
-        <google.bigtable.endpoint.host>bigtable.googleapis.com</google.bigtable.endpoint.host>
-        <google.bigtable.admin.endpoint.host>bigtableadmin.googleapis.com</google.bigtable.admin.endpoint.host>
-        <google.bigtable.cluster.admin.endpoint.host>bigtableclusteradmin.googleapis.com</google.bigtable.cluster.admin.endpoint.host>
     </properties>
 
     <distributionManagement>
