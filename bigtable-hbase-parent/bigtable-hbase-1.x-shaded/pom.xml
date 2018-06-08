@@ -68,6 +68,12 @@ limitations under the License.
   <dependency>
     <groupId>io.opencensus</groupId>
     <artifactId>opencensus-contrib-zpages</artifactId>
+    <exclusions>
+        <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </exclusion>
+    </exclusions>
     <version>${opencensus.version}</version>
   </dependency>
   <dependency>
