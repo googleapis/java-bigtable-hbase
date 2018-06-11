@@ -23,7 +23,7 @@ limitations under the License.
         <version>1.4.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>bigtable-hbase-parent</artifactId>
+    <artifactId>bigtable-hbase-1.x-parent</artifactId>
     <packaging>pom</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
@@ -31,11 +31,9 @@ limitations under the License.
     </description>
 
     <modules>
-        <module>bigtable-hbase</module>
-        <module>bigtable-hbase-integration-tests-common</module>
         <module>bigtable-hbase-1.x</module>
         <module>bigtable-hbase-1.x-integration-tests</module>
-        <module>bigtable-hbase-mapreduce</module>
+        <module>bigtable-hbase-1.x-mapreduce</module>
     </modules>
 
     <profiles>

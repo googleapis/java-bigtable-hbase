@@ -37,7 +37,7 @@ limitations under the License.
 
     <modules>
         <module>bigtable-client-core-parent</module>
-        <module>bigtable-hbase-parent</module>
+        <module>bigtable-hbase-1.x-parent</module>
         <module>bigtable-hbase-2.x-parent</module>
         <module>bigtable-dataflow-parent</module>
         <module>bigtable-test</module>
