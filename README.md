@@ -33,6 +33,7 @@ which makes it easy for development teams to get started.
 * Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven).
   * bigtable-hbase-1.x: use for standalone applications where you are in control your dependencies.
   * bigtable-hbase-1.x-hadoop: use in hadoop environments
+  * bigtable-hbase-1.x-mapreduce: use for map/reduce utilities
   * bigtable-hbase-1.x-shaded: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
   * bigtable-hbase-2.x: use for standalone applications where you are in control your dependencies.  This includes an HBase async client.
   * bigtable-hbase-2.x-hadoop: use in hadoop environments
@@ -43,7 +44,7 @@ which makes it easy for development teams to get started.
     <dependency>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-hbase-1.x</artifactId>
-        <version>1.3.0</version>
+        <version>1.4.0</version>
     </dependency>
   ```
 
