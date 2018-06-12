@@ -99,7 +99,7 @@ infrequent product and client library announcements.
    Developer's NOTE: You can build the project faster by running the following command, and then run the integration test command from the appropriate integration test directory:
    
    ```sh
-   mvn -pl bigtable-hbase-parent/bigtable-hbase-1.x-integration-tests \
+   mvn -pl bigtable-hbase-1.x-parent/bigtable-hbase-1.x-integration-tests \
    -pl bigtable-hbase-2.x-parent/bigtable-hbase-2.x-integration-tests \
    -am clean install
    ```
