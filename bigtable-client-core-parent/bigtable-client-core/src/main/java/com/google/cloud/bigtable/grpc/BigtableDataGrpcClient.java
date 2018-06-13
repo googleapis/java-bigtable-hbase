@@ -17,17 +17,13 @@ package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 
-import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.ServerMethodDefinition;
-import io.grpc.ServerServiceDefinition;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
@@ -179,51 +175,25 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     this.retryExecutorService = retryExecutorService;
     this.retryOptions = bigtableOptions.getRetryOptions();
 
-    // grpc static variable method descriptors are deprecated.  They are going to be replaced
-    // with static methods.  Once the new static methods exist, then we should use those.
-    // For now, use a hacky approach to get the method descrptors so that all environments work.
-    //
-    // See https://github.com/grpc/grpc-java/issues/1901 for more details.
-    ServerServiceDefinition definition = new BigtableGrpc.BigtableImplBase() {}.bindService();
-
     BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
-    this.sampleRowKeysAsync =
-        asyncUtilities.createAsyncRpc(
-            this.<SampleRowKeysRequest, SampleRowKeysResponse>
-                getMethod(definition, "SampleRowKeys"),
-            Predicates.<SampleRowKeysRequest> alwaysTrue());
-    this.readRowsAsync =
-        asyncUtilities.createAsyncRpc(
-            this.<ReadRowsRequest, ReadRowsResponse>
-                getMethod(definition, "ReadRows"),
-            Predicates.<ReadRowsRequest> alwaysTrue());
-    this.mutateRowRpc =
-        asyncUtilities.createAsyncRpc(
-            this.<MutateRowRequest, MutateRowResponse>
-                getMethod(definition, "MutateRow"),
-            getMutationRetryableFunction(IS_RETRYABLE_MUTATION));
-    this.mutateRowsRpc =
-        asyncUtilities.createAsyncRpc(
-            this.<MutateRowsRequest, MutateRowsResponse>
-                getMethod(definition, "MutateRows"),
-            getMutationRetryableFunction(ARE_RETRYABLE_MUTATIONS));
-    this.checkAndMutateRpc =
-        asyncUtilities.createAsyncRpc(
-            this.<CheckAndMutateRowRequest, CheckAndMutateRowResponse>
-                getMethod(definition, "CheckAndMutateRow"),
-            getMutationRetryableFunction(Predicates.<CheckAndMutateRowRequest> alwaysFalse()));
-    this.readWriteModifyRpc =
-        asyncUtilities.createAsyncRpc(
-            this.<ReadModifyWriteRowRequest, ReadModifyWriteRowResponse>
-                getMethod(definition, "ReadModifyWriteRow"),
-            Predicates.<ReadModifyWriteRowRequest> alwaysFalse());
-  }
-
-  private static <Req, Resp> MethodDescriptor<Req, Resp> getMethod(ServerServiceDefinition def, String methodName) {
-    ServerMethodDefinition methodDescriptor =
-        def.getMethod("google.bigtable.v2.Bigtable/" + methodName);
-    return (MethodDescriptor<Req, Resp>)
-        Preconditions.checkNotNull(methodDescriptor.getMethodDescriptor());
+    this.sampleRowKeysAsync = asyncUtilities.createAsyncRpc(
+        BigtableGrpc.getSampleRowKeysMethod(),
+        Predicates.<SampleRowKeysRequest> alwaysTrue());
+    this.readRowsAsync = asyncUtilities.createAsyncRpc(
+        BigtableGrpc.getReadRowsMethod(),
+        Predicates.<ReadRowsRequest> alwaysTrue());
+    this.mutateRowRpc = asyncUtilities.createAsyncRpc(
+        BigtableGrpc.getMutateRowMethod(),
+        getMutationRetryableFunction(IS_RETRYABLE_MUTATION));
+    this.mutateRowsRpc = asyncUtilities.createAsyncRpc(
+        BigtableGrpc.getMutateRowsMethod(),
+        getMutationRetryableFunction(ARE_RETRYABLE_MUTATIONS));
+    this.checkAndMutateRpc = asyncUtilities.createAsyncRpc(
+        BigtableGrpc.getCheckAndMutateRowMethod(),
+        getMutationRetryableFunction(Predicates.<CheckAndMutateRowRequest> alwaysFalse()));
+    this.readWriteModifyRpc = asyncUtilities.createAsyncRpc(
+        BigtableGrpc.getReadModifyWriteRowMethod(),
+        Predicates.<ReadModifyWriteRowRequest> alwaysFalse());
   }
 
   /** {@inheritDoc} */

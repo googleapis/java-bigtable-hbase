@@ -24,10 +24,6 @@ import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
-import com.google.bigtable.v2.BigtableGrpc;
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadModifyWriteRowResponse;
-import com.google.common.base.Preconditions;
 import com.google.longrunning.Operation;
 import com.google.common.primitives.Ints;
 import java.io.IOException;
@@ -37,7 +33,6 @@ import com.google.bigtable.admin.v2.CheckConsistencyRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
 import com.google.common.annotations.VisibleForTesting;
 
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 
@@ -67,6 +62,7 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.ServerMethodDefinition;
 import io.grpc.ServerServiceDefinition;
+import io.grpc.ServiceDescriptor;
 
 /**
  * A gRPC client for accessing the Bigtable Table Admin API.
@@ -102,85 +98,51 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
       ScheduledExecutorService retryExecutorService, BigtableOptions bigtableOptions) {
     BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
 
-    // grpc static variable method descriptors are deprecated.  They are going to be replaced
-    // with static methods.  Once the new static methods exist, then we should use those.
-    // For now, use a hacky approach to get the method descrptors so that all environments work.
-    //
-    // See https://github.com/grpc/grpc-java/issues/1901 for more details.
-    ServerServiceDefinition definition = new BigtableTableAdminGrpc.BigtableTableAdminImplBase() {}
-      .bindService();
-
     // Read only methods.  These are always retried.
     this.listTablesRpc = asyncUtilities.createAsyncRpc(
-        this.<ListTablesRequest, ListTablesResponse>
-            getMethod(definition, "ListTables"),
+        BigtableTableAdminGrpc.getListTablesMethod(),
         Predicates.<ListTablesRequest> alwaysTrue());
     this.getTableRpc = asyncUtilities.createAsyncRpc(
-        this.<GetTableRequest, Table>
-            getMethod(definition, "GetTable"),
-       Predicates.<GetTableRequest> alwaysTrue());
+        BigtableTableAdminGrpc.getGetTableMethod(),
+        Predicates.<GetTableRequest> alwaysTrue());
 
     // Write methods. These are only retried for UNAVAILABLE or UNAUTHORIZED
     this.createTableRpc = asyncUtilities.createAsyncRpc(
-        this.<CreateTableRequest, Table>
-            getMethod(definition, "CreateTable"),
+        BigtableTableAdminGrpc.getCreateTableMethod(),
         Predicates.<CreateTableRequest> alwaysFalse());
-    this.modifyColumnFamilyRpc =
-        asyncUtilities.createAsyncRpc(
-            this.<ModifyColumnFamiliesRequest, Table>
-                getMethod(definition, "ModifyColumnFamilies"),
-            Predicates.<ModifyColumnFamiliesRequest> alwaysFalse());
+    this.modifyColumnFamilyRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getModifyColumnFamiliesMethod(),
+        Predicates.<ModifyColumnFamiliesRequest> alwaysFalse());
     this.deleteTableRpc = asyncUtilities.createAsyncRpc(
-        this.<DeleteTableRequest, Empty>
-            getMethod(definition, "DeleteTable"),
+        BigtableTableAdminGrpc.getDeleteTableMethod(),
         Predicates.<DeleteTableRequest> alwaysFalse());
     this.dropRowRangeRpc = asyncUtilities.createAsyncRpc(
-        this.<DropRowRangeRequest, Empty>
-            getMethod(definition, "DropRowRange"),
+        BigtableTableAdminGrpc.getDropRowRangeMethod(),
         Predicates.<DropRowRangeRequest> alwaysFalse());
     this.generateConsistencyTokenRpc = asyncUtilities.createAsyncRpc(
-        this.<GenerateConsistencyTokenRequest, GenerateConsistencyTokenResponse>
-            getMethod(definition, "GenerateConsistencyToken"),
+        BigtableTableAdminGrpc.getGenerateConsistencyTokenMethod(),
         Predicates.<GenerateConsistencyTokenRequest> alwaysFalse());
     this.checkConsistencyRpc = asyncUtilities.createAsyncRpc(
-        this.<CheckConsistencyRequest, CheckConsistencyResponse>
-            getMethod(definition, "CheckConsistency"),
+        BigtableTableAdminGrpc.getCheckConsistencyMethod(),
         Predicates.<CheckConsistencyRequest> alwaysFalse());
-
     this.snapshotTableRpc = asyncUtilities.createAsyncRpc(
-        this.<SnapshotTableRequest, Operation>
-            getMethod(definition, "SnapshotTable"),
+        BigtableTableAdminGrpc.getSnapshotTableMethod(),
         Predicates.<SnapshotTableRequest>alwaysFalse());
-
     this.getSnapshotRpc = asyncUtilities.createAsyncRpc(
-        this.<GetSnapshotRequest, Snapshot>
-            getMethod(definition, "GetSnapshot"),
+        BigtableTableAdminGrpc.getGetSnapshotMethod(),
         Predicates.<GetSnapshotRequest>alwaysTrue());
-
     this.listSnapshotsRpc = asyncUtilities.createAsyncRpc(
-        this.<ListSnapshotsRequest, ListSnapshotsResponse>
-            getMethod(definition, "ListSnapshots"),
+        BigtableTableAdminGrpc.getListSnapshotsMethod(),
         Predicates.<ListSnapshotsRequest>alwaysTrue());
-
     this.deleteSnapshotRpc = asyncUtilities.createAsyncRpc(
-        this.<DeleteSnapshotRequest, Empty>
-            getMethod(definition, "DeleteSnapshot"),
+        BigtableTableAdminGrpc.getDeleteSnapshotMethod(),
         Predicates.<DeleteSnapshotRequest>alwaysFalse());
-
     this.createTableFromSnapshotRpc = asyncUtilities.createAsyncRpc(
-        this.<CreateTableFromSnapshotRequest, Operation>
-            getMethod(definition, "CreateTableFromSnapshot"),
+        BigtableTableAdminGrpc.getCreateTableFromSnapshotMethod(),
         Predicates.<CreateTableFromSnapshotRequest>alwaysFalse());
 
     this.retryOptions = bigtableOptions.getRetryOptions();
     this.retryExecutorService = retryExecutorService;
-  }
-
-  private static <Req, Resp> MethodDescriptor<Req, Resp> getMethod(ServerServiceDefinition def, String methodName) {
-    ServerMethodDefinition methodDescriptor =
-        def.getMethod("google.bigtable.admin.v2.BigtableTableAdmin/" + methodName);
-    return (MethodDescriptor<Req, Resp>)
-        Preconditions.checkNotNull(methodDescriptor.getMethodDescriptor());
   }
 
   /** {@inheritDoc} */
