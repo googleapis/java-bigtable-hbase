@@ -16,13 +16,18 @@
 package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
+
+import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import io.grpc.ServerMethodDefinition;
+import io.grpc.ServerServiceDefinition;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
@@ -134,13 +139,13 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       };
 
   private static Function<List<ReadRowsResponse>, List<Row>> ROW_LIST_TRANSFORMER =
-    new Function<List<ReadRowsResponse>, List<Row>>() {
-      @Override
-      public List<Row> apply(List<ReadRowsResponse> responses) {
-        return Lists.transform(RowMerger.toRows(responses), FLAT_ROW_TRANSFORMER);
-      }
-    };
-      
+      new Function<List<ReadRowsResponse>, List<Row>>() {
+        @Override
+        public List<Row> apply(List<ReadRowsResponse> responses) {
+          return Lists.transform(RowMerger.toRows(responses), FLAT_ROW_TRANSFORMER);
+        }
+      };
+
   // Member variables
   private final String clientDefaultAppProfileId;
   private final ScheduledExecutorService retryExecutorService;
@@ -174,31 +179,51 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     this.retryExecutorService = retryExecutorService;
     this.retryOptions = bigtableOptions.getRetryOptions();
 
+    // grpc static variable method descriptors are deprecated.  They are going to be replaced
+    // with static methods.  Once the new static methods exist, then we should use those.
+    // For now, use a hacky approach to get the method descrptors so that all environments work.
+    //
+    // See https://github.com/grpc/grpc-java/issues/1901 for more details.
+    ServerServiceDefinition definition = new BigtableGrpc.BigtableImplBase() {}.bindService();
+
     BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
     this.sampleRowKeysAsync =
         asyncUtilities.createAsyncRpc(
-             BigtableGrpc.METHOD_SAMPLE_ROW_KEYS,
-             Predicates.<SampleRowKeysRequest> alwaysTrue());
+            this.<SampleRowKeysRequest, SampleRowKeysResponse>
+                getMethod(definition, "SampleRowKeys"),
+            Predicates.<SampleRowKeysRequest> alwaysTrue());
     this.readRowsAsync =
         asyncUtilities.createAsyncRpc(
-            BigtableGrpc.METHOD_READ_ROWS,
+            this.<ReadRowsRequest, ReadRowsResponse>
+                getMethod(definition, "ReadRows"),
             Predicates.<ReadRowsRequest> alwaysTrue());
     this.mutateRowRpc =
         asyncUtilities.createAsyncRpc(
-            BigtableGrpc.METHOD_MUTATE_ROW,
+            this.<MutateRowRequest, MutateRowResponse>
+                getMethod(definition, "MutateRow"),
             getMutationRetryableFunction(IS_RETRYABLE_MUTATION));
     this.mutateRowsRpc =
         asyncUtilities.createAsyncRpc(
-            BigtableGrpc.METHOD_MUTATE_ROWS,
+            this.<MutateRowsRequest, MutateRowsResponse>
+                getMethod(definition, "MutateRows"),
             getMutationRetryableFunction(ARE_RETRYABLE_MUTATIONS));
     this.checkAndMutateRpc =
         asyncUtilities.createAsyncRpc(
-            BigtableGrpc.METHOD_CHECK_AND_MUTATE_ROW,
+            this.<CheckAndMutateRowRequest, CheckAndMutateRowResponse>
+                getMethod(definition, "CheckAndMutateRow"),
             getMutationRetryableFunction(Predicates.<CheckAndMutateRowRequest> alwaysFalse()));
     this.readWriteModifyRpc =
         asyncUtilities.createAsyncRpc(
-            BigtableGrpc.METHOD_READ_MODIFY_WRITE_ROW,
+            this.<ReadModifyWriteRowRequest, ReadModifyWriteRowResponse>
+                getMethod(definition, "ReadModifyWriteRow"),
             Predicates.<ReadModifyWriteRowRequest> alwaysFalse());
+  }
+
+  private static <Req, Resp> MethodDescriptor<Req, Resp> getMethod(ServerServiceDefinition def, String methodName) {
+    ServerMethodDefinition methodDescriptor =
+        def.getMethod("google.bigtable.v2.Bigtable/" + methodName);
+    return (MethodDescriptor<Req, Resp>)
+        Preconditions.checkNotNull(methodDescriptor.getMethodDescriptor());
   }
 
   /** {@inheritDoc} */
@@ -366,7 +391,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }
 
     return FLAT_ROW_LIST_TRANSFORMER.apply(
-      createStreamingListener(request, readRowsAsync, request.getTableName()).getBlockingResult());
+        createStreamingListener(request, readRowsAsync, request.getTableName()).getBlockingResult());
   }
 
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
