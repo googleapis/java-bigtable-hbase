@@ -94,41 +94,46 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
 
     // Read only methods.  These are always retried.
-    this.listTablesRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_LIST_TABLES,
-      Predicates.<ListTablesRequest> alwaysTrue());
-    this.getTableRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_GET_TABLE,
-      Predicates.<GetTableRequest> alwaysTrue());
+    this.listTablesRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getListTablesMethod(),
+        Predicates.<ListTablesRequest> alwaysTrue());
+    this.getTableRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getGetTableMethod(),
+        Predicates.<GetTableRequest> alwaysTrue());
 
     // Write methods. These are only retried for UNAVAILABLE or UNAUTHORIZED
-    this.createTableRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_CREATE_TABLE,
-      Predicates.<CreateTableRequest> alwaysFalse());
-    this.modifyColumnFamilyRpc =
-        asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_MODIFY_COLUMN_FAMILIES,
-          Predicates.<ModifyColumnFamiliesRequest> alwaysFalse());
-    this.deleteTableRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_DELETE_TABLE,
-      Predicates.<DeleteTableRequest> alwaysFalse());
-    this.dropRowRangeRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_DROP_ROW_RANGE,
-      Predicates.<DropRowRangeRequest> alwaysFalse());
+    this.createTableRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getCreateTableMethod(),
+        Predicates.<CreateTableRequest> alwaysFalse());
+    this.modifyColumnFamilyRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getModifyColumnFamiliesMethod(),
+        Predicates.<ModifyColumnFamiliesRequest> alwaysFalse());
+    this.deleteTableRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getDeleteTableMethod(),
+        Predicates.<DeleteTableRequest> alwaysFalse());
+    this.dropRowRangeRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getDropRowRangeMethod(),
+        Predicates.<DropRowRangeRequest> alwaysFalse());
     this.generateConsistencyTokenRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.METHOD_GENERATE_CONSISTENCY_TOKEN,
+        BigtableTableAdminGrpc.getGenerateConsistencyTokenMethod(),
         Predicates.<GenerateConsistencyTokenRequest> alwaysFalse());
     this.checkConsistencyRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.METHOD_CHECK_CONSISTENCY,
+        BigtableTableAdminGrpc.getCheckConsistencyMethod(),
         Predicates.<CheckConsistencyRequest> alwaysFalse());
-
-    this.snapshotTableRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_SNAPSHOT_TABLE,
+    this.snapshotTableRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getSnapshotTableMethod(),
         Predicates.<SnapshotTableRequest>alwaysFalse());
-
-    this.getSnapshotRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_GET_SNAPSHOT,
+    this.getSnapshotRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getGetSnapshotMethod(),
         Predicates.<GetSnapshotRequest>alwaysTrue());
-
-    this.listSnapshotsRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_LIST_SNAPSHOTS,
+    this.listSnapshotsRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getListSnapshotsMethod(),
         Predicates.<ListSnapshotsRequest>alwaysTrue());
-
-    this.deleteSnapshotRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_DELETE_SNAPSHOT,
+    this.deleteSnapshotRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getDeleteSnapshotMethod(),
         Predicates.<DeleteSnapshotRequest>alwaysFalse());
-
-    this.createTableFromSnapshotRpc = asyncUtilities.createAsyncRpc(BigtableTableAdminGrpc.METHOD_CREATE_TABLE_FROM_SNAPSHOT,
+    this.createTableFromSnapshotRpc = asyncUtilities.createAsyncRpc(
+        BigtableTableAdminGrpc.getCreateTableFromSnapshotMethod(),
         Predicates.<CreateTableFromSnapshotRequest>alwaysFalse());
 
     this.retryOptions = bigtableOptions.getRetryOptions();
