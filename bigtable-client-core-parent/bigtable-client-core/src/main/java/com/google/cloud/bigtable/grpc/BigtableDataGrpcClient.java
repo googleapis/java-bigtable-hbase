@@ -171,6 +171,14 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       Channel channel,
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions) {
+
+    try {
+      BigtableGrpc.getReadRowsMethod();
+    } catch(NoSuchMethodError e) {
+      throw new RuntimeException("Please make sure that you are using "
+          + "grpc-google-cloud-bigtable-v2 > 0.11.0 and bigtable-protos is not on your classpath");
+    }
+
     this.clientDefaultAppProfileId = bigtableOptions.getAppProfileId();
     this.retryExecutorService = retryExecutorService;
     this.retryOptions = bigtableOptions.getRetryOptions();

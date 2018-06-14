@@ -32,7 +32,6 @@ import com.google.api.client.util.ExponentialBackOff;
 import com.google.bigtable.admin.v2.CheckConsistencyRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
 import com.google.common.annotations.VisibleForTesting;
-
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 
@@ -59,10 +58,6 @@ import com.google.protobuf.Empty;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import io.grpc.ServerMethodDefinition;
-import io.grpc.ServerServiceDefinition;
-import io.grpc.ServiceDescriptor;
 
 /**
  * A gRPC client for accessing the Bigtable Table Admin API.
