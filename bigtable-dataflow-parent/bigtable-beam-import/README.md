@@ -7,6 +7,8 @@ Cloud Dataflow.
 
 Download [the import/export jar](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.1.0/bigtable-beam-import-1.1.0-shaded.jar), which is an aggregation of all required jars.
 
+Please pay attention to the Cluster CPU usage and adjust the number of Dataflow workers accordingly.
+
 ## Export
 
 On the command line:
@@ -19,7 +21,7 @@ java -jar bigtable-beam-import-1.1.0-shaded.jar export \
     --bigtableTableId=[your_table_id] \
     --destinationPath=gs://[bucket_name]/[export_directory]/ \
     --tempLocation=gs://[bucket_name]/[temp_work_directory]/ \
-    --numWorkers=[10x number of nodes] \
+    --maxNumWorkers=[10x number of nodes] \
     --zone=[zone of your cluster]
 ```
 
@@ -37,6 +39,6 @@ java -jar bigtable-beam-import-1.1.0-shaded.jar import \
     --bigtableTableId=[your_table_id] \
     --sourcePattern='gs://[bucket_name]/[import_directory]/part-*' \
     --tempLocation=gs://[bucket_name]/[temp_work_directory] \
-    --maxNumWorkers=[5x number of nodes] \
+    --maxNumWorkers=[3x number of nodes] \
     --zone=[zone of your cluster]
 ```
