@@ -90,18 +90,92 @@ public class TestScanAdapter {
   public void testNewScan() {
     Scan scan = new Scan();
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
-    Assert.assertEquals(RowSet.newBuilder()
-        .addRowRanges(RowRange.getDefaultInstance()).build(),
+    Assert.assertEquals(toRowSet(RowRange.getDefaultInstance()),
       request.getRows());
+  }
+
+  @Test
+  public void testStartDefault() {
+    byte[] startKey = Bytes.toBytes("startKey");
+    Scan scan = new Scan().withStartRow(startKey);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setStartKeyClosed(ByteString.copyFrom(startKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStartInclusive() {
+    byte[] startKey = Bytes.toBytes("startKey");
+    Scan scan = new Scan().withStartRow(startKey, true);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setStartKeyClosed(ByteString.copyFrom(startKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStartExclusive() {
+    byte[] startKey = Bytes.toBytes("startKey");
+    Scan scan = new Scan().withStartRow(startKey, false);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setStartKeyOpen(ByteString.copyFrom(startKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStopDefault() {
+    byte[] stopKey = Bytes.toBytes("stopKey");
+    Scan scan = new Scan().withStopRow(stopKey);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setEndKeyOpen(ByteString.copyFrom(stopKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStopInclusive() {
+    byte[] stopKey = Bytes.toBytes("stopKey");
+    Scan scan = new Scan().withStopRow(stopKey, true);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setEndKeyClosed(ByteString.copyFrom(stopKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStopExclusive() {
+    byte[] stopKey = Bytes.toBytes("stopKey");
+    Scan scan = new Scan().withStopRow(stopKey, false);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setEndKeyOpen(ByteString.copyFrom(stopKey)).build());
+    Assert.assertEquals(expected, request.getRows());
   }
 
   @Test
   public void testStartAndEndKeysAreSet() {
     byte[] startKey = Bytes.toBytes("startKey");
     byte[] stopKey = Bytes.toBytes("stopKey");
-    Scan scan = new Scan(startKey, stopKey);
+    Scan scan = new Scan()
+        .withStartRow(startKey)
+        .withStopRow(stopKey);
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
     Assert.assertEquals(toRowSet(toRange(startKey, stopKey)), request.getRows());
+  }
+
+  @Test
+  public void testStartAndEndKeysNonDefault() {
+    byte[] startKey = Bytes.toBytes("startKey");
+    byte[] stopKey = Bytes.toBytes("stopKey");
+    Scan scan = new Scan()
+        .withStartRow(startKey, false)
+        .withStopRow(stopKey, true);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    Assert.assertEquals(toRowSet(
+        RowRange.newBuilder().setStartKeyOpen(ByteStringer.wrap(startKey))
+            .setEndKeyClosed(ByteStringer.wrap(stopKey)).build()), request.getRows());
   }
 
   @Test
