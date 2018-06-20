@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
@@ -45,6 +46,16 @@ public class TemplateUtils {
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
+
+    // Enable throttling in BufferedMutator by default.
+    // We don't want to expose this as a parameter because we want to make the default Dataflow
+    // pipeline or template easier to use. User can (but not recommended) alter this behavior by
+    // implementing their own custom pipeline. With this flag turned on, a default target latency of
+    // 100 milliseconds (see {@link BulkOptions.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT}) is used.
+    // The throttling will kick in only when the mutation latency has reached the target latency.
+    builder.withConfiguration(
+        BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, Boolean.toString(true));
+
     return builder.build();
   }
 
