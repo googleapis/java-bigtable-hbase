@@ -48,7 +48,7 @@ public class TemplateUtils {
     }
 
     // Enable throttling in BufferedMutator by default.
-    // We don't want to expose this as a parameter because we want to make the default dataflow
+    // We don't want to expose this as a parameter because we want to make the default Dataflow
     // pipeline or template easier to use. User can (but not recommended) alter this behavior by
     // implementing their own custom pipeline. With this flag turned on, a default target latency of
     // 100 milliseconds (see {@link BulkOptions.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT}) is used.
