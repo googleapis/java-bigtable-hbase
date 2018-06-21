@@ -42,5 +42,3 @@ java -jar bigtable-beam-import-1.1.0-shaded.jar import \
     --maxNumWorkers=[3x number of nodes] \
     --zone=[zone of your cluster]
 ```
-
-NOTE: Throttling in BufferedMutator is enabled by default. The throttling will kick in only when the mutation latency has reached the target latency of 100 milliseconds.
