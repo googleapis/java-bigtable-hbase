@@ -69,7 +69,7 @@ public class PutAdapterPerf {
       long start = System.nanoTime();
       for (int i = 0; i < count; i++) {
         MutateRowRequest adapted = adapter.adapt(put);
-        BigtableGrpc.METHOD_MUTATE_ROW.streamRequest(adapted);
+        BigtableGrpc.getMutateRowMethod().streamRequest(adapted);
       }
       long time = System.nanoTime() - start;
       System.out.println(
@@ -82,7 +82,7 @@ public class PutAdapterPerf {
       for (int i = 0; i < count; i++) {
         MutateRowRequest adapted = adapter.adapt(put);
         adapted.getSerializedSize();
-        BigtableGrpc.METHOD_MUTATE_ROW.streamRequest(adapted);
+        BigtableGrpc.getMutateRowMethod().streamRequest(adapted);
       }
       long time = System.nanoTime() - start;
       System.out.println(String.format(

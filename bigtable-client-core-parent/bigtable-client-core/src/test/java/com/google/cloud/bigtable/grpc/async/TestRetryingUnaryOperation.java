@@ -64,7 +64,7 @@ import io.grpc.StatusRuntimeException;
 public class TestRetryingUnaryOperation {
 
   private static final BigtableAsyncRpc.RpcMetrics metrics =
-      BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.METHOD_READ_ROWS);
+      BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.getReadRowsMethod());
 
   private RetryingUnaryOperation underTest;
 
@@ -91,7 +91,7 @@ public class TestRetryingUnaryOperation {
     retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
 
     when(readAsync.getRpcMetrics()).thenReturn(metrics);
-    when(readAsync.getMethodDescriptor()).thenReturn(BigtableGrpc.METHOD_READ_ROWS);
+    when(readAsync.getMethodDescriptor()).thenReturn(BigtableGrpc.getReadRowsMethod());
 
     underTest = new RetryingUnaryOperation<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
         readAsync, CallOptions.DEFAULT, executorService, new Metadata());

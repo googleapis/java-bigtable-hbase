@@ -323,13 +323,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       return callOptions;
     }
     MethodDescriptor<RequestT, ResponseT> methodDescriptor = rpc.getMethodDescriptor();
-    if (methodDescriptor.getType() != MethodType.UNARY) {
-      if (methodDescriptor == BigtableGrpc.METHOD_READ_ROWS
-          && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet(request)) {
-        // This is a streaming read.
-        return callOptions;
-      } // else this is a 1) mutateRows or 2) SampleRowKeys or 3) a get, all of which can benefit
-        // from a timeout equal to a unary operation.
+    if (methodDescriptor == BigtableGrpc.getReadRowsMethod()
+        && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet(request)) {
+      // This is a streaming read.
+      return callOptions;
     }
     return callOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
   }

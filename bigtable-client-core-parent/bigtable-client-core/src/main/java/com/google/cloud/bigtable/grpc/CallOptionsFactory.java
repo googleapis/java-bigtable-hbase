@@ -78,7 +78,7 @@ public interface CallOptionsFactory {
       }
 
       int timeout = config.getShortRpcTimeoutMs();
-      if (isLongRequest(descriptor, request)) {
+      if (isLongRequest(request)) {
         timeout = config.getLongRpcTimeoutMs();
       }
       return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
@@ -89,9 +89,8 @@ public interface CallOptionsFactory {
      * @return true if this is a {@link MutateRowsRequest} or a {@link ReadRowsRequest} that's a
      *         scan.
      */
-    public static <RequestT> boolean isLongRequest(MethodDescriptor<RequestT, ?> descriptor,
-        RequestT request) {
-      return descriptor == BigtableGrpc.METHOD_MUTATE_ROWS || !isGet(request);
+    public static <RequestT> boolean isLongRequest(RequestT request) {
+      return (request instanceof MutateRowsRequest) || !isGet(request);
     }
 
     public static boolean isGet(Object request) {
