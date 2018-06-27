@@ -2,6 +2,7 @@ package com.google.cloud.bigtable.grpc.io;
 
 import com.google.api.client.util.Clock;
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
@@ -19,6 +20,12 @@ import javax.annotation.concurrent.GuardedBy;
 
 @InternalApi
 public class Watchdog implements Runnable {
+  private static final Logger LOG = new Logger(Watchdog.class);
+
+  // By default kill the stream after 10 minutes of inactivity
+  private static final long DEFAULT_IDLE_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(10);
+  private static final long MIN_CHECK_PERIOD_MS = TimeUnit.SECONDS.toMillis(10);
+
   // Dummy value to convert the ConcurrentHashMap into a Set
   private static Object PRESENT = new Object();
   private final ConcurrentHashMap<WatchedCall<?,?>, Object> openStreams = new ConcurrentHashMap<>();
@@ -29,6 +36,9 @@ public class Watchdog implements Runnable {
 
   private ScheduledFuture<?> scheduledFuture;
 
+  public Watchdog(Clock clock, long waitTimeoutMs) {
+    this(clock, waitTimeoutMs, DEFAULT_IDLE_TIMEOUT_MS);
+  }
 
   public Watchdog(Clock clock, long waitTimeoutMs, long idleTimeoutMs) {
     this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
@@ -43,24 +53,28 @@ public class Watchdog implements Runnable {
   public void run() {
     Iterator<Entry<WatchedCall<?,?>, Object>> it = openStreams.entrySet().iterator();
 
+    int count = 0;
+
     while (it.hasNext()) {
       WatchedCall<?,?> stream = it.next().getKey();
       if (stream.cancelIfStale()) {
+        count++;
         it.remove();
       }
+    }
+
+    if (count > 0) {
+      LOG.warn("Found %d stale streams and cancelled them", count);
     }
   }
 
   public void start(ScheduledExecutorService executor) {
     Preconditions.checkState(scheduledFuture == null, "Already started");
     long minTimeoutMs = Math.min(waitTimeoutMs, idleTimeoutMs);
+    long checkPeriodMs = Math.max(minTimeoutMs / 2, MIN_CHECK_PERIOD_MS);
 
-    long checkPeriodMs = minTimeoutMs / 2;
-    if (checkPeriodMs < TimeUnit.SECONDS.toMillis(10)) {
-      checkPeriodMs = TimeUnit.SECONDS.toMillis(10);
-    }
-
-    scheduledFuture = executor.scheduleAtFixedRate(this, checkPeriodMs, checkPeriodMs, TimeUnit.MILLISECONDS);
+    scheduledFuture = executor.scheduleAtFixedRate(this,
+        checkPeriodMs, checkPeriodMs, TimeUnit.MILLISECONDS);
   }
 
   public void stop() {
@@ -180,6 +194,8 @@ public class Watchdog implements Runnable {
           case DELIVERING:
             // Don't cancel the stream while it's results are being processed by user code.
             break;
+          default:
+            throw new IllegalStateException("Unknown state: " + this.state);
         }
       }
 

@@ -215,7 +215,6 @@ public class BigtableSession implements Closeable {
     clientInterceptors =
         clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
 
-
     Channel dataChannel = getDataChannelPool();
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
@@ -262,11 +261,8 @@ public class BigtableSession implements Closeable {
   private WatchdogInterceptor setupWatchdog() {
     Preconditions.checkState(watchdog == null, "Watchdog already setup");
 
-    watchdog = new Watchdog(
-        Clock.SYSTEM,
-        options.getRetryOptions().getReadPartialRowTimeoutMillis(),
-        TimeUnit.MINUTES.toMillis(15)
-    );
+    watchdog = new Watchdog(Clock.SYSTEM,
+        options.getRetryOptions().getReadPartialRowTimeoutMillis());
     watchdog.start(BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
 
     return new WatchdogInterceptor(
