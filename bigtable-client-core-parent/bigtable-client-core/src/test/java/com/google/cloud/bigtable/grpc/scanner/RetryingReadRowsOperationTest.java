@@ -194,7 +194,7 @@ public class RetryingReadRowsOperationTest {
 
   @Test
   public void testSingleResponseWithQueue() throws UnsupportedEncodingException {
-    ResponseQueueReader reader = new ResponseQueueReader(10000);
+    ResponseQueueReader reader = new ResponseQueueReader();
     RetryingReadRowsOperation underTest = createOperation(reader);
     start(underTest);
     ByteString key = ByteString.copyFrom("SomeKey", "UTF-8");
