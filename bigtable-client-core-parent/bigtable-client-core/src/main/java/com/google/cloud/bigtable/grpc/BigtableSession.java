@@ -16,6 +16,12 @@
 
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.CurrentMillisClock;
+import com.google.bigtable.v2.BigtableGrpc;
+import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import io.grpc.MethodDescriptor;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -34,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 
 import com.google.api.client.util.Strings;
-import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
@@ -62,6 +67,7 @@ import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.internal.GrpcUtil;
+import org.joda.time.Duration;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -147,6 +153,7 @@ public class BigtableSession implements Closeable {
     return resourceLimiter;
   }
 
+  private final WatchdogInterceptor watchdog;
   private final BigtableDataClient dataClient;
 
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
@@ -210,7 +217,21 @@ public class BigtableSession implements Closeable {
     clientInterceptors =
         clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
 
+
     Channel dataChannel = getDataChannelPool();
+
+    Duration waitTimeout = Duration.millis(options.getRetryOptions().getReadPartialRowTimeoutMillis());
+
+    watchdog = new WatchdogInterceptor(
+        ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()),
+        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
+        CurrentMillisClock.getDefaultClock(),
+        waitTimeout,
+        Duration.standardMinutes(15)
+    );
+    watchdog.start();
+
+    dataChannel = ClientInterceptors.intercept(dataChannel, watchdog);
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
@@ -501,6 +522,8 @@ public class BigtableSession implements Closeable {
   /** {@inheritDoc} */
   @Override
   public synchronized void close() throws IOException {
+    watchdog.stop();
+
     if (managedChannels.isEmpty()) {
       return;
     }
