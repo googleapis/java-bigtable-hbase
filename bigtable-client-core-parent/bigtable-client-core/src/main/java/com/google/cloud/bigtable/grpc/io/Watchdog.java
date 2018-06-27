@@ -1,6 +1,6 @@
 package com.google.cloud.bigtable.grpc.io;
 
-import com.google.api.core.ApiClock;
+import com.google.api.client.util.Clock;
 import com.google.api.core.InternalApi;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
@@ -16,7 +16,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.GuardedBy;
-import org.joda.time.Duration;
 
 @InternalApi
 public class Watchdog implements Runnable {
@@ -24,17 +23,17 @@ public class Watchdog implements Runnable {
   private static Object PRESENT = new Object();
   private final ConcurrentHashMap<WatchedCall<?,?>, Object> openStreams = new ConcurrentHashMap<>();
 
-  private final ApiClock clock;
-  private final Duration waitTimeout;
-  private final Duration idleTimeout;
+  private final Clock clock;
+  private final long waitTimeoutMs;
+  private final long idleTimeoutMs;
 
   private ScheduledFuture<?> scheduledFuture;
 
 
-  public Watchdog(ApiClock clock, Duration waitTimeout, Duration idleTimeout) {
+  public Watchdog(Clock clock, long waitTimeoutMs, long idleTimeoutMs) {
     this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
-    this.waitTimeout = Preconditions.checkNotNull(waitTimeout, "waitTimeout can't be null");
-    this.idleTimeout = Preconditions.checkNotNull(idleTimeout, "idleTimeout can't be null");
+    this.waitTimeoutMs = waitTimeoutMs;
+    this.idleTimeoutMs = idleTimeoutMs;
   }
 
   public <ReqT, RespT> ClientCall<ReqT, RespT> watch(ClientCall<ReqT, RespT> innerCall) {
@@ -54,16 +53,14 @@ public class Watchdog implements Runnable {
 
   public void start(ScheduledExecutorService executor) {
     Preconditions.checkState(scheduledFuture == null, "Already started");
-    Duration min = waitTimeout;
-    if (idleTimeout.isShorterThan(min)) {
-      min = idleTimeout;
-    }
-    Duration checkPeriod = min.dividedBy(2);
-    if (checkPeriod.isShorterThan(Duration.standardSeconds(10))) {
-      checkPeriod = Duration.standardSeconds(10);
+    long minTimeoutMs = Math.min(waitTimeoutMs, idleTimeoutMs);
+
+    long checkPeriodMs = minTimeoutMs / 2;
+    if (checkPeriodMs < TimeUnit.SECONDS.toMillis(10)) {
+      checkPeriodMs = TimeUnit.SECONDS.toMillis(10);
     }
 
-    scheduledFuture = executor.scheduleAtFixedRate(this, checkPeriod.getMillis(), checkPeriod.getMillis(), TimeUnit.MILLISECONDS);
+    scheduledFuture = executor.scheduleAtFixedRate(this, checkPeriodMs, checkPeriodMs, TimeUnit.MILLISECONDS);
   }
 
   public void stop() {
@@ -92,7 +89,7 @@ public class Watchdog implements Runnable {
     private int pendingCount = 0;
 
     @GuardedBy("lock")
-    private long lastActivityAt = clock.millisTime();
+    private long lastActivityAt = clock.currentTimeMillis();
 
     WatchedCall(ClientCall<ReqT, RespT> delegate) {
       super(delegate);
@@ -105,7 +102,7 @@ public class Watchdog implements Runnable {
       synchronized (lock) {
         Preconditions.checkState(state == null, "Already started");
         state = (pendingCount == 0) ? State.IDLE : State.WAITING;
-        lastActivityAt = clock.millisTime();
+        lastActivityAt = clock.currentTimeMillis();
       }
 
       openStreams.put(this, PRESENT);
@@ -117,13 +114,15 @@ public class Watchdog implements Runnable {
             state = State.DELIVERING;
           }
 
-          super.onMessage(message);
+          try {
+            super.onMessage(message);
+          } finally {
+            synchronized (lock) {
+              pendingCount--;
+              lastActivityAt = clock.currentTimeMillis();
 
-          synchronized (lock) {
-            pendingCount--;
-            lastActivityAt = clock.millisTime();
-
-            state = (pendingCount > 0) ? State.WAITING : State.IDLE;
+              state = (pendingCount > 0) ? State.WAITING : State.IDLE;
+            }
           }
         }
 
@@ -149,7 +148,7 @@ public class Watchdog implements Runnable {
       synchronized (lock) {
         if (state == State.IDLE) {
           state = State.WAITING;
-          lastActivityAt = clock.millisTime();
+          lastActivityAt = clock.currentTimeMillis();
         }
 
         // Increment the request count without overflow
@@ -163,20 +162,23 @@ public class Watchdog implements Runnable {
 
     boolean cancelIfStale() {
       synchronized (lock) {
-        long waitTime = clock.millisTime() - lastActivityAt;
+        long waitTime = clock.currentTimeMillis() - lastActivityAt;
 
         switch (this.state) {
           case IDLE:
-            if (idleTimeout.getMillis() > 0 && waitTime >= idleTimeout.getMillis()) {
+            if (waitTime >= idleTimeoutMs) {
               delegate().cancel("Canceled due to idle connection", new CancellationException());
               return true;
             }
             break;
           case WAITING:
-            if (waitTimeout.getMillis() > 0 && waitTime >= waitTimeout.getMillis()) {
+            if (waitTime >= waitTimeoutMs) {
               delegate().cancel("Canceled due to timeout waiting for next response", new StreamWaitTimeoutException());
               return true;
             }
+            break;
+          case DELIVERING:
+            // Don't cancel the stream while it's results are being processed by user code.
             break;
         }
       }

@@ -97,7 +97,9 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
   /** {@inheritDoc} */
   @Override
   public void close() {
-    if (isConsumed) return;
+    if (isConsumed) {
+      return;
+    }
 
     isConsumed = true;
     responseQueueReader.close();
