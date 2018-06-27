@@ -18,9 +18,9 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.CurrentMillisClock;
 import com.google.bigtable.v2.BigtableGrpc;
+import com.google.cloud.bigtable.grpc.io.Watchdog;
 import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import io.grpc.MethodDescriptor;
 import java.io.Closeable;
 import java.io.IOException;
@@ -153,7 +153,7 @@ public class BigtableSession implements Closeable {
     return resourceLimiter;
   }
 
-  private final WatchdogInterceptor watchdog;
+  private final Watchdog watchdog;
   private final BigtableDataClient dataClient;
 
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
@@ -220,18 +220,18 @@ public class BigtableSession implements Closeable {
 
     Channel dataChannel = getDataChannelPool();
 
-    Duration waitTimeout = Duration.millis(options.getRetryOptions().getReadPartialRowTimeoutMillis());
-
-    watchdog = new WatchdogInterceptor(
-        ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()),
-        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
+    // Configure the watchdog
+    watchdog = new Watchdog(
         CurrentMillisClock.getDefaultClock(),
-        waitTimeout,
+        Duration.millis(options.getRetryOptions().getReadPartialRowTimeoutMillis()),
         Duration.standardMinutes(15)
     );
-    watchdog.start();
+    watchdog.start(BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
 
-    dataChannel = ClientInterceptors.intercept(dataChannel, watchdog);
+    dataChannel = ClientInterceptors.intercept(dataChannel, new WatchdogInterceptor(
+        ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()),
+        watchdog)
+    );
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
