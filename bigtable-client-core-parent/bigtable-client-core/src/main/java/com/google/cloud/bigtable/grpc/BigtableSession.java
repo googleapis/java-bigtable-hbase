@@ -153,7 +153,7 @@ public class BigtableSession implements Closeable {
     return resourceLimiter;
   }
 
-  private final Watchdog watchdog;
+  private Watchdog watchdog;
   private final BigtableDataClient dataClient;
 
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
@@ -214,24 +214,13 @@ public class BigtableSession implements Closeable {
       throw new IOException("Could not initialize credentials.", e);
     }
 
+    clientInterceptorsList.add(setupWatchdog());
+
     clientInterceptors =
         clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
 
 
     Channel dataChannel = getDataChannelPool();
-
-    // Configure the watchdog
-    watchdog = new Watchdog(
-        CurrentMillisClock.getDefaultClock(),
-        Duration.millis(options.getRetryOptions().getReadPartialRowTimeoutMillis()),
-        Duration.standardMinutes(15)
-    );
-    watchdog.start(BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
-
-    dataChannel = ClientInterceptors.intercept(dataChannel, new WatchdogInterceptor(
-        ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()),
-        watchdog)
-    );
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
@@ -272,6 +261,21 @@ public class BigtableSession implements Closeable {
       }
     }
     return createManagedPool(host, channelCount);
+  }
+
+  private WatchdogInterceptor setupWatchdog() {
+    Preconditions.checkState(watchdog == null, "Watchdog already setup");
+
+    watchdog = new Watchdog(
+        CurrentMillisClock.getDefaultClock(),
+        Duration.millis(options.getRetryOptions().getReadPartialRowTimeoutMillis()),
+        Duration.standardMinutes(15)
+    );
+    watchdog.start(BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
+
+    return new WatchdogInterceptor(
+        ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()),
+        watchdog);
   }
 
   /**
