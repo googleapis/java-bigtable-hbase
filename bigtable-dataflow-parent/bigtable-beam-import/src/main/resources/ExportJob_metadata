@@ -1,6 +1,6 @@
 {
   "name": "ExportJob",
-  "description": "A pipeline that exports data from Cloud Bigtable to GCS in SequenceFile format.",
+  "description": "A pipeline that exports data from Cloud Bigtable to Cloud Storage in SequenceFile format.",
   "parameters": [{
     "name": "bigtableProject",
     "label": "Project ID",
