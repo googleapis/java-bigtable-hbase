@@ -142,11 +142,6 @@ public interface BigtableTableAdminClient {
    * Blocks until replication has caught up to the point this method was called or timeout is
    * reached.
    *
-   * <p>This is a private alpha release of Cloud Bigtable replication. This feature
-   * is not currently available to most Cloud Bigtable customers. This feature
-   * might be changed in backward-incompatible ways and is not recommended for
-   * production use. It is not subject to any SLA or deprecation policy.
-   *
    * @param tableName the name of the table to wait for replication.
    * @param timeout the maximum time to wait in seconds.
    * @throws InterruptedException if call is interrupted while waiting to recheck if replication has
