@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+
+import com.google.bigtable.v2.BigtableGrpc;
 import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
@@ -52,6 +54,20 @@ import java.util.NavigableSet;
 public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
+  private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
+
+  /**
+   * HBase supports include(Stop|Start)Row only at 1.4.0+, so check to make sure that the HBase
+   * runtime dependency supports this feature.  Specifically, Beam uses HBase 1.2.0.
+   */
+  private static boolean isOpenClosedAvailable() {
+    try {
+      new Scan().includeStopRow();
+      return true;
+    } catch(NoSuchMethodError e) {
+      return false;
+    }
+  }
 
   private final FilterAdapter filterAdapter;
   private final RowRangeAdapter rowRangeAdapter;
@@ -136,12 +152,22 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       } else {
         RowRange.Builder range =  RowRange.newBuilder();
         if (!startRow.isEmpty()) {
-          range.setStartKeyClosed(startRow);
+          if (!OPEN_CLOSED_AVAILABLE || scan.includeStartRow()) {
+            // the default for start is closed
+            range.setStartKeyClosed(startRow);
+          } else {
+            range.setStartKeyOpen(startRow);
+          }
         }
 
         ByteString stopRow = ByteString.copyFrom(scan.getStopRow());
         if (!stopRow.isEmpty()) {
-          range.setEndKeyOpen(stopRow);
+          if (!OPEN_CLOSED_AVAILABLE || !scan.includeStopRow()) {
+            // the default for stop is open
+            range.setEndKeyOpen(stopRow);
+          } else {
+            range.setEndKeyClosed(stopRow);
+          }
         }
         rowSetBuilder.addRowRanges(range);
       }
