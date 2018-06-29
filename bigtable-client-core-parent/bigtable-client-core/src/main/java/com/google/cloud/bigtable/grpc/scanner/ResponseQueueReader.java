@@ -56,6 +56,7 @@ public class ResponseQueueReader
 
   private final BlockingQueue<ResultQueueEntry<FlatRow>> resultQueue =  new LinkedBlockingQueue<>();
   private final AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
+  private final long maxWaitMs;
   private boolean lastResponseProcessed = false;
   private Long startTime;
   private ClientCallStreamObserver<ReadRowsRequest> requestStream;
@@ -64,10 +65,11 @@ public class ResponseQueueReader
   /**
    * <p>Constructor for ResponseQueueReader.</p>
    */
-  public ResponseQueueReader() {
+  public ResponseQueueReader(long maxWaitMs) {
     if (BigtableClientMetrics.isEnabled(MetricLevel.Info)) {
       startTime = System.nanoTime();
     }
+    this.maxWaitMs = maxWaitMs;
   }
 
   @Override
@@ -127,7 +129,11 @@ public class ResponseQueueReader
   protected ResultQueueEntry<FlatRow> getNext() throws IOException {
     ResultQueueEntry<FlatRow> queueEntry;
     try {
-      queueEntry = resultQueue.take();
+      queueEntry = resultQueue.poll(maxWaitMs, TimeUnit.MILLISECONDS);
+      // Should never happen
+      if (queueEntry == null) {
+        throw new IllegalStateException("Timed out awaiting next sync rows");
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Interrupted while waiting for next result", e);
