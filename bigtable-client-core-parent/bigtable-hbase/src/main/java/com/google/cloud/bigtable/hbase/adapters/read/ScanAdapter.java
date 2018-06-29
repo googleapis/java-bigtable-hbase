@@ -54,18 +54,19 @@ import java.util.NavigableSet;
 public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
-  private static boolean OPEN_CLOSED_AVAILABLE;
+  private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
 
-  static {
+  /**
+   * HBase supports include(Stop|Start)Row only at 1.4.0+, so check to make sure that the HBase
+   * runtime dependency supports this feature.  Specifically, Beam uses HBase 1.2.0.
+   */
+  private static boolean isOpenClosedAvailable() {
     try {
-      // Not all versions of HBase support include(Stop|Start)Row, so check at startup.
-      // Specifically,
       new Scan().includeStopRow();
-      OPEN_CLOSED_AVAILABLE = true;
+      return true;
     } catch(NoSuchMethodError e) {
-      OPEN_CLOSED_AVAILABLE = false;
+      return false;
     }
-
   }
 
   private final FilterAdapter filterAdapter;
