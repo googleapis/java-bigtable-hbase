@@ -83,7 +83,7 @@ public class ImportJob {
   static final long BUNDLE_SIZE = 100 * 1024 * 1024;
 
   public interface ImportOptions extends GcpOptions {
-    @Description("This Bigtable App Profile id. (Replication alpha feature).")
+    @Description("This Bigtable App Profile id.")
     ValueProvider<String> getBigtableAppProfileId();
     @SuppressWarnings("unused")
     void setBigtableAppProfileId(ValueProvider<String> appProfileId);
