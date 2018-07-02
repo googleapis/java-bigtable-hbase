@@ -24,9 +24,10 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import java.io.Serializable;
 import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ParseFilter;
-//import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 /**
  * !!! DO NOT TOUCH THIS CLASS !!!
@@ -47,13 +48,13 @@ public class TemplateUtils {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
 
-    if (opts.getBigtableWriteThrottleMs() != null) {
-      builder.withConfiguration("google.bigtable.buffered.mutator.throttling.enable" , // BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING,
-          "true");
-      builder.withConfiguration(
-          "google.bigtable.buffered.mutator.throttling.threshold.ms", // BigTableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
-          opts.getBigtableWriteThrottleMs());
-    }
+    ValueProvider enableThrottling = ValueProvider.NestedValueProvider.of(
+        opts.getBigtableWriteThrottleMs(), (Integer throttleMs) -> String.valueOf(throttleMs > 0));
+
+    builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, enableThrottling);
+    builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+        String.valueOf(opts.getBigtableWriteThrottleMs()));
+
     return builder.build();
   }
 
