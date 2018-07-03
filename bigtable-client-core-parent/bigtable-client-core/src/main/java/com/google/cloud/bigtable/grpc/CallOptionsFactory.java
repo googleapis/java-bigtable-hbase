@@ -89,15 +89,16 @@ public interface CallOptionsFactory {
      * @return true if this is a {@link MutateRowsRequest} or a {@link ReadRowsRequest} that's a
      *         scan.
      */
-    public static <RequestT> boolean isLongRequest(RequestT request) {
-      return (request instanceof MutateRowsRequest) || !isGet(request);
+    public static boolean isLongRequest(Object request) {
+      if (request instanceof ReadRowsRequest) {
+        return !isGet((ReadRowsRequest) request);
+      } else {
+        return request instanceof MutateRowsRequest;
+      }
     }
 
-    public static boolean isGet(Object request) {
-      if (request.getClass() != ReadRowsRequest.class) {
-        return false;
-      }
-      RowSet rowSet = ((ReadRowsRequest) request).getRows();
+    public static boolean isGet(ReadRowsRequest request) {
+      RowSet rowSet = request.getRows();
       return rowSet != null && rowSet.getRowRangesCount() == 0 && rowSet.getRowKeysCount() == 1;
     }
   }
