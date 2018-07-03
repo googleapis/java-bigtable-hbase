@@ -16,26 +16,10 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import javax.net.ssl.SSLException;
-
+import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
-import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
 import com.google.bigtable.admin.v2.ListClustersResponse;
+import com.google.bigtable.v2.BigtableGrpc;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.BulkOptions;
@@ -51,17 +35,35 @@ import com.google.cloud.bigtable.grpc.async.ThrottlingClientInterceptor;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
+import com.google.cloud.bigtable.grpc.io.Watchdog;
+import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-
+import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.MethodDescriptor;
 import io.grpc.internal.GrpcUtil;
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLException;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -147,6 +149,7 @@ public class BigtableSession implements Closeable {
     return resourceLimiter;
   }
 
+  private Watchdog watchdog;
   private final BigtableDataClient dataClient;
 
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
@@ -207,6 +210,8 @@ public class BigtableSession implements Closeable {
       throw new IOException("Could not initialize credentials.", e);
     }
 
+    clientInterceptorsList.add(setupWatchdog());
+
     clientInterceptors =
         clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
 
@@ -251,6 +256,18 @@ public class BigtableSession implements Closeable {
       }
     }
     return createManagedPool(host, channelCount);
+  }
+
+  private WatchdogInterceptor setupWatchdog() {
+    Preconditions.checkState(watchdog == null, "Watchdog already setup");
+
+    watchdog = new Watchdog(Clock.SYSTEM,
+        options.getRetryOptions().getReadPartialRowTimeoutMillis());
+    watchdog.start(BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
+
+    return new WatchdogInterceptor(
+        ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()),
+        watchdog);
   }
 
   /**
@@ -501,6 +518,8 @@ public class BigtableSession implements Closeable {
   /** {@inheritDoc} */
   @Override
   public synchronized void close() throws IOException {
+    watchdog.stop();
+
     if (managedChannels.isEmpty()) {
       return;
     }
