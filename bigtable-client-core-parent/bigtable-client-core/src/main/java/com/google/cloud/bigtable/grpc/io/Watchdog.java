@@ -126,7 +126,7 @@ public class Watchdog implements Runnable {
     private final Object lock = new Object();
 
     @GuardedBy("lock")
-    private State state;
+    private State state = State.IDLE;
 
     @GuardedBy("lock")
     private int pendingCount = 0;
@@ -144,7 +144,6 @@ public class Watchdog implements Runnable {
 
       synchronized (lock) {
         Preconditions.checkState(state == null, "Already started");
-        state = (pendingCount == 0) ? State.IDLE : State.WAITING;
         lastActivityAt = clock.currentTimeMillis();
       }
 

@@ -33,8 +33,8 @@ import org.junit.runners.JUnit4;
 public class WatchdogTest {
 
   private FixedClock clock;
-  private long waitTimeMs = TimeUnit.SECONDS.toMillis(10);
-  private long idleTimeMs = TimeUnit.MINUTES.toMillis(5);
+  private static final long waitTimeMs = TimeUnit.SECONDS.toMillis(10);
+  private static final long idleTimeMs = TimeUnit.MINUTES.toMillis(5);
 
   private Watchdog watchdog;
   private FakeClientCall call;
@@ -150,4 +150,5 @@ public class WatchdogTest {
       closeStatus = status;
     }
   }
+
 }
