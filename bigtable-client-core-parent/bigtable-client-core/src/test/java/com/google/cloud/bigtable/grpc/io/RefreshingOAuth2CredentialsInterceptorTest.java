@@ -158,7 +158,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
                 .thenReturn(new OAuthCredentialsCache.HeaderToken(grpcStatus, null));
 
         ClientCall<ReadRowsRequest, ReadRowsResponse> call = underTest.interceptCall(
-                BigtableGrpc.METHOD_READ_ROWS,
+                BigtableGrpc.getReadRowsMethod(),
                 CallOptions.DEFAULT,
                 mockChannel);
         call.start(mockListener, new Metadata());
@@ -204,7 +204,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     private ClientCall<ReadRowsRequest, ReadRowsResponse> sendRequest(CallOptions callOptions) {
         ClientCall<ReadRowsRequest, ReadRowsResponse> call = underTest.interceptCall(
-                BigtableGrpc.METHOD_READ_ROWS,
+                BigtableGrpc.getReadRowsMethod(),
                 callOptions,
                 mockChannel);
         call.start(mockListener, new Metadata());

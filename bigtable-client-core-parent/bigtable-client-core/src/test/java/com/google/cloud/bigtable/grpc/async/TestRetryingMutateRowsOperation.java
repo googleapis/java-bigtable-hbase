@@ -58,7 +58,7 @@ public class TestRetryingMutateRowsOperation {
   private static Status OK = statusOf(io.grpc.Status.Code.OK);
   private static Status DEADLINE_EXCEEDED = statusOf(io.grpc.Status.Code.DEADLINE_EXCEEDED);
   private static final BigtableAsyncRpc.RpcMetrics metrics =
-      BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.METHOD_MUTATE_ROWS);
+      BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.getMutateRowsMethod());
 
   private static MutateRowsResponse createResponse(Status... statuses) {
     MutateRowsResponse.Builder builder = MutateRowsResponse.newBuilder();
@@ -128,7 +128,7 @@ public class TestRetryingMutateRowsOperation {
   public void setup() {
     MockitoAnnotations.initMocks(this);
     when(mutateRows.getRpcMetrics()).thenReturn(metrics);
-    when(mutateRows.getMethodDescriptor()).thenReturn(BigtableGrpc.METHOD_MUTATE_ROWS);
+    when(mutateRows.getMethodDescriptor()).thenReturn(BigtableGrpc.getMutateRowsMethod());
     retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
   }
 

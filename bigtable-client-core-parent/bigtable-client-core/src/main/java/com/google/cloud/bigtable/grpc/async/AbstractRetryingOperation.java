@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v2.BigtableGrpc;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.CallOptionsFactory;
@@ -322,14 +323,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     if (callOptions.getDeadline() != null) {
       return callOptions;
     }
-    MethodDescriptor<RequestT, ResponseT> methodDescriptor = rpc.getMethodDescriptor();
-    if (methodDescriptor.getType() != MethodType.UNARY) {
-      if (methodDescriptor == BigtableGrpc.METHOD_READ_ROWS
-          && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet(request)) {
-        // This is a streaming read.
-        return callOptions;
-      } // else this is a 1) mutateRows or 2) SampleRowKeys or 3) a get, all of which can benefit
-        // from a timeout equal to a unary operation.
+    if (request instanceof ReadRowsRequest
+        && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request)) {
+      // This is a streaming read.
+      return callOptions;
     }
     return callOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
   }

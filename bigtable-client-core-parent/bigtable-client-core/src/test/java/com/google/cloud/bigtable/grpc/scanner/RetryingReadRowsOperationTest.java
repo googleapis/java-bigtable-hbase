@@ -127,7 +127,7 @@ public class RetryingReadRowsOperationTest {
 
     when(mockRetryableRpc.newCall(any(CallOptions.class))).thenReturn(mockClientCall);
     when(mockRetryableRpc.getRpcMetrics()).thenReturn(mockRpcMetrics);
-    when(mockRetryableRpc.getMethodDescriptor()).thenReturn(BigtableGrpc.METHOD_READ_ROWS);
+    when(mockRetryableRpc.getMethodDescriptor()).thenReturn(BigtableGrpc.getReadRowsMethod());
     when(mockRpcMetrics.timeOperation()).thenReturn(mockOperationTimerContext);
     when(mockRpcMetrics.timeRpc()).thenReturn(mockRpcTimerContext);
 
