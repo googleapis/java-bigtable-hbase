@@ -109,6 +109,12 @@ public class ImportJob {
     @SuppressWarnings("unused")
     void setSourcePattern(ValueProvider<String> sourcePath);
 
+    @Description("Optional Set mutation latency throttling (enables the feature). Value in milliseconds.")
+    @Default.Integer(0)
+    ValueProvider<Integer> getMutationThrottleLatencyMs();
+    @SuppressWarnings("unused")
+    void setMutationThrottleLatencyMs(ValueProvider<Integer> throttleMs);
+
     // When creating a template, this flag must be set to false.
     @Description("Wait for pipeline to finish.")
     @Default.Boolean(true)
