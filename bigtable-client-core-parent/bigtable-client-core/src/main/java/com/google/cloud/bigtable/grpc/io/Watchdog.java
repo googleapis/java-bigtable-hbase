@@ -26,7 +26,6 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -50,7 +49,7 @@ import javax.annotation.concurrent.GuardedBy;
  */
 @InternalApi
 public class Watchdog implements Runnable {
-  private enum State {
+  public enum State {
     /** Stream has been started, but doesn't have any outstanding requests. */
     IDLE,
     /** Stream is awaiting a response from upstream. */
@@ -174,14 +173,6 @@ public class Watchdog implements Runnable {
         public void onClose(Status status, Metadata trailers) {
           openStreams.remove(WatchedCall.this);
 
-          // Take care to convert an error caused by StreamWaitTimeoutException into an ABORTED
-          // status. This will allow it to be retried.
-          if (status.getCause() instanceof StreamWaitTimeoutException) {
-            status = Status.ABORTED
-                .withDescription(status.getDescription())
-                .withCause(status.getCause());
-          }
-
           super.onClose(status, trailers);
         }
       }, metadata);
@@ -211,13 +202,13 @@ public class Watchdog implements Runnable {
         switch (this.state) {
           case IDLE:
             if (waitTime >= idleTimeoutMs) {
-              delegate().cancel("Canceled due to idle connection", new CancellationException());
+              delegate().cancel("Canceled due to idle connection", new StreamWaitTimeoutException(this.state, waitTime));
               return true;
             }
             break;
           case WAITING:
             if (waitTime >= waitTimeoutMs) {
-              delegate().cancel("Canceled due to timeout waiting for next response", new StreamWaitTimeoutException());
+              delegate().cancel("Canceled due to timeout waiting for next response", new StreamWaitTimeoutException(this.state, waitTime));
               return true;
             }
             break;
@@ -236,5 +227,21 @@ public class Watchdog implements Runnable {
   /**
    * Marker exception to replace cancelled status with aborted to allow retries.
    */
-  private static class StreamWaitTimeoutException extends RuntimeException {}
+  public static class StreamWaitTimeoutException extends RuntimeException {
+    private final State state;
+    private final long waitTimeMs;
+
+    public StreamWaitTimeoutException(State state, long waitTimeMs) {
+      this.state = state;
+      this.waitTimeMs = waitTimeMs;
+    }
+
+    public State getState() {
+      return state;
+    }
+
+    public long getWaitTimeMs() {
+      return waitTimeMs;
+    }
+  }
 }

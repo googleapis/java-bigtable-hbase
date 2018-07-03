@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.client.util.Preconditions;
+import com.google.cloud.bigtable.grpc.io.Watchdog.State;
+import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.Nullable;
@@ -49,8 +52,6 @@ import io.opencensus.trace.AttributeValue;
 @NotThreadSafe
 public class RetryingReadRowsOperation extends
     AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, String> implements ScanHandler {
-
-  private static final String TIMEOUT_CANCEL_MSG = "Client side timeout induced cancellation";
 
   private class CallToStreamObserverAdapter extends ClientCallStreamObserver<ReadRowsRequest> {
     private boolean autoFlowControlEnabled = true;
@@ -105,7 +106,6 @@ public class RetryingReadRowsOperation extends
   private final ReadRowsRequestManager requestManager;
   private final StreamObserver<FlatRow> rowObserver;
   private final RowMerger rowMerger;
-  private long lastResponseMs;
 
   // The number of times we've retried after a timeout
   private int timeoutRetryCount = 0;
@@ -154,7 +154,6 @@ public class RetryingReadRowsOperation extends
       if (rowObserver instanceof ClientResponseObserver) {
         ((ClientResponseObserver<ReadRowsRequest, FlatRow>) rowObserver).beforeStart(adapter);
       }
-      lastResponseMs = clock.currentTimeMillis();
     } catch (Exception e) {
       setException(e);
     }
@@ -165,7 +164,6 @@ public class RetryingReadRowsOperation extends
   public void onMessage(ReadRowsResponse message) {
     try {
       resetStatusBasedBackoff();
-      lastResponseMs = clock.currentTimeMillis();
       // We've had at least one successful RPC, reset the backoff and retry counter
       timeoutRetryCount = 0;
 
@@ -222,13 +220,12 @@ public class RetryingReadRowsOperation extends
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
-    if (status.getCode() == Status.Code.CANCELLED
-        && status.getDescription() != null
-        && status.getDescription().contains(TIMEOUT_CANCEL_MSG)) {
-      // If this was canceled because of handleTimeout(). The cancel is immediately retried or
-      // completed in another fashion.
+    if (status.getCause() instanceof StreamWaitTimeoutException
+        && ((StreamWaitTimeoutException)status.getCause()).getState() == State.WAITING) {
+      handleTimeoutError(status);
       return;
     }
+
     super.onClose(status, trailers);
   }
 
@@ -262,47 +259,36 @@ public class RetryingReadRowsOperation extends
   void resetStatusBasedBackoff() {
     this.currentBackoff = null;
     this.failedCount = 0;
-    this.lastResponseMs = clock.currentTimeMillis();
   }
 
   /**
-   * This gets called by {@link ResumingStreamingResultScanner} when a queue is empty via {@link
-   * ResponseQueueReader#getNext()}.
+   * Special retry handling for watchdog timeouts, which uses its own fail counter.
    *
-   * @param rte a {@link ScanTimeoutException}
-   * @throws BigtableRetriesExhaustedException
+   * @return true if a retry has been scheduled
    */
-  @Override
-  public void handleTimeout(ScanTimeoutException rte) throws BigtableRetriesExhaustedException {
-    if ((clock.currentTimeMillis() - lastResponseMs) >= retryOptions
-        .getReadPartialRowTimeoutMillis()) {
-      // This gets called from ResumingStreamingResultScanner which does not have knowledge
-      // about neither partial cellChunks nor responses with a lastScannedRowKey set. In either
-      // case, a streaming response was sent, but the queue was not filled. In that case, just
-      // continue on.
-      //
-      // In other words, the timeout has not occurred. Proceed as normal, and wait for the RPC to
-      // proceed.
-      retryOnTimeout(rte);
-    }
-  }
-
-  private void retryOnTimeout(ScanTimeoutException rte) throws BigtableRetriesExhaustedException {
-    LOG.info("The client could not get a response in %d ms. Retrying the scan.",
-      retryOptions.getReadPartialRowTimeoutMillis());
+  private void handleTimeoutError(Status status) {
+    Preconditions.checkArgument(status.getCause() instanceof StreamWaitTimeoutException,
+        "status is not caused by a StreamWaitTimeoutException");
+    StreamWaitTimeoutException e = ((StreamWaitTimeoutException) status.getCause());
 
     // Cancel the existing rpc.
-    cancel(TIMEOUT_CANCEL_MSG);
     rpcTimerContext.close();
     failedCount++;
 
     // Can this request be retried
     int maxRetries = retryOptions.getMaxScanTimeoutRetries();
     if (retryOptions.enableRetries() && ++timeoutRetryCount <= maxRetries) {
+      LOG.warn("The client could not get a response in %d ms. Retrying the scan.",
+          e.getWaitTimeMs());
+
       resetStatusBasedBackoff();
       performRetry(0);
     } else {
-      throw getExhaustedRetriesException(Status.ABORTED);
+      LOG.warn("The client could not get a response after %d tries, giving up.",
+          timeoutRetryCount);
+      rpc.getRpcMetrics().markFailure();
+      finalizeStats(status);
+      setException(getExhaustedRetriesException(status));
     }
   }
 

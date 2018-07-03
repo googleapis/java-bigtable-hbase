@@ -20,16 +20,8 @@ package com.google.cloud.bigtable.grpc.scanner;
  * situations.
  */
 public interface ScanHandler {
-
-  /**
-   * Handle exceptions found in {@link ResponseQueueReader#getNext()}.
-   * @param e
-   * @throws BigtableRetriesExhaustedException
-   */
-  public void handleTimeout(ScanTimeoutException e) throws BigtableRetriesExhaustedException;
-
   /**
    * Perform an rpc cancellation given a client-side request.
    */
-  public void cancel();
+  void cancel();
 }
