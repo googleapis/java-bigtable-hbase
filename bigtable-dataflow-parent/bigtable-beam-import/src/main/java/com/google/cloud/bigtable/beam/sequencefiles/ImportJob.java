@@ -109,11 +109,11 @@ public class ImportJob {
     @SuppressWarnings("unused")
     void setSourcePattern(ValueProvider<String> sourcePath);
 
-    @Description("Optional Enable BigTable write throttling. Value in milliseconds.")
+    @Description("Optional Set mutation latency throttling (enables the feature). Value in milliseconds.")
     @Default.Integer(0)
-    ValueProvider<Integer> getBigtableWriteThrottleMs();
+    ValueProvider<Integer> getMutationThrottleLatencyMs();
     @SuppressWarnings("unused")
-    void setBigtableWriteThrottleMs(ValueProvider<Integer> throttleMs);
+    void setMutationThrottleLatencyMs(ValueProvider<Integer> throttleMs);
 
     // When creating a template, this flag must be set to false.
     @Description("Wait for pipeline to finish.")

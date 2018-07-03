@@ -396,7 +396,7 @@ public class BigtableOptionsFactory {
 
     if (configuration.getBoolean(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING,
       BulkOptions.BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT)) {
-      LOG.info("Setting up Bigtable throttling with latency threshold %d",
+      LOG.info("Bigtable mutation latency throttling enabled with threshold %d",
           configuration.getInt(BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
           BulkOptions.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT));
       bulkOptionsBuilder.enableBulkMutationThrottling();

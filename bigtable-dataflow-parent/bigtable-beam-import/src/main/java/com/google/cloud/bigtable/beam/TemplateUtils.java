@@ -24,7 +24,6 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import java.io.Serializable;
 import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.options.ValueProvider;
-import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ParseFilter;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -49,11 +48,11 @@ public class TemplateUtils {
     }
 
     ValueProvider enableThrottling = ValueProvider.NestedValueProvider.of(
-        opts.getBigtableWriteThrottleMs(), (Integer throttleMs) -> String.valueOf(throttleMs > 0));
+        opts.getMutationThrottleLatencyMs(), (Integer throttleMs) -> String.valueOf(throttleMs > 0));
 
     builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, enableThrottling);
     builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
-        String.valueOf(opts.getBigtableWriteThrottleMs()));
+        ValueProvider.NestedValueProvider.of(opts.getMutationThrottleLatencyMs(), String::valueOf));
 
     return builder.build();
   }
