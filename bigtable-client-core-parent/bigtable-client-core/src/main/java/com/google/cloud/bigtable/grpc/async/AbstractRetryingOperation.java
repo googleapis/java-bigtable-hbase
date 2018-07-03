@@ -323,7 +323,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       return callOptions;
     }
     MethodDescriptor<RequestT, ResponseT> methodDescriptor = rpc.getMethodDescriptor();
-    if (methodDescriptor == BigtableGrpc.getReadRowsMethod()
+    if (BigtableGrpc.getReadRowsMethod().equals(methodDescriptor)
         && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet(request)) {
       // This is a streaming read.
       return callOptions;
