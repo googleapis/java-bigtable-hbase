@@ -50,6 +50,7 @@ import javax.annotation.concurrent.GuardedBy;
 @InternalApi
 public class Watchdog implements Runnable {
   public enum State {
+    NOT_STARTED,
     /** Stream has been started, but doesn't have any outstanding requests. */
     IDLE,
     /** Stream is awaiting a response from upstream. */
@@ -126,7 +127,7 @@ public class Watchdog implements Runnable {
     private final Object lock = new Object();
 
     @GuardedBy("lock")
-    private State state = State.IDLE;
+    private State state = State.NOT_STARTED;
 
     @GuardedBy("lock")
     private int pendingCount = 0;
@@ -143,8 +144,8 @@ public class Watchdog implements Runnable {
       ClientCall<ReqT, RespT> call = delegate();
 
       synchronized (lock) {
-        Preconditions.checkState(state == null, "Already started");
-        lastActivityAt = clock.currentTimeMillis();
+        Preconditions.checkState(state == State.NOT_STARTED, "Already started");
+        setState(State.IDLE);
       }
 
       openStreams.put(this, PRESENT);
@@ -152,18 +153,14 @@ public class Watchdog implements Runnable {
       call.start(new SimpleForwardingClientCallListener<RespT>(listener) {
         @Override
         public void onMessage(RespT message) {
-          synchronized (lock) {
-            state = State.DELIVERING;
-          }
+          setState(State.DELIVERING);
 
           try {
             super.onMessage(message);
           } finally {
             synchronized (lock) {
               pendingCount--;
-              lastActivityAt = clock.currentTimeMillis();
-
-              state = (pendingCount > 0) ? State.WAITING : State.IDLE;
+              setState((pendingCount > 0) ? State.WAITING : State.IDLE);
             }
           }
         }
@@ -177,49 +174,65 @@ public class Watchdog implements Runnable {
       }, metadata);
     }
 
+    private void setState(State state) {
+      synchronized (lock) {
+        this.state = state;
+        this.lastActivityAt = clock.currentTimeMillis();
+      }
+    }
+
     @Override
     public void request(int count) {
       synchronized (lock) {
-        if (state == State.IDLE) {
-          state = State.WAITING;
-          lastActivityAt = clock.currentTimeMillis();
-        }
-
+        Preconditions.checkState(state != State.NOT_STARTED,
+            "The Call was not started");
         // Increment the request count without overflow
         int maxIncrement = Integer.MAX_VALUE - pendingCount;
-        count = Math.min(maxIncrement, count);
-        pendingCount += count;
+        pendingCount += Math.min(maxIncrement, count);
+
+        if (state == State.IDLE) {
+          setState(State.WAITING);
+        }
       }
 
       super.request(count);
     }
 
-    boolean cancelIfStale() {
+    /**
+     *
+     * @return true if this RPC was cancelled.
+     */
+    private boolean cancelIfStale() {
       synchronized (lock) {
         long waitTime = clock.currentTimeMillis() - lastActivityAt;
 
         switch (this.state) {
-          case IDLE:
-            if (waitTime >= idleTimeoutMs) {
-              delegate().cancel("Canceled due to idle connection", new StreamWaitTimeoutException(this.state, waitTime));
-              return true;
-            }
-            break;
-          case WAITING:
-            if (waitTime >= waitTimeoutMs) {
-              delegate().cancel("Canceled due to timeout waiting for next response", new StreamWaitTimeoutException(this.state, waitTime));
-              return true;
-            }
-            break;
-          case DELIVERING:
-            // Don't cancel the stream while it's results are being processed by user code.
-            break;
-          default:
-            throw new IllegalStateException("Unknown state: " + this.state);
-        }
-      }
+        case NOT_STARTED:
+        case IDLE:
+          if (waitTime >= idleTimeoutMs) {
+            delegate().cancel("Canceled due to idle connection",
+                new StreamWaitTimeoutException(this.state, waitTime));
+            return true;
+          }
+          break;
 
-      return false;
+        case WAITING:
+          if (waitTime >= waitTimeoutMs) {
+            delegate().cancel("Canceled due to timeout waiting for next response",
+                new StreamWaitTimeoutException(this.state, waitTime));
+            return true;
+          }
+          break;
+
+        case DELIVERING:
+          // Don't cancel the stream while it's results are being processed by user code.
+          break;
+
+        default:
+          throw new IllegalStateException("Unknown state: " + this.state);
+        }
+        return false;
+      }
     }
   }
 
