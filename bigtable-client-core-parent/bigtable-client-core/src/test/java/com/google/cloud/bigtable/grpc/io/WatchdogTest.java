@@ -81,7 +81,29 @@ public class WatchdogTest {
   }
 
   @Test
-  public void testIdleTimeout() throws InterruptedException {
+  public void testNotStarted() {
+    clock.setTime(idleTimeMs - 1);
+    watchdog.run();
+    Assert.assertNull(call.cancelMessage);
+
+    clock.setTime(idleTimeMs);
+    watchdog.run();
+    Assert.assertNotNull(call.cancelMessage);
+
+    call.listener
+        .onClose(
+            Status.CANCELLED.withDescription("Some upstream exception representing cancellation"),
+            new Metadata());
+
+    Assert.assertEquals(listener.closeStatus.getDescription(),
+        "Some upstream exception representing cancellation");
+  }
+
+  @Test
+  public void testIdleTimeout() {
+    call.request(1);
+    call.listener.onMessage("");
+
     clock.setTime(idleTimeMs - 1);
     watchdog.run();
     Assert.assertNull(call.cancelMessage);
