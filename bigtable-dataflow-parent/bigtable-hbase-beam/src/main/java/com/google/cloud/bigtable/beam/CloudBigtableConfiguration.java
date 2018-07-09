@@ -23,16 +23,15 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.Map.Entry;
 
-import org.apache.beam.repackaged.beam_sdks_java_io_hbase.com.google.common.base.Strings;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.conf.Configuration;
 
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
+import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import org.apache.hadoop.hbase.shaded.com.google.common.base.Preconditions;
-import org.apache.hadoop.hbase.shaded.com.google.common.collect.ImmutableMap;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a Cloud
@@ -343,7 +342,7 @@ public class CloudBigtableConfiguration implements Serializable {
 
   protected static void checkNotNullOrEmpty(String value, String name) {
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(value),
+        value != null && !value.isEmpty(),
         "A " + name + " must be set to configure Bigtable properly.");
   }
 

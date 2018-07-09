@@ -60,13 +60,12 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
-import org.apache.hadoop.hbase.shaded.com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
@@ -76,6 +75,7 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.Resou
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
@@ -170,7 +170,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Coder<Result> getDefaultOutputCoder() {
+    public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
 
@@ -487,7 +487,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Coder<Result> getDefaultOutputCoder() {
+    public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
   }
@@ -569,7 +569,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Coder<Result> getDefaultOutputCoder() {
+    public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
 
