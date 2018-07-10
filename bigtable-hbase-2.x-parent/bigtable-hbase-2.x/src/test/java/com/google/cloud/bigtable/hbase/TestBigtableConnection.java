@@ -41,10 +41,29 @@ public class TestBigtableConnection {
   public void testBigtableConnectionExists() {
     Assert.assertEquals(BigtableConnection.class, BigtableConfiguration.getConnectionClass());
   }
-  
+
+  @Test
+  public void testConfig_Basic() {
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId");
+    Assert.assertEquals("projectId", conf.get(BigtableOptionsFactory.PROJECT_ID_KEY));
+    Assert.assertEquals("instanceId", conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY));
+    Assert.assertEquals(BigtableConfiguration.getConnectionClass().getName(), conf.get("hbase.client.connection.impl"));
+    Assert.assertNull(conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY));
+  }
+
+  @Test
+  public void testConfig_AppProfile() {
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
+    Assert.assertEquals(conf.get(BigtableOptionsFactory.PROJECT_ID_KEY), "projectId");
+    Assert.assertEquals(conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY), "instanceId");
+    Assert.assertEquals(conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY), "appProfileId");
+    Assert.assertEquals(conf.get("hbase.client.connection.impl"),
+        BigtableConfiguration.getConnectionClass().getName());
+  }
+
   @Test
   public void testTable() throws IOException {
-    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId");
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
     conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
     BigtableConnection connection = new BigtableConnection(conf);

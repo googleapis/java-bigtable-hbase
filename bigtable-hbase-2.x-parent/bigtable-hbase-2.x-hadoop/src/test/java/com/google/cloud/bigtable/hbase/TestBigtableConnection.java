@@ -15,13 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import java.io.IOException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BufferedMutator;
-import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,9 +28,10 @@ import org.junit.runners.JUnit4;
 import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import com.google.cloud.bigtable.hbase2_x.BigtableConnection;
 
+import java.io.IOException;
 
 /**
- * This is a test to ensure that BigtableConnection can find {@link BigtableConnection}
+ * This is a test to ensure that {@link BigtableConfiguration} can find {@link BigtableConnection}
  *
  */
 @RunWith(JUnit4.class)
@@ -45,8 +43,27 @@ public class TestBigtableConnection {
   }
 
   @Test
-  public void testTable() throws IOException {
+  public void testConfig_Basic() {
     Configuration conf = BigtableConfiguration.configure("projectId", "instanceId");
+    Assert.assertEquals("projectId", conf.get(BigtableOptionsFactory.PROJECT_ID_KEY));
+    Assert.assertEquals("instanceId", conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY));
+    Assert.assertEquals(BigtableConfiguration.getConnectionClass().getName(), conf.get("hbase.client.connection.impl"));
+    Assert.assertNull(conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY));
+  }
+
+  @Test
+  public void testConfig_AppProfile() {
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
+    Assert.assertEquals(conf.get(BigtableOptionsFactory.PROJECT_ID_KEY), "projectId");
+    Assert.assertEquals(conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY), "instanceId");
+    Assert.assertEquals(conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY), "appProfileId");
+    Assert.assertEquals(conf.get("hbase.client.connection.impl"),
+        BigtableConfiguration.getConnectionClass().getName());
+  }
+
+  @Test
+  public void testTable() throws IOException {
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
     conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
     BigtableConnection connection = new BigtableConnection(conf);
@@ -61,5 +78,4 @@ public class TestBigtableConnection {
       throw OpenSsl.unavailabilityCause();
     }
   }
-
 }
