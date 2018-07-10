@@ -64,8 +64,8 @@ limitations under the License.
         <guava.version>20.0</guava.version>
 
         <!-- hbase dependency versions -->
-        <hbase.version.1>1.4.3</hbase.version.1>
-        <hbase.version.2>2.0.0</hbase.version.2>
+        <hbase.version.1>1.4.5</hbase.version.1>
+        <hbase.version.2>2.0.1</hbase.version.2>
         <hbase.version>${hbase.version.1}</hbase.version>
         <hadoop.version>2.7.4</hadoop.version>
 
