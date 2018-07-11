@@ -16,9 +16,11 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.client.util.Preconditions;
+import com.google.cloud.bigtable.grpc.CallOptionsFactory;
 import com.google.cloud.bigtable.grpc.io.Watchdog.State;
 import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -289,6 +291,16 @@ public class RetryingReadRowsOperation extends
       rpc.getRpcMetrics().markFailure();
       finalizeStats(status);
       setException(getExhaustedRetriesException(status));
+    }
+  }
+
+  protected CallOptions getCallOptions() {
+    if (CallOptionsFactory.ConfiguredCallOptionsFactory.isGet(nextRequest)) {
+      // This is a get, so apply a finite deadline.
+      return super.getCallOptions();
+    } else {
+      // This is a streaming read.
+      return super.getUserCallOptions();
     }
   }
 

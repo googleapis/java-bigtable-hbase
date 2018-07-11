@@ -24,6 +24,7 @@ import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
 
 import io.grpc.CallOptions;
+import io.grpc.Context;
 import io.grpc.Deadline;
 import io.grpc.MethodDescriptor;
 
@@ -71,17 +72,19 @@ public interface CallOptionsFactory {
     }
 
     @Override
-    public <RequestT> CallOptions create(
-        MethodDescriptor<RequestT, ?> descriptor, RequestT request) {
-      if (!config.isUseTimeout() || request == null) {
+    public <RequestT> CallOptions create(MethodDescriptor<RequestT, ?> descriptor, RequestT request) {
+      Deadline contextDeadline = Context.current().getDeadline();
+      if (contextDeadline != null) {
+        return CallOptions.DEFAULT.withDeadline(contextDeadline);
+      } else if (!config.isUseTimeout() || request == null) {
         return CallOptions.DEFAULT;
-      }
+      } else {
+        int timeout = isLongRequest(request)
+                ? config.getLongRpcTimeoutMs()
+                : config.getShortRpcTimeoutMs();
 
-      int timeout = config.getShortRpcTimeoutMs();
-      if (isLongRequest(request)) {
-        timeout = config.getLongRpcTimeoutMs();
+        return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
       }
-      return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
     }
 
     /**

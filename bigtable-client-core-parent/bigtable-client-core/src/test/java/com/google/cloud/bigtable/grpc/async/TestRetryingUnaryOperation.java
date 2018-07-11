@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.api.client.util.ExponentialBackOff;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,6 +37,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
@@ -66,8 +69,6 @@ public class TestRetryingUnaryOperation {
   private static final BigtableAsyncRpc.RpcMetrics metrics =
       BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.getReadRowsMethod());
 
-  private RetryingUnaryOperation underTest;
-
   @Mock
   private BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readAsync;
 
@@ -76,6 +77,9 @@ public class TestRetryingUnaryOperation {
 
   @Mock
   private NanoClock nanoClock;
+
+  @Mock
+  private RetryOptions mockRetryOptions;
 
   private RetryOptions retryOptions;
 
@@ -92,9 +96,6 @@ public class TestRetryingUnaryOperation {
 
     when(readAsync.getRpcMetrics()).thenReturn(metrics);
     when(readAsync.getMethodDescriptor()).thenReturn(BigtableGrpc.getReadRowsMethod());
-
-    underTest = new RetryingUnaryOperation<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
-        readAsync, CallOptions.DEFAULT, executorService, new Metadata());
 
     totalSleep = new AtomicLong();
 
@@ -144,9 +145,15 @@ public class TestRetryingUnaryOperation {
             any(ClientCall.Listener.class),
             any(Metadata.class),
             any(ClientCall.class));
+    AbstractRetryingOperation underTest = createOperation(CallOptions.DEFAULT);
     ListenableFuture future = underTest.getAsyncResult();
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
     verify(nanoClock, times(0)).nanoTime();
+  }
+
+  private RetryingUnaryOperation createOperation(CallOptions options) {
+    return new RetryingUnaryOperation<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
+            readAsync, options, executorService, new Metadata());
   }
 
   @Test
@@ -169,6 +176,7 @@ public class TestRetryingUnaryOperation {
     };
     doAnswer(answer).when(readAsync).start(any(ReadRowsRequest.class),
       any(ClientCall.Listener.class), any(Metadata.class), any(ClientCall.class));
+    AbstractRetryingOperation underTest = createOperation(CallOptions.DEFAULT);
     ListenableFuture future = underTest.getAsyncResult();
 
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
@@ -176,7 +184,38 @@ public class TestRetryingUnaryOperation {
   }
 
   @Test
-  public void testCompleteFailure() throws Exception {
+  public void testCompleteFailure_withoutDeadline() throws Exception {
+    final Status errorStatus = Status.UNAVAILABLE;
+    Answer<Void> answer = new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        invocation.getArgumentAt(1, ClientCall.Listener.class).onClose(errorStatus, null);
+        return null;
+      }
+    };
+    doAnswer(answer).when(readAsync).start(any(ReadRowsRequest.class),
+            any(ClientCall.Listener.class), any(Metadata.class), any(ClientCall.class));
+
+    try {
+      AbstractRetryingOperation underTest = createOperation(CallOptions.DEFAULT.withDeadlineAfter(2,
+              TimeUnit.SECONDS));
+      underTest.getAsyncResult().get(1, TimeUnit.SECONDS);
+      Assert.fail();
+    } catch (ExecutionException e) {
+      Assert.assertEquals(BigtableRetriesExhaustedException.class, e.getCause().getClass());
+      BigtableRetriesExhaustedException retriesExhaustedException =
+              (BigtableRetriesExhaustedException) e.getCause();
+      StatusRuntimeException sre = (StatusRuntimeException) retriesExhaustedException.getCause();
+      Assert.assertEquals(errorStatus.getCode(), sre.getStatus().getCode());
+      long maxSleep = TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElapsedBackoffMillis());
+      Assert.assertTrue(
+              String.format("Slept only %d seconds", TimeUnit.NANOSECONDS.toSeconds(totalSleep.get())),
+              totalSleep.get() >= maxSleep);
+    }
+  }
+
+  @Test
+  public void testCompleteFailure_withDeadline() throws Exception {
     final Status errorStatus = Status.UNAVAILABLE;
     Answer<Void> answer = new Answer<Void>() {
       @Override
@@ -187,7 +226,10 @@ public class TestRetryingUnaryOperation {
     };
     doAnswer(answer).when(readAsync).start(any(ReadRowsRequest.class),
       any(ClientCall.Listener.class), any(Metadata.class), any(ClientCall.class));
+
     try {
+      AbstractRetryingOperation underTest = createOperation(CallOptions.DEFAULT.withDeadlineAfter(2,
+              TimeUnit.SECONDS));
       underTest.getAsyncResult().get(1, TimeUnit.SECONDS);
       Assert.fail();
     } catch (ExecutionException e) {
@@ -196,10 +238,38 @@ public class TestRetryingUnaryOperation {
           (BigtableRetriesExhaustedException) e.getCause();
       StatusRuntimeException sre = (StatusRuntimeException) retriesExhaustedException.getCause();
       Assert.assertEquals(errorStatus.getCode(), sre.getStatus().getCode());
-      long maxSleep = TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElapsedBackoffMillis());
+      long maxSleep = TimeUnit.SECONDS.toNanos(2);
       Assert.assertTrue(
         String.format("Slept only %d seconds", TimeUnit.NANOSECONDS.toSeconds(totalSleep.get())),
         totalSleep.get() >= maxSleep);
     }
+  }
+
+  @Test
+  public void testDefaultBackoff() {
+    when(mockRetryOptions.createBackoff()).thenReturn(new ExponentialBackOff.Builder().build());
+
+    RetryingUnaryOperation underTest = new RetryingUnaryOperation<>(mockRetryOptions, ReadRowsRequest.getDefaultInstance(),
+            readAsync, CallOptions.DEFAULT, executorService, new Metadata());
+
+    underTest.getNextBackoff();
+    verify(mockRetryOptions, times(1)).createBackoff();
+  }
+
+  @Test
+  public void testDeadlineBackoff() {
+    when(mockRetryOptions.createBackoff(anyInt())).thenReturn(new ExponentialBackOff.Builder().build());
+    CallOptions callOptions = CallOptions.DEFAULT.withDeadlineAfter(1000, TimeUnit.MILLISECONDS);
+    RetryingUnaryOperation underTest = new RetryingUnaryOperation<>(mockRetryOptions, ReadRowsRequest.getDefaultInstance(),
+            readAsync, callOptions, executorService, new Metadata());
+
+    underTest.getNextBackoff();
+
+    ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
+    verify(mockRetryOptions, times(1)).createBackoff(captor.capture());
+
+    // The deadline remaining and the should be within 100 ms.
+    Assert.assertEquals((double) callOptions.getDeadline().timeRemaining(TimeUnit.MILLISECONDS),
+            (double) captor.getValue(), 100.0);
   }
 }
