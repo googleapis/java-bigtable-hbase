@@ -350,7 +350,17 @@ public class RetryOptions implements Serializable {
    * @return a {@link com.google.api.client.util.BackOff} object.
    */
   public BackOff createBackoff() {
-    return createBackoffBuilder().build();
+    return createBackoff(getMaxElapsedBackoffMillis());
+  }
+
+  /**
+   * <p>createBackoff.</p>
+   *
+   * @param maxElapsedBackoffMillis The maximum millis to wait.
+   * @return a {@link com.google.api.client.util.BackOff} object.
+   */
+  public BackOff createBackoff(int maxElapsedBackoffMillis) {
+    return createBackoffBuilder(maxElapsedBackoffMillis).build();
   }
 
   /**
@@ -359,13 +369,13 @@ public class RetryOptions implements Serializable {
    * @return a {@link com.google.api.client.util.ExponentialBackOff.Builder} object.
    */
   @VisibleForTesting
-  protected ExponentialBackOff.Builder createBackoffBuilder() {
+  protected ExponentialBackOff.Builder createBackoffBuilder(int maxElapsedBackoffMillis) {
     return new ExponentialBackOff.Builder()
         .setInitialIntervalMillis(getInitialBackoffMillis())
-        .setMaxElapsedTimeMillis(getMaxElapsedBackoffMillis())
+        .setMaxElapsedTimeMillis(maxElapsedBackoffMillis)
         .setMultiplier(getBackoffMultiplier());
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {

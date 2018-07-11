@@ -40,12 +40,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import io.grpc.CallOptions;
-import io.grpc.ClientCall;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
+import io.grpc.*;
 import io.grpc.MethodDescriptor.MethodType;
-import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.opencensus.contrib.grpc.util.StatusConverter;
 import io.opencensus.trace.Annotation;
@@ -282,7 +278,12 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected long getNextBackoff() {
     if (currentBackoff == null) {
-      currentBackoff = retryOptions.createBackoff();
+      Deadline deadline = getUserCallOptions().getDeadline();
+      if (deadline != null) {
+        currentBackoff = retryOptions.createBackoff((int) deadline.timeRemaining(TimeUnit.MILLISECONDS));
+      } else {
+        currentBackoff = retryOptions.createBackoff();
+      }
     }
     try {
       return currentBackoff.nextBackOffMillis();
@@ -321,14 +322,14 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected CallOptions getCallOptions() {
     if (callOptions.getDeadline() != null) {
-      return callOptions;
+      return getUserCallOptions();
+    } else {
+      return getUserCallOptions().withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
     }
-    if (request instanceof ReadRowsRequest
-        && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request)) {
-      // This is a streaming read.
-      return callOptions;
-    }
-    return callOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
+  }
+
+  protected CallOptions getUserCallOptions() {
+    return callOptions;
   }
 
   protected RequestT getRetryRequest() {

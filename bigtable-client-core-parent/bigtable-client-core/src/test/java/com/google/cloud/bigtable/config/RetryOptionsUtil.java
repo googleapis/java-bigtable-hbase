@@ -23,6 +23,7 @@ import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_READ_PARTIAL
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_STREAMING_BUFFER_SIZE;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES_SET;
 
+import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.NanoClock;
 
@@ -43,8 +44,8 @@ public class RetryOptionsUtil {
       private static final long serialVersionUID = 1L;
 
       @Override
-      protected ExponentialBackOff.Builder createBackoffBuilder() {
-        return super.createBackoffBuilder().setNanoClock(nanoClock);
+      protected ExponentialBackOff.Builder createBackoffBuilder(int maxElapsedBackoffMillis) {
+        return super.createBackoffBuilder(maxElapsedBackoffMillis).setNanoClock(nanoClock);
       }
     };
   }

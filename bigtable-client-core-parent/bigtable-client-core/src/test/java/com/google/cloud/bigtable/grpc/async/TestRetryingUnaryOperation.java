@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -28,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.bigtable.v2.MutateRowRequest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,6 +38,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
@@ -76,6 +80,9 @@ public class TestRetryingUnaryOperation {
 
   @Mock
   private NanoClock nanoClock;
+
+  @Mock
+  private RetryOptions mockRetryOptions;
 
   private RetryOptions retryOptions;
 
@@ -201,5 +208,32 @@ public class TestRetryingUnaryOperation {
         String.format("Slept only %d seconds", TimeUnit.NANOSECONDS.toSeconds(totalSleep.get())),
         totalSleep.get() >= maxSleep);
     }
+  }
+
+  @Test
+  public void testDefaultBackoff() {
+    when(mockRetryOptions.createBackoff()).thenReturn(new ExponentialBackOff.Builder().build());
+    underTest = new RetryingUnaryOperation<>(mockRetryOptions, ReadRowsRequest.getDefaultInstance(),
+            readAsync, CallOptions.DEFAULT, executorService, new Metadata());
+
+    underTest.getNextBackoff();
+    verify(mockRetryOptions, times(1)).createBackoff();
+  }
+
+  @Test
+  public void testDeadlineBackoff() {
+    when(mockRetryOptions.createBackoff(anyInt())).thenReturn(new ExponentialBackOff.Builder().build());
+    CallOptions callOptions = CallOptions.DEFAULT.withDeadlineAfter(1000, TimeUnit.MILLISECONDS);
+    underTest = new RetryingUnaryOperation<>(mockRetryOptions, ReadRowsRequest.getDefaultInstance(),
+            readAsync, callOptions, executorService, new Metadata());
+
+    underTest.getNextBackoff();
+
+    ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
+    verify(mockRetryOptions, times(1)).createBackoff(captor.capture());
+
+    // The deadline remaining and the should be within 100 ms.
+    Assert.assertEquals((double) callOptions.getDeadline().timeRemaining(TimeUnit.MILLISECONDS),
+            (double) captor.getValue(), 100.0);
   }
 }
