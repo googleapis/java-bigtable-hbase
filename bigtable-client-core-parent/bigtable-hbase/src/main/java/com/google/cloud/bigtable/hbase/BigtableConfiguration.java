@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.HConnection;
 
 import com.google.common.base.Preconditions;
 
@@ -29,6 +28,7 @@ import com.google.common.base.Preconditions;
  */
 @SuppressWarnings("deprecation")
 public class BigtableConfiguration {
+  public static final String HBASE_CLIENT_CONNECTION_IMPL = "hbase.client.connection.impl";
   public static final String HBASE_CLIENT_ASYNC_CONNECTION_IMPL = "hbase.client.async.connection.impl";
   public static final String HBASE_CLIENT_ASYNC_REGISTRY_IMPL = "hbase.client.registry.impl";
   public static final String BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS = "org.apache.hadoop.hbase.client.BigtableAsyncConnection";
@@ -76,6 +76,19 @@ public class BigtableConfiguration {
   }
 
   /**
+   * <p>Create and configure a new {@link org.apache.hadoop.conf.Configuration}.</p>
+   *
+   * @param projectId a {@link java.lang.String} object.
+   * @param instanceId a {@link java.lang.String} object.
+   * @param appProfileId a {@link java.lang.String} object.
+   * @return a {@link org.apache.hadoop.conf.Configuration} object.
+   */
+  public static Configuration configure(String projectId, String instanceId, String appProfileId) {
+    Configuration config = new Configuration(false);
+    return configure(config, projectId, instanceId, appProfileId);
+  }
+
+  /**
    * <p>Configure and return an existing {@link org.apache.hadoop.conf.Configuration}.</p>
    *
    * @param conf a {@link org.apache.hadoop.conf.Configuration} object to configure.
@@ -86,7 +99,25 @@ public class BigtableConfiguration {
   public static Configuration configure(Configuration conf, String projectId, String instanceId) {
     conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
     conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
-    conf.set(HConnection.HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
+    conf.set(HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
+    return conf;
+  }
+
+  /**
+   * <p>Configure and return an existing {@link org.apache.hadoop.conf.Configuration}.</p>
+   *
+   * @param conf a {@link org.apache.hadoop.conf.Configuration} object to configure.
+   * @param projectId a {@link java.lang.String} object.
+   * @param instanceId a {@link java.lang.String} object.
+   * @param appProfileId a {@link java.lang.String} object.
+   * @return the modified {@link org.apache.hadoop.conf.Configuration} object.
+   */
+  public static Configuration configure(Configuration conf, String projectId, String instanceId,
+      String appProfileId) {
+    conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
+    conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
+    conf.set(BigtableOptionsFactory.APP_PROFILE_ID_KEY, appProfileId);
+    conf.set(HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
     return conf;
   }
 
@@ -111,6 +142,18 @@ public class BigtableConfiguration {
    */
   public static Connection connect(String projectId, String instanceId) {
     return connect(configure(projectId, instanceId));
+  }
+
+  /**
+   * <p>connect.</p>
+   *
+   * @param projectId a {@link java.lang.String} object.
+   * @param instanceId a {@link java.lang.String} object.
+   * @param appProfileId a {@link java.lang.String} object.
+   * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
+   */
+  public static Connection connect(String projectId, String instanceId, String appProfileId) {
+    return connect(configure(projectId, instanceId, appProfileId));
   }
 
   /**
