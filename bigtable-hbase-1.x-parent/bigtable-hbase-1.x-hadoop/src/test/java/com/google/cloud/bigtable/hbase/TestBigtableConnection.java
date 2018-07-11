@@ -47,8 +47,9 @@ public class TestBigtableConnection {
     Configuration conf = BigtableConfiguration.configure("projectId", "instanceId");
     Assert.assertEquals("projectId", conf.get(BigtableOptionsFactory.PROJECT_ID_KEY));
     Assert.assertEquals("instanceId", conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY));
-    Assert.assertEquals(BigtableConfiguration.getConnectionClass().getName(), conf.get("hbase.client.connection.impl"));
     Assert.assertNull(conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY));
+    Assert.assertEquals(BigtableConfiguration.getConnectionClass().getName(),
+            conf.get(BigtableConfiguration.HBASE_CLIENT_CONNECTION_IMPL));
   }
 
   @Test
@@ -57,8 +58,8 @@ public class TestBigtableConnection {
     Assert.assertEquals(conf.get(BigtableOptionsFactory.PROJECT_ID_KEY), "projectId");
     Assert.assertEquals(conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY), "instanceId");
     Assert.assertEquals(conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY), "appProfileId");
-    Assert.assertEquals(conf.get("hbase.client.connection.impl"),
-        BigtableConfiguration.getConnectionClass().getName());
+    Assert.assertEquals(BigtableConfiguration.getConnectionClass().getName(),
+            conf.get(BigtableConfiguration.HBASE_CLIENT_CONNECTION_IMPL));
   }
 
   @Test
