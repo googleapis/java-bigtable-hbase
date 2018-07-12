@@ -20,6 +20,8 @@ import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
 import io.grpc.CallOptions;
 import io.grpc.Context;
+import io.grpc.Deadline;
+import io.grpc.DeadlineUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,81 +33,92 @@ import org.mockito.MockitoAnnotations;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/** Tests for {@link CallOptionsFactory}. */
+/**
+ * Tests for {@link CallOptionsFactory}.
+ */
 @RunWith(JUnit4.class)
 public class TestCallOptionsFactory {
 
-    @Mock
-    ScheduledExecutorService mockExecutor;
+  private static final long NOW = System.nanoTime();
 
-    @Before
-    public void setup() {
-        MockitoAnnotations.initMocks(this);
-    }
+  @Mock
+  ScheduledExecutorService mockExecutor;
 
-    @Test
-    public void testDefault() {
+  @Before
+  public void setup() {
+    MockitoAnnotations.initMocks(this);
+  }
+
+  @Test
+  public void testDefault() {
+    CallOptionsFactory factory = new CallOptionsFactory.Default();
+    Assert.assertSame(CallOptions.DEFAULT, factory.create(null, null));
+  }
+
+  @Test
+  public void testDefaultWithContext() {
+    Deadline deadline = DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, NOW);
+    Context.CancellableContext context = Context.current().withDeadline(deadline, mockExecutor);
+    context.run(new Runnable() {
+      @Override
+      public void run() {
         CallOptionsFactory factory = new CallOptionsFactory.Default();
-        Assert.assertSame(CallOptions.DEFAULT, factory.create(null, null));
-    }
-
-    @Test
-    public void testDefaultWithContext() {
-        Context.CancellableContext context = Context.current().withDeadlineAfter(1, TimeUnit.SECONDS, mockExecutor);
-        context.run(new Runnable() {
-            @Override
-            public void run() {
-                CallOptionsFactory factory = new CallOptionsFactory.Default();
-                Assert.assertEquals(
-                        Context.current().getDeadline().timeRemaining(TimeUnit.MILLISECONDS),
-                        getDeadlineMs(factory, null),
-                        100.0
-                );
-            }
-        });
-    }
-
-    @Test
-    public void testConfiguredDefaultConfig() {
-        CallOptionsConfig config = new CallOptionsConfig.Builder().build();
-        CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
-        Assert.assertSame(CallOptions.DEFAULT, factory.create(null, null));
-    }
-
-    @Test
-    public void testConfiguredConfigEnabled() {
-        CallOptionsConfig config = new CallOptionsConfig.Builder().setUseTimeout(true).build();
-        CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
-        Assert.assertEquals(
-                (double) config.getShortRpcTimeoutMs(),
-                getDeadlineMs(factory, MutateRowRequest.getDefaultInstance()),
-                100.0
+        assertSameTimeDiff(
+                Context.current().getDeadline().timeRemaining(TimeUnit.MILLISECONDS),
+                getDeadlineMs(factory, null)
         );
-        Assert.assertEquals(
-                (double) config.getLongRpcTimeoutMs(),
-                (double) getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance()),
-                100.0
+      }
+    });
+  }
+
+  @Test
+  public void testConfiguredDefaultConfig() {
+    CallOptionsConfig config = new CallOptionsConfig.Builder().build();
+    CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
+    Assert.assertSame(CallOptions.DEFAULT, factory.create(null, null));
+  }
+
+  @Test
+  public void testConfiguredConfigEnabled() {
+    CallOptionsConfig config = new CallOptionsConfig.Builder().setUseTimeout(true).build();
+    CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
+    assertSameTimeDiff(
+            config.getShortRpcTimeoutMs(),
+            getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
+    );
+    assertSameTimeDiff(
+            config.getLongRpcTimeoutMs(),
+            getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance())
+    );
+  }
+
+  @Test
+  public void testConfiguredWithContext() {
+    Deadline deadline = DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, NOW);
+    Context.CancellableContext context = Context.current().withDeadline(deadline, mockExecutor);
+    context.run(new Runnable() {
+      @Override
+      public void run() {
+        CallOptionsConfig config = new CallOptionsConfig.Builder()
+                .setUseTimeout(true)
+                .setShortRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(100))
+                .setLongRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
+                .build();
+        CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
+        // The deadline in the context in 1 second, and the deadline in the config is 100+ seconds
+        assertSameTimeDiff(
+                TimeUnit.SECONDS.toMillis(1),
+                getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
         );
-    }
+      }
+    });
+  }
 
-    @Test
-    public void testConfiguredWithContext() {
-        Context.CancellableContext context = Context.current().withDeadlineAfter(1, TimeUnit.SECONDS, mockExecutor);
-        context.run(new Runnable() {
-            @Override
-            public void run() {
-                CallOptionsConfig config = new CallOptionsConfig.Builder().setUseTimeout(true).build();
-                CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
-                Assert.assertEquals(
-                        Context.current().getDeadline().timeRemaining(TimeUnit.MILLISECONDS),
-                        getDeadlineMs(factory, MutateRowRequest.getDefaultInstance()),
-                        100.0
-                );
-            }
-        });
-    }
+  private static void assertSameTimeDiff(long l1, long l2) {
+    Assert.assertEquals((double) l1, (double) l2, 10);
+  }
 
-    private double getDeadlineMs(CallOptionsFactory factory, Object request) {
-        return (double) factory.create(null, request).getDeadline().timeRemaining(TimeUnit.MILLISECONDS);
-    }
+  private int getDeadlineMs(CallOptionsFactory factory, Object request) {
+    return (int) factory.create(null, request).getDeadline().timeRemaining(TimeUnit.MILLISECONDS);
+  }
 }

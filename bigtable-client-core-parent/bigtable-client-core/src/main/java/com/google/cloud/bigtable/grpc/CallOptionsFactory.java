@@ -91,14 +91,11 @@ public interface CallOptionsFactory {
       Deadline contextDeadline = Context.current().getDeadline();
       if (contextDeadline != null) {
         return CallOptions.DEFAULT.withDeadline(contextDeadline);
-      } else if (!config.isUseTimeout() || request == null) {
-        return CallOptions.DEFAULT;
-      } else {
-        int timeout = isLongRequest(request)
-                ? config.getLongRpcTimeoutMs()
-                : config.getShortRpcTimeoutMs();
-
+      } else if (config.isUseTimeout() && request != null) {
+        int timeout = isLongRequest(request) ? config.getLongRpcTimeoutMs() : config.getShortRpcTimeoutMs();
         return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
+      } else {
+        return CallOptions.DEFAULT;
       }
     }
 
