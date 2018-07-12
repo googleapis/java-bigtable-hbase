@@ -63,7 +63,7 @@ public class TestCallOptionsFactory {
       @Override
       public void run() {
         CallOptionsFactory factory = new CallOptionsFactory.Default();
-        assertSameTimeDiff(
+        assertEqualsDeadlines(
                 Context.current().getDeadline().timeRemaining(TimeUnit.MILLISECONDS),
                 getDeadlineMs(factory, null)
         );
@@ -82,11 +82,11 @@ public class TestCallOptionsFactory {
   public void testConfiguredConfigEnabled() {
     CallOptionsConfig config = new CallOptionsConfig.Builder().setUseTimeout(true).build();
     CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
-    assertSameTimeDiff(
+    assertEqualsDeadlines(
             config.getShortRpcTimeoutMs(),
             getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
     );
-    assertSameTimeDiff(
+    assertEqualsDeadlines(
             config.getLongRpcTimeoutMs(),
             getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance())
     );
@@ -106,7 +106,7 @@ public class TestCallOptionsFactory {
                 .build();
         CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
         // The deadline in the context in 1 second, and the deadline in the config is 100+ seconds
-        assertSameTimeDiff(
+        assertEqualsDeadlines(
                 TimeUnit.SECONDS.toMillis(1),
                 getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
         );
@@ -114,8 +114,15 @@ public class TestCallOptionsFactory {
     });
   }
 
-  private static void assertSameTimeDiff(long l1, long l2) {
-    Assert.assertEquals((double) l1, (double) l2, 10);
+  /**
+   * Deadline / Timestamp math could lead to some minor variations from expected values. This method
+   * allows for a minor delta.
+   *
+   * @param expected
+   * @param actual
+   */
+  private static void assertEqualsDeadlines(long expected, long actual) {
+    Assert.assertEquals((double) expected, (double) actual, 10);
   }
 
   private int getDeadlineMs(CallOptionsFactory factory, Object request) {
