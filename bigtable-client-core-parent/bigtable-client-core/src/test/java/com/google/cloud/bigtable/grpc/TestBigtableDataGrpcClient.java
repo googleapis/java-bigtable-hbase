@@ -51,7 +51,6 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.RowRange;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -79,9 +78,6 @@ public class TestBigtableDataGrpcClient {
   @Mock
   ClientCall mockClientCall;
 
-  @Mock
-  NanoClock nanoClock;
-
   BigtableDataGrpcClient defaultClient;
 
   @Before
@@ -93,8 +89,8 @@ public class TestBigtableDataGrpcClient {
   }
 
   protected BigtableDataGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
-    RetryOptions retryOptions =
-        RetryOptionsUtil.createTestRetryOptions(nanoClock, allowRetriesWithoutTimestamp);
+    RetryOptions retryOptions = new RetryOptions.Builder()
+            .setAllowRetriesWithoutTimestamp(allowRetriesWithoutTimestamp).build();
     BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
     doAnswer(new Answer<Void>(){
       @Override

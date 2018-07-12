@@ -41,7 +41,6 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.rpc.Status;
 
@@ -129,7 +128,7 @@ public class TestRetryingMutateRowsOperation {
     MockitoAnnotations.initMocks(this);
     when(mutateRows.getRpcMetrics()).thenReturn(metrics);
     when(mutateRows.getMethodDescriptor()).thenReturn(BigtableGrpc.getMutateRowsMethod());
-    retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
+    retryOptions = new RetryOptions.Builder().build();
   }
 
   @Test

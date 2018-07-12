@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import com.google.api.client.util.BackOff;
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.client.util.NanoClock;
 import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -282,13 +284,26 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected long getNextBackoff() {
     if (currentBackoff == null) {
-      currentBackoff = retryOptions.createBackoff();
+      currentBackoff = createBackoffBuilder().build();
     }
     try {
       return currentBackoff.nextBackOffMillis();
     } catch (IOException e) {
       return BackOff.STOP;
     }
+  }
+
+  /**
+   * <p>createBackoffBuilder.</p>
+   *
+   * @return a {@link com.google.api.client.util.ExponentialBackOff.Builder} object.
+   */
+  @VisibleForTesting
+  protected ExponentialBackOff.Builder createBackoffBuilder() {
+    return new ExponentialBackOff.Builder()
+            .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
+            .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
+            .setMultiplier(retryOptions.getBackoffMultiplier());
   }
 
   /**

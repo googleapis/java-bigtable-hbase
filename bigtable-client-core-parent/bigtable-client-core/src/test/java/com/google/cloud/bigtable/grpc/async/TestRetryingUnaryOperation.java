@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.api.client.util.ExponentialBackOff;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -45,7 +46,6 @@ import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.CallOptions;
@@ -88,13 +88,10 @@ public class TestRetryingUnaryOperation {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
+    retryOptions = new RetryOptions.Builder().build();
 
     when(readAsync.getRpcMetrics()).thenReturn(metrics);
     when(readAsync.getMethodDescriptor()).thenReturn(BigtableGrpc.getReadRowsMethod());
-
-    underTest = new RetryingUnaryOperation<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
-        readAsync, CallOptions.DEFAULT, executorService, new Metadata());
 
     totalSleep = new AtomicLong();
 
@@ -123,6 +120,19 @@ public class TestRetryingUnaryOperation {
       }
     });
     when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
+
+    underTest = new RetryingUnaryOperation<ReadRowsRequest, ReadRowsResponse>(retryOptions,
+            ReadRowsRequest.getDefaultInstance(), readAsync, CallOptions.DEFAULT, executorService,
+            new Metadata()) {
+        protected ExponentialBackOff.Builder createBackoffBuilder() {
+            return new ExponentialBackOff.Builder()
+                    .setNanoClock(nanoClock)
+                    .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
+                    .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
+                    .setMultiplier(retryOptions.getBackoffMultiplier());
+        }
+    };
+
   }
 
   @Test

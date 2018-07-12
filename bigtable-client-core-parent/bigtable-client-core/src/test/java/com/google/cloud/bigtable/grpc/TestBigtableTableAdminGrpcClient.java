@@ -26,7 +26,6 @@ import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenResponse;
 import com.google.bigtable.admin.v2.GetSnapshotRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
-import com.google.bigtable.admin.v2.Instance;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
@@ -34,7 +33,6 @@ import com.google.bigtable.admin.v2.Table;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -52,7 +50,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -94,9 +91,7 @@ public class TestBigtableTableAdminGrpcClient {
   }
 
   protected BigtableTableAdminGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
-    RetryOptions retryOptions =
-        RetryOptionsUtil.createTestRetryOptions(nanoClock, allowRetriesWithoutTimestamp);
-    BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
+    BigtableOptions options = new BigtableOptions.Builder().build();
     return new BigtableTableAdminGrpcClient(mockChannel, null, options);
   }
 
