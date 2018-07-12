@@ -26,7 +26,6 @@ import javax.annotation.Nullable;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
-import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -43,8 +42,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.opencensus.contrib.grpc.util.StatusConverter;
@@ -122,8 +119,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   protected BackOff currentBackoff;
-  @VisibleForTesting
-  Sleeper sleeper = Sleeper.DEFAULT;
 
   protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   protected final RetryOptions retryOptions;
