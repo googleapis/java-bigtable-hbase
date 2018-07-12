@@ -317,7 +317,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         // There's a subtle race condition in RetryingStreamOperation which requires a separate
         // newCall/start split. The call variable needs to be set before onMessage() happens; that
         // usually will occur, but some unit tests broke with a merged newCall and start.
-        call = rpc.newCall(getCallOptions());
+        call = rpc.newCall(getRpcCallOptions());
         rpc.start(getRetryRequest(), this, metadata, call);
       }
     } catch (Exception e) {
@@ -329,16 +329,36 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     return call;
   }
 
-  protected CallOptions getCallOptions() {
-    if (callOptions.getDeadline() != null) {
-      return callOptions;
+  /**
+   * Returns the {@link CallOptions} that a user set for the entire Operation, which can span multiple RPCs/retries.
+   * @return The {@link CallOptions}
+   */
+  protected CallOptions getOperationCallOptions() {
+    return callOptions;
+  }
+
+  /**
+   * Create an {@link CallOption} that has a fail safe RPC deadline to make sure that unary operations don't hang. This
+   * will have to be overridden for streaming RPCs like read rows.
+   *
+   * @return a {@link CallOptions}
+   */
+  protected CallOptions getRpcCallOptions() {
+    if (callOptions.getDeadline() != null || isStreamingRead()) {
+      // If the user set a deadline, honor it.
+      // If this is a streaming read, then the Watchdog will take affect and ensure that hanging does not occur.
+      return getOperationCallOptions();
+    } else {
+      // Unary calls should fail after 6 minutes, if there isn't any response from the server.
+      return callOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
     }
-    if (request instanceof ReadRowsRequest
-        && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request)) {
-      // This is a streaming read.
-      return callOptions;
-    }
-    return callOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
+  }
+
+  // TODO(sduskis): This is only required because BigtableDataGrpcClient doesn't always use
+  //      RetryingReadRowsOperation like it should.
+  protected boolean isStreamingRead() {
+    return request instanceof ReadRowsRequest &&
+            CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request);
   }
 
   protected RequestT getRetryRequest() {

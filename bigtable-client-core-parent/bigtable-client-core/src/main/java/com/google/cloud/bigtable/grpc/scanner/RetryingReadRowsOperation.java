@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.client.util.Preconditions;
+import com.google.cloud.bigtable.grpc.CallOptionsFactory;
 import com.google.cloud.bigtable.grpc.io.Watchdog.State;
 import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -200,6 +201,25 @@ public class RetryingReadRowsOperation extends
       }
     } catch (Exception e) {
       setException(e);
+    }
+  }
+
+  @Override
+  /**
+   * Override the default behavior of {@link AbstractRetryingOperation#getRpcCallOptions()} to ensure that deadlines
+   * are not set for streaming reads.
+   */
+  protected CallOptions getRpcCallOptions() {
+    if (CallOptionsFactory.ConfiguredCallOptionsFactory.isGet(nextRequest)) {
+      // This is a single get.  Treat this Operation line any unary operation.
+      return super.getRpcCallOptions();
+
+    } else {
+      // This is a streaming read.  There should not be a difference between an "Rpc" and an "Operation"
+      // as far as Deadlines are concerned.  Absolute Deadlines don't really work for stream RPCs, since there's
+      // no way to determine how many responses the service will return.  However, there's a "Watchdog" interceptor
+      // that has a more complex method of tracking activity and helps ensure that there won't be hanging.
+      return super.getOperationCallOptions();
     }
   }
 
