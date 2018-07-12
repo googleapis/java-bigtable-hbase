@@ -53,7 +53,8 @@ public interface CallOptionsFactory {
   <RequestT> CallOptions create(MethodDescriptor<RequestT, ?> descriptor, RequestT request);
 
   /**
-   * Always returns {@link CallOptions#DEFAULT}.
+   * Returns {@link CallOptions#DEFAULT} with any {@link Context#current()}'s {@link Context#getDeadline()}
+   *  applied to it.
    */
   public static class Default implements CallOptionsFactory {
     @Override
