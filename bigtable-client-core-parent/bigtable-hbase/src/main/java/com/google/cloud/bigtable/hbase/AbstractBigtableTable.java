@@ -90,6 +90,7 @@ import io.opencensus.trace.Tracing;
  * @author sduskis
  * @version $Id: $Id
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractBigtableTable implements Table {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractBigtableTable.class);

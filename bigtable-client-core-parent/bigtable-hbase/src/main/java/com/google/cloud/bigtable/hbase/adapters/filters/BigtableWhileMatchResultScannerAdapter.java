@@ -99,7 +99,7 @@ public class BigtableWhileMatchResultScannerAdapter {
         try {
           bigtableResultScanner.close();
         } catch (IOException ioe) {
-          throw Throwables.propagate(ioe);
+          throw new RuntimeException(ioe);
         } finally {
           closeSpan();
         }

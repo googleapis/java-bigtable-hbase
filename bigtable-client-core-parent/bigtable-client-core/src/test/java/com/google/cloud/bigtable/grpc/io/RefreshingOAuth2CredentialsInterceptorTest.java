@@ -69,14 +69,11 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     }
 
     @AfterClass
-    public static void shtudown() {
+    public static void shutdown() {
         executorService.shutdownNow();
     }
 
     private RefreshingOAuth2CredentialsInterceptor underTest;
-
-    @Mock
-    private OAuth2Credentials mockCredentials;
 
     @Mock
     private Channel mockChannel;

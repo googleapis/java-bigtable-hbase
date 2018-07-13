@@ -247,10 +247,10 @@ public class TestScanAdapter {
     Mockito.when(filterAdapter.adaptFilter(any(FilterAdapterContext.class), eq(fakeFilter)))
         .thenReturn(Optional.of(RowFilter.getDefaultInstance()));
 
-    Scan scan = new Scan();
-    scan.setStartRow("a".getBytes());
-    scan.setStopRow("z".getBytes());
-    scan.setFilter(fakeFilter);
+    Scan scan = new Scan()
+        .withStartRow("a".getBytes())
+        .withStopRow("z".getBytes())
+        .setFilter(fakeFilter);
 
     Builder adapted = scanAdapter.adapt(scan, throwingReadHooks);
 
@@ -269,9 +269,9 @@ public class TestScanAdapter {
   @Test
   /** Make sure that the scan rowSet is unaffected when the filter is not set */
   public void testNarrowedScanWithoutFilter() {
-    Scan scan = new Scan();
-    scan.setStartRow("a".getBytes());
-    scan.setStopRow("z".getBytes());
+    Scan scan = new Scan()
+        .withStartRow("a".getBytes())
+        .withStopRow("z".getBytes());
 
     RowSet result = scanAdapter.adapt(scan, throwingReadHooks).build().getRows();
     RowSet expected = RowSet.newBuilder()
@@ -287,10 +287,10 @@ public class TestScanAdapter {
 
   @Test
   public void testEmptyFilterList(){
-    Scan scan = new Scan();
-    scan.setFilter(new FilterList());
-    scan.setStartRow("a".getBytes());
-    scan.setStopRow("z".getBytes());
+    Scan scan = new Scan()
+        .setFilter(new FilterList())
+        .withStartRow("a".getBytes())
+        .withStopRow("z".getBytes());
 
     RowSet result = scanAdapter.adapt(scan, throwingReadHooks).build().getRows();
     RowSet expected = RowSet.newBuilder()
