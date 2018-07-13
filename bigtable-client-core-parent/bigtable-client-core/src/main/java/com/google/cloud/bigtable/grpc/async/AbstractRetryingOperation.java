@@ -25,8 +25,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import com.google.api.client.util.BackOff;
+import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.Sleeper;
-import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -43,8 +43,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.opencensus.contrib.grpc.util.StatusConverter;
@@ -282,13 +280,27 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected long getNextBackoff() {
     if (currentBackoff == null) {
-      currentBackoff = retryOptions.createBackoff();
+      currentBackoff = createBackoff();
     }
     try {
       return currentBackoff.nextBackOffMillis();
     } catch (IOException e) {
       return BackOff.STOP;
     }
+  }
+
+  /**
+   * <p>createBackoff.</p>
+   *
+   * @return a {@link com.google.api.client.util.ExponentialBackOff} object.
+   */
+  @VisibleForTesting
+  protected ExponentialBackOff createBackoff() {
+    return new ExponentialBackOff.Builder()
+            .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
+            .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
+            .setMultiplier(retryOptions.getBackoffMultiplier())
+            .build();
   }
 
   /**

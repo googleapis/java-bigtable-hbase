@@ -343,28 +343,6 @@ public class RetryOptions implements Serializable {
   public boolean isRetryable(Status.Code code) {
     return statusToRetryOn.contains(code);
   }
-
-  /**
-   * <p>createBackoff.</p>
-   *
-   * @return a {@link com.google.api.client.util.BackOff} object.
-   */
-  public BackOff createBackoff() {
-    return createBackoffBuilder().build();
-  }
-
-  /**
-   * <p>createBackoffBuilder.</p>
-   *
-   * @return a {@link com.google.api.client.util.ExponentialBackOff.Builder} object.
-   */
-  @VisibleForTesting
-  protected ExponentialBackOff.Builder createBackoffBuilder() {
-    return new ExponentialBackOff.Builder()
-        .setInitialIntervalMillis(getInitialBackoffMillis())
-        .setMaxElapsedTimeMillis(getMaxElapsedBackoffMillis())
-        .setMultiplier(getBackoffMultiplier());
-  }
   
   /** {@inheritDoc} */
   @Override
