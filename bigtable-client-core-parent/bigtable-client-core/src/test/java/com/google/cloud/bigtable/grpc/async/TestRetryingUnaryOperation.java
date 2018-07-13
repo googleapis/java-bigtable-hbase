@@ -124,12 +124,14 @@ public class TestRetryingUnaryOperation {
     underTest = new RetryingUnaryOperation<ReadRowsRequest, ReadRowsResponse>(retryOptions,
             ReadRowsRequest.getDefaultInstance(), readAsync, CallOptions.DEFAULT, executorService,
             new Metadata()) {
-        protected ExponentialBackOff.Builder createBackoffBuilder() {
+        @Override
+        protected ExponentialBackOff createBackoff() {
             return new ExponentialBackOff.Builder()
                     .setNanoClock(nanoClock)
                     .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
                     .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
-                    .setMultiplier(retryOptions.getBackoffMultiplier());
+                    .setMultiplier(retryOptions.getBackoffMultiplier())
+                    .build();
         }
     };
 

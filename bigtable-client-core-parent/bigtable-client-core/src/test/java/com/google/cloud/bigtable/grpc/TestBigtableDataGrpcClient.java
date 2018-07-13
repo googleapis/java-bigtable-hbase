@@ -103,7 +103,7 @@ public class TestBigtableDataGrpcClient {
   }
 
   @Test
-  public void testRetyableMutateRow() throws Exception {
+  public void testRetryableMutateRow() {
     MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     setResponse(MutateRowResponse.getDefaultInstance());
     defaultClient.mutateRow(request);
@@ -111,14 +111,14 @@ public class TestBigtableDataGrpcClient {
   }
 
   @Test
-  public void testRetyableMutateRowAsync() {
+  public void testRetryableMutateRowAsync() {
     MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     defaultClient.mutateRowAsync(request);
     verifyRequestCalled(request);
   }
 
   @Test
-  public void testRetyableCheckAndMutateRow() throws Exception {
+  public void testRetryableCheckAndMutateRow() {
     CheckAndMutateRowRequest request =
         CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     setResponse(CheckAndMutateRowResponse.getDefaultInstance());
@@ -127,7 +127,7 @@ public class TestBigtableDataGrpcClient {
   }
 
   @Test
-  public void testRetyableCheckAndMutateRowAsync() {
+  public void testRetryableCheckAndMutateRowAsync() {
     CheckAndMutateRowRequest request =
         CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     defaultClient.checkAndMutateRowAsync(request);

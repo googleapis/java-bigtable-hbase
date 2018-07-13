@@ -27,7 +27,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.MockitoAnnotations;
 
-import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsRequest.Entry;
 import com.google.bigtable.v2.MutateRowsResponse;
@@ -90,12 +89,6 @@ public class TestMutateRowsRequestManager {
   }
 
   private AtomicLong time = new AtomicLong();
-  private NanoClock nanoClock = new NanoClock() {
-    @Override
-    public long nanoTime() {
-      return time.get();
-    }
-  };
 
   private RetryOptions retryOptions;
 
