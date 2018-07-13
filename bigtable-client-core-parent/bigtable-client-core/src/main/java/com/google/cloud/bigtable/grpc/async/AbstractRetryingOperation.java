@@ -120,8 +120,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   protected BackOff currentBackoff;
-  @VisibleForTesting
-  Sleeper sleeper = Sleeper.DEFAULT;
 
   protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   protected final RetryOptions retryOptions;
