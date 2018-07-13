@@ -21,16 +21,13 @@ import java.util.concurrent.TimeUnit;
  * Hack to allow the creation of a {@link Deadline} with a constant time.
  */
 public class DeadlineUtil {
-  static Deadline.Ticker constantBasedTicker(final long timeNs) {
-    return new Deadline.Ticker() {
+
+  public static Deadline deadlineWithFixedTime(int duration, TimeUnit unit, final long timeNs) {
+    return Deadline.after(duration, unit, new Deadline.Ticker() {
       @Override
       public long read() {
         return timeNs;
       }
-    };
-  }
-
-  public static Deadline deadlineWithFixedTime(int duration, TimeUnit unit, long timeNs) {
-    return Deadline.after(duration, unit, constantBasedTicker(timeNs));
+    });
   }
 }

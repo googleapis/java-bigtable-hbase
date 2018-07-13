@@ -57,15 +57,15 @@ public class TestCallOptionsFactory {
 
   @Test
   public void testDefaultWithContext() {
-    Deadline deadline = DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, NOW);
+    final Deadline deadline = DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, NOW);
     Context.CancellableContext context = Context.current().withDeadline(deadline, mockExecutor);
     context.run(new Runnable() {
       @Override
       public void run() {
         CallOptionsFactory factory = new CallOptionsFactory.Default();
         assertEqualsDeadlines(
-                Context.current().getDeadline().timeRemaining(TimeUnit.MILLISECONDS),
-                getDeadlineMs(factory, null)
+            deadline.timeRemaining(TimeUnit.MILLISECONDS),
+            getDeadlineMs(factory, null)
         );
       }
     });
@@ -83,12 +83,12 @@ public class TestCallOptionsFactory {
     CallOptionsConfig config = new CallOptionsConfig.Builder().setUseTimeout(true).build();
     CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
     assertEqualsDeadlines(
-            config.getShortRpcTimeoutMs(),
-            getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
+        config.getShortRpcTimeoutMs(),
+        getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
     );
     assertEqualsDeadlines(
-            config.getLongRpcTimeoutMs(),
-            getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance())
+        config.getLongRpcTimeoutMs(),
+        getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance())
     );
   }
 
@@ -100,15 +100,15 @@ public class TestCallOptionsFactory {
       @Override
       public void run() {
         CallOptionsConfig config = new CallOptionsConfig.Builder()
-                .setUseTimeout(true)
-                .setShortRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(100))
-                .setLongRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
-                .build();
+            .setUseTimeout(true)
+            .setShortRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(100))
+            .setLongRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
+            .build();
         CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
         // The deadline in the context in 1 second, and the deadline in the config is 100+ seconds
         assertEqualsDeadlines(
-                TimeUnit.SECONDS.toMillis(1),
-                getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
+            TimeUnit.SECONDS.toMillis(1),
+            getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
         );
       }
     });
