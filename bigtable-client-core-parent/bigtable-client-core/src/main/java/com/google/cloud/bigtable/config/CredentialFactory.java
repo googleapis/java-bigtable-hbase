@@ -206,7 +206,6 @@ public class CredentialFactory {
    * @param inputStream a {@link java.io.InputStream} object.
    * @return a {@link com.google.auth.Credentials} object.
    * @throws java.io.IOException if any.
-   * @throws java.security.GeneralSecurityException if any.
    */
   public static Credentials getInputStreamCredential(InputStream inputStream) throws IOException {
     return GoogleCredentials.fromStream(inputStream, getHttpTransportFactory())
