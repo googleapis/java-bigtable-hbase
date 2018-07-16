@@ -200,7 +200,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     Code code = status.getCode();
     // CANCELLED
     if (code == Status.Code.CANCELLED) {
-      completionFuture.setException(status.asRuntimeException());
+      setException(status.asRuntimeException());
       // An explicit user cancellation is not considered a failure.
       finalizeStats(status);
       return;
@@ -373,10 +373,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   protected RequestT getRetryRequest() {
-    return request;
-  }
-
-  public final RequestT getOriginalRequest() {
     return request;
   }
 
