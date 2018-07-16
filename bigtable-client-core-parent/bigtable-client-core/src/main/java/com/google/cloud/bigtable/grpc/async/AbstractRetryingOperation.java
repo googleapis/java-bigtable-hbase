@@ -369,7 +369,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   //      RetryingReadRowsOperation like it should.
   protected boolean isStreamingRead() {
     return request instanceof ReadRowsRequest &&
-            CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request);
+            !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request);
   }
 
   protected RequestT getRetryRequest() {
