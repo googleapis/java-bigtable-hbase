@@ -27,7 +27,6 @@ import org.apache.hadoop.hbase.filter.RegexStringComparator;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 /**
@@ -61,9 +60,8 @@ public class RowFilterAdapter
     } else if (comparator instanceof RegexStringComparator) {
       regexValue = ByteString.copyFrom(comparator.getValue());
     } else if (comparator instanceof BinaryComparator) {
-      byte[] quotedRegularExpression =
+      regexValue =
           ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
-      regexValue = ByteStringer.wrap(quotedRegularExpression);
     } else {
       throw new IllegalStateException(String.format("Cannot adapt comparator %s", comparator
           .getClass().getCanonicalName()));

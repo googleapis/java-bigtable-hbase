@@ -22,7 +22,7 @@ import org.apache.hadoop.hbase.client.Row;
 
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 /**

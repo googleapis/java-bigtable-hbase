@@ -21,7 +21,6 @@ import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.QualifierRangeFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
@@ -71,8 +70,7 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
   private Filter adaptBinaryComparator(
       FilterAdapterContext context, CompareOp compareOp, BinaryComparator comparator)
       throws IOException {
-    byte[] quoted = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
-    ByteString quotedValue = ByteStringer.wrap(quoted);
+    ByteString quotedValue = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
     switch (compareOp) {
       case LESS:
         return range(context).endOpen(quotedValue);
