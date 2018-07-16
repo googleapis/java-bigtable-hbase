@@ -70,13 +70,4 @@ public class RetryingUnaryOperation<RequestT, ResponseT>
     }
     return true;
   }
-
-  @Override
-  protected CallOptions getCallOptions() {
-    CallOptions originalCallOptions = super.getCallOptions();
-    if (originalCallOptions.getDeadline() != null) {
-      return originalCallOptions;
-    }
-    return originalCallOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
-  }
 }
