@@ -39,6 +39,7 @@ import com.google.cloud.bigtable.grpc.io.Watchdog;
 import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.util.ThreadUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -48,7 +49,6 @@ import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.MethodDescriptor;
-import io.grpc.internal.GrpcUtil;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -103,7 +103,7 @@ public class BigtableSession implements Closeable {
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
     ExecutorService connectionStartupExecutor = Executors
-        .newCachedThreadPool(GrpcUtil.getThreadFactory("BigtableSession-startup-%d", true));
+        .newCachedThreadPool(ThreadUtil.getThreadFactory("BigtableSession-startup-%d", true));
 
     connectionStartupExecutor.execute(new Runnable() {
       @Override

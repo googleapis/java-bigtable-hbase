@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.cloud.bigtable.util.ThreadUtil;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-
-import io.grpc.internal.GrpcUtil;
 
 /**
  * This class contains executors and other thread pool related resources that can be reused across a
@@ -66,7 +66,7 @@ public class BigtableSessionSharedThreadPools {
   public synchronized ExecutorService getBatchThreadPool() {
     if (batchThreadPool == null) {
       batchThreadPool = Executors
-          .newCachedThreadPool(GrpcUtil.getThreadFactory(BATCH_POOL_THREAD_NAME_PATTERN, true));
+          .newCachedThreadPool(ThreadUtil.getThreadFactory(BATCH_POOL_THREAD_NAME_PATTERN, true));
     }
     return batchThreadPool;
   }
@@ -79,7 +79,7 @@ public class BigtableSessionSharedThreadPools {
   public synchronized ScheduledExecutorService getRetryExecutor() {
     if (retryExecutor == null) {
       retryExecutor = Executors.newScheduledThreadPool(RETRY_THREAD_COUNT,
-        GrpcUtil.getThreadFactory(RETRY_THREADPOOL_NAME_PATTERN, true));
+          ThreadUtil.getThreadFactory(RETRY_THREADPOOL_NAME_PATTERN, true));
     }
     return retryExecutor;
   }
