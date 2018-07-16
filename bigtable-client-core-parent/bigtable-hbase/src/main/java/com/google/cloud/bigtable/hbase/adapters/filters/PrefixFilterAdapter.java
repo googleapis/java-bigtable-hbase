@@ -45,7 +45,7 @@ public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
     ByteString.Output output = ByteString.newOutput(filter.getPrefix().length * 2);
     ReaderExpressionHelper.writeQuotedRegularExpression(output, filter.getPrefix());
     // Unquoted all bytes:
-    baos.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
+    output.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
     return FILTERS.key().regex(output.toByteString()).toProto();
   }
 
