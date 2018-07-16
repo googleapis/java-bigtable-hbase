@@ -136,21 +136,6 @@ public class CredentialFactory {
   }
 
   /**
-   * Initializes OAuth2 credential using preconfigured ServiceAccount settings on the local
-   * Google Compute Engine VM. See:
-   * <a href="https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances"
-   * >Creating and Enabling Service Accounts for Instances</a>.
-   *
-   * @return a {@link com.google.auth.Credentials} object.
-   * @throws java.io.IOException if any.
-   * @throws java.security.GeneralSecurityException if any.
-   */
-  public static Credentials getCredentialFromMetadataServiceAccount()
-      throws IOException, GeneralSecurityException {
-    return new ComputeEngineCredentials(getHttpTransportFactory());
-  }
-
-  /**
    * Initializes OAuth2 credential from a private keyfile, as described in
    * <a href="https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#service_accounts"
    * >Service accounts</a>.
@@ -188,8 +173,15 @@ public class CredentialFactory {
     PrivateKey privateKey =
         SecurityUtils.loadPrivateKeyFromKeyStore(SecurityUtils.getPkcs12KeyStore(),
           new FileInputStream(privateKeyFile), "notasecret", "privatekey", "notasecret");
-    return new ServiceAccountCredentials(clientId, serviceAccountEmail, privateKey, privateKeyId,
-        scopes, getHttpTransportFactory(), null /* tokenServerUri */);
+    return ServiceAccountCredentials
+            .newBuilder()
+            .setClientId(clientId)
+            .setClientEmail(serviceAccountEmail)
+            .setPrivateKey(privateKey)
+            .setPrivateKeyId(privateKeyId)
+            .setScopes(scopes)
+            .setHttpTransportFactory(getHttpTransportFactory())
+            .build();
   }
 
   /**
@@ -202,10 +194,8 @@ public class CredentialFactory {
    *
    * @return a {@link com.google.auth.Credentials} object.
    * @throws java.io.IOException if any.
-   * @throws java.security.GeneralSecurityException if any.
    */
-  public static Credentials getApplicationDefaultCredential() throws IOException,
-      GeneralSecurityException {
+  public static Credentials getApplicationDefaultCredential() throws IOException {
     return GoogleCredentials.getApplicationDefault(getHttpTransportFactory())
         .createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
   }
@@ -216,10 +206,8 @@ public class CredentialFactory {
    * @param inputStream a {@link java.io.InputStream} object.
    * @return a {@link com.google.auth.Credentials} object.
    * @throws java.io.IOException if any.
-   * @throws java.security.GeneralSecurityException if any.
    */
-  public static Credentials getInputStreamCredential(InputStream inputStream) throws IOException,
-      GeneralSecurityException {
+  public static Credentials getInputStreamCredential(InputStream inputStream) throws IOException {
     return GoogleCredentials.fromStream(inputStream, getHttpTransportFactory())
         .createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
   }

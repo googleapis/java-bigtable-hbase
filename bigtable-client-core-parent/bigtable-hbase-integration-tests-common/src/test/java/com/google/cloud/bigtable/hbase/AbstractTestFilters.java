@@ -225,14 +225,20 @@ public abstract class AbstractTestFilters extends AbstractTest {
     // Test ColumnCountGetFilter on scan.  ColumnCountGetFilter is not made for scans, and once
     // the column limit has been met, Filter#filterAllRemaining() returns true.
     Filter filter = new ColumnCountGetFilter(numColumnsToFilter);
-    Scan scan = new Scan(Bytes.toBytes(rowPrefix), Bytes.toBytes(endRowKey)).setFilter(filter);
+    Scan scan = new Scan()
+            .withStartRow(Bytes.toBytes(rowPrefix))
+            .withStopRow(Bytes.toBytes(endRowKey))
+            .setFilter(filter);
     ResultScanner scanner = table.getScanner(scan);
     Result[] results = scanner.next(1000);
     Assert.assertEquals(1, results.length);
 
     // Test ColumnPaginationFilter on scan
     filter = new ColumnPaginationFilter(numColumnsToFilter, offset);
-    scan = new Scan(Bytes.toBytes(rowPrefix), Bytes.toBytes(endRowKey)).setFilter(filter);
+    scan = new Scan()
+            .withStartRow(Bytes.toBytes(rowPrefix))
+            .withStartRow(Bytes.toBytes(endRowKey))
+            .setFilter(filter);
     scanner = table.getScanner(scan);
     results = scanner.next(1000);
     Assert.assertEquals(numRows, results.length);
@@ -1097,7 +1103,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     ByteArrayComparable rowValue2Comparable = new BinaryComparator(Bytes.toBytes("12"));
     ValueFilter valueFilter = new ValueFilter(CompareOp.NOT_EQUAL, rowValue2Comparable);
     WhileMatchFilter simpleWhileMatch = new WhileMatchFilter(valueFilter);
-    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    Scan scan = new Scan().withStartRow(Bytes.toBytes(rowKeyPrefix));
     scan.setFilter(simpleWhileMatch);
 
     int[] expected = {0, 1, 10, 11};
@@ -1242,7 +1248,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
       Operator.MUST_PASS_ONE,
       simpleWhileMatch1,
       simpleWhileMatch2);
-    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    Scan scan = new Scan().withStartRow(Bytes.toBytes(rowKeyPrefix));
     scan.setFilter(filterList);
 
     int[] expected = {0, 1, 10, 11, 12, 13, 14};
@@ -1266,7 +1272,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
       Operator.MUST_PASS_ALL,
       simpleWhileMatch1,
       simpleWhileMatch2);
-    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    Scan scan = new Scan().withStartRow(Bytes.toBytes(rowKeyPrefix));
     scan.setFilter(filterList);
 
     int[] expected = {0, 1, 10, 11};
@@ -1284,7 +1290,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     ValueFilter valueFilter1 = new ValueFilter(CompareOp.NOT_EQUAL, rowValue2Comparable1);
     WhileMatchFilter simpleWhileMatch1 = new WhileMatchFilter(valueFilter1);
     WhileMatchFilter simpleWhileMatch2 = new WhileMatchFilter(simpleWhileMatch1);
-    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    Scan scan = new Scan().withStartRow(Bytes.toBytes(rowKeyPrefix));
     scan.setFilter(simpleWhileMatch2);
 
     int[] expected = {0, 1, 10, 11};
@@ -1554,8 +1560,8 @@ public abstract class AbstractTestFilters extends AbstractTest {
     }
     table.put(puts);
     Scan scan = new Scan();
-    scan.setStartRow(Bytes.toBytes("trandA"));
-    scan.setStopRow(Bytes.toBytes("trandB"));
+    scan.withStartRow(Bytes.toBytes("trandA"));
+    scan.withStopRow(Bytes.toBytes("trandB"));
     RandomRowFilter filter = new RandomRowFilter(0.5f);
     scan.setFilter(filter);
     ResultScanner scanner = table.getScanner(scan);
@@ -1579,7 +1585,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
 
     Scan rootScan = new Scan()
         .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck)
-        .setStartRow(rowKey).setStopRow(rowKey);
+        .withStartRow(rowKey).withStopRow(rowKey);
 
     Assert.assertNull("< 1000 should fail",
         getFirst(table, rootScan, CompareOp.LESS, 1000l));
@@ -1670,8 +1676,8 @@ public abstract class AbstractTestFilters extends AbstractTest {
 
     // Make sure that it works with start & end rows: exclude first & last row
     Scan boundedScan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filter)
-        .setStartRow(rowKeys[1])
-        .setStopRow(rowKeys[rowKeys.length - 1]);
+        .withStartRow(rowKeys[1])
+        .withStopRow(rowKeys[rowKeys.length - 1]);
 
     ResultScanner boundedScanner = table.getScanner(boundedScan);
     Result[] boundedResults = boundedScanner.next(rowCount + 2);
@@ -1863,7 +1869,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Table table = getDefaultTable();
     table.put(puts);
 
-    Scan scan = new Scan(Bytes.toBytes("pageFilter-"));
+    Scan scan = new Scan().withStartRow(Bytes.toBytes("pageFilter-"));
 
     PageFilter pageFilter = new PageFilter(20);
     scan.setFilter(pageFilter);
@@ -1963,7 +1969,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
         Operator.MUST_PASS_ONE,
         prefixFilter1,
         prefixFilter2);
-    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    Scan scan = new Scan().withStartRow(Bytes.toBytes(rowKeyPrefix));
     scan.setFilter(filterList);
 
     try (ResultScanner scanner = table.getScanner(scan)) {
