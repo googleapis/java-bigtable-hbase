@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.client.util.Preconditions;
-import com.google.cloud.bigtable.grpc.CallOptionsFactory;
 import com.google.cloud.bigtable.grpc.io.Watchdog.State;
 import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import java.util.concurrent.ScheduledExecutorService;
