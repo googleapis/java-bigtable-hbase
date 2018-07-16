@@ -23,12 +23,10 @@ import java.io.IOException;
 
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.ChainFilter;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 
@@ -180,8 +178,8 @@ public class SingleColumnValueFilterAdapter
   @VisibleForTesting
   static ChainFilter getColumnSpecFilter(byte[] family, byte[] qualifier, boolean latestVersionOnly)
       throws IOException {
-    ByteString wrappedQual = ByteStringer.wrap(quoteRegularExpression(qualifier));
-    String wrappedFamily = Bytes.toString(quoteRegularExpression(family));
+    ByteString wrappedQual = quoteRegularExpression(qualifier);
+    String wrappedFamily = quoteRegularExpression(family).toStringUtf8();
     ChainFilter builder = FILTERS.chain()
         .filter(FILTERS.family().regex(wrappedFamily))
         .filter(FILTERS.qualifier().regex(wrappedQual));

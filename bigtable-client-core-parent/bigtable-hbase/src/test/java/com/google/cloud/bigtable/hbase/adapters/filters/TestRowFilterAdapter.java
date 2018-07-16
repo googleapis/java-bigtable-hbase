@@ -69,8 +69,7 @@ public class TestRowFilterAdapter {
             CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
         RowFilter.newBuilder()
-            .setRowKeyRegexFilter(
-                ByteString.copyFrom(ReaderExpressionHelper.quoteRegularExpression(bytes)))
+            .setRowKeyRegexFilter(ReaderExpressionHelper.quoteRegularExpression(bytes))
             .build(),
         adapter.adapt(context, filter));
   }

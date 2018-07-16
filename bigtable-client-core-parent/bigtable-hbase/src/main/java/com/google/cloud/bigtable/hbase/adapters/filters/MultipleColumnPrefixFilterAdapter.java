@@ -20,11 +20,10 @@ import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.wrappers.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.ByteStringer;
 
+import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
@@ -43,10 +42,10 @@ public class MultipleColumnPrefixFilterAdapter
       FilterAdapterContext context,
       MultipleColumnPrefixFilter filter) throws IOException {
     InterleaveFilter interleave = FILTERS.interleave();
-    ByteArrayOutputStream outputStream = null;
+    ByteString.Output outputStream = null;
     for (byte[] prefix : filter.getPrefix()) {
       if (outputStream == null) {
-        outputStream = new ByteArrayOutputStream(prefix.length * 2);
+        outputStream = ByteString.newOutput(prefix.length * 2);
       } else {
         outputStream.reset();
       }
@@ -54,7 +53,7 @@ public class MultipleColumnPrefixFilterAdapter
       ReaderExpressionHelper.writeQuotedExpression(outputStream, prefix);
       outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
 
-      interleave.filter(FILTERS.qualifier().regex(ByteStringer.wrap(outputStream.toByteArray())));
+      interleave.filter(FILTERS.qualifier().regex(outputStream.toByteString()));
     }
     return interleave.toProto();
   }

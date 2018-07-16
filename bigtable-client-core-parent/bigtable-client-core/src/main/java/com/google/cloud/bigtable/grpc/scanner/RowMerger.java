@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +28,6 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
 import com.google.bigtable.v2.RowFilter.Interleave;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
@@ -242,7 +240,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
     // cell in progress info
     private CellIdentifier currentId;
-    private ByteArrayOutputStream outputStream;
+    private ByteString.Output outputStream;
 
 
     private final Map<String, List<FlatRow.Cell>> cells = new TreeMap<>();
@@ -257,7 +255,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
     private final void completeMultiChunkCell() {
       Preconditions.checkArgument(hasChunkInProgess());
-      addCell(ByteStringer.wrap(outputStream.toByteArray()));
+      addCell(outputStream.toByteString());
       outputStream = null;
     }
 
@@ -328,7 +326,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
     private void addPartialCellChunk(ReadRowsResponse.CellChunk chunk) throws IOException {
       if (outputStream == null) {
-        outputStream = new ByteArrayOutputStream(chunk.getValueSize());
+        outputStream = ByteString.newOutput();
       }
       chunk.getValue().writeTo(outputStream);
     }

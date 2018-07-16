@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
-import com.google.bigtable.v2.BigtableGrpc;
 import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
@@ -31,7 +30,6 @@ import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.RangeSet;
@@ -175,7 +173,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     }
   }
 
-  private static byte[] quoteRegex(byte[] unquoted)  {
+  private static ByteString quoteRegex(byte[] unquoted)  {
     try {
       return ReaderExpressionHelper.quoteRegularExpression(unquoted);
     } catch (IOException e) {
@@ -211,7 +209,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   }
 
   private Filters.Filter createColumnQualifierFilter(byte[] unquotedQualifier) {
-    return FILTERS.qualifier().regex(ByteStringer.wrap(quoteRegex(unquotedQualifier)));
+    return FILTERS.qualifier().regex(quoteRegex(unquotedQualifier));
   }
 
   private Filters.Filter createFamilyFilter(byte[] familyName) {
