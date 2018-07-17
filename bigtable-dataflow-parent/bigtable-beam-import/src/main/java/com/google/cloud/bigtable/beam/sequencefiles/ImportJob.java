@@ -37,8 +37,8 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
 /**
- * A job that imports data from Cloud Storage bucket with SequenceFile format into Cloud Bigtable. This job
- * can be run directly or as a Dataflow template.
+ * A job that imports data from Cloud Storage bucket with HBase SequenceFile format into Cloud Bigtable.
+ * This job can be run directly or as a Dataflow template.
  *
  * <p>Execute the following command to run the job directly:
  *
