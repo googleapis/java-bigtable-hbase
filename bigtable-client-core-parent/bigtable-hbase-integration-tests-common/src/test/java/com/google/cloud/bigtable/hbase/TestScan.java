@@ -102,7 +102,7 @@ public class TestScan extends AbstractTest {
 
     Scan scan3 = new Scan()
         .withStartRow(rowKey)
-        .withStartRow(rowFollowing(rowKey))
+        .withStopRow(rowFollowing(rowKey))
         .setTimeRange(0, ts1 + 1);
     try (ResultScanner resultScanner = table.getScanner(scan3)) {
       Result result = resultScanner.next();
@@ -273,8 +273,9 @@ public class TestScan extends AbstractTest {
     byte[] value = dataHelper.randomData("value-");
 
     table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, value));
-    Scan scan = new Scan();
-    scan.withStartRow(rowKey).withStopRow(rowKey);
+    Scan scan = new Scan()
+        .withStartRow(rowKey)
+        .withStopRow(rowKey, true);
     try (ResultScanner resultScanner = table.getScanner(scan)) {
       Result result = resultScanner.next();
       Assert.assertNotNull(result);
