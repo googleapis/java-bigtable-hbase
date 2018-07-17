@@ -1574,6 +1574,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
 
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testSingleValueLongCompares() throws IOException {
     byte[] rowKey = dataHelper.randomData("rowKeyNumeric-");
     byte[] qualToCheck = dataHelper.randomData("toCheckNumeric-");
@@ -1585,7 +1586,8 @@ public abstract class AbstractTestFilters extends AbstractTest {
 
     Scan rootScan = new Scan()
         .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck)
-        .withStartRow(rowKey).withStopRow(rowKey);
+        .withStartRow(rowKey)
+        .withStopRow(rowKey, true);
 
     Assert.assertNull("< 1000 should fail",
         getFirst(table, rootScan, CompareOp.LESS, 1000l));
