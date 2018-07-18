@@ -226,9 +226,9 @@ public abstract class AbstractTestFilters extends AbstractTest {
     // the column limit has been met, Filter#filterAllRemaining() returns true.
     Filter filter = new ColumnCountGetFilter(numColumnsToFilter);
     Scan scan = new Scan()
-            .withStartRow(Bytes.toBytes(rowPrefix))
-            .withStopRow(Bytes.toBytes(endRowKey))
-            .setFilter(filter);
+        .withStartRow(Bytes.toBytes(rowPrefix))
+        .withStopRow(Bytes.toBytes(endRowKey))
+        .setFilter(filter);
     ResultScanner scanner = table.getScanner(scan);
     Result[] results = scanner.next(1000);
     Assert.assertEquals(1, results.length);
@@ -236,9 +236,9 @@ public abstract class AbstractTestFilters extends AbstractTest {
     // Test ColumnPaginationFilter on scan
     filter = new ColumnPaginationFilter(numColumnsToFilter, offset);
     scan = new Scan()
-            .withStartRow(Bytes.toBytes(rowPrefix))
-            .withStartRow(Bytes.toBytes(endRowKey))
-            .setFilter(filter);
+        .withStartRow(Bytes.toBytes(rowPrefix))
+        .withStopRow(Bytes.toBytes(endRowKey))
+        .setFilter(filter);
     scanner = table.getScanner(scan);
     results = scanner.next(1000);
     Assert.assertEquals(numRows, results.length);
@@ -1559,11 +1559,11 @@ public abstract class AbstractTestFilters extends AbstractTest {
       puts.add(put);
     }
     table.put(puts);
-    Scan scan = new Scan();
-    scan.withStartRow(Bytes.toBytes("trandA"));
-    scan.withStopRow(Bytes.toBytes("trandB"));
     RandomRowFilter filter = new RandomRowFilter(0.5f);
-    scan.setFilter(filter);
+    Scan scan = new Scan()
+        .withStartRow(Bytes.toBytes("trandA"))
+        .withStopRow(Bytes.toBytes("trandB"))
+        .setFilter(filter);
     ResultScanner scanner = table.getScanner(scan);
     Result[] results = scanner.next(100);
 
