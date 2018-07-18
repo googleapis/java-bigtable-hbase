@@ -26,7 +26,6 @@ import javax.annotation.Nullable;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -298,13 +297,19 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    *
    * @return a {@link com.google.api.client.util.ExponentialBackOff} object.
    */
-  @VisibleForTesting
-  protected ExponentialBackOff createBackoff(int maxElapsedMillis) {
-    return new ExponentialBackOff.Builder()
+  private ExponentialBackOff createBackoff(int maxElapsedMillis) {
+    ExponentialBackOff.Builder builder =
+        new ExponentialBackOff.Builder().setMaxElapsedTimeMillis(maxElapsedMillis)
+            .setMaxIntervalMillis(maxElapsedMillis / 2)
             .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-            .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
-            .setMultiplier(retryOptions.getBackoffMultiplier())
-            .build();
+            .setMultiplier(retryOptions.getBackoffMultiplier());
+    return configureBackoffBuilder(builder).build();
+  }
+
+  @VisibleForTesting
+  /** This is a hook for tests */
+  protected ExponentialBackOff.Builder configureBackoffBuilder(ExponentialBackOff.Builder builder) {
+    return builder;
   }
 
   /**

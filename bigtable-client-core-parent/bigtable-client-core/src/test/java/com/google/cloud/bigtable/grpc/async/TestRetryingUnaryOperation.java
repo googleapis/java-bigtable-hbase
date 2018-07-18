@@ -185,8 +185,9 @@ public class TestRetryingUnaryOperation {
     return new RetryingUnaryOperation<ReadRowsRequest, ReadRowsResponse>(RETRY_OPTIONS,
         ReadRowsRequest.getDefaultInstance(), readAsync, options, executorService, new Metadata()) {
       @Override
-      protected ExponentialBackOff createBackoff(int maxTimeoutMs) {
-        return clock.createBackoff(retryOptions, maxTimeoutMs);
+      protected ExponentialBackOff.Builder configureBackoffBuilder(
+          ExponentialBackOff.Builder builder) {
+        return builder.setNanoClock(clock);
       }
     };
   }

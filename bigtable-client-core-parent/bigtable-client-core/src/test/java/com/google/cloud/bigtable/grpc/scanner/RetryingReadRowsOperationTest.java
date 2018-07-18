@@ -147,8 +147,10 @@ public class RetryingReadRowsOperationTest {
       StreamObserver<FlatRow> observer) {
     return new RetryingReadRowsOperation(observer, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
         mockRetryableRpc, options, mockRetryExecutorService, metaData) {
-      protected ExponentialBackOff createBackoff(int maxTimeoutMs) {
-        return clock.createBackoff(retryOptions, maxTimeoutMs);
+      @Override
+      protected ExponentialBackOff.Builder configureBackoffBuilder(
+          ExponentialBackOff.Builder builder) {
+        return builder.setNanoClock(clock);
       }
     };
   }
