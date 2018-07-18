@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -164,6 +163,9 @@ public class TestRetryingMutateRowsOperation {
 
   @Test
   public void testCompleteFailure() throws InterruptedException, TimeoutException {
+    MutateRowsRequest request = createRequest(2);
+    final RetryingMutateRowsOperation underTest = createOperation(request);
+
     doAnswer(new Answer<Void>() {
       @Override public Void answer(InvocationOnMock invocation) {
         invocation.getArgumentAt(1, ClientCall.Listener.class)
@@ -172,13 +174,9 @@ public class TestRetryingMutateRowsOperation {
       }
     }).when(mutateRows).start(any(MutateRowsRequest.class), any(ClientCall.Listener.class),
         any(Metadata.class), any(ClientCall.class));
-    MutateRowsRequest request = createRequest(2);
-    final RetryingMutateRowsOperation underTest = createOperation(request);
 
-    ListenableFuture<List<MutateRowsResponse>> future = underTest.getAsyncResult();
-    underTest.onClose(io.grpc.Status.DEADLINE_EXCEEDED, new Metadata());
     try {
-      future.get(1, TimeUnit.MINUTES);
+      underTest.getAsyncResult().get(1, TimeUnit.MINUTES);
       Assert.fail("Expecting a DEADLINE_EXCEEDED exception");
     } catch (ExecutionException e) {
       Assert.assertEquals(io.grpc.Status.DEADLINE_EXCEEDED.getCode(),

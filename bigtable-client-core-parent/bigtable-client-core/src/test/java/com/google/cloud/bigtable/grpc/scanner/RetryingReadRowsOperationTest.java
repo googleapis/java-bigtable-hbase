@@ -247,11 +247,12 @@ public class RetryingReadRowsOperationTest {
       Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(), Status.fromThrowable(e).getCode());
     }
 
-    Assert.assertEquals(
-        ((ExponentialBackOff) underTest.getCurrentBackoff()).getMaxElapsedTimeMillis(),
-        RETRY_OPTIONS.getMaxElapsedBackoffMillis(), 10);
-    clock.assertTimeWithinExpectations(
-        TimeUnit.MILLISECONDS.toNanos(RETRY_OPTIONS.getMaxElapsedBackoffMillis()));
+    int expectedMaxElapsedTimeMs =
+        ((ExponentialBackOff) underTest.getCurrentBackoff()).getMaxElapsedTimeMillis();
+    int actualElapsedTimeMs = RETRY_OPTIONS.getMaxElapsedBackoffMillis();
+
+    Assert.assertEquals(expectedMaxElapsedTimeMs, actualElapsedTimeMs);
+    clock.assertTimeWithinExpectations(TimeUnit.MILLISECONDS.toNanos(actualElapsedTimeMs));
   }
 
   @Test
@@ -267,7 +268,7 @@ public class RetryingReadRowsOperationTest {
     underTest.onMessage(buildResponse(key2));
     verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
     checkRetryRequest(underTest, key2, 8);
-    verify(mockClientCall, atLeast(2)).request(eq(1));
+    verify(mockClientCall, times(4)).request(eq(1));
 
     finishOK(underTest, 1);
   }
