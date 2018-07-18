@@ -42,6 +42,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
+import io.grpc.Deadline;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.Status.Code;
@@ -278,7 +279,12 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected long getNextBackoff() {
     if (currentBackoff == null) {
-      currentBackoff = createBackoff();
+      Deadline deadline = getOperationCallOptions().getDeadline();
+      if (deadline != null) {
+        currentBackoff = createBackoff((int) deadline.timeRemaining(TimeUnit.MILLISECONDS));
+      } else {
+        currentBackoff = createBackoff(retryOptions.getMaxElapsedBackoffMillis());
+      }
     }
     try {
       return currentBackoff.nextBackOffMillis();
@@ -293,7 +299,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @return a {@link com.google.api.client.util.ExponentialBackOff} object.
    */
   @VisibleForTesting
-  protected ExponentialBackOff createBackoff() {
+  protected ExponentialBackOff createBackoff(int maxElapsedMillis) {
     return new ExponentialBackOff.Builder()
             .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
             .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
@@ -413,5 +419,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    */
   protected void cancel(final String message) {
     call.cancel(message, null);
+  }
+
+  @VisibleForTesting
+  BackOff getCurrentBackoff() {
+    return currentBackoff;
   }
 }

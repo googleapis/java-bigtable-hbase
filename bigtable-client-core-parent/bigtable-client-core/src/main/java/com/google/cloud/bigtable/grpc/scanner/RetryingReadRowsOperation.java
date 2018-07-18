@@ -307,12 +307,12 @@ public class RetryingReadRowsOperation extends
   }
 
   @VisibleForTesting
-  BackOff getCurrentBackoff() {
-    return currentBackoff;
+  RowMerger getRowMerger() {
+    return rowMerger;
   }
 
   @VisibleForTesting
-  RowMerger getRowMerger() {
-    return rowMerger;
+  BackOff getCurrentBackoff() {
+    return super.currentBackoff;
   }
 }

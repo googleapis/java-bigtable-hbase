@@ -18,6 +18,9 @@ package com.google.cloud.bigtable.grpc.async;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.RetryOptions;
+import io.grpc.CallOptions;
+import io.grpc.Deadline;
+import io.grpc.DeadlineUtil;
 import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -74,11 +77,11 @@ public class OperationClock implements NanoClock {
   /**
    * Creates a {@link ExponentialBackOff} with this as its {@link NanoClock}.
    */
-  public ExponentialBackOff createBackoff(RetryOptions retryOptions) {
+  public ExponentialBackOff createBackoff(RetryOptions retryOptions, int maxTimeoutMs) {
     return new ExponentialBackOff.Builder()
         .setNanoClock(this)
+        .setMaxElapsedTimeMillis(maxTimeoutMs)
         .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-        .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
         .setMultiplier(retryOptions.getBackoffMultiplier()).build();
   }
 
@@ -91,5 +94,10 @@ public class OperationClock implements NanoClock {
         totalSleepTime >= expectedSleepNs);
     Assert.assertTrue(String.format("Slept more than expected (%d seconds)", sleptSeconds),
         totalSleepTime < expectedSleepNs * 2);
+  }
+
+  public CallOptions createCallOptionsWithDeadline(int duration, TimeUnit unit) {
+     Deadline deadline = DeadlineUtil.deadlineWithFixedTime(duration, unit, this);
+     return CallOptions.DEFAULT.withDeadline(deadline);
   }
 }

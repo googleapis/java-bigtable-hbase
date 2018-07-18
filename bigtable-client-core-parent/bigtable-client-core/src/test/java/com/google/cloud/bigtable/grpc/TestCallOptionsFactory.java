@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
+import com.google.cloud.bigtable.grpc.async.OperationClock;
 import io.grpc.CallOptions;
 import io.grpc.Context;
 import io.grpc.Deadline;
@@ -39,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(JUnit4.class)
 public class TestCallOptionsFactory {
 
-  private static final long NOW = System.nanoTime();
+  private static final OperationClock CLOCK = new OperationClock();
 
   @Mock
   ScheduledExecutorService mockExecutor;
@@ -57,7 +58,7 @@ public class TestCallOptionsFactory {
 
   @Test
   public void testDefaultWithContext() {
-    final Deadline deadline = DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, NOW);
+    final Deadline deadline = DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, CLOCK);
     Context.CancellableContext context = Context.current().withDeadline(deadline, mockExecutor);
     context.run(new Runnable() {
       @Override
@@ -94,7 +95,7 @@ public class TestCallOptionsFactory {
 
   @Test
   public void testConfiguredWithContext() {
-    Deadline deadline = DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, NOW);
+    Deadline deadline = DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, CLOCK);
     Context.CancellableContext context = Context.current().withDeadline(deadline, mockExecutor);
     context.run(new Runnable() {
       @Override
