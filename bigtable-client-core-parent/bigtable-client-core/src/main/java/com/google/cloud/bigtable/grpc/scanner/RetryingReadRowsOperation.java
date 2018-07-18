@@ -24,7 +24,6 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 import com.google.api.client.util.BackOff;
-import com.google.api.client.util.Clock;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -101,8 +100,6 @@ public class RetryingReadRowsOperation extends
     }
   }
 
-  @VisibleForTesting
-  Clock clock = Clock.SYSTEM;
   private final ReadRowsRequestManager requestManager;
   private final StreamObserver<FlatRow> rowObserver;
   private final RowMerger rowMerger;

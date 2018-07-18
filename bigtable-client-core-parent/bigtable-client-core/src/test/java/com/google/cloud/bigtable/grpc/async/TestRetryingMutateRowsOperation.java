@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,34 +26,39 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.TimeoutException;
 
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.cloud.bigtable.config.RetryOptions;
+import io.grpc.ClientCall;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsRequest.Entry;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
-import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.rpc.Status;
 
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.grpc.Status.Code;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  * Tests for {@link RetryingMutateRowsOperation}.
  *
  */
 public class TestRetryingMutateRowsOperation {
+
+  private static final RetryOptions RETRY_OPTIONS = new RetryOptions.Builder().build();
 
   private static Status OK = statusOf(io.grpc.Status.Code.OK);
   private static Status DEADLINE_EXCEEDED = statusOf(io.grpc.Status.Code.DEADLINE_EXCEEDED);
@@ -110,25 +116,19 @@ public class TestRetryingMutateRowsOperation {
   @Mock
   private BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> mutateRows;
 
-  private AtomicLong time = new AtomicLong();
-  private NanoClock nanoClock = new NanoClock() {
-    @Override
-    public long nanoTime() {
-      return time.get();
-    }
-  };
-
   @Mock
   private ScheduledExecutorService executorService;
 
-  private RetryOptions retryOptions;
+  private OperationClock clock;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     when(mutateRows.getRpcMetrics()).thenReturn(metrics);
+    when(mutateRows.isRetryable(any(MutateRowsRequest.class))).thenReturn(true);
     when(mutateRows.getMethodDescriptor()).thenReturn(BigtableGrpc.getMutateRowsMethod());
-    retryOptions = new RetryOptions.Builder().build();
+    clock = new OperationClock();
+    clock.initializeMockSchedule(executorService, null);
   }
 
   @Test
@@ -162,6 +162,33 @@ public class TestRetryingMutateRowsOperation {
   }
 
   @Test
+  public void testCompleteFailure() throws InterruptedException, TimeoutException {
+    MutateRowsRequest request = createRequest(2);
+    final RetryingMutateRowsOperation underTest = createOperation(request);
+
+    doAnswer(new Answer<Void>() {
+      @Override public Void answer(InvocationOnMock invocation) {
+        invocation.getArgumentAt(1, ClientCall.Listener.class)
+            .onClose(io.grpc.Status.DEADLINE_EXCEEDED, new Metadata());
+        return null;
+      }
+    }).when(mutateRows).start(any(MutateRowsRequest.class), any(ClientCall.Listener.class),
+        any(Metadata.class), any(ClientCall.class));
+
+    try {
+      underTest.getAsyncResult().get(1, TimeUnit.MINUTES);
+      Assert.fail("Expecting a DEADLINE_EXCEEDED exception");
+    } catch (ExecutionException e) {
+      Assert.assertEquals(io.grpc.Status.DEADLINE_EXCEEDED.getCode(),
+          io.grpc.Status.fromThrowable(e).getCode());
+    }
+
+    // Check that the amount of sleep required is correct
+    clock.assertTimeWithinExpectations(
+        TimeUnit.MILLISECONDS.toNanos(RETRY_OPTIONS.getMaxElapsedBackoffMillis()));
+  }
+
+  @Test
   public void testResponseOutOfOrder() throws Exception {
     MutateRowsRequest request = createRequest(2);
     RetryingMutateRowsOperation underTest = createOperation(request);
@@ -174,7 +201,7 @@ public class TestRetryingMutateRowsOperation {
   }
 
   @Test
-  public void testPartialResponse() throws Exception {
+  public void testPartialResponse() {
     RetryingMutateRowsOperation underTest = createOperation(createRequest(2));
     ListenableFuture<?> future = underTest.getAsyncResult();
     send(underTest, OK);
@@ -182,7 +209,6 @@ public class TestRetryingMutateRowsOperation {
       future.get(3, TimeUnit.MILLISECONDS);
       Assert.fail("Expected exception");
     } catch (ExecutionException e) {
-      System.out.println(e.getClass().getName());
       Assert.assertEquals(io.grpc.Status.Code.INTERNAL, io.grpc.Status.fromThrowable(e).getCode());
     } catch (Exception e) {
       Assert.fail("Expected ExecutionException.");
@@ -190,8 +216,13 @@ public class TestRetryingMutateRowsOperation {
   }
 
   private RetryingMutateRowsOperation createOperation(MutateRowsRequest request) {
-    return new RetryingMutateRowsOperation(retryOptions, request,
-        mutateRows, CallOptions.DEFAULT, executorService, new Metadata());
+    return new RetryingMutateRowsOperation(RETRY_OPTIONS, request, mutateRows, CallOptions.DEFAULT,
+        executorService, new Metadata()) {
+      @Override
+      protected ExponentialBackOff createBackoff() {
+        return clock.createBackoff(retryOptions);
+      }
+    };
   }
 
   private void checkExecutor(int count) {

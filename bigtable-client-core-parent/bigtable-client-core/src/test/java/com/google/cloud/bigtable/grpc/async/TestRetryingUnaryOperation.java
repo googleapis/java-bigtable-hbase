@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -26,14 +25,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.cloud.bigtable.config.RetryOptions;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
@@ -41,11 +38,9 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
-import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.CallOptions;
@@ -53,7 +48,6 @@ import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.ClientCall.Listener;
 import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 
 /**
  * Test for {@link RetryingUnaryOperation} and {@link AbstractRetryingOperation}
@@ -63,78 +57,29 @@ import io.grpc.StatusRuntimeException;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestRetryingUnaryOperation {
 
+  private static final RetryOptions RETRY_OPTIONS = new RetryOptions.Builder().build();
+
   private static final BigtableAsyncRpc.RpcMetrics metrics =
       BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.getReadRowsMethod());
-
-  private RetryingUnaryOperation underTest;
 
   @Mock
   private BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readAsync;
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
-  @Mock
-  private NanoClock nanoClock;
-
-  private RetryOptions retryOptions;
-
-  AtomicLong totalSleep;
+  private OperationClock clock;
 
   @Mock
   private ScheduledExecutorService executorService;
 
-
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    retryOptions = new RetryOptions.Builder().build();
 
     when(readAsync.getRpcMetrics()).thenReturn(metrics);
     when(readAsync.getMethodDescriptor()).thenReturn(BigtableGrpc.getReadRowsMethod());
-
-    totalSleep = new AtomicLong();
-
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        long value = invocation.getArgumentAt(1, Long.class);
-        TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
-        totalSleep.addAndGet(timeUnit.toNanos(value));
-        invocation.getArgumentAt(0, Runnable.class).run();
-        return null;
-      }
-    }).when(executorService).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
-
-    final long startNewCall = System.nanoTime();
-
-    // We want the nanoClock to mimic the behavior of sleeping, but without the time penalty.
-    // This will allow the RetryingRpcFutureFallback's ExponentialBackOff to work properly.
-    // The ExponentialBackOff sends a BackOff.STOP only when the clock time reaches
-    // startNewCall + maxElapsedTimeMillis.  Since we don't want to wait maxElapsedTimeMillis (60 seconds)
-    // for the test to complete, we mock the clock.
-    when(nanoClock.nanoTime()).then(new Answer<Long>() {
-      @Override
-      public Long answer(InvocationOnMock invocation) throws Throwable {
-        return startNewCall + totalSleep.get();
-      }
-    });
     when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
 
-    underTest = new RetryingUnaryOperation<ReadRowsRequest, ReadRowsResponse>(retryOptions,
-            ReadRowsRequest.getDefaultInstance(), readAsync, CallOptions.DEFAULT, executorService,
-            new Metadata()) {
-        @Override
-        protected ExponentialBackOff createBackoff() {
-            return new ExponentialBackOff.Builder()
-                    .setNanoClock(nanoClock)
-                    .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-                    .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
-                    .setMultiplier(retryOptions.getBackoffMultiplier())
-                    .build();
-        }
-    };
-
+    clock = new OperationClock();
+    clock.initializeMockSchedule(executorService, null);
   }
 
   @Test
@@ -142,7 +87,7 @@ public class TestRetryingUnaryOperation {
     final ReadRowsResponse result = ReadRowsResponse.getDefaultInstance();
     Answer<Void> answer = new Answer<Void>() {
       @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
+      public Void answer(InvocationOnMock invocation) {
         Listener listener = invocation.getArgumentAt(1, ClientCall.Listener.class);
         listener.onMessage(result);
         listener.onClose(Status.OK, null);
@@ -156,9 +101,13 @@ public class TestRetryingUnaryOperation {
             any(ClientCall.Listener.class),
             any(Metadata.class),
             any(ClientCall.class));
-    ListenableFuture future = underTest.getAsyncResult();
+    ListenableFuture future = createOperation(CallOptions.DEFAULT).getAsyncResult();
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
-    verify(nanoClock, times(0)).nanoTime();
+    verify(readAsync, times(1)).start(
+        any(ReadRowsRequest.class),
+        any(ClientCall.Listener.class),
+        any(Metadata.class),
+        any(ClientCall.class));
   }
 
   @Test
@@ -180,8 +129,8 @@ public class TestRetryingUnaryOperation {
       }
     };
     doAnswer(answer).when(readAsync).start(any(ReadRowsRequest.class),
-      any(ClientCall.Listener.class), any(Metadata.class), any(ClientCall.class));
-    ListenableFuture future = underTest.getAsyncResult();
+            any(ClientCall.Listener.class), any(Metadata.class), any(ClientCall.class));
+    ListenableFuture future = createOperation(CallOptions.DEFAULT).getAsyncResult();
 
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
     Assert.assertEquals(5, counter.get());
@@ -192,26 +141,38 @@ public class TestRetryingUnaryOperation {
     final Status errorStatus = Status.UNAVAILABLE;
     Answer<Void> answer = new Answer<Void>() {
       @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgumentAt(1, ClientCall.Listener.class).onClose(errorStatus, null);
+      public Void answer(InvocationOnMock invocation) {
+        invocation.getArgumentAt(1, Listener.class).onClose(errorStatus, null);
         return null;
       }
     };
-    doAnswer(answer).when(readAsync).start(any(ReadRowsRequest.class),
-      any(ClientCall.Listener.class), any(Metadata.class), any(ClientCall.class));
+    doAnswer(answer)
+        .when(readAsync)
+        .start(
+            any(ReadRowsRequest.class),
+            any(Listener.class),
+            any(Metadata.class),
+            any(ClientCall.class));
     try {
-      underTest.getAsyncResult().get(1, TimeUnit.SECONDS);
+      createOperation(CallOptions.DEFAULT).getAsyncResult().get(1, TimeUnit.SECONDS);
       Assert.fail();
     } catch (ExecutionException e) {
       Assert.assertEquals(BigtableRetriesExhaustedException.class, e.getCause().getClass());
-      BigtableRetriesExhaustedException retriesExhaustedException =
-          (BigtableRetriesExhaustedException) e.getCause();
-      StatusRuntimeException sre = (StatusRuntimeException) retriesExhaustedException.getCause();
-      Assert.assertEquals(errorStatus.getCode(), sre.getStatus().getCode());
-      long maxSleep = TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElapsedBackoffMillis());
-      Assert.assertTrue(
-        String.format("Slept only %d seconds", TimeUnit.NANOSECONDS.toSeconds(totalSleep.get())),
-        totalSleep.get() >= maxSleep);
+      Assert.assertEquals(errorStatus.getCode(), Status.fromThrowable(e).getCode());
     }
+
+    clock.assertTimeWithinExpectations(
+        TimeUnit.MILLISECONDS.toNanos(RETRY_OPTIONS.getMaxElapsedBackoffMillis()));
   }
+
+  private RetryingUnaryOperation createOperation(CallOptions options) {
+    return new RetryingUnaryOperation<ReadRowsRequest, ReadRowsResponse>(RETRY_OPTIONS,
+        ReadRowsRequest.getDefaultInstance(), readAsync, options, executorService, new Metadata()) {
+      @Override
+      protected ExponentialBackOff createBackoff() {
+        return clock.createBackoff(retryOptions);
+      }
+    };
+  }
+
 }
