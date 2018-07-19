@@ -137,8 +137,19 @@ public class TestRetryingUnaryOperation {
   }
 
   @Test
-  public void testCompleteFailure() throws Exception {
-    final Status errorStatus = Status.UNAVAILABLE;
+  public void testCompleteFailure_default() throws Exception {
+    testFailure(RETRY_OPTIONS.getMaxElapsedBackoffMillis(), CallOptions.DEFAULT);
+  }
+
+  @Test
+  public void testCompleteFailure_withDeadline() throws Exception {
+    testFailure((int) TimeUnit.SECONDS.toMillis(5),
+        clock.createCallOptionsWithDeadline(5, TimeUnit.SECONDS));
+  }
+
+  private void testFailure(int expectedMaxElapsedTimeMs, CallOptions options)
+      throws InterruptedException, java.util.concurrent.TimeoutException {
+    final Status errorStatus = Status.DEADLINE_EXCEEDED;
     Answer<Void> answer = new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) {
@@ -153,24 +164,30 @@ public class TestRetryingUnaryOperation {
             any(Listener.class),
             any(Metadata.class),
             any(ClientCall.class));
+    RetryingUnaryOperation underTest = createOperation(options);
     try {
-      createOperation(CallOptions.DEFAULT).getAsyncResult().get(1, TimeUnit.SECONDS);
+      underTest.getAsyncResult().get(1, TimeUnit.SECONDS);
       Assert.fail();
     } catch (ExecutionException e) {
       Assert.assertEquals(BigtableRetriesExhaustedException.class, e.getCause().getClass());
       Assert.assertEquals(errorStatus.getCode(), Status.fromThrowable(e).getCode());
     }
 
+    int actualElapsedTimeMs =
+        ((ExponentialBackOff) underTest.getCurrentBackoff()).getMaxElapsedTimeMillis();
+
+    Assert.assertEquals(expectedMaxElapsedTimeMs, actualElapsedTimeMs);
     clock.assertTimeWithinExpectations(
-        TimeUnit.MILLISECONDS.toNanos(RETRY_OPTIONS.getMaxElapsedBackoffMillis()));
+        TimeUnit.MILLISECONDS.toNanos(expectedMaxElapsedTimeMs));
   }
 
   private RetryingUnaryOperation createOperation(CallOptions options) {
     return new RetryingUnaryOperation<ReadRowsRequest, ReadRowsResponse>(RETRY_OPTIONS,
         ReadRowsRequest.getDefaultInstance(), readAsync, options, executorService, new Metadata()) {
       @Override
-      protected ExponentialBackOff createBackoff() {
-        return clock.createBackoff(retryOptions);
+      protected ExponentialBackOff.Builder configureBackoffBuilder(
+          ExponentialBackOff.Builder builder) {
+        return builder.setNanoClock(clock);
       }
     };
   }

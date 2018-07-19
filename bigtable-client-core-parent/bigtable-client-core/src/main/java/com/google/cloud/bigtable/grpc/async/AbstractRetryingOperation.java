@@ -26,7 +26,6 @@ import javax.annotation.Nullable;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -42,6 +41,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
+import io.grpc.Deadline;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.Status.Code;
@@ -278,7 +278,12 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected long getNextBackoff() {
     if (currentBackoff == null) {
-      currentBackoff = createBackoff();
+      Deadline deadline = getOperationCallOptions().getDeadline();
+      if (deadline != null) {
+        currentBackoff = createBackoff((int) deadline.timeRemaining(TimeUnit.MILLISECONDS));
+      } else {
+        currentBackoff = createBackoff(retryOptions.getMaxElapsedBackoffMillis());
+      }
     }
     try {
       return currentBackoff.nextBackOffMillis();
@@ -292,13 +297,19 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    *
    * @return a {@link com.google.api.client.util.ExponentialBackOff} object.
    */
-  @VisibleForTesting
-  protected ExponentialBackOff createBackoff() {
-    return new ExponentialBackOff.Builder()
+  private ExponentialBackOff createBackoff(int maxElapsedMillis) {
+    ExponentialBackOff.Builder builder =
+        new ExponentialBackOff.Builder().setMaxElapsedTimeMillis(maxElapsedMillis)
+            .setMaxIntervalMillis(maxElapsedMillis / 2)
             .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-            .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
-            .setMultiplier(retryOptions.getBackoffMultiplier())
-            .build();
+            .setMultiplier(retryOptions.getBackoffMultiplier());
+    return configureBackoffBuilder(builder).build();
+  }
+
+  @VisibleForTesting
+  /** This is a hook for tests */
+  protected ExponentialBackOff.Builder configureBackoffBuilder(ExponentialBackOff.Builder builder) {
+    return builder;
   }
 
   /**
@@ -413,5 +424,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    */
   protected void cancel(final String message) {
     call.cancel(message, null);
+  }
+
+  @VisibleForTesting
+  BackOff getCurrentBackoff() {
+    return currentBackoff;
   }
 }

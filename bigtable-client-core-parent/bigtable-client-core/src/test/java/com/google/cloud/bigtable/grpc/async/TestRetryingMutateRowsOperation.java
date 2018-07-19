@@ -162,9 +162,20 @@ public class TestRetryingMutateRowsOperation {
   }
 
   @Test
-  public void testCompleteFailure() throws InterruptedException, TimeoutException {
+  public void testCompleteFailure_default() throws InterruptedException, TimeoutException {
+    testFailure(RETRY_OPTIONS.getMaxElapsedBackoffMillis(), CallOptions.DEFAULT);
+  }
+
+  @Test
+  public void testCompleteFailure_withDeadline() throws InterruptedException, TimeoutException {
+    testFailure((int) TimeUnit.SECONDS.toMillis(5),
+        clock.createCallOptionsWithDeadline(5, TimeUnit.SECONDS));
+  }
+
+  private void testFailure(int expectedMaxElapsedTimeMs, CallOptions callOptions)
+      throws InterruptedException, TimeoutException {
     MutateRowsRequest request = createRequest(2);
-    final RetryingMutateRowsOperation underTest = createOperation(request);
+    final RetryingMutateRowsOperation underTest = createOperation(request, callOptions);
 
     doAnswer(new Answer<Void>() {
       @Override public Void answer(InvocationOnMock invocation) {
@@ -172,8 +183,8 @@ public class TestRetryingMutateRowsOperation {
             .onClose(io.grpc.Status.DEADLINE_EXCEEDED, new Metadata());
         return null;
       }
-    }).when(mutateRows).start(any(MutateRowsRequest.class), any(ClientCall.Listener.class),
-        any(Metadata.class), any(ClientCall.class));
+    }).when(mutateRows).start(any(MutateRowsRequest.class), any(ClientCall.Listener.class), any(Metadata.class),
+        any(ClientCall.class));
 
     try {
       underTest.getAsyncResult().get(1, TimeUnit.MINUTES);
@@ -183,9 +194,11 @@ public class TestRetryingMutateRowsOperation {
           io.grpc.Status.fromThrowable(e).getCode());
     }
 
-    // Check that the amount of sleep required is correct
-    clock.assertTimeWithinExpectations(
-        TimeUnit.MILLISECONDS.toNanos(RETRY_OPTIONS.getMaxElapsedBackoffMillis()));
+    int actualElapsedTimeMs =
+        ((ExponentialBackOff) underTest.getCurrentBackoff()).getMaxElapsedTimeMillis();
+
+    Assert.assertEquals(expectedMaxElapsedTimeMs, actualElapsedTimeMs);
+    clock.assertTimeWithinExpectations(TimeUnit.MILLISECONDS.toNanos(actualElapsedTimeMs));
   }
 
   @Test
@@ -216,11 +229,17 @@ public class TestRetryingMutateRowsOperation {
   }
 
   private RetryingMutateRowsOperation createOperation(MutateRowsRequest request) {
-    return new RetryingMutateRowsOperation(RETRY_OPTIONS, request, mutateRows, CallOptions.DEFAULT,
+    return createOperation(request, CallOptions.DEFAULT);
+  }
+
+  private RetryingMutateRowsOperation createOperation(final MutateRowsRequest request,
+      final CallOptions options) {
+    return new RetryingMutateRowsOperation(RETRY_OPTIONS, request, mutateRows, options,
         executorService, new Metadata()) {
       @Override
-      protected ExponentialBackOff createBackoff() {
-        return clock.createBackoff(retryOptions);
+      protected ExponentialBackOff.Builder configureBackoffBuilder(
+          ExponentialBackOff.Builder builder) {
+        return builder.setNanoClock(clock);
       }
     };
   }

@@ -15,6 +15,8 @@
  */
 package io.grpc;
 
+import com.google.api.client.util.NanoClock;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -22,11 +24,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class DeadlineUtil {
 
-  public static Deadline deadlineWithFixedTime(int duration, TimeUnit unit, final long timeNs) {
+  public static Deadline deadlineWithFixedTime(int duration, TimeUnit unit, final NanoClock clock) {
     return Deadline.after(duration, unit, new Deadline.Ticker() {
       @Override
       public long read() {
-        return timeNs;
+        return clock.nanoTime();
       }
     });
   }

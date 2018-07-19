@@ -147,8 +147,10 @@ public class RetryingReadRowsOperationTest {
       StreamObserver<FlatRow> observer) {
     return new RetryingReadRowsOperation(observer, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
         mockRetryableRpc, options, mockRetryExecutorService, metaData) {
-      @Override protected ExponentialBackOff createBackoff() {
-        return clock.createBackoff(retryOptions);
+      @Override
+      protected ExponentialBackOff.Builder configureBackoffBuilder(
+          ExponentialBackOff.Builder builder) {
+        return builder.setNanoClock(clock);
       }
     };
   }
@@ -212,7 +214,18 @@ public class RetryingReadRowsOperationTest {
   }
 
   @Test
-  public void testFailure() throws Exception {
+  public void testFailure_default() throws Exception {
+    testFailure(CallOptions.DEFAULT, RETRY_OPTIONS.getMaxElapsedBackoffMillis());
+  }
+
+  @Test
+  public void testFailure_withDeadline() throws Exception {
+    testFailure(clock.createCallOptionsWithDeadline(5, TimeUnit.SECONDS),
+        (int) TimeUnit.SECONDS.toMillis(5));
+  }
+
+  private void testFailure(CallOptions options, int expectedMaxElapsedTimeMs)
+      throws InterruptedException, java.util.concurrent.TimeoutException {
     doAnswer(new Answer<Void>() {
       @Override public Void answer(InvocationOnMock invocation) {
         invocation.getArgumentAt(1, ClientCall.Listener.class)
@@ -224,7 +237,7 @@ public class RetryingReadRowsOperationTest {
             any(ClientCall.class));
 
     RetryingReadRowsOperation underTest =
-        createOperation(CallOptions.DEFAULT, mockFlatRowObserver);
+        createOperation(options, mockFlatRowObserver);
     try {
       underTest.getAsyncResult().get(100, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
@@ -232,9 +245,8 @@ public class RetryingReadRowsOperationTest {
       Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(), Status.fromThrowable(e).getCode());
     }
 
-    int expectedMaxElapsedTimeMs =
+    int actualElapsedTimeMs =
         ((ExponentialBackOff) underTest.getCurrentBackoff()).getMaxElapsedTimeMillis();
-    int actualElapsedTimeMs = RETRY_OPTIONS.getMaxElapsedBackoffMillis();
 
     Assert.assertEquals(expectedMaxElapsedTimeMs, actualElapsedTimeMs);
     clock.assertTimeWithinExpectations(TimeUnit.MILLISECONDS.toNanos(actualElapsedTimeMs));
