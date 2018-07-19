@@ -171,7 +171,7 @@ public class CheckAndMutateUtil {
       if (start == 0L && end == Long.MAX_VALUE) {
         return this;
       }
-      Preconditions.checkArgument(start < 0L || (start >= end), "Invalid start/end");
+      Preconditions.checkArgument((0L <= start) && (start < end), "Invalid start/end");
       this.timeFilter = new TimestampRangeFilter(start, end);
       return this;
     }
