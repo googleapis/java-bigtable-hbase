@@ -456,6 +456,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
+  public void cloneTableSchema(TableName tableName, TableName tableName1, boolean b) {
+    throw new UnsupportedOperationException("cloneTableSchema"); // TODO
+  }
+
+  @Override
   public void compact(TableName arg0, CompactType arg1) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("compact");
   }
@@ -484,6 +489,16 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void enableTableReplication(TableName arg0) throws IOException {
     throw new UnsupportedOperationException("enableTableReplication");
+  }
+
+  @Override
+  public Future<Void> enableReplicationPeerAsync(String s) {
+    throw new UnsupportedOperationException("enableTableReplication");
+  }
+
+  @Override
+  public Future<Void> disableReplicationPeerAsync(String s) {
+    throw new UnsupportedOperationException("disableReplicationPeerAsync");
   }
 
   @Override
@@ -674,18 +689,29 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void addReplicationPeer(String arg0, ReplicationPeerConfig arg1, boolean arg2) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("addReplicationPeer"); // TODO
+  }
+
+  @Override
+  public Future<Void> addReplicationPeerAsync(String peerId, ReplicationPeerConfig peerConfig) {
+    throw new UnsupportedOperationException("addReplicationPeerAsync"); // TODO
+  }
+
+  @Override
+  public Future<Void> addReplicationPeerAsync(String s, ReplicationPeerConfig replicationPeerConfig,
+      boolean b) {
+    throw new UnsupportedOperationException("addReplicationPeerAsync"); // TODO
   }
 
   @Override
   public void appendReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1)
       throws ReplicationException, IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("appendReplicationPeerTableCFs"); // TODO
   }
 
   @Override
   public CacheEvictionStats clearBlockCache(TableName arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODOv
+    throw new UnsupportedOperationException("clearBlockCache"); // TODOv
   }
 
   @Override
@@ -695,12 +721,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void disableReplicationPeer(String arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("disableReplicationPeer"); // TODO
   }
 
   @Override
   public void enableReplicationPeer(String arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("enableReplicationPeer"); // TODO
   }
 
   @Override
@@ -710,67 +736,78 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public List<QuotaSettings> getQuota(QuotaFilter arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("getQuota"); // TODO
   }
 
   @Override
   public List<RegionMetrics> getRegionMetrics(ServerName arg0, TableName arg1) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("getRegionMetrics"); // TODO
   }
 
   @Override
   public ReplicationPeerConfig getReplicationPeerConfig(String arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("getReplicationPeerConfig"); // TODO
   }
 
   @Override
   public boolean isMergeEnabled() throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("isMergeEnabled"); // TODO
   }
 
   @Override
   public boolean isSplitEnabled() throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("isSplitEnabled"); // TODO
   }
 
   @Override
   public List<ReplicationPeerDescription> listReplicationPeers() throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("listReplicationPeers"); // TODO
   }
 
   @Override
   public List<ReplicationPeerDescription> listReplicationPeers(Pattern arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("listReplicationPeers"); // TODO
   }
 
   @Override
   public void majorCompactRegionServer(ServerName arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("majorCompactRegionServer"); // TODO
   }
 
   @Override
   public boolean mergeSwitch(boolean arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("mergeSwitch"); // TODO
   }
 
   @Override
   public void removeReplicationPeer(String arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("removeReplicationPeer"); // TODO
   }
 
   @Override
   public void removeReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1)
       throws ReplicationException, IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("removeReplicationPeerTableCFs"); // TODO
+  }
+
+  @Override
+  public Future<Void> removeReplicationPeerAsync(String s) {
+    throw new UnsupportedOperationException("removeReplicationPeerAsync"); // TODO
   }
 
   @Override
   public boolean splitSwitch(boolean arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("splitSwitch"); // TODO
   }
 
   @Override
   public void updateReplicationPeerConfig(String arg0, ReplicationPeerConfig arg1) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("updateReplicationPeerConfig"); // TODO
+  }
+
+  @Override
+  public Future<Void> updateReplicationPeerConfigAsync(String s,
+      ReplicationPeerConfig replicationPeerConfig) {
+    throw new UnsupportedOperationException("updateReplicationPeerConfigAsync"); // TODO
   }
 }
