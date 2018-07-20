@@ -67,9 +67,9 @@ public class RetryOptions implements Serializable {
    */
   public static final int DEFAULT_INITIAL_BACKOFF_MILLIS = 5;
   /**
-   * Multiplier to apply to wait times after failed retries (default value: 2).
+   * Multiplier to apply to wait times after failed retries (default value: 1.5).
    */
-  public static final double DEFAULT_BACKOFF_MULTIPLIER = 2;
+  public static final double DEFAULT_BACKOFF_MULTIPLIER = 1.5;
   /**
    * Maximum amount of time to retry before failing the operation (default value: 60 seconds).
    */

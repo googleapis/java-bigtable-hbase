@@ -26,7 +26,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
 import org.junit.Assert;
 import org.junit.Before;

@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,9 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
-import com.google.api.client.util.BackOff;
 import com.google.api.core.ApiClock;
-import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.TimedAttemptSettings;
@@ -57,7 +54,6 @@ import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import org.threeten.bp.Duration;
 import org.threeten.bp.temporal.ChronoUnit;
-import org.threeten.bp.temporal.TemporalUnit;
 
 /**
  * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
@@ -126,6 +122,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   private final ExponentialRetryAlgorithm exponentialRetryAlgorithm;
+  private final ApiClock clock;
   private TimedAttemptSettings currentBackoff;
 
   protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
@@ -174,6 +171,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.completionFuture = new GrpcFuture<>();
     String spanName = makeSpanName("Operation", rpc.getMethodDescriptor().getFullMethodName());
     this.operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
+    this.clock = clock;
     this.exponentialRetryAlgorithm = createRetryAlgorithm(clock);
   }
 
@@ -298,7 +296,21 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
     currentBackoff = exponentialRetryAlgorithm.createNextAttempt(currentBackoff);
     if (!exponentialRetryAlgorithm.shouldRetry(currentBackoff)) {
-      return null;
+
+      // TODO: consider creating a subclass of exponentialRetryAlgorithm to encapsulate this logic
+      long timeLeftNs =  currentBackoff.getGlobalSettings().getTotalTimeout().toNanos() -
+          (clock.nanoTime() - currentBackoff.getFirstAttemptStartTimeNanos());
+      long timeLeftMs = TimeUnit.NANOSECONDS.toMillis(timeLeftNs);
+
+      if (timeLeftMs > currentBackoff.getGlobalSettings().getInitialRetryDelay()) {
+        // The backoff algorithm doesn't always wait until the timeout is achieved.  Wait
+        // one final time so that retries hit
+        return timeLeftMs;
+      } else {
+
+        // Finish for real.
+        return null;
+      }
     } else {
       return currentBackoff.getRetryDelay().toMillis();
     }

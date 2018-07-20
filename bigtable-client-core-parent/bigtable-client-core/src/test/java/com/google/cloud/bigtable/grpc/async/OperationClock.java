@@ -54,10 +54,6 @@ public class OperationClock implements ApiClock {
     return TimeUnit.NANOSECONDS.toMillis(nanoTime());
   }
 
-  public long getTotalSleepTimeNs() {
-    return totalSleepTimeNs;
-  }
-
   /**
    * Sets up a mock {@link ScheduledExecutorService} to use update the clock based on the amount
    * of time the scheduler was set to.
@@ -85,10 +81,10 @@ public class OperationClock implements ApiClock {
    * Checks to make sure that the expected sleep time matches the actual time slept.
    */
   public synchronized void assertTimeWithinExpectations(long expectedSleepNs) {
-    long sleptSeconds = TimeUnit.NANOSECONDS.toSeconds(totalSleepTimeNs);
-    Assert.assertTrue(String.format("Slept only %d seconds", sleptSeconds),
+    long sleptMillis = TimeUnit.MILLISECONDS.toSeconds(totalSleepTimeNs);
+    Assert.assertTrue(String.format("Slept only %d ms", sleptMillis),
         totalSleepTimeNs >= expectedSleepNs * .9);
-    Assert.assertTrue(String.format("Slept more than expected (%d seconds)", sleptSeconds),
+    Assert.assertTrue(String.format("Slept more than expected (%d ms)", sleptMillis),
         totalSleepTimeNs < expectedSleepNs * 1.5);
   }
 }
