@@ -147,11 +147,7 @@ public class RetryingReadRowsOperationTest {
   protected RetryingReadRowsOperation createOperation(CallOptions options,
       StreamObserver<FlatRow> observer) {
     return new RetryingReadRowsOperation(observer, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
-        mockRetryableRpc, options, mockRetryExecutorService, metaData) {
-      @Override protected ApiClock getApiClock() {
-        return clock;
-      }
-    };
+        mockRetryableRpc, options, mockRetryExecutorService, metaData, clock);
   }
 
   @Test

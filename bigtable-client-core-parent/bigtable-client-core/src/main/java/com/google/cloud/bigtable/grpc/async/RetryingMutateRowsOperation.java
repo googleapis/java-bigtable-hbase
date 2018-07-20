@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.api.client.util.BackOff;
+import com.google.api.core.ApiClock;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -43,8 +44,9 @@ public class RetryingMutateRowsOperation extends
 
   public RetryingMutateRowsOperation(RetryOptions retryOptions, MutateRowsRequest originalRquest,
       BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> retryableRpc, CallOptions callOptions,
-      ScheduledExecutorService retryExecutorService, Metadata originalMetadata) {
-    super(retryOptions, originalRquest, retryableRpc, callOptions, retryExecutorService, originalMetadata);
+      ScheduledExecutorService retryExecutorService, Metadata originalMetadata, ApiClock clock) {
+    super(retryOptions, originalRquest, retryableRpc, callOptions, retryExecutorService,
+        originalMetadata, clock);
     requestManager = new MutateRowsRequestManager(retryOptions, originalRquest);
     operationSpan.addAnnotation("MutationCount", ImmutableMap.of("count",
       AttributeValue.longAttributeValue(originalRquest.getEntriesCount())));

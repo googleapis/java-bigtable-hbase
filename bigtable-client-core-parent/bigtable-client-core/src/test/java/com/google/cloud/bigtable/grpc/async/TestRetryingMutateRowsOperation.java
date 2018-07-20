@@ -179,7 +179,6 @@ public class TestRetryingMutateRowsOperation {
       underTest.getAsyncResult().get(1, TimeUnit.MINUTES);
       Assert.fail("Expecting a DEADLINE_EXCEEDED exception");
     } catch (ExecutionException e) {
-      e.printStackTrace();
       Assert.assertEquals(io.grpc.Status.DEADLINE_EXCEEDED.getCode(),
           io.grpc.Status.fromThrowable(e).getCode());
     }
@@ -218,11 +217,7 @@ public class TestRetryingMutateRowsOperation {
 
   private RetryingMutateRowsOperation createOperation(MutateRowsRequest request) {
     return new RetryingMutateRowsOperation(RETRY_OPTIONS, request, mutateRows, CallOptions.DEFAULT,
-        executorService, new Metadata()) {
-      @Override protected ApiClock getApiClock() {
-        return clock;
-      }
-    };
+        executorService, new Metadata(), clock);
   }
 
   private void checkExecutor(int count) {

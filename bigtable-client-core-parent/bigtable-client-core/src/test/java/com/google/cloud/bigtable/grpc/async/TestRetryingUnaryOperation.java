@@ -166,12 +166,8 @@ public class TestRetryingUnaryOperation {
   }
 
   private RetryingUnaryOperation createOperation(CallOptions options) {
-    return new RetryingUnaryOperation<ReadRowsRequest, ReadRowsResponse>(RETRY_OPTIONS,
-        ReadRowsRequest.getDefaultInstance(), readAsync, options, executorService, new Metadata()) {
-      @Override protected ApiClock getApiClock() {
-        return clock;
-      }
-    };
+    return new RetryingUnaryOperation<>(RETRY_OPTIONS, ReadRowsRequest.getDefaultInstance(),
+        readAsync, options, executorService, new Metadata(), clock);
   }
 
 }

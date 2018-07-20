@@ -155,6 +155,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @param callOptions a {@link io.grpc.CallOptions} object.
    * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param originalMetadata a {@link io.grpc.Metadata} object.
+   * @param clock a {@link ApiClock} object
    */
   public AbstractRetryingOperation(
           RetryOptions retryOptions,
@@ -162,7 +163,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
           BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
           CallOptions callOptions,
           ScheduledExecutorService retryExecutorService,
-          Metadata originalMetadata) {
+          Metadata originalMetadata,
+          ApiClock clock) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
@@ -172,7 +174,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.completionFuture = new GrpcFuture<>();
     String spanName = makeSpanName("Operation", rpc.getMethodDescriptor().getFullMethodName());
     this.operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
-    this.exponentialRetryAlgorithm = createRetryAlgorithm();
+    this.exponentialRetryAlgorithm = createRetryAlgorithm(clock);
   }
 
   /** {@inheritDoc} */
@@ -321,7 +323,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    *
    * @return a {@link ExponentialRetryAlgorithm} object.
    */
-  private ExponentialRetryAlgorithm createRetryAlgorithm() {
+  private ExponentialRetryAlgorithm createRetryAlgorithm(ApiClock clock) {
     int timeoutMs = retryOptions.getMaxElapsedBackoffMillis();
 
     RetrySettings retrySettings = RetrySettings.newBuilder()
@@ -336,19 +338,14 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
         // What is the maximum amount of sleep time between retries?
         // There needs to be some sane number for max retry delay, and it's unclear what that
-        // number ought to be.  20% of timeout time was chosen because some number is needed
-        .setMaxRetryDelay(toDuration(timeoutMs / 5))
+        // number ought to be.  1 Minute time was chosen because some number is needed.
+        .setMaxRetryDelay( Duration.of(1, ChronoUnit.MINUTES))
 
-        // How long should we wait before giving up retries?
+        // How long should we wait before giving up retries after the first failure?
         .setTotalTimeout(toDuration(timeoutMs))
 
         .build();
-    return new ExponentialRetryAlgorithm(retrySettings, getApiClock());
-  }
-
-  @VisibleForTesting
-  protected ApiClock getApiClock() {
-    return NanoClock.getDefaultClock();
+    return new ExponentialRetryAlgorithm(retrySettings, clock);
   }
 
   private static Duration toDuration(long millis) {

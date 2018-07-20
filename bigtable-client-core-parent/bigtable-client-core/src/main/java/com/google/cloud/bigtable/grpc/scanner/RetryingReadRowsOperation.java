@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.client.util.Preconditions;
+import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.grpc.io.Watchdog.State;
 import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -118,8 +119,10 @@ public class RetryingReadRowsOperation extends
       BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> retryableRpc,
       CallOptions callOptions,
       ScheduledExecutorService retryExecutorService,
-      Metadata originalMetadata) {
-    super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata);
+      Metadata originalMetadata,
+      ApiClock clock) {
+    super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata,
+        clock);
     this.rowObserver = observer;
     this.rowMerger = new RowMerger(rowObserver);
     this.adapter = new CallToStreamObserverAdapter();
