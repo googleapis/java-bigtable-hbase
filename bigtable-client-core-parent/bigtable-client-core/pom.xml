@@ -153,6 +153,17 @@ limitations under the License.
             <artifactId>grpc-netty-shaded</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.api</groupId>
+            <artifactId>gax-grpc</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
         <!-- Metrics -->
         <dependency>
             <groupId>io.opencensus</groupId>

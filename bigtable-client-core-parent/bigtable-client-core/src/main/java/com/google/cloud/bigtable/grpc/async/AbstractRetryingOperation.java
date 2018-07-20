@@ -25,8 +25,11 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import com.google.api.client.util.BackOff;
-import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.client.util.Sleeper;
+import com.google.api.core.ApiClock;
+import com.google.api.core.NanoClock;
+import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -52,6 +55,9 @@ import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
+import org.threeten.bp.Duration;
+import org.threeten.bp.temporal.ChronoUnit;
+import org.threeten.bp.temporal.TemporalUnit;
 
 /**
  * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
@@ -119,7 +125,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
   }
 
-  protected BackOff currentBackoff;
+  private ExponentialRetryAlgorithm exponentialRetryAlgorithm;
+  private TimedAttemptSettings currentBackoff;
 
   protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   protected final RetryOptions retryOptions;
@@ -221,11 +228,11 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
 
     // Attempt retry with backoff
-    long nextBackOff = getNextBackoff();
+    Long nextBackOff = getNextBackoff();
     failedCount += 1;
 
     // Backoffs timed out.
-    if (nextBackOff == BackOff.STOP) {
+    if (nextBackOff == null) {
       LOG.info("All retries were exhausted. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
       setException(getExhaustedRetriesException(status));
@@ -276,29 +283,60 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    */
   protected abstract boolean onOK(Metadata trailers);
 
-  protected long getNextBackoff() {
+  protected Long getNextBackoff() {
+    if (exponentialRetryAlgorithm == null) {
+      exponentialRetryAlgorithm = createRetryAlgorithm();
+    }
+
     if (currentBackoff == null) {
-      currentBackoff = createBackoff();
+      currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
+    } else {
+      currentBackoff = exponentialRetryAlgorithm.createNextAttempt(currentBackoff);
     }
-    try {
-      return currentBackoff.nextBackOffMillis();
-    } catch (IOException e) {
-      return BackOff.STOP;
+    if (!exponentialRetryAlgorithm.shouldRetry(currentBackoff)) {
+      return null;
+    } else {
+      return currentBackoff.getRetryDelay().toMillis();
     }
+  }
+
+  @VisibleForTesting
+  protected boolean inRetryMode() {
+    return currentBackoff != null;
+  }
+
+  /**
+   * Either a response was found, or a timeout event occurred. Reset the information relating to
+   * Status oriented exception handling.
+   */
+  protected void resetStatusBasedBackoff() {
+    this.currentBackoff = null;
+    this.failedCount = 0;
   }
 
   /**
    * <p>createBackoff.</p>
    *
-   * @return a {@link com.google.api.client.util.ExponentialBackOff} object.
+   * @return a {@link ExponentialRetryAlgorithm} object.
    */
+  private ExponentialRetryAlgorithm createRetryAlgorithm() {
+    RetrySettings retrySettings = RetrySettings.newBuilder()
+        .setJittered(true)
+        .setInitialRetryDelay(toDuration(retryOptions.getInitialBackoffMillis()))
+        .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
+        .setMaxRetryDelay(toDuration(retryOptions.getMaxElapsedBackoffMillis() / 5))
+        .setTotalTimeout(toDuration(retryOptions.getMaxElapsedBackoffMillis()))
+        .build();
+    return new ExponentialRetryAlgorithm(retrySettings, getApiClock());
+  }
+
   @VisibleForTesting
-  protected ExponentialBackOff createBackoff() {
-    return new ExponentialBackOff.Builder()
-            .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-            .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
-            .setMultiplier(retryOptions.getBackoffMultiplier())
-            .build();
+  protected ApiClock getApiClock() {
+    return NanoClock.getDefaultClock();
+  }
+
+  private static Duration toDuration(long millis) {
+    return Duration.of(millis, ChronoUnit.MILLIS);
   }
 
   /**

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.OperationClock;
 import com.google.cloud.bigtable.grpc.io.Watchdog;
@@ -147,8 +148,8 @@ public class RetryingReadRowsOperationTest {
       StreamObserver<FlatRow> observer) {
     return new RetryingReadRowsOperation(observer, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
         mockRetryableRpc, options, mockRetryExecutorService, metaData) {
-      @Override protected ExponentialBackOff createBackoff() {
-        return clock.createBackoff(retryOptions);
+      @Override protected ApiClock getApiClock() {
+        return clock;
       }
     };
   }
@@ -232,12 +233,9 @@ public class RetryingReadRowsOperationTest {
       Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(), Status.fromThrowable(e).getCode());
     }
 
-    int expectedMaxElapsedTimeMs =
-        ((ExponentialBackOff) underTest.getCurrentBackoff()).getMaxElapsedTimeMillis();
-    int actualElapsedTimeMs = RETRY_OPTIONS.getMaxElapsedBackoffMillis();
+    int expectedTimeMs = RETRY_OPTIONS.getMaxElapsedBackoffMillis();
 
-    Assert.assertEquals(expectedMaxElapsedTimeMs, actualElapsedTimeMs);
-    clock.assertTimeWithinExpectations(TimeUnit.MILLISECONDS.toNanos(actualElapsedTimeMs));
+    clock.assertTimeWithinExpectations(TimeUnit.MILLISECONDS.toNanos(expectedTimeMs));
     verify(mockFlatRowObserver, times(0)).onCompleted();
     verify(mockFlatRowObserver, times(1)).onError(any(Throwable.class));
   }
@@ -349,7 +347,7 @@ public class RetryingReadRowsOperationTest {
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
     underTest.onMessage(buildResponse(key1));
     underTest.onClose(Status.ABORTED, new Metadata());
-    Assert.assertNotNull(underTest.getCurrentBackoff());
+    Assert.assertTrue(underTest.performingRetries());
     expectedRetryCount++;
     checkRetryRequest(underTest, key1, 9);
 
@@ -359,7 +357,7 @@ public class RetryingReadRowsOperationTest {
       expectedRetryCount++;
     }
     checkRetryRequest(underTest, key1, 9);
-    Assert.assertNull(underTest.getCurrentBackoff());
+    Assert.assertFalse(underTest.performingRetries());
     underTest.onMessage(buildResponse(key2));
 
     for (int i = 0; i < RETRY_OPTIONS.getMaxScanTimeoutRetries(); i++) {
@@ -367,7 +365,7 @@ public class RetryingReadRowsOperationTest {
       expectedRetryCount++;
 
       performTimeout(underTest);
-      Assert.assertNull(underTest.getCurrentBackoff());
+      Assert.assertFalse(underTest.performingRetries());
       expectedRetryCount++;
     }
 

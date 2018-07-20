@@ -26,7 +26,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
 import org.junit.Assert;
 import org.junit.Before;
@@ -168,9 +168,8 @@ public class TestRetryingUnaryOperation {
   private RetryingUnaryOperation createOperation(CallOptions options) {
     return new RetryingUnaryOperation<ReadRowsRequest, ReadRowsResponse>(RETRY_OPTIONS,
         ReadRowsRequest.getDefaultInstance(), readAsync, options, executorService, new Metadata()) {
-      @Override
-      protected ExponentialBackOff createBackoff() {
-        return clock.createBackoff(retryOptions);
+      @Override protected ApiClock getApiClock() {
+        return clock;
       }
     };
   }

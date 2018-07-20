@@ -250,15 +250,6 @@ public class RetryingReadRowsOperation extends
   }
 
   /**
-   * Either a response was found, or a timeout event occurred. Reset the information relating to
-   * Status oriented exception handling.
-   */
-  void resetStatusBasedBackoff() {
-    this.currentBackoff = null;
-    this.failedCount = 0;
-  }
-
-  /**
    * Special retry handling for watchdog timeouts, which uses its own fail counter.
    *
    * @return true if a retry has been scheduled
@@ -307,12 +298,14 @@ public class RetryingReadRowsOperation extends
   }
 
   @VisibleForTesting
-  BackOff getCurrentBackoff() {
-    return currentBackoff;
-  }
-
-  @VisibleForTesting
   RowMerger getRowMerger() {
     return rowMerger;
   }
+
+
+  @VisibleForTesting
+  boolean performingRetries() {
+    return super.inRetryMode();
+  }
+
 }

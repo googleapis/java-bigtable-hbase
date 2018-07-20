@@ -28,7 +28,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
 import io.grpc.ClientCall;
 import org.junit.Assert;
@@ -179,6 +179,7 @@ public class TestRetryingMutateRowsOperation {
       underTest.getAsyncResult().get(1, TimeUnit.MINUTES);
       Assert.fail("Expecting a DEADLINE_EXCEEDED exception");
     } catch (ExecutionException e) {
+      e.printStackTrace();
       Assert.assertEquals(io.grpc.Status.DEADLINE_EXCEEDED.getCode(),
           io.grpc.Status.fromThrowable(e).getCode());
     }
@@ -218,9 +219,8 @@ public class TestRetryingMutateRowsOperation {
   private RetryingMutateRowsOperation createOperation(MutateRowsRequest request) {
     return new RetryingMutateRowsOperation(RETRY_OPTIONS, request, mutateRows, CallOptions.DEFAULT,
         executorService, new Metadata()) {
-      @Override
-      protected ExponentialBackOff createBackoff() {
-        return clock.createBackoff(retryOptions);
+      @Override protected ApiClock getApiClock() {
+        return clock;
       }
     };
   }
