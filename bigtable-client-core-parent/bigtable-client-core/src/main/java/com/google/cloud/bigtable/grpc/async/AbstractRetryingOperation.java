@@ -125,7 +125,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
   }
 
-  private ExponentialRetryAlgorithm exponentialRetryAlgorithm;
+  private final ExponentialRetryAlgorithm exponentialRetryAlgorithm;
   private TimedAttemptSettings currentBackoff;
 
   protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
@@ -171,7 +171,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.originalMetadata = originalMetadata;
     this.completionFuture = new GrpcFuture<>();
     String spanName = makeSpanName("Operation", rpc.getMethodDescriptor().getFullMethodName());
-    operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
+    this.operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
+    this.exponentialRetryAlgorithm = createRetryAlgorithm();
   }
 
   /** {@inheritDoc} */
@@ -284,15 +285,16 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected abstract boolean onOK(Metadata trailers);
 
   protected Long getNextBackoff() {
-    if (exponentialRetryAlgorithm == null) {
-      exponentialRetryAlgorithm = createRetryAlgorithm();
-    }
-
     if (currentBackoff == null) {
+      // Historically, the client waited for "total timeout" after the first failure.  For now,
+      // that behavior is preserved, even though that's not the ideal.
+      //
+      // TODO: Think through retries, and create policy that works with the mental model most
+      //       users would have of relating to retries.  That would likely involve updating some
+      //       default settings in addition to changing the algorithm.
       currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
-    } else {
-      currentBackoff = exponentialRetryAlgorithm.createNextAttempt(currentBackoff);
     }
+    currentBackoff = exponentialRetryAlgorithm.createNextAttempt(currentBackoff);
     if (!exponentialRetryAlgorithm.shouldRetry(currentBackoff)) {
       return null;
     } else {
@@ -320,12 +322,26 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @return a {@link ExponentialRetryAlgorithm} object.
    */
   private ExponentialRetryAlgorithm createRetryAlgorithm() {
+    int timeoutMs = retryOptions.getMaxElapsedBackoffMillis();
+
     RetrySettings retrySettings = RetrySettings.newBuilder()
+
         .setJittered(true)
+
+        // How long should the sleep be between RPC failure and the next RPC retry?
         .setInitialRetryDelay(toDuration(retryOptions.getInitialBackoffMillis()))
+
+        // How fast should the retry delay increase?
         .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
-        .setMaxRetryDelay(toDuration(retryOptions.getMaxElapsedBackoffMillis() / 5))
-        .setTotalTimeout(toDuration(retryOptions.getMaxElapsedBackoffMillis()))
+
+        // What is the maximum amount of sleep time between retries?
+        // There needs to be some sane number for max retry delay, and it's unclear what that
+        // number ought to be.  20% of timeout time was chosen because some number is needed
+        .setMaxRetryDelay(toDuration(timeoutMs / 5))
+
+        // How long should we wait before giving up retries?
+        .setTotalTimeout(toDuration(timeoutMs))
+
         .build();
     return new ExponentialRetryAlgorithm(retrySettings, getApiClock());
   }
