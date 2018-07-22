@@ -302,7 +302,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
           (clock.nanoTime() - currentBackoff.getFirstAttemptStartTimeNanos());
       long timeLeftMs = TimeUnit.NANOSECONDS.toMillis(timeLeftNs);
 
-      if (timeLeftMs > currentBackoff.getGlobalSettings().getInitialRetryDelay()) {
+      if (timeLeftMs > currentBackoff.getGlobalSettings().getInitialRetryDelay().toMillis()) {
         // The backoff algorithm doesn't always wait until the timeout is achieved.  Wait
         // one final time so that retries hit
         return timeLeftMs;
