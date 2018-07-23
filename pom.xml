@@ -63,6 +63,11 @@ limitations under the License.
         <opencensus.version>0.12.3</opencensus.version>
         <guava.version>20.0</guava.version>
 
+        <!--
+           TODO: This can be removed once google-cloud-clients's versions are updated.
+        -->
+        <google-auth.version>0.10.0</google-auth.version>
+
         <!-- hbase dependency versions -->
         <hbase.version.1>1.4.5</hbase.version.1>
         <hbase.version.2>2.1.0</hbase.version.2>
