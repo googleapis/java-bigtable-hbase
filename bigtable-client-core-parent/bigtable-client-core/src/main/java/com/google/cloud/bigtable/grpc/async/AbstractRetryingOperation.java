@@ -317,7 +317,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   @VisibleForTesting
-  protected boolean inRetryMode() {
+  public boolean inRetryMode() {
     return currentBackoff != null;
   }
 

@@ -343,7 +343,7 @@ public class RetryingReadRowsOperationTest {
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
     underTest.onMessage(buildResponse(key1));
     underTest.onClose(Status.ABORTED, new Metadata());
-    Assert.assertTrue(underTest.performingRetries());
+    Assert.assertTrue(underTest.inRetryMode());
     expectedRetryCount++;
     checkRetryRequest(underTest, key1, 9);
 
@@ -353,7 +353,7 @@ public class RetryingReadRowsOperationTest {
       expectedRetryCount++;
     }
     checkRetryRequest(underTest, key1, 9);
-    Assert.assertFalse(underTest.performingRetries());
+    Assert.assertFalse(underTest.inRetryMode());
     underTest.onMessage(buildResponse(key2));
 
     for (int i = 0; i < RETRY_OPTIONS.getMaxScanTimeoutRetries(); i++) {
@@ -361,7 +361,7 @@ public class RetryingReadRowsOperationTest {
       expectedRetryCount++;
 
       performTimeout(underTest);
-      Assert.assertFalse(underTest.performingRetries());
+      Assert.assertFalse(underTest.inRetryMode());
       expectedRetryCount++;
     }
 

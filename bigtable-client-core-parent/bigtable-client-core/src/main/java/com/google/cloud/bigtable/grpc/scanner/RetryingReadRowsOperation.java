@@ -304,11 +304,4 @@ public class RetryingReadRowsOperation extends
   RowMerger getRowMerger() {
     return rowMerger;
   }
-
-
-  @VisibleForTesting
-  boolean performingRetries() {
-    return super.inRetryMode();
-  }
-
 }
