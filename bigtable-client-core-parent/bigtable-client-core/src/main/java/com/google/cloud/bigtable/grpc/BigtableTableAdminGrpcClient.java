@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 
+import com.google.api.core.NanoClock;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.GetSnapshotRequest;
@@ -278,8 +279,8 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String resource) {
     CallOptions callOptions = CallOptions.DEFAULT;
     Metadata metadata = createMetadata(resource);
-    return new RetryingUnaryOperation<>(
-        retryOptions, request, rpc, callOptions, retryExecutorService, metadata);
+    return new RetryingUnaryOperation<>(retryOptions, request, rpc, callOptions,
+        retryExecutorService, metadata, NanoClock.getDefaultClock());
   }
 
   /**

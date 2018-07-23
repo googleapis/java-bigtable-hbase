@@ -28,7 +28,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
 import io.grpc.ClientCall;
 import org.junit.Assert;
@@ -217,12 +217,7 @@ public class TestRetryingMutateRowsOperation {
 
   private RetryingMutateRowsOperation createOperation(MutateRowsRequest request) {
     return new RetryingMutateRowsOperation(RETRY_OPTIONS, request, mutateRows, CallOptions.DEFAULT,
-        executorService, new Metadata()) {
-      @Override
-      protected ExponentialBackOff createBackoff() {
-        return clock.createBackoff(retryOptions);
-      }
-    };
+        executorService, new Metadata(), clock);
   }
 
   private void checkExecutor(int count) {

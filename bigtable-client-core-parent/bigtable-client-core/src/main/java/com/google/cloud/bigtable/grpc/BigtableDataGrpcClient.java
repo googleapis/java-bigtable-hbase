@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 
+import com.google.api.core.ApiClock;
+import com.google.api.core.NanoClock;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
@@ -79,6 +81,8 @@ import com.google.common.util.concurrent.ListenableFuture;
  * @version $Id: $Id
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
+
+  private final static ApiClock CLOCK = NanoClock.getDefaultClock();
 
   // Retryable Predicates
   /** Constant <code>IS_RETRYABLE_MUTATION</code> */
@@ -265,8 +269,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }
     CallOptions callOptions = getCallOptions(mutateRowsRpc.getMethodDescriptor(), request);
     Metadata metadata = createMetadata(request.getTableName());
-    return new RetryingMutateRowsOperation(
-        retryOptions, request, mutateRowsRpc, callOptions, retryExecutorService, metadata);
+    return new RetryingMutateRowsOperation(retryOptions, request, mutateRowsRpc, callOptions,
+        retryExecutorService, metadata, CLOCK);
   }
 
   /** {@inheritDoc} */
@@ -377,7 +381,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
     Metadata metadata = createMetadata(tableName);
     return new RetryingUnaryOperation<>(
-        retryOptions, request, rpc, callOptions, retryExecutorService, metadata);
+        retryOptions, request, rpc, callOptions, retryExecutorService, metadata, CLOCK);
   }
 
   private <ReqT, RespT> RetryingStreamOperation<ReqT, RespT> createStreamingListener(
@@ -385,7 +389,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
     Metadata metadata = createMetadata(tableName);
     return new RetryingStreamOperation<>(
-        retryOptions, request, rpc, callOptions, retryExecutorService, metadata);
+        retryOptions, request, rpc, callOptions, retryExecutorService, metadata, CLOCK);
   }
 
   private <ReqT> CallOptions getCallOptions(final MethodDescriptor<ReqT, ?> methodDescriptor,
@@ -497,7 +501,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         readRowsAsync,
         getCallOptions(readRowsAsync.getMethodDescriptor(), request),
         retryExecutorService,
-        createMetadata(request.getTableName()));
+        createMetadata(request.getTableName()),
+        CLOCK);
   }
 
   private boolean shouldOverrideAppProfile(String requestProfile) {

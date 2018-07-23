@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.NanoClock;
+import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
 import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
@@ -34,10 +35,10 @@ import static org.mockito.Mockito.when;
  * It can configure a mock {@link ScheduledExecutorService} to set internal time, and it can
  * validate that the amount of sleep time matches expectations.
  */
-public class OperationClock implements NanoClock {
+public class OperationClock implements ApiClock {
 
   private long timeNs;
-  private long totalSleepTime = 0;
+  private long totalSleepTimeNs = 0;
 
   public OperationClock() {
     this.timeNs = System.nanoTime();
@@ -45,7 +46,12 @@ public class OperationClock implements NanoClock {
 
   @Override
   public synchronized long nanoTime() {
-    return timeNs + totalSleepTime;
+    return timeNs + totalSleepTimeNs;
+  }
+
+  @Override
+  public long millisTime() {
+    return TimeUnit.NANOSECONDS.toMillis(nanoTime());
   }
 
   /**
@@ -60,7 +66,7 @@ public class OperationClock implements NanoClock {
         long duration = invocation.getArgumentAt(1, Long.class);
         TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
         synchronized (OperationClock.this) {
-          totalSleepTime += timeUnit.toNanos(duration);
+          totalSleepTimeNs += timeUnit.toNanos(duration);
         }
         invocation.getArgumentAt(0, Runnable.class).run();
         return future;
@@ -72,24 +78,13 @@ public class OperationClock implements NanoClock {
   }
 
   /**
-   * Creates a {@link ExponentialBackOff} with this as its {@link NanoClock}.
-   */
-  public ExponentialBackOff createBackoff(RetryOptions retryOptions) {
-    return new ExponentialBackOff.Builder()
-        .setNanoClock(this)
-        .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-        .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
-        .setMultiplier(retryOptions.getBackoffMultiplier()).build();
-  }
-
-  /**
    * Checks to make sure that the expected sleep time matches the actual time slept.
    */
   public synchronized void assertTimeWithinExpectations(long expectedSleepNs) {
-    long sleptSeconds = TimeUnit.NANOSECONDS.toSeconds(totalSleepTime);
-    Assert.assertTrue(String.format("Slept only %d seconds", sleptSeconds),
-        totalSleepTime >= expectedSleepNs);
-    Assert.assertTrue(String.format("Slept more than expected (%d seconds)", sleptSeconds),
-        totalSleepTime < expectedSleepNs * 2);
+    long sleptMillis = TimeUnit.MILLISECONDS.toSeconds(totalSleepTimeNs);
+    Assert.assertTrue(String.format("Slept only %d ms", sleptMillis),
+        totalSleepTimeNs >= expectedSleepNs * .9);
+    Assert.assertTrue(String.format("Slept more than expected (%d ms)", sleptMillis),
+        totalSleepTimeNs < expectedSleepNs * 1.5);
   }
 }

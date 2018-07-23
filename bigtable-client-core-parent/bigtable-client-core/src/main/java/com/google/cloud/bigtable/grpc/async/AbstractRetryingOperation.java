@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,9 +23,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
-import com.google.api.client.util.BackOff;
-import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.client.util.Sleeper;
+import com.google.api.core.ApiClock;
+import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -52,6 +52,8 @@ import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
+import org.threeten.bp.Duration;
+import org.threeten.bp.temporal.ChronoUnit;
 
 /**
  * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
@@ -119,7 +121,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
   }
 
-  protected BackOff currentBackoff;
+  private final ExponentialRetryAlgorithm exponentialRetryAlgorithm;
+  private final ApiClock clock;
+  private TimedAttemptSettings currentBackoff;
 
   protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   protected final RetryOptions retryOptions;
@@ -148,6 +152,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @param callOptions a {@link io.grpc.CallOptions} object.
    * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param originalMetadata a {@link io.grpc.Metadata} object.
+   * @param clock a {@link ApiClock} object
    */
   public AbstractRetryingOperation(
           RetryOptions retryOptions,
@@ -155,7 +160,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
           BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
           CallOptions callOptions,
           ScheduledExecutorService retryExecutorService,
-          Metadata originalMetadata) {
+          Metadata originalMetadata,
+          ApiClock clock) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
@@ -164,7 +170,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.originalMetadata = originalMetadata;
     this.completionFuture = new GrpcFuture<>();
     String spanName = makeSpanName("Operation", rpc.getMethodDescriptor().getFullMethodName());
-    operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
+    this.operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
+    this.clock = clock;
+    this.exponentialRetryAlgorithm = createRetryAlgorithm(clock);
   }
 
   /** {@inheritDoc} */
@@ -221,11 +229,11 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
 
     // Attempt retry with backoff
-    long nextBackOff = getNextBackoff();
+    Long nextBackOff = getNextBackoff();
     failedCount += 1;
 
     // Backoffs timed out.
-    if (nextBackOff == BackOff.STOP) {
+    if (nextBackOff == null) {
       LOG.info("All retries were exhausted. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
       setException(getExhaustedRetriesException(status));
@@ -276,29 +284,84 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    */
   protected abstract boolean onOK(Metadata trailers);
 
-  protected long getNextBackoff() {
+  protected Long getNextBackoff() {
     if (currentBackoff == null) {
-      currentBackoff = createBackoff();
+      // Historically, the client waited for "total timeout" after the first failure.  For now,
+      // that behavior is preserved, even though that's not the ideal.
+      //
+      // TODO: Think through retries, and create policy that works with the mental model most
+      //       users would have of relating to retries.  That would likely involve updating some
+      //       default settings in addition to changing the algorithm.
+      currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
     }
-    try {
-      return currentBackoff.nextBackOffMillis();
-    } catch (IOException e) {
-      return BackOff.STOP;
+    currentBackoff = exponentialRetryAlgorithm.createNextAttempt(currentBackoff);
+    if (!exponentialRetryAlgorithm.shouldRetry(currentBackoff)) {
+
+      // TODO: consider creating a subclass of exponentialRetryAlgorithm to encapsulate this logic
+      long timeLeftNs =  currentBackoff.getGlobalSettings().getTotalTimeout().toNanos() -
+          (clock.nanoTime() - currentBackoff.getFirstAttemptStartTimeNanos());
+      long timeLeftMs = TimeUnit.NANOSECONDS.toMillis(timeLeftNs);
+
+      if (timeLeftMs > currentBackoff.getGlobalSettings().getInitialRetryDelay().toMillis()) {
+        // The backoff algorithm doesn't always wait until the timeout is achieved.  Wait
+        // one final time so that retries hit
+        return timeLeftMs;
+      } else {
+
+        // Finish for real.
+        return null;
+      }
+    } else {
+      return currentBackoff.getRetryDelay().toMillis();
     }
+  }
+
+  @VisibleForTesting
+  public boolean inRetryMode() {
+    return currentBackoff != null;
+  }
+
+  /**
+   * Either a response was found, or a timeout event occurred. Reset the information relating to
+   * Status oriented exception handling.
+   */
+  protected void resetStatusBasedBackoff() {
+    this.currentBackoff = null;
+    this.failedCount = 0;
   }
 
   /**
    * <p>createBackoff.</p>
    *
-   * @return a {@link com.google.api.client.util.ExponentialBackOff} object.
+   * @return a {@link ExponentialRetryAlgorithm} object.
    */
-  @VisibleForTesting
-  protected ExponentialBackOff createBackoff() {
-    return new ExponentialBackOff.Builder()
-            .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-            .setMaxElapsedTimeMillis(retryOptions.getMaxElapsedBackoffMillis())
-            .setMultiplier(retryOptions.getBackoffMultiplier())
-            .build();
+  private ExponentialRetryAlgorithm createRetryAlgorithm(ApiClock clock) {
+    int timeoutMs = retryOptions.getMaxElapsedBackoffMillis();
+
+    RetrySettings retrySettings = RetrySettings.newBuilder()
+
+        .setJittered(true)
+
+        // How long should the sleep be between RPC failure and the next RPC retry?
+        .setInitialRetryDelay(toDuration(retryOptions.getInitialBackoffMillis()))
+
+        // How fast should the retry delay increase?
+        .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
+
+        // What is the maximum amount of sleep time between retries?
+        // There needs to be some sane number for max retry delay, and it's unclear what that
+        // number ought to be.  1 Minute time was chosen because some number is needed.
+        .setMaxRetryDelay( Duration.of(1, ChronoUnit.MINUTES))
+
+        // How long should we wait before giving up retries after the first failure?
+        .setTotalTimeout(toDuration(timeoutMs))
+
+        .build();
+    return new ExponentialRetryAlgorithm(retrySettings, clock);
+  }
+
+  private static Duration toDuration(long millis) {
+    return Duration.of(millis, ChronoUnit.MILLIS);
   }
 
   /**

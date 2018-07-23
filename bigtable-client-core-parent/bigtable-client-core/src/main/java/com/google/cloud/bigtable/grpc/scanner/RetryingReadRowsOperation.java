@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.client.util.Preconditions;
+import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.grpc.io.Watchdog.State;
 import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -118,8 +119,10 @@ public class RetryingReadRowsOperation extends
       BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> retryableRpc,
       CallOptions callOptions,
       ScheduledExecutorService retryExecutorService,
-      Metadata originalMetadata) {
-    super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata);
+      Metadata originalMetadata,
+      ApiClock clock) {
+    super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata,
+        clock);
     this.rowObserver = observer;
     this.rowMerger = new RowMerger(rowObserver);
     this.adapter = new CallToStreamObserverAdapter();
@@ -250,15 +253,6 @@ public class RetryingReadRowsOperation extends
   }
 
   /**
-   * Either a response was found, or a timeout event occurred. Reset the information relating to
-   * Status oriented exception handling.
-   */
-  void resetStatusBasedBackoff() {
-    this.currentBackoff = null;
-    this.failedCount = 0;
-  }
-
-  /**
    * Special retry handling for watchdog timeouts, which uses its own fail counter.
    *
    * @return true if a retry has been scheduled
@@ -304,11 +298,6 @@ public class RetryingReadRowsOperation extends
   @VisibleForTesting
   int getTimeoutRetryCount() {
     return timeoutRetryCount;
-  }
-
-  @VisibleForTesting
-  BackOff getCurrentBackoff() {
-    return currentBackoff;
   }
 
   @VisibleForTesting
