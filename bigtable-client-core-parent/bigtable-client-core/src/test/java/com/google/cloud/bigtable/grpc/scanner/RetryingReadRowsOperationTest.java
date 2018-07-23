@@ -36,6 +36,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import io.grpc.DeadlineUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -209,7 +210,18 @@ public class RetryingReadRowsOperationTest {
   }
 
   @Test
-  public void testFailure() throws Exception {
+  public void testFailure_default() throws Exception {
+    testFailure(RETRY_OPTIONS.getMaxElapsedBackoffMillis(), CallOptions.DEFAULT);
+  }
+
+  @Test
+  public void testFailure_deadline() throws Exception {
+    CallOptions options = DeadlineUtil.optionsWithDeadline(1, TimeUnit.SECONDS, clock);
+    testFailure(TimeUnit.SECONDS.toMillis(1), options);
+  }
+
+  private void testFailure(long expectedTimeMs, CallOptions options)
+      throws InterruptedException, java.util.concurrent.TimeoutException {
     doAnswer(new Answer<Void>() {
       @Override public Void answer(InvocationOnMock invocation) {
         invocation.getArgumentAt(1, ClientCall.Listener.class)
@@ -221,15 +233,13 @@ public class RetryingReadRowsOperationTest {
             any(ClientCall.class));
 
     RetryingReadRowsOperation underTest =
-        createOperation(CallOptions.DEFAULT, mockFlatRowObserver);
+        createOperation(options, mockFlatRowObserver);
     try {
       underTest.getAsyncResult().get(100, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
       Assert.assertEquals(BigtableRetriesExhaustedException.class, e.getCause().getClass());
       Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(), Status.fromThrowable(e).getCode());
     }
-
-    int expectedTimeMs = RETRY_OPTIONS.getMaxElapsedBackoffMillis();
 
     clock.assertTimeWithinExpectations(TimeUnit.MILLISECONDS.toNanos(expectedTimeMs));
     verify(mockFlatRowObserver, times(0)).onCompleted();
