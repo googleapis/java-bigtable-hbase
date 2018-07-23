@@ -540,6 +540,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   // ****** TO BE IMPLEMENTED [start] ******
 
   @Override
+  public CompletableFuture<Void> cloneTableSchema(TableName tableName, TableName tableName1,
+      boolean preserveSplits) {
+    throw new UnsupportedOperationException("cloneTableSchema"); // TODO
+  }
+
+  @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern arg0) {
     throw new UnsupportedOperationException("listTableSnapshots"); // TODO
   }
