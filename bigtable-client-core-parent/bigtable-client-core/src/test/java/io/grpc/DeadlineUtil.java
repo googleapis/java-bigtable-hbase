@@ -15,6 +15,8 @@
  */
 package io.grpc;
 
+import com.google.api.core.ApiClock;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -22,11 +24,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class DeadlineUtil {
 
-  public static Deadline deadlineWithFixedTime(int duration, TimeUnit unit, final long timeNs) {
+  public static CallOptions optionsWithDeadline(int duration, TimeUnit unit, final ApiClock clock) {
+    return CallOptions.DEFAULT.withDeadline(deadlineWithFixedTime(duration, unit, clock));
+  }
+
+  public static Deadline deadlineWithFixedTime(int duration, TimeUnit unit, final ApiClock clock) {
     return Deadline.after(duration, unit, new Deadline.Ticker() {
       @Override
       public long read() {
-        return timeNs;
+        return clock.nanoTime();
       }
     });
   }

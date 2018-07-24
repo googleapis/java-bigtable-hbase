@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.cloud.bigtable.config.RetryOptions;
+import io.grpc.DeadlineUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -136,7 +137,18 @@ public class TestRetryingUnaryOperation {
   }
 
   @Test
-  public void testCompleteFailure() throws Exception {
+  public void testCompleteFailure_DEFAULT() throws Exception {
+    testTimeout(RETRY_OPTIONS.getMaxElapsedBackoffMillis(), CallOptions.DEFAULT);
+  }
+
+  @Test
+  public void testCompleteFailure_Deadline() throws Exception {
+    CallOptions options = DeadlineUtil.optionsWithDeadline(1, TimeUnit.SECONDS, clock);
+    testTimeout(TimeUnit.SECONDS.toMillis(1), options);
+  }
+
+  private void testTimeout(long expectedTimeoutMs, CallOptions options)
+      throws InterruptedException, java.util.concurrent.TimeoutException {
     final Status errorStatus = Status.UNAVAILABLE;
     Answer<Void> answer = new Answer<Void>() {
       @Override
@@ -153,15 +165,14 @@ public class TestRetryingUnaryOperation {
             any(Metadata.class),
             any(ClientCall.class));
     try {
-      createOperation(CallOptions.DEFAULT).getAsyncResult().get(1, TimeUnit.SECONDS);
+      createOperation(options).getAsyncResult().get(1, TimeUnit.SECONDS);
       Assert.fail();
     } catch (ExecutionException e) {
       Assert.assertEquals(BigtableRetriesExhaustedException.class, e.getCause().getClass());
       Assert.assertEquals(errorStatus.getCode(), Status.fromThrowable(e).getCode());
     }
 
-    clock.assertTimeWithinExpectations(
-        TimeUnit.MILLISECONDS.toNanos(RETRY_OPTIONS.getMaxElapsedBackoffMillis()));
+    clock.assertTimeWithinExpectations(TimeUnit.MILLISECONDS.toNanos(expectedTimeoutMs));
   }
 
   private RetryingUnaryOperation createOperation(CallOptions options) {

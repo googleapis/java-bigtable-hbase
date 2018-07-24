@@ -42,6 +42,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
+import io.grpc.Deadline;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.Status.Code;
@@ -336,7 +337,12 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @return a {@link ExponentialRetryAlgorithm} object.
    */
   private ExponentialRetryAlgorithm createRetryAlgorithm(ApiClock clock) {
-    int timeoutMs = retryOptions.getMaxElapsedBackoffMillis();
+    long timeoutMs = retryOptions.getMaxElapsedBackoffMillis();
+
+    Deadline deadline = getOperationCallOptions().getDeadline();
+    if (deadline != null) {
+      timeoutMs = deadline.timeRemaining(TimeUnit.MILLISECONDS);
+    }
 
     RetrySettings retrySettings = RetrySettings.newBuilder()
 
@@ -351,7 +357,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         // What is the maximum amount of sleep time between retries?
         // There needs to be some sane number for max retry delay, and it's unclear what that
         // number ought to be.  1 Minute time was chosen because some number is needed.
-        .setMaxRetryDelay( Duration.of(1, ChronoUnit.MINUTES))
+        .setMaxRetryDelay(Duration.of(1, ChronoUnit.MINUTES))
 
         // How long should we wait before giving up retries after the first failure?
         .setTotalTimeout(toDuration(timeoutMs))
