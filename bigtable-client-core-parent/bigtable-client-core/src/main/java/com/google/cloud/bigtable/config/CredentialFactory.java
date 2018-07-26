@@ -82,6 +82,9 @@ public class CredentialFactory {
   // GeneralSecurityException to the time a caller actually tries to get a credential.
   private static HttpTransportFactory httpTransportFactory;
 
+  /** Constant <code>LOG</code> */
+  private static final Logger LOG = new Logger(CredentialFactory.class);
+
   /**
    * Allow for an override of the credentials HttpTransportFactory.
    * @param httpTransportFactory
@@ -97,8 +100,9 @@ public class CredentialFactory {
       if (PlatformInformation.isOnGAEStandard7()) {
         try {
           return new UrlFetchTransport();
-        } catch (Exception ignore) {
-          // Maybe not on App Engine
+        } catch (Exception e) {
+          LOG.warn("An exception occurred trying to set up the HTTPTransport for credentials, "
+              + " while expecting GAE standard 7.", e);
         }
       }
       return new NetHttpTransport();
