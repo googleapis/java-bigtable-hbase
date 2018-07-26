@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.util;
 
+import com.google.cloud.PlatformInformation;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -27,12 +28,6 @@ import java.util.concurrent.ThreadFactory;
  */
 public class ThreadUtil {
 
-  // AppEngine runtimes have constraints on threading and socket handling
-  // that need to be accommodated.
-  public static final boolean IS_RESTRICTED_APPENGINE =
-          System.getProperty("com.google.appengine.runtime.environment") != null
-                  && "1.7".equals(System.getProperty("java.specification.version"));
-
   /**
    * Get a {@link ThreadFactory} suitable for use in the current environment.
    * @param nameFormat to apply to threads created by the factory.
@@ -41,7 +36,7 @@ public class ThreadUtil {
    * @return a {@link ThreadFactory}.
    */
   public static ThreadFactory getThreadFactory(String nameFormat, boolean daemon) {
-    if (IS_RESTRICTED_APPENGINE) {
+    if (PlatformInformation.isOnGAEStandard7()) {
       return MoreExecutors.platformThreadFactory();
     } else {
       return new ThreadFactoryBuilder()
@@ -50,5 +45,4 @@ public class ThreadUtil {
           .build();
     }
   }
-
 }
