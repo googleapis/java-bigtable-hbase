@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -64,6 +65,8 @@ import io.grpc.stub.StreamObserver;
  * @version $Id: $Id
  */
 public class RowMerger implements StreamObserver<ReadRowsResponse> {
+
+protected static final Logger LOG = new Logger(RowMerger.class);
 
   /**
    * <p>toRows.</p>
@@ -236,21 +239,33 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    * This class represents the data in the row that's currently being processed.
    */
   private static final class RowInProgress {
+
+    // 50MB is pretty large for a row, so log any rows that are of that size
+    private final static int LARGE_ROW_SIZE = 50 * 1024 * 1024;
+
     private ByteString rowKey;
 
     // cell in progress info
     private CellIdentifier currentId;
     private ByteString.Output outputStream;
-
+    private int currentByteSize = 0;
+    private int loggedAtSize = 0;
 
     private final Map<String, List<FlatRow.Cell>> cells = new TreeMap<>();
+    private int cellCount = 0;
     private List<FlatRow.Cell> currentFamilyRowCells = null;
     private String currentFamily;
     private FlatRow.Cell previousNoLabelCell;
 
     private final void addFullChunk(ReadRowsResponse.CellChunk chunk) {
       Preconditions.checkState(!hasChunkInProgess());
+      currentByteSize += chunk.getSerializedSize();
       addCell(chunk.getValue());
+      if (currentByteSize >= loggedAtSize + LARGE_ROW_SIZE) {
+        LOG.warn("Large row read is in progress. key: `%s`, size: %d, cells: %d",
+            rowKey.toStringUtf8(), currentByteSize, cellCount);
+        loggedAtSize = currentByteSize;
+      }
     }
 
     private final void completeMultiChunkCell() {
@@ -286,6 +301,8 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         currentFamilyRowCells.add(cell);
         previousNoLabelCell = cell;
       } // else, this is a duplicate cell.
+
+      cellCount++;
     }
 
     /**
@@ -340,6 +357,11 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     }
 
     private FlatRow buildRow() {
+      if (currentByteSize >= LARGE_ROW_SIZE) {
+        LOG.warn("Large row was read. key: `%s`, size: %d, cellCount: %d",
+            rowKey.toStringUtf8(), currentByteSize, cellCount);
+      }
+
       return new FlatRow(rowKey, flattenCells());
     }
 
