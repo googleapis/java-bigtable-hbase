@@ -22,18 +22,18 @@ import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.List;
 
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.extensions.appengine.http.UrlFetchTransport;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.util.SecurityUtils;
 import com.google.auth.Credentials;
 import com.google.auth.http.HttpTransportFactory;
-import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.PlatformInformation;
 import com.google.cloud.bigtable.config.CredentialOptions.JsonCredentialsOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.P12CredentialOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.UserSuppliedCredentialOptions;
-import com.google.cloud.http.HttpTransportOptions;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -82,6 +82,9 @@ public class CredentialFactory {
   // GeneralSecurityException to the time a caller actually tries to get a credential.
   private static HttpTransportFactory httpTransportFactory;
 
+  /** Constant <code>LOG</code> */
+  private static final Logger LOG = new Logger(CredentialFactory.class);
+
   /**
    * Allow for an override of the credentials HttpTransportFactory.
    * @param httpTransportFactory
@@ -90,9 +93,25 @@ public class CredentialFactory {
     CredentialFactory.httpTransportFactory = httpTransportFactory;
   }
 
+  private static class DefaultHttpTransportFactory implements HttpTransportFactory {
+    @Override
+    public HttpTransport create() {
+      // Consider App Engine Standard
+      if (PlatformInformation.isOnGAEStandard7()) {
+        try {
+          return new UrlFetchTransport();
+        } catch (Exception e) {
+          LOG.warn("An exception occurred trying to set up the HTTPTransport for credentials, "
+              + " while expecting GAE standard 7.", e);
+        }
+      }
+      return new NetHttpTransport();
+    }
+  }
+
   public static HttpTransportFactory getHttpTransportFactory() {
     if (httpTransportFactory == null) {
-      httpTransportFactory = new HttpTransportOptions.DefaultHttpTransportFactory();
+      httpTransportFactory = new DefaultHttpTransportFactory();
     }
     return httpTransportFactory;
   }
