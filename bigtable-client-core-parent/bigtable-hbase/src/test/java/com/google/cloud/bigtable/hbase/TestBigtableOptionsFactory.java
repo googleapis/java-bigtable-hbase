@@ -17,7 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
+import com.google.auth.Credentials;
+import com.google.cloud.bigtable.config.CredentialFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,6 +42,13 @@ public class TestBigtableOptionsFactory {
   public static final int TEST_PORT = 80;
   public static final String TEST_PROJECT_ID = "project-foo";
   public static final String TEST_INSTANCE_ID = "test-instance";
+
+  static class CredentialsCallable implements Callable<Credentials> {
+
+    @Override public Credentials call() throws Exception {
+      return CredentialFactory.getApplicationDefaultCredential();
+    }
+  }
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -131,4 +141,16 @@ public class TestBigtableOptionsFactory {
     assertEquals(111, retryOptions.getMaxElapsedBackoffMillis());
     assertEquals(123, retryOptions.getReadPartialRowTimeoutMillis());
   }
+
+  @Test
+  public void testCredentialsCallable() throws IOException {
+    Configuration configuration = new Configuration(false);
+    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_CREDENTIALS_CALLABLE_CLASS_KEY,
+        CredentialsCallable.class.getName());
+    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+  }
+
 }
