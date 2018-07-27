@@ -17,10 +17,12 @@ package com.google.cloud.bigtable.hbase;
 
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.concurrent.Callable;
 
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.config.CredentialOptions;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,19 +36,20 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class TestBigtableOptionsFactory {
 
   public static final String TEST_HOST = "localhost";
-  public static final int TEST_PORT = 80;
   public static final String TEST_PROJECT_ID = "project-foo";
   public static final String TEST_INSTANCE_ID = "test-instance";
+  private static final Credentials MOCK_CREDENTIALS = Mockito.mock(Credentials.class);
 
   static class CredentialsCallable implements Callable<Credentials> {
 
-    @Override public Credentials call() throws Exception {
-      return CredentialFactory.getApplicationDefaultCredential();
+    @Override public Credentials call() {
+      return MOCK_CREDENTIALS;
     }
   }
 
@@ -143,14 +146,18 @@ public class TestBigtableOptionsFactory {
   }
 
   @Test
-  public void testCredentialsCallable() throws IOException {
+  public void testCredentialsCallable() throws IOException, GeneralSecurityException {
     Configuration configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
     configuration.set(BigtableOptionsFactory.BIGTABLE_CREDENTIALS_CALLABLE_CLASS_KEY,
         CredentialsCallable.class.getName());
-    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+
+    // The test ensures that these do not throw an exception
+    CredentialOptions options =
+        BigtableOptionsFactory.fromConfiguration(configuration).getCredentialOptions();
+    Assert.assertEquals(MOCK_CREDENTIALS, CredentialFactory.getCredentials(options));
   }
 
 }
