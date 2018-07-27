@@ -28,6 +28,7 @@ import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS
 import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
 
+import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
@@ -44,6 +45,8 @@ import org.apache.hadoop.hbase.util.VersionInfo;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.Callable;
 
 /**
  * Static methods to convert an instance of {@link org.apache.hadoop.conf.Configuration}
@@ -128,6 +131,12 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY =
       "google.bigtable.auth.json.value";
+
+  /**
+   * Key to set to a json security credentials string.
+   */
+  public static final String BIGTABLE_CREDENTIALS_CALLABLE_CLASS_KEY =
+      "google.bigtable.auth.credentials.callable.class";
 
   /**
    * Key to set to a boolean flag indicating whether or not grpc retries should be enabled.
@@ -432,10 +441,19 @@ public class BigtableOptionsFactory {
         String keyfileLocation =
             configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
         Preconditions.checkState(!isNullOrEmpty(keyfileLocation),
-          "Key file location must be specified when setting service account email");
+            "Key file location must be specified when setting service account email");
         LOG.debug("Using p12 keyfile: %s", keyfileLocation);
-        builder.setCredentialOptions(
-          CredentialOptions.p12Credential(serviceAccount,  keyfileLocation));
+        builder.setCredentialOptions(CredentialOptions.p12Credential(serviceAccount, keyfileLocation));
+      } else if (configuration.get(BIGTABLE_CREDENTIALS_CALLABLE_CLASS_KEY) != null) {
+        String className = configuration.get(BIGTABLE_CREDENTIALS_CALLABLE_CLASS_KEY);
+        try {
+          Callable<Credentials> callable =
+              (Callable<Credentials>) Class.forName(className).getDeclaredConstructor()
+                  .newInstance();
+          builder.setCredentialOptions(CredentialOptions.credential(callable.call()));
+        } catch (Exception  e) {
+          throw new IllegalArgumentException("Could not get a Credentials Callable", e);
+        }
       } else {
         LOG.debug("Using default credentials.");
         builder.setCredentialOptions(
