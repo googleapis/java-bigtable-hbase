@@ -28,6 +28,7 @@ import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS
 import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
 
+import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
@@ -414,28 +415,31 @@ public class BigtableOptionsFactory {
         BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
       LOG.debug("Using service accounts");
 
-      if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY) != null) {
+      if (configuration instanceof BigtableExtendedConfiguration) {
+        Credentials credentials = ((BigtableExtendedConfiguration) configuration).getCredentials();
+        builder.setCredentialOptions(CredentialOptions.credential(credentials));
+      } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY) != null) {
         String jsonValue = configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY);
         LOG.debug("Using json value");
         builder.setCredentialOptions(
           CredentialOptions.jsonCredentials(jsonValue));
       } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY) != null) {
-        String keyfileLocation =
+        String keyFileLocation =
             configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
-        LOG.debug("Using json keyfile: %s", keyfileLocation);
+        LOG.debug("Using json keyfile: %s", keyFileLocation);
         builder.setCredentialOptions(
           CredentialOptions.jsonCredentials(
-            new FileInputStream(keyfileLocation)));
+            new FileInputStream(keyFileLocation)));
       } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY) != null) {
         String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
         LOG.debug("Service account %s specified.", serviceAccount);
-        String keyfileLocation =
+        String keyFileLocation =
             configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
-        Preconditions.checkState(!isNullOrEmpty(keyfileLocation),
+        Preconditions.checkState(!isNullOrEmpty(keyFileLocation),
           "Key file location must be specified when setting service account email");
-        LOG.debug("Using p12 keyfile: %s", keyfileLocation);
+        LOG.debug("Using p12 keyfile: %s", keyFileLocation);
         builder.setCredentialOptions(
-          CredentialOptions.p12Credential(serviceAccount,  keyfileLocation));
+          CredentialOptions.p12Credential(serviceAccount,  keyFileLocation));
       } else {
         LOG.debug("Using default credentials.");
         builder.setCredentialOptions(
