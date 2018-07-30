@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.auth.Credentials;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Connection;
 
@@ -119,6 +120,17 @@ public class BigtableConfiguration {
     conf.set(BigtableOptionsFactory.APP_PROFILE_ID_KEY, appProfileId);
     conf.set(HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
     return conf;
+  }
+
+  /**
+   * Sets a reference to a {@link Credentials} in a {@link Configuration} object.
+   *
+   * @param conf a {@link org.apache.hadoop.conf.Configuration} object to configure.
+   * @param credentials a {@link Credentials} object;
+   * @return
+   */
+  public static Configuration withCredentials(Configuration conf, Credentials credentials) {
+    return new BigtableExtendedConfiguration(conf, credentials);
   }
 
   /**

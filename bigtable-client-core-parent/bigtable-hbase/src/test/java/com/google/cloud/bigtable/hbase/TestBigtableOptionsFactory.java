@@ -17,7 +17,11 @@ package com.google.cloud.bigtable.hbase;
 
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 
+import com.google.auth.Credentials;
+import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.config.CredentialOptions;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class TestBigtableOptionsFactory {
@@ -131,4 +136,19 @@ public class TestBigtableOptionsFactory {
     assertEquals(111, retryOptions.getMaxElapsedBackoffMillis());
     assertEquals(123, retryOptions.getReadPartialRowTimeoutMillis());
   }
-}
+
+  @Test
+  public void testExplicitCredentials() throws IOException, GeneralSecurityException {
+    Credentials credentials = Mockito.mock(Credentials.class);
+    configuration = new Configuration(false);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
+    configuration = BigtableConfiguration.withCredentials(configuration, credentials);
+
+    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+
+    Credentials actualCreds = CredentialFactory.getCredentials(options.getCredentialOptions());
+    Assert.assertSame(credentials, actualCreds);
+  }
+ }
