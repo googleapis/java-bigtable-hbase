@@ -17,7 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.common.base.Throwables;
 
+import io.opencensus.common.Scope;
+import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
+import io.opencensus.trace.Status;
 import io.opencensus.trace.Tracing;
 
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -73,7 +76,7 @@ public class BigtableWhileMatchResultScannerAdapter {
         FlatRow row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
-          closeSpan();
+          span.end();
           return null;
         }
 
@@ -85,23 +88,15 @@ public class BigtableWhileMatchResultScannerAdapter {
         return rowAdapter.adaptResponse(row);
       }
 
-      protected void closeSpan() {
-        try (AutoCloseable c = Tracing.getTracer().withSpan(span)) {
-          span.end();
-        } catch (Exception e) {
-          // ignore. withSpan() returns a Closable which can throw exceptions, but no exceptions
-          // will actually be thrown
-        }
-      }
-
       @Override
       public void close() {
         try {
           bigtableResultScanner.close();
         } catch (IOException ioe) {
+          span.setStatus(Status.UNKNOWN.withDescription(ioe.getMessage()));
           throw new RuntimeException(ioe);
         } finally {
-          closeSpan();
+          span.end();
         }
       }
 

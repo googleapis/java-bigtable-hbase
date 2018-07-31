@@ -17,7 +17,9 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.common.base.Throwables;
 
+import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
+import io.opencensus.trace.Status;
 import io.opencensus.trace.Tracing;
 
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
@@ -68,7 +70,7 @@ public class BigtableResultScannerAdapter<T> {
         T row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
-          closeSpan();
+          span.end();
           return null;
         }
         rowCount++;
@@ -80,21 +82,12 @@ public class BigtableResultScannerAdapter<T> {
         try {
           bigtableResultScanner.close();
         } catch (IOException ioe) {
+          span.setStatus(Status.UNKNOWN.withDescription(ioe.getMessage()));
           throw new RuntimeException(ioe);
         } finally {
-          closeSpan();
-        }
-      }
-
-      protected void closeSpan() {
-        try (AutoCloseable c = Tracing.getTracer().withSpan(span)) {
           span.end();
-        } catch (Exception e) {
-          // ignore. withSpan() returns a Closable which can throw exceptions, but no exceptions
-          // will actually be thrown
         }
       }
-
 
       /**
        * This is an HBase concept that was added in HBase 1.0.2.  It's not relevant for Cloud

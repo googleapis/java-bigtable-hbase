@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import io.opencensus.common.Scope;
 import java.io.Closeable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -90,6 +91,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
   private static final Tracer TRACER = Tracing.getTracer();
+  private static final EndSpanOptions END_SPAN_OPTIONS_WITH_SAMPLE_STORE =
+      EndSpanOptions.builder().setSampleToLocalSpanStore(true).build();
 
   // The server-side has a 5 minute timeout. Unary operations should be timed-out on the client side
   // after 6 minutes.
@@ -179,7 +182,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
-    try (Closeable s = TRACER.withSpan(operationSpan)) {
+    try (Scope scope = TRACER.withSpan(operationSpan)) {
       synchronized (callLock) {
         call = NULL_CALL;
       }
@@ -200,8 +203,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected void finalizeStats(Status status) {
     operationTimerContext.close();
     if (operationSpan != null) {
-      io.opencensus.trace.Status ocensusStatus = StatusConverter.fromGrpcStatus(status);
-      operationSpan.end(EndSpanOptions.builder().setStatus(ocensusStatus).build());
+      operationSpan.setStatus(StatusConverter.fromGrpcStatus(status));
+      operationSpan.end(END_SPAN_OPTIONS_WITH_SAMPLE_STORE);
     }
   }
 
@@ -376,7 +379,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * with this as the listener so that retries happen correctly.
    */
   protected void run() {
-    try (Closeable s = TRACER.withSpan(operationSpan)) {
+    try (Scope scope = TRACER.withSpan(operationSpan)) {
       rpcTimerContext = rpc.getRpcMetrics().timeRpc();
       operationSpan.addAnnotation(Annotation.fromDescriptionAndAttributes("rpcStart",
         ImmutableMap.of("attempt", AttributeValue.longAttributeValue(failedCount))));

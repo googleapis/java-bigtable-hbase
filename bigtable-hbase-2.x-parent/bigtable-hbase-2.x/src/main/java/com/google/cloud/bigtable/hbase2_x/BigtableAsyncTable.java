@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import static java.util.stream.Collectors.toList;
 
+import io.opencensus.common.Scope;
+import io.opencensus.trace.Status;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -397,7 +399,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   public ResultScanner getScanner(Scan scan) {
     LOG.trace("getScanner(Scan)");
     Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
-    try (Closeable c = TRACER.withSpan(span)) {
+    try (Scope scope = TRACER.withSpan(span)) {
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
           client.getClient().readFlatRows(hbaseAdapter.adapt(scan));
       if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
@@ -406,7 +408,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       return Adapters.BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner, span);
     } catch (final Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
-
+      span.setStatus(Status.UNKNOWN);
       return new ResultScanner() {
         @Override
         public boolean renewLease() {
@@ -424,6 +426,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
         public void close() {
         }
       };
+    } finally {
+      span.end();
     }
   }
 

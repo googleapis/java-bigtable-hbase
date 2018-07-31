@@ -80,8 +80,6 @@ public final class TracingUtilities {
    */
   private static void addDescriptor(List<String> descriptors, ServiceDescriptor serviceDescriptor) {
     for (MethodDescriptor<?, ?> method : serviceDescriptor.getMethods()) {
-      // This is added by a grpc ClientInterceptor
-      descriptors.add("Sent." + method.getFullMethodName().replace('/', '.'));
       // This is added by Cloud Bigtable's AbstractRetryingOperation
       descriptors.add("Operation." + method.getFullMethodName().replace('/', '.'));
     }
