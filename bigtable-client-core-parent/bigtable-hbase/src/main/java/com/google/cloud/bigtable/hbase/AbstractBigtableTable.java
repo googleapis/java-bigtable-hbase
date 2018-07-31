@@ -299,14 +299,15 @@ public abstract class AbstractBigtableTable implements Table {
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       span.setStatus(Status.UNKNOWN);
+      // Close the span only when throw an exception and not on finally because if no exception
+      // the span will be ended by the adapter.
+      span.end();
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner",
               options.getProjectId(),
               tableName.getQualifierAsString()),
           throwable);
-    } finally {
-      span.end();
     }
   }
 
