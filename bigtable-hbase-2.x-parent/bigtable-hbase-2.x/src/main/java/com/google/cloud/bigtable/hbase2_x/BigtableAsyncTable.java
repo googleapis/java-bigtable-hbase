@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toList;
 
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

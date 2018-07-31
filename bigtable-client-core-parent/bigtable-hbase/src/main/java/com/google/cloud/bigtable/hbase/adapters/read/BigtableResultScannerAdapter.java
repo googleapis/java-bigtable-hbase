@@ -15,12 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.common.base.Throwables;
-
-import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Status;
-import io.opencensus.trace.Tracing;
 
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 

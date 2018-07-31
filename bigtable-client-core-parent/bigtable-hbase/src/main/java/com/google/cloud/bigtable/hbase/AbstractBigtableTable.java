@@ -16,9 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import io.opencensus.common.Scope;
-import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Status;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import io.opencensus.common.Scope;
-import java.io.Closeable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
