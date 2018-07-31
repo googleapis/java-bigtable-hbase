@@ -17,7 +17,8 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import static java.util.stream.Collectors.toList;
 
-import java.io.Closeable;
+import io.opencensus.common.Scope;
+import io.opencensus.trace.Status;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -396,8 +397,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public ResultScanner getScanner(Scan scan) {
     LOG.trace("getScanner(Scan)");
-    Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
-    try (Closeable c = TRACER.withSpan(span)) {
+    final Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
+    try (Scope scope = TRACER.withSpan(span)) {
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
           client.getClient().readFlatRows(hbaseAdapter.adapt(scan));
       if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
@@ -406,7 +407,10 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       return Adapters.BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner, span);
     } catch (final Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
-
+      span.setStatus(Status.UNKNOWN);
+      // Close the span only when throw an exception and not on finally because if no exception
+      // the span will be ended by the adapter.
+      span.end();
       return new ResultScanner() {
         @Override
         public boolean renewLease() {
