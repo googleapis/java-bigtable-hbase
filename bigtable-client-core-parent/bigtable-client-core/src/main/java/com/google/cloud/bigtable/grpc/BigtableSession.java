@@ -70,7 +70,7 @@ import javax.net.ssl.SSLException;
  *
  * <p>The following functionality is handled by this class:
  * <ol>
- *   <li> Created Executors
+ *   <li> Creates Executors
  *   <li> Creates Channels - netty ChannelImpls, ReconnectingChannel and ChannelPools
  *   <li> Creates ChannelInterceptors - auth headers, performance interceptors.
  *   <li> Close anything above that needs to be closed (ExecutorService, CahnnelImpls)
