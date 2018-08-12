@@ -115,14 +115,14 @@ public class RetryOptions implements Serializable {
     /**
      * Enable or disable retry on deadline exceeded.
      */
-    public Builder setRetryOnDeadlineExceeded(boolean enabled) {
-      if (enabled) {
-      	options.statusToRetryOn.add(Status.Code.DEADLINE_EXCEEDED);
-      } else {
-      	options.statusToRetryOn.remove(Status.Code.DEADLINE_EXCEEDED);
-      }
-      return this;
-    }
+		public Builder setRetryOnDeadlineExceeded(boolean enabled) {
+			if (enabled) {
+				options.statusToRetryOn.add(Status.Code.DEADLINE_EXCEEDED);
+			} else {
+				options.statusToRetryOn.remove(Status.Code.DEADLINE_EXCEEDED);
+			}
+			return this;
+		}
 
     /**
      * The amount of time in milliseconds we will wait for our first error retry.
@@ -191,16 +191,7 @@ public class RetryOptions implements Serializable {
      * Construct a new RetryOptions object.
      */
     public RetryOptions build() {
-      return new RetryOptions(
-      		options.retriesEnabled,
-      		options.allowRetriesWithoutTimestamp,
-      		options.initialBackoffMillis,
-      		options.backoffMultiplier,
-      		options.maxElapsedBackoffMillis,
-      		options.streamingBufferSize,
-      		options.readPartialRowTimeoutMillis,
-      		options.maxScanTimeoutRetries,
-          ImmutableSet.copyOf(options.statusToRetryOn));
+    	return options;
     }
   }
 
@@ -247,8 +238,7 @@ public class RetryOptions implements Serializable {
     this.statusToRetryOn = ImmutableSet.copyOf(statusToRetryOn);
   }
   
-  @VisibleForTesting
-  RetryOptions()
+  private RetryOptions()
   {}
   /**
    * The amount of time in milliseconds we will wait for our first error retry.
@@ -386,6 +376,14 @@ public class RetryOptions implements Serializable {
    * @return a {@link com.google.cloud.bigtable.config.RetryOptions.Builder} object.
    */
   public Builder toBuilder() {
-    return new Builder(this);
+    return new Builder(this.clone());
+  }
+  
+  protected RetryOptions clone() {
+  	try {
+      return (RetryOptions) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Could not clone RetryOptions.");
+    }
   }
 }
