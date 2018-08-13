@@ -205,10 +205,10 @@ public class RetryingReadRowsOperation extends
 
   @Override
   protected void finalizeStats(Status status) {
-    super.finalizeStats(status);
     // Add an annotation for the total number of rows that were returned across all responses.
     operationSpan.addAnnotation("Total Rows Processed",
-      ImmutableMap.of("rowCount", AttributeValue.longAttributeValue(totalRowsProcessed)));
+        ImmutableMap.of("rowCount", AttributeValue.longAttributeValue(totalRowsProcessed)));
+    super.finalizeStats(status);
   }
 
   private void updateLastFoundKey(ByteString lastProcessedKey) {
