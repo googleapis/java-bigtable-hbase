@@ -87,6 +87,8 @@ public class RetryOptions implements Serializable {
    */
   public static class Builder {
   	private RetryOptions options = new RetryOptions();
+  	
+  	@Deprecated
     public Builder() {
     	options = new RetryOptions();
     	options.retriesEnabled = DEFAULT_ENABLE_GRPC_RETRIES;
@@ -100,6 +102,7 @@ public class RetryOptions implements Serializable {
     	options.statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
    }
 
+    @Deprecated
     public Builder(RetryOptions options) {
       this.options = options; 
     }
@@ -377,6 +380,10 @@ public class RetryOptions implements Serializable {
    */
   public Builder toBuilder() {
     return new Builder(this.clone());
+  }
+  
+  public static Builder builder() {
+    return new Builder();
   }
   
   protected RetryOptions clone() {
