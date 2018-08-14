@@ -79,7 +79,7 @@ public class RetryOptions implements Serializable {
   public static final int DEFAULT_MAX_SCAN_TIMEOUT_RETRIES = 3;
   
   public static RetryOptions getDefaultOptions() {
-  	return new Builder().build();
+  	return builder().build();
   }
     
   /**
@@ -118,14 +118,14 @@ public class RetryOptions implements Serializable {
     /**
      * Enable or disable retry on deadline exceeded.
      */
-		public Builder setRetryOnDeadlineExceeded(boolean enabled) {
-			if (enabled) {
-				options.statusToRetryOn.add(Status.Code.DEADLINE_EXCEEDED);
-			} else {
-				options.statusToRetryOn.remove(Status.Code.DEADLINE_EXCEEDED);
-			}
-			return this;
-		}
+    public Builder setRetryOnDeadlineExceeded(boolean enabled) {
+      if (enabled) {
+        options.statusToRetryOn.add(Status.Code.DEADLINE_EXCEEDED);
+      } else {
+        options.statusToRetryOn.remove(Status.Code.DEADLINE_EXCEEDED);
+      }
+      return this;
+    }
 
     /**
      * The amount of time in milliseconds we will wait for our first error retry.
