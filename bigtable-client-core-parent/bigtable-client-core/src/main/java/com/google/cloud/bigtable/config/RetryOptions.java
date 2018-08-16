@@ -81,7 +81,11 @@ public class RetryOptions implements Serializable {
   public static RetryOptions getDefaultOptions() {
   	return builder().build();
   }
-    
+  
+  public static Builder builder() {
+    return new Builder();
+  }
+  
   /**
    * A Builder for ChannelOptions objects.
    */
@@ -102,9 +106,8 @@ public class RetryOptions implements Serializable {
     	options.statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
    }
 
-    @Deprecated
     public Builder(RetryOptions options) {
-      this.options = options; 
+      this.options = options.clone(); 
     }
 
     /**
@@ -220,6 +223,7 @@ public class RetryOptions implements Serializable {
    * @param maxScanTimeoutRetries a int.
    * @param statusToRetryOn a Set.
    */
+  @Deprecated
   public RetryOptions(
       boolean retriesEnabled,
       boolean allowRetriesWithoutTimestamp,
@@ -379,7 +383,7 @@ public class RetryOptions implements Serializable {
    * @return a {@link com.google.cloud.bigtable.config.RetryOptions.Builder} object.
    */
   public Builder toBuilder() {
-    return new Builder(this.clone());
+    return new Builder(this);
   }
   
   public static Builder builder() {
