@@ -386,10 +386,6 @@ public class RetryOptions implements Serializable {
     return new Builder(this);
   }
   
-  public static Builder builder() {
-    return new Builder();
-  }
-  
   protected RetryOptions clone() {
   	try {
       return (RetryOptions) super.clone();
