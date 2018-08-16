@@ -154,7 +154,8 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
   @Test
   public void testGetTableDescriptor_nullTable() throws Exception {
     // This breaks the minicluster, for some reason, so only run it for Cloud Bigtable.
-    Assume.assumeTrue(SharedTestEnvRule.getInstance().isBigtable());
+    Assume.assumeTrue("HBase asyncAdmin.getDescriptor(null) seems to break the mini-cluster",
+        SharedTestEnvRule.getInstance().isBigtable());
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     assertEquals(null, asyncAdmin.getDescriptor(null).get());
   }
