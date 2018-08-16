@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.hamcrest.core.IsInstanceOf;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -152,12 +153,11 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
 
   @Test
   public void testGetTableDescriptor_nullTable() throws Exception {
-    // This breaks the minicluster, for some reason.
-    if (SharedTestEnvRule.getInstance().isBigtable()) {
-      AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
-      assertEquals(null, asyncAdmin.getDescriptor(null).get());
-    }
-  }  
+    // This breaks the minicluster, for some reason, so only run it for Cloud Bigtable.
+    Assume.assumeTrue(SharedTestEnvRule.getInstance().isBigtable());
+    AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
+    assertEquals(null, asyncAdmin.getDescriptor(null).get());
+  }
 
   @Test
   public void testCreateTableWithNumRegions_exception() throws Exception {
