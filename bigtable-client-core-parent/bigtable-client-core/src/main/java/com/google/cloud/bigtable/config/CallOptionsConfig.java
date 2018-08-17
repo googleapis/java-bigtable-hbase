@@ -51,6 +51,7 @@ public class CallOptionsConfig implements Serializable {
   public static Builder builder() {
     return new Builder();
   }
+  
   public static class Builder {
     private boolean useTimeout = USE_TIMEOUT_DEFAULT;
     private int shortRpcTimeoutMs = SHORT_TIMEOUT_MS_DEFAULT;
