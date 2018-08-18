@@ -48,11 +48,16 @@ public class CallOptionsConfig implements Serializable {
    */
   public static final int LONG_TIMEOUT_MS_DEFAULT = 600_000;
 
+  public static Builder builder() {
+    return new Builder();
+  }
+  
   public static class Builder {
     private boolean useTimeout = USE_TIMEOUT_DEFAULT;
     private int shortRpcTimeoutMs = SHORT_TIMEOUT_MS_DEFAULT;
     private int longRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
 
+    @Deprecated
     public Builder() {
     }
 
@@ -120,6 +125,7 @@ public class CallOptionsConfig implements Serializable {
    * @param unaryRpcTimeoutMs an int.
    * @param longRpcTimeoutMs an int.
    */
+  @Deprecated
   public CallOptionsConfig(boolean useTimeout, int unaryRpcTimeoutMs, int longRpcTimeoutMs) {
     this.useTimeout = useTimeout;
     this.shortRpcTimeoutMs = unaryRpcTimeoutMs;
