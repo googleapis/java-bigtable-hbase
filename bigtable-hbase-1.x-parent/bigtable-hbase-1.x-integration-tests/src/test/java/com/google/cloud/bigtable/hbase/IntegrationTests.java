@@ -51,7 +51,8 @@ import org.junit.runners.Suite;
     TestListTables.class,
     TestPut.class,
     TestTimestamp.class,
-    TestTruncateTable.class
+    TestTruncateTable.class,
+    TestModifyTable.class
 })
 public class IntegrationTests {
   private static final int TIME_OUT_MINUTES =

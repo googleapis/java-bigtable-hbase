@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -25,18 +26,19 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
@@ -360,15 +362,82 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public void modifyTable(TableDescriptor arg0) throws IOException {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
+  public void modifyTable(TableDescriptor tableDescriptor) throws IOException {
+    modifyTable(tableDescriptor.getTableName(), tableDescriptor);
   }
 
   @Override
-  public void modifyTable(TableName arg0, TableDescriptor arg1) throws IOException {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
+  public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
+    //Check table exists or not
+    if(isTableAvailable(tableName)) {
+      //To create or modify family 
+      modifyFamilies(tableName,tableDescriptor);
+      //To delete family
+      deleteFamilies(tableName,tableDescriptor);
+    }else {
+      throw new TableNotFoundException(tableName);
+    }
+    
   }
 
+  /**
+   * This method will either create or modify family.
+   * 
+   * @param tableName
+   * @param tableDescriptor
+   * @throws IOException
+   */
+  private void modifyFamilies(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
+    TableDescriptor currentTableDescriptor = getTableDescriptor(tableName);
+    // Compare existing TableDescriptor with new TableDescriptor
+    List<ColumnFamilyDescriptor> descriptors = Arrays.asList(tableDescriptor.getColumnFamilies());
+    Consumer<ColumnFamilyDescriptor> columnFamilyDescriptors = colFamilyDesc -> {
+      if (currentTableDescriptor.hasColumnFamily(colFamilyDesc.getName())) {
+        // call modify family RPC
+        try {
+          modifyColumnFamily(tableName, colFamilyDesc);
+        } catch (IOException ioException) {
+          throw new UncheckedIOException(String.format("Failed to modify column family '%s' in table '%s'",
+              colFamilyDesc.getName(), tableName.getNameAsString()), ioException);
+        }
+      } else {
+        // call add family RPC
+        try {
+          addColumnFamily(tableName, colFamilyDesc);
+        } catch (IOException ioException) {
+          throw new UncheckedIOException(String.format("Failed to add column family '%s' in table '%s'",
+              colFamilyDesc.getName(), tableName.getNameAsString()), ioException);
+        }
+      }
+
+    };
+    descriptors.forEach(columnFamilyDescriptors);
+  }
+  
+  /**
+   * This method will delete families 
+   * 
+   * @param tableName
+   * @param tableDescriptor
+   * @throws IOException
+   */
+  private void deleteFamilies(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
+    // Delete column families which are no more exists
+    TableDescriptor updatedTableDescriptor = getTableDescriptor(tableName);
+    List<ColumnFamilyDescriptor> newdescriptors = Arrays.asList(updatedTableDescriptor.getColumnFamilies());
+    Consumer<ColumnFamilyDescriptor> updatedcolFamilyDescriptors = colFamilyDesc -> {
+      if (!tableDescriptor.hasColumnFamily(colFamilyDesc.getName())) {
+        try {
+          deleteColumnFamily(tableName, colFamilyDesc.getName());
+        } catch (IOException ioException) {
+          throw new UncheckedIOException(String.format("Failed to delete column family '%s' in table '%s'",
+              colFamilyDesc.getName(), tableName.getNameAsString()), ioException);
+        }
+      }
+    };
+    newdescriptors.forEach(updatedcolFamilyDescriptors);
+  }
+  
   @Override
   public Future<Void> modifyTableAsync(TableDescriptor arg0) throws IOException {
     // TODO - implementable with async hbase2

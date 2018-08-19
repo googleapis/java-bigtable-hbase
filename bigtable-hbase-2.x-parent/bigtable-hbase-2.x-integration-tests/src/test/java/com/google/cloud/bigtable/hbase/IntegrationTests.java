@@ -73,7 +73,8 @@ import java.util.concurrent.TimeUnit;
     TestBasicAsyncOps.class,
     TestAsyncTruncateTable.class,
     TestAsyncSnapshots.class,
-    TestAsyncColumnFamily.class
+    TestAsyncColumnFamily.class,
+    TestModifyTable.class
 })
 public class IntegrationTests {
 
