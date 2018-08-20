@@ -92,7 +92,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.auth</groupId>
             <artifactId>google-auth-library-oauth2-http</artifactId>
-            <version>${google-auth.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
