@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -60,8 +61,8 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
   @Override
   protected void deleteTable(Admin admin, TableName tableName) throws Exception {
     if (enableAsyncDelete) {
-      admin.disableTableAsync(tableName).get();
-      admin.deleteTableAsync(tableName).get();
+      admin.disableTableAsync(tableName).get(10, TimeUnit.SECONDS);
+      admin.deleteTableAsync(tableName).get(10, TimeUnit.SECONDS);
     } else {
       super.deleteTable(admin, tableName);
     }

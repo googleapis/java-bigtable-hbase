@@ -52,7 +52,9 @@ public abstract class AbstractTestListTables extends AbstractTest {
     try (Admin admin = getConnection().getAdmin()) {
       for (TableName tableName : tablesToDelete) {
         if (admin.tableExists(tableName)) {
-          admin.disableTable(tableName);
+          if (admin.isTableEnabled(tableName)) {
+            admin.disableTable(tableName);
+          }
           admin.deleteTable(tableName);
         }
       }
