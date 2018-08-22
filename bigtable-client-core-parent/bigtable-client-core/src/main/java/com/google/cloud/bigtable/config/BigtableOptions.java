@@ -69,9 +69,12 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   public static BigtableOptions getDefaultOptions() {
-    return new Builder().build();
+    return builder().build();
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
   /**
    * A mutable builder for BigtableConnectionOptions.
    */
@@ -79,6 +82,7 @@ public class BigtableOptions implements Serializable, Cloneable {
 
     private BigtableOptions options = new BigtableOptions();
 
+    @Deprecated
     public Builder() {
       options = new BigtableOptions();
       options.appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
