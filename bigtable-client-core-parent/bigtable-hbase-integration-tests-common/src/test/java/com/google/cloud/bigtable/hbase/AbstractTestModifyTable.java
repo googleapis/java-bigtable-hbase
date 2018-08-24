@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -24,8 +24,6 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
@@ -43,19 +41,12 @@ public abstract class AbstractTestModifyTable extends AbstractTest {
     sharedTestEnv.createTable(tableName);
     try(Admin admin = getConnection().getAdmin();
         Table table = getConnection().getTable(tableName)) {
-      byte[] rowKey = dataHelper.randomData("testrow-");
-      byte[] qual = dataHelper.randomData("qual-");
-      byte[] value = dataHelper.randomData("value-");
-      Put put = new Put(rowKey);
-      put.addColumn(COLUMN_FAMILY, qual, 1L, value);
-      put.addColumn(COLUMN_FAMILY, qual, 2L, value);
-      table.put(put);
-      assertTrue(table.exists(new Get(rowKey)));
       HTableDescriptor descriptor = new HTableDescriptor(tableName);
       descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY2));
       modifyTable(descriptor);
       assertTrue(admin.tableExists(tableName));
       assertTrue(admin.getTableDescriptor(tableName).hasFamily(COLUMN_FAMILY2));
+      assertEquals(1, admin.getTableDescriptor(tableName).getColumnFamilies().length);
       admin.disableTable(tableName);
       admin.deleteTable(tableName);
     }

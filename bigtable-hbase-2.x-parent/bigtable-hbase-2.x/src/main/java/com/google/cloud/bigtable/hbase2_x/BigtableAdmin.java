@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -368,71 +367,67 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
-    //Check table exists or not
     if(isTableAvailable(tableName)) {
-      //To create or modify family 
-      modifyFamilies(tableName,tableDescriptor);
-      //To delete family
-      deleteFamilies(tableName,tableDescriptor);
+      List<Modification> modifications = new ArrayList<>();
+      buildModificationsForModifyFamilies(tableName,tableDescriptor,modifications);
+      buildModifcationsForDeleteFamilies(tableName,tableDescriptor,modifications);
+      modifyColumn(tableName,"modifyTable","update",(Modification[]) modifications.toArray());
     }else {
       throw new TableNotFoundException(tableName);
     }
-    
   }
 
   /**
-   * This method will either create or modify family.
+   * This method will build list of either create or modify Modifications objects..
    * 
    * @param tableName
    * @param tableDescriptor
+   * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
    * @throws IOException
    */
-  private void modifyFamilies(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
+  private void buildModificationsForModifyFamilies(TableName tableName, TableDescriptor tableDescriptor,List<Modification> modifications) throws IOException {
     TableDescriptor currentTableDescriptor = getTableDescriptor(tableName);
-    // Compare existing TableDescriptor with new TableDescriptor
     List<ColumnFamilyDescriptor> descriptors = Arrays.asList(tableDescriptor.getColumnFamilies());
     Consumer<ColumnFamilyDescriptor> columnFamilyDescriptors = colFamilyDesc -> {
       if (currentTableDescriptor.hasColumnFamily(colFamilyDesc.getName())) {
-        // call modify family RPC
-        try {
-          modifyColumnFamily(tableName, colFamilyDesc);
-        } catch (IOException ioException) {
-          throw new UncheckedIOException(String.format("Failed to modify column family '%s' in table '%s'",
-              colFamilyDesc.getName(), tableName.getNameAsString()), ioException);
-        }
+          Modification modification = Modification
+              .newBuilder()
+              .setId(colFamilyDesc.getNameAsString())
+              .setUpdate(tableAdapter2x.toColumnFamily(colFamilyDesc))
+              .build();
+          modifications.add(modification);
       } else {
-        // call add family RPC
-        try {
-          addColumnFamily(tableName, colFamilyDesc);
-        } catch (IOException ioException) {
-          throw new UncheckedIOException(String.format("Failed to add column family '%s' in table '%s'",
-              colFamilyDesc.getName(), tableName.getNameAsString()), ioException);
-        }
+          Modification modification = Modification
+              .newBuilder()
+              .setId(colFamilyDesc.getNameAsString())
+              .setCreate(tableAdapter2x.toColumnFamily(colFamilyDesc))
+              .build();
+          modifications.add(modification);
       }
-
     };
     descriptors.forEach(columnFamilyDescriptors);
   }
   
   /**
-   * This method will delete families 
+   * This method will build list of delete Modifications objects. 
    * 
    * @param tableName
    * @param tableDescriptor
+   * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
    * @throws IOException
    */
-  private void deleteFamilies(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
+  private void buildModifcationsForDeleteFamilies(TableName tableName, TableDescriptor tableDescriptor,List<Modification> modifications) throws IOException {
     // Delete column families which are no more exists
     TableDescriptor updatedTableDescriptor = getTableDescriptor(tableName);
     List<ColumnFamilyDescriptor> newdescriptors = Arrays.asList(updatedTableDescriptor.getColumnFamilies());
     Consumer<ColumnFamilyDescriptor> updatedcolFamilyDescriptors = colFamilyDesc -> {
       if (!tableDescriptor.hasColumnFamily(colFamilyDesc.getName())) {
-        try {
-          deleteColumnFamily(tableName, colFamilyDesc.getName());
-        } catch (IOException ioException) {
-          throw new UncheckedIOException(String.format("Failed to delete column family '%s' in table '%s'",
-              colFamilyDesc.getName(), tableName.getNameAsString()), ioException);
-        }
+          Modification modification = Modification
+              .newBuilder()
+              .setId(colFamilyDesc.getNameAsString())
+              .setDrop(true)
+              .build();
+          modifications.add(modification);
       }
     };
     newdescriptors.forEach(updatedcolFamilyDescriptors);
