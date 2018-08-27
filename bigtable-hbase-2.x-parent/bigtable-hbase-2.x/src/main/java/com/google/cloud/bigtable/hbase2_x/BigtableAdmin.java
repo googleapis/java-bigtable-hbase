@@ -25,12 +25,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionMetrics;
@@ -368,69 +368,24 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
     if(isTableAvailable(tableName)) {
+      TableDescriptor currentTableDescriptor = getTableDescriptor(tableName);
       List<Modification> modifications = new ArrayList<>();
-      buildModificationsForModifyFamilies(tableName,tableDescriptor,modifications);
-      buildModifcationsForDeleteFamilies(tableName,tableDescriptor,modifications);
+      List<HColumnDescriptor> columnDescriptors = toHColumnDescriptors(tableDescriptor);
+      List<HColumnDescriptor> currentColumnDescriptors = toHColumnDescriptors(currentTableDescriptor);
+      buildModificationsForModifyFamilies(tableName,columnDescriptors,currentColumnDescriptors);
+      buildModifcationsForDeleteFamilies(tableName,columnDescriptors,currentColumnDescriptors);
       modifyColumn(tableName,"modifyTable","update",(Modification[]) modifications.toArray());
     }else {
       throw new TableNotFoundException(tableName);
     }
   }
 
-  /**
-   * This method will build list of either create or modify Modifications objects..
-   * 
-   * @param tableName
-   * @param tableDescriptor
-   * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
-   * @throws IOException
-   */
-  private void buildModificationsForModifyFamilies(TableName tableName, TableDescriptor tableDescriptor,List<Modification> modifications) throws IOException {
-    TableDescriptor currentTableDescriptor = getTableDescriptor(tableName);
-    List<ColumnFamilyDescriptor> descriptors = Arrays.asList(tableDescriptor.getColumnFamilies());
-    Consumer<ColumnFamilyDescriptor> columnFamilyDescriptors = colFamilyDesc -> {
-      if (currentTableDescriptor.hasColumnFamily(colFamilyDesc.getName())) {
-          Modification modification = Modification
-              .newBuilder()
-              .setId(colFamilyDesc.getNameAsString())
-              .setUpdate(tableAdapter2x.toColumnFamily(colFamilyDesc))
-              .build();
-          modifications.add(modification);
-      } else {
-          Modification modification = Modification
-              .newBuilder()
-              .setId(colFamilyDesc.getNameAsString())
-              .setCreate(tableAdapter2x.toColumnFamily(colFamilyDesc))
-              .build();
-          modifications.add(modification);
-      }
-    };
-    descriptors.forEach(columnFamilyDescriptors);
-  }
-  
-  /**
-   * This method will build list of delete Modifications objects. 
-   * 
-   * @param tableName
-   * @param tableDescriptor
-   * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
-   * @throws IOException
-   */
-  private void buildModifcationsForDeleteFamilies(TableName tableName, TableDescriptor tableDescriptor,List<Modification> modifications) throws IOException {
-    // Delete column families which are no more exists
-    TableDescriptor updatedTableDescriptor = getTableDescriptor(tableName);
-    List<ColumnFamilyDescriptor> newdescriptors = Arrays.asList(updatedTableDescriptor.getColumnFamilies());
-    Consumer<ColumnFamilyDescriptor> updatedcolFamilyDescriptors = colFamilyDesc -> {
-      if (!tableDescriptor.hasColumnFamily(colFamilyDesc.getName())) {
-          Modification modification = Modification
-              .newBuilder()
-              .setId(colFamilyDesc.getNameAsString())
-              .setDrop(true)
-              .build();
-          modifications.add(modification);
-      }
-    };
-    newdescriptors.forEach(updatedcolFamilyDescriptors);
+  private List<HColumnDescriptor> toHColumnDescriptors(TableDescriptor tableDescriptor) {
+    List<HColumnDescriptor> columnDescriptors = new ArrayList<>();
+    for(ColumnFamilyDescriptor columnFamilyDescriptor : tableDescriptor.getColumnFamilies()) {
+      columnDescriptors.add(tableAdapter2x.toHColumnDescriptor(columnFamilyDescriptor));
+    }
+    return columnDescriptors;
   }
   
   @Override
@@ -873,5 +828,23 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public Future<Void> updateReplicationPeerConfigAsync(String s,
       ReplicationPeerConfig replicationPeerConfig) {
     throw new UnsupportedOperationException("updateReplicationPeerConfigAsync"); // TODO
+  }
+
+  @Override
+  protected Modification getModificationUpdate(HColumnDescriptor colFamilyDesc) {
+    return Modification
+        .newBuilder()
+        .setId(colFamilyDesc.getNameAsString())
+        .setUpdate(tableAdapter2x.toColumnFamily(colFamilyDesc))
+        .build();
+  }
+
+  @Override
+  protected Modification getModificationCreate(HColumnDescriptor colFamilyDesc) {
+    return Modification
+        .newBuilder()
+        .setId(colFamilyDesc.getNameAsString())
+        .setCreate(tableAdapter2x.toColumnFamily(colFamilyDesc))
+        .build();
   }
 }

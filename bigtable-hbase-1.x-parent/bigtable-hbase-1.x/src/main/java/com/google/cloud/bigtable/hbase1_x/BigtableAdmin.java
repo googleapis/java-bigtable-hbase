@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase1_x;
 
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.cloud.bigtable.grpc.BigtableSnapshotName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -27,6 +28,8 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
@@ -299,5 +302,23 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public boolean[] setSplitOrMergeEnabled(boolean arg0, boolean arg1, MasterSwitchType... arg2)
       throws IOException {
     throw new UnsupportedOperationException("setSplitOrMergeEnabled"); // TODO
+  }
+
+  @Override
+  protected Modification getModificationUpdate(HColumnDescriptor colFamilyDesc) throws IOException{
+    return Modification
+        .newBuilder()
+        .setId(colFamilyDesc.getNameAsString())
+        .setUpdate(tableAdapter.toColumnFamily(colFamilyDesc))
+        .build();
+  }
+
+  @Override
+  protected Modification getModificationCreate(HColumnDescriptor colFamilyDesc) throws IOException{
+    return Modification
+        .newBuilder()
+        .setId(colFamilyDesc.getNameAsString())
+        .setCreate(tableAdapter.toColumnFamily(colFamilyDesc))
+        .build();
   }
 }
