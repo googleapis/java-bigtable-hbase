@@ -77,6 +77,10 @@ public class BulkOptions implements Serializable {
   public static final long BIGTABLE_MAX_MEMORY_DEFAULT =
       (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
 
+  public static Builder builder() {
+    return new Builder();
+  }
+  
   /**
    * A mutable builder for BigtableConnectionOptions.
    */
@@ -92,6 +96,7 @@ public class BulkOptions implements Serializable {
     private boolean enableBulkMutationThrottling = BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT;
     private int bulkMutationRpcTargetMs = BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
 
+    @Deprecated
     public Builder() {
     }
 
