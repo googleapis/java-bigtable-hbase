@@ -367,13 +367,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
+    System.out.println("********************* IN modifyTable ***********************");
     if (isTableAvailable(tableName)) {
       TableDescriptor currentTableDescriptor = getTableDescriptor(tableName);
       List<Modification> modifications = new ArrayList<>();
       List<HColumnDescriptor> columnDescriptors = toHColumnDescriptors(tableDescriptor);
       List<HColumnDescriptor> currentColumnDescriptors = toHColumnDescriptors(currentTableDescriptor);
-      buildModificationsForModifyFamilies(tableName, columnDescriptors, currentColumnDescriptors);
-      buildModifcationsForDeleteFamilies(tableName, columnDescriptors, currentColumnDescriptors);
+      modifications.addAll(tableModificationAdapter.buildModificationsForModifyFamilies(columnDescriptors, currentColumnDescriptors));
+      modifications.addAll(tableModificationAdapter.buildModifcationsForDeleteFamilies(columnDescriptors, currentColumnDescriptors));
       modifyColumn(tableName, "modifyTable", "update", (Modification[]) modifications.toArray());
     } else {
       throw new TableNotFoundException(tableName);
@@ -828,23 +829,5 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public Future<Void> updateReplicationPeerConfigAsync(String s,
       ReplicationPeerConfig replicationPeerConfig) {
     throw new UnsupportedOperationException("updateReplicationPeerConfigAsync"); // TODO
-  }
-
-  @Override
-  protected Modification getModificationUpdate(HColumnDescriptor colFamilyDesc) {
-    return Modification
-        .newBuilder()
-        .setId(colFamilyDesc.getNameAsString())
-        .setUpdate(tableAdapter2x.toColumnFamily(colFamilyDesc))
-        .build();
-  }
-
-  @Override
-  protected Modification getModificationCreate(HColumnDescriptor colFamilyDesc) {
-    return Modification
-        .newBuilder()
-        .setId(colFamilyDesc.getNameAsString())
-        .setCreate(tableAdapter2x.toColumnFamily(colFamilyDesc))
-        .build();
   }
 }

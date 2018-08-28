@@ -22,7 +22,6 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-@SuppressWarnings("deprecation")
 @RunWith(JUnit4.class)
 public class TestModifyTable extends AbstractTestModifyTable {
 

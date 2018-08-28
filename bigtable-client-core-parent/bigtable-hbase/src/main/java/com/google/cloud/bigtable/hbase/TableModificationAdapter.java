@@ -20,25 +20,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.TableName;
 
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
+import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 
-public abstract class AbstractBigtableModifyTable {
+public class TableModificationAdapter {
 
+  private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
+  
   /**
    * This method will build list of either create or modify Modifications objects..
    * 
-   * @param tableName
    * @param tableDescriptor
    * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
    * @throws IOException
    */
-  protected List<Modification> buildModificationsForModifyFamilies(TableName tableName,
-      List<HColumnDescriptor> modifyColumnDescriptors, List<HColumnDescriptor> currentColumnDescriptors)
+  public List<Modification> buildModificationsForModifyFamilies(List<HColumnDescriptor> modifyColumnDescriptors, List<HColumnDescriptor> currentColumnDescriptors)
       throws IOException {
     final List<Modification> modifications = new ArrayList<>();
-    List<String> currentColumnNames = getAllColumnDescritpors(currentColumnDescriptors);
+    List<String> currentColumnNames = getAllColumnDescritptors(currentColumnDescriptors);
 
     for (HColumnDescriptor hColumnDescriptor : modifyColumnDescriptors) {
       if (currentColumnNames.contains(hColumnDescriptor.getNameAsString())) {
@@ -52,7 +52,7 @@ public abstract class AbstractBigtableModifyTable {
     return modifications;
   }
 
-  private List<String> getAllColumnDescritpors(List<HColumnDescriptor> columnDescriptors) {
+  private List<String> getAllColumnDescritptors(List<HColumnDescriptor> columnDescriptors) {
     List<String> names = new ArrayList<>();
     for (HColumnDescriptor hColumnDescriptor : columnDescriptors) {
       names.add(hColumnDescriptor.getNameAsString());
@@ -63,15 +63,13 @@ public abstract class AbstractBigtableModifyTable {
   /**
    * This method will build list of delete Modifications objects.
    * 
-   * @param tableName
    * @param tableDescriptor
    * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
    * @throws IOException
    */
-  protected List<Modification> buildModifcationsForDeleteFamilies(TableName tableName,
-      List<HColumnDescriptor> tableDescriptor, List<HColumnDescriptor> currentColumnDescriptors) throws IOException {
+  public List<Modification> buildModifcationsForDeleteFamilies(List<HColumnDescriptor> tableDescriptor, List<HColumnDescriptor> currentColumnDescriptors) throws IOException {
     final List<Modification> modifications = new ArrayList<>();
-    List<String> requestedColumnNames = getAllColumnDescritpors(tableDescriptor);
+    List<String> requestedColumnNames = getAllColumnDescritptors(tableDescriptor);
 
     for (HColumnDescriptor hColumnDescriptor : currentColumnDescriptors) {
       if (!requestedColumnNames.contains(hColumnDescriptor.getNameAsString())) {
@@ -82,16 +80,27 @@ public abstract class AbstractBigtableModifyTable {
     return modifications;
   }
 
-  protected Modification getModificationDelete(HColumnDescriptor colFamilyDesc) throws IOException {
+  private Modification getModificationUpdate(HColumnDescriptor colFamilyDesc) {
+    return Modification
+        .newBuilder()
+        .setId(colFamilyDesc.getNameAsString())
+        .setUpdate(columnDescriptorAdapter.adapt(colFamilyDesc).build())
+        .build();
+  }
+
+  private Modification getModificationCreate(HColumnDescriptor colFamilyDesc) {
+    return Modification
+        .newBuilder()
+        .setId(colFamilyDesc.getNameAsString())
+        .setCreate(columnDescriptorAdapter.adapt(colFamilyDesc).build())
+        .build();
+  }
+  
+  private Modification getModificationDelete(HColumnDescriptor colFamilyDesc) throws IOException {
     return Modification
         .newBuilder()
         .setId(colFamilyDesc.getNameAsString())
         .setDrop(true)
         .build();
   }
-  
-  protected abstract Modification getModificationUpdate(HColumnDescriptor colFamilyDesc) throws IOException;
-
-  protected abstract Modification getModificationCreate(HColumnDescriptor colFamilyDesc) throws IOException;
-
 }

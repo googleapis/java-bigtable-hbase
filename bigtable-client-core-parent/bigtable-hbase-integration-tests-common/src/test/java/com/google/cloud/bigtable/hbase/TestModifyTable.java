@@ -24,7 +24,7 @@ public class TestModifyTable extends AbstractTestModifyTable {
 
   @Override
   protected void modifyTable(HTableDescriptor descriptor) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       admin.modifyTable(descriptor.getTableName(), descriptor);
     }
   }

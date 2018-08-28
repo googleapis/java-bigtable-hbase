@@ -33,7 +33,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
-import com.google.cloud.bigtable.hbase.AbstractBigtableModifyTable;
+import com.google.cloud.bigtable.hbase.TableModificationAdapter;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
@@ -89,7 +89,7 @@ import java.util.regex.Pattern;
  * @version $Id: $Id
  */
 @SuppressWarnings("deprecation")
-public abstract class AbstractBigtableAdmin extends AbstractBigtableModifyTable implements Admin {
+public abstract class AbstractBigtableAdmin implements Admin {
 
   protected final Logger LOG = new Logger(getClass());
 
@@ -110,7 +110,8 @@ public abstract class AbstractBigtableAdmin extends AbstractBigtableModifyTable 
   private BigtableClusterName bigtableSnapshotClusterName;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
   protected final TableAdapter tableAdapter;
-
+  protected final TableModificationAdapter tableModificationAdapter = new TableModificationAdapter();
+  
   /**
    * <p>
    * Constructor for AbstractBigtableAdmin.
@@ -1235,7 +1236,7 @@ public abstract class AbstractBigtableAdmin extends AbstractBigtableModifyTable 
 
   /** {@inheritDoc} */
   @Override
-  public void modifyTable(TableName tableName, HTableDescriptor htd) throws IOException {
+  public void modifyTable(TableName tableName, HTableDescriptor hTableDescriptor) throws IOException {
     throw new UnsupportedOperationException("modifyTable");  // TODO
   }
 
