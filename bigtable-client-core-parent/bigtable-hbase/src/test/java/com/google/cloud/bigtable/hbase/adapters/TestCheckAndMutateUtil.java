@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.protobuf.ByteString;
@@ -28,7 +28,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;

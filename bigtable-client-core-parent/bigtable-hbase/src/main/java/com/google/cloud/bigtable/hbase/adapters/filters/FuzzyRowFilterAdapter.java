@@ -15,25 +15,22 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.QuoteMetaOutputStream;
+import com.google.common.base.Preconditions;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
-
-import com.google.cloud.bigtable.config.Logger;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
-
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
-
-import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.InterleaveFilter;
-import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.QuoteMetaOutputStream;
-import com.google.common.base.Preconditions;
 
 /**
  * An adapter for {@link org.apache.hadoop.hbase.filter.FuzzyRowFilter}.
