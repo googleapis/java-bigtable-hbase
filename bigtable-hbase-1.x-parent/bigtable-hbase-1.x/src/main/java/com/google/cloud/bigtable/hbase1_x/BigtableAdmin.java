@@ -15,6 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase1_x;
 
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
+import com.google.bigtable.admin.v2.Snapshot;
+import com.google.cloud.bigtable.grpc.BigtableSnapshotName;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,13 +46,6 @@ import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
-
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.cloud.bigtable.grpc.BigtableSnapshotName;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.common.util.concurrent.Futures;
 
 /**
  * This is an hbase 1.x implementation of {@link AbstractBigtableAdmin}. Most methods in this class

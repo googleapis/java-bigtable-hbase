@@ -1236,7 +1236,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
-  public void modifyTable(TableName tableName, HTableDescriptor hTableDescriptor) throws IOException {
+  public void modifyTable(TableName tableName, HTableDescriptor htd) throws IOException {
     throw new UnsupportedOperationException("modifyTable");  // TODO
   }
 

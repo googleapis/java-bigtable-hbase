@@ -71,7 +71,7 @@ public class TableAdapter2x {
     return columnDescriptorAdapter.adapt(toHColumnDescriptor(column)).build();
   }
 
-  public HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor column) {
+  private HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor column) {
     //TODO: verify if this copy is sufficient
     HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(column.getNameAsString());
     // TODO - copy the config and value Maps
