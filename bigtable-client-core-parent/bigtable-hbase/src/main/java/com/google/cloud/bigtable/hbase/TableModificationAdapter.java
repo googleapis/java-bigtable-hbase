@@ -17,7 +17,9 @@ package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 
@@ -35,10 +37,10 @@ public class TableModificationAdapter {
    * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
    * @throws IOException
    */
-  public List<Modification> buildModificationsForModifyFamilies(List<HColumnDescriptor> modifyColumnDescriptors, List<HColumnDescriptor> currentColumnDescriptors)
+  public List<Modification> buildModifications(List<HColumnDescriptor> modifyColumnDescriptors, List<HColumnDescriptor> currentColumnDescriptors)
       throws IOException {
     final List<Modification> modifications = new ArrayList<>();
-    List<String> currentColumnNames = getAllColumnDescritptors(currentColumnDescriptors);
+    Set<String> currentColumnNames = getAllColumnDescriptors(currentColumnDescriptors);
 
     for (HColumnDescriptor hColumnDescriptor : modifyColumnDescriptors) {
       if (currentColumnNames.contains(hColumnDescriptor.getNameAsString())) {
@@ -49,11 +51,12 @@ public class TableModificationAdapter {
         modifications.add(modification);
       }
     }
+    modifications.addAll(buildModifcationsForDeleteFamilies(modifyColumnDescriptors,currentColumnDescriptors));
     return modifications;
   }
 
-  private List<String> getAllColumnDescritptors(List<HColumnDescriptor> columnDescriptors) {
-    List<String> names = new ArrayList<>();
+  private Set<String> getAllColumnDescriptors(List<HColumnDescriptor> columnDescriptors) {
+    Set<String> names = new HashSet<>();
     for (HColumnDescriptor hColumnDescriptor : columnDescriptors) {
       names.add(hColumnDescriptor.getNameAsString());
     }
@@ -67,9 +70,9 @@ public class TableModificationAdapter {
    * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
    * @throws IOException
    */
-  public List<Modification> buildModifcationsForDeleteFamilies(List<HColumnDescriptor> tableDescriptor, List<HColumnDescriptor> currentColumnDescriptors) throws IOException {
+  private List<Modification> buildModifcationsForDeleteFamilies(List<HColumnDescriptor> tableDescriptor, List<HColumnDescriptor> currentColumnDescriptors) throws IOException {
     final List<Modification> modifications = new ArrayList<>();
-    List<String> requestedColumnNames = getAllColumnDescritptors(tableDescriptor);
+    Set<String> requestedColumnNames = getAllColumnDescriptors(tableDescriptor);
 
     for (HColumnDescriptor hColumnDescriptor : currentColumnDescriptors) {
       if (!requestedColumnNames.contains(hColumnDescriptor.getNameAsString())) {

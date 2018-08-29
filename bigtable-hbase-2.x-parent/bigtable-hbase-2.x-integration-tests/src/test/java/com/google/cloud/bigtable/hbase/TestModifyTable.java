@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -28,7 +29,7 @@ public class TestModifyTable extends AbstractTestModifyTable {
   @Override
   protected void modifyTable(HTableDescriptor descriptor) throws IOException {
     try(Admin admin = getConnection().getAdmin()) {
-      admin.modifyTable(descriptor);
+      admin.modifyTable((TableDescriptor)descriptor);
     }
   }
 }

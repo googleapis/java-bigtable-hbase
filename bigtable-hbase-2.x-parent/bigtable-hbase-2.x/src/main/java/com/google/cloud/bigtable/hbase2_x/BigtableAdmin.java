@@ -367,26 +367,16 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
-    System.out.println("********************* IN modifyTable ***********************");
     if (isTableAvailable(tableName)) {
       TableDescriptor currentTableDescriptor = getTableDescriptor(tableName);
       List<Modification> modifications = new ArrayList<>();
-      List<HColumnDescriptor> columnDescriptors = toHColumnDescriptors(tableDescriptor);
-      List<HColumnDescriptor> currentColumnDescriptors = toHColumnDescriptors(currentTableDescriptor);
-      modifications.addAll(tableModificationAdapter.buildModificationsForModifyFamilies(columnDescriptors, currentColumnDescriptors));
-      modifications.addAll(tableModificationAdapter.buildModifcationsForDeleteFamilies(columnDescriptors, currentColumnDescriptors));
+      List<HColumnDescriptor> columnDescriptors = tableAdapter2x.toHColumnDescriptors(tableDescriptor);
+      List<HColumnDescriptor> currentColumnDescriptors = tableAdapter2x.toHColumnDescriptors(currentTableDescriptor);
+      modifications.addAll(tableModificationAdapter.buildModifications(columnDescriptors, currentColumnDescriptors));
       modifyColumn(tableName, "modifyTable", "update", (Modification[]) modifications.toArray());
     } else {
       throw new TableNotFoundException(tableName);
     }
-  }
-
-  private List<HColumnDescriptor> toHColumnDescriptors(TableDescriptor tableDescriptor) {
-    List<HColumnDescriptor> columnDescriptors = new ArrayList<>();
-    for (ColumnFamilyDescriptor columnFamilyDescriptor : tableDescriptor.getColumnFamilies()) {
-      columnDescriptors.add(tableAdapter2x.toHColumnDescriptor(columnFamilyDescriptor));
-    }
-    return columnDescriptors;
   }
   
   @Override

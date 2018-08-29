@@ -15,11 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase2_x.adapters.admin;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.bigtable.admin.v2.CreateTableRequest;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -83,6 +84,14 @@ public class TableAdapter2x {
     return hColumnDescriptor;
   }
 
+  public List<HColumnDescriptor> toHColumnDescriptors(TableDescriptor tableDescriptor) {
+    List<HColumnDescriptor> columnDescriptors = new ArrayList<>();
+    for (ColumnFamilyDescriptor columnFamilyDescriptor : tableDescriptor.getColumnFamilies()) {
+      columnDescriptors.add(toHColumnDescriptor(columnFamilyDescriptor));
+    }
+    return columnDescriptors;
+  }
+  
   /**
    * <p>adapt.</p>
    *
