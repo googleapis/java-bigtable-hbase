@@ -109,7 +109,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private BigtableInstanceName bigtableInstanceName;
   private BigtableClusterName bigtableSnapshotClusterName;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
-  protected final TableAdapter tableAdapter;
+  private final TableAdapter tableAdapter;
   protected final TableModificationAdapter tableModificationAdapter = new TableModificationAdapter();
   
   /**
