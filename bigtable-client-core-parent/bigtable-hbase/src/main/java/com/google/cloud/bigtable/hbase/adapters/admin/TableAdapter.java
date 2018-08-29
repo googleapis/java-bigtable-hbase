@@ -101,8 +101,4 @@ public class TableAdapter {
     }
     return tableDescriptor;
   }
-  
-  public ColumnFamily toColumnFamily(HColumnDescriptor column) {
-    return columnDescriptorAdapter.adapt(column).build();
-  }
 }
