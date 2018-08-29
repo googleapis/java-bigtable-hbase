@@ -33,6 +33,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.hbase.TableModificationAdapter;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
@@ -109,7 +110,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private BigtableClusterName bigtableSnapshotClusterName;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
   private final TableAdapter tableAdapter;
-
+  protected final TableModificationAdapter tableModificationAdapter = new TableModificationAdapter();
+  
   /**
    * <p>
    * Constructor for AbstractBigtableAdmin.

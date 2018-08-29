@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
@@ -360,15 +361,24 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public void modifyTable(TableDescriptor arg0) throws IOException {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
+  public void modifyTable(TableDescriptor tableDescriptor) throws IOException {
+    modifyTable(tableDescriptor.getTableName(), tableDescriptor);
   }
 
   @Override
-  public void modifyTable(TableName arg0, TableDescriptor arg1) throws IOException {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
+  public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
+    if (isTableAvailable(tableName)) {
+      TableDescriptor currentTableDescriptor = getTableDescriptor(tableName);
+      List<Modification> modifications = new ArrayList<>();
+      List<HColumnDescriptor> columnDescriptors = tableAdapter2x.toHColumnDescriptors(tableDescriptor);
+      List<HColumnDescriptor> currentColumnDescriptors = tableAdapter2x.toHColumnDescriptors(currentTableDescriptor);
+      modifications.addAll(tableModificationAdapter.buildModifications(columnDescriptors, currentColumnDescriptors));
+      modifyColumn(tableName, "modifyTable", "update", (Modification[]) modifications.toArray());
+    } else {
+      throw new TableNotFoundException(tableName);
+    }
   }
-
+  
   @Override
   public Future<Void> modifyTableAsync(TableDescriptor arg0) throws IOException {
     // TODO - implementable with async hbase2
