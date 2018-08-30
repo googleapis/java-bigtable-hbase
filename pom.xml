@@ -74,6 +74,7 @@ limitations under the License.
         <mockito.version>1.10.19</mockito.version>
 
         <beam.version>2.5.0</beam.version>
+        <bigtable.version>0.59.0-alpha</bigtable.version>
     </properties>
 
     <distributionManagement>
