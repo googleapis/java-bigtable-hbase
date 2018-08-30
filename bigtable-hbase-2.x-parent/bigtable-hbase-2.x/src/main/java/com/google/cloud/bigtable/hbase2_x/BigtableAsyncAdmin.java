@@ -1130,7 +1130,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   /**
-   * <p>modifyColumn.</p>
+   * <p>modifyColumns.</p>
    *
    * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
    * @param modification an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} objectss

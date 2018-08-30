@@ -25,65 +25,24 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.util.Bytes;
 
 public class TableModificationAdapter {
 
-  private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
-  
-  /**
-   * This method will build list of either create or modify Modifications objects..
-   * 
-   * @param tableDescriptor
-   * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
-   * @throws IOException
-   */
-  public List<Modification> buildModifications(List<HColumnDescriptor> modifyColumnDescriptors, List<HColumnDescriptor> currentColumnDescriptors)
-      throws IOException {
-    final List<Modification> modifications = new ArrayList<>();
-    Set<String> currentColumnNames = getAllColumnDescriptors(currentColumnDescriptors);
+  private final static ColumnDescriptorAdapter columnDescriptorAdapter =
+      new ColumnDescriptorAdapter();
 
-    for (HColumnDescriptor hColumnDescriptor : modifyColumnDescriptors) {
-      if (currentColumnNames.contains(hColumnDescriptor.getNameAsString())) {
-        Modification modification = getModificationUpdate(hColumnDescriptor);
-        modifications.add(modification);
-      } else {
-        Modification modification = getModificationCreate(hColumnDescriptor);
-        modifications.add(modification);
-      }
-    }
-    modifications.addAll(buildModifcationsForDeleteFamilies(modifyColumnDescriptors,currentColumnDescriptors));
-    return modifications;
-  }
-
-  private Set<String> getAllColumnDescriptors(List<HColumnDescriptor> columnDescriptors) {
+  private static Set<String> getColumnNames(HTableDescriptor tableDescriptor) {
     Set<String> names = new HashSet<>();
-    for (HColumnDescriptor hColumnDescriptor : columnDescriptors) {
-      names.add(hColumnDescriptor.getNameAsString());
+    for (byte[] name : tableDescriptor.getFamiliesKeys()) {
+      names.add(Bytes.toString(name));
     }
     return names;
   }
-  
-  /**
-   * This method will build list of delete Modifications objects.
-   * 
-   * @param tableDescriptor
-   * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
-   * @throws IOException
-   */
-  private List<Modification> buildModifcationsForDeleteFamilies(List<HColumnDescriptor> tableDescriptor, List<HColumnDescriptor> currentColumnDescriptors) throws IOException {
-    final List<Modification> modifications = new ArrayList<>();
-    Set<String> requestedColumnNames = getAllColumnDescriptors(tableDescriptor);
 
-    for (HColumnDescriptor hColumnDescriptor : currentColumnDescriptors) {
-      if (!requestedColumnNames.contains(hColumnDescriptor.getNameAsString())) {
-        Modification modification = getModificationDelete(hColumnDescriptor);
-        modifications.add(modification);
-      }
-    }
-    return modifications;
-  }
-
-  private Modification getModificationUpdate(HColumnDescriptor colFamilyDesc) {
+  private static Modification updateModification(HColumnDescriptor colFamilyDesc) {
     return Modification
         .newBuilder()
         .setId(colFamilyDesc.getNameAsString())
@@ -91,19 +50,47 @@ public class TableModificationAdapter {
         .build();
   }
 
-  private Modification getModificationCreate(HColumnDescriptor colFamilyDesc) {
+  private static Modification creationModification(HColumnDescriptor colFamilyDesc) {
     return Modification
         .newBuilder()
         .setId(colFamilyDesc.getNameAsString())
         .setCreate(columnDescriptorAdapter.adapt(colFamilyDesc).build())
         .build();
   }
-  
-  private Modification getModificationDelete(HColumnDescriptor colFamilyDesc) throws IOException {
+
+  private static Modification deleteModification(String columnName) {
     return Modification
         .newBuilder()
-        .setId(colFamilyDesc.getNameAsString())
+        .setId(columnName)
         .setDrop(true)
         .build();
+  }
+
+  /**
+   * This method will build list of of protobuf {@link Modification} objects based on a diff of the
+   * new and existing set of column descriptors.  This is for use in
+   * {@link org.apache.hadoop.hbase.client.Admin#modifyTable(TableName, HTableDescriptor)}.
+   */
+  public Modification[] buildModifications(HTableDescriptor newTableDescriptor,
+      HTableDescriptor currentTableDescriptors) {
+    Set<String> currentColumnNames = getColumnNames(currentTableDescriptors);
+    Set<String> newColumnNames = getColumnNames(newTableDescriptor);
+
+    final List<Modification> modifications = new ArrayList<>();
+    for (HColumnDescriptor hColumnDescriptor : newTableDescriptor.getFamilies()) {
+      if (currentColumnNames.contains(hColumnDescriptor.getNameAsString())) {
+        modifications.add(updateModification(hColumnDescriptor));
+      } else {
+        modifications.add(creationModification(hColumnDescriptor));
+      }
+    }
+
+    Set<String> columnsToRemove = new HashSet<>(currentColumnNames);
+    columnsToRemove.removeAll(newColumnNames);
+
+    for (String column : columnsToRemove) {
+      modifications.add(deleteModification(column));
+    }
+    return modifications.toArray(new Modification[modifications.size()]);
   }
 }
