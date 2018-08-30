@@ -1236,8 +1236,17 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
-  public void modifyTable(TableName tableName, HTableDescriptor htd) throws IOException {
-    throw new UnsupportedOperationException("modifyTable");  // TODO
+  public void modifyTable(TableName tableName, HTableDescriptor hTableDescriptor) throws IOException {
+    if (isTableAvailable(tableName)) {
+      HTableDescriptor currentTableDescriptor = getTableDescriptor(tableName);
+      List<Modification> modifications = new ArrayList<>();
+      List<HColumnDescriptor> columnDescriptors = Arrays.asList(hTableDescriptor.getColumnFamilies());
+      List<HColumnDescriptor> currentColumnDescriptors = Arrays.asList(currentTableDescriptor.getColumnFamilies());
+      modifications.addAll(tableModificationAdapter.buildModifications(columnDescriptors, currentColumnDescriptors));
+      modifyColumn(tableName, "modifyTable", "update", (Modification[]) modifications.toArray());
+    } else {
+      throw new TableNotFoundException(tableName);
+    }
   }
 
   /** {@inheritDoc} */
