@@ -43,12 +43,6 @@ limitations under the License.
     </dependencyManagement>
 
     <dependencies>
-        <!-- google cloud java bigtable shaded client -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>bigtable-shaded</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <!-- Protos -->
         <dependency>
             <groupId>com.google.api.grpc</groupId>

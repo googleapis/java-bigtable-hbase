@@ -15,17 +15,17 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
-import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
-import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
-import com.google.cloud.bigtable.data.v2.models.Filters.TimestampRangeFilter;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.ChainFilter;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.InterleaveFilter;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.TimestampRangeFilter;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;

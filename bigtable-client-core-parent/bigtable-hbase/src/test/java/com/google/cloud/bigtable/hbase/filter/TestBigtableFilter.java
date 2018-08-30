@@ -17,13 +17,14 @@ package com.google.cloud.bigtable.hbase.filter;
 
 import java.io.IOException;
 
-import com.google.cloud.bigtable.data.v2.models.Filters;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.FilterProtos;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.google.cloud.bigtable.data.v2.wrappers.Filters;
 
 /**
  * Tests for {@link BigtableFilter}

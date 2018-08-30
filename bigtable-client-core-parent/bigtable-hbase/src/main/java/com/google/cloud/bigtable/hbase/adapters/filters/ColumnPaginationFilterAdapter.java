@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
-import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.ChainFilter;
+import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;

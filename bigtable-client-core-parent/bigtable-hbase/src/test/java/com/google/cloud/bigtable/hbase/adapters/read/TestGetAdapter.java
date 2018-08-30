@@ -15,19 +15,27 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
 
 import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
 import com.google.common.base.Function;
 import com.google.protobuf.ByteString;
+
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 

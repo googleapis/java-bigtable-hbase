@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.wrappers.Filters;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
