@@ -67,18 +67,12 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 public abstract class AbstractTestFilters extends AbstractTest {
 
@@ -2021,7 +2015,6 @@ public abstract class AbstractTestFilters extends AbstractTest {
   }
 
   @Test
-  @Ignore("This doesn't work in either HBase or Bigtable.  We need to fix this.  See issue #1770")
   public void testFuzzyWithIntKeys() throws Exception {
     Table table = getDefaultTable();
     List<byte[]> keys = Collections.unmodifiableList(
@@ -2051,19 +2044,15 @@ public abstract class AbstractTestFilters extends AbstractTest {
         Pair.newPair(createKey(5, 0, 129, 0), createFuzzyMask(0, 1, 0, 1))));
 
     Scan scan = new Scan().setFilter(filter);
-
+    Set<String> expectedKeys = keys.stream().map(k ->toFuzzyKeyString(k)).collect(Collectors.toSet());
+    Set<String> actualKeys = new HashSet();
     // all 8 keys should be matched
     try (ResultScanner scanner = table.getScanner(scan)) {
-      assertMatchingRow(scanner.next(), keys.get(0));
-      assertMatchingRow(scanner.next(), keys.get(1));
-      assertMatchingRow(scanner.next(), keys.get(2));
-      assertMatchingRow(scanner.next(), keys.get(3));
-      assertMatchingRow(scanner.next(), keys.get(4));
-      assertMatchingRow(scanner.next(), keys.get(5));
-      assertMatchingRow(scanner.next(), keys.get(6));
-      assertMatchingRow(scanner.next(), keys.get(7));
-      assertNull(scanner.next());
+      scanner.forEach(r -> {
+        actualKeys.add(toFuzzyKeyString(CellUtil.cloneRow(r.rawCells()[0])));
+      });
     }
+    assertEquals(expectedKeys,actualKeys);
   }
 
   protected final void assertMatchingRow(Result result, byte[] key) {
