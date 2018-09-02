@@ -73,7 +73,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.TreeSet;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
@@ -2053,13 +2052,17 @@ public abstract class AbstractTestFilters extends AbstractTest {
         Pair.newPair(createKey(5, 0, 129, 0), createFuzzyMask(0, 1, 0, 1))));
 
     Scan scan = new Scan().setFilter(filter);
-    Set<String> expectedKeys = keys.stream().map(k -> toFuzzyKeyString(k)).collect(Collectors.toSet());
-    Set<String> actualKeys = new HashSet();
+
+    Set<String> expectedKeys = new HashSet<>(keys.size());
+    for(byte[] key : keys) {
+      expectedKeys.add(toFuzzyKeyString(key));
+    }
+    Set<String> actualKeys = new HashSet(keys.size());
     // all 8 keys should be matched
     try (ResultScanner scanner = table.getScanner(scan)) {
-      scanner.forEach(r -> {
-        actualKeys.add(toFuzzyKeyString(CellUtil.cloneRow(r.rawCells()[0])));
-      });
+      for(Result result : scanner) {
+        actualKeys.add(toFuzzyKeyString(CellUtil.cloneRow(result.rawCells()[0])));
+      }
     }
     assertEquals(expectedKeys, actualKeys);
   }
