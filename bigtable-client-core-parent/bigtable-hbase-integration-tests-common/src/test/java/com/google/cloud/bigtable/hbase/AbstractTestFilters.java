@@ -67,12 +67,21 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.TreeSet;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public abstract class AbstractTestFilters extends AbstractTest {
 
@@ -2044,7 +2053,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
         Pair.newPair(createKey(5, 0, 129, 0), createFuzzyMask(0, 1, 0, 1))));
 
     Scan scan = new Scan().setFilter(filter);
-    Set<String> expectedKeys = keys.stream().map(k ->toFuzzyKeyString(k)).collect(Collectors.toSet());
+    Set<String> expectedKeys = keys.stream().map(k -> toFuzzyKeyString(k)).collect(Collectors.toSet());
     Set<String> actualKeys = new HashSet();
     // all 8 keys should be matched
     try (ResultScanner scanner = table.getScanner(scan)) {
@@ -2052,7 +2061,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
         actualKeys.add(toFuzzyKeyString(CellUtil.cloneRow(r.rawCells()[0])));
       });
     }
-    assertEquals(expectedKeys,actualKeys);
+    assertEquals(expectedKeys, actualKeys);
   }
 
   protected final void assertMatchingRow(Result result, byte[] key) {
