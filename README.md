@@ -44,18 +44,18 @@ which makes it easy for development teams to get started.
   <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
   </dependency>
   ```
 
   Gradle:
   ```Groovy
-  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:1.4.0'
+  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:1.5.0'
   ```
 
   SBT:
   ```Scala
-  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "1.4.0"
+  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "1.5.0"
   ```
 
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
