@@ -43,6 +43,16 @@ limitations under the License.
     </dependencyManagement>
 
     <dependencies>
+        <!-- Bigtable Java Veneer client -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-bigtable</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-bigtable-admin</artifactId>
+        </dependency>
+
         <!-- Protos -->
         <dependency>
             <groupId>com.google.api.grpc</groupId>

@@ -47,7 +47,7 @@ import javax.annotation.Nonnull;
  *
  * }</pre>
  */
-@InternalExtensionOnly
+@Deprecated @InternalExtensionOnly
 public final class Filters {
   /** Entry point into the DSL. */
   public static final Filters FILTERS = new Filters();
