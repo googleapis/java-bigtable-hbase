@@ -95,7 +95,7 @@ public class TestMutateRowsRequestManager {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    retryOptions = new RetryOptions.Builder().build();
+    retryOptions = RetryOptions.getDefaultOptions();
   }
 
   @Test

@@ -91,13 +91,13 @@ public class TestBigtableTable {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    BigtableOptions options = new BigtableOptions.Builder()
+    BigtableOptions options = BigtableOptions.builder()
         .setAdminHost("localhost")
         .setDataHost("localhost")
         .setPort(0)
         .setProjectId(TEST_PROJECT)
         .setInstanceId(TEST_INSTANCE)
-        .setRetryOptions(new RetryOptions.Builder().setEnableRetries(false).build())
+        .setRetryOptions(RetryOptions.builder().setEnableRetries(false).build())
         .setCredentialOptions(null)
         .setUserAgent("testAgent")
         .build();

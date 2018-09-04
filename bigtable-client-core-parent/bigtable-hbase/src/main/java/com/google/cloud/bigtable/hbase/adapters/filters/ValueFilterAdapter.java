@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.ValueRangeFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.models.Filters.ValueRangeFilter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;

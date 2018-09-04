@@ -58,7 +58,7 @@ import org.mockito.stubbing.Answer;
  */
 public class TestRetryingMutateRowsOperation {
 
-  private static final RetryOptions RETRY_OPTIONS = new RetryOptions.Builder().build();
+  private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
   private static Status OK = statusOf(io.grpc.Status.Code.OK);
   private static Status DEADLINE_EXCEEDED = statusOf(io.grpc.Status.Code.DEADLINE_EXCEEDED);

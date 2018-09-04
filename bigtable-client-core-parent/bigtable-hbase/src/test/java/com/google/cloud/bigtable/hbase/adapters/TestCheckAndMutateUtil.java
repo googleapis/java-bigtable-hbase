@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.protobuf.ByteString;

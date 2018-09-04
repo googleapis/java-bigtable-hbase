@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 

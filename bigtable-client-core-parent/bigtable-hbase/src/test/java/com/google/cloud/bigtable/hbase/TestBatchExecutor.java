@@ -134,7 +134,7 @@ public class TestBatchExecutor {
   private HBaseRequestAdapter requestAdapter;
   @Before
   public void setup() throws InterruptedException {
-    final BigtableOptions options = new BigtableOptions.Builder()
+    final BigtableOptions options = BigtableOptions.builder()
         .setProjectId("projectId")
         .setInstanceId("instanceId")
         .build();

@@ -287,7 +287,7 @@ public class BigtableOptionsFactory {
   public static BigtableOptions fromConfiguration(final Configuration configuration)
       throws IOException {
 
-    BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
+    BigtableOptions.Builder bigtableOptionsBuilder = BigtableOptions.builder();
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
     bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
@@ -365,7 +365,7 @@ public class BigtableOptionsFactory {
 
   private static void setBulkOptions(final Configuration configuration,
       BigtableOptions.Builder bigtableOptionsBuilder) {
-    BulkOptions.Builder bulkOptionsBuilder = new BulkOptions.Builder();
+    BulkOptions.Builder bulkOptionsBuilder = BulkOptions.builder();
 
     int asyncMutatorCount = configuration.getInt(
         BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
@@ -457,7 +457,7 @@ public class BigtableOptionsFactory {
 
   private static void setClientCallOptions(Configuration configuration,
       BigtableOptions.Builder bigtableOptionsBuilder) {
-    CallOptionsConfig.Builder clientCallOptionsBuilder = new CallOptionsConfig.Builder();
+    CallOptionsConfig.Builder clientCallOptionsBuilder = CallOptionsConfig.builder();
 
     clientCallOptionsBuilder
         .setUseTimeout(configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT));
@@ -469,7 +469,7 @@ public class BigtableOptionsFactory {
   }
 
   private static RetryOptions createRetryOptions(Configuration configuration) {
-    RetryOptions.Builder retryOptionsBuilder = new RetryOptions.Builder();
+    RetryOptions.Builder retryOptionsBuilder = RetryOptions.builder();
     boolean enableRetries = configuration.getBoolean(
         ENABLE_GRPC_RETRIES_KEY, RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
