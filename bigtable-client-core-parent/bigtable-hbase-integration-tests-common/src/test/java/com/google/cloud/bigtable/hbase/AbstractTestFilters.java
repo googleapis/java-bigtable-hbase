@@ -2062,7 +2062,9 @@ public abstract class AbstractTestFilters extends AbstractTest {
     // all 8 keys should be matched
     try (ResultScanner scanner = table.getScanner(scan)) {
       for(Result result : scanner) {
-        actualKeys.add(toFuzzyKeyString(CellUtil.cloneRow(result.rawCells()[0])));
+        if (!result.isEmpty()) {
+          actualKeys.add(toFuzzyKeyString(CellUtil.cloneRow(result.rawCells()[0])));
+        }
       }
     }
     assertEquals(expectedKeys, actualKeys);
