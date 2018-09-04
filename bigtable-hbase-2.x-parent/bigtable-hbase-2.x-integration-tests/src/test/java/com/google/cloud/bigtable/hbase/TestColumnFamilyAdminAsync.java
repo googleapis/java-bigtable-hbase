@@ -45,19 +45,19 @@ public class TestColumnFamilyAdminAsync extends AbstractTestColumnFamilyAdmin {
   @Override
   protected void addColumn(byte[] columnName, int version) throws Exception {
     admin.addColumnFamilyAsync(tableName, createFamilyDescriptor(columnName, version))
-        .get(1, TimeUnit.SECONDS);
+        .get(1, TimeUnit.MINUTES);
   }
 
   @Override
   protected void modifyColumn(byte[] columnName, int version) throws Exception {
     admin.modifyColumnFamilyAsync(tableName, createFamilyDescriptor(columnName, version))
-        .get(1, TimeUnit.SECONDS);
+        .get(1, TimeUnit.MINUTES);
   }
 
   @Override
   protected void deleteColumn(byte[] columnName) throws Exception {
     admin.deleteColumnFamilyAsync(tableName, DELETE_COLUMN_FAMILY)
-        .get(1, TimeUnit.SECONDS);
+        .get(1, TimeUnit.MINUTES);
   }
 
   private ColumnFamilyDescriptor createFamilyDescriptor(byte[] columnName, int version) {

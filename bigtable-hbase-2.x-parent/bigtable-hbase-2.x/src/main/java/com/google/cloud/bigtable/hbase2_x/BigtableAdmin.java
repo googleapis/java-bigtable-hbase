@@ -24,14 +24,17 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
+import com.google.bigtable.admin.v2.GetTableRequest;
+import io.grpc.Status;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
@@ -170,7 +173,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         .setId(columnFamilyDesc.getNameAsString())
         .setCreate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
         .build();
-    modifyColumn(tableName, columnFamilyDesc.getNameAsString(), "add", modification);
+    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "add", modification);
   }
 
   /**
@@ -186,7 +189,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         .setId(columnFamilyDesc.getNameAsString())
         .setUpdate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
         .build();
-    modifyColumn(tableName, columnFamilyDesc.getNameAsString(), "update", modification);
+    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "update", modification);
 
   }
 
@@ -252,7 +255,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         .setId(columnName)
         .setCreate(tableAdapter2x.toColumnFamily(columnFamily))
         .build();
-    return modifyColumnAsync(tableName, modification);
+    return modifyColumnsAsync(tableName, modification);
   }
 
   @Override
@@ -267,17 +270,18 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         .setId(Bytes.toString(columnName))
         .setDrop(true)
         .build();
-    return modifyColumnAsync(tableName, modification);
+    return modifyColumnsAsync(tableName, modification);
   }
 
 
-  protected CompletableFuture<Void> modifyColumnAsync(TableName tableName, Modification... modifications) {
-    ModifyColumnFamiliesRequest.Builder modifyColumnBuilder = ModifyColumnFamiliesRequest
+  protected CompletableFuture<Void> modifyColumnsAsync(TableName tableName, Modification... modifications) {
+    ModifyColumnFamiliesRequest modifyColumnRequest = ModifyColumnFamiliesRequest
         .newBuilder()
         .addAllModifications(Arrays.asList(modifications))
-        .setName(toBigtableName(tableName));
+        .setName(toBigtableName(tableName))
+        .build();
     return FutureUtils.toCompletableFuture(
-        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnBuilder.build()))
+        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnRequest))
         .thenApply(r -> null);
   }
 
@@ -357,7 +361,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         .setId(columnName)
         .setUpdate(tableAdapter2x.toColumnFamily(columnFamily))
         .build();
-    return modifyColumnAsync(tableName, modification);
+    return modifyColumnsAsync(tableName, modification);
   }
 
   @Override
@@ -367,28 +371,50 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
-    if (isTableAvailable(tableName)) {
-      TableDescriptor currentTableDescriptor = getTableDescriptor(tableName);
-      List<Modification> modifications = new ArrayList<>();
-      List<HColumnDescriptor> columnDescriptors = tableAdapter2x.toHColumnDescriptors(tableDescriptor);
-      List<HColumnDescriptor> currentColumnDescriptors = tableAdapter2x.toHColumnDescriptors(currentTableDescriptor);
-      modifications.addAll(tableModificationAdapter.buildModifications(columnDescriptors, currentColumnDescriptors));
-      modifyColumn(tableName, "modifyTable", "update", (Modification[]) modifications.toArray());
-    } else {
-      throw new TableNotFoundException(tableName);
-    }
+    super.modifyTable(tableName, new HTableDescriptor(tableDescriptor));
   }
   
   @Override
-  public Future<Void> modifyTableAsync(TableDescriptor arg0) throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("modifyTableAsync");
+  public Future<Void> modifyTableAsync(TableDescriptor tableDescriptor)
+      throws IOException {
+    return modifyTableAsync(tableDescriptor.getTableName(), tableDescriptor);
   }
 
   @Override
-  public Future<Void> modifyTableAsync(TableName arg0, TableDescriptor arg1) throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("modifyTableAsync");
+  public Future<Void> modifyTableAsync(TableName tableName, TableDescriptor newDescriptor) {
+    return getDescriptorAsync(tableName).thenApply(descriptor -> tableModificationAdapter
+        .buildModifications(new HTableDescriptor(newDescriptor), new HTableDescriptor(descriptor)))
+        .thenApply(modifications -> {
+          try {
+            return modifyColumns(tableName, null, "modifyTableAsync", modifications);
+          } catch (IOException e) {
+            throw new CompletionException(e);
+          }
+        });
+  }
+
+  private CompletableFuture<TableDescriptor> getDescriptorAsync(TableName tableName) {
+    if (tableName == null) {
+      return CompletableFuture.completedFuture(null);
+    }
+
+    GetTableRequest request = GetTableRequest
+        .newBuilder()
+        .setName(bigtableInstanceName.toTableNameStr(tableName.getNameAsString()))
+        .build();
+
+    ListenableFuture<Table> tableFuture = bigtableTableAdminClient.getTableAsync(request);
+    return FutureUtils.toCompletableFuture(tableFuture).handle((resp, ex) -> {
+      if (ex != null) {
+        if (Status.fromThrowable(ex).getCode() == Status.Code.NOT_FOUND) {
+          throw new CompletionException(new TableNotFoundException(tableName));
+        } else {
+          throw new CompletionException(ex);
+        }
+      } else {
+        return tableAdapter2x.adapt(resp);
+      }
+    });
   }
 
   /* (non-Javadoc)

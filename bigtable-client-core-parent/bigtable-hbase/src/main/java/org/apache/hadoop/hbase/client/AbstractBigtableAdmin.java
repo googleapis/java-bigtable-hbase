@@ -106,7 +106,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   protected final AbstractBigtableConnection connection;
   protected final BigtableTableAdminClient bigtableTableAdminClient;
 
-  private BigtableInstanceName bigtableInstanceName;
+  protected final BigtableInstanceName bigtableInstanceName;
   private BigtableClusterName bigtableSnapshotClusterName;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
   private final TableAdapter tableAdapter;
@@ -584,9 +584,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
         .setId(columnName)
         .setCreate(columnDescriptorAdapter.adapt(column).build())
         .build();
-    modifyColumn(tableName, columnName, "add", modification);
+    modifyColumns(tableName, columnName, "add", modification);
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -597,7 +596,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
         .setId(columnName)
         .setUpdate(columnDescriptorAdapter.adapt(column).build())
         .build();
-    modifyColumn(tableName, columnName, "update", modification);
+    modifyColumns(tableName, columnName, "update", modification);
   }
 
   /** {@inheritDoc} */
@@ -609,11 +608,23 @@ public abstract class AbstractBigtableAdmin implements Admin {
         .setId(columnNameStr)
         .setDrop(true)
         .build();
-    modifyColumn(tableName, columnNameStr, "delete", modification);
+    modifyColumns(tableName, columnNameStr, "delete", modification);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void modifyTable(TableName tableName, HTableDescriptor newDecriptor) throws IOException {
+    if (isTableAvailable(tableName)) {
+      Modification[] modifications =
+          tableModificationAdapter.buildModifications(newDecriptor, getTableDescriptor(tableName));
+      modifyColumns(tableName, "N/A", "modifyTable", modifications);
+    } else {
+      throw new TableNotFoundException(tableName);
+    }
   }
 
   /**
-   * <p>modifyColumn.</p>
+   * <p>modifyColumns.</p>
    *
    * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
    * @param columnName a {@link java.lang.String} object.
@@ -621,7 +632,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
    * @throws java.io.IOException if any.
    */
-  protected void modifyColumn(TableName tableName, String columnName,
+  protected Void modifyColumns(TableName tableName, String columnName,
       String modificationType, Modification... modifications) throws IOException {
     ModifyColumnFamiliesRequest modifyColumn = ModifyColumnFamiliesRequest
         .newBuilder()
@@ -631,6 +642,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
     try {
       bigtableTableAdminClient.modifyColumnFamily(modifyColumn);
+      return null;
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
@@ -652,7 +664,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * Modify an existing column family on a table. Asynchronous operation.
    */
-  public void modifyColumn(final String tableName, HColumnDescriptor descriptor)
+  public void modifyColumns(final String tableName, HColumnDescriptor descriptor)
       throws IOException {
     modifyColumn(TableName.valueOf(tableName), descriptor);
   }
@@ -1232,12 +1244,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void splitRegion(byte[] bytes, byte[] bytes2) throws IOException {
     LOG.info("split is a no-op");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void modifyTable(TableName tableName, HTableDescriptor htd) throws IOException {
-    throw new UnsupportedOperationException("modifyTable");  // TODO
   }
 
   /** {@inheritDoc} */

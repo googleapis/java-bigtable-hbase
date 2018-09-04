@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import com.google.common.base.Function;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -34,16 +35,14 @@ import org.junit.runners.JUnit4;
 public abstract class AbstractTestModifyTable extends AbstractTest {
   
   public static final byte[] COLUMN_FAMILY2 = Bytes.toBytes("test_family2");
-  
-  @Test
-  public void testModifyTable() throws IOException {
+
+  public void testModifyTable(Function<HTableDescriptor, Void> modifyTable) throws IOException {
     TableName tableName = sharedTestEnv.newTestTableName();
     sharedTestEnv.createTable(tableName);
-    try(Admin admin = getConnection().getAdmin();
-        Table table = getConnection().getTable(tableName)) {
+    try(Admin admin = getConnection().getAdmin()) {
       HTableDescriptor descriptor = new HTableDescriptor(tableName);
       descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY2));
-      modifyTable(descriptor);
+      modifyTable.apply(descriptor);
       assertTrue(admin.tableExists(tableName));
       assertTrue(admin.getTableDescriptor(tableName).hasFamily(COLUMN_FAMILY2));
       assertEquals(1, admin.getTableDescriptor(tableName).getColumnFamilies().length);
@@ -51,6 +50,4 @@ public abstract class AbstractTestModifyTable extends AbstractTest {
       admin.deleteTable(tableName);
     }
   }
-  
-  protected abstract void modifyTable(HTableDescriptor descriptor) throws IOException; 
 }

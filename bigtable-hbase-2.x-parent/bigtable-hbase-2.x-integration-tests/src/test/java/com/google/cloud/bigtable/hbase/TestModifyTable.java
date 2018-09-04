@@ -16,20 +16,63 @@
 package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Function;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import javax.annotation.Nullable;
 
 @RunWith(JUnit4.class)
 public class TestModifyTable extends AbstractTestModifyTable {
 
-  @Override
-  protected void modifyTable(HTableDescriptor descriptor) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
-      admin.modifyTable((TableDescriptor)descriptor);
-    }
+  @Test
+  public void testModifyTable_HBase2_NoTable() throws IOException {
+    super.testModifyTable(new Function<HTableDescriptor, Void>() {
+      @Nullable @Override
+      public Void apply(@Nullable HTableDescriptor descriptor) {
+        try (Admin admin = getConnection().getAdmin()) {
+          admin.modifyTable(descriptor);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        return null;
+      }
+    });
+  }
+
+  @Test
+  public void testModifyTable_HBase2_WithTable() throws IOException {
+    super.testModifyTable(new Function<HTableDescriptor, Void>() {
+      @Nullable @Override
+      public Void apply(@Nullable HTableDescriptor descriptor) {
+        try (Admin admin = getConnection().getAdmin()) {
+          admin.modifyTable(descriptor.getTableName(), descriptor);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        return null;
+      }
+    });
+  }
+
+  @Test
+  public void testModifyTable_HBase2_Async() throws IOException {
+    super.testModifyTable(new Function<HTableDescriptor, Void>() {
+      @Nullable @Override
+      public Void apply(@Nullable HTableDescriptor descriptor) {
+        try (Admin admin = getConnection().getAdmin()) {
+          admin.modifyTableAsync(descriptor).get(20, TimeUnit.SECONDS);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+        return null;
+      }
+    });
   }
 }
