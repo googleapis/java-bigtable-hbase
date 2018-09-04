@@ -70,6 +70,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -77,6 +78,7 @@ import java.util.TreeSet;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -2021,7 +2023,6 @@ public abstract class AbstractTestFilters extends AbstractTest {
   }
 
   @Test
-  @Ignore("This doesn't work in either HBase or Bigtable.  We need to fix this.  See issue #1770")
   public void testFuzzyWithIntKeys() throws Exception {
     Table table = getDefaultTable();
     List<byte[]> keys = Collections.unmodifiableList(
@@ -2052,18 +2053,18 @@ public abstract class AbstractTestFilters extends AbstractTest {
 
     Scan scan = new Scan().setFilter(filter);
 
+    Set<String> expectedKeys = new HashSet<>(keys.size());
+    for(byte[] key : keys) {
+      expectedKeys.add(toFuzzyKeyString(key));
+    }
+    Set<String> actualKeys = new HashSet(keys.size());
     // all 8 keys should be matched
     try (ResultScanner scanner = table.getScanner(scan)) {
-      assertMatchingRow(scanner.next(), keys.get(0));
-      assertMatchingRow(scanner.next(), keys.get(1));
-      assertMatchingRow(scanner.next(), keys.get(2));
-      assertMatchingRow(scanner.next(), keys.get(3));
-      assertMatchingRow(scanner.next(), keys.get(4));
-      assertMatchingRow(scanner.next(), keys.get(5));
-      assertMatchingRow(scanner.next(), keys.get(6));
-      assertMatchingRow(scanner.next(), keys.get(7));
-      assertNull(scanner.next());
+      for(Result result : scanner) {
+        actualKeys.add(toFuzzyKeyString(CellUtil.cloneRow(result.rawCells()[0])));
+      }
     }
+    assertEquals(expectedKeys, actualKeys);
   }
 
   protected final void assertMatchingRow(Result result, byte[] key) {
