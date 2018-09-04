@@ -32,7 +32,8 @@ public class TestModifyTable extends AbstractTestModifyTable {
   @Test
   public void testModifyTable() throws IOException {
     super.testModifyTable(new Function<HTableDescriptor, Void>() {
-      @Nullable @Override public Void apply(@Nullable HTableDescriptor descriptor) {
+      @Nullable @Override
+      public Void apply(@Nullable HTableDescriptor descriptor) {
         try (Admin admin = getConnection().getAdmin()) {
           admin.modifyTable(descriptor.getTableName(), descriptor);
         } catch (IOException e) {
