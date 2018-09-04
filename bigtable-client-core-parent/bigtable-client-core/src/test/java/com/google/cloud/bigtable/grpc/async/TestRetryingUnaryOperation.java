@@ -57,7 +57,7 @@ import io.grpc.Status;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestRetryingUnaryOperation {
 
-  private static final RetryOptions RETRY_OPTIONS = new RetryOptions.Builder().build();
+  private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
   private static final BigtableAsyncRpc.RpcMetrics metrics =
       BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.getReadRowsMethod());

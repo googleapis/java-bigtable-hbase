@@ -37,7 +37,7 @@ public class PutAdapterPerf {
     byte[] value = RandomStringUtils.randomAlphanumeric(10000).getBytes();
     put.addColumn(Bytes.toBytes("Family1"), Bytes.toBytes("Qaulifier"), value);
 
-    BigtableOptions options = new BigtableOptions.Builder()
+    BigtableOptions options = BigtableOptions.builder()
         .setInstanceId("instanceId")
         .setProjectId("projectId")
         .build();

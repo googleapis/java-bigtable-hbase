@@ -46,6 +46,8 @@ import javax.annotation.Nonnull;
  * }
  *
  * }</pre>
+ *
+ * @deprecated Please use {@link com.google.cloud.bigtable.data.v2.models.Filters} instead.
  */
 @Deprecated @InternalExtensionOnly
 public final class Filters {

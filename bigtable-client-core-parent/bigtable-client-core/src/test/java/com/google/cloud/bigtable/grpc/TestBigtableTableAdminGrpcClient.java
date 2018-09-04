@@ -91,7 +91,7 @@ public class TestBigtableTableAdminGrpcClient {
   }
 
   protected BigtableTableAdminGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
-    BigtableOptions options = new BigtableOptions.Builder().build();
+    BigtableOptions options = BigtableOptions.getDefaultOptions();
     return new BigtableTableAdminGrpcClient(mockChannel, null, options);
   }
 

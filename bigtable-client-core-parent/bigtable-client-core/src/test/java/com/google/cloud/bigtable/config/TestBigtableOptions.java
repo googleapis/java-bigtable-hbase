@@ -32,25 +32,25 @@ public class TestBigtableOptions {
 
   @Test
   public void testEquals() {
-    BigtableOptions options1 = new BigtableOptions.Builder()
+    BigtableOptions options1 = BigtableOptions.builder()
         .setProjectId("project")
         .setInstanceId("instance")
         .setUserAgent("foo")
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
-    BigtableOptions options2 = new BigtableOptions.Builder()
+    BigtableOptions options2 = BigtableOptions.builder()
         .setProjectId("project")
         .setInstanceId("instance")
         .setUserAgent("foo")
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
-    BigtableOptions options3 = new BigtableOptions.Builder()
+    BigtableOptions options3 = BigtableOptions.builder()
         .setProjectId("project")
         .setInstanceId("instance")
         .setUserAgent("foo1")
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
-    BigtableOptions options4 = new BigtableOptions.Builder()
+    BigtableOptions options4 = BigtableOptions.builder()
         .setProjectId("project")
         .setInstanceId("instance")
         .setUserAgent("foo1")
@@ -64,7 +64,7 @@ public class TestBigtableOptions {
 
   @Test
   public void testSerialization() throws IOException, ClassNotFoundException {
-    BigtableOptions options = new BigtableOptions.Builder()
+    BigtableOptions options = BigtableOptions.builder()
         .setProjectId("project")
         .setInstanceId("instance")
         .setUserAgent("foo")
@@ -93,7 +93,7 @@ public class TestBigtableOptions {
     Map<String, String> testEnv = new HashMap<>();
     testEnv.put(BigtableOptions.BIGTABLE_EMULATOR_HOST_ENV_VAR, "localhost:1234");
     setTestEnv(testEnv);
-    BigtableOptions options = new BigtableOptions.Builder()
+    BigtableOptions options = BigtableOptions.builder()
         .setPort(443)
         .setDataHost("xxx")
         .build();
@@ -104,7 +104,7 @@ public class TestBigtableOptions {
     Assert.assertEquals(CredentialOptions.nullCredential(), options.getCredentialOptions());
 
     setTestEnv(oldEnv);
-    options = new BigtableOptions.Builder()
+    options = BigtableOptions.builder()
         .setDataHost("override")
         .build();
     Assert.assertEquals(BigtableOptions.BIGTABLE_PORT_DEFAULT, options.getPort());

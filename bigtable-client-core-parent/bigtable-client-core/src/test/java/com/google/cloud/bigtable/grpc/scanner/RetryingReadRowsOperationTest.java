@@ -74,7 +74,7 @@ import io.grpc.stub.StreamObserver;
 @RunWith(JUnit4.class)
 public class RetryingReadRowsOperationTest {
 
-  private static final RetryOptions RETRY_OPTIONS = new RetryOptions.Builder().build();
+  private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
   private static ReadRowsRequest READ_ENTIRE_TABLE_REQUEST =
       ReadRowsRequest.newBuilder()

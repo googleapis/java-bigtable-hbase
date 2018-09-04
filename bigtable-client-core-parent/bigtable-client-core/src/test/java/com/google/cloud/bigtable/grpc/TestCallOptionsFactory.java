@@ -75,14 +75,14 @@ public class TestCallOptionsFactory {
 
   @Test
   public void testConfiguredDefaultConfig() {
-    CallOptionsConfig config = new CallOptionsConfig.Builder().build();
+    CallOptionsConfig config = CallOptionsConfig.builder().build();
     CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
     Assert.assertSame(CallOptions.DEFAULT, factory.create(null, null));
   }
 
   @Test
   public void testConfiguredConfigEnabled() {
-    CallOptionsConfig config = new CallOptionsConfig.Builder().setUseTimeout(true).build();
+    CallOptionsConfig config = CallOptionsConfig.builder().setUseTimeout(true).build();
     CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
     assertEqualsDeadlines(
         config.getShortRpcTimeoutMs(),
@@ -102,7 +102,7 @@ public class TestCallOptionsFactory {
     context.run(new Runnable() {
       @Override
       public void run() {
-        CallOptionsConfig config = new CallOptionsConfig.Builder()
+        CallOptionsConfig config = CallOptionsConfig.builder()
             .setUseTimeout(true)
             .setShortRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(100))
             .setLongRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))

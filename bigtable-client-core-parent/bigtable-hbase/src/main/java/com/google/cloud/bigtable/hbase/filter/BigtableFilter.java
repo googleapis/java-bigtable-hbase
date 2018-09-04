@@ -25,7 +25,7 @@ import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
@@ -42,6 +42,11 @@ public class BigtableFilter extends FilterBase implements Serializable {
   private final RowFilter rowFilter;
 
   public BigtableFilter(Filters.Filter filter) {
+    this.rowFilter = filter.toProto();
+  }
+  
+  @Deprecated
+  public BigtableFilter(com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter filter) {
     this.rowFilter = filter.toProto();
   }
 

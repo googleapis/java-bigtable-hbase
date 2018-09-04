@@ -67,7 +67,7 @@ public class TestBulkMutation {
       new BigtableInstanceName("project", "instance").toTableName("table");
   private final static ByteString QUALIFIER = ByteString.copyFrom("qual".getBytes());
   private final static int MAX_ROW_COUNT = 10;
-  private final static BulkOptions BULK_OPTIONS = new BulkOptions.Builder()
+  private final static BulkOptions BULK_OPTIONS = BulkOptions.builder()
       .setBulkMaxRequestSize(1000000L).setBulkMaxRowKeyCount(MAX_ROW_COUNT).build();
 
   static MutateRowsRequest.Entry createEntry() {
@@ -288,7 +288,7 @@ public class TestBulkMutation {
     // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the
     // scheduled executor mock
     underTest = new BulkMutation(TABLE_NAME, client, operationAccountant,
-        retryExecutorService, new BulkOptions.Builder().setAutoflushMs(1000L).build());
+        retryExecutorService, BulkOptions.builder().setAutoflushMs(1000L).build());
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
     when(retryExecutorService.schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class)))
         .thenReturn(mockScheduledFuture);
