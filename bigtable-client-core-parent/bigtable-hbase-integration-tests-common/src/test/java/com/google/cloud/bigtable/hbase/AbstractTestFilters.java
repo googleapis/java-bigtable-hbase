@@ -2023,7 +2023,6 @@ public abstract class AbstractTestFilters extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testFuzzyWithIntKeys() throws Exception {
     Table table = getDefaultTable();
     List<byte[]> keys = Collections.unmodifiableList(
