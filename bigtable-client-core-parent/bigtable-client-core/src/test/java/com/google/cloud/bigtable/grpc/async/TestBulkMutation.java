@@ -358,6 +358,15 @@ public class TestBulkMutation {
     Assert.assertTrue(underTest.currentBatch.builder.getEntriesList().contains(lastRequest));
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testTooManyMutations() {
+    MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry().toBuilder();
+    bigRequest.addAllMutations(
+        Collections.nCopies((int) BulkMutation.MAX_NUMBER_OF_MUTATIONS, bigRequest.getMutations(0))
+    );
+    underTest.add(bigRequest.build());
+  }
+
   private BulkMutation createBulkMutation() {
     return new BulkMutation(TABLE_NAME, client, operationAccountant, retryExecutorService,
         BULK_OPTIONS);
