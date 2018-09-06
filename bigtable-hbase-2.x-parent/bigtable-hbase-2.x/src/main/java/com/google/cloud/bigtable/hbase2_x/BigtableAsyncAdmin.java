@@ -84,6 +84,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -558,7 +559,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return getDescriptor(newDescriptor.getTableName()).thenApply(descriptor -> tableModificationAdapter
         .buildModifications(new HTableDescriptor(newDescriptor), new HTableDescriptor(descriptor)))
         .thenApply(modifications -> {
-          modifyColumns(newDescriptor.getTableName(), modifications);
+          try {
+            modifyColumns(newDescriptor.getTableName(), modifications).get();
+          } catch (InterruptedException | ExecutionException e) {
+            throw new CompletionException(e);
+          }
           return null;
         });
   }

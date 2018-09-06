@@ -44,7 +44,7 @@ public class TestModifyTableAsync extends AbstractTestModifyTable {
       @Override
       public Void apply(@Nullable HTableDescriptor descriptor) {
         try {
-          getAsyncAdmin().modifyTable(descriptor).get(20, TimeUnit.SECONDS);
+          getAsyncAdmin().modifyTable(descriptor).get(1, TimeUnit.MINUTES);
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
