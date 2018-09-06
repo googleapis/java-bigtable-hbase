@@ -38,7 +38,7 @@ public class TestModifyTableAsync extends AbstractTestModifyTable {
   }
   
   @Test
-  public void testModifyTable_HBase2_NoTable() throws IOException {
+  public void testModifyTable_HBase2_Async() throws IOException {
     super.testModifyTable(new Function<HTableDescriptor, Void>() {
       @Nullable
       @Override
