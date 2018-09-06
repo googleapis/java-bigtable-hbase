@@ -69,7 +69,7 @@ public class BulkMutation {
   static Logger LOG = new Logger(BulkMutation.class);
 
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
-  private static final long MAX_NUMBER_OF_MUTATIONS = 100_000;
+  public static final long MAX_NUMBER_OF_MUTATIONS = 100_000;
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -401,6 +401,10 @@ public class BulkMutation {
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
     Preconditions.checkNotNull(entry, "Request null");
     Preconditions.checkArgument(!entry.getRowKey().isEmpty(), "Request has an empty rowkey");
+    Preconditions.checkArgument(entry.getMutationsCount() <= MAX_NUMBER_OF_MUTATIONS, String
+        .format("Key %s has %d mutations, which is over the %d maximum.",
+            entry.getRowKey().toStringUtf8(), entry.getMutationsCount(),
+            MAX_NUMBER_OF_MUTATIONS));
 
     boolean didSend = false;
     if (currentBatch != null && currentBatch.wouldBeFull(entry)) {
