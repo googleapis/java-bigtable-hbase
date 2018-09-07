@@ -303,4 +303,11 @@ public class TestScanAdapter {
 
     Assert.assertEquals(expected, result);
   }
+
+  @Test
+  public void testLimit() {
+    Scan scan = new Scan().setLimit(10);
+    int adaptedLimit = (int) scanAdapter.adapt(scan, throwingReadHooks).build().getRowsLimit();
+    Assert.assertEquals(scan.getLimit(), adaptedLimit);
+  }
 }
