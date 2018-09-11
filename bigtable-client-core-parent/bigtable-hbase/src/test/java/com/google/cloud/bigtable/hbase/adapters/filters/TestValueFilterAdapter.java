@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import java.io.IOException;
 
-import com.google.cloud.bigtable.data.v2.wrappers.Filters;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
