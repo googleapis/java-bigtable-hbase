@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import java.io.IOException;
 
+import com.google.cloud.bigtable.data.v2.wrappers.Filters;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
@@ -86,6 +87,12 @@ public class TestValueFilterAdapter {
   public void testGreaterThanEqualValueFilter() throws IOException {
     assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.GREATER_OR_EQUAL,
       toRowFilter(ValueRange.newBuilder().setStartValueClosed(FOO_BYTESTRING)));
+  }
+
+  @Test
+  public void testNotEqualEmptyStringValueFilter() throws IOException {
+    assertAdaptedForm(new BinaryComparator("".getBytes()), CompareOp.NOT_EQUAL,
+        RowFilter.newBuilder().setValueRegexFilter(ByteString.copyFrom(".+".getBytes())).build());
   }
 
   @Test
