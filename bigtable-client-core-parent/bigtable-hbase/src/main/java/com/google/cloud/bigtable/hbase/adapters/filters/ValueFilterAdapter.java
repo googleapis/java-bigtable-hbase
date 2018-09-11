@@ -88,10 +88,13 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
           return range().startClosed(value).endClosed(value);
         }
       case NOT_EQUAL:
-        // This strictly less than + strictly greater than:
-        return FILTERS.interleave()
-            .filter(range().endOpen(value))
-            .filter(range().startOpen(value));
+        if(comparator.getValue().length == 0) {
+          //Special case for NOT_EQUAL to EMPTY_STRING
+          return FILTERS.value().regex(".+");
+        } else {
+          // This strictly less than + strictly greater than:
+          return FILTERS.interleave().filter(range().endOpen(value)).filter(range().startOpen(value));
+        }
       case GREATER_OR_EQUAL:
         return range().startClosed(value);
       case GREATER:

@@ -1548,6 +1548,51 @@ public abstract class AbstractTestFilters extends AbstractTest {
   }
 
   @Test
+  public void testSingleColumnValueFilterNotEqualEmptyString() throws IOException {
+    // Set up:
+    // Row 1: f:qualifier1 = value1
+    // Row 2: f:qualifier1 = ""
+
+    // Cases to test:
+    // a: Filter NOT_EQUAL to EMPTY_STRING
+
+    byte[] rowKey1 = dataHelper.randomData("scvfrk1");
+    byte[] rowKey2 = dataHelper.randomData("scvfrk2");
+    byte[] qualifier1 = dataHelper.randomData("scvfq1");
+    byte[] value1_1 = dataHelper.randomData("val1.1");
+    byte[] value1_2 = "".getBytes();
+
+
+    Table table = getDefaultTable();
+    Put put = new Put(rowKey1);
+    put.addColumn(COLUMN_FAMILY, qualifier1, value1_1);
+    table.put(put);
+
+    put = new Put(rowKey2);
+    put.addColumn(COLUMN_FAMILY, qualifier1, value1_2);
+    table.put(put);
+
+    Result[] results;
+    Scan scan = new Scan();
+    scan.addColumn(COLUMN_FAMILY, qualifier1);
+
+    // This is not intuitive. In order to get filter.setLatestVersionOnly to have an effect,
+    // we must enable the scanner to see more versions:
+    scanAddVersion(scan,3);
+    ByteArrayComparable valueComparable1 = new BinaryComparator(value1_2);
+    SingleColumnValueFilter filter =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier1, CompareOp.NOT_EQUAL, valueComparable1);
+    filter.setFilterIfMissing(false);
+    filter.setLatestVersionOnly(true);
+
+    // a: Qualifier exists in the row and the value NOT_EQUAL to EMPTY_STRING (row1)
+    scan.setFilter(filter);
+    results = table.getScanner(scan).next(10);
+    Assert.assertEquals(1, results.length);
+    Assert.assertEquals(1,results[0].listCells().size());
+  }
+
+  @Test
   public void testRandomRowFilter() throws IOException {
     byte[][] rowKeys = dataHelper.randomData("trandA", 100);
     byte[] qualifier = dataHelper.randomData("trandq-");
