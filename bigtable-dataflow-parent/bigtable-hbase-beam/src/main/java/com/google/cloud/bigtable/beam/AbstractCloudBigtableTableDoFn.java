@@ -58,7 +58,8 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
                 + "Breakdown of exceptions {type - count}: %s",
             context,
             exception.getNumExceptions(),
-            exception.getMessage(), getFurtherInfo(exception)),
+            exception.getMessage(),
+            getFurtherInfo(exception)),
         exception.getCause(0));
   }
 
