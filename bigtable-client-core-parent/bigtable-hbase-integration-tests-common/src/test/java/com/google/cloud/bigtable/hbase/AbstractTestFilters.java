@@ -1559,17 +1559,17 @@ public abstract class AbstractTestFilters extends AbstractTest {
     byte[] rowKey1 = dataHelper.randomData("scvfrk1");
     byte[] rowKey2 = dataHelper.randomData("scvfrk2");
     byte[] qualifier1 = dataHelper.randomData("scvfq1");
-    byte[] value1_1 = dataHelper.randomData("val1.1");
-    byte[] value1_2 = "".getBytes();
+    byte[] nonEmptyStringValue = dataHelper.randomData("val1.1");
+    byte[] emptyStringValue = "".getBytes();
 
 
     Table table = getDefaultTable();
     Put put = new Put(rowKey1);
-    put.addColumn(COLUMN_FAMILY, qualifier1, value1_1);
+    put.addColumn(COLUMN_FAMILY, qualifier1, nonEmptyStringValue);
     table.put(put);
 
     put = new Put(rowKey2);
-    put.addColumn(COLUMN_FAMILY, qualifier1, value1_2);
+    put.addColumn(COLUMN_FAMILY, qualifier1, emptyStringValue);
     table.put(put);
 
     Result[] results;
@@ -1578,10 +1578,10 @@ public abstract class AbstractTestFilters extends AbstractTest {
 
     // This is not intuitive. In order to get filter.setLatestVersionOnly to have an effect,
     // we must enable the scanner to see more versions:
-    scanAddVersion(scan,3);
-    ByteArrayComparable valueComparable1 = new BinaryComparator(value1_2);
+    scanAddVersion(scan, 3);
+    ByteArrayComparable emptyStringValueComparable = new BinaryComparator(emptyStringValue);
     SingleColumnValueFilter filter =
-        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier1, CompareOp.NOT_EQUAL, valueComparable1);
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier1, CompareOp.NOT_EQUAL, emptyStringValueComparable);
     filter.setFilterIfMissing(false);
     filter.setLatestVersionOnly(true);
 
@@ -1589,7 +1589,8 @@ public abstract class AbstractTestFilters extends AbstractTest {
     scan.setFilter(filter);
     results = table.getScanner(scan).next(10);
     Assert.assertEquals(1, results.length);
-    Assert.assertEquals(1,results[0].listCells().size());
+    Assert.assertEquals(1, results[0].listCells().size());
+    Assert.assertArrayEquals(nonEmptyStringValue, results[0].rawCells()[0].getValueArray());
   }
 
   @Test

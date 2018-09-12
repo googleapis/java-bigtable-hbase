@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.bigtable.v2.ValueRange;
@@ -91,7 +92,7 @@ public class TestValueFilterAdapter {
   @Test
   public void testNotEqualEmptyStringValueFilter() throws IOException {
     assertAdaptedForm(new BinaryComparator("".getBytes()), CompareOp.NOT_EQUAL,
-        RowFilter.newBuilder().setValueRegexFilter(ByteString.copyFrom(".+".getBytes())).build());
+        RowFilter.newBuilder().setValueRegexFilter(ByteString.copyFrom(ReaderExpressionHelper.ANY_BYTES.getBytes())).build());
   }
 
   @Test

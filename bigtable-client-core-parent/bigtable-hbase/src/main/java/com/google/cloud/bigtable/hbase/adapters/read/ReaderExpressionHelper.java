@@ -32,7 +32,9 @@ import java.io.OutputStream;
 public class ReaderExpressionHelper {
   /** Constant <code>ANY_BYTE="\\C"</code> */
   public static final String ANY_BYTE = "\\C";
-  /** Constant <code>ANY_BYTE="\\C"</code> */
+  /** Constant <code>ANY_BYTES="\\C+"</code> */
+  public static final String ANY_BYTES = "\\C+";
+  /** Constant <code>ALL_BYTES="\\C*"</code> */
   public static final String ALL_BYTES = "\\C*";
   /** Constant <code>ANY_BYTE_BYTES=Bytes.toBytes(ANY_BYTE)</code> */
   public static final byte[] ANY_BYTE_BYTES = Bytes.toBytes(ANY_BYTE);
