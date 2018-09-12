@@ -53,7 +53,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
   private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
-  private static final boolean LIMIT_AVAILABLE = isLimitAvaoilable();
+  private static final boolean LIMIT_AVAILABLE = isLimitAvailable();
 
   /**
    * HBase supports include(Stop|Start)Row only at 1.4.0+, so check to make sure that the HBase
@@ -68,7 +68,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     }
   }
 
-  private static boolean isLimitAvaoilable() {
+  private static boolean isLimitAvailable() {
     try {
       new Scan().setLimit(1);
       return true;
