@@ -401,7 +401,7 @@ public class BulkMutation {
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
     Preconditions.checkNotNull(entry, "Entry is null");
     Preconditions.checkArgument(!entry.getRowKey().isEmpty(), "Request has an empty rowkey");
-    if (entry.getMutationsCount() <= MAX_NUMBER_OF_MUTATIONS) {
+    if (entry.getMutationsCount() >= MAX_NUMBER_OF_MUTATIONS) {
       // entry.getRowKey().toStringUtf8() can be expensive, so don't add it in a standard
       // Precondition.checkArgument() which will always run it.
       throw new IllegalArgumentException(String
