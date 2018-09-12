@@ -51,17 +51,6 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
           exception);
       return;
     }
-    Map<String, Integer> furtherInfo = new TreeMap<>();
-    List<Throwable> causes = exception.getCauses();
-    for (Throwable throwable : causes) {
-      String message = throwable.getMessage();
-      Integer count = furtherInfo.get(message);
-      if (count == null) {
-        furtherInfo.put(message, 1);
-      } else {
-        furtherInfo.put(message, 1 + count);
-      }
-    }
     log.error(
         String.format(
             "For context %s: %d exceptions occured during a bulk operation:\n\t%s.\n"
@@ -69,9 +58,28 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
                 + "Breakdown of exceptions {type - count}: %s",
             context,
             exception.getNumExceptions(),
-            exception.getMessage(),
-            furtherInfo),
+            exception.getMessage(), getFurtherInfo(exception)),
         exception.getCause(0));
+  }
+
+  private static Map<String, Integer> getFurtherInfo(
+      RetriesExhaustedWithDetailsException exception) {
+    Map<String, Integer> furtherInfo = new TreeMap<>();
+    try {
+      List<Throwable> causes = exception.getCauses();
+      for (Throwable throwable : causes) {
+        String message = throwable.getClass().getName() + ": " + throwable.getMessage();
+        Integer count = furtherInfo.get(message);
+        if (count == null) {
+          furtherInfo.put(message, 1);
+        } else {
+          furtherInfo.put(message, 1 + count);
+        }
+      }
+    } catch (Throwable t) {
+      // Don't fail just because information gathering failed.
+    }
+    return furtherInfo;
   }
 
   protected static void rethrowException(RetriesExhaustedWithDetailsException exception)
