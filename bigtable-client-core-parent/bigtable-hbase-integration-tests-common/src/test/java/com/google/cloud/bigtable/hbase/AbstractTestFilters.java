@@ -1575,6 +1575,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Result[] results;
     Scan scan = new Scan();
     scan.addColumn(COLUMN_FAMILY, qualifier1);
+    scan.setRowPrefixFilter(Bytes.toBytes("scvfrk"));
 
     // This is not intuitive. In order to get filter.setLatestVersionOnly to have an effect,
     // we must enable the scanner to see more versions:
