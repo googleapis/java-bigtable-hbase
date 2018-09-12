@@ -53,6 +53,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
   private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
+  private static final boolean LIMIT_AVAILABLE = isLimitAvailable();
 
   /**
    * HBase supports include(Stop|Start)Row only at 1.4.0+, so check to make sure that the HBase
@@ -61,6 +62,15 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   private static boolean isOpenClosedAvailable() {
     try {
       new Scan().includeStopRow();
+      return true;
+    } catch(NoSuchMethodError e) {
+      return false;
+    }
+  }
+
+  private static boolean isLimitAvailable() {
+    try {
+      new Scan().setLimit(1);
       return true;
     } catch(NoSuchMethodError e) {
       return false;
@@ -131,12 +141,20 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   public ReadRowsRequest.Builder adapt(Scan scan, ReadHooks readHooks) {
     throwIfUnsupportedScan(scan);
 
-    RowSet rowSet = getRowSet(scan);
-    rowSet = narrowRowSet(rowSet, scan.getFilter());
-
-    return ReadRowsRequest.newBuilder()
-        .setRows(rowSet)
+    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder()
+        .setRows(toRowSet(scan))
         .setFilter(buildFilter(scan, readHooks));
+
+    if (LIMIT_AVAILABLE && scan.getLimit() > 0) {
+      requestBuilder.setRowsLimit(scan.getLimit());
+    }
+
+    return requestBuilder;
+  }
+
+  private RowSet toRowSet(Scan scan) {
+    RowSet rowSet = getRowSet(scan);
+    return narrowRowSet(rowSet, scan.getFilter());
   }
 
   private RowSet getRowSet(Scan scan) {
