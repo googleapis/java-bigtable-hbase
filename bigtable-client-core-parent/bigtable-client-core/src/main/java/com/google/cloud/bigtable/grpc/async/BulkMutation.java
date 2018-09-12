@@ -399,12 +399,16 @@ public class BulkMutation {
    *     SettableFuture is set.
    */
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
-    Preconditions.checkNotNull(entry, "Request null");
+    Preconditions.checkNotNull(entry, "Entry is null");
     Preconditions.checkArgument(!entry.getRowKey().isEmpty(), "Request has an empty rowkey");
-    Preconditions.checkArgument(entry.getMutationsCount() <= MAX_NUMBER_OF_MUTATIONS, String
-        .format("Key %s has %d mutations, which is over the %d maximum.",
-            entry.getRowKey().toStringUtf8(), entry.getMutationsCount(),
-            MAX_NUMBER_OF_MUTATIONS));
+    if (entry.getMutationsCount() <= MAX_NUMBER_OF_MUTATIONS) {
+      // entry.getRowKey().toStringUtf8() can be expensive, so don't add it in a standard
+      // Precondition.checkArgument() which will always run it.
+      throw new IllegalArgumentException(String
+          .format("Key %s has %d mutations, which is over the %d maximum.",
+              entry.getRowKey().toStringUtf8(), entry.getMutationsCount(),
+              MAX_NUMBER_OF_MUTATIONS));
+    };
 
     boolean didSend = false;
     if (currentBatch != null && currentBatch.wouldBeFull(entry)) {
