@@ -336,7 +336,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public List<SnapshotDescription> listTableSnapshots(Pattern tableName,
       Pattern snapshotName) throws IOException {
-    List<SnapshotDescription> response = new ArrayList<SnapshotDescription>();
+    List<SnapshotDescription> response = new ArrayList<>();
     for (SnapshotDescription snapshot: listSnapshots(snapshotName)) {
       if (tableName.matcher(snapshot.getTableNameAsString()).matches()) {
         response.add(snapshot);
