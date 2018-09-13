@@ -116,14 +116,16 @@ class ReadRowsRequestManager {
         continue;
       }
 
+      RowRange newRowRange = rowRange;
       StartKeyCase startKeyCase = rowRange.getStartKeyCase();
       if ((startKeyCase == StartKeyCase.START_KEY_CLOSED
           && startKeyIsAlreadyRead(rowRange.getStartKeyClosed()))
           || (startKeyCase == StartKeyCase.START_KEY_OPEN
           && startKeyIsAlreadyRead(rowRange.getStartKeyOpen()))
           || startKeyCase == StartKeyCase.STARTKEY_NOT_SET) {
-        rowSetBuilder.addRowRanges(rowRange.toBuilder().setStartKeyOpen(lastFoundKey).build());
+        newRowRange = newRowRange.toBuilder().setStartKeyOpen(lastFoundKey).build();
       }
+      rowSetBuilder.addRowRanges(newRowRange);
     }
 
     return rowSetBuilder.build();

@@ -36,12 +36,6 @@ public class ReadRowsRequestManagerTest {
 
   static final ByteString BLANK = ByteString.EMPTY;
 
-  static FlatRow buildRow(String rowKey) {
-    return FlatRow.newBuilder()
-        .withRowKey(ByteString.copyFromUtf8(rowKey))
-        .build();
-  }
-
   private static ReadRowsRequest createRequest(RowRange range) {
     return ReadRowsRequest.newBuilder().setRows(RowSet.newBuilder().addRowRanges(range)).build();
   }
