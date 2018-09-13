@@ -1559,6 +1559,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     byte[] rowKey1 = dataHelper.randomData("scvfrk1");
     byte[] rowKey2 = dataHelper.randomData("scvfrk2");
     byte[] qualifier1 = dataHelper.randomData("scvfq1");
+    byte[] qualifier2 = dataHelper.randomData("scvfq2");
     byte[] nonEmptyStringValue = dataHelper.randomData("val1.1");
     byte[] emptyStringValue = "".getBytes();
 
@@ -1566,10 +1567,12 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Table table = getDefaultTable();
     Put put = new Put(rowKey1);
     put.addColumn(COLUMN_FAMILY, qualifier1, nonEmptyStringValue);
+    put.addColumn(COLUMN_FAMILY, qualifier2, nonEmptyStringValue);
     table.put(put);
 
     put = new Put(rowKey2);
-    put.addColumn(COLUMN_FAMILY, qualifier1, emptyStringValue);
+    put.addColumn(COLUMN_FAMILY, qualifier1, nonEmptyStringValue);
+    put.addColumn(COLUMN_FAMILY, qualifier2, emptyStringValue);
     table.put(put);
 
     Result[] results;
@@ -1582,7 +1585,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     scanAddVersion(scan, 3);
     ByteArrayComparable emptyStringValueComparable = new BinaryComparator(emptyStringValue);
     SingleColumnValueFilter filter =
-        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier1, CompareOp.NOT_EQUAL, emptyStringValueComparable);
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier2, CompareOp.NOT_EQUAL, emptyStringValueComparable);
     filter.setFilterIfMissing(false);
     filter.setLatestVersionOnly(true);
 
@@ -1590,8 +1593,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     scan.setFilter(filter);
     results = table.getScanner(scan).next(10);
     Assert.assertEquals(1, results.length);
-    Assert.assertEquals(1, results[0].listCells().size());
-    Assert.assertArrayEquals(nonEmptyStringValue, results[0].rawCells()[0].getValueArray());
+    Assert.assertArrayEquals(rowKey1, results[0].getRow());
   }
 
   @Test
