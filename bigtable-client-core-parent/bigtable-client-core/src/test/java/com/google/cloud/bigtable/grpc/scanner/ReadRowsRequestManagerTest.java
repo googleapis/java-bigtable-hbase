@@ -36,12 +36,6 @@ public class ReadRowsRequestManagerTest {
 
   static final ByteString BLANK = ByteString.EMPTY;
 
-  static FlatRow buildRow(String rowKey) {
-    return FlatRow.newBuilder()
-        .withRowKey(ByteString.copyFromUtf8(rowKey))
-        .build();
-  }
-
   private static ReadRowsRequest createRequest(RowRange range) {
     return ReadRowsRequest.newBuilder().setRows(RowSet.newBuilder().addRowRanges(range)).build();
   }
@@ -62,14 +56,13 @@ public class ReadRowsRequestManagerTest {
     return RowSet.newBuilder().addAllRowKeys(keys).build();
   }
 
-
   /**
-   * Test a single, full table scan scenario for {@Link ResumingStreamingResultScanner#filterRows()}
+   * Test a single, full table scan scenario for {@link ReadRowsRequestManager#buildUpdatedRequest()}
    * .
    * @throws IOException
    */
   @Test
-  public void test_filterRows_testAllRange() throws IOException{
+  public void test_filterRows_testAllRange() {
     ByteString key1 = ByteString.copyFrom("row1".getBytes());
 
     ReadRowsRequest originalRequest =
@@ -83,11 +76,33 @@ public class ReadRowsRequestManagerTest {
   }
 
   /**
-   * Test rowKeys scenario for {@Link ReadRowsRequestManager#getUpdatedRequest()}.
+   * Test a single, full table scan scenario for {@link ReadRowsRequestManager#buildUpdatedRequest()}}
+   * .
+   */
+   @Test
+  public void test_filterRows_empty() {
+     ByteString key1 = ByteString.copyFrom("row1".getBytes());
+
+     ReadRowsRequest originalRequest = createRequest(RowRange.getDefaultInstance());
+
+     ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
+
+     underTest.updateLastFoundKey(key1);
+     RowSet actual = underTest.buildUpdatedRequest().getRows();
+     Assert.assertEquals(0, actual.getRowKeysCount());
+     Assert.assertEquals(1, actual.getRowRangesCount());
+     RowRange actualRange = actual.getRowRanges(0);
+     Assert.assertEquals(key1, actualRange.getStartKeyOpen());
+     RowRange.EndKeyCase endKeyCase = actualRange.getEndKeyCase();
+     Assert.assertTrue(endKeyCase == RowRange.EndKeyCase.ENDKEY_NOT_SET);
+   }
+
+  /**
+   * Test rowKeys scenario for {@link ReadRowsRequestManager#buildUpdatedRequest()}}.
    * @throws IOException
    */
   @Test
-  public void test_filterRows_rowKeys() throws IOException{
+  public void test_filterRows_rowKeys() {
     ByteString key1 = ByteString.copyFrom("row1".getBytes());
     ByteString key2 = ByteString.copyFrom("row2".getBytes());
     ByteString key3 = ByteString.copyFrom("row3".getBytes());
@@ -104,11 +119,11 @@ public class ReadRowsRequestManagerTest {
   }
 
   /**
-   * Test multiple rowset filter scenarios for {@Link ReadRowsRequestManager#getUpdatedRequest()}.
+   * Test multiple rowset filter scenarios for {@link ReadRowsRequestManager#buildUpdatedRequest()}}.
    * @throws IOException
    */
   @Test
-  public void test_filterRows_multiRowSetFilters() throws IOException{
+  public void test_filterRows_multiRowSetFilters() {
     ByteString key1 = ByteString.copyFrom("row1".getBytes());
     ByteString key2 = ByteString.copyFrom("row2".getBytes());
     ByteString key3 = ByteString.copyFrom("row3".getBytes());

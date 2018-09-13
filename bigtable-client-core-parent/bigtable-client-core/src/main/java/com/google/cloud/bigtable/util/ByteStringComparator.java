@@ -28,9 +28,21 @@ public final class ByteStringComparator implements Comparator<ByteString>{
 
   @Override
   public int compare(ByteString key1, ByteString key2) {
-    int size1 = key1.size();
-    int size2 = key2.size();
-    int size = Math.min(size1, size2);
+    if (key1 == null) {
+      if (key2 == null) {
+        return 0;
+      } else {
+        return 1;
+      }
+    } else if (key2 == null) {
+      return -1;
+    }
+
+    if (key1 == key2) {
+      return 0;
+    }
+
+    int size = Math.min(key1.size(), key2.size());
 
     for (int i = 0; i < size; i++) {
       // compare bytes as unsigned
@@ -42,6 +54,6 @@ public final class ByteStringComparator implements Comparator<ByteString>{
         return comparison;
       }
     }
-    return Integer.compare(size1, size2);
+    return Integer.compare(key1.size(), key2.size());
   }
 }
