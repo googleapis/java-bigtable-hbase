@@ -101,7 +101,7 @@ public class TestColumnDescriptorAdapter {
     descriptor.setScope(1); // REPLICATION_SCOPE
     descriptor.setInMemory(true);
 
-    ColumnFamily.Builder result = adapter.adapt(descriptor).clearGcRule();
+    ColumnFamily.Builder result = adapter.adapt(descriptor).toBuilder().clearGcRule();
 
     Assert.assertArrayEquals(
         new byte[0],
@@ -113,7 +113,7 @@ public class TestColumnDescriptorAdapter {
     // TTL of 1 day (in seconds):
     int ttl = 86400;
     descriptor.setTimeToLive(ttl);
-    ColumnFamily.Builder result = adapter.adapt(descriptor);
+    ColumnFamily result = adapter.adapt(descriptor);
     Assert.assertEquals(union(maxAge(ttl), maxVersions(1)), result.getGcRule());
   }
 
@@ -129,7 +129,7 @@ public class TestColumnDescriptorAdapter {
   @Test
   public void maxVersionsIsPreservedInGcExpression() {
     descriptor.setMaxVersions(10);
-    ColumnFamily.Builder result = adapter.adapt(descriptor);
+    ColumnFamily result = adapter.adapt(descriptor);
     Assert.assertEquals(maxVersions(10), result.getGcRule());
   }
 
@@ -144,7 +144,7 @@ public class TestColumnDescriptorAdapter {
     descriptor.setMaxVersions(20);
     descriptor.setMinVersions(10);
     descriptor.setTimeToLive(86400); // 1 day in seconds
-    ColumnFamily.Builder result = adapter.adapt(descriptor);
+    ColumnFamily result = adapter.adapt(descriptor);
     Assert.assertEquals(minMaxRule(10, 86400, 20), result.getGcRule());
   }
 

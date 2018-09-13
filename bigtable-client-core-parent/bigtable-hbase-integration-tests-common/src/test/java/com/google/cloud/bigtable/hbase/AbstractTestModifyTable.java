@@ -34,20 +34,24 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public abstract class AbstractTestModifyTable extends AbstractTest {
   
-  public static final byte[] COLUMN_FAMILY2 = Bytes.toBytes("test_family2");
+  public static final byte[] COLUMN_FAMILY3 = Bytes.toBytes("COLUMN_FAMILY3");
 
   public void testModifyTable(Function<HTableDescriptor, Void> modifyTable) throws IOException {
     TableName tableName = sharedTestEnv.newTestTableName();
     sharedTestEnv.createTable(tableName);
     try(Admin admin = getConnection().getAdmin()) {
-      HTableDescriptor descriptor = new HTableDescriptor(tableName);
-      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY2));
-      modifyTable.apply(descriptor);
-      assertTrue(admin.tableExists(tableName));
-      assertTrue(admin.getTableDescriptor(tableName).hasFamily(COLUMN_FAMILY2));
-      assertEquals(1, admin.getTableDescriptor(tableName).getColumnFamilies().length);
-      admin.disableTable(tableName);
-      admin.deleteTable(tableName);
+      try {
+        HTableDescriptor descriptor = new HTableDescriptor(tableName);
+        descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY3));
+        modifyTable.apply(descriptor);
+        assertTrue(admin.tableExists(tableName));
+        HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
+        assertTrue(tableDescriptor.hasFamily(COLUMN_FAMILY3));
+        assertEquals(1, tableDescriptor.getColumnFamilies().length);
+      } finally {
+        admin.disableTable(tableName);
+        admin.deleteTable(tableName);
+      }
     }
   }
 }
