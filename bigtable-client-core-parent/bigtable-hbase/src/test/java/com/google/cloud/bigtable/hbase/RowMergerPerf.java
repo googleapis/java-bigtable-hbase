@@ -56,7 +56,8 @@ public class RowMergerPerf {
     final int qualifiersPerFamily = 15;
     Preconditions.checkArgument(size > 0, "size has to be > 0.");
     final ByteString rowKey = ByteString.copyFrom(Bytes.toBytes("rowkey-0"));
-    for (int i = 0; i < cellCount; i++) {
+    int quals = Math.max(1, cellCount - 1);
+    for (int i = 0; i < quals; i++) {
       CellChunk.Builder contentChunk =
           CellChunk.newBuilder()
               .setRowKey(i == 0 ? rowKey : ByteString.EMPTY)
@@ -64,13 +65,23 @@ public class RowMergerPerf {
                   .setValue(ByteString.copyFromUtf8("Qualifier" + (i % qualifiersPerFamily))))
               .setValue(ByteString.copyFrom(RandomStringUtils.randomAlphanumeric(size).getBytes()))
               .setTimestampMicros(330020L)
-              .setCommitRow(i == cellCount - 1);
+              .setCommitRow(i == quals - 1);
       if (i % qualifiersPerFamily == 0) {
         contentChunk.setFamilyName(StringValue.newBuilder().setValue("Family" + (i / qualifiersPerFamily)));
       }
 
       readRowsResponse.addChunks(contentChunk);
     }
+
+    // This adds a new row to test performance of comparing two different row keys.
+    readRowsResponse.addChunks(CellChunk.newBuilder()
+        .setRowKey(ByteString.copyFromUtf8("rowkey-1"))
+        .setQualifier(BytesValue.newBuilder()
+            .setValue(ByteString.copyFromUtf8("Qualifier0")))
+        .setFamilyName(StringValue.newBuilder().setValue("Family1").build())
+        .setValue(ByteString.copyFrom(RandomStringUtils.randomAlphanumeric(size).getBytes()))
+        .setTimestampMicros(330020L)
+        .setCommitRow(true));
     return readRowsResponse.build();
   }
 

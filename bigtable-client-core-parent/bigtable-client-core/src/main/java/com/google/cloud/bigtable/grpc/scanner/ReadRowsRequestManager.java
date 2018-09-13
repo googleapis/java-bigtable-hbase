@@ -91,6 +91,15 @@ class ReadRowsRequestManager {
     }
     RowSet.Builder rowSetBuilder = RowSet.newBuilder();
 
+    if (originalRows.getRowKeysCount() == 0 && originalRows.getRowRangesCount() == 0) {
+      rowSetBuilder.addRowRanges(
+          RowRange
+              .newBuilder()
+              .setStartKeyOpen(lastFoundKey)
+              .setEndKeyOpen(ByteString.EMPTY)
+              .build());
+    }
+
     for (ByteString key : originalRows.getRowKeysList()) {
       if (!startKeyIsAlreadyRead(key)) {
         rowSetBuilder.addRowKeys(key);
@@ -107,16 +116,14 @@ class ReadRowsRequestManager {
         continue;
       }
 
-      RowRange newRange = rowRange;
       StartKeyCase startKeyCase = rowRange.getStartKeyCase();
       if ((startKeyCase == StartKeyCase.START_KEY_CLOSED
           && startKeyIsAlreadyRead(rowRange.getStartKeyClosed()))
           || (startKeyCase == StartKeyCase.START_KEY_OPEN
           && startKeyIsAlreadyRead(rowRange.getStartKeyOpen()))
           || startKeyCase == StartKeyCase.STARTKEY_NOT_SET) {
-        newRange = rowRange.toBuilder().setStartKeyOpen(lastFoundKey).build();
+        rowSetBuilder.addRowRanges(rowRange.toBuilder().setStartKeyOpen(lastFoundKey).build());
       }
-      rowSetBuilder.addRowRanges(newRange);
     }
 
     return rowSetBuilder.build();
