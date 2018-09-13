@@ -126,6 +126,14 @@ limitations under the License.
         </profile>
         <profile>
             <id>hbaseLocalMiniClusterTestH2</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-testing-util</artifactId>
+                    <version>${hbase.version}</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -278,19 +286,7 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-mapreduce</artifactId>
-            <version>${hbase.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-testing-util</artifactId>
             <version>${hbase.version}</version>
             <scope>test</scope>
         </dependency>
