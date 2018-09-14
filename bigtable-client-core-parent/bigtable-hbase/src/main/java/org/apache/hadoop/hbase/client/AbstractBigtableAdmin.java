@@ -611,10 +611,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * <p>modifyColumns.</p>
    *
-   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @param columnName a {@link java.lang.String} object.
-   * @param modificationType a {@link java.lang.String} object.
-   * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
+   * @param tableName a {@link TableName} object for error messages.
+   * @param columnName a {@link String} object for error messages
+   * @param modificationType a {@link String} object for error messages
+   * @param builder a {@link ModifyTableBuilder} object to send.
    * @throws java.io.IOException if any.
    */
   protected Void modifyColumns(TableName tableName, String columnName,
@@ -642,7 +642,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   /**
-   * Modify an existing column family on a table.
+   * Modify an existing column family on a table.  NOTE: this is needed for backwards compatibility
+   * for the hbase shell.
    */
   public void modifyColumns(final String tableName, HColumnDescriptor descriptor)
       throws IOException {
