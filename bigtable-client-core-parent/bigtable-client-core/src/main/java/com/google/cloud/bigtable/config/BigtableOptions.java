@@ -105,7 +105,7 @@ public class BigtableOptions implements Serializable, Cloneable {
     }
 
     private Builder(BigtableOptions options) {
-      this.options = options;
+      this.options = options.clone();
     }
 
     public Builder setAdminHost(String adminHost) {
@@ -467,7 +467,7 @@ public class BigtableOptions implements Serializable, Cloneable {
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions.Builder} object.
    */
   public Builder toBuilder() {
-    return new Builder(this.clone());
+    return new Builder(this);
   }
 
   /**

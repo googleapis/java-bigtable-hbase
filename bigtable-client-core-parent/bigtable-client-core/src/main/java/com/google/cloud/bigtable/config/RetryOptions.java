@@ -90,7 +90,7 @@ public class RetryOptions implements Serializable {
    * A Builder for ChannelOptions objects.
    */
   public static class Builder {
-  	private RetryOptions options = new RetryOptions();
+  	private RetryOptions options;
   	
   	@Deprecated
     public Builder() {

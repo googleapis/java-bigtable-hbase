@@ -28,7 +28,7 @@ import com.google.common.base.Preconditions;
  * @author sduskis
  * @version $Id: $Id
  */
-public class BulkOptions implements Serializable {
+public class BulkOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
@@ -86,74 +86,66 @@ public class BulkOptions implements Serializable {
    */
   public static class Builder {
 
-    private int asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
-    private boolean useBulkApi = true;
-    private int bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
-    private long bulkMaxRequestSize = BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
-    private long autoflushMs = BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
-    private int maxInflightRpcs = -1;
-    private long maxMemory = BIGTABLE_MAX_MEMORY_DEFAULT;
-    private boolean enableBulkMutationThrottling = BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT;
-    private int bulkMutationRpcTargetMs = BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
+    private BulkOptions options;
 
     @Deprecated
     public Builder() {
+      options =  new BulkOptions();
+      options.asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
+      options.useBulkApi = true;
+      options.bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
+      options.bulkMaxRequestSize = BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
+      options.autoflushMs = BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
+      options.maxInflightRpcs = -1;
+      options.maxMemory = BIGTABLE_MAX_MEMORY_DEFAULT;
+      options.enableBulkMutationThrottling = BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT;
+      options.bulkMutationRpcTargetMs = BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
     }
 
-    private Builder(BulkOptions original) {
-      this.asyncMutatorCount = original.asyncMutatorCount;
-      this.useBulkApi = original.useBulkApi;
-      this.bulkMaxRowKeyCount = original.bulkMaxRowKeyCount;
-      this.bulkMaxRequestSize = original.bulkMaxRequestSize;
-      this.autoflushMs = original.autoflushMs;
-      this.maxInflightRpcs = original.maxInflightRpcs;
-      this.maxMemory = original.maxMemory;
-      this.enableBulkMutationThrottling = original.enableBulkMutationThrottling;
-      this.bulkMutationRpcTargetMs = original.bulkMutationRpcTargetMs;
-    }
+    private Builder(BulkOptions options) { this.options = options.clone(); }
 
     public Builder setAsyncMutatorWorkerCount(int asyncMutatorCount) {
       Preconditions.checkArgument(
           asyncMutatorCount >= 0, "asyncMutatorCount must be greater or equal to 0.");
-      this.asyncMutatorCount = asyncMutatorCount;
+      options.asyncMutatorCount = asyncMutatorCount;
       return this;
     }
 
     public Builder setUseBulkApi(boolean useBulkApi) {
-      this.useBulkApi = useBulkApi;
+      options.useBulkApi = useBulkApi;
       return this;
     }
 
     public Builder setBulkMaxRowKeyCount(int bulkMaxRowKeyCount) {
       Preconditions.checkArgument(
         bulkMaxRowKeyCount >= 0, "bulkMaxRowKeyCount must be greater or equal to 0.");
-      this.bulkMaxRowKeyCount = bulkMaxRowKeyCount;
+      options.bulkMaxRowKeyCount = bulkMaxRowKeyCount;
       return this;
     }
 
     public Builder setBulkMaxRequestSize(long bulkMaxRequestSize) {
       Preconditions.checkArgument(
         bulkMaxRequestSize >= 0, "bulkMaxRequestSize must be greater or equal to 0.");
-      this.bulkMaxRequestSize = bulkMaxRequestSize;
+      options.bulkMaxRequestSize = bulkMaxRequestSize;
       return this;
     }
 
     public Builder setAutoflushMs(long autoflushMs) {
       Preconditions.checkArgument(
           autoflushMs >= 0, "autoflushMs must be greater or equal to 0.");
-      this.autoflushMs = autoflushMs;
+      options.autoflushMs = autoflushMs;
       return this;
     }
 
     public Builder setMaxInflightRpcs(int maxInflightRpcs) {
       Preconditions.checkArgument(maxInflightRpcs > 0, "maxInflightRpcs must be greater than 0.");
-      this.maxInflightRpcs = maxInflightRpcs;
+      options.maxInflightRpcs = maxInflightRpcs;
       return this;
     }
 
     public Builder setMaxMemory(long maxMemory) {
       Preconditions.checkArgument(maxMemory > 0, "maxMemory must be greater than 0.");
-      this.maxMemory = maxMemory;
+      options.maxMemory = maxMemory;
       return this;
     }
 
@@ -165,40 +157,29 @@ public class BulkOptions implements Serializable {
      * @return this, for convenience.
      */
     public Builder enableBulkMutationThrottling() {
-      this.enableBulkMutationThrottling = true;
+      options.enableBulkMutationThrottling = true;
       return this;
     }
 
     public Builder setBulkMutationRpcTargetMs(int bulkMutationRpcTargetMs) {
-      this.bulkMutationRpcTargetMs = bulkMutationRpcTargetMs;
+      options.bulkMutationRpcTargetMs = bulkMutationRpcTargetMs;
       return this;
     }
 
-    public BulkOptions build() {
-      return new BulkOptions(
-          asyncMutatorCount,
-          useBulkApi,
-          bulkMaxRowKeyCount,
-          bulkMaxRequestSize,
-          autoflushMs,
-          maxInflightRpcs,
-          maxMemory,
-          enableBulkMutationThrottling,
-          bulkMutationRpcTargetMs);
-    }
+    public BulkOptions build() { return options; }
   }
 
-  private final int asyncMutatorCount;
-  private final boolean useBulkApi;
-  private final int bulkMaxRowKeyCount;
-  private final long bulkMaxRequestSize;
-  private final long autoflushMs;
+  private int asyncMutatorCount;
+  private boolean useBulkApi;
+  private int bulkMaxRowKeyCount;
+  private long bulkMaxRequestSize;
+  private long autoflushMs;
 
-  private final int maxInflightRpcs;
-  private final long maxMemory;
+  private int maxInflightRpcs;
+  private long maxMemory;
 
-  private final boolean enableBulkMutationThrottling;
-  private final int bulkMutationRpcTargetMs;
+  private boolean enableBulkMutationThrottling;
+  private int bulkMutationRpcTargetMs;
 
   @VisibleForTesting
   BulkOptions() {
@@ -360,5 +341,13 @@ public class BulkOptions implements Serializable {
    */
   public Builder toBuilder() {
     return new Builder(this);
+  }
+
+  protected BulkOptions clone() {
+    try {
+      return (BulkOptions) super.clone();
+    } catch(CloneNotSupportedException e) {
+      throw new RuntimeException("Could not clone BulkOptions");
+    }
   }
 }
