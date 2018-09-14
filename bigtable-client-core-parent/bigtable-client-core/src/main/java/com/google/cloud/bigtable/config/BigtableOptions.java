@@ -45,7 +45,7 @@ public class BigtableOptions implements Serializable, Cloneable {
 
   /** Constant <code>BIGTABLE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
   public static final String BIGTABLE_ADMIN_HOST_DEFAULT =
-          "bigtableadmin.googleapis.com";
+      "bigtableadmin.googleapis.com";
   /** Constant <code>BIGTABLE_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
   /** Constant <code>BIGTABLE_BATCH_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
@@ -206,15 +206,15 @@ public class BigtableOptions implements Serializable, Cloneable {
     public Builder enableEmulator(String emulatorHostAndPort) {
       String[] hostPort = emulatorHostAndPort.split(":");
       Preconditions.checkArgument(hostPort.length == 2,
-              "Malformed " + BIGTABLE_EMULATOR_HOST_ENV_VAR + " environment variable: " +
-                      emulatorHostAndPort + ". Expecting host:port.");
+          "Malformed " + BIGTABLE_EMULATOR_HOST_ENV_VAR + " environment variable: " +
+          emulatorHostAndPort + ". Expecting host:port.");
 
       int port;
       try {
         port = Integer.parseInt(hostPort[1]);
       } catch (NumberFormatException e) {
         throw new RuntimeException("Invalid port in " + BIGTABLE_EMULATOR_HOST_ENV_VAR +
-                " environment variable: " + emulatorHostAndPort);
+            " environment variable: " + emulatorHostAndPort);
       }
       enableEmulator(hostPort[0], port);
       return this;
@@ -236,29 +236,29 @@ public class BigtableOptions implements Serializable, Cloneable {
     public BigtableOptions build() {
       if (options.bulkOptions == null) {
         int maxInflightRpcs =
-                BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
+            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
         options.bulkOptions = BulkOptions.builder().setMaxInflightRpcs(maxInflightRpcs).build();
       } else if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
         int maxInflightRpcs =
-                BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
+            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
         options.bulkOptions = options.bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
       }
       applyEmulatorEnvironment();
       options.adminHost = Preconditions.checkNotNull(options.adminHost);
       options.dataHost = Preconditions.checkNotNull(options.dataHost);
       if (!Strings.isNullOrEmpty(options.projectId)
-              && !Strings.isNullOrEmpty(options.instanceId)) {
+          && !Strings.isNullOrEmpty(options.instanceId)) {
         options.instanceName = new BigtableInstanceName(options.projectId, options.instanceId);
       } else {
         options.instanceName = null;
       }
 
       LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
-                      + "admin host %s.",
-              options.projectId,
-              options.instanceId,
-              options.dataHost,
-              options.adminHost);
+              + "admin host %s.",
+          options.projectId,
+          options.instanceId,
+          options.dataHost,
+          options.adminHost);
 
       return options;
     }
