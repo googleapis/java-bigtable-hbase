@@ -29,6 +29,8 @@ import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
+import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import io.grpc.Status;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
@@ -85,11 +87,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 @SuppressWarnings("deprecation")
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
-  private final TableAdapter2x tableAdapter2x;
 
   public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
     super(connection);
-    tableAdapter2x = new TableAdapter2x(connection.getSession().getOptions());
   }
 
   /** {@inheritDoc} */
@@ -109,14 +109,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), tableAdapter2x.adapt(desc, splitKeys));
+    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys));
   }
 
   /** {@inheritDoc} */
   @Override
   public Future<Void> createTableAsync(TableDescriptor desc, byte[][] splitKeys)
       throws IOException {
-    CreateTableRequest.Builder builder = tableAdapter2x.adapt(desc, splitKeys);
+    CreateTableRequest.Builder builder = TableAdapter2x.adapt(desc, splitKeys);
     ListenableFuture<Table> future = createTableAsync(builder, desc.getTableName());
     return FutureUtils.toCompletableFuture(future).thenApply(r -> null);
   }
@@ -169,11 +169,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    Modification modification = Modification.newBuilder()
-        .setId(columnFamilyDesc.getNameAsString())
-        .setCreate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
-        .build();
-    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "add", modification);
+    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "add",
+        ModifyTableBuilder.create().add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   /**
@@ -185,12 +182,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    Modification modification = Modification.newBuilder()
-        .setId(columnFamilyDesc.getNameAsString())
-        .setUpdate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
-        .build();
-    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "update", modification);
-
+    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "modify",
+        ModifyTableBuilder.create().modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   /** {@inheritDoc} */
@@ -253,7 +246,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     Modification modification = Modification
         .newBuilder()
         .setId(columnName)
-        .setCreate(tableAdapter2x.toColumnFamily(columnFamily))
+        .setCreate(TableAdapter2x.toColumnFamily(columnFamily))
         .build();
     return modifyColumnsAsync(tableName, modification);
   }
@@ -359,7 +352,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     Modification modification = Modification
         .newBuilder()
         .setId(columnName)
-        .setUpdate(tableAdapter2x.toColumnFamily(columnFamily))
+        .setUpdate(TableAdapter2x.toColumnFamily(columnFamily))
         .build();
     return modifyColumnsAsync(tableName, modification);
   }
@@ -382,7 +375,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public Future<Void> modifyTableAsync(TableName tableName, TableDescriptor newDescriptor) {
-    return getDescriptorAsync(tableName).thenApply(descriptor -> tableModificationAdapter
+    return getDescriptorAsync(tableName).thenApply(descriptor -> ModifyTableBuilder
         .buildModifications(new HTableDescriptor(newDescriptor), new HTableDescriptor(descriptor)))
         .thenApply(modifications -> {
           try {
@@ -412,7 +405,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
           throw new CompletionException(ex);
         }
       } else {
-        return tableAdapter2x.adapt(resp);
+        return tableAdapter.adapt(resp);
       }
     });
   }

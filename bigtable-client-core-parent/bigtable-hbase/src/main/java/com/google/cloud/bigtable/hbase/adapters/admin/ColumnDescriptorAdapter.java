@@ -46,6 +46,8 @@ import java.util.Set;
  */
 public class ColumnDescriptorAdapter {
 
+  public static final ColumnDescriptorAdapter INSTANCE = new ColumnDescriptorAdapter();
+
   /**
    * Configuration keys that we can support unconditionally and we provide
    * a mapped version of the column descriptor to Bigtable.
@@ -331,7 +333,7 @@ public class ColumnDescriptorAdapter {
    * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
    * @return a {@link com.google.bigtable.admin.v2.ColumnFamily.Builder} object.
    */
-  public ColumnFamily.Builder adapt(HColumnDescriptor columnDescriptor) {
+  public ColumnFamily adapt(HColumnDescriptor columnDescriptor) {
     throwIfRequestingUnknownFeatures(columnDescriptor);
     throwIfRequestingUnsupportedFeatures(columnDescriptor);
 
@@ -340,7 +342,7 @@ public class ColumnDescriptorAdapter {
     if (gcRule != null) {
       resultBuilder.setGcRule(gcRule);
     }
-    return resultBuilder;
+    return resultBuilder.build();
   }
 
   /**
