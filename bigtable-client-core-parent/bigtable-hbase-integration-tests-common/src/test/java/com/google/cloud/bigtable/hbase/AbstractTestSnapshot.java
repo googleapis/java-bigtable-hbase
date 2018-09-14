@@ -188,6 +188,21 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
     }
   }
 
+  @Test
+  public void testListTableSnapshotWithSingleArgs() throws Exception {
+	if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
+	      return;
+    }
+    try (Admin admin = getConnection().getAdmin()) {
+      sharedTestEnv.createTable(tableName);
+	  snapshot(snapshotName, tableName);
+	  Assert.assertEquals(1, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+	  snapshot(snapshotName+1, tableName);
+	  Assert.assertEquals(2, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+	  deleteSnapshot(snapshotName);
+	  Assert.assertEquals(1,  listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+    }
+  }
   private void checkSnapshotCount(Admin admin, int count) throws IOException {
     Assert.assertEquals(count,listSnapshotsSize(snapshotName));
   }
@@ -243,4 +258,5 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       Pattern snapshotNamePattern) throws IOException;
   protected abstract void deleteSnapshots(final Pattern pattern) throws IOException;
   protected abstract void deleteTable(final TableName tableName) throws IOException;
+  protected abstract int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception;
 }
