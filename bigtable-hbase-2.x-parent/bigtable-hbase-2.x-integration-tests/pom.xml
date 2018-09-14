@@ -133,6 +133,12 @@ limitations under the License.
                     <version>${hbase.version}</version>
                     <scope>test</scope>
                 </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-mapreduce</artifactId>
+                    <version>${hbase.version}</version>
+                    <scope>test</scope>
+                </dependency>
             </dependencies>
             <build>
                 <plugins>
@@ -283,12 +289,6 @@ limitations under the License.
                     <artifactId>bigtable-hbase-2.x-shaded</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-mapreduce</artifactId>
-            <version>${hbase.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
