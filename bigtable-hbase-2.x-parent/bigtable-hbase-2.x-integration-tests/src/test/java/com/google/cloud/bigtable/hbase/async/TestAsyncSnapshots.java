@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.async;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.TableExistsException;
@@ -161,5 +162,14 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Error while deleting table: "+e.getCause());
     }
+  }
+
+  @Override
+  protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
+	try {
+		return getAsyncAdmin().listTableSnapshots(tableNamePattern).get(60, TimeUnit.SECONDS).size();
+	}catch (InterruptedException | ExecutionException e) {
+	    throw new IOException("Error while listing table snapshots: "+e.getCause());
+	}
   }
 }

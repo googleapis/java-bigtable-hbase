@@ -585,8 +585,10 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
+  public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern tableNamePattern) {
+    return listSnapshots().thenApply(r -> 
+    		filter(r, d->tableNamePattern == null || 
+    		tableNamePattern.matcher(d.getTableNameAsString()).matches()));
   }
 
   @Override

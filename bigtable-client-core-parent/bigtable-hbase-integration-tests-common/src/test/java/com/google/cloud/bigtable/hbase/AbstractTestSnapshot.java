@@ -126,9 +126,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       return;
     }
     final Pattern allSnapshots = Pattern.compile(snapshotName + ".*");
-    try (Admin admin = getConnection().getAdmin()) {
       createTable(tableName);
-
       Map<String, Long> values = createAndPopulateTable(tableName);
       Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
       snapshot(snapshotName, tableName);
@@ -142,7 +140,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       Assert.assertEquals(1, listSnapshotsSize(Pattern.compile(snapshotName + 2)));
       deleteSnapshots(allSnapshots);
       Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
-    }
+    
   }
   
   @Test
@@ -151,7 +149,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       return;
     }
     final Pattern matchAll =  Pattern.compile(".*");
-    try (Admin admin = getConnection().getAdmin()) {
       createTable(tableName);
       createTable(anotherTableName);
       
@@ -185,9 +182,22 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
           listTableSnapshotsSize(anotherTableName.getNameAsString(), snapshotName));
       Assert.assertEquals(0, 
           listTableSnapshotsSize(anotherTableName.getNameAsString(), anotherSnapshotName));
-    }
+    
   }
 
+  @Test
+  public void testListTableSnapshotWithSingleArgs() throws Exception {
+	if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
+	      return;
+    }
+      sharedTestEnv.createTable(tableName);
+	  snapshot(snapshotName, tableName);
+	  Assert.assertEquals(1, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+	  snapshot(snapshotName+1, tableName);
+	  Assert.assertEquals(2, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+	  deleteSnapshot(snapshotName);
+	  Assert.assertEquals(1,  listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+  }
   private void checkSnapshotCount(Admin admin, int count) throws IOException {
     Assert.assertEquals(count,listSnapshotsSize(snapshotName));
   }
@@ -243,4 +253,5 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       Pattern snapshotNamePattern) throws IOException;
   protected abstract void deleteSnapshots(final Pattern pattern) throws IOException;
   protected abstract void deleteTable(final TableName tableName) throws IOException;
+  protected abstract int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception;
 }
