@@ -17,7 +17,6 @@
 package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
@@ -42,9 +40,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
 
 /**
  * <p>AbstractTestSnapshot class.</p>
@@ -184,20 +182,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
           listTableSnapshotsSize(anotherTableName.getNameAsString(), anotherSnapshotName));
     
   }
-
-  @Test
-  public void testListTableSnapshotWithSingleArgs() throws Exception {
-	if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
-	      return;
-    }
-      sharedTestEnv.createTable(tableName);
-	  snapshot(snapshotName, tableName);
-	  Assert.assertEquals(1, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
-	  snapshot(snapshotName+1, tableName);
-	  Assert.assertEquals(2, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
-	  deleteSnapshot(snapshotName);
-	  Assert.assertEquals(1,  listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
-  }
   private void checkSnapshotCount(Admin admin, int count) throws IOException {
     Assert.assertEquals(count,listSnapshotsSize(snapshotName));
   }
@@ -237,6 +221,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
     }
     Assert.assertTrue("There were missing keys.", values.isEmpty());
   }
+  
 
   protected abstract void createTable(TableName tableName) throws IOException;
   protected abstract void snapshot(String snapshotName, TableName tableName) throws IOException;
@@ -253,5 +238,4 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       Pattern snapshotNamePattern) throws IOException;
   protected abstract void deleteSnapshots(final Pattern pattern) throws IOException;
   protected abstract void deleteTable(final TableName tableName) throws IOException;
-  protected abstract int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception;
 }

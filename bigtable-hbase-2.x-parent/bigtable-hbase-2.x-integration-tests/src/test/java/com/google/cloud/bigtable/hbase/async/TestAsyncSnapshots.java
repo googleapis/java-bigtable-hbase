@@ -28,6 +28,8 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -163,8 +165,21 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       throw new IOException("Error while deleting table: "+e.getCause());
     }
   }
+    
+  @Test
+  public void testListTableSnapshotWithSingleArg() throws Exception {
+	  if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
+	      return;
+    }
+      sharedTestEnv.createTable(tableName);
+	  snapshot(snapshotName, tableName);
+	  Assert.assertEquals(1, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+	  snapshot(snapshotName+1, tableName);
+	  Assert.assertEquals(2, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+	  deleteSnapshot(snapshotName);
+	  Assert.assertEquals(1,  listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+  }
 
-  @Override
   protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
 	try {
 		return getAsyncAdmin().listTableSnapshots(tableNamePattern).get(60, TimeUnit.SECONDS).size();
