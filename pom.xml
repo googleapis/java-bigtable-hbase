@@ -95,10 +95,10 @@ limitations under the License.
     </repositories>
 
     <scm>
-        <connection>scm:git:https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git</connection>
-        <url>scm:git:https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git</url>
-        <developerConnection>scm:git:https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git</developerConnection>
-        <tag>bigtable-client-parent-1.4.1-SNAPSHOT</tag>
+        <connection>scm:git:git@github.com:GoogleCloudPlatform/cloud-bigtable-client.git</connection>
+        <developerConnection>scm:git:git@github.com:GoogleCloudPlatform/cloud-bigtable-client.git</developerConnection>
+        <url>https://github.com/GoogleCloudPlatform/cloud-bigtable-client</ur>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>
