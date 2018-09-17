@@ -97,7 +97,7 @@ limitations under the License.
     <scm>
         <connection>scm:git:git@github.com:GoogleCloudPlatform/cloud-bigtable-client.git</connection>
         <developerConnection>scm:git:git@github.com:GoogleCloudPlatform/cloud-bigtable-client.git</developerConnection>
-        <url>https://github.com/GoogleCloudPlatform/cloud-bigtable-client</ur>
+        <url>https://github.com/GoogleCloudPlatform/cloud-bigtable-client</url>
         <tag>HEAD</tag>
     </scm>
 
