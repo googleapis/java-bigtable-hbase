@@ -167,9 +167,9 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   @Override
   protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
 	try {
-		return getAsyncAdmin().listTableSnapshots(tableNamePattern).get(60, TimeUnit.SECONDS).size();
-	}catch (InterruptedException | ExecutionException e) {
-	    throw new IOException("Error while listing table snapshots: "+e.getCause());
+      return getAsyncAdmin().listTableSnapshots(tableNamePattern).get(60, TimeUnit.SECONDS).size();
+	} catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while listing table snapshots: "+e.getCause());
 	}
   }
 }
