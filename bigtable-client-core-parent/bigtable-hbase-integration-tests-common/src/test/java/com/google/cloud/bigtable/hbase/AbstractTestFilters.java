@@ -1586,8 +1586,6 @@ public abstract class AbstractTestFilters extends AbstractTest {
     ByteArrayComparable emptyStringValueComparable = new BinaryComparator(emptyStringValue);
     SingleColumnValueFilter filter =
         new SingleColumnValueFilter(COLUMN_FAMILY, qualifier2, CompareOp.NOT_EQUAL, emptyStringValueComparable);
-    filter.setFilterIfMissing(false);
-    filter.setLatestVersionOnly(true);
 
     // a: Qualifier exists in the row and the value NOT_EQUAL to EMPTY_STRING (row1)
     scan.setFilter(filter);
