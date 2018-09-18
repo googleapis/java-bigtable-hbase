@@ -119,4 +119,11 @@ public class TestSnapshots extends AbstractTestSnapshot {
       admin.deleteTable(tableName);
     }
   }
+
+  @Override
+  protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
+    try(Admin admin = getConnection().getAdmin()){
+      return admin.listTableSnapshots(tableNamePattern, Pattern.compile(".*")).size();
+    }
+  }
 }
