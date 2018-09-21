@@ -15,10 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
@@ -27,6 +26,14 @@ import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_MAX_INFLIGHT
 import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
+import static com.google.common.base.Strings.isNullOrEmpty;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.VersionInfo;
 
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -38,13 +45,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
 
 import io.grpc.Status;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.VersionInfo;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 /**
  * Static methods to convert an instance of {@link org.apache.hadoop.conf.Configuration}
@@ -308,14 +308,14 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setUsePlaintextNegotiation(
       configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false));
 
+    setBulkOptions(configuration, bigtableOptionsBuilder);
+    setChannelOptions(configuration, bigtableOptionsBuilder);
+    setClientCallOptions(configuration, bigtableOptionsBuilder);
+
     String emulatorHost = configuration.get(BIGTABLE_EMULATOR_HOST_KEY);
     if (emulatorHost != null) {
       bigtableOptionsBuilder.enableEmulator(emulatorHost);
     }
-
-    setBulkOptions(configuration, bigtableOptionsBuilder);
-    setChannelOptions(configuration, bigtableOptionsBuilder);
-    setClientCallOptions(configuration, bigtableOptionsBuilder);
 
     return bigtableOptionsBuilder.build();
   }
