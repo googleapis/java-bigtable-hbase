@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.ThreadFactory;
 
 /**
- * Creates a {@link ThreadFactory} that's safe to use in AppEngine.
+ * Creates a {@link ThreadFactory} that's safe to use in App Engine.
  * <p>
  * This class copies code that originates in {@link io.grpc.internal.GrpcUtil#getThreadFactory(String, boolean)}.
  */
