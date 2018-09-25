@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -33,7 +32,8 @@ import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
-import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionMetrics;
@@ -43,6 +43,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
+import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.BigtableAsyncConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.CompactType;
@@ -63,6 +64,7 @@ import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
@@ -79,10 +81,13 @@ import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
   private AsyncAdmin asyncAdmin;
+  private AsyncConnection asyncConnection;
 
   public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
    super(connection);
-   asyncAdmin = new BigtableAsyncConnection(connection.getConfiguration()).getAdminBuilder().build();
+
+   asyncConnection = new BigtableAsyncConnection(connection.getConfiguration());
+   asyncAdmin = asyncConnection.getAdminBuilder().build();
   }
 
   private <T> T getResult(Future<T> U) {
@@ -96,7 +101,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc) throws IOException {
-    //createTable(desc, nulCompletionExceptionl);
     getResult(asyncAdmin.createTable(desc));
   }
 
@@ -104,7 +108,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void createTable(TableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions)
       throws IOException {
-   // createTable(desc, createSplitKeys(startKey, endKey, numRegions));
     getResult(asyncAdmin.createTable(desc, createSplitKeys(startKey, endKey, numRegions)));
   }
 
@@ -112,7 +115,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
-    //createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys));
     getResult(asyncAdmin.createTable(desc, splitKeys));
   }
 
@@ -141,7 +143,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
       throws IOException {
     return getResult(asyncAdmin.listSnapshots());
   }
-
 
   /**
    * {@inheritDoc}
@@ -172,32 +173,25 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public Future<Void> deleteNamespaceAsync(String name) throws IOException {
-    deleteNamespace(name);
-    // TODO Consider better options after adding support for async hbase2
-//    return CompletableFuture.runAsync(() -> {});
     return asyncAdmin.deleteNamespace(name);
   }
 
   /** {@inheritDoc} */
   @Override
   public Future<Void> disableTableAsync(TableName tableName) throws IOException {
-    disableTable(tableName);
-    // TODO Consider better options after adding support for async hbase2
-    return CompletableFuture.runAsync(() -> {});
+    return asyncAdmin.disableTable(tableName);
   }
 
   /** {@inheritDoc} */
   @Override
   public Future<Void> enableTableAsync(TableName tableName) throws IOException {
-    enableTable(tableName);
-    // TODO Consider better options after adding support for async hbase2
-    return CompletableFuture.runAsync(() -> {});
+    return asyncAdmin.enableTable(tableName);
   }
 
   /** {@inheritDoc} */
   @Override
   public TableDescriptor getDescriptor(TableName tableName) throws IOException {
-    return getTableDescriptor(tableName);
+    return getResult(asyncAdmin.getDescriptor(tableName));
   }
 
   /** {@inheritDoc} */
@@ -261,7 +255,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public Future<Void> deleteTableAsync(TableName tableName) throws IOException {
-    return deleteTableAsyncInternal(tableName);
+    return asyncAdmin.deleteTable(tableName);
   }
 
   @Override
@@ -513,12 +507,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public List<RegionInfo> getRegions(TableName tableName) throws IOException {
-    List<HRegionLocation> hRegionLocations = connection.getRegionLocator(tableName).getAllRegionLocations();
-    List<RegionInfo> regionInfos = new ArrayList<>();
-    for (HRegionLocation hRegionLocation : hRegionLocations) {
-      regionInfos.add(hRegionLocation.getRegion());
-    }
-    return regionInfos;
+    return getResult(asyncAdmin.getRegions(tableName));
   }
 
   @Override
@@ -762,5 +751,239 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public Future<Void> updateReplicationPeerConfigAsync(String s,
       ReplicationPeerConfig replicationPeerConfig) {
     throw new UnsupportedOperationException("updateReplicationPeerConfigAsync"); // TODO
+  }
+
+  @Override
+  public boolean tableExists(TableName tableName) throws IOException {
+    return getResult(asyncAdmin.tableExists(tableName));
+  }
+
+  @Override
+  public boolean tableExists(String tableName) throws IOException {
+    return tableExists(TableName.valueOf(tableName));
+  }
+
+  @Override
+  public TableName[] listTableNames(String patternStr) throws IOException {
+    return listTableNames(Pattern.compile(patternStr));
+  }
+
+  @Override
+  public TableName[] listTableNames(Pattern pattern) throws IOException {
+    // TODO Auto-generated method stub
+    return listTableNames(pattern, false);
+  }
+
+  @Override
+  public TableName[] listTableNames(Pattern pattern, boolean includeSysTables) throws IOException {
+    List<TableName> tableNames = getResult(asyncAdmin.listTableNames(pattern, includeSysTables));
+    if(tableNames == null)
+      return null;
+    return tableNames.toArray(new TableName[tableNames.size()]);
+  }
+
+  @Override
+  public TableName[] listTableNames(String regex, boolean includeSysTables) throws IOException {
+    return listTableNames(Pattern.compile(regex), includeSysTables);
+  }
+
+
+  @Override
+  public TableName[] listTableNames() throws IOException {
+    List<TableName> tableNames = getResult(asyncAdmin.listTableNames());
+    if(tableNames == null)
+      return null;
+    return tableNames.toArray(new TableName[tableNames.size()]);
+  }
+
+  @Override
+  public void deleteTable(TableName tableName) throws IOException {
+    getResult(asyncAdmin.deleteTable(tableName));
+  }
+
+  @Override
+  public void enableTable(TableName tableName) throws IOException {
+    getResult(asyncAdmin.enableTable(tableName));
+  }
+
+  @Override
+  public void enableTable(String tableName) throws IOException {
+    getResult(asyncAdmin.enableTable(TableName.valueOf(tableName)));
+  }
+
+  @Override
+  public void disableTable(TableName tableName) throws IOException {
+    getResult(asyncAdmin.disableTable(tableName));
+  }
+
+  @Override
+  public void disableTable(String tableName) throws IOException {
+    getResult(asyncAdmin.disableTable(TableName.valueOf(tableName)));
+  }
+
+  @Override
+  public boolean isTableEnabled(TableName tableName) throws IOException {
+    return getResult(asyncAdmin.isTableEnabled(tableName));
+  }
+
+  @Override
+  public boolean isTableEnabled(String tableName) throws IOException {
+    return getResult(asyncAdmin.isTableEnabled(TableName.valueOf(tableName)));
+  }
+
+  @Override
+  public boolean isTableDisabled(TableName tableName) throws IOException {
+    return getResult(asyncAdmin.isTableDisabled(tableName));
+  }
+
+  @Override
+  public boolean isTableDisabled(String tableName) throws IOException {
+    return getResult(asyncAdmin.isTableDisabled(TableName.valueOf(tableName)));
+  }
+
+  @Override
+  public boolean isTableAvailable(TableName tableName) throws IOException {
+    return getResult(asyncAdmin.isTableAvailable(tableName));
+  }
+
+  @Override
+  public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
+    getResult(asyncAdmin.addColumnFamily(tableName, column));
+  }
+
+  @Override
+  public void modifyColumn(TableName tableName, HColumnDescriptor column) throws IOException {
+    getResult(asyncAdmin.modifyColumnFamily(tableName, column));
+  }
+
+  @Override
+  public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
+    getResult(asyncAdmin.deleteColumnFamily(tableName, columnName));
+  }
+
+  @Override
+  public void modifyTable(TableName tableName, HTableDescriptor newDescriptor) throws IOException {
+    getResult(asyncAdmin.modifyTable( new HTableDescriptor(tableName, newDescriptor)));
+  }
+
+  @Override
+  public void addColumn(String tableName, HColumnDescriptor column) throws IOException {
+    getResult(asyncAdmin.addColumnFamily(TableName.valueOf(tableName), column));
+  }
+
+  @Override
+  public void modifyColumns(String tableName, HColumnDescriptor descriptor) throws IOException {
+    getResult(asyncAdmin.modifyColumnFamily(TableName.valueOf(tableName), descriptor));
+  }
+
+  @Override
+  public void deleteColumn(String tableName, byte[] columnName) throws IOException {
+    getResult(asyncAdmin.deleteColumnFamily(TableName.valueOf(tableName), columnName));
+  }
+
+  @Override
+  public void deleteColumn(String tableName, String columnName) throws IOException {
+    getResult(asyncAdmin.deleteColumnFamily(TableName.valueOf(tableName), Bytes.toBytes(columnName)));
+  }
+
+  @Override
+  public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
+    List<RegionInfo> regionList =  getResult(asyncAdmin.getRegions(tableName));
+    return regionList.stream().map(p ->
+        new HRegionInfo(p)).collect(Collectors.toList());
+  }
+
+
+  @Override
+  public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
+    if(names != null && !names.isEmpty()) {
+      List<TableDescriptor> listTableDescriptor = names.stream().map(p -> getResult(asyncAdmin
+        .getDescriptor(TableName.valueOf(p)))).collect(Collectors.toList());
+
+      List<HTableDescriptor> listHTableDescriptor =  listTableDescriptor.stream()
+        .map(p -> new HTableDescriptor(p)).collect(Collectors.toList());
+
+      return listHTableDescriptor.toArray(new HTableDescriptor[listHTableDescriptor.size()]);
+    }
+    return null;
+  }
+
+  @Override
+  public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException {
+    getResult(asyncAdmin.truncateTable(tableName, preserveSplits));
+  }
+
+  @Override
+  public boolean isTableAvailable(TableName tableName, byte[][] splitKeys) throws IOException {
+    return getResult(asyncAdmin.isTableAvailable(tableName, splitKeys));
+  }
+
+
+  @Override
+  public void snapshot(String snapshotName, TableName tableName)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    getResult(asyncAdmin.snapshot(snapshotName, tableName));
+  }
+
+  @Override
+  public void snapshot(byte[] snapshotName, byte[] tableName)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    getResult(asyncAdmin.snapshot(Bytes.toString(snapshotName), TableName.valueOf(tableName)));
+  }
+
+  @Override
+  public void snapshot(byte[] snapshotName, TableName tableName)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    getResult(asyncAdmin.snapshot(Bytes.toString(snapshotName), tableName));
+  }
+
+  @Override
+  public void cloneSnapshot(byte[] snapshotName, byte[] tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    getResult(asyncAdmin.cloneSnapshot(Bytes.toString(snapshotName), TableName.valueOf(tableName)));
+  }
+
+  @Override
+  public void cloneSnapshot(byte[] snapshotName, TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    getResult(asyncAdmin.cloneSnapshot(Bytes.toString(snapshotName), tableName));
+  }
+
+  @Override
+  public void cloneSnapshot(String snapshotName, TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    getResult(asyncAdmin.cloneSnapshot(snapshotName, tableName));
+  }
+
+  @Override
+  public void deleteSnapshot(byte[] snapshotName) throws IOException {
+    getResult(asyncAdmin.deleteSnapshot(Bytes.toString(snapshotName)));
+  }
+
+  @Override
+  public void deleteSnapshot(String snapshotName) throws IOException {
+    getResult(asyncAdmin.deleteSnapshot(snapshotName));
+  }
+
+  @Override
+  public void deleteSnapshots(String regex) throws IOException {
+    getResult(asyncAdmin.deleteSnapshots(Pattern.compile(regex)));
+  }
+
+  @Override
+  public void deleteSnapshots(Pattern pattern) throws IOException {
+    getResult(asyncAdmin.deleteSnapshots(pattern));
+  }
+
+  @Override
+  public void deleteTableSnapshots(String tableNameRegex, String snapshotNameRegex)
+      throws IOException {
+    getResult(asyncAdmin.deleteTableSnapshots(Pattern.compile(tableNameRegex), Pattern.compile(snapshotNameRegex)));
+  }
+
+  @Override
+  public void deleteTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern)
+      throws IOException {
+    getResult(asyncAdmin.deleteTableSnapshots(tableNamePattern, snapshotNamePattern));
   }
 }
