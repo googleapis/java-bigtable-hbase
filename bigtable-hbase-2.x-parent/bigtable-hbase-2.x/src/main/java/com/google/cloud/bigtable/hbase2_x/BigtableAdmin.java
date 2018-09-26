@@ -90,6 +90,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    asyncAdmin = asyncConnection.getAdminBuilder().build();
   }
 
+  /**
+   * To complete the computation of object, and returns the result.
+   *
+   * @param Future<T> U
+   * @return T
+   */
   private <T> T getResult(Future<T> U) {
     try {
       return U.get();
@@ -110,7 +116,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
       throws IOException {
     getResult(asyncAdmin.createTable(desc, createSplitKeys(startKey, endKey, numRegions)));
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -212,7 +217,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void snapshotAsync(SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException {
-    snapshotTable(snapshot.getName(), snapshot.getTableName());
+    getResult(asyncAdmin.snapshot(snapshot));
     LOG.warn("isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
         + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
   }
@@ -224,7 +229,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void deleteColumnFamily(TableName tableName, byte[] columnName) throws IOException {
-   getResult(asyncAdmin.deleteColumnFamily(tableName, columnName));
+    getResult(asyncAdmin.deleteColumnFamily(tableName, columnName));
   }
 
   @Override
@@ -753,6 +758,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     throw new UnsupportedOperationException("updateReplicationPeerConfigAsync"); // TODO
   }
 
+  /* *************** More Delegated methods **************** */
+
   @Override
   public boolean tableExists(TableName tableName) throws IOException {
     return getResult(asyncAdmin.tableExists(tableName));
@@ -770,7 +777,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public TableName[] listTableNames(Pattern pattern) throws IOException {
-    // TODO Auto-generated method stub
     return listTableNames(pattern, false);
   }
 
@@ -893,7 +899,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         new HRegionInfo(p)).collect(Collectors.toList());
   }
 
-
   @Override
   public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
     if(names != null && !names.isEmpty()) {
@@ -917,7 +922,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public boolean isTableAvailable(TableName tableName, byte[][] splitKeys) throws IOException {
     return getResult(asyncAdmin.isTableAvailable(tableName, splitKeys));
   }
-
 
   @Override
   public void snapshot(String snapshotName, TableName tableName)
