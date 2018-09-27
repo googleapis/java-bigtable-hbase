@@ -1556,29 +1556,28 @@ public abstract class AbstractTestFilters extends AbstractTest {
     // Cases to test:
     // a: Filter NOT_EQUAL to EMPTY_STRING
 
-    byte[] rowKey1 = dataHelper.randomData("scvfrk1");
-    byte[] rowKey2 = dataHelper.randomData("scvfrk2");
-    byte[] qualifier1 = dataHelper.randomData("scvfq1");
-    byte[] qualifier2 = dataHelper.randomData("scvfq2");
+    byte[] rowKey1 = dataHelper.randomData("scvfnees1");
+    byte[] rowKey2 = dataHelper.randomData("scvfnees2");
+    byte[] qualifier1 = dataHelper.randomData("scvfnees1");
+    byte[] qualifier2 = dataHelper.randomData("scvfnees2");
     byte[] nonEmptyStringValue = dataHelper.randomData("val1.1");
     byte[] emptyStringValue = "".getBytes();
 
 
     Table table = getDefaultTable();
-    Put put = new Put(rowKey1);
-    put.addColumn(COLUMN_FAMILY, qualifier1, nonEmptyStringValue);
-    put.addColumn(COLUMN_FAMILY, qualifier2, nonEmptyStringValue);
-    table.put(put);
+    Put put1 = new Put(rowKey1);
+    put1.addColumn(COLUMN_FAMILY, qualifier1, nonEmptyStringValue);
+    put1.addColumn(COLUMN_FAMILY, qualifier2, nonEmptyStringValue);
 
-    put = new Put(rowKey2);
-    put.addColumn(COLUMN_FAMILY, qualifier1, nonEmptyStringValue);
-    put.addColumn(COLUMN_FAMILY, qualifier2, emptyStringValue);
-    table.put(put);
+    Put put2 = new Put(rowKey2);
+    put2.addColumn(COLUMN_FAMILY, qualifier1, nonEmptyStringValue);
+    put2.addColumn(COLUMN_FAMILY, qualifier2, emptyStringValue);
+    table.put(Arrays.asList(put1, put2));
 
     Result[] results;
     Scan scan = new Scan();
     scan.addColumn(COLUMN_FAMILY, qualifier1);
-    scan.setRowPrefixFilter(Bytes.toBytes("scvfrk"));
+    scan.setRowPrefixFilter(Bytes.toBytes("scvfnees"));
 
     // This is not intuitive. In order to get filter.setLatestVersionOnly to have an effect,
     // we must enable the scanner to see more versions:
