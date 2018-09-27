@@ -114,6 +114,15 @@ public class TestBigtableOptions {
     Assert.assertEquals(CredentialOptions.defaultCredentials(), options.getCredentialOptions());
   }
 
+  @Test
+  public void testUseBatch() {
+    BigtableOptions options = BigtableOptions.builder().setUseBatch(true).build();
+    Assert.assertTrue(options.useCachedChannel());
+    Assert.assertEquals(BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT, options.getDataHost());
+    Assert.assertEquals(5000, options.getRetryOptions().getInitialBackoffMillis());
+    Assert.assertEquals(5000, options.getRetryOptions().getMaxElapsedBackoffMillis());
+  }
+
   /**
    * This is a dirty way to override the environment that is accessible to a test.
    * It only modifies the JVM's view of the environment, not the environment itself.

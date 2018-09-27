@@ -33,7 +33,7 @@ import com.google.common.collect.ImmutableSet;
  * @author sduskis
  * @version $Id: $Id
  */
-public class RetryOptions implements Serializable {
+public class RetryOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 

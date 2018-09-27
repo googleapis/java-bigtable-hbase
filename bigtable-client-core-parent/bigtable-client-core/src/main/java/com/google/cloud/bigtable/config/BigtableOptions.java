@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.config;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -102,6 +103,7 @@ public class BigtableOptions implements Serializable, Cloneable {
       // the Google Compute Engine metadata service or gcloud configuration in other environments. A
       // user can also override the default behavior with P12 or JSON configuration.
       options.credentialOptions = CredentialOptions.defaultCredentials();
+      options.useBatch = false;
     }
 
     private Builder(BigtableOptions options) {
@@ -190,6 +192,11 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
+    public Builder setUseBatch(boolean useBatch) {
+      options.useBatch = useBatch;
+      return this;
+    }
+
     /**
      * Apply emulator settings from the relevant environment variable, if set.
      */
@@ -253,6 +260,14 @@ public class BigtableOptions implements Serializable, Cloneable {
         options.instanceName = null;
       }
 
+      if(options.useBatch) {
+        options.useCachedDataPool = true;
+        options.dataHost = BIGTABLE_BATCH_DATA_HOST_DEFAULT;
+        RetryOptions.Builder retryOptionsBuilder = options.retryOptions.toBuilder();
+        retryOptionsBuilder.setInitialBackoffMillis((int) TimeUnit.SECONDS.toMillis(5));
+        retryOptionsBuilder.setMaxElapsedBackoffMillis((int) TimeUnit.SECONDS.toMillis(5));
+        options.retryOptions = retryOptionsBuilder.build();
+      }
       LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
               + "admin host %s.",
           options.projectId,
@@ -281,6 +296,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   private CallOptionsConfig callOptionsConfig;
   private CredentialOptions credentialOptions;
   private RetryOptions retryOptions;
+  private boolean useBatch;
 
   @VisibleForTesting
   BigtableOptions() {
@@ -436,7 +452,8 @@ public class BigtableOptions implements Serializable, Cloneable {
         && Objects.equals(credentialOptions, other.credentialOptions)
         && Objects.equals(retryOptions, other.retryOptions)
         && Objects.equals(bulkOptions, other.bulkOptions)
-        && Objects.equals(callOptionsConfig, other.callOptionsConfig);
+        && Objects.equals(callOptionsConfig, other.callOptionsConfig)
+        && Objects.equals(useBatch, other.useBatch);
   }
 
   /** {@inheritDoc} */
@@ -458,6 +475,7 @@ public class BigtableOptions implements Serializable, Cloneable {
         .add("callOptionsConfig", callOptionsConfig)
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .add("useCachedDataPool", useCachedDataPool)
+        .add("useBatch", useBatch)
         .toString();
   }
 
@@ -477,6 +495,10 @@ public class BigtableOptions implements Serializable, Cloneable {
    */
   public boolean useCachedChannel() {
     return useCachedDataPool;
+  }
+
+  public boolean useBatch() {
+    return useBatch;
   }
 
   protected BigtableOptions clone() {

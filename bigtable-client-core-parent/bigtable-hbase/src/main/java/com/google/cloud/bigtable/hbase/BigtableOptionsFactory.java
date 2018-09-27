@@ -199,6 +199,10 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_USE_BULK_API =
       "google.bigtable.use.bulk.api";
 
+  /** Constant <code>BIGTABLE_USE_BATCH="google.bigtable.use.batch"</code> */
+  public static final String BIGTABLE_USE_BATCH =
+      "google.bigtable.use.batch";
+
   /** Constant <code>BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES="google.bigtable.bulk.max.request.size.b"{trunked}</code> */
   public static final String BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES =
       "google.bigtable.bulk.max.request.size.bytes";
@@ -316,6 +320,7 @@ public class BigtableOptionsFactory {
     if (emulatorHost != null) {
       bigtableOptionsBuilder.enableEmulator(emulatorHost);
     }
+    bigtableOptionsBuilder.setUseBatch(configuration.getBoolean(BIGTABLE_USE_BATCH, false));
 
     return bigtableOptionsBuilder.build();
   }
