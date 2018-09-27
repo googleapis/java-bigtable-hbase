@@ -1548,6 +1548,53 @@ public abstract class AbstractTestFilters extends AbstractTest {
   }
 
   @Test
+  public void testSingleColumnValueFilterNotEqualEmptyString() throws IOException {
+    // Set up:
+    // Row 1: f:qualifier1 = value1
+    // Row 2: f:qualifier1 = ""
+
+    // Cases to test:
+    // a: Filter NOT_EQUAL to EMPTY_STRING
+
+    byte[] rowKey1 = dataHelper.randomData("scvfrk1");
+    byte[] rowKey2 = dataHelper.randomData("scvfrk2");
+    byte[] qualifier1 = dataHelper.randomData("scvfq1");
+    byte[] qualifier2 = dataHelper.randomData("scvfq2");
+    byte[] nonEmptyStringValue = dataHelper.randomData("val1.1");
+    byte[] emptyStringValue = "".getBytes();
+
+
+    Table table = getDefaultTable();
+    Put put = new Put(rowKey1);
+    put.addColumn(COLUMN_FAMILY, qualifier1, nonEmptyStringValue);
+    put.addColumn(COLUMN_FAMILY, qualifier2, nonEmptyStringValue);
+    table.put(put);
+
+    put = new Put(rowKey2);
+    put.addColumn(COLUMN_FAMILY, qualifier1, nonEmptyStringValue);
+    put.addColumn(COLUMN_FAMILY, qualifier2, emptyStringValue);
+    table.put(put);
+
+    Result[] results;
+    Scan scan = new Scan();
+    scan.addColumn(COLUMN_FAMILY, qualifier1);
+    scan.setRowPrefixFilter(Bytes.toBytes("scvfrk"));
+
+    // This is not intuitive. In order to get filter.setLatestVersionOnly to have an effect,
+    // we must enable the scanner to see more versions:
+    scanAddVersion(scan, 3);
+    ByteArrayComparable emptyStringValueComparable = new BinaryComparator(emptyStringValue);
+    SingleColumnValueFilter filter =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier2, CompareOp.NOT_EQUAL, emptyStringValueComparable);
+
+    // a: Qualifier exists in the row and the value NOT_EQUAL to EMPTY_STRING (row1)
+    scan.setFilter(filter);
+    results = table.getScanner(scan).next(10);
+    Assert.assertEquals(1, results.length);
+    Assert.assertArrayEquals(rowKey1, results[0].getRow());
+  }
+
+  @Test
   public void testRandomRowFilter() throws IOException {
     byte[][] rowKeys = dataHelper.randomData("trandA", 100);
     byte[] qualifier = dataHelper.randomData("trandq-");
