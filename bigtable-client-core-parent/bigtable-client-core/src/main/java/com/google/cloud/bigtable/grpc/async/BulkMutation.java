@@ -16,12 +16,9 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.bigtable.v2.*;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.api.client.util.NanoClock;
-import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.MutateRowResponse;
-import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -31,24 +28,21 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.*;
 import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
 import com.google.rpc.Status;
 
 import io.grpc.StatusRuntimeException;
 
+import javax.annotation.Nullable;
+import javax.security.auth.callback.Callback;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * This class combines a collection of {@link MutateRowRequest}s into a single {@link
@@ -131,7 +125,7 @@ public class BulkMutation {
      *
      * @param entry The {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to add
      * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}
-     *     returns from the server. See {@link #addCallback(ListenableFuture)} for more 
+     *     returns from the server. See {@link #addCallback(ListenableFuture)} for more
      *     information about how the SettableFuture is set.
      */
     private ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
@@ -239,7 +233,7 @@ public class BulkMutation {
       }
       if (missingEntriesCount > 0) {
         LOG.error("Missing %d responses for bulkWrite. Setting exceptions on the futures.",
-          missingEntriesCount);
+            missingEntriesCount);
       }
     }
 
@@ -270,7 +264,7 @@ public class BulkMutation {
               setComplete();
             } else if (isStale()) {
               setFailure(
-                io.grpc.Status.INTERNAL.withDescription("Stale requests.").asRuntimeException());
+                  io.grpc.Status.INTERNAL.withDescription("Stale requests.").asRuntimeException());
             } else {
               setupStalenessChecker();
             }
@@ -310,7 +304,7 @@ public class BulkMutation {
         setComplete();
       }
     }
- 
+
     private synchronized void setComplete() {
       cancelIfNotDone(stalenessFuture);
       cancelIfNotDone(mutateRowsFuture);
@@ -346,6 +340,7 @@ public class BulkMutation {
   private final long autoflushMs;
   private final Meter batchMeter =
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.batch.meter");
+  private boolean enableUnsafeMutationSplits;
 
   @VisibleForTesting
   NanoClock clock = NanoClock.SYSTEM;
@@ -382,10 +377,23 @@ public class BulkMutation {
     this.maxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();
     this.maxRequestSize = bulkOptions.getBulkMaxRequestSize();
     this.autoflushMs = bulkOptions.getAutoflushMs();
+    this.enableUnsafeMutationSplits = bulkOptions.isEnableUnsafeMutationSplits();
   }
 
   public ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     return add(convert(request));
+  }
+
+  private ListenableFuture<MutateRowResponse> sendDirect(ByteString rowKey, List<Mutation> mutations) {
+    ListenableFuture<MutateRowResponse> mutateRowFuture = null;
+    try {
+      MutateRowRequest mutateRowRequest =
+          MutateRowRequest.newBuilder().setTableName(tableName).setRowKey(rowKey).addAllMutations(mutations).build();
+      mutateRowFuture = client.mutateRowAsync(mutateRowRequest);
+    } catch (Throwable e) {
+      mutateRowFuture = Futures.<MutateRowResponse>immediateFailedFuture(e);
+    }
+    return mutateRowFuture;
   }
 
   /**
@@ -401,15 +409,13 @@ public class BulkMutation {
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
     Preconditions.checkNotNull(entry, "Entry is null");
     Preconditions.checkArgument(!entry.getRowKey().isEmpty(), "Request has an empty rowkey");
-    if (entry.getMutationsCount() >= MAX_NUMBER_OF_MUTATIONS) {
-      // entry.getRowKey().toStringUtf8() can be expensive, so don't add it in a standard
-      // Precondition.checkArgument() which will always run it.
-      throw new IllegalArgumentException(String
-          .format("Key %s has %d mutations, which is over the %d maximum.",
-              entry.getRowKey().toStringUtf8(), entry.getMutationsCount(),
-              MAX_NUMBER_OF_MUTATIONS));
-    };
-
+    // entry.getRowKey().toStringUtf8() can be expensive, so don't add it in a standard
+    // Precondition.checkArgument() which will always run it.
+    if(shouldProcessUnsafeMutationSplit(entry)) {
+      sendUnsent();
+      ListenableFuture<MutateRowResponse> result = processUnsafeMutationSplit(entry);
+      return result;
+    }
     boolean didSend = false;
     if (currentBatch != null && currentBatch.wouldBeFull(entry)) {
       sendUnsent();
@@ -432,8 +438,7 @@ public class BulkMutation {
       // NOTE: this is optimized for adding minimal overhead to per item adds, at the expense of periodic partial batches
       if (this.autoflushMs > 0 && currentBatch != null && scheduledFlush == null) {
         scheduledFlush = retryExecutorService.schedule(new Runnable() {
-          @Override
-          public void run() {
+          @Override public void run() {
             synchronized (BulkMutation.this) {
               scheduledFlush = null;
               sendUnsent();
@@ -442,8 +447,46 @@ public class BulkMutation {
         }, autoflushMs, TimeUnit.MILLISECONDS);
       }
     }
-
     return future;
+  }
+
+  private ListenableFuture<MutateRowResponse> processUnsafeMutationSplit(MutateRowsRequest.Entry entry) {
+    final SettableFuture<MutateRowResponse> mutateRowResponseListenableFuture = SettableFuture.create();
+    final List<List<Mutation>> subSets = Lists.partition(entry.getMutationsList(), (int) MAX_NUMBER_OF_MUTATIONS);
+    // split subSets into several entries of 100,000
+    for (List<Mutation> mutations : subSets) {
+      ListenableFuture<MutateRowResponse> childFuture = sendDirect(entry.getRowKey(), mutations);
+      Futures.addCallback(childFuture, new FutureCallback<MutateRowResponse>() {
+        private boolean failed = false;
+        private int success = 0;
+
+        @Override public void onSuccess(@Nullable MutateRowResponse result) {
+          success++;
+          if (!failed && success == subSets.size()) {
+            mutateRowResponseListenableFuture.set(result);
+          }
+        }
+
+        @Override public void onFailure(Throwable t) {
+          failed = true;
+          mutateRowResponseListenableFuture.setException(t);
+        }
+      });
+      operationAccountant.registerOperation(childFuture);
+    }
+    return mutateRowResponseListenableFuture;
+  }
+
+  public boolean shouldProcessUnsafeMutationSplit(MutateRowsRequest.Entry entry) {
+    if (entry.getMutationsCount() > MAX_NUMBER_OF_MUTATIONS) {
+      if (!this.enableUnsafeMutationSplits) {
+        throw new IllegalArgumentException(String
+            .format("Key %s has %d mutations, which is over the %d maximum.", entry.getRowKey().toStringUtf8(), entry.getMutationsCount(),
+                MAX_NUMBER_OF_MUTATIONS));
+      }
+      return true;
+    }
+    return false;
   }
 
   /**

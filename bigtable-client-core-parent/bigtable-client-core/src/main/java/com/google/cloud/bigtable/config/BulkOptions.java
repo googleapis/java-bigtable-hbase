@@ -71,16 +71,21 @@ public class BulkOptions implements Serializable, Cloneable {
   public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 10;
 
   /**
-    * This is the maximum accumulated size of uncompleted requests that we allow before throttling.
-    * Default to 10% of available memory with a max of 1GB.
+   * This is the maximum accumulated size of uncompleted requests that we allow before throttling.
+   * Default to 10% of available memory with a max of 1GB.
    */
   public static final long BIGTABLE_MAX_MEMORY_DEFAULT =
       (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
 
+  /**
+   *  Whether or not to enable unsafe mutation splits
+   */
+  public static final boolean BIGTABLE_ENABLE_UNSAFE_MUTATION_SPLITS = false;
+
   public static Builder builder() {
     return new Builder();
   }
-  
+
   /**
    * A mutable builder for BigtableConnectionOptions.
    */
@@ -90,7 +95,7 @@ public class BulkOptions implements Serializable, Cloneable {
 
     @Deprecated
     public Builder() {
-      options =  new BulkOptions();
+      options = new BulkOptions();
       options.asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
       options.useBulkApi = true;
       options.bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
@@ -100,6 +105,7 @@ public class BulkOptions implements Serializable, Cloneable {
       options.maxMemory = BIGTABLE_MAX_MEMORY_DEFAULT;
       options.enableBulkMutationThrottling = BIGTABLE_BULK_ENABLE_THROTTLE_REBALANCE_DEFAULT;
       options.bulkMutationRpcTargetMs = BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
+      options.enableUnsafeMutationSplits = BIGTABLE_ENABLE_UNSAFE_MUTATION_SPLITS;
     }
 
     private Builder(BulkOptions options) { this.options = options.clone(); }
@@ -118,14 +124,14 @@ public class BulkOptions implements Serializable, Cloneable {
 
     public Builder setBulkMaxRowKeyCount(int bulkMaxRowKeyCount) {
       Preconditions.checkArgument(
-        bulkMaxRowKeyCount >= 0, "bulkMaxRowKeyCount must be greater or equal to 0.");
+          bulkMaxRowKeyCount >= 0, "bulkMaxRowKeyCount must be greater or equal to 0.");
       options.bulkMaxRowKeyCount = bulkMaxRowKeyCount;
       return this;
     }
 
     public Builder setBulkMaxRequestSize(long bulkMaxRequestSize) {
       Preconditions.checkArgument(
-        bulkMaxRequestSize >= 0, "bulkMaxRequestSize must be greater or equal to 0.");
+          bulkMaxRequestSize >= 0, "bulkMaxRequestSize must be greater or equal to 0.");
       options.bulkMaxRequestSize = bulkMaxRequestSize;
       return this;
     }
@@ -166,6 +172,11 @@ public class BulkOptions implements Serializable, Cloneable {
       return this;
     }
 
+    public Builder setEnableUnsafeMutationSplits(boolean enableUnsafeMutationSplits) {
+      options.enableUnsafeMutationSplits = enableUnsafeMutationSplits;
+      return this;
+    }
+
     public BulkOptions build() { return options; }
   }
 
@@ -180,40 +191,10 @@ public class BulkOptions implements Serializable, Cloneable {
 
   private boolean enableBulkMutationThrottling;
   private int bulkMutationRpcTargetMs;
+  private boolean enableUnsafeMutationSplits;
 
   @VisibleForTesting
-  BulkOptions() {
-      asyncMutatorCount = 1;
-      useBulkApi = false;
-      bulkMaxRowKeyCount = -1;
-      bulkMaxRequestSize = -1;
-      autoflushMs = -1l;
-      maxInflightRpcs = -1;
-      maxMemory = -1l;
-      enableBulkMutationThrottling = false;
-      bulkMutationRpcTargetMs = -1;
-  }
-
-  private BulkOptions(
-      int asyncMutatorCount,
-      boolean useBulkApi,
-      int bulkMaxKeyCount,
-      long bulkMaxRequestSize,
-      long autoflushMs,
-      int maxInflightRpcs,
-      long maxMemory,
-      boolean enableBulkMutationThrottling,
-      int bulkMutationRpcTargetMs) {
-    this.asyncMutatorCount = asyncMutatorCount;
-    this.useBulkApi = useBulkApi;
-    this.bulkMaxRowKeyCount = bulkMaxKeyCount;
-    this.bulkMaxRequestSize = bulkMaxRequestSize;
-    this.autoflushMs = autoflushMs;
-    this.maxInflightRpcs = maxInflightRpcs;
-    this.maxMemory = maxMemory;
-    this.enableBulkMutationThrottling = enableBulkMutationThrottling;
-    this.bulkMutationRpcTargetMs = bulkMutationRpcTargetMs;
-  }
+  BulkOptions() { }
 
   /**
    * <p>Getter for the field <code>asyncMutatorCount</code>.</p>
@@ -283,7 +264,7 @@ public class BulkOptions implements Serializable, Cloneable {
    * @return a boolean
    */
   public boolean isEnableBulkMutationThrottling() {
-    return enableBulkMutationThrottling;
+    return BIGTABLE_ENABLE_UNSAFE_MUTATION_SPLITS;
   }
 
   /**
@@ -294,6 +275,10 @@ public class BulkOptions implements Serializable, Cloneable {
    */
   public int getBulkMutationRpcTargetMs() {
     return bulkMutationRpcTargetMs;
+  }
+
+  public boolean isEnableUnsafeMutationSplits() {
+    return enableUnsafeMutationSplits;
   }
 
   /** {@inheritDoc} */
@@ -314,7 +299,8 @@ public class BulkOptions implements Serializable, Cloneable {
         && (maxInflightRpcs == other.maxInflightRpcs)
         && (maxMemory == other.maxMemory)
         && (enableBulkMutationThrottling == other.enableBulkMutationThrottling)
-        && (bulkMutationRpcTargetMs == other.bulkMutationRpcTargetMs);
+        && (bulkMutationRpcTargetMs == other.bulkMutationRpcTargetMs)
+        && (enableUnsafeMutationSplits == other.enableUnsafeMutationSplits);
   }
 
   /** {@inheritDoc} */
@@ -331,6 +317,7 @@ public class BulkOptions implements Serializable, Cloneable {
         .add("maxMemory", maxMemory)
         .add("enableBulkMutationThrottling", enableBulkMutationThrottling)
         .add("bulkMutationRpcTargetMs", bulkMutationRpcTargetMs)
+        .add("enableUnsafeMutationSplits", enableUnsafeMutationSplits)
         .toString();
   }
 

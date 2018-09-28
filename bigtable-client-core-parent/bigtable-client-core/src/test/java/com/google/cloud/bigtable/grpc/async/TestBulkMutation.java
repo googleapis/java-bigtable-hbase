@@ -11,10 +11,7 @@ package com.google.cloud.bigtable.grpc.async;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.bigtable.v2.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,10 +39,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
-import com.google.bigtable.v2.MutateRowResponse;
-import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.bigtable.v2.MutateRowsResponse;
-import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
@@ -142,7 +136,7 @@ public class TestBulkMutation {
     return MutateRowsRequest.Entry.newBuilder()
         .setRowKey(rowKey)
         .addMutations(Mutation.newBuilder()
-          .setSetCell(setCell))
+            .setSetCell(setCell))
         .build();
   }
 
@@ -207,7 +201,7 @@ public class TestBulkMutation {
       Assert.fail("Expected exception");
     } catch (ExecutionException e) {
       Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(),
-        Status.fromThrowable(e).getCode());
+          Status.fromThrowable(e).getCode());
     }
 
     Assert.assertFalse(operationAccountant.hasInflightOperations());
@@ -362,9 +356,111 @@ public class TestBulkMutation {
   public void testTooManyMutations() {
     MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry().toBuilder();
     bigRequest.addAllMutations(
-        Collections.nCopies((int) BulkMutation.MAX_NUMBER_OF_MUTATIONS, bigRequest.getMutations(0))
+        Collections.nCopies((int) BulkMutation.MAX_NUMBER_OF_MUTATIONS + 1, bigRequest.getMutations(0))
     );
     underTest.add(bigRequest.build());
+  }
+
+  @Test
+  public void testUnsafeMutationSplits() {
+    underTest = new BulkMutation(TABLE_NAME, client, operationAccountant, retryExecutorService,
+        BulkOptions.builder().setEnableUnsafeMutationSplits(true).build());
+
+    MutateRowRequest mutateRowRequest = createUnsafeBigRequest();
+
+    ListenableFuture<MutateRowResponse> future1 = SettableFuture.create();
+    ListenableFuture<MutateRowResponse> future2 = SettableFuture.create();
+    MutateRowResponse response = MutateRowResponse.getDefaultInstance();
+    ((SettableFuture<MutateRowResponse>) future1).set(response);
+    ((SettableFuture<MutateRowResponse>) future2).set(response);
+
+    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future1).thenReturn(future2);
+    underTest.add(mutateRowRequest);
+    verify(client, times(2)).mutateRowAsync(any(MutateRowRequest.class));
+  }
+
+  @Test
+  public void testUnsafeMutationSplitSecondFails() throws Throwable {
+    underTest = new BulkMutation(TABLE_NAME, client, operationAccountant, retryExecutorService,
+        BulkOptions.builder().setEnableUnsafeMutationSplits(true).build());
+
+    MutateRowRequest mutateRowRequest = createUnsafeBigRequest();
+
+    ListenableFuture<MutateRowResponse> future1 = SettableFuture.create();
+    ListenableFuture<MutateRowResponse> future2 = SettableFuture.create();
+    MutateRowResponse response = MutateRowResponse.getDefaultInstance();
+    Throwable t = new Throwable();
+    ((SettableFuture<MutateRowResponse>) future1).set(response);
+    ((SettableFuture<MutateRowResponse>) future2).setException(t);
+
+    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future1).thenReturn(future2);
+    ListenableFuture<MutateRowResponse> result = underTest.add(mutateRowRequest);
+    Assert.assertTrue(result.isDone());
+    try {
+      result.get();
+    } catch (Throwable throwable) {
+      Assert.assertEquals(Status.Code.UNKNOWN, Status.fromThrowable(throwable).getCode());
+    }
+  }
+
+  @Test
+  public void testUnsafeMutationSplitFirstFails() throws Throwable {
+    underTest = new BulkMutation(TABLE_NAME, client, operationAccountant, retryExecutorService,
+        BulkOptions.builder().setEnableUnsafeMutationSplits(true).build());
+
+    MutateRowRequest mutateRowRequest = createUnsafeBigRequest();
+
+    ListenableFuture<MutateRowResponse> future1 = SettableFuture.create();
+    ListenableFuture<MutateRowResponse> future2 = SettableFuture.create();
+    MutateRowResponse response = MutateRowResponse.getDefaultInstance();
+    Throwable t = new Throwable();
+    ((SettableFuture<MutateRowResponse>) future1).setException(t);
+    ((SettableFuture<MutateRowResponse>) future2).set(response);
+
+    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future1).thenReturn(future2);
+    ListenableFuture<MutateRowResponse> result = underTest.add(mutateRowRequest);
+    Assert.assertTrue(result.isDone());
+    try {
+      result.get();
+    } catch (Throwable throwable) {
+      Assert.assertEquals(Status.Code.UNKNOWN, Status.fromThrowable(throwable).getCode());
+    }
+  }
+
+  @Test
+  public void testUnsafeMutationSplitBothFail() throws Throwable {
+    underTest = new BulkMutation(TABLE_NAME, client, operationAccountant, retryExecutorService,
+        BulkOptions.builder().setEnableUnsafeMutationSplits(true).build());
+
+    MutateRowRequest mutateRowRequest = createUnsafeBigRequest();
+
+    ListenableFuture<MutateRowResponse> future1 = SettableFuture.create();
+    ListenableFuture<MutateRowResponse> future2 = SettableFuture.create();
+    MutateRowResponse response = MutateRowResponse.getDefaultInstance();
+    Throwable t = new Throwable();
+    ((SettableFuture<MutateRowResponse>) future1).setException(t);
+    ((SettableFuture<MutateRowResponse>) future2).setException(t);
+
+    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future1).thenReturn(future2);
+    ListenableFuture<MutateRowResponse> result = underTest.add(mutateRowRequest);
+    Assert.assertTrue(result.isDone());
+    try {
+      result.get();
+    } catch (Throwable throwable) {
+      Assert.assertEquals(Status.Code.UNKNOWN, Status.fromThrowable(throwable).getCode());
+    }
+  }
+
+  private MutateRowRequest createUnsafeBigRequest() {
+    MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry().toBuilder();
+    SetCell setCell = SetCell.newBuilder().setFamilyName("cf1").setColumnQualifier(QUALIFIER).build();
+    bigRequest.addMutations(Mutation.newBuilder().setSetCell(setCell));
+    MutateRowRequest mutateRowRequest =
+        MutateRowRequest.newBuilder().setTableName(TABLE_NAME.toString())
+            .setRowKey(bigRequest.getRowKey()).addAllMutations(Collections
+            .nCopies((int) BulkMutation.MAX_NUMBER_OF_MUTATIONS + 1, bigRequest.getMutations(0)))
+            .build();
+    return mutateRowRequest;
   }
 
   private BulkMutation createBulkMutation() {
@@ -396,7 +492,7 @@ public class TestBulkMutation {
     responseBuilder.addEntriesBuilder()
         .setIndex(0)
         .getStatusBuilder()
-            .setCode(code.getCode().value());
+        .setCode(code.getCode().value());
     future.set(Arrays.asList(responseBuilder.build()));
     underTest.sendUnsent();
   }
