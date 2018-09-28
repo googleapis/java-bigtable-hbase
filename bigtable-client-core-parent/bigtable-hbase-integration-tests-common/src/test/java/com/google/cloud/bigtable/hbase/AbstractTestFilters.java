@@ -1547,7 +1547,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Assert.assertEquals(0, results.length);
   }
 
-  @Test
+  @Test @Ignore("This test needs to be fixed, but proper behavior is still undetermined")
   public void testSingleColumnValueFilterNotEqualEmptyString() throws IOException {
     // Set up:
     // Row 1: f:qualifier1 = value1
