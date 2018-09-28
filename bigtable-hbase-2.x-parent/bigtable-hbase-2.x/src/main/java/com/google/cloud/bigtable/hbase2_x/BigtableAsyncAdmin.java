@@ -106,19 +106,19 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final Configuration configuration;
   private final BigtableSession bigtableSession;
 
-  public BigtableAsyncAdmin(CommonConnection co) throws IOException {
-    this.options = co.getOptions();
-    this.bigtableTableAdminClient = new BigtableTableAdminClient(co.getSession().getTableAdminClient());
-    this.disabledTables = co.getDisabledTables();
+  public BigtableAsyncAdmin(CommonConnection commonConnection) throws IOException {
+    this.options = commonConnection.getOptions();
+    this.bigtableTableAdminClient = new BigtableTableAdminClient(commonConnection.getSession().getTableAdminClient());
+    this.disabledTables = commonConnection.getDisabledTables();
     this.bigtableInstanceName = options.getInstanceName();
-    this.configuration = co.getConfiguration();
+    this.configuration = commonConnection.getConfiguration();
     this.tableAdapter2x = new TableAdapter2x(options);
 
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
-    this.bigtableSession = co.getSession();
+    this.bigtableSession = commonConnection.getSession();
   }
 
   /** {@inheritDoc} */
