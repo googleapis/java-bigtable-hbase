@@ -53,7 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author sduskis
  * @version $Id: $Id
  */
-public abstract class AbstractBigtableConnection implements Connection, Closeable {
+public abstract class AbstractBigtableConnection implements Connection, Closeable, CommonConnection {
   private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
   private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
       Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
@@ -349,7 +349,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
    *
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
-  protected BigtableOptions getOptions() {
+  @Override
+  public BigtableOptions getOptions() {
     return options;
   }
 
@@ -358,7 +359,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
    *
    * @return a {@link java.util.Set} object.
    */
-  protected Set<TableName> getDisabledTables() {
+  @Override
+  public Set<TableName> getDisabledTables() {
     return disabledTables;
   }
 
@@ -367,6 +369,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
    *
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
    */
+  @Override
   public BigtableSession getSession() {
     return session;
   }

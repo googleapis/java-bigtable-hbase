@@ -45,7 +45,7 @@ import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTableRegionLocator;
  *
  * @author spollapally
  */
-public class BigtableAsyncConnection implements AsyncConnection, Closeable {
+public class BigtableAsyncConnection implements AsyncConnection, Closeable, CommonConnection {
   private final Logger LOG = new Logger(getClass());
 
   private final Configuration conf;
@@ -95,14 +95,17 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
     return new HBaseRequestAdapter(options, tableName, mutationAdapters);
   }
 
+  @Override
   public BigtableSession getSession() {
     return this.session;
   }
 
+  @Override
   public BigtableOptions getOptions() {
     return this.options;
   }
 
+  @Override
   public Set<TableName> getDisabledTables() {
     return disabledTables;
   }
@@ -214,51 +217,51 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable {
       ExecutorService es) {
     return getBufferedMutatorBuilder(tableName);
   }
-  
+
   @Override
   public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName tableName) {
     return new AsyncTableBuilder<AdvancedScanResultConsumer>() {
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setStartLogErrorsCnt(int arg0) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setScanTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setRetryPause(long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setReadRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setOperationTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setMaxAttempts(int arg0) {
         return this;
       }
-      
+
       @Override
       public AsyncTable build() {
         return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
