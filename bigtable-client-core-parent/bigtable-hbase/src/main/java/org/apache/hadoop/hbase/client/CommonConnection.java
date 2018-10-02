@@ -53,4 +53,11 @@ public interface CommonConnection {
    */
   Set<TableName> getDisabledTables();
 
+  /**
+   * <p>Getter for the field Connection.</p>
+   *
+   * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
+   */
+  Connection getConnection();
+
 }

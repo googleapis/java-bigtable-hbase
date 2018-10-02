@@ -33,7 +33,6 @@ import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.CommonConnection;
-import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
@@ -54,11 +53,8 @@ import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 @SuppressWarnings("deprecation")
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
-  private final BigtableConnection connection;
-
   public BigtableAdmin(CommonConnection connection) throws IOException {
     super(connection);
-    this.connection = new BigtableConnection(connection.getConfiguration());
   }
 
   /** {@inheritDoc} */
@@ -70,12 +66,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
     return MasterProtos.SnapshotResponse.newBuilder()
         .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5)).build();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public Connection getConnection() {
-    return connection;
   }
 
   /** {@inheritDoc} */

@@ -131,6 +131,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
+  public Connection getConnection() {
+    return connection.getConnection();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public boolean tableExists(TableName tableName) throws IOException {
     for(TableName existingTableName : listTableNames(tableName.getNameAsString())) {
       if (existingTableName.equals(tableName)) {

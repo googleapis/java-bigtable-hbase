@@ -47,7 +47,6 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
-import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.SnapshotType;
@@ -80,18 +79,10 @@ import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
   private final AsyncAdmin asyncAdmin;
-  private final BigtableConnection connection;
 
   public BigtableAdmin(CommonConnection connection) throws IOException {
     super(connection);
     this.asyncAdmin = new BigtableAsyncAdmin(connection);
-    this.connection = new BigtableConnection(connection.getConfiguration());
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public Connection getConnection() {
-    return connection;
   }
 
   /**
