@@ -99,7 +99,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   private final Configuration configuration;
   private final BigtableOptions options;
-  protected final AbstractBigtableConnection connection;
+  protected final CommonConnection connection;
   protected final BigtableTableAdminClient bigtableTableAdminClient;
 
   protected final BigtableInstanceName bigtableInstanceName;
@@ -113,7 +113,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @param connection a {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection} object.
    * @throws IOException
    */
-  public AbstractBigtableAdmin(AbstractBigtableConnection connection) throws IOException {
+  public AbstractBigtableAdmin(CommonConnection connection) throws IOException {
     LOG.debug("Creating BigtableAdmin");
     configuration = connection.getConfiguration();
     options = connection.getOptions();
@@ -127,12 +127,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public Connection getConnection() {
-    return connection;
   }
 
   /** {@inheritDoc} */
@@ -701,7 +695,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
     List<HRegionInfo> regionInfos = new ArrayList<>();
-    for (HRegionLocation location : connection.getRegionLocator(tableName).getAllRegionLocations()) {
+    for (HRegionLocation location : getConnection().getRegionLocator(tableName).getAllRegionLocations()) {
       regionInfos.add(location.getRegionInfo());
     }
     return regionInfos;

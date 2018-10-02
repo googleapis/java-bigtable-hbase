@@ -16,13 +16,11 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -31,29 +29,25 @@ import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.google.bigtable.admin.v2.GetTableRequest;
-import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
-import io.grpc.Status;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
-import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.SnapshotType;
@@ -72,18 +66,10 @@ import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 
 
 /**
@@ -94,10 +80,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
   private final AsyncAdmin asyncAdmin;
+  private final BigtableConnection connection;
 
-  public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
+  public BigtableAdmin(CommonConnection connection) throws IOException {
     super(connection);
-    asyncAdmin = new BigtableAsyncAdmin(connection);
+    this.asyncAdmin = new BigtableAsyncAdmin(connection);
+    this.connection = new BigtableConnection(connection.getConfiguration());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Connection getConnection() {
+    return connection;
   }
 
   /**
