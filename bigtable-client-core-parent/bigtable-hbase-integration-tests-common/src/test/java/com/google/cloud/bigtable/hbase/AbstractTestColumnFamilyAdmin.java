@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ public abstract class AbstractTestColumnFamilyAdmin extends AbstractTest {
     assertEquals(SharedTestEnvRule.MAX_VERSIONS, retrievedDescriptor.getFamily(COLUMN_FAMILY).getMaxVersions());
     assertEquals(SharedTestEnvRule.MAX_VERSIONS, retrievedDescriptor.getFamily(COLUMN_FAMILY2).getMaxVersions());
   }
-  
+
   @Test
   public void testAddColumn() throws Exception {
     byte[] new_column = Bytes.toBytes("NEW_COLUMN");
@@ -80,7 +80,7 @@ public abstract class AbstractTestColumnFamilyAdmin extends AbstractTest {
     HTableDescriptor tblDesc = getTableDescriptor(tableName);
     assertNotNull(tblDesc.getFamily(new_column));
   }
-  
+
   @Test
   public void testModifyColumnFamily() throws Exception {
     byte[] modifyColumn = Bytes.toBytes("MODIFY_COLUMN");
@@ -90,7 +90,7 @@ public abstract class AbstractTestColumnFamilyAdmin extends AbstractTest {
     modifyColumn(modifyColumn, 100);
     assertEquals(100, getTableDescriptor(tableName).getFamily(modifyColumn).getMaxVersions());
   }
-  
+
   @Test
   public void testRemoveColumn() throws Exception {
     addColumn(DELETE_COLUMN_FAMILY, 2);
@@ -107,8 +107,20 @@ public abstract class AbstractTestColumnFamilyAdmin extends AbstractTest {
     getTableDescriptor(TableName.valueOf("does-not-exist"));
   }
 
-  protected abstract HTableDescriptor getTableDescriptor(TableName tableName) throws Exception;
-  protected abstract void addColumn(byte[] columnName, int version) throws Exception;
-  protected abstract void modifyColumn(byte[] columnName, int version) throws Exception;
-  protected abstract void deleteColumn(byte[] columnName) throws Exception;
+  protected HTableDescriptor getTableDescriptor(TableName tableName) throws Exception {
+    return admin.getTableDescriptor(tableName);
+  }
+
+  protected void addColumn(byte[] columnName, int versions) throws Exception {
+    admin.addColumn(tableName, new HColumnDescriptor(columnName).setMaxVersions(versions));
+  }
+
+  protected void modifyColumn(byte[] columnName, int versions) throws Exception {
+    admin.modifyColumn(tableName, new HColumnDescriptor(columnName).setMaxVersions(versions));
+  }
+
+  protected void deleteColumn(byte[] columnName) throws Exception {
+    admin.deleteColumn(tableName, columnName);
+  }
+
 }

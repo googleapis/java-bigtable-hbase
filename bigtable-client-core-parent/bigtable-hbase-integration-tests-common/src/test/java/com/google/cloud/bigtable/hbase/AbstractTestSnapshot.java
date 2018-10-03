@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
@@ -124,7 +125,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
     }
     final Pattern allSnapshots = Pattern.compile(snapshotName + ".*");
     createTable(tableName);
-    Map<String, Long> values = createAndPopulateTable(tableName);
+    createAndPopulateTable(tableName);
     Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
     snapshot(snapshotName, tableName);
     Assert.assertEquals(1, listSnapshotsSize(snapshotName));
@@ -233,20 +234,82 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
     Assert.assertTrue("There were missing keys.", values.isEmpty());
   }
 
+  protected void snapshot(String snapshotName, TableName tableName)
+      throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.snapshot(snapshotName, tableName);
+    }
+
+  }
+
+  protected int listSnapshotsSize(String regEx) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.listSnapshots(regEx).size();
+    }
+  }
+
+  protected void deleteSnapshot(String snapshotName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.deleteSnapshot(snapshotName);
+    }
+  }
+
+  protected boolean tableExists(TableName tableName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.tableExists(tableName);
+    }
+  }
+
+  protected void disableTable(TableName tableName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.disableTable(tableName);
+    }
+  }
+
+  protected void cloneSnapshot(String snapshotName, TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.cloneSnapshot(snapshotName,tableName);
+    }
+  }
+
+  protected void deleteSnapshots(Pattern pattern) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.deleteSnapshots(pattern);
+    }
+  }
+
+  protected int listTableSnapshotsSize(String tableNameRegex,
+      String snapshotNameRegex) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.listTableSnapshots(tableNameRegex,snapshotNameRegex).size();
+    }
+  }
+
+  protected int listSnapshotsSize(Pattern pattern) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.listSnapshots(pattern).size();
+    }
+  }
+
+  protected int listTableSnapshotsSize(Pattern tableNamePattern,
+      Pattern snapshotNamePattern) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      return admin.listTableSnapshots(tableNamePattern, snapshotNamePattern).size();
+    }
+  }
+
+  protected void deleteTable(TableName tableName) throws IOException {
+    try(Admin admin = getConnection().getAdmin()) {
+      admin.deleteTable(tableName);
+    }
+  }
+
+  protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
+    try(Admin admin = getConnection().getAdmin()){
+      return admin.listTableSnapshots(tableNamePattern, Pattern.compile(".*")).size();
+    }
+  }
+
   protected abstract void createTable(TableName tableName) throws IOException;
-  protected abstract void snapshot(String snapshotName, TableName tableName) throws IOException;
-  protected abstract int listSnapshotsSize(String regEx) throws IOException;
-  protected abstract int listSnapshotsSize(Pattern pattern) throws IOException;
-  protected abstract void deleteSnapshot(String snapshotName) throws IOException;
-  protected abstract boolean tableExists(final TableName tableName) throws IOException;
-  protected abstract void disableTable(final TableName tableName) throws IOException;
-  protected abstract void cloneSnapshot(final String snapshotName, final TableName tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException;
-  protected abstract int listTableSnapshotsSize(String tableNameRegex,
-      String snapshotNameRegex) throws IOException;
-  protected abstract int listTableSnapshotsSize(Pattern tableNamePattern,
-      Pattern snapshotNamePattern) throws IOException;
-  protected abstract void deleteSnapshots(final Pattern pattern) throws IOException;
-  protected abstract void deleteTable(final TableName tableName) throws IOException;
-  protected abstract int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception;
 }
