@@ -362,7 +362,7 @@ public class TestBulkMutation {
   }
 
   @Test
-  public void testUnsafeMutationSplits() {
+  public void testUnsafeMutationSplits() throws ExecutionException, InterruptedException {
     underTest = new BulkMutation(TABLE_NAME, client, operationAccountant, retryExecutorService,
         BulkOptions.builder().setEnableUnsafeMutationSplits(true).build());
 
@@ -375,7 +375,8 @@ public class TestBulkMutation {
     ((SettableFuture<MutateRowResponse>) future2).set(response);
 
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future1).thenReturn(future2);
-    underTest.add(mutateRowRequest);
+    ListenableFuture<MutateRowResponse> result = underTest.add(mutateRowRequest);
+    result.get();
     verify(client, times(2)).mutateRowAsync(any(MutateRowRequest.class));
   }
 

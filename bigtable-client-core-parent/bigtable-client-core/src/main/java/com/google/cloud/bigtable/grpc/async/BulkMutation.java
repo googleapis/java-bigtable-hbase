@@ -454,30 +454,31 @@ public class BulkMutation {
     final SettableFuture<MutateRowResponse> mutateRowResponseListenableFuture = SettableFuture.create();
     final List<List<Mutation>> subSets = Lists.partition(entry.getMutationsList(), (int) MAX_NUMBER_OF_MUTATIONS);
     // split subSets into several entries of 100,000
+    FutureCallback<MutateRowResponse> futureCallback = new FutureCallback<MutateRowResponse>() {
+      private boolean failed = false;
+      private int success = 0;
+
+      @Override public void onSuccess(@Nullable MutateRowResponse result) {
+        success++;
+        if (!failed && success == subSets.size()) {
+          mutateRowResponseListenableFuture.set(result);
+        }
+      }
+
+      @Override public void onFailure(Throwable t) {
+        failed = true;
+        mutateRowResponseListenableFuture.setException(t);
+      }
+    };
     for (List<Mutation> mutations : subSets) {
       ListenableFuture<MutateRowResponse> childFuture = sendDirect(entry.getRowKey(), mutations);
-      Futures.addCallback(childFuture, new FutureCallback<MutateRowResponse>() {
-        private boolean failed = false;
-        private int success = 0;
-
-        @Override public void onSuccess(@Nullable MutateRowResponse result) {
-          success++;
-          if (!failed && success == subSets.size()) {
-            mutateRowResponseListenableFuture.set(result);
-          }
-        }
-
-        @Override public void onFailure(Throwable t) {
-          failed = true;
-          mutateRowResponseListenableFuture.setException(t);
-        }
-      });
+      Futures.addCallback(childFuture, futureCallback);
       operationAccountant.registerOperation(childFuture);
     }
     return mutateRowResponseListenableFuture;
   }
 
-  public boolean shouldProcessUnsafeMutationSplit(MutateRowsRequest.Entry entry) {
+  private boolean shouldProcessUnsafeMutationSplit(MutateRowsRequest.Entry entry) {
     if (entry.getMutationsCount() > MAX_NUMBER_OF_MUTATIONS) {
       if (!this.enableUnsafeMutationSplits) {
         throw new IllegalArgumentException(String
