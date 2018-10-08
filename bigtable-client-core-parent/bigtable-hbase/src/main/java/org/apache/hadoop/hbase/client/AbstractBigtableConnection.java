@@ -373,10 +373,4 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   public BigtableSession getSession() {
     return session;
   }
-
-  @Override
-  public Connection getConnection() {
-    return this;
-  }
-
 }
