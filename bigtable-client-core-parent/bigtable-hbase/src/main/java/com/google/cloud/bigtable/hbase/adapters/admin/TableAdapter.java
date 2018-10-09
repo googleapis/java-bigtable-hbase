@@ -37,21 +37,11 @@ import java.util.Map.Entry;
  * @version $Id: $Id
  */
 public class TableAdapter {
+  private static final ColumnDescriptorAdapter columnDescriptorAdapter =
+      ColumnDescriptorAdapter.INSTANCE;
   protected final BigtableInstanceName bigtableInstanceName;
-  protected final ColumnDescriptorAdapter columnDescriptorAdapter;
 
-  /**
-   * <p>Constructor for TableAdapter.</p>
-   *
-   * @param bigtableInstanceName a {@link BigtableInstanceName} object.
-   * @param columnDescriptorAdapter a {@link ColumnDescriptorAdapter} object.
-   */
-  public TableAdapter(BigtableInstanceName bigtableInstanceName,
-      ColumnDescriptorAdapter columnDescriptorAdapter) {
-    this.bigtableInstanceName = Preconditions
-        .checkNotNull(bigtableInstanceName, "bigtableInstanceName cannot be null.");
-    this.columnDescriptorAdapter = columnDescriptorAdapter;
-  }
+
 
   /**
    * <p>adapt.</p>
@@ -59,18 +49,17 @@ public class TableAdapter {
    * @param desc a {@link org.apache.hadoop.hbase.HTableDescriptor} object.
    * @return a {@link com.google.bigtable.admin.v2.Table} object.
    */
-  protected Table adapt(HTableDescriptor desc) {
+  protected static Table adapt(HTableDescriptor desc) {
     Map<String, ColumnFamily> columnFamilies = new HashMap<>();
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
       String columnName = column.getNameAsString();
-      ColumnFamily columnFamily = columnDescriptorAdapter.adapt(column).build();
+      ColumnFamily columnFamily = columnDescriptorAdapter.adapt(column);
       columnFamilies.put(columnName, columnFamily);
     }
     return Table.newBuilder().putAllColumnFamilies(columnFamilies).build();
   }
 
-
-  public CreateTableRequest.Builder adapt(HTableDescriptor desc, byte[][] splitKeys) {
+  public static CreateTableRequest.Builder adapt(HTableDescriptor desc, byte[][] splitKeys) {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
     builder.setTableId(desc.getTableName().getQualifierAsString());
     builder.setTable(adapt(desc));
@@ -85,6 +74,16 @@ public class TableAdapter {
             CreateTableRequest.Split.newBuilder().setKey(ByteString.copyFrom(splitKey)).build());
       }
     }
+  }
+
+  /**
+   * <p>Constructor for TableAdapter.</p>
+   *
+   * @param bigtableInstanceName a {@link BigtableInstanceName} object.
+   */
+  public TableAdapter(BigtableInstanceName bigtableInstanceName) {
+    this.bigtableInstanceName = Preconditions
+        .checkNotNull(bigtableInstanceName, "bigtableInstanceName cannot be null.");
   }
 
   /**

@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc.async;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
 
 import io.grpc.CallOptions;
@@ -47,11 +48,12 @@ public class RetryingUnaryOperation<RequestT, ResponseT>
    * @param callOptions a {@link io.grpc.CallOptions} object.
    * @param executorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param metadata a {@link io.grpc.Metadata} object.
+   * @param clock a {@link ApiClock} object
    */
   public RetryingUnaryOperation(RetryOptions retryOptions, RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, CallOptions callOptions,
-      ScheduledExecutorService executorService, Metadata metadata) {
-    super(retryOptions, request, retryableRpc, callOptions, executorService, metadata);
+      ScheduledExecutorService executorService, Metadata metadata, ApiClock clock) {
+    super(retryOptions, request, retryableRpc, callOptions, executorService, metadata, clock);
   }
 
   /** {@inheritDoc} */
@@ -69,14 +71,5 @@ public class RetryingUnaryOperation<RequestT, ResponseT>
       completionFuture.setException(NO_VALUE_SET_EXCEPTION);
     }
     return true;
-  }
-
-  @Override
-  protected CallOptions getCallOptions() {
-    CallOptions originalCallOptions = super.getCallOptions();
-    if (originalCallOptions.getDeadline() != null) {
-      return originalCallOptions;
-    }
-    return originalCallOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
   }
 }

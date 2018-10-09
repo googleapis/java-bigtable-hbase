@@ -15,21 +15,21 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.ChainFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.InterleaveFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.TimestampRangeFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.TimestampRangeFilter;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.RangeSet;
@@ -52,6 +52,30 @@ import java.util.NavigableSet;
 public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
+  private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
+  private static final boolean LIMIT_AVAILABLE = isLimitAvailable();
+
+  /**
+   * HBase supports include(Stop|Start)Row only at 1.4.0+, so check to make sure that the HBase
+   * runtime dependency supports this feature.  Specifically, Beam uses HBase 1.2.0.
+   */
+  private static boolean isOpenClosedAvailable() {
+    try {
+      new Scan().includeStopRow();
+      return true;
+    } catch(NoSuchMethodError e) {
+      return false;
+    }
+  }
+
+  private static boolean isLimitAvailable() {
+    try {
+      new Scan().setLimit(1);
+      return true;
+    } catch(NoSuchMethodError e) {
+      return false;
+    }
+  }
 
   private final FilterAdapter filterAdapter;
   private final RowRangeAdapter rowRangeAdapter;
@@ -117,12 +141,20 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   public ReadRowsRequest.Builder adapt(Scan scan, ReadHooks readHooks) {
     throwIfUnsupportedScan(scan);
 
-    RowSet rowSet = getRowSet(scan);
-    rowSet = narrowRowSet(rowSet, scan.getFilter());
-
-    return ReadRowsRequest.newBuilder()
-        .setRows(rowSet)
+    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder()
+        .setRows(toRowSet(scan))
         .setFilter(buildFilter(scan, readHooks));
+
+    if (LIMIT_AVAILABLE && scan.getLimit() > 0) {
+      requestBuilder.setRowsLimit(scan.getLimit());
+    }
+
+    return requestBuilder;
+  }
+
+  private RowSet toRowSet(Scan scan) {
+    RowSet rowSet = getRowSet(scan);
+    return narrowRowSet(rowSet, scan.getFilter());
   }
 
   private RowSet getRowSet(Scan scan) {
@@ -136,12 +168,22 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       } else {
         RowRange.Builder range =  RowRange.newBuilder();
         if (!startRow.isEmpty()) {
-          range.setStartKeyClosed(startRow);
+          if (!OPEN_CLOSED_AVAILABLE || scan.includeStartRow()) {
+            // the default for start is closed
+            range.setStartKeyClosed(startRow);
+          } else {
+            range.setStartKeyOpen(startRow);
+          }
         }
 
         ByteString stopRow = ByteString.copyFrom(scan.getStopRow());
         if (!stopRow.isEmpty()) {
-          range.setEndKeyOpen(stopRow);
+          if (!OPEN_CLOSED_AVAILABLE || !scan.includeStopRow()) {
+            // the default for stop is open
+            range.setEndKeyOpen(stopRow);
+          } else {
+            range.setEndKeyClosed(stopRow);
+          }
         }
         rowSetBuilder.addRowRanges(range);
       }
@@ -149,7 +191,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     }
   }
 
-  private static byte[] quoteRegex(byte[] unquoted)  {
+  private static ByteString quoteRegex(byte[] unquoted)  {
     try {
       return ReaderExpressionHelper.quoteRegularExpression(unquoted);
     } catch (IOException e) {
@@ -185,7 +227,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   }
 
   private Filters.Filter createColumnQualifierFilter(byte[] unquotedQualifier) {
-    return FILTERS.qualifier().regex(ByteStringer.wrap(quoteRegex(unquotedQualifier)));
+    return FILTERS.qualifier().regex(quoteRegex(unquotedQualifier));
   }
 
   private Filters.Filter createFamilyFilter(byte[] familyName) {

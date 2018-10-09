@@ -21,7 +21,7 @@ import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
-import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.apache.hadoop.hbase.KeyValue;

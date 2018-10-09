@@ -56,7 +56,7 @@ public class PutMicroBenchmark {
     String instanceId = args.length > 1 ? args[1] : "instanceId";
     String tableId = args.length > 2 ? args[2] : "table";
 
-    options = new BigtableOptions.Builder()
+    options = BigtableOptions.builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
         .setUserAgent("put_microbenchmark")

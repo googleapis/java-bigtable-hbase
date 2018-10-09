@@ -37,7 +37,7 @@ public class PutAdapterPerf {
     byte[] value = RandomStringUtils.randomAlphanumeric(10000).getBytes();
     put.addColumn(Bytes.toBytes("Family1"), Bytes.toBytes("Qaulifier"), value);
 
-    BigtableOptions options = new BigtableOptions.Builder()
+    BigtableOptions options = BigtableOptions.builder()
         .setInstanceId("instanceId")
         .setProjectId("projectId")
         .build();
@@ -69,7 +69,7 @@ public class PutAdapterPerf {
       long start = System.nanoTime();
       for (int i = 0; i < count; i++) {
         MutateRowRequest adapted = adapter.adapt(put);
-        BigtableGrpc.METHOD_MUTATE_ROW.streamRequest(adapted);
+        BigtableGrpc.getMutateRowMethod().streamRequest(adapted);
       }
       long time = System.nanoTime() - start;
       System.out.println(
@@ -82,7 +82,7 @@ public class PutAdapterPerf {
       for (int i = 0; i < count; i++) {
         MutateRowRequest adapted = adapter.adapt(put);
         adapted.getSerializedSize();
-        BigtableGrpc.METHOD_MUTATE_ROW.streamRequest(adapted);
+        BigtableGrpc.getMutateRowMethod().streamRequest(adapted);
       }
       long time = System.nanoTime() - start;
       System.out.println(String.format(

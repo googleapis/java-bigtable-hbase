@@ -75,7 +75,7 @@ public class TestAppProfile {
     server.start();
 
 
-    BigtableOptions opts = new BigtableOptions.Builder()
+    BigtableOptions opts = BigtableOptions.builder()
         .setDataHost("localhost")
         .setAdminHost("locahost")
         .setPort(port)

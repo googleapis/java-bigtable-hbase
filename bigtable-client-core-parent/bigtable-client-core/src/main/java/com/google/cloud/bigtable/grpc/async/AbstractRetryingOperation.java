@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.io.Closeable;
-import java.io.IOException;
+import io.opencensus.common.Scope;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,9 +23,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
-import com.google.api.client.util.BackOff;
-import com.google.api.client.util.Sleeper;
-import com.google.bigtable.v2.BigtableGrpc;
+import com.google.api.core.ApiClock;
+import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.retrying.TimedAttemptSettings;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.CallOptionsFactory;
@@ -41,9 +42,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
+import io.grpc.Deadline;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.opencensus.contrib.grpc.util.StatusConverter;
@@ -53,6 +53,8 @@ import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
+import org.threeten.bp.Duration;
+import org.threeten.bp.temporal.ChronoUnit;
 
 /**
  * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
@@ -88,6 +90,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
   private static final Tracer TRACER = Tracing.getTracer();
+  private static final EndSpanOptions END_SPAN_OPTIONS_WITH_SAMPLE_STORE =
+      EndSpanOptions.builder().setSampleToLocalSpanStore(true).build();
 
   // The server-side has a 5 minute timeout. Unary operations should be timed-out on the client side
   // after 6 minutes.
@@ -120,9 +124,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
   }
 
-  protected BackOff currentBackoff;
-  @VisibleForTesting
-  Sleeper sleeper = Sleeper.DEFAULT;
+  private final ExponentialRetryAlgorithm exponentialRetryAlgorithm;
+  private final ApiClock clock;
+  private TimedAttemptSettings currentBackoff;
 
   protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   protected final RetryOptions retryOptions;
@@ -151,6 +155,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @param callOptions a {@link io.grpc.CallOptions} object.
    * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param originalMetadata a {@link io.grpc.Metadata} object.
+   * @param clock a {@link ApiClock} object
    */
   public AbstractRetryingOperation(
           RetryOptions retryOptions,
@@ -158,7 +163,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
           BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
           CallOptions callOptions,
           ScheduledExecutorService retryExecutorService,
-          Metadata originalMetadata) {
+          Metadata originalMetadata,
+          ApiClock clock) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
@@ -167,13 +173,15 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.originalMetadata = originalMetadata;
     this.completionFuture = new GrpcFuture<>();
     String spanName = makeSpanName("Operation", rpc.getMethodDescriptor().getFullMethodName());
-    operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
+    this.operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
+    this.clock = clock;
+    this.exponentialRetryAlgorithm = createRetryAlgorithm(clock);
   }
 
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
-    try (Closeable s = TRACER.withSpan(operationSpan)) {
+    try (Scope scope = TRACER.withSpan(operationSpan)) {
       synchronized (callLock) {
         call = NULL_CALL;
       }
@@ -194,8 +202,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected void finalizeStats(Status status) {
     operationTimerContext.close();
     if (operationSpan != null) {
-      io.opencensus.trace.Status ocensusStatus = StatusConverter.fromGrpcStatus(status);
-      operationSpan.end(EndSpanOptions.builder().setStatus(ocensusStatus).build());
+      operationSpan.setStatus(StatusConverter.fromGrpcStatus(status));
+      operationSpan.end(END_SPAN_OPTIONS_WITH_SAMPLE_STORE);
     }
   }
 
@@ -203,7 +211,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     Code code = status.getCode();
     // CANCELLED
     if (code == Status.Code.CANCELLED) {
-      completionFuture.setException(status.asRuntimeException());
+      setException(status.asRuntimeException());
       // An explicit user cancellation is not considered a failure.
       finalizeStats(status);
       return;
@@ -215,8 +223,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     // Unauthenticated is special because the request never made it to
     // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
-      LOG.info("Could not complete RPC. Failure #%d, got: %s on channel %s", status.getCause(),
-        failedCount, status, channelId);
+      LOG.info("Could not complete RPC. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+          status.getCause(), failedCount, status, channelId, trailers);
       rpc.getRpcMetrics().markFailure();
       finalizeStats(status);
       setException(status.asRuntimeException());
@@ -224,17 +232,17 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
 
     // Attempt retry with backoff
-    long nextBackOff = getNextBackoff();
+    Long nextBackOff = getNextBackoff();
     failedCount += 1;
 
     // Backoffs timed out.
-    if (nextBackOff == BackOff.STOP) {
-      LOG.info("All retries were exhausted. Failure #%d, got: %s on channel %s", status.getCause(),
-        failedCount, status, channelId);
+    if (nextBackOff == null) {
+      LOG.info("All retries were exhausted. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+          status.getCause(), failedCount, status, channelId, trailers);
       setException(getExhaustedRetriesException(status));
     } else {
-      LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s", status.getCause(),
-        failedCount, status, channelId);
+      LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+          status.getCause(), failedCount, status, channelId, trailers);
       performRetry(nextBackOff);
     }
   }
@@ -279,15 +287,89 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    */
   protected abstract boolean onOK(Metadata trailers);
 
-  protected long getNextBackoff() {
+  protected Long getNextBackoff() {
     if (currentBackoff == null) {
-      currentBackoff = retryOptions.createBackoff();
+      // Historically, the client waited for "total timeout" after the first failure.  For now,
+      // that behavior is preserved, even though that's not the ideal.
+      //
+      // TODO: Think through retries, and create policy that works with the mental model most
+      //       users would have of relating to retries.  That would likely involve updating some
+      //       default settings in addition to changing the algorithm.
+      currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
     }
-    try {
-      return currentBackoff.nextBackOffMillis();
-    } catch (IOException e) {
-      return BackOff.STOP;
+    currentBackoff = exponentialRetryAlgorithm.createNextAttempt(currentBackoff);
+    if (!exponentialRetryAlgorithm.shouldRetry(currentBackoff)) {
+
+      // TODO: consider creating a subclass of exponentialRetryAlgorithm to encapsulate this logic
+      long timeLeftNs =  currentBackoff.getGlobalSettings().getTotalTimeout().toNanos() -
+          (clock.nanoTime() - currentBackoff.getFirstAttemptStartTimeNanos());
+      long timeLeftMs = TimeUnit.NANOSECONDS.toMillis(timeLeftNs);
+
+      if (timeLeftMs > currentBackoff.getGlobalSettings().getInitialRetryDelay().toMillis()) {
+        // The backoff algorithm doesn't always wait until the timeout is achieved.  Wait
+        // one final time so that retries hit
+        return timeLeftMs;
+      } else {
+
+        // Finish for real.
+        return null;
+      }
+    } else {
+      return currentBackoff.getRetryDelay().toMillis();
     }
+  }
+
+  @VisibleForTesting
+  public boolean inRetryMode() {
+    return currentBackoff != null;
+  }
+
+  /**
+   * Either a response was found, or a timeout event occurred. Reset the information relating to
+   * Status oriented exception handling.
+   */
+  protected void resetStatusBasedBackoff() {
+    this.currentBackoff = null;
+    this.failedCount = 0;
+  }
+
+  /**
+   * <p>createBackoff.</p>
+   *
+   * @return a {@link ExponentialRetryAlgorithm} object.
+   */
+  private ExponentialRetryAlgorithm createRetryAlgorithm(ApiClock clock) {
+    long timeoutMs = retryOptions.getMaxElapsedBackoffMillis();
+
+    Deadline deadline = getOperationCallOptions().getDeadline();
+    if (deadline != null) {
+      timeoutMs = deadline.timeRemaining(TimeUnit.MILLISECONDS);
+    }
+
+    RetrySettings retrySettings = RetrySettings.newBuilder()
+
+        .setJittered(true)
+
+        // How long should the sleep be between RPC failure and the next RPC retry?
+        .setInitialRetryDelay(toDuration(retryOptions.getInitialBackoffMillis()))
+
+        // How fast should the retry delay increase?
+        .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
+
+        // What is the maximum amount of sleep time between retries?
+        // There needs to be some sane number for max retry delay, and it's unclear what that
+        // number ought to be.  1 Minute time was chosen because some number is needed.
+        .setMaxRetryDelay(Duration.of(1, ChronoUnit.MINUTES))
+
+        // How long should we wait before giving up retries after the first failure?
+        .setTotalTimeout(toDuration(timeoutMs))
+
+        .build();
+    return new ExponentialRetryAlgorithm(retrySettings, clock);
+  }
+
+  private static Duration toDuration(long millis) {
+    return Duration.of(millis, ChronoUnit.MILLIS);
   }
 
   /**
@@ -296,7 +378,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * with this as the listener so that retries happen correctly.
    */
   protected void run() {
-    try (Closeable s = TRACER.withSpan(operationSpan)) {
+    try (Scope scope = TRACER.withSpan(operationSpan)) {
       rpcTimerContext = rpc.getRpcMetrics().timeRpc();
       operationSpan.addAnnotation(Annotation.fromDescriptionAndAttributes("rpcStart",
         ImmutableMap.of("attempt", AttributeValue.longAttributeValue(failedCount))));
@@ -306,7 +388,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         // There's a subtle race condition in RetryingStreamOperation which requires a separate
         // newCall/start split. The call variable needs to be set before onMessage() happens; that
         // usually will occur, but some unit tests broke with a merged newCall and start.
-        call = rpc.newCall(getCallOptions());
+        call = rpc.newCall(getRpcCallOptions());
         rpc.start(getRetryRequest(), this, metadata, call);
       }
     } catch (Exception e) {
@@ -318,27 +400,50 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     return call;
   }
 
-  protected CallOptions getCallOptions() {
-    if (callOptions.getDeadline() != null) {
-      return callOptions;
+  /**
+   * Returns the {@link CallOptions} that a user set for the entire Operation, which can span multiple RPCs/retries.
+   * @return The {@link CallOptions}
+   */
+  protected CallOptions getOperationCallOptions() {
+    return callOptions;
+  }
+
+  /**
+   * Create an {@link CallOptions} that has a fail safe RPC deadline to make sure that unary
+   * operations don't hang. This will have to be overridden for streaming RPCs like read rows.
+   * <p>
+   * The logic is as follows:
+   * <ol>
+   *   <li> If the user provides a deadline, use the deadline</li>
+   *   <li> Else If this is a streaming read, don't set an explicit deadline.  The
+   *   {@link com.google.cloud.bigtable.grpc.io.Watchdog} will handle hanging</li>
+   *   <li> Else Set a deadline of {@link #UNARY_DEADLINE_MINUTES} minutes deadline.</li>
+   * </ol>
+   *
+   * @see com.google.cloud.bigtable.grpc.io.Watchdog Watchdog which handles hanging for streaming
+   * reads.
+   *
+   * @return a {@link CallOptions}
+   */
+  protected CallOptions getRpcCallOptions() {
+    if (callOptions.getDeadline() != null || isStreamingRead()) {
+      // If the user set a deadline, honor it.
+      // If this is a streaming read, then the Watchdog will take affect and ensure that hanging does not occur.
+      return getOperationCallOptions();
+    } else {
+      // Unary calls should fail after 6 minutes, if there isn't any response from the server.
+      return callOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
     }
-    MethodDescriptor<RequestT, ResponseT> methodDescriptor = rpc.getMethodDescriptor();
-    if (methodDescriptor.getType() != MethodType.UNARY) {
-      if (methodDescriptor == BigtableGrpc.METHOD_READ_ROWS
-          && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet(request)) {
-        // This is a streaming read.
-        return callOptions;
-      } // else this is a 1) mutateRows or 2) SampleRowKeys or 3) a get, all of which can benefit
-        // from a timeout equal to a unary operation.
-    }
-    return callOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
+  }
+
+  // TODO(sduskis): This is only required because BigtableDataGrpcClient doesn't always use
+  //      RetryingReadRowsOperation like it should.
+  protected boolean isStreamingRead() {
+    return request instanceof ReadRowsRequest &&
+            !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request);
   }
 
   protected RequestT getRetryRequest() {
-    return request;
-  }
-
-  public final RequestT getOriginalRequest() {
     return request;
   }
 

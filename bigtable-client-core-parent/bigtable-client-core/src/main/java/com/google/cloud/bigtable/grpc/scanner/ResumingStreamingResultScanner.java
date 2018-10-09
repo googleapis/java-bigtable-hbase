@@ -20,6 +20,7 @@ import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -40,20 +41,18 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
       BigtableClientMetrics.timer(MetricLevel.Debug, "scanner.results.latency");
 
   // Member variables from the constructor.
-  private final ScanHandler scanHandler;
   private final ResponseQueueReader responseQueueReader;
+
+  private boolean isConsumed;
 
   /**
    * <p>
    * Constructor for ResumingStreamingResultScanner.
    * </p>
    * @param responseQueueReader a {@link ResponseQueueReader} which queues up {@link FlatRow}s.
-   * @param scanHandler a {@link ScanHandler} which handles exception situations.
    */
-  public ResumingStreamingResultScanner(ResponseQueueReader responseQueueReader,
-      ScanHandler scanHandler) {
+  public ResumingStreamingResultScanner(ResponseQueueReader responseQueueReader) {
     this.responseQueueReader = responseQueueReader;
-    this.scanHandler = scanHandler;
   }
 
   /** {@inheritDoc} */
@@ -73,21 +72,19 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
   /** {@inheritDoc} */
   @Override
   public FlatRow next() throws IOException {
+    Preconditions.checkState(!isConsumed, "Scanner is already closed");
+
     try(Timer.Context ignored = resultsTimer.time()) {
-      while (true) {
-        try {
-          FlatRow result = responseQueueReader.getNextMergedRow();
-          if (result != null) {
-            resultsMeter.mark();
-          }
-          return result;
-        } catch (ScanTimeoutException rte) {
-          scanHandler.handleTimeout(rte);
-        } catch (Throwable e) {
-          scanHandler.cancel();
-          throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", e);
-        }
+      FlatRow result = responseQueueReader.getNextMergedRow();
+      if (result != null) {
+        resultsMeter.mark();
+      } else {
+        isConsumed = true;
       }
+      return result;
+    } catch(RuntimeException|IOException e) {
+      isConsumed = true;
+      throw e;
     }
   }
 
@@ -99,7 +96,12 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
 
   /** {@inheritDoc} */
   @Override
-  public void close() throws IOException {
-    scanHandler.cancel();
+  public void close() {
+    if (isConsumed) {
+      return;
+    }
+
+    isConsumed = true;
+    responseQueueReader.close();
   }
 }

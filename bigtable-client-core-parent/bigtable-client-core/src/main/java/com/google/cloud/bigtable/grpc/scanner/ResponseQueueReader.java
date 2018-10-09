@@ -55,7 +55,6 @@ public class ResponseQueueReader
   }
 
   private final BlockingQueue<ResultQueueEntry<FlatRow>> resultQueue =  new LinkedBlockingQueue<>();
-  private final long waitTimeMs;
   private final AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
   private boolean lastResponseProcessed = false;
   private Long startTime;
@@ -65,17 +64,20 @@ public class ResponseQueueReader
   /**
    * <p>Constructor for ResponseQueueReader.</p>
    */
-  public ResponseQueueReader(long waitTimeMs) {
+  public ResponseQueueReader() {
     if (BigtableClientMetrics.isEnabled(MetricLevel.Info)) {
       startTime = System.nanoTime();
     }
-    this.waitTimeMs = waitTimeMs;
   }
 
   @Override
   public void beforeStart(ClientCallStreamObserver<ReadRowsRequest> requestStream) {
     requestStream.disableAutoInboundFlowControl();
     this.requestStream = requestStream;
+  }
+
+  public void close() {
+    requestStream.cancel("Closing ResponseQueueReader", null);
   }
 
   /**
@@ -85,10 +87,6 @@ public class ResponseQueueReader
    * @throws java.io.IOException On errors.
    */
   public synchronized FlatRow getNextMergedRow() throws IOException {
-    if (lastResponseProcessed) {
-      return null;
-    }
-
     ResultQueueEntry<FlatRow> queueEntry = getNext();
 
     switch (queueEntry.getType()) {
@@ -129,13 +127,14 @@ public class ResponseQueueReader
   protected ResultQueueEntry<FlatRow> getNext() throws IOException {
     ResultQueueEntry<FlatRow> queueEntry;
     try {
-      queueEntry = resultQueue.poll(waitTimeMs, TimeUnit.MILLISECONDS);
+      queueEntry = resultQueue.take();
+      // Should never happen
+      if (queueEntry == null) {
+        throw new IllegalStateException("Timed out awaiting next sync rows");
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Interrupted while waiting for next result", e);
-    }
-    if (queueEntry == null) {
-      throw new ScanTimeoutException("Timeout while merging responses.");
     }
 
     return queueEntry;

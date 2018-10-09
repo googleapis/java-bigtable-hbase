@@ -24,8 +24,6 @@ import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -34,8 +32,8 @@ import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
+import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -71,7 +69,6 @@ import org.apache.hadoop.hbase.util.Pair;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -105,10 +102,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   protected final AbstractBigtableConnection connection;
   protected final BigtableTableAdminClient bigtableTableAdminClient;
 
-  private BigtableInstanceName bigtableInstanceName;
+  protected final BigtableInstanceName bigtableInstanceName;
   private BigtableClusterName bigtableSnapshotClusterName;
-  private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
-  private final TableAdapter tableAdapter;
+  protected final TableAdapter tableAdapter;
 
   /**
    * <p>
@@ -125,7 +121,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     bigtableTableAdminClient = connection.getSession().getTableAdminClient();
     disabledTables = connection.getDisabledTables();
     bigtableInstanceName = options.getInstanceName();
-    tableAdapter = new TableAdapter(bigtableInstanceName, columnDescriptorAdapter);
+    tableAdapter = new TableAdapter(bigtableInstanceName);
 
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
@@ -576,59 +572,57 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-    String columnName = column.getNameAsString();
-    Modification modification = Modification
-        .newBuilder()
-        .setId(columnName)
-        .setCreate(columnDescriptorAdapter.adapt(column).build())
-        .build();
-    modifyColumn(tableName, columnName, "add", modification);
+    modifyColumns(tableName, column.getNameAsString(), "add",
+        ModifyTableBuilder.create().add(column));
   }
-
 
   /** {@inheritDoc} */
   @Override
   public void modifyColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-    String columnName = column.getNameAsString();
-    Modification modification = Modification
-        .newBuilder()
-        .setId(columnName)
-        .setUpdate(columnDescriptorAdapter.adapt(column).build())
-        .build();
-    modifyColumn(tableName, columnName, "update", modification);
+    modifyColumns(tableName, column.getNameAsString(), "modify",
+        ModifyTableBuilder.create().modify(column));
   }
 
   /** {@inheritDoc} */
   @Override
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
-    final String columnNameStr = Bytes.toString(columnName);
-    Modification modification = Modification
-        .newBuilder()
-        .setId(columnNameStr)
-        .setDrop(true)
-        .build();
-    modifyColumn(tableName, columnNameStr, "delete", modification);
+    String name = Bytes.toString(columnName);
+    modifyColumns(tableName, name, "delete",
+        ModifyTableBuilder.create().delete(name));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void modifyTable(TableName tableName, HTableDescriptor newDecriptor) throws IOException {
+    if (isTableAvailable(tableName)) {
+      try {
+        ModifyTableBuilder builder =
+            ModifyTableBuilder.buildModifications(newDecriptor, getTableDescriptor(tableName));
+        bigtableTableAdminClient.modifyColumnFamily(builder.toProto(toBigtableName(tableName)));
+      } catch (Throwable throwable) {
+        throw new IOException(
+            String.format("Failed to modify table '%s'", tableName.getNameAsString()), throwable);
+      }
+    } else {
+      throw new TableNotFoundException(tableName);
+    }
   }
 
   /**
-   * <p>modifyColumn.</p>
+   * <p>modifyColumns.</p>
    *
-   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @param columnName a {@link java.lang.String} object.
-   * @param modificationType a {@link java.lang.String} object.
-   * @param modifications an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} object.
+   * @param tableName a {@link TableName} object for error messages.
+   * @param columnName a {@link String} object for error messages
+   * @param modificationType a {@link String} object for error messages
+   * @param builder a {@link ModifyTableBuilder} object to send.
    * @throws java.io.IOException if any.
    */
-  protected void modifyColumn(TableName tableName, String columnName,
-      String modificationType, Modification... modifications) throws IOException {
-    ModifyColumnFamiliesRequest modifyColumn = ModifyColumnFamiliesRequest
-        .newBuilder()
-        .addAllModifications(Arrays.asList(modifications))
-        .setName(toBigtableName(tableName))
-        .build();
+  protected Void modifyColumns(TableName tableName, String columnName,
+      String modificationType, ModifyTableBuilder builder) throws IOException {
 
     try {
-      bigtableTableAdminClient.modifyColumnFamily(modifyColumn);
+      bigtableTableAdminClient.modifyColumnFamily(builder.toProto(toBigtableName(tableName)));
+      return null;
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
@@ -648,9 +642,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   /**
-   * Modify an existing column family on a table. Asynchronous operation.
+   * Modify an existing column family on a table.  NOTE: this is needed for backwards compatibility
+   * for the hbase shell.
    */
-  public void modifyColumn(final String tableName, HColumnDescriptor descriptor)
+  public void modifyColumns(final String tableName, HColumnDescriptor descriptor)
       throws IOException {
     modifyColumn(TableName.valueOf(tableName), descriptor);
   }
@@ -1230,12 +1225,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void splitRegion(byte[] bytes, byte[] bytes2) throws IOException {
     LOG.info("split is a no-op");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void modifyTable(TableName tableName, HTableDescriptor htd) throws IOException {
-    throw new UnsupportedOperationException("modifyTable");  // TODO
   }
 
   /** {@inheritDoc} */

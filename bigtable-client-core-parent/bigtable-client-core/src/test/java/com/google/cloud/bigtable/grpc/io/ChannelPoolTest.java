@@ -86,7 +86,7 @@ public class ChannelPoolTest {
 
   @Test
   public void testInterceptorIsCalled() throws Exception {
-    MethodDescriptor descriptor = BigtableGrpc.METHOD_MUTATE_ROW;
+    MethodDescriptor descriptor = BigtableGrpc.getMutateRowMethod();
     ChannelPool pool = new ChannelPool(new MockChannelFactory(), 1);
     ClientCall call = pool.newCall(descriptor, CallOptions.DEFAULT);
     Metadata headers = new Metadata();
@@ -96,7 +96,7 @@ public class ChannelPoolTest {
   @Test
   public void testChannelsAreRoundRobinned() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    MethodDescriptor descriptor = BigtableGrpc.METHOD_MUTATE_ROW;
+    MethodDescriptor descriptor = BigtableGrpc.getMutateRowMethod();
     MockitoAnnotations.initMocks(this);
     ChannelPool pool = new ChannelPool(factory, 2);
     pool.newCall(descriptor, CallOptions.DEFAULT);

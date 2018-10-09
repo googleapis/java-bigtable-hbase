@@ -24,19 +24,25 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
+import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
+import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
+import io.grpc.Status;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
@@ -81,11 +87,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 @SuppressWarnings("deprecation")
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
-  private final TableAdapter2x tableAdapter2x;
 
   public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
     super(connection);
-    tableAdapter2x = new TableAdapter2x(connection.getSession().getOptions());
   }
 
   /** {@inheritDoc} */
@@ -105,14 +109,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), tableAdapter2x.adapt(desc, splitKeys));
+    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys));
   }
 
   /** {@inheritDoc} */
   @Override
   public Future<Void> createTableAsync(TableDescriptor desc, byte[][] splitKeys)
       throws IOException {
-    CreateTableRequest.Builder builder = tableAdapter2x.adapt(desc, splitKeys);
+    CreateTableRequest.Builder builder = TableAdapter2x.adapt(desc, splitKeys);
     ListenableFuture<Table> future = createTableAsync(builder, desc.getTableName());
     return FutureUtils.toCompletableFuture(future).thenApply(r -> null);
   }
@@ -165,11 +169,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    Modification modification = Modification.newBuilder()
-        .setId(columnFamilyDesc.getNameAsString())
-        .setCreate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
-        .build();
-    modifyColumn(tableName, columnFamilyDesc.getNameAsString(), "add", modification);
+    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "add",
+        ModifyTableBuilder.create().add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   /**
@@ -181,12 +182,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    Modification modification = Modification.newBuilder()
-        .setId(columnFamilyDesc.getNameAsString())
-        .setUpdate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
-        .build();
-    modifyColumn(tableName, columnFamilyDesc.getNameAsString(), "update", modification);
-
+    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "modify",
+        ModifyTableBuilder.create().modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   /** {@inheritDoc} */
@@ -249,9 +246,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     Modification modification = Modification
         .newBuilder()
         .setId(columnName)
-        .setCreate(tableAdapter2x.toColumnFamily(columnFamily))
+        .setCreate(TableAdapter2x.toColumnFamily(columnFamily))
         .build();
-    return modifyColumnAsync(tableName, modification);
+    return modifyColumnsAsync(tableName, modification);
   }
 
   @Override
@@ -266,17 +263,18 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         .setId(Bytes.toString(columnName))
         .setDrop(true)
         .build();
-    return modifyColumnAsync(tableName, modification);
+    return modifyColumnsAsync(tableName, modification);
   }
 
 
-  protected CompletableFuture<Void> modifyColumnAsync(TableName tableName, Modification... modifications) {
-    ModifyColumnFamiliesRequest.Builder modifyColumnBuilder = ModifyColumnFamiliesRequest
+  protected CompletableFuture<Void> modifyColumnsAsync(TableName tableName, Modification... modifications) {
+    ModifyColumnFamiliesRequest modifyColumnRequest = ModifyColumnFamiliesRequest
         .newBuilder()
         .addAllModifications(Arrays.asList(modifications))
-        .setName(toBigtableName(tableName));
+        .setName(toBigtableName(tableName))
+        .build();
     return FutureUtils.toCompletableFuture(
-        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnBuilder.build()))
+        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnRequest))
         .thenApply(r -> null);
   }
 
@@ -338,7 +336,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public List<SnapshotDescription> listTableSnapshots(Pattern tableName,
       Pattern snapshotName) throws IOException {
-    List<SnapshotDescription> response = new ArrayList<SnapshotDescription>();
+    List<SnapshotDescription> response = new ArrayList<>();
     for (SnapshotDescription snapshot: listSnapshots(snapshotName)) {
       if (tableName.matcher(snapshot.getTableNameAsString()).matches()) {
         response.add(snapshot);
@@ -354,31 +352,62 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     Modification modification = Modification
         .newBuilder()
         .setId(columnName)
-        .setUpdate(tableAdapter2x.toColumnFamily(columnFamily))
+        .setUpdate(TableAdapter2x.toColumnFamily(columnFamily))
         .build();
-    return modifyColumnAsync(tableName, modification);
+    return modifyColumnsAsync(tableName, modification);
   }
 
   @Override
-  public void modifyTable(TableDescriptor arg0) throws IOException {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
+  public void modifyTable(TableDescriptor tableDescriptor) throws IOException {
+    modifyTable(tableDescriptor.getTableName(), tableDescriptor);
   }
 
   @Override
-  public void modifyTable(TableName arg0, TableDescriptor arg1) throws IOException {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
+  public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
+    super.modifyTable(tableName, new HTableDescriptor(tableDescriptor));
+  }
+  
+  @Override
+  public Future<Void> modifyTableAsync(TableDescriptor tableDescriptor)
+      throws IOException {
+    return modifyTableAsync(tableDescriptor.getTableName(), tableDescriptor);
   }
 
   @Override
-  public Future<Void> modifyTableAsync(TableDescriptor arg0) throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("modifyTableAsync");
+  public Future<Void> modifyTableAsync(TableName tableName, TableDescriptor newDescriptor) {
+    return getDescriptorAsync(tableName).thenApply(descriptor -> ModifyTableBuilder
+        .buildModifications(new HTableDescriptor(newDescriptor), new HTableDescriptor(descriptor)))
+        .thenApply(modifications -> {
+          try {
+            return modifyColumns(tableName, null, "modifyTableAsync", modifications);
+          } catch (IOException e) {
+            throw new CompletionException(e);
+          }
+        });
   }
 
-  @Override
-  public Future<Void> modifyTableAsync(TableName arg0, TableDescriptor arg1) throws IOException {
-    // TODO - implementable with async hbase2
-    throw new UnsupportedOperationException("modifyTableAsync");
+  private CompletableFuture<TableDescriptor> getDescriptorAsync(TableName tableName) {
+    if (tableName == null) {
+      return CompletableFuture.completedFuture(null);
+    }
+
+    GetTableRequest request = GetTableRequest
+        .newBuilder()
+        .setName(bigtableInstanceName.toTableNameStr(tableName.getNameAsString()))
+        .build();
+
+    ListenableFuture<Table> tableFuture = bigtableTableAdminClient.getTableAsync(request);
+    return FutureUtils.toCompletableFuture(tableFuture).handle((resp, ex) -> {
+      if (ex != null) {
+        if (Status.fromThrowable(ex).getCode() == Status.Code.NOT_FOUND) {
+          throw new CompletionException(new TableNotFoundException(tableName));
+        } else {
+          throw new CompletionException(ex);
+        }
+      } else {
+        return tableAdapter.adapt(resp);
+      }
+    });
   }
 
   /* (non-Javadoc)
@@ -456,6 +485,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
+  public void cloneTableSchema(TableName tableName, TableName tableName1, boolean b) {
+    throw new UnsupportedOperationException("cloneTableSchema"); // TODO
+  }
+
+  @Override
   public void compact(TableName arg0, CompactType arg1) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("compact");
   }
@@ -484,6 +518,16 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void enableTableReplication(TableName arg0) throws IOException {
     throw new UnsupportedOperationException("enableTableReplication");
+  }
+
+  @Override
+  public Future<Void> enableReplicationPeerAsync(String s) {
+    throw new UnsupportedOperationException("enableTableReplication");
+  }
+
+  @Override
+  public Future<Void> disableReplicationPeerAsync(String s) {
+    throw new UnsupportedOperationException("disableReplicationPeerAsync");
   }
 
   @Override
@@ -674,18 +718,29 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void addReplicationPeer(String arg0, ReplicationPeerConfig arg1, boolean arg2) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("addReplicationPeer"); // TODO
+  }
+
+  @Override
+  public Future<Void> addReplicationPeerAsync(String peerId, ReplicationPeerConfig peerConfig) {
+    throw new UnsupportedOperationException("addReplicationPeerAsync"); // TODO
+  }
+
+  @Override
+  public Future<Void> addReplicationPeerAsync(String s, ReplicationPeerConfig replicationPeerConfig,
+      boolean b) {
+    throw new UnsupportedOperationException("addReplicationPeerAsync"); // TODO
   }
 
   @Override
   public void appendReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1)
       throws ReplicationException, IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("appendReplicationPeerTableCFs"); // TODO
   }
 
   @Override
   public CacheEvictionStats clearBlockCache(TableName arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODOv
+    throw new UnsupportedOperationException("clearBlockCache"); // TODOv
   }
 
   @Override
@@ -695,12 +750,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void disableReplicationPeer(String arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("disableReplicationPeer"); // TODO
   }
 
   @Override
   public void enableReplicationPeer(String arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("enableReplicationPeer"); // TODO
   }
 
   @Override
@@ -710,67 +765,78 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public List<QuotaSettings> getQuota(QuotaFilter arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("getQuota"); // TODO
   }
 
   @Override
   public List<RegionMetrics> getRegionMetrics(ServerName arg0, TableName arg1) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("getRegionMetrics"); // TODO
   }
 
   @Override
   public ReplicationPeerConfig getReplicationPeerConfig(String arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("getReplicationPeerConfig"); // TODO
   }
 
   @Override
   public boolean isMergeEnabled() throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("isMergeEnabled"); // TODO
   }
 
   @Override
   public boolean isSplitEnabled() throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("isSplitEnabled"); // TODO
   }
 
   @Override
   public List<ReplicationPeerDescription> listReplicationPeers() throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("listReplicationPeers"); // TODO
   }
 
   @Override
   public List<ReplicationPeerDescription> listReplicationPeers(Pattern arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("listReplicationPeers"); // TODO
   }
 
   @Override
   public void majorCompactRegionServer(ServerName arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("majorCompactRegionServer"); // TODO
   }
 
   @Override
   public boolean mergeSwitch(boolean arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("mergeSwitch"); // TODO
   }
 
   @Override
   public void removeReplicationPeer(String arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("removeReplicationPeer"); // TODO
   }
 
   @Override
   public void removeReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1)
       throws ReplicationException, IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("removeReplicationPeerTableCFs"); // TODO
+  }
+
+  @Override
+  public Future<Void> removeReplicationPeerAsync(String s) {
+    throw new UnsupportedOperationException("removeReplicationPeerAsync"); // TODO
   }
 
   @Override
   public boolean splitSwitch(boolean arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("splitSwitch"); // TODO
   }
 
   @Override
   public void updateReplicationPeerConfig(String arg0, ReplicationPeerConfig arg1) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
+    throw new UnsupportedOperationException("updateReplicationPeerConfig"); // TODO
+  }
+
+  @Override
+  public Future<Void> updateReplicationPeerConfigAsync(String s,
+      ReplicationPeerConfig replicationPeerConfig) {
+    throw new UnsupportedOperationException("updateReplicationPeerConfigAsync"); // TODO
   }
 }

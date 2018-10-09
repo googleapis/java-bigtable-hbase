@@ -15,11 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.ValueRangeFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.models.Filters.ValueRangeFilter;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
@@ -88,10 +89,15 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
           return range().startClosed(value).endClosed(value);
         }
       case NOT_EQUAL:
-        // This strictly less than + strictly greater than:
-        return FILTERS.interleave()
-            .filter(range().endOpen(value))
-            .filter(range().startOpen(value));
+        if(comparator.getValue().length == 0) {
+          //Special case for NOT_EQUAL to EMPTY_STRING
+          return FILTERS.value().regex(ReaderExpressionHelper.ANY_BYTES);
+        } else {
+          // This strictly less than + strictly greater than:
+          return FILTERS.interleave()
+              .filter(range().endOpen(value))
+              .filter(range().startOpen(value));
+        }
       case GREATER_OR_EQUAL:
         return range().startClosed(value);
       case GREATER:

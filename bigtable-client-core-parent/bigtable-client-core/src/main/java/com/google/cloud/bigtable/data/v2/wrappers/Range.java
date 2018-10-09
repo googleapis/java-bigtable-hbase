@@ -40,6 +40,7 @@ import javax.annotation.Nonnull;
  * ByteStringRange r2 = r1.clone().endUnbounded();
  * }</pre>
  */
+@Deprecated
 abstract class Range<T, R extends Range<T, R>> {
   public enum BoundType {
     OPEN,
@@ -150,6 +151,7 @@ abstract class Range<T, R extends Range<T, R>> {
   }
 
   /** Abstract specialization of a {@link Range} for timestamps. */
+  @Deprecated
   abstract static class AbstractTimestampRange<R extends AbstractTimestampRange<R>>
       extends Range<Long, R> implements Cloneable {
     AbstractTimestampRange() {
@@ -175,6 +177,7 @@ abstract class Range<T, R extends Range<T, R>> {
    * Abstract specialization of a {@link Range} for {@link ByteString}s. Allows for easy interop
    * with simple Strings.
    */
+  @Deprecated
   abstract static class AbstractByteStringRange<R extends AbstractByteStringRange<R>>
       extends Range<ByteString, R> implements Cloneable {
     AbstractByteStringRange() {
@@ -230,6 +233,7 @@ abstract class Range<T, R extends Range<T, R>> {
   }
 
   /** Concrete Range for timestamps */
+  @Deprecated
   public static final class TimestampRange extends AbstractTimestampRange<TimestampRange> {
     public static TimestampRange unbounded() {
       return new TimestampRange(BoundType.UNBOUNDED, null, BoundType.UNBOUNDED, null);
@@ -245,6 +249,7 @@ abstract class Range<T, R extends Range<T, R>> {
   }
 
   /** Concrete Range for ByteStrings */
+  @Deprecated
   public static final class ByteStringRange extends AbstractByteStringRange<ByteStringRange> {
     public static ByteStringRange unbounded() {
       return new ByteStringRange(BoundType.UNBOUNDED, null, BoundType.UNBOUNDED, null);

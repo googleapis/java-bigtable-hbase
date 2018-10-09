@@ -28,7 +28,6 @@ import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import java.io.IOException;
@@ -81,7 +80,7 @@ public class CheckConfig {
     }
 
     String configuredConnectionClass =
-        fullConfiguration.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL);
+        fullConfiguration.get(BigtableConfiguration.HBASE_CLIENT_CONNECTION_IMPL);
 
     boolean isCorrectClassSpecified = false;
 

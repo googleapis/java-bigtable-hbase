@@ -23,8 +23,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.google.api.client.util.BackOff;
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
@@ -35,7 +33,7 @@ import com.google.common.collect.ImmutableSet;
  * @author sduskis
  * @version $Id: $Id
  */
-public class RetryOptions implements Serializable {
+public class RetryOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
@@ -67,9 +65,9 @@ public class RetryOptions implements Serializable {
    */
   public static final int DEFAULT_INITIAL_BACKOFF_MILLIS = 5;
   /**
-   * Multiplier to apply to wait times after failed retries (default value: 2).
+   * Multiplier to apply to wait times after failed retries (default value: 1.5).
    */
-  public static final double DEFAULT_BACKOFF_MULTIPLIER = 2;
+  public static final double DEFAULT_BACKOFF_MULTIPLIER = 1.5;
   /**
    * Maximum amount of time to retry before failing the operation (default value: 60 seconds).
    */
@@ -79,41 +77,44 @@ public class RetryOptions implements Serializable {
    * Maximum number of times to retry after a scan timeout
    */
   public static final int DEFAULT_MAX_SCAN_TIMEOUT_RETRIES = 3;
-
+  
+  public static RetryOptions getDefaultOptions() {
+  	return builder().build();
+  }
+  
+  public static Builder builder() {
+    return new Builder();
+  }
+  
   /**
    * A Builder for ChannelOptions objects.
    */
   public static class Builder {
-    private boolean enableRetries = DEFAULT_ENABLE_GRPC_RETRIES;
-    private int initialBackoffMillis = DEFAULT_INITIAL_BACKOFF_MILLIS;
-    private double backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER;
-    private int maxElapsedBackoffMillis = DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
-    private int streamingBufferSize = DEFAULT_STREAMING_BUFFER_SIZE;
-    private int readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
-    private int maxScanTimeoutRetries = DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
-    private Set<Status.Code> statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
-    private boolean allowRetriesWithoutTimestamp;
-
+  	private RetryOptions options;
+  	
+  	@Deprecated
     public Builder() {
-    }
+    	options = new RetryOptions();
+    	options.retriesEnabled = DEFAULT_ENABLE_GRPC_RETRIES;
+    	options.allowRetriesWithoutTimestamp = false;
+    	options.initialBackoffMillis = DEFAULT_INITIAL_BACKOFF_MILLIS;
+    	options.maxElapsedBackoffMillis = DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
+    	options.backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER;
+    	options.streamingBufferSize = DEFAULT_STREAMING_BUFFER_SIZE;
+    	options.readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
+    	options.maxScanTimeoutRetries = DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
+    	options.statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
+   }
 
     public Builder(RetryOptions options) {
-      this.enableRetries = options.retriesEnabled;
-      this.initialBackoffMillis = options.initialBackoffMillis;
-      this.backoffMultiplier = options.backoffMultiplier;
-      this.maxElapsedBackoffMillis = options.maxElapsedBackoffMillis;
-      this.streamingBufferSize = options.streamingBufferSize;
-      this.readPartialRowTimeoutMillis = options.readPartialRowTimeoutMillis;
-      this.maxScanTimeoutRetries = options.maxScanTimeoutRetries;
-      this.statusToRetryOn = new HashSet<>(options.statusToRetryOn);
-      this.allowRetriesWithoutTimestamp = options.allowRetriesWithoutTimestamp;
+      this.options = options.clone(); 
     }
 
     /**
      * Enable or disable retries.
      */
     public Builder setEnableRetries(boolean enabled) {
-      this.enableRetries = enabled;
+    	options.retriesEnabled = enabled;
       return this;
     }
 
@@ -122,9 +123,9 @@ public class RetryOptions implements Serializable {
      */
     public Builder setRetryOnDeadlineExceeded(boolean enabled) {
       if (enabled) {
-        statusToRetryOn.add(Status.Code.DEADLINE_EXCEEDED);
+        options.statusToRetryOn.add(Status.Code.DEADLINE_EXCEEDED);
       } else {
-        statusToRetryOn.remove(Status.Code.DEADLINE_EXCEEDED);
+        options.statusToRetryOn.remove(Status.Code.DEADLINE_EXCEEDED);
       }
       return this;
     }
@@ -133,7 +134,7 @@ public class RetryOptions implements Serializable {
      * The amount of time in milliseconds we will wait for our first error retry.
      */
     public Builder setInitialBackoffMillis(int initialBackoffMillis) {
-      this.initialBackoffMillis = initialBackoffMillis;
+    	options.initialBackoffMillis = initialBackoffMillis;
       return this;
     }
 
@@ -141,7 +142,7 @@ public class RetryOptions implements Serializable {
      * Multiplier we will apply to backoff times between retries.
      */
     public Builder setBackoffMultiplier(double multiplier) {
-      this.backoffMultiplier = multiplier;
+    	options.backoffMultiplier = multiplier;
       return this;
     }
 
@@ -149,7 +150,7 @@ public class RetryOptions implements Serializable {
      * Maximum amount of time we will retry an operation that is failing.
      */
     public Builder setMaxElapsedBackoffMillis(int maxElapsedBackoffMillis) {
-      this.maxElapsedBackoffMillis = maxElapsedBackoffMillis;
+    	options.maxElapsedBackoffMillis = maxElapsedBackoffMillis;
       return this;
     }
 
@@ -157,7 +158,7 @@ public class RetryOptions implements Serializable {
      * Set the maximum number of messages to buffer when scanning.
      */
     public Builder setStreamingBufferSize(int streamingBufferSize) {
-      this.streamingBufferSize = streamingBufferSize;
+    	options.streamingBufferSize = streamingBufferSize;
       return this;
     }
 
@@ -166,7 +167,7 @@ public class RetryOptions implements Serializable {
      * ReadRowsResponse messages from a stream.
      */
     public Builder setReadPartialRowTimeoutMillis(int timeout) {
-      this.readPartialRowTimeoutMillis = timeout;
+    	options.readPartialRowTimeoutMillis = timeout;
       return this;
     }
 
@@ -174,12 +175,12 @@ public class RetryOptions implements Serializable {
      * Set the maximum number of times to retry after a scan timeout.
      */
     public Builder setMaxScanTimeoutRetries(int maxScanTimeoutRetries) {
-      this.maxScanTimeoutRetries = maxScanTimeoutRetries;
+    	options.maxScanTimeoutRetries = maxScanTimeoutRetries;
       return this;
     }
 
     public Builder addStatusToRetryOn(Status.Code code) {
-      statusToRetryOn.add(code);
+    	options.statusToRetryOn.add(code);
       return this;
     }
 
@@ -188,7 +189,7 @@ public class RetryOptions implements Serializable {
      * timestamp to the server time.
      */
     public Builder setAllowRetriesWithoutTimestamp(boolean allowRetriesWithoutTimestamp) {
-      this.allowRetriesWithoutTimestamp = allowRetriesWithoutTimestamp;
+    	options.allowRetriesWithoutTimestamp = allowRetriesWithoutTimestamp;
       return this;
     }
 
@@ -196,29 +197,19 @@ public class RetryOptions implements Serializable {
      * Construct a new RetryOptions object.
      */
     public RetryOptions build() {
-      return new RetryOptions(
-          enableRetries,
-          allowRetriesWithoutTimestamp,
-          initialBackoffMillis,
-          backoffMultiplier,
-              maxElapsedBackoffMillis,
-          streamingBufferSize,
-          readPartialRowTimeoutMillis,
-          maxScanTimeoutRetries,
-          ImmutableSet.copyOf(statusToRetryOn));
+    	return options;
     }
   }
 
-  private final boolean retriesEnabled;
-  private final boolean allowRetriesWithoutTimestamp;
-  private final int initialBackoffMillis;
-  private final int maxElapsedBackoffMillis;
-  private final double backoffMultiplier;
-  private final int streamingBufferSize;
-  private final int readPartialRowTimeoutMillis;
-  private final int maxScanTimeoutRetries;
-  private final ImmutableSet<Status.Code> statusToRetryOn;
-
+  private boolean retriesEnabled;
+  private boolean allowRetriesWithoutTimestamp;
+  private int initialBackoffMillis;
+  private int maxElapsedBackoffMillis;
+  private double backoffMultiplier;
+  private int streamingBufferSize;
+  private int readPartialRowTimeoutMillis;
+  private int maxScanTimeoutRetries;
+  private Set<Status.Code> statusToRetryOn;
   /**
    * <p>Constructor for RetryOptions.</p>
    *
@@ -232,6 +223,7 @@ public class RetryOptions implements Serializable {
    * @param maxScanTimeoutRetries a int.
    * @param statusToRetryOn a Set.
    */
+  @Deprecated
   public RetryOptions(
       boolean retriesEnabled,
       boolean allowRetriesWithoutTimestamp,
@@ -252,7 +244,9 @@ public class RetryOptions implements Serializable {
     this.maxScanTimeoutRetries = maxScanTimeoutRetries;
     this.statusToRetryOn = ImmutableSet.copyOf(statusToRetryOn);
   }
-
+  
+  private RetryOptions()
+  {}
   /**
    * The amount of time in milliseconds we will wait for our first error retry.
    *
@@ -343,28 +337,6 @@ public class RetryOptions implements Serializable {
   public boolean isRetryable(Status.Code code) {
     return statusToRetryOn.contains(code);
   }
-
-  /**
-   * <p>createBackoff.</p>
-   *
-   * @return a {@link com.google.api.client.util.BackOff} object.
-   */
-  public BackOff createBackoff() {
-    return createBackoffBuilder().build();
-  }
-
-  /**
-   * <p>createBackoffBuilder.</p>
-   *
-   * @return a {@link com.google.api.client.util.ExponentialBackOff.Builder} object.
-   */
-  @VisibleForTesting
-  protected ExponentialBackOff.Builder createBackoffBuilder() {
-    return new ExponentialBackOff.Builder()
-        .setInitialIntervalMillis(getInitialBackoffMillis())
-        .setMaxElapsedTimeMillis(getMaxElapsedBackoffMillis())
-        .setMultiplier(getBackoffMultiplier());
-  }
   
   /** {@inheritDoc} */
   @Override
@@ -412,5 +384,13 @@ public class RetryOptions implements Serializable {
    */
   public Builder toBuilder() {
     return new Builder(this);
+  }
+  
+  protected RetryOptions clone() {
+  	try {
+      return (RetryOptions) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Could not clone RetryOptions.");
+    }
   }
 }

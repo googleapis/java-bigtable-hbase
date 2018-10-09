@@ -36,7 +36,7 @@ public class TestBigtableSession {
   private static void createSession(String projectId, String instanceId, String userAgent)
       throws IOException {
     BigtableSession ignored =
-        new BigtableSession(new BigtableOptions.Builder()
+        new BigtableSession(BigtableOptions.builder()
           .setProjectId(projectId)
           .setInstanceId(instanceId)
           .setUserAgent(userAgent)
@@ -81,7 +81,7 @@ public class TestBigtableSession {
   @Test
   public void testCreateInstanceClient() throws Throwable {
     try {
-      BigtableSession.createInstanceClient(new BigtableOptions.Builder().setCredentialOptions(
+      BigtableSession.createInstanceClient(BigtableOptions.builder().setCredentialOptions(
           CredentialOptions.nullCredential()).build());
     } catch (IOException e) {
       if (e.getMessage().toLowerCase().contains("credentials")) {

@@ -31,7 +31,7 @@ import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
 import java.io.IOException;
 
 /**
- * This is a test to ensure that BigtableConnection can find {@link BigtableConnection}
+ * This is a test to ensure that {@link BigtableConfiguration} can find {@link BigtableConnection}
  *
  */
 @RunWith(JUnit4.class)
@@ -42,10 +42,29 @@ public class TestBigtableConnection {
     Assert.assertEquals(BigtableConnection.class, BigtableConfiguration.getConnectionClass());
   }
 
+  @Test
+  public void testConfig_Basic() {
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId");
+    Assert.assertEquals("projectId", conf.get(BigtableOptionsFactory.PROJECT_ID_KEY));
+    Assert.assertEquals("instanceId", conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY));
+    Assert.assertNull(conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY));
+    Assert.assertEquals(BigtableConfiguration.getConnectionClass().getName(),
+            conf.get(BigtableConfiguration.HBASE_CLIENT_CONNECTION_IMPL));
+  }
+
+  @Test
+  public void testConfig_AppProfile() {
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
+    Assert.assertEquals(conf.get(BigtableOptionsFactory.PROJECT_ID_KEY), "projectId");
+    Assert.assertEquals(conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY), "instanceId");
+    Assert.assertEquals(conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY), "appProfileId");
+    Assert.assertEquals(BigtableConfiguration.getConnectionClass().getName(),
+            conf.get(BigtableConfiguration.HBASE_CLIENT_CONNECTION_IMPL));
+  }
 
   @Test
   public void testTable() throws IOException {
-    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId");
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
     conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
     BigtableConnection connection = new BigtableConnection(conf);

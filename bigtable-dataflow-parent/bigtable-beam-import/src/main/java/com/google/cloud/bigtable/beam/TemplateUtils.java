@@ -26,6 +26,7 @@ import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ParseFilter;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 /**
  * !!! DO NOT TOUCH THIS CLASS !!!
@@ -45,6 +46,14 @@ public class TemplateUtils {
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
+
+    ValueProvider enableThrottling = ValueProvider.NestedValueProvider.of(
+        opts.getMutationThrottleLatencyMs(), (Integer throttleMs) -> String.valueOf(throttleMs > 0));
+
+    builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, enableThrottling);
+    builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+        ValueProvider.NestedValueProvider.of(opts.getMutationThrottleLatencyMs(), String::valueOf));
+
     return builder.build();
   }
 

@@ -23,8 +23,7 @@ import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
-import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
-import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Result;

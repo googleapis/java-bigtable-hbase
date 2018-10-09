@@ -288,7 +288,7 @@ public class TestBulkMutationAwaitCompletion {
   }
 
   protected BulkMutation createBulkMutation(OperationAccountant operationAccountant) {
-    BulkOptions options = new BulkOptions.Builder()
+    BulkOptions options = BulkOptions.builder()
         .setBulkMaxRowKeyCount(MUTATIONS_PER_RPC)
         .setBulkMaxRequestSize(1000000000)
         .build();

@@ -80,21 +80,31 @@ public class TestScan extends AbstractTest {
     table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, ts1, values[0]));
     table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, ts2, values[1]));
 
-    try (ResultScanner resultScanner =
-        table.getScanner(new Scan(rowKey, rowFollowing(rowKey)).setTimeRange(0, ts1))) {
+    Scan scan1 = new Scan()
+            .withStartRow(rowKey)
+            .withStopRow(rowFollowing(rowKey))
+            .setTimeRange(0, ts1);
+    try (ResultScanner resultScanner = table.getScanner(scan1)) {
       Assert.assertNull(resultScanner.next());
     }
 
-    try (ResultScanner resultScanner =
-        table.getScanner(new Scan(rowKey, rowFollowing(rowKey)).setTimeRange(0, ts2 + 1))) {
+
+    Scan scan2 = new Scan()
+        .withStartRow(rowKey)
+        .withStopRow(rowFollowing(rowKey))
+        .setTimeRange(0, ts2 + 1);
+    try (ResultScanner resultScanner = table.getScanner(scan2)) {
       Result result = resultScanner.next();
       Assert.assertNotNull(result);
       Assert.assertArrayEquals(values[1],
         CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual)));
     }
 
-    try (ResultScanner resultScanner = table.getScanner(
-      new Scan(rowKey, rowFollowing(rowKey)).setTimeRange(0, ts1 + 1))) {
+    Scan scan3 = new Scan()
+        .withStartRow(rowKey)
+        .withStopRow(rowFollowing(rowKey))
+        .setTimeRange(0, ts1 + 1);
+    try (ResultScanner resultScanner = table.getScanner(scan3)) {
       Result result = resultScanner.next();
       Assert.assertNotNull(result);
       Assert.assertArrayEquals(values[0],
@@ -119,9 +129,9 @@ public class TestScan extends AbstractTest {
     table.put(put);
 
     // Get without a qualifer, and confirm all results are returned.
-    Scan scan = new Scan();
-    scan.setStartRow(rowKey)
-        .setStopRow(rowFollowing(rowKey))
+    Scan scan = new Scan()
+        .withStartRow(rowKey)
+        .withStopRow(rowFollowing(rowKey))
         .addFamily(COLUMN_FAMILY);
 
     ResultScanner resultScanner = table.getScanner(scan);
@@ -172,8 +182,8 @@ public class TestScan extends AbstractTest {
     table.put(puts);
 
     Scan scan = new Scan();
-    scan.setStartRow(rowKeys[0])
-        .setStopRow(rowFollowing(rowKeys[rowsToWrite - 1]))
+    scan.withStartRow(rowKeys[0])
+        .withStopRow(rowFollowing(rowKeys[rowsToWrite - 1]))
         .addFamily(COLUMN_FAMILY);
 
     try(ResultScanner resultScanner = table.getScanner(scan)) {
@@ -238,8 +248,8 @@ public class TestScan extends AbstractTest {
     table.put(puts);
 
     Scan scan = new Scan();
-    scan.setStartRow(rowKeys[0])
-        .setStopRow(rowFollowing(rowKeys[rowsToWrite - 1]))
+    scan.withStartRow(rowKeys[0])
+        .withStopRow(rowFollowing(rowKeys[rowsToWrite - 1]))
         .addFamily(COLUMN_FAMILY);
     int deleteCount = 0;
     try (ResultScanner resultScanner = table.getScanner(scan)) {
@@ -263,8 +273,9 @@ public class TestScan extends AbstractTest {
     byte[] value = dataHelper.randomData("value-");
 
     table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, value));
-    Scan scan = new Scan();
-    scan.setStartRow(rowKey).setStopRow(rowKey);
+    Scan scan = new Scan()
+        .withStartRow(rowKey)
+        .withStopRow(rowKey, true);
     try (ResultScanner resultScanner = table.getScanner(scan)) {
       Result result = resultScanner.next();
       Assert.assertNotNull(result);

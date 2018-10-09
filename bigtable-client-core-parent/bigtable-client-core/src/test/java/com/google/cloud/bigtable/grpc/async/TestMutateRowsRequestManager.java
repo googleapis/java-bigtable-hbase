@@ -27,14 +27,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.MockitoAnnotations;
 
-import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsRequest.Entry;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.async.MutateRowsRequestManager.ProcessingStatus;
 import com.google.rpc.Status;
 
@@ -91,19 +89,13 @@ public class TestMutateRowsRequestManager {
   }
 
   private AtomicLong time = new AtomicLong();
-  private NanoClock nanoClock = new NanoClock() {
-    @Override
-    public long nanoTime() {
-      return time.get();
-    }
-  };
 
   private RetryOptions retryOptions;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
+    retryOptions = RetryOptions.getDefaultOptions();
   }
 
   @Test

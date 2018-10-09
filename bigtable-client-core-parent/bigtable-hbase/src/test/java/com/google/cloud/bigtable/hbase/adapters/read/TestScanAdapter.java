@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 
@@ -27,7 +27,7 @@ import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
-import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -90,18 +90,92 @@ public class TestScanAdapter {
   public void testNewScan() {
     Scan scan = new Scan();
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
-    Assert.assertEquals(RowSet.newBuilder()
-        .addRowRanges(RowRange.getDefaultInstance()).build(),
+    Assert.assertEquals(toRowSet(RowRange.getDefaultInstance()),
       request.getRows());
+  }
+
+  @Test
+  public void testStartDefault() {
+    byte[] startKey = Bytes.toBytes("startKey");
+    Scan scan = new Scan().withStartRow(startKey);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setStartKeyClosed(ByteString.copyFrom(startKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStartInclusive() {
+    byte[] startKey = Bytes.toBytes("startKey");
+    Scan scan = new Scan().withStartRow(startKey, true);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setStartKeyClosed(ByteString.copyFrom(startKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStartExclusive() {
+    byte[] startKey = Bytes.toBytes("startKey");
+    Scan scan = new Scan().withStartRow(startKey, false);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setStartKeyOpen(ByteString.copyFrom(startKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStopDefault() {
+    byte[] stopKey = Bytes.toBytes("stopKey");
+    Scan scan = new Scan().withStopRow(stopKey);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setEndKeyOpen(ByteString.copyFrom(stopKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStopInclusive() {
+    byte[] stopKey = Bytes.toBytes("stopKey");
+    Scan scan = new Scan().withStopRow(stopKey, true);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setEndKeyClosed(ByteString.copyFrom(stopKey)).build());
+    Assert.assertEquals(expected, request.getRows());
+  }
+
+  @Test
+  public void testStopExclusive() {
+    byte[] stopKey = Bytes.toBytes("stopKey");
+    Scan scan = new Scan().withStopRow(stopKey, false);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    RowSet expected = toRowSet(
+        RowRange.newBuilder().setEndKeyOpen(ByteString.copyFrom(stopKey)).build());
+    Assert.assertEquals(expected, request.getRows());
   }
 
   @Test
   public void testStartAndEndKeysAreSet() {
     byte[] startKey = Bytes.toBytes("startKey");
     byte[] stopKey = Bytes.toBytes("stopKey");
-    Scan scan = new Scan(startKey, stopKey);
+    Scan scan = new Scan()
+        .withStartRow(startKey)
+        .withStopRow(stopKey);
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
     Assert.assertEquals(toRowSet(toRange(startKey, stopKey)), request.getRows());
+  }
+
+  @Test
+  public void testStartAndEndKeysNonDefault() {
+    byte[] startKey = Bytes.toBytes("startKey");
+    byte[] stopKey = Bytes.toBytes("stopKey");
+    Scan scan = new Scan()
+        .withStartRow(startKey, false)
+        .withStopRow(stopKey, true);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
+    Assert.assertEquals(toRowSet(
+        RowRange.newBuilder().setStartKeyOpen(ByteStringer.wrap(startKey))
+            .setEndKeyClosed(ByteStringer.wrap(stopKey)).build()), request.getRows());
   }
 
   @Test
@@ -173,10 +247,10 @@ public class TestScanAdapter {
     Mockito.when(filterAdapter.adaptFilter(any(FilterAdapterContext.class), eq(fakeFilter)))
         .thenReturn(Optional.of(RowFilter.getDefaultInstance()));
 
-    Scan scan = new Scan();
-    scan.setStartRow("a".getBytes());
-    scan.setStopRow("z".getBytes());
-    scan.setFilter(fakeFilter);
+    Scan scan = new Scan()
+        .withStartRow("a".getBytes())
+        .withStopRow("z".getBytes())
+        .setFilter(fakeFilter);
 
     Builder adapted = scanAdapter.adapt(scan, throwingReadHooks);
 
@@ -195,9 +269,9 @@ public class TestScanAdapter {
   @Test
   /** Make sure that the scan rowSet is unaffected when the filter is not set */
   public void testNarrowedScanWithoutFilter() {
-    Scan scan = new Scan();
-    scan.setStartRow("a".getBytes());
-    scan.setStopRow("z".getBytes());
+    Scan scan = new Scan()
+        .withStartRow("a".getBytes())
+        .withStopRow("z".getBytes());
 
     RowSet result = scanAdapter.adapt(scan, throwingReadHooks).build().getRows();
     RowSet expected = RowSet.newBuilder()
@@ -213,10 +287,10 @@ public class TestScanAdapter {
 
   @Test
   public void testEmptyFilterList(){
-    Scan scan = new Scan();
-    scan.setFilter(new FilterList());
-    scan.setStartRow("a".getBytes());
-    scan.setStopRow("z".getBytes());
+    Scan scan = new Scan()
+        .setFilter(new FilterList())
+        .withStartRow("a".getBytes())
+        .withStopRow("z".getBytes());
 
     RowSet result = scanAdapter.adapt(scan, throwingReadHooks).build().getRows();
     RowSet expected = RowSet.newBuilder()
@@ -228,5 +302,12 @@ public class TestScanAdapter {
         .build();
 
     Assert.assertEquals(expected, result);
+  }
+
+  @Test
+  public void testLimit() {
+    Scan scan = new Scan().setLimit(10);
+    int adaptedLimit = (int) scanAdapter.adapt(scan, throwingReadHooks).build().getRowsLimit();
+    Assert.assertEquals(scan.getLimit(), adaptedLimit);
   }
 }

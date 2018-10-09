@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-client-core-parent</artifactId>
-        <version>1.4.1-SNAPSHOT</version>
+        <version>1.6.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-client-core</artifactId>
@@ -43,6 +43,16 @@ limitations under the License.
     </dependencyManagement>
 
     <dependencies>
+        <!-- Bigtable Java Veneer client -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-bigtable</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-bigtable-admin</artifactId>
+        </dependency>
+
         <!-- Protos -->
         <dependency>
             <groupId>com.google.api.grpc</groupId>
@@ -155,6 +165,17 @@ limitations under the License.
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-auth</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.api</groupId>
+            <artifactId>gax-grpc</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Metrics -->

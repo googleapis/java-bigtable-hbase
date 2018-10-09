@@ -22,7 +22,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
@@ -38,12 +37,14 @@ import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.hamcrest.core.IsInstanceOf;
 import org.junit.Assert;
-import org.junit.Ignore;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
 /**
  * Integration tests for BigtableAsyncAdmin
@@ -152,9 +153,12 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
 
   @Test
   public void testGetTableDescriptor_nullTable() throws Exception {
+    // This breaks the minicluster, for some reason, so only run it for Cloud Bigtable.
+    Assume.assumeTrue("HBase asyncAdmin.getDescriptor(null) seems to break the mini-cluster",
+        SharedTestEnvRule.getInstance().isBigtable());
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     assertEquals(null, asyncAdmin.getDescriptor(null).get());
-  }  
+  }
 
   @Test
   public void testCreateTableWithNumRegions_exception() throws Exception {
