@@ -152,6 +152,10 @@ limitations under the License.
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-auth</artifactId>
+        </dependency>
 
         <!-- Metrics -->
         <dependency>
