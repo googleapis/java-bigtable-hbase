@@ -103,7 +103,14 @@ public class CredentialInterceptorCache {
     }
 
     if (credentials instanceof ServiceAccountJwtAccessCredentials) {
-      return new ClientAuthInterceptor(credentials, MoreExecutors.directExecutor());
+      ClientInterceptor jwtAuthInterceptor =
+          new ClientAuthInterceptor(credentials, MoreExecutors.directExecutor());
+
+      if (isDefaultCredentials) {
+        defaultCredentialInterceptor = jwtAuthInterceptor;
+      }
+
+      return jwtAuthInterceptor;
     }
 
     Preconditions.checkState(
