@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -168,8 +169,15 @@ public class CredentialFactory {
   public static Credentials getCredentialFromPrivateKeyServiceAccount(
       String serviceAccountEmail, String privateKeyFile)
       throws IOException, GeneralSecurityException {
-    return getCredentialFromPrivateKeyServiceAccount(serviceAccountEmail, privateKeyFile,
-      CLOUD_BIGTABLE_ALL_SCOPES);
+
+    PrivateKey privateKey =
+        SecurityUtils.loadPrivateKeyFromKeyStore(SecurityUtils.getPkcs12KeyStore(),
+            new FileInputStream(privateKeyFile), "notasecret", "privatekey", "notasecret");
+
+    return ServiceAccountJwtAccessCredentials.newBuilder()
+        .setClientEmail(serviceAccountEmail)
+        .setPrivateKey(privateKey)
+        .build();
   }
 
   /**
@@ -187,20 +195,18 @@ public class CredentialFactory {
   public static Credentials getCredentialFromPrivateKeyServiceAccount(
       String serviceAccountEmail, String privateKeyFile, List<String> scopes)
       throws IOException, GeneralSecurityException {
-    String clientId = null;
-    String privateKeyId = null;
+
     PrivateKey privateKey =
         SecurityUtils.loadPrivateKeyFromKeyStore(SecurityUtils.getPkcs12KeyStore(),
           new FileInputStream(privateKeyFile), "notasecret", "privatekey", "notasecret");
-    return ServiceAccountCredentials
-            .newBuilder()
-            .setClientId(clientId)
-            .setClientEmail(serviceAccountEmail)
-            .setPrivateKey(privateKey)
-            .setPrivateKeyId(privateKeyId)
-            .setScopes(scopes)
-            .setHttpTransportFactory(getHttpTransportFactory())
-            .build();
+
+    // Since the user specified scopes, we can't use JWT tokens
+    return ServiceAccountCredentials.newBuilder()
+        .setClientEmail(serviceAccountEmail)
+        .setPrivateKey(privateKey)
+        .setScopes(scopes)
+        .setHttpTransportFactory(getHttpTransportFactory())
+        .build();
   }
 
   /**
@@ -215,8 +221,14 @@ public class CredentialFactory {
    * @throws java.io.IOException if any.
    */
   public static Credentials getApplicationDefaultCredential() throws IOException {
-    return GoogleCredentials.getApplicationDefault(getHttpTransportFactory())
-        .createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
+    GoogleCredentials credentials = GoogleCredentials
+        .getApplicationDefault(getHttpTransportFactory());
+
+    if (credentials instanceof ServiceAccountCredentials) {
+      return getJwtToken((ServiceAccountCredentials)credentials);
+    }
+
+    return credentials.createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
   }
 
   /**
@@ -227,7 +239,20 @@ public class CredentialFactory {
    * @throws java.io.IOException if any.
    */
   public static Credentials getInputStreamCredential(InputStream inputStream) throws IOException {
-    return GoogleCredentials.fromStream(inputStream, getHttpTransportFactory())
-        .createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
+    GoogleCredentials credentials = GoogleCredentials.fromStream(inputStream, getHttpTransportFactory());
+
+    if (credentials instanceof ServiceAccountCredentials) {
+      return getJwtToken((ServiceAccountCredentials)credentials);
+    }
+    return credentials.createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
+  }
+
+  private static Credentials getJwtToken(ServiceAccountCredentials serviceAccount) {
+    return ServiceAccountJwtAccessCredentials.newBuilder()
+        .setClientEmail(serviceAccount.getClientEmail())
+        .setClientId(serviceAccount.getClientId())
+        .setPrivateKey(serviceAccount.getPrivateKey())
+        .setPrivateKeyId(serviceAccount.getPrivateKeyId())
+        .build();
   }
 }
