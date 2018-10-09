@@ -44,7 +44,7 @@ public class UnsupportedMutationAdapter<T extends Mutation> extends MutationAdap
    * Adapt a single HBase Operation to a single Bigtable generated message.
    */
   @Override
-  protected Collection<com.google.bigtable.v2.Mutation> adaptMutations(T operation) {
+  protected void adaptMutations(T operation, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
     throw new UnsupportedOperationException(
       String.format("The %s operation is unsupported.", operationDescription));
 }

@@ -17,9 +17,14 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import java.util.concurrent.TimeUnit;
 
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -31,10 +36,18 @@ import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 @RunWith(JUnit4.class)
 public class TestDeleteAdapter {
+
+  private static final String PROJECT_ID = "test-project-id";
+  private static final String INSTANCE_ID = "test-instance-id";
+  private static final String TABLE_ID = "test-table-id";
+  public static final String APP_PROFILE_ID = "test-app-profile-id";
+
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
@@ -42,11 +55,28 @@ public class TestDeleteAdapter {
   protected QualifierTestHelper qualifierTestHelper = new QualifierTestHelper();
   protected DataGenerationHelper randomHelper = new DataGenerationHelper();
 
+  @Mock
+  private RequestContext requestContext;
+  @Mock
+  private InstanceName instanceName;
+
+
+  @Before
+  public void setUp() throws Exception {
+    MockitoAnnotations.initMocks(this);
+    Mockito.when(instanceName.getProject()).thenReturn(PROJECT_ID);
+    Mockito.when(instanceName.getInstance()).thenReturn(INSTANCE_ID);
+    Mockito.when(requestContext.getInstanceName()).thenReturn(instanceName);
+    Mockito.when(requestContext.getAppProfileId()).thenReturn(APP_PROFILE_ID);
+  }
   @Test
   public void testFullRowDelete() {
     byte[] rowKey = randomHelper.randomData("rk1-");
     Delete delete = new Delete(rowKey);
-    MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
+    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+    deleteAdapter.adapt(delete, mutation);
+    MutateRowRequest rowMutation = toMutateRowRequest(rowKey, mutation);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
     Assert.assertEquals(1, rowMutation.getMutationsCount());
@@ -66,7 +96,7 @@ public class TestDeleteAdapter {
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Cannot perform row deletion at timestamp");
 
-    deleteAdapter.adapt(delete);
+    deleteAdapter.adapt(delete, com.google.cloud.bigtable.data.v2.models.Mutation.create());
   }
 
   @Test
@@ -75,7 +105,10 @@ public class TestDeleteAdapter {
     byte[] family = randomHelper.randomData("family1-");
     Delete delete = new Delete(rowKey);
     delete.addFamily(family);
-    MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
+    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+    deleteAdapter.adapt(delete, mutation);
+    MutateRowRequest rowMutation = toMutateRowRequest(rowKey, mutation);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
     Assert.assertEquals(1, rowMutation.getMutationsCount());
@@ -100,7 +133,7 @@ public class TestDeleteAdapter {
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Cannot perform column family deletion before timestamp");
 
-    deleteAdapter.adapt(delete);
+    deleteAdapter.adapt(delete, com.google.cloud.bigtable.data.v2.models.Mutation.create());
   }
 
   @Test
@@ -114,7 +147,10 @@ public class TestDeleteAdapter {
 
     Delete delete = new Delete(rowKey);
     delete.addColumn(family, qualifier, hbaseTimestamp);
-    MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
+    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+    deleteAdapter.adapt(delete, mutation);
+    MutateRowRequest rowMutation = toMutateRowRequest(rowKey, mutation);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
     Assert.assertEquals(1, rowMutation.getMutationsCount());
@@ -148,7 +184,7 @@ public class TestDeleteAdapter {
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Cannot delete single latest cell");
 
-    deleteAdapter.adapt(delete);
+    deleteAdapter.adapt(delete, com.google.cloud.bigtable.data.v2.models.Mutation.create());
   }
 
   @Test
@@ -161,7 +197,10 @@ public class TestDeleteAdapter {
 
     Delete delete = new Delete(rowKey);
     delete.addColumns(family, qualifier, hbaseTimestamp);
-    MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
+    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+    deleteAdapter.adapt(delete, mutation);
+    MutateRowRequest rowMutation = toMutateRowRequest(rowKey, mutation);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
     Assert.assertEquals(1, rowMutation.getMutationsCount());
@@ -193,7 +232,7 @@ public class TestDeleteAdapter {
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Cannot perform column family deletion at timestamp");
 
-    deleteAdapter.adapt(delete);
+    deleteAdapter.adapt(delete, com.google.cloud.bigtable.data.v2.models.Mutation.create());
   }
 
   /**
@@ -203,10 +242,26 @@ public class TestDeleteAdapter {
    */
   private void testTwoWayAdapt(Delete delete, DeleteAdapter adapter) {
     // delete -> mutation
-    MutateRowRequest firstAdapt = adapter.adapt(delete).build();
+    com.google.cloud.bigtable.data.v2.models.Mutation firstMutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+    adapter.adapt(delete, firstMutation);
+    MutateRowRequest firstAdapt = toMutateRowRequest(delete.getRow(), firstMutation);
     // mutation -> delete -> mutation;
-    MutateRowRequest secondAdapt = adapter.adapt(adapter.adapt(firstAdapt)).build();
+    com.google.cloud.bigtable.data.v2.models.Mutation secondMutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+    adapter.adapt(adapter.adapt(firstAdapt), secondMutation);
+    MutateRowRequest secondAdapt = toMutateRowRequest(delete.getRow(), secondMutation);
     // The round trips
     Assert.assertEquals(firstAdapt, secondAdapt);
+  }
+
+  private MutateRowRequest toMutateRowRequest(byte[] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
+    RowMutation rowMutation = toRowMutationModel(rowKey, mutation);
+    MutateRowRequest.Builder builder = rowMutation.toProto(requestContext).toBuilder();
+    return builder.build();
+  }
+
+  private RowMutation toRowMutationModel(byte [] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
+    return RowMutation.create(TABLE_ID, ByteString.copyFrom(rowKey), mutation);
   }
 }

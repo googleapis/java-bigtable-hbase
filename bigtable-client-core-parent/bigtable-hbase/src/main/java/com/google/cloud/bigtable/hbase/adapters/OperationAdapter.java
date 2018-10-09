@@ -27,13 +27,14 @@ import org.apache.hadoop.hbase.client.Row;
  * @author sduskis
  * @version $Id: $Id
  */
-public interface OperationAdapter<T extends Row, U extends MessageLite.Builder> {
+public interface OperationAdapter<T extends Row, U> {
 
   /**
    * Adapt a single HBase Operation to a single Bigtable generated message.
    *
    * @param operation The HBase operation to convert.
-   * @return An equivalent Bigtable
+   * @param U Type of converted operation.
+   * @return void
    */
-  public U adapt(T operation);
+  public void adapt(T operation, U u);
 }

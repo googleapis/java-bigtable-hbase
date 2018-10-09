@@ -38,7 +38,9 @@ public class TestAppendAdapter {
   public void testBasicRowKeyAppend() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Append append = new Append(rowKey);
-    ReadModifyWriteRowRequest request = appendAdapter.adapt(append).build();
+    ReadModifyWriteRowRequest.Builder requestBuilder = ReadModifyWriteRowRequest.newBuilder();
+    appendAdapter.adapt(append, requestBuilder);
+    ReadModifyWriteRowRequest request = requestBuilder.build();
     ByteString adaptedRowKey = request.getRowKey();
     Assert.assertArrayEquals(rowKey, adaptedRowKey.toByteArray());
   }
@@ -59,7 +61,9 @@ public class TestAppendAdapter {
     append.add(family1, qualifier1, value1);
     append.add(family2, qualifier2, value2);
 
-    ReadModifyWriteRowRequest request = appendAdapter.adapt(append).build();
+    ReadModifyWriteRowRequest.Builder requestBuilder = ReadModifyWriteRowRequest.newBuilder();
+    appendAdapter.adapt(append, requestBuilder);
+    ReadModifyWriteRowRequest request = requestBuilder.build();
     List<ReadModifyWriteRule> rules = request.getRulesList();
     Assert.assertEquals(2, rules.size());
 
@@ -91,7 +95,9 @@ public class TestAppendAdapter {
     append.add(family2, qualifier2, value2);
     append.add(family2, qualifier2, value3);
 
-    ReadModifyWriteRowRequest request = appendAdapter.adapt(append).build();
+    ReadModifyWriteRowRequest.Builder requestBuilder = ReadModifyWriteRowRequest.newBuilder();
+    appendAdapter.adapt(append, requestBuilder);
+    ReadModifyWriteRowRequest request = requestBuilder.build();
     List<ReadModifyWriteRule> rules = request.getRulesList();
     Assert.assertEquals(2, rules.size());
 
@@ -120,7 +126,9 @@ public class TestAppendAdapter {
     append.add(family1, qualifier1, value1);
     append.add(family2, qualifier1, value2);
 
-    ReadModifyWriteRowRequest request = appendAdapter.adapt(append).build();
+    ReadModifyWriteRowRequest.Builder requestBuilder = ReadModifyWriteRowRequest.newBuilder();
+    appendAdapter.adapt(append, requestBuilder);
+    ReadModifyWriteRowRequest request = requestBuilder.build();
     List<ReadModifyWriteRule> rules = request.getRulesList();
     Assert.assertEquals(2, rules.size());
 

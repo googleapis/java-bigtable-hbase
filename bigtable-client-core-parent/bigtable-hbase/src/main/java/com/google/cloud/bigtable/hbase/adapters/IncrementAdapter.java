@@ -40,13 +40,11 @@ public class IncrementAdapter
 
   /** {@inheritDoc} */
   @Override
-  public ReadModifyWriteRowRequest.Builder adapt(Increment operation) {
+  public void adapt(Increment operation, ReadModifyWriteRowRequest.Builder result) {
     if (!operation.getTimeRange().isAllTime()) {
       throw new UnsupportedOperationException(
           "Setting the time range in an Increment is not implemented");
     }
-
-    ReadModifyWriteRowRequest.Builder result = ReadModifyWriteRowRequest.newBuilder();
 
     result.setRowKey(ByteString.copyFrom(operation.getRow()));
 
@@ -71,6 +69,5 @@ public class IncrementAdapter
         result.addRules(rule.build());
       }
     }
-    return result;
   }
 }

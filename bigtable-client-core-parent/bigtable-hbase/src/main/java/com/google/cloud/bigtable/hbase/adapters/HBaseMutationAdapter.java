@@ -75,13 +75,13 @@ public class HBaseMutationAdapter extends MutationAdapter<Mutation> {
 
   @Override
   /** {@inheritDoc} */
-  protected Collection<com.google.bigtable.v2.Mutation> adaptMutations(Mutation mutation) {
+  protected void adaptMutations(Mutation mutation, com.google.cloud.bigtable.data.v2.models.Mutation mutationModel) {
     MutationAdapter<Mutation> adapter = adapterMap.get(mutation.getClass());
     if (adapter == null) {
       throw new UnsupportedOperationException(
           String.format(
               "Cannot adapt mutation of type %s.", mutation.getClass().getCanonicalName()));
     }
-    return adapter.adaptMutations(mutation);
+    adapter.adaptMutations(mutation, mutationModel);
   }
 }
