@@ -30,18 +30,28 @@ import com.google.common.base.Preconditions;
 public class BigtableTableName {
   // Use a very loose pattern so we don't validate more strictly than the server.
   private static final Pattern PATTERN =
-      Pattern.compile("projects/[^/]+/instances/([^/]+)/tables/([^/]+)");
+      Pattern.compile("projects/([^/]+)/instances/([^/]+)/tables/([^/]+)");
 
   private final String tableName;
   private final String instanceId;
   private final String tableId;
+  private final String projectId;
 
   public BigtableTableName(String tableName) {
     this.tableName = tableName;
     Matcher matcher = PATTERN.matcher(tableName);
     Preconditions.checkArgument(matcher.matches(), "Malformed table name");
-    this.instanceId = matcher.group(1);
-    this.tableId = matcher.group(2);
+    this.projectId = matcher.group(1);
+    this.instanceId = matcher.group(2);
+    this.tableId = matcher.group(3);
+  }
+
+  /**
+   * @return The id of the project that contains this table. It's the first group in the table name
+   *         name: "projects/{projectId}/instances/{instanceId}/tables/{tableId}".
+   */
+  public String getProjectId() {
+    return projectId;
   }
 
   /**

@@ -46,7 +46,7 @@ public class RowMutationsAdapter extends MutationAdapter<RowMutations>{
   @Override
   protected void adaptMutations(
       RowMutations operation,
-      com.google.cloud.bigtable.data.v2.models.Mutation mutationModel
+      com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutationModel
   ) {
     for (Mutation mutation : operation.getMutations()) {
       mutationAdapter.adaptMutations(mutation, mutationModel);

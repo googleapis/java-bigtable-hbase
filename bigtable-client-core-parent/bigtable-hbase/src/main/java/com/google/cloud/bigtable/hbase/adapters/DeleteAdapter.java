@@ -95,7 +95,7 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
   static void addDeleteFromColumnMods(
       ByteString familyByteString,
       Cell cell,
-      com.google.cloud.bigtable.data.v2.models.Mutation mutation
+      com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation
   ) {
 
     ByteString cellQualifierByteString = ByteString.copyFrom(
@@ -125,7 +125,7 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
 
   @Override
   /** {@inheritDoc} */
-  protected void adaptMutations(Delete operation, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
+  protected void adaptMutations(Delete operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     if (operation.getFamilyCellMap().isEmpty()) {
       throwIfUnsupportedDeleteRow(operation);
 

@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
+import com.google.cloud.bigtable.data.v2.models.MutationApi;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
@@ -48,11 +49,6 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
  */
 public class HBaseRequestAdapter {
 
-  private final static RequestContext REQUEST_CONTEXT = RequestContext.create(
-      InstanceName.of("", ""),
-      ""
-  );
-
   public static class MutationAdapters {
     protected final PutAdapter putAdapter;
     protected final HBaseMutationAdapter hbaseMutationAdapter;
@@ -77,6 +73,7 @@ public class HBaseRequestAdapter {
   protected final MutationAdapters mutationAdapters;
   protected final TableName tableName;
   protected final BigtableTableName bigtableTableName;
+  protected final RequestContext requestContext;
 
   /**
    * <p>Constructor for HBaseRequestAdapter.</p>
@@ -119,6 +116,10 @@ public class HBaseRequestAdapter {
     this.tableName = tableName;
     this.bigtableTableName = bigtableTableName;
     this.mutationAdapters = mutationAdapters;
+    this.requestContext = RequestContext.create(
+        InstanceName.of(bigtableTableName.getProjectId(), bigtableTableName.getInstanceId()),
+        ""
+    );
   }
 
   public HBaseRequestAdapter withServerSideTimestamps(){
@@ -132,9 +133,20 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
    */
   public MutateRowRequest adapt(Delete delete) {
-    Mutation mutation = Mutation.create();
-    Adapters.DELETE_ADAPTER.adapt(delete, mutation);
-    return toMutateRowRequest(delete.getRow(), mutation);
+    RowMutation rowMutation = rowMutationModel(delete.getRow());
+    adapt(delete, rowMutation);
+    return rowMutation.toProto(requestContext);
+  }
+
+  /**
+   * <p>adapt.</p>
+   *
+   * @param delete a {@link org.apache.hadoop.hbase.client.Delete} object.
+   * @param mutationApi a {@link com.google.cloud.bigtable.data.v2.models.MutationApi<?>} object.
+   * @return void
+   */
+  public void adapt(Delete delete, MutationApi<?> mutationApi) {
+    Adapters.DELETE_ADAPTER.adapt(delete, mutationApi);
   }
 
   /**
@@ -144,9 +156,9 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} object.
    */
   public MutateRowsRequest.Entry adaptEntry(Delete delete) {
-    Mutation mutation = Mutation.create();
-    Adapters.DELETE_ADAPTER.toEntry(delete, mutation);
-    return toEntry(delete.getRow(), mutation);
+    RowMutation rowMutation = rowMutationModel(delete.getRow());
+    adapt(delete, rowMutation);
+    return toEntry(rowMutation);
   }
 
   /**
@@ -208,12 +220,21 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
    */
   public MutateRowRequest adapt(Put put) {
-    Mutation mutation = Mutation.create();
-    mutationAdapters.putAdapter.adapt(put, mutation);
-    return toMutateRowRequest(put.getRow(), mutation);
+    RowMutation rowMutation = rowMutationModel(put.getRow());
+    adapt(put, rowMutation);
+    return rowMutation.toProto(requestContext);
   }
 
-
+  /**
+   * <p>adapt.</p>
+   *
+   * @param put a {@link org.apache.hadoop.hbase.client.Put} object.
+   * @param mutationApi a {@link com.google.cloud.bigtable.data.v2.models.MutationApi<?>} object.
+   * @return void
+   */
+  public void adapt(Put put, MutationApi<?> mutationApi) {
+    mutationAdapters.putAdapter.adapt(put, mutationApi);
+  }
   /**
    * <p>adaptEntry.</p>
    *
@@ -221,9 +242,9 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} object.
    */
   public MutateRowsRequest.Entry adaptEntry(Put put) {
-    Mutation mutation = Mutation.create();
-    mutationAdapters.putAdapter.toEntry(put, mutation);
-    return toEntry(put.getRow(), mutation);
+    RowMutation rowMutation = rowMutationModel(put.getRow());
+    adapt(put, rowMutation);
+    return toEntry(rowMutation);
   }
 
   /**
@@ -233,9 +254,20 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
    */
   public MutateRowRequest adapt(RowMutations mutations) {
-    Mutation mutation = Mutation.create();
-    mutationAdapters.rowMutationsAdapter.adapt(mutations, mutation);
-    return toMutateRowRequest(mutations.getRow(), mutation);
+    RowMutation rowMutation = rowMutationModel(mutations.getRow());
+    adapt(mutations, rowMutation);
+    return rowMutation.toProto(requestContext);
+  }
+
+  /**
+   * <p>adapt.</p>
+   *
+   * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
+   * @param mutationApi a {@link com.google.cloud.bigtable.data.v2.models.MutationApi<?>} object.
+   * @return void
+   */
+  public void adapt(RowMutations mutations, MutationApi<?> mutationApi) {
+    mutationAdapters.rowMutationsAdapter.adapt(mutations, mutationApi);
   }
 
   /**
@@ -245,9 +277,9 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} object.
    */
   public MutateRowsRequest.Entry adaptEntry(RowMutations mutations) {
-    Mutation mutation = Mutation.create();
-    mutationAdapters.rowMutationsAdapter.toEntry(mutations, mutation);
-    return toEntry(mutations.getRow(), mutation);
+    RowMutation rowMutation = rowMutationModel(mutations.getRow());
+    adapt(mutations, rowMutation);
+    return toEntry(rowMutation);
   }
 
   /**
@@ -257,9 +289,20 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
    */
   public MutateRowRequest adapt(org.apache.hadoop.hbase.client.Mutation mutation) {
-    Mutation mutationModel = Mutation.create();
-    mutationAdapters.hbaseMutationAdapter.adapt(mutation, mutationModel);
-    return toMutateRowRequest(mutation.getRow(), mutationModel);
+    RowMutation rowMutation = rowMutationModel(mutation.getRow());
+    adapt(mutation, rowMutation);
+    return rowMutation.toProto(requestContext);
+  }
+
+  /**
+   * <p>adapt.</p>
+   *
+   * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
+   * @param mutationApi a {@link com.google.cloud.bigtable.data.v2.models.MutationApi<?>} object.
+   * @return void
+   */
+  public void adapt(org.apache.hadoop.hbase.client.Mutation mutation, MutationApi<?> mutationApi) {
+    mutationAdapters.hbaseMutationAdapter.adapt(mutation, mutationApi);
   }
 
   /**
@@ -289,20 +332,12 @@ public class HBaseRequestAdapter {
     return getBigtableTableName().toString();
   }
 
-  private MutateRowRequest toMutateRowRequest(byte[] rowKey, Mutation mutation) {
-    RowMutation rowMutation = toRowMutationModel(rowKey, mutation);
-    MutateRowRequest.Builder builder = rowMutation.toProto(REQUEST_CONTEXT).toBuilder();
-    builder.setTableName(getTableNameString());
-    return builder.build();
+  private MutateRowsRequest.Entry toEntry(RowMutation rowMutation) {
+    return rowMutation.toBulkProto(requestContext).getEntries(0);
   }
 
-  private MutateRowsRequest.Entry toEntry(byte[] rowKey, Mutation mutation) {
-    RowMutation rowMutation = toRowMutationModel(rowKey, mutation);
-    return rowMutation.toBulkProto(REQUEST_CONTEXT).getEntries(0);
-  }
-
-  private RowMutation toRowMutationModel(byte [] rowKey, Mutation mutation) {
-    return RowMutation.create("", ByteString.copyFrom(rowKey), mutation);
+  private RowMutation rowMutationModel(byte [] rowKey) {
+    return RowMutation.create(bigtableTableName.getTableId(), ByteString.copyFrom(rowKey));
   }
 
 }

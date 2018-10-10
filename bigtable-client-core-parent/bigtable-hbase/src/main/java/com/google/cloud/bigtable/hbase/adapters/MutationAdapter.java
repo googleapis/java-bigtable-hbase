@@ -33,7 +33,7 @@ import com.google.protobuf.ByteString;
  * @version $Id: $Id
  */
 public abstract class MutationAdapter<T extends Row>
-    implements OperationAdapter<T, com.google.cloud.bigtable.data.v2.models.Mutation> {
+    implements OperationAdapter<T, com.google.cloud.bigtable.data.v2.models.MutationApi<?>> {
 
   protected static byte[] getBytes(ByteString bs) {
     return ByteStringer.extract(bs);
@@ -41,11 +41,11 @@ public abstract class MutationAdapter<T extends Row>
 
   /** {@inheritDoc} */
   @Override
-  public final void adapt(T operation, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
+  public final void adapt(T operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     adaptMutations(operation, mutation);
   }
 
-  public final void toEntry(T operation, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
+  public final void toEntry(T operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     adaptMutations(operation, mutation);
   }
 
@@ -58,11 +58,11 @@ public abstract class MutationAdapter<T extends Row>
    * com.google.bigtable.v2.MutateRowsRequest.Entry} is akin to an HBase {@link Mutation}.
    *
    * @param operation The HBase {@link Mutation} to convert
-   * @param Mutation The model {@link com.google.cloud.bigtable.data.v2.models.Mutation}
+   * @param mutation The model {@link com.google.cloud.bigtable.data.v2.models.MutationApi<?>}
    * @return void
    */
   protected abstract void adaptMutations(
       T operation,
-      com.google.cloud.bigtable.data.v2.models.Mutation mutation
+      com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation
   );
 }
