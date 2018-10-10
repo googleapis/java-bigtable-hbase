@@ -31,14 +31,12 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 
 /**
  * Adapt an HBase {@link Put} Operation into a Google Cloud Java
- * {@link com.google.cloud.bigtable.data.v2.models.Mutation}.
+ * {@link com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
  * @author sduskis
  * @version $Id: $Id

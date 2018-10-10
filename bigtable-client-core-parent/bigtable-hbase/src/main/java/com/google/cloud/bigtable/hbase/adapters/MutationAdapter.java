@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import java.util.Collection;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Row;

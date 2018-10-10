@@ -46,25 +46,14 @@ public class TestPutAdapter {
   private static final String PROJECT_ID = "test-project-id";
   private static final String INSTANCE_ID = "test-instance-id";
   private static final String TABLE_ID = "test-table-id";
-  public static final String APP_PROFILE_ID = "test-app-profile-id";
+  private static final String APP_PROFILE_ID = "test-app-profile-id";
+  private static final RequestContext REQUEST_CONTEXT = RequestContext.create(
+      InstanceName.of(PROJECT_ID, INSTANCE_ID),
+      APP_PROFILE_ID
+  );
 
   protected final PutAdapter adapter = new PutAdapter(-1);
   protected final DataGenerationHelper dataHelper = new DataGenerationHelper();
-
-  @Mock
-  private RequestContext requestContext;
-  @Mock
-  private InstanceName instanceName;
-
-
-  @Before
-  public void setUp() throws Exception {
-    MockitoAnnotations.initMocks(this);
-    Mockito.when(instanceName.getProject()).thenReturn(PROJECT_ID);
-    Mockito.when(instanceName.getInstance()).thenReturn(INSTANCE_ID);
-    Mockito.when(requestContext.getInstanceName()).thenReturn(instanceName);
-    Mockito.when(requestContext.getAppProfileId()).thenReturn(APP_PROFILE_ID);
-  }
 
   @Test
   public void testSingleCellIsConverted() throws IOException {
@@ -292,7 +281,7 @@ public class TestPutAdapter {
 
   private MutateRowRequest toMutateRowRequest(byte[] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
     RowMutation rowMutation = toRowMutationModel(rowKey, mutation);
-    MutateRowRequest.Builder builder = rowMutation.toProto(requestContext).toBuilder();
+    MutateRowRequest.Builder builder = rowMutation.toProto(REQUEST_CONTEXT).toBuilder();
     return builder.build();
   }
 

@@ -17,13 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 
 import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.Mutation;
-import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.protobuf.ByteString;
 
 //import org.apache.hadoop.hbase.client.Mutation;
@@ -40,8 +37,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
@@ -52,14 +47,14 @@ public class TestRowMutationsAdapter {
   private static final String PROJECT_ID = "test-project-id";
   private static final String INSTANCE_ID = "test-instance-id";
   private static final String TABLE_ID = "test-table-id";
-  public static final String APP_PROFILE_ID = "test-app-profile-id";
+  private static final String APP_PROFILE_ID = "test-app-profile-id";
+  private static final RequestContext REQUEST_CONTEXT = RequestContext.create(
+      InstanceName.of(PROJECT_ID, INSTANCE_ID),
+      APP_PROFILE_ID
+  );
 
   @Mock
   private MutationAdapter<org.apache.hadoop.hbase.client.Mutation> mutationAdapter;
-  @Mock
-  private RequestContext requestContext;
-  @Mock
-  private InstanceName instanceName;
 
   private RowMutationsAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -68,10 +63,6 @@ public class TestRowMutationsAdapter {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     adapter = new RowMutationsAdapter(mutationAdapter);
-    Mockito.when(instanceName.getProject()).thenReturn(PROJECT_ID);
-    Mockito.when(instanceName.getInstance()).thenReturn(INSTANCE_ID);
-    Mockito.when(requestContext.getInstanceName()).thenReturn(instanceName);
-    Mockito.when(requestContext.getAppProfileId()).thenReturn(APP_PROFILE_ID);
   }
 
   @Test
@@ -119,7 +110,7 @@ public class TestRowMutationsAdapter {
 
   private MutateRowRequest toMutateRowRequest(byte[] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
     RowMutation rowMutation = toRowMutationModel(rowKey, mutation);
-    MutateRowRequest.Builder builder = rowMutation.toProto(requestContext).toBuilder();
+    MutateRowRequest.Builder builder = rowMutation.toProto(REQUEST_CONTEXT).toBuilder();
     return builder.build();
   }
 

@@ -51,10 +51,6 @@ public class TestHBaseMutationAdapter {
   private MutationAdapter<Increment> incrementAdapter;
   @Mock
   private MutationAdapter<Append> appendAdapter;
-  @Mock
-  private RequestContext requestContext;
-  @Mock
-  private InstanceName instanceName;
 
   private HBaseMutationAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
