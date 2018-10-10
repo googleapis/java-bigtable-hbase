@@ -15,6 +15,7 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import java.io.Closeable;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -23,7 +24,7 @@ import org.apache.hadoop.hbase.TableName;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 
-public interface CommonConnection {
+public interface CommonConnection extends Closeable {
 
   /**
    * <p>Getter for the field <code>session</code>.</p>
@@ -52,12 +53,4 @@ public interface CommonConnection {
    * @return a {@link java.util.Set} object.
    */
   Set<TableName> getDisabledTables();
-
-  /**
-   * <p>Getter for the field Connection.</p>
-   *
-   * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
-   */
-  Connection getConnection();
-
 }

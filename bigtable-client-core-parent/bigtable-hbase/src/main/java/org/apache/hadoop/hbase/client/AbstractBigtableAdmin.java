@@ -32,6 +32,7 @@ import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
@@ -98,7 +99,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final Set<TableName> disabledTables;
 
   private final Configuration configuration;
-  private final BigtableOptions options;
+  protected final BigtableOptions options;
   protected final CommonConnection connection;
   protected final BigtableTableAdminClient bigtableTableAdminClient;
 
@@ -132,7 +133,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public Connection getConnection() {
-    return connection.getConnection();
+    return (Connection) connection;
   }
 
   /** {@inheritDoc} */
@@ -349,7 +350,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), tableAdapter.adapt(desc, splitKeys));
+    createTable(desc.getTableName(), TableAdapter.adapt(desc, splitKeys));
   }
 
   protected void createTable(TableName tableName, CreateTableRequest.Builder builder) throws IOException {
@@ -365,7 +366,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTableAsync(final HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     LOG.warn("Creating the table synchronously");
-    CreateTableRequest.Builder builder = tableAdapter.adapt(desc, splitKeys);
+    CreateTableRequest.Builder builder = TableAdapter.adapt(desc, splitKeys);
     createTableAsync(builder, desc.getTableName());
   }
 
@@ -700,10 +701,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
-    List<HRegionInfo> regionInfos = new ArrayList<>();
-    for (HRegionLocation location : getConnection().getRegionLocator(tableName).getAllRegionLocations()) {
+    List<HRegionInfo> regionInfos = Collections.emptyList();
+    BigtableRegionLocator regionLocator = new BigtableRegionLocator(tableName, options, connection.getSession().getDataClient());
+    for (HRegionLocation location : regionLocator.getAllRegionLocations()) {
       regionInfos.add(location.getRegionInfo());
     }
+    regionLocator.close();
     return regionInfos;
   }
 

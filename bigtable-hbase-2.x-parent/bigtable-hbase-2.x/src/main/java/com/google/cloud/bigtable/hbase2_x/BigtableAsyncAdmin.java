@@ -259,15 +259,29 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Boolean> isTableDisabled(TableName tableName) {
-    // TODO: this might require a tableExists() check, and throw an exception if it doesn't.
-    return CompletableFuture.completedFuture(disabledTables.contains(tableName));
+    return tableExists(tableName).thenApply(exists -> {
+      if (!exists) {
+        throw new CompletionException(new TableNotFoundException(tableName));
+      } else if (disabledTables.contains(tableName)) {
+        throw new CompletionException(new TableNotEnabledException(tableName));
+      } else {
+       return disabledTables.contains(tableName);
+      }
+    });
   }
 
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Boolean> isTableEnabled(TableName tableName) {
-    // TODO: this might require a tableExists() check, and throw an exception if it doesn't.
-    return CompletableFuture.completedFuture(!disabledTables.contains(tableName));
+    return tableExists(tableName).thenApply(exists -> {
+      if (!exists) {
+        throw new CompletionException(new TableNotFoundException(tableName));
+      } else if (disabledTables.contains(tableName)) {
+        throw new CompletionException(new TableNotEnabledException(tableName));
+      } else {
+       return !disabledTables.contains(tableName);
+      }
+    });
   }
 
   /** {@inheritDoc} */

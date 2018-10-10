@@ -61,6 +61,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
     return new BigtableAdmin(this);
   }
 
+  @Override
   protected SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
       ServerName serverName) {
     return new SampledRowKeysAdapter(tableName, serverName) {
@@ -76,4 +77,5 @@ public class BigtableConnection extends AbstractBigtableConnection {
   public Table getTable(TableName tableName, ExecutorService ignored) throws IOException {
     return new AbstractBigtableTable(this, createAdapter(tableName)){};
   }
+
 }

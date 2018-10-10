@@ -324,10 +324,4 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable, Comm
       }
     };
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public Connection getConnection() {
-    throw new UnsupportedOperationException("getConnection");
-  }
 }
