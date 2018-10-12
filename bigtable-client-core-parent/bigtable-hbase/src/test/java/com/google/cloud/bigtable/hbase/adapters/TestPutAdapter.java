@@ -88,18 +88,28 @@ public class TestPutAdapter {
   }
 
   private void testTwoWay(Put put, PutAdapter adapter) throws IOException {
+    testTwoWay(put, adapter, false);
+  }
+
+  private void testTwoWay(Put put, PutAdapter adapter, boolean useUnsafe) throws IOException {
     com.google.cloud.bigtable.data.v2.models.Mutation firstMutationModel =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+        newMutationBuilder(useUnsafe);
     adapter.adapt(put, firstMutationModel);
     MutateRowRequest firstAdapt = toMutateRowRequest(put.getRow(), firstMutationModel);
     // mutation -> put -> mutation;
     com.google.cloud.bigtable.data.v2.models.Mutation secondMutationModel =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+        newMutationBuilder(useUnsafe);
     adapter.adapt(adapter.adapt(firstAdapt), secondMutationModel);
     MutateRowRequest secondAdapt = toMutateRowRequest(put.getRow(), secondMutationModel);
     Assert.assertEquals(firstAdapt, secondAdapt);
   }
 
+  private com.google.cloud.bigtable.data.v2.models.Mutation newMutationBuilder(boolean unsafe) {
+    if(unsafe) {
+      return com.google.cloud.bigtable.data.v2.models.Mutation.createUnsafe();
+    }
+    return com.google.cloud.bigtable.data.v2.models.Mutation.create();
+  }
   @Test
   public void testMultipleCellsInOneFamilyAreConverted() throws IOException {
     byte[] row = dataHelper.randomData("rk-");
@@ -234,7 +244,7 @@ public class TestPutAdapter {
     Put hbasePut = new Put(row).addColumn(family1, qualifier1, value1);
 
     com.google.cloud.bigtable.data.v2.models.Mutation mutationModel =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+        com.google.cloud.bigtable.data.v2.models.Mutation.createUnsafe();
     adapter.adapt(hbasePut, mutationModel);
     MutateRowRequest rowMutationBuilder = toMutateRowRequest(row, mutationModel);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
@@ -250,7 +260,7 @@ public class TestPutAdapter {
     Assert.assertEquals(-1, setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
 
-    testTwoWay(hbasePut, adapter);
+    testTwoWay(hbasePut, adapter, true);
   }
 
   @Test(expected = IllegalArgumentException.class)

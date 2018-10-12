@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.MutationApi;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.common.annotations.VisibleForTesting;
@@ -70,6 +71,8 @@ public class HBaseRequestAdapter {
     }
   }
 
+  private final boolean allowServersideTimestamp;
+
   protected final MutationAdapters mutationAdapters;
   protected final TableName tableName;
   protected final BigtableTableName bigtableTableName;
@@ -113,6 +116,12 @@ public class HBaseRequestAdapter {
   HBaseRequestAdapter(TableName tableName,
                               BigtableTableName bigtableTableName,
                               MutationAdapters mutationAdapters) {
+    this(tableName, bigtableTableName, mutationAdapters, false);
+  }
+
+  private HBaseRequestAdapter(TableName tableName,
+      BigtableTableName bigtableTableName,
+      MutationAdapters mutationAdapters, boolean allowServersideTimestamp) {
     this.tableName = tableName;
     this.bigtableTableName = bigtableTableName;
     this.mutationAdapters = mutationAdapters;
@@ -120,10 +129,11 @@ public class HBaseRequestAdapter {
         InstanceName.of(bigtableTableName.getProjectId(), bigtableTableName.getInstanceId()),
         ""
     );
+    this.allowServersideTimestamp = allowServersideTimestamp;
   }
 
   public HBaseRequestAdapter withServerSideTimestamps(){
-    return new HBaseRequestAdapter(tableName, bigtableTableName, mutationAdapters.withServerSideTimestamps());
+    return new HBaseRequestAdapter(tableName, bigtableTableName, mutationAdapters.withServerSideTimestamps(), true);
   }
 
   /**
@@ -341,6 +351,12 @@ public class HBaseRequestAdapter {
   }
 
   private RowMutation newRowMutationModel(byte [] rowKey) {
+    if (allowServersideTimestamp) {
+      return RowMutation.create(
+          bigtableTableName.getTableId(),
+          ByteString.copyFrom(rowKey),
+          Mutation.createUnsafe());
+    }
     return RowMutation.create(bigtableTableName.getTableId(), ByteString.copyFrom(rowKey));
   }
 
