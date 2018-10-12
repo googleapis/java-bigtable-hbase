@@ -16,9 +16,12 @@
 package org.apache.hadoop.hbase.client;
 
 import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.TableName;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -53,4 +56,12 @@ public interface CommonConnection extends Closeable {
    * @return a {@link java.util.Set} object.
    */
   Set<TableName> getDisabledTables();
+
+  /**
+   * Retrieve a region information on a table.
+   *
+   * @param tableName Name of the table who's region is to be examined
+   * @return A {@link java.util.List} HRegionInfo object
+   */
+  List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException;
 }

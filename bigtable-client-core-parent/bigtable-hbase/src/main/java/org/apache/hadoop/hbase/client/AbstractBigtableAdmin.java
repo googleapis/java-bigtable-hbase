@@ -32,7 +32,6 @@ import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
@@ -49,7 +48,6 @@ import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -701,13 +699,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
-    List<HRegionInfo> regionInfos = Collections.emptyList();
-    BigtableRegionLocator regionLocator = new BigtableRegionLocator(tableName, options, connection.getSession().getDataClient());
-    for (HRegionLocation location : regionLocator.getAllRegionLocations()) {
-      regionInfos.add(location.getRegionInfo());
-    }
-    regionLocator.close();
-    return regionInfos;
+    return connection.getAllRegionInfos(tableName);
   }
 
   /** {@inheritDoc} */

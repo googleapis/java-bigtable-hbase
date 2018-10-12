@@ -25,12 +25,12 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.security.User;
@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -222,19 +223,22 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   /** {@inheritDoc} */
   @Override
+  public List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException {
+    List<HRegionInfo> regionInfos = Collections.emptyList();
+
+    for(HRegionLocation location : getRegionLocator(tableName).getAllRegionLocations()) {
+      regionInfos.add(location.getRegionInfo());
+    }
+    return regionInfos;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public RegionLocator getRegionLocator(TableName tableName) throws IOException {
     RegionLocator locator = getCachedLocator(tableName);
 
     if (locator == null) {
-      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClient()) {
-
-        @Override
-        public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
-            ServerName serverName) {
-          return createSampledRowKeysAdapter(tableName, serverName);
-        }
-      };
-
+      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClient());
       locatorCache.add(locator);
     }
     return locator;
@@ -249,13 +253,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     return null;
   }
-
-  /**
-   * There are some hbase 1.x and 2.x incompatibilities which require this abstract method. See
-   * {@link SampledRowKeysAdapter} for more details.
-   */
-  protected abstract SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
-    ServerName serverName);
 
   /** {@inheritDoc} */
   @Override

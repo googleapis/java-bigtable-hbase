@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
-import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -30,7 +28,6 @@ import org.apache.hadoop.hbase.util.Pair;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
 /**
  * <p>BigtableRegionLocator class.</p>
@@ -85,7 +82,7 @@ public class BigtableRegionLocator extends AbstractBigtableRegionLocator impleme
       }
     }
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public List<HRegionLocation> getAllRegionLocations() throws IOException {
@@ -128,17 +125,5 @@ public class BigtableRegionLocator extends AbstractBigtableRegionLocator impleme
   /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
-  }
-
-  @Override
-  public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
-      ServerName serverName) {
-    return new SampledRowKeysAdapter(tableName, serverName) {
-      @Override
-      protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
-        HRegionInfo hRegionInfo = new HRegionInfo(tableName, startKey, endKey);
-        return new HRegionLocation(hRegionInfo, serverName);
-      }
-    };
   }
 }
