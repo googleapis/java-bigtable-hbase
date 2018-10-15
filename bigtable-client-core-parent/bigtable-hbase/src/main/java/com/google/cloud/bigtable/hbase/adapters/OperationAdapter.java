@@ -34,7 +34,8 @@ public interface OperationAdapter<T extends Row, U> {
    * Adapt a single HBase Operation to a single Bigtable generated message.
    *
    * @param operation The HBase operation to convert.
-   * @param U Type to which all input operations to be mapped to.
+   * @param u Type to which HBase operation will be mapped to. Typically it will be
+   *          Google Cloud Java Bigtable Models.
    * @return void
    */
   public void adapt(T operation, U u);
