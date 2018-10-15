@@ -51,27 +51,28 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 public class HBaseRequestAdapter {
 
   public static class MutationAdapters {
+    private final boolean allowServersideTimestamp;
+
     protected final PutAdapter putAdapter;
     protected final HBaseMutationAdapter hbaseMutationAdapter;
     protected final RowMutationsAdapter rowMutationsAdapter;
 
     public MutationAdapters(BigtableOptions options, Configuration config) {
-      this(Adapters.createPutAdapter(config, options));
+      this(Adapters.createPutAdapter(config, options), false);
     }
 
     @VisibleForTesting
-    MutationAdapters(PutAdapter putAdapter) {
+    MutationAdapters(PutAdapter putAdapter, boolean allowServersideTimestamp) {
       this.putAdapter = putAdapter;
+      this.allowServersideTimestamp = allowServersideTimestamp;
       this.hbaseMutationAdapter = Adapters.createMutationsAdapter(putAdapter);
       this.rowMutationsAdapter = new RowMutationsAdapter(hbaseMutationAdapter);
     }
 
     public MutationAdapters withServerSideTimestamps() {
-      return new MutationAdapters(putAdapter.withServerSideTimestamps());
+      return new MutationAdapters(putAdapter.withServerSideTimestamps(), true);
     }
   }
-
-  private final boolean allowServersideTimestamp;
 
   protected final MutationAdapters mutationAdapters;
   protected final TableName tableName;
@@ -101,7 +102,11 @@ public class HBaseRequestAdapter {
                              MutationAdapters mutationAdapters) {
     this(tableName,
         options.getInstanceName().toTableName(tableName.getQualifierAsString()),
-        mutationAdapters);
+        mutationAdapters,
+        RequestContext.create(
+            InstanceName.of(options.getProjectId(), options.getInstanceId()),
+            options.getAppProfileId()
+        ));
   }
 
 
@@ -115,25 +120,16 @@ public class HBaseRequestAdapter {
   @VisibleForTesting
   HBaseRequestAdapter(TableName tableName,
                               BigtableTableName bigtableTableName,
-                              MutationAdapters mutationAdapters) {
-    this(tableName, bigtableTableName, mutationAdapters, false);
-  }
-
-  private HBaseRequestAdapter(TableName tableName,
-      BigtableTableName bigtableTableName,
-      MutationAdapters mutationAdapters, boolean allowServersideTimestamp) {
+                              MutationAdapters mutationAdapters,
+                              RequestContext requestContext) {
     this.tableName = tableName;
     this.bigtableTableName = bigtableTableName;
     this.mutationAdapters = mutationAdapters;
-    this.requestContext = RequestContext.create(
-        InstanceName.of(bigtableTableName.getProjectId(), bigtableTableName.getInstanceId()),
-        ""
-    );
-    this.allowServersideTimestamp = allowServersideTimestamp;
+    this.requestContext = requestContext;
   }
 
   public HBaseRequestAdapter withServerSideTimestamps(){
-    return new HBaseRequestAdapter(tableName, bigtableTableName, mutationAdapters.withServerSideTimestamps(), true);
+    return new HBaseRequestAdapter(tableName, bigtableTableName, mutationAdapters.withServerSideTimestamps(), requestContext);
   }
 
   /**
@@ -206,6 +202,7 @@ public class HBaseRequestAdapter {
    */
   public ReadModifyWriteRowRequest adapt(Append append) {
     ReadModifyWriteRowRequest.Builder builder = ReadModifyWriteRowRequest.newBuilder();
+    //TODO: change APPEND_ADAPTER to adapt to {@link com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow} model
     Adapters.APPEND_ADAPTER.adapt(append, builder);
     builder.setTableName(getTableNameString());
     return builder.build();
@@ -219,6 +216,7 @@ public class HBaseRequestAdapter {
    */
   public ReadModifyWriteRowRequest adapt(Increment increment) {
     ReadModifyWriteRowRequest.Builder builder = ReadModifyWriteRowRequest.newBuilder();
+    //TODO: change INCREMENT_ADAPTER to adapt to {@link com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow} model
     Adapters.INCREMENT_ADAPTER.adapt(increment, builder);
     builder.setTableName(getTableNameString());
     return builder.build();
@@ -351,7 +349,7 @@ public class HBaseRequestAdapter {
   }
 
   private RowMutation newRowMutationModel(byte [] rowKey) {
-    if (allowServersideTimestamp) {
+    if (mutationAdapters.allowServersideTimestamp) {
       return RowMutation.create(
           bigtableTableName.getTableId(),
           ByteString.copyFrom(rowKey),
