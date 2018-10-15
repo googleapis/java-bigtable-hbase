@@ -32,8 +32,8 @@ public interface IBigtableDataClient {
    * Mutate a row atomically.
    *
    * @param rowMutation a {@link RowMutation} model object.
-   * @throws ExecutionException
-   * @throws InterruptedException
+   * @throws ExecutionException if any.
+   * @throws InterruptedException if any.
    */
   void mutateRow(RowMutation rowMutation) throws ExecutionException, InterruptedException;
 
@@ -41,8 +41,9 @@ public interface IBigtableDataClient {
    * Mutate a row atomically.
    *
    * @param rowMutation a {@link RowMutation} model object.
-   * @return ApiFuture</Void> returns api future.
-   * @throws InterruptedException
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
+   *     successful otherwise exception will be thrown.
+   * @throws InterruptedException if any.
    */
   ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
 
@@ -51,8 +52,8 @@ public interface IBigtableDataClient {
    *
    * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
    * @return Row a modified row.
-   * @throws ExecutionException
-   * @throws InterruptedException
+   * @throws ExecutionException if any.
+   * @throws InterruptedException if any.
    */
   Row readModifyWriteRow(ReadModifyWriteRow readModifyWriteRow)
       throws ExecutionException, InterruptedException;
@@ -61,8 +62,9 @@ public interface IBigtableDataClient {
    * Perform an atomic read-modify-write operation on a row.
    *
    * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
-   * @return ApiFuture<Row> returns future.
-   * @throws InterruptedException
+   * @return a {@link ApiFuture} of type {@link Row} will be set when request is
+   *     successful otherwise exception will be thrown.
+   * @throws InterruptedException if any.
    */
   ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) throws InterruptedException;
 
@@ -75,7 +77,8 @@ public interface IBigtableDataClient {
    * Mutate a row atomically dependent on a precondition.
    *
    * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
-   * @return ApiFuture<Boolean> returns api future.
+   * @return a {@link ApiFuture} of type {@link Boolean} will be set when request is
+   *     successful otherwise exception will be thrown.
    */
   ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
 
@@ -84,8 +87,8 @@ public interface IBigtableDataClient {
    *
    * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
    * @return Boolean returns true if predicate returns any result.
-   * @throws ExecutionException
-   * @throws InterruptedException
+   * @throws ExecutionException if any.
+   * @throws InterruptedException if any.
    */
   Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation)
       throws ExecutionException, InterruptedException;

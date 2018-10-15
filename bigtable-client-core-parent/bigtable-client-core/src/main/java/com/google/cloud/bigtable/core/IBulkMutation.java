@@ -45,8 +45,8 @@ public interface IBulkMutation {
    * mechanism.
    *
    * @param rowMutation The {@link com.google.cloud.bigtable.data.v2.models.RowMutation} to add
-   * @return a {@link com.google.common.util.concurrent.SettableFuture} will be set when request is
-   * successful otherwise exception will be thrown.
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
+   *     successful otherwise exception will be thrown.
    */
   ApiFuture<Void> add(RowMutation rowMutation);
 }
