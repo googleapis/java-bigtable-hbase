@@ -25,7 +25,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Interface to support batching multiple RowMutation request in to singe grpc request.
  */
-public interface BulkMutation {
+public interface IBulkMutation {
   long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
 
   /**
@@ -41,7 +41,7 @@ public interface BulkMutation {
   boolean isFlushed();
 
   /**
-   * Adds a {@link com.google.cloud.bigtable.data.v2.models.RowMutation} to the underlying BulkMutation
+   * Adds a {@link com.google.cloud.bigtable.data.v2.models.RowMutation} to the underlying IBulkMutation
    * mechanism.
    *
    * @param rowMutation The {@link com.google.cloud.bigtable.data.v2.models.RowMutation} to add

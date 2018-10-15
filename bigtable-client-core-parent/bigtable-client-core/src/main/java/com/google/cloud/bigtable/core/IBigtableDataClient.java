@@ -26,7 +26,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * Interface to access Bigtable data service api.
  */
-public interface ClientWrapper {
+public interface IBigtableDataClient {
 
   /**
    * Mutate a row atomically.
@@ -69,7 +69,7 @@ public interface ClientWrapper {
   /**
    * Creates BulMutation batcher.
    */
-  BulkMutation createBulkMutationBatcher();
+  IBulkMutation createBulkMutationBatcher();
 
   /**
    * Mutate a row atomically dependent on a precondition.
