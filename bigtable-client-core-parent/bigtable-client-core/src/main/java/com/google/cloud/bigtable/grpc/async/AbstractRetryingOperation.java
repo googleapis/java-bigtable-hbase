@@ -223,7 +223,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     // Unauthenticated is special because the request never made it to
     // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
-      LOG.info("Could not complete RPC. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+      LOG.error("Could not complete RPC. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
       rpc.getRpcMetrics().markFailure();
       finalizeStats(status);
@@ -237,11 +237,11 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
     // Backoffs timed out.
     if (nextBackOff == null) {
-      LOG.info("All retries were exhausted. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+      LOG.error("All retries were exhausted. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
       setException(getExhaustedRetriesException(status));
     } else {
-      LOG.info("Retrying failed call. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+      LOG.warn("Retrying failed call. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
       performRetry(nextBackOff);
     }
