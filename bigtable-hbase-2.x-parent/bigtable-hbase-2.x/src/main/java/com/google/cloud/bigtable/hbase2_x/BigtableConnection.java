@@ -19,12 +19,18 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableBuilder;
 import org.apache.hadoop.hbase.security.User;
+
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 
 /**
  * HBase 2.x specific implementation of {@link AbstractBigtableConnection}.
@@ -47,6 +53,25 @@ public class BigtableConnection extends AbstractBigtableConnection {
   public BigtableConnection(Configuration conf, ExecutorService pool, User user)
       throws IOException {
     super(conf);
+  }
+
+  /**
+   * Due to hbase 1.x to 2.x binary incompatibilities.
+   * {@link HRegionLocation#HRegionLocation(org.apache.hadoop.hbase.client.RegionInfo, ServerName)}
+   * will fail with NoSuchMethodException if not recompiled with hbase 2.0 dependencies. Hence the
+   * override. See {@link SampledRowKeysAdapter} for more details.
+   */
+  @Override
+  protected SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
+      ServerName serverName) {
+    return new SampledRowKeysAdapter(tableName, serverName) {
+      @Override
+      protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
+        RegionInfo regionInfo =
+            RegionInfoBuilder.newBuilder(tableName).setStartKey(startKey).setEndKey(endKey).build();
+        return new HRegionLocation(regionInfo, serverName);
+      }
+    };
   }
 
   /** {@inheritDoc} */

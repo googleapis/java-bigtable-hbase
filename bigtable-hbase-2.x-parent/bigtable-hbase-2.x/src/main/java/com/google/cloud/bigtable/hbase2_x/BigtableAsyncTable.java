@@ -31,7 +31,7 @@ import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
-import org.apache.hadoop.hbase.client.CommonConnection;
+import org.apache.hadoop.hbase.client.BigtableAsyncConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
+import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -78,16 +79,17 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   private static <T, R> List<R> map(List<T> list, Function<T, R> f) {
     return list.stream().map(f).collect(toList());
   }
-  private final CommonConnection commonConnection;
+
+  private final BigtableAsyncConnection asyncConnection;
   private final BigtableDataClient client;
   private final HBaseRequestAdapter hbaseAdapter;
   private final TableName tableName;
   private BatchExecutor batchExecutor;
 
-  public BigtableAsyncTable(CommonConnection commonConnection,
+  public BigtableAsyncTable(BigtableAsyncConnection asyncConnection,
       HBaseRequestAdapter hbaseAdapter) {
-    this.commonConnection = commonConnection;
-    BigtableSession session = commonConnection.getSession();
+    this.asyncConnection = asyncConnection;
+    BigtableSession session = asyncConnection.getSession();
     this.client = new BigtableDataClient(session.getDataClient());
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
@@ -95,7 +97,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   protected synchronized BatchExecutor getBatchExecutor() {
     if (batchExecutor == null) {
-      batchExecutor = new BatchExecutor(commonConnection.getSession(), hbaseAdapter);
+      batchExecutor = new BatchExecutor(asyncConnection.getSession(), hbaseAdapter);
     }
     return batchExecutor;
   }
@@ -176,7 +178,6 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     /**
      * {@inheritDoc}
      */
-    @Override
     public CheckAndMutateBuilder timeRange(TimeRange timeRange) {
       builder.timeRange(timeRange.getMin(), timeRange.getMax());
       return this;
@@ -307,7 +308,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
    */
   @Override
   public Configuration getConfiguration() {
-    return this.commonConnection.getConfiguration(); // TODO
+    return this.asyncConnection.getConfiguration(); // TODO
   }
 
   /**
@@ -433,7 +434,6 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   /**
    * {@inheritDoc}
    */
-  @Override
   public void scan(Scan scan, final ScanResultConsumer consumer) {
     if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
       throw new UnsupportedOperationException(

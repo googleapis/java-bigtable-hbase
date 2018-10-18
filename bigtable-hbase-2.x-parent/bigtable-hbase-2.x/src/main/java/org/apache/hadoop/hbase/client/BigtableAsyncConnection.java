@@ -20,29 +20,20 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HRegionLocation;
-import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
 
-import com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncAdmin;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncBufferedMutator;
@@ -54,7 +45,7 @@ import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTableRegionLocator;
  *
  * @author spollapally
  */
-public class BigtableAsyncConnection implements AsyncConnection, Closeable, CommonConnection {
+public class BigtableAsyncConnection implements AsyncConnection, Closeable {
   private final Logger LOG = new Logger(getClass());
 
   private final Configuration conf;
@@ -104,17 +95,14 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable, Comm
     return new HBaseRequestAdapter(options, tableName, mutationAdapters);
   }
 
-  @Override
   public BigtableSession getSession() {
     return this.session;
   }
 
-  @Override
   public BigtableOptions getOptions() {
     return this.options;
   }
 
-  @Override
   public Set<TableName> getDisabledTables() {
     return disabledTables;
   }
@@ -226,51 +214,51 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable, Comm
       ExecutorService es) {
     return getBufferedMutatorBuilder(tableName);
   }
-
+  
   @Override
   public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName tableName) {
     return new AsyncTableBuilder<AdvancedScanResultConsumer>() {
-
+      
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setStartLogErrorsCnt(int arg0) {
         return this;
       }
-
+      
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setScanTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setRetryPause(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setReadRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setOperationTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-
+      
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setMaxAttempts(int arg0) {
         return this;
       }
-
+      
       @Override
       public AsyncTable build() {
         return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
@@ -281,35 +269,6 @@ public class BigtableAsyncConnection implements AsyncConnection, Closeable, Comm
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
     return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getDataClient());
-  }
-
-  @Override
-  public List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException {
-    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
-    SampledRowKeysAdapter sampledRowKeysAdapter = getSampledRowKeysAdapter(tableName, serverName);
-    SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setTableName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
-
-    List<SampleRowKeysResponse> result = this.session.getDataClient().sampleRowKeys(request.build());
-
-    return sampledRowKeysAdapter.adaptResponse(result)
-        .stream()
-        .map(location -> location.getRegionInfo())
-        .collect(Collectors.toCollection(CopyOnWriteArrayList::new));
-  }
-
-
-  private SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableNameAdapter,
-      ServerName serverNameAdapter) {
-    return new SampledRowKeysAdapter(tableNameAdapter, serverNameAdapter) {
-      @Override
-      protected HRegionLocation createRegionLocation(byte[] startKey,
-          byte[] endKey) {
-        RegionInfo regionInfo = RegionInfoBuilder.newBuilder(tableNameAdapter)
-            .setStartKey(startKey).setEndKey(endKey).build();
-        return new HRegionLocation(regionInfo, serverNameAdapter);
-      }
-    };
   }
 
   @Override

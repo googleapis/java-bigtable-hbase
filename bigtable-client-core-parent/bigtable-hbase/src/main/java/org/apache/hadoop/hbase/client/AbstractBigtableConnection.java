@@ -25,12 +25,12 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.security.User;
@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -54,7 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author sduskis
  * @version $Id: $Id
  */
-public abstract class AbstractBigtableConnection implements Connection, Closeable, CommonConnection {
+public abstract class AbstractBigtableConnection implements Connection, Closeable {
   private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
   private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
       Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
@@ -223,22 +222,19 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   /** {@inheritDoc} */
   @Override
-  public List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException {
-    List<HRegionInfo> regionInfos = Collections.emptyList();
-
-    for(HRegionLocation location : getRegionLocator(tableName).getAllRegionLocations()) {
-      regionInfos.add(location.getRegionInfo());
-    }
-    return regionInfos;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public RegionLocator getRegionLocator(TableName tableName) throws IOException {
     RegionLocator locator = getCachedLocator(tableName);
 
     if (locator == null) {
-      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClient());
+      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClient()) {
+
+        @Override
+        public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
+            ServerName serverName) {
+          return createSampledRowKeysAdapter(tableName, serverName);
+        }
+      };
+
       locatorCache.add(locator);
     }
     return locator;
@@ -253,6 +249,13 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     return null;
   }
+
+  /**
+   * There are some hbase 1.x and 2.x incompatibilities which require this abstract method. See
+   * {@link SampledRowKeysAdapter} for more details.
+   */
+  protected abstract SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
+    ServerName serverName);
 
   /** {@inheritDoc} */
   @Override
@@ -346,8 +349,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
    *
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
-  @Override
-  public BigtableOptions getOptions() {
+  protected BigtableOptions getOptions() {
     return options;
   }
 
@@ -356,8 +358,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
    *
    * @return a {@link java.util.Set} object.
    */
-  @Override
-  public Set<TableName> getDisabledTables() {
+  protected Set<TableName> getDisabledTables() {
     return disabledTables;
   }
 
@@ -366,7 +367,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
    *
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
    */
-  @Override
   public BigtableSession getSession() {
     return session;
   }

@@ -21,7 +21,6 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -40,7 +39,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * <p> AbstractBigtbleRegionLocator class. </p>
- *
+ * 
  * @author rupeshit
  *
  */
@@ -58,7 +57,7 @@ public abstract class AbstractBigtableRegionLocator {
   private final SampledRowKeysAdapter adapter;
   private final BigtableTableName bigtableTableName;
   private long regionsFetchTimeMillis;
-
+  
   public AbstractBigtableRegionLocator (TableName tableName, BigtableOptions options, BigtableDataClient client) {
     this.tableName = tableName;
     this.client = client;
@@ -66,18 +65,10 @@ public abstract class AbstractBigtableRegionLocator {
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     this.adapter = getSampledRowKeysAdapter(tableName, serverName);
   }
-
-  public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
-      ServerName serverName) {
-    return new SampledRowKeysAdapter(tableName, serverName) {
-      @Override
-      protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
-        HRegionInfo hRegionInfo = new HRegionInfo(tableName, startKey, endKey);
-        return new HRegionLocation(hRegionInfo, serverName);
-      }
-    };
-  }
-
+  
+  public abstract SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
+      ServerName serverName);
+ 
   /**
    * The list of regions will be sorted and cover all the possible rows.
    */
