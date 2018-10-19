@@ -51,26 +51,24 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 public class HBaseRequestAdapter {
 
   public static class MutationAdapters {
-    private final boolean allowServersideTimestamp;
 
     protected final PutAdapter putAdapter;
     protected final HBaseMutationAdapter hbaseMutationAdapter;
     protected final RowMutationsAdapter rowMutationsAdapter;
 
     public MutationAdapters(BigtableOptions options, Configuration config) {
-      this(Adapters.createPutAdapter(config, options), false);
+      this(Adapters.createPutAdapter(config, options));
     }
 
     @VisibleForTesting
-    MutationAdapters(PutAdapter putAdapter, boolean allowServersideTimestamp) {
+    MutationAdapters(PutAdapter putAdapter) {
       this.putAdapter = putAdapter;
-      this.allowServersideTimestamp = allowServersideTimestamp;
       this.hbaseMutationAdapter = Adapters.createMutationsAdapter(putAdapter);
       this.rowMutationsAdapter = new RowMutationsAdapter(hbaseMutationAdapter);
     }
 
     public MutationAdapters withServerSideTimestamps() {
-      return new MutationAdapters(putAdapter.withServerSideTimestamps(), true);
+      return new MutationAdapters(putAdapter.withServerSideTimestamps());
     }
   }
 
@@ -349,7 +347,7 @@ public class HBaseRequestAdapter {
   }
 
   private RowMutation newRowMutationModel(byte [] rowKey) {
-    if (mutationAdapters.allowServersideTimestamp) {
+    if (!mutationAdapters.putAdapter.isSetClientTimestamp()) {
       return RowMutation.create(
           bigtableTableName.getTableId(),
           ByteString.copyFrom(rowKey),

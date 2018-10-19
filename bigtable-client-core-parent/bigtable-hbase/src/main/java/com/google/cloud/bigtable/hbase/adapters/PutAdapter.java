@@ -154,4 +154,8 @@ public class PutAdapter extends MutationAdapter<Put> {
     }
     return put;
   }
+
+  boolean isSetClientTimestamp() {
+    return setClientTimestamp;
+  }
 }

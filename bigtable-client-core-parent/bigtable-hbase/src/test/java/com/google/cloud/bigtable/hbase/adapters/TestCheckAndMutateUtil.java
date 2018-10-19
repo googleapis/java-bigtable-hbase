@@ -69,7 +69,7 @@ public class TestCheckAndMutateUtil {
   public static void setup() {
     PutAdapter putAdapter = new PutAdapter(100, true);
     HBaseRequestAdapter.MutationAdapters mutationAdapters =
-        new HBaseRequestAdapter.MutationAdapters(putAdapter, true);
+        new HBaseRequestAdapter.MutationAdapters(putAdapter);
     requestAdapter = new HBaseRequestAdapter(
         TABLE_NAME,
         BT_TABLE_NAME,
