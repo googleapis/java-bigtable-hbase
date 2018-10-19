@@ -1,7 +1,7 @@
 # [Google Cloud Bigtable HBase client for Java](https://cloud.google.com/bigtable/docs/bigtable-and-hbase)
 
 [![Travis CI status][travis-shield]][travis-link]
-[![Maven][maven-shield]][maven-hbase-client]
+[![Maven][maven-hbase-shield]][maven-hbase-client-maven-search]
 [![Stack Overflow][stackoverflow-shield]][stackoverflow-link]
 
 [Google Cloud Bigtable](https://cloud.google.com/bigtable/) is Google's NoSQL
@@ -123,13 +123,13 @@ maven repository. When you disable that profile, you have to attach workspace so
 | Name | Language | Repository | latest version | status |
 | --- | --- | --- | --- | --- |
 | Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bitgable-examples][maven-examples-repo] | | |
-| HBase client | Java | [GoogleCloudPlatform/cloud-bitgable-client][maven-hbase-client-repo] | [![Maven][maven-shield]][maven-hbase-client] | GA |
-| Cloud Bigtable Java | java | [googleapis/google-cloud-java](http://github.com/googleapis/google-cloud-java) | *shield* | Beta |
-| Cloud Bigtable Python | Python | [googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | *shield* | Beta |
+| HBase client | Java | [GoogleCloudPlatform/cloud-bitgable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
+| Cloud Bigtable Java | java | [googleapis/google-cloud-java](http://github.com/googleapis/google-cloud-java) | [![Maven][maven-google-cloud-java-shield]][maven-google-cloud-java-maven-search] | Beta |
+| Cloud Bigtable Python | Python | [googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | [![PyPI version](https://badge.fury.io/py/google-cloud-bigtable.svg)](https://badge.fury.io/py/google-cloud-bigtable) | Beta |
 | Cloud Bigtable Node.js | Node | [googleaps/nodejs-bigtable](maven-bigtable-nodejs-repo) | [![npm version][npm-shield]][npm-bigtable-client] | Beta |
-| Cloud Bigtable C# | C# | [googleapis/google-cloud-dotnet](http://github.com/googleapis/google-cloud-dotnet) | *shield* | Beta |
+| Cloud Bigtable C# | C# | [googleapis/google-cloud-dotnet](http://github.com/googleapis/google-cloud-dotnet) | [![NuGet version](https://badge.fury.io/nu/bigtable.svg)](https://badge.fury.io/nu/bigtable) | Beta |
 | Cloud Bigtable C++ | C++ | [googleapis/google-cloud-cpp](http://github.com/googleapis/google-cloud-cpp) | 0.2.0 | Beta |
-| Cloud Bigtable Ruby | Ruby | [googleapis/google-cloud-ruby](http://github.com/googleapis/google-cloud-ruby) | *shield* | Alpha |
+| Cloud Bigtable Ruby | Ruby | [googleapis/google-cloud-ruby](http://github.com/googleapis/google-cloud-ruby) | [![Gem Version](https://badge.fury.io/rb/google-cloud-bigtable.svg)](https://badge.fury.io/rb/google-cloud-bigtable) | Alpha |
 | Cloud Bigtable PHP | PHP | [googleapis/google-cloud-php](http://github.com/googleapis/google-cloud-php) |  | In progress  |
 
 ## Contributing changes
@@ -145,8 +145,10 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 
 [travis-shield]: https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client.svg
 [travis-link]: https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client/builds
-[maven-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg
-[maven-hbase-client]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
+[maven-hbase-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg
+[maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
+[maven-google-cloud-java-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud/google-cloud-bigtable/badge.svg
+[maven-google-cloud-java-maven-search]: https://search.maven.org/search?q=a:google-cloud-bigtable
 [npm-shield]: https://badge.fury.io/js/%40google-cloud%2Fbigtable.svg
 [npm-bigtable-client]: https://www.npmjs.com/package/@google-cloud/bigtable
 [stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
