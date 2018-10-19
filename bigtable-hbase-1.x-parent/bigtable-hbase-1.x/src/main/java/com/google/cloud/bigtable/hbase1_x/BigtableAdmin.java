@@ -32,7 +32,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
-import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
+import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
@@ -53,7 +53,7 @@ import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 @SuppressWarnings("deprecation")
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
-  public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
+  public BigtableAdmin(CommonConnection connection) throws IOException {
     super(connection);
   }
 
