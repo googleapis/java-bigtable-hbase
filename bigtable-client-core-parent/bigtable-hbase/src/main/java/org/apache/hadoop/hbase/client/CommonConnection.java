@@ -22,7 +22,7 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
  * Common interface for BigtableConnection & BigtableAsyncConnection
  */
 public interface CommonConnection extends Closeable {
-  
+
   /**
    * <p>
    * Getter for the field <code>session</code>.

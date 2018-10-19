@@ -125,7 +125,6 @@ public class BigtableConnection extends AbstractBigtableConnection {
     return new BigtableTable(this, createAdapter(tableName));
   }
 
-  
   /* (non-Javadoc)
    * @see org.apache.hadoop.hbase.client.CommonConnection#getAllRegionInfos(org.apache.hadoop.hbase.TableName)
    */

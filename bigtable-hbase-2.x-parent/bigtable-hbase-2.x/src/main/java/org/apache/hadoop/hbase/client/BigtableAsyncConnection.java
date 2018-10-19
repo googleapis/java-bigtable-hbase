@@ -337,13 +337,13 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
     request.setTableName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
     List<SampleRowKeysResponse> sampleRowKeyResponse = this.session.getDataClient().sampleRowKeys(request.build());
-    
+
     return getSampledRowKeysAdapter(tableName, serverName).adaptResponse(sampleRowKeyResponse)
         .stream()
         .map(location -> location.getRegionInfo())
         .collect(Collectors.toCollection(CopyOnWriteArrayList::new));
   }
-  
+
   private SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableNameAdapter,
       ServerName serverNameAdapter) {
     return new SampledRowKeysAdapter(tableNameAdapter, serverNameAdapter) {
