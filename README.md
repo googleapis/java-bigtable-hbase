@@ -124,13 +124,13 @@ maven repository. When you disable that profile, you have to attach workspace so
 | --- | --- | --- | --- | --- |
 | Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bitgable-examples][maven-examples-repo] | | |
 | HBase client | Java | [GoogleCloudPlatform/cloud-bitgable-client][maven-hbase-client-repo] | [![Maven][maven-shield]][maven-hbase-client] | GA |
-| Cloud Bigtable Java | java | (googleapis/google-cloud-java)[http://github.com/googleapis/google-cloud-java] | *shield* | Beta |
-| Cloud Bigtable Python | Python | ][googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | *shield* | Beta |
-| Cloud Bigtable Node.js | Node | [googleaps/nodejs-bigtable][maven-bigtable-nodejs-repo] | [![npm version][npm-shield]][npm-bigtable-client] | Beta |
+| Cloud Bigtable Java | java | [googleapis/google-cloud-java](http://github.com/googleapis/google-cloud-java) | *shield* | Beta |
+| Cloud Bigtable Python | Python | [googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | *shield* | Beta |
+| Cloud Bigtable Node.js | Node | [googleaps/nodejs-bigtable](maven-bigtable-nodejs-repo) | [![npm version][npm-shield]][npm-bigtable-client] | Beta |
 | Cloud Bigtable C# | C# | (googleapis/google-cloud-dotnet)[http://github.com/googleapis/google-cloud-dotnet] | *shield* | Beta |
-| Cloud Bigtable C++ | C++ | (googleapis/google-cloud-cpp)[http://github.com/googleapis/google-cloud-cpp] | 0.2.0 | Beta |
-| Cloud Bigtable Ruby | Ruby | (googleapis/google-cloud-ruby)[http://github.com/googleapis/google-cloud-ruby] | *shield* | Alpha |
-| Cloud Bigtable PHP | PHP | (googleapis/google-cloud-php)[http://github.com/googleapis/google-cloud-php] |  | In progress  |
+| Cloud Bigtable C++ | C++ | [googleapis/google-cloud-cpp](http://github.com/googleapis/google-cloud-cpp) | 0.2.0 | Beta |
+| Cloud Bigtable Ruby | Ruby | [googleapis/google-cloud-ruby](http://github.com/googleapis/google-cloud-ruby) | *shield* | Alpha |
+| Cloud Bigtable PHP | PHP | [googleapis/google-cloud-php](http://github.com/googleapis/google-cloud-php) |  | In progress  |
 
 ## Contributing changes
 
