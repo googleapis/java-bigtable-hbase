@@ -123,7 +123,8 @@ maven repository. When you disable that profile, you have to attach workspace so
 | Name | Language | Repository | latest version | status |
 | --- | --- | --- | --- | --- |
 | Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bitgable-examples][maven-examples-repo] | | |
-| HBase client | Java | [GoogleCloudPlatform/cloud-bitgable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
+| HBase client | Java | [GoogleCloudPlatform/cloud-bigtable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
+| Cloud Bigtable GoLang | Go | [googleapis/google-cloud-go](https://github.com/googleapis/google-cloud-go) | N/A | GA |
 | Cloud Bigtable Java | java | [googleapis/google-cloud-java](http://github.com/googleapis/google-cloud-java) | [![Maven][maven-google-cloud-java-shield]][maven-google-cloud-java-maven-search] | Beta |
 | Cloud Bigtable Python | Python | [googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | [![PyPI version](https://badge.fury.io/py/google-cloud-bigtable.svg)](https://badge.fury.io/py/google-cloud-bigtable) | Beta |
 | Cloud Bigtable Node.js | Node | [googleaps/nodejs-bigtable](maven-bigtable-nodejs-repo) | [![npm version][npm-shield]][npm-bigtable-client] | Beta |
