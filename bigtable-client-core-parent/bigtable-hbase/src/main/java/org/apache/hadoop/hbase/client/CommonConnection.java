@@ -19,20 +19,18 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 
 /**
- * Common interface for BigtableConnection & BigtableAsyncConnection
+ * Common interface for {@link AbstractBigtableConnection} and HBase 2's BigtableAsyncConnection.
  */
 public interface CommonConnection extends Closeable {
 
   /**
-   * <p>
-   * Getter for the field <code>session</code>.
-   * </p>
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
+   * Get a {@link BigtableSession} on which operations can be performed.
+   * @return a {@link BigtableSession} object.
    */
   BigtableSession getSession();
 
   /**
-   * Returns the {@link org.apache.hadoop.conf.Configuration} object used by this instance. The
+   * Returns the {@link Configuration} object used by this instance. The
    * reference returned is not a copy, so any change made to it will affect this instance.
    */
   Configuration getConfiguration();
@@ -49,13 +47,13 @@ public interface CommonConnection extends Closeable {
    * <p>
    * Getter for the field <code>disabledTables</code>.
    * </p>
-   * @return a {@link java.util.Set} object.
+   * @return a {@link Set} object that are disabled.
    */
   Set<TableName> getDisabledTables();
 
   /**
    * Retrieve a region information on a table.
-   * @param tableName Name of the table who's region is to be examined
+   * @param tableName Name of the table for which to return region info.
    * @return A {@link java.util.List} HRegionInfo object
    */
   List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException;
