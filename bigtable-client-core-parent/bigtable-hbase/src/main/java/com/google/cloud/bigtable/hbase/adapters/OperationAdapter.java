@@ -20,20 +20,23 @@ import com.google.protobuf.MessageLite;
 import org.apache.hadoop.hbase.client.Row;
 
 /**
- * An interface for adapters that will convert an HBase Operation into an Bigtable
+ * An interface for adapters that will convert an HBase Operation into
+ * Google Cloud Java Bigtable Models type.
  *
  * @param <T> The HBase operation type
- * @param <U> The Bigtable message type
+ * @param <U> The Google Cloud Java Bigtable Model type.
  * @author sduskis
  * @version $Id: $Id
  */
-public interface OperationAdapter<T extends Row, U extends MessageLite.Builder> {
+public interface OperationAdapter<T extends Row, U> {
 
   /**
    * Adapt a single HBase Operation to a single Bigtable generated message.
    *
    * @param operation The HBase operation to convert.
-   * @return An equivalent Bigtable
+   * @param u Type to which HBase operation will be mapped to. Typically it will be
+   *          Google Cloud Java Bigtable Models.
+   * @return void
    */
-  public U adapt(T operation);
+  public void adapt(T operation, U u);
 }

@@ -43,7 +43,8 @@ public class TestIncrementAdapter {
   public void testBasicRowKeyIncrement() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Increment incr = new Increment(rowKey);
-    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    ReadModifyWriteRowRequest.Builder requestBuilder = ReadModifyWriteRowRequest.newBuilder();
+    incrementAdapter.adapt(incr, requestBuilder);
     ByteString adaptedRowKey = requestBuilder.getRowKey();
     Assert.assertArrayEquals(rowKey, adaptedRowKey.toByteArray());
   }
@@ -58,7 +59,8 @@ public class TestIncrementAdapter {
     Increment incr = new Increment(rowKey);
     incr.addColumn(family, qualifier, amount);
 
-    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    ReadModifyWriteRowRequest.Builder requestBuilder = ReadModifyWriteRowRequest.newBuilder();
+    incrementAdapter.adapt(incr, requestBuilder);
 
     Assert.assertEquals(1, requestBuilder.getRulesCount());
     ReadModifyWriteRule rule = requestBuilder.getRules(0);
@@ -84,7 +86,8 @@ public class TestIncrementAdapter {
     incr.addColumn(family1, qualifier1, amount1);
     incr.addColumn(family2, qualifier2, amount2);
 
-    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    ReadModifyWriteRowRequest.Builder requestBuilder = ReadModifyWriteRowRequest.newBuilder();
+    incrementAdapter.adapt(incr, requestBuilder);
     Assert.assertEquals(2, requestBuilder.getRulesCount());
 
     ReadModifyWriteRule rule = requestBuilder.getRules(0);
@@ -118,7 +121,8 @@ public class TestIncrementAdapter {
     incr.addColumn(family2, qualifier2, amount2);
     incr.addColumn(family2, qualifier2, amount3);
 
-    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    ReadModifyWriteRowRequest.Builder requestBuilder = ReadModifyWriteRowRequest.newBuilder();
+    incrementAdapter.adapt(incr, requestBuilder);
     Assert.assertEquals(2, requestBuilder.getRulesCount());
 
     ReadModifyWriteRule rule = requestBuilder.getRules(0);
@@ -142,6 +146,6 @@ public class TestIncrementAdapter {
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Setting the time range in an Increment is not implemented");
 
-    incrementAdapter.adapt(incr);
+    incrementAdapter.adapt(incr, ReadModifyWriteRowRequest.newBuilder());
   }
 }

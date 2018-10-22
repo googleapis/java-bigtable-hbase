@@ -36,8 +36,7 @@ public class AppendAdapter implements OperationAdapter<Append, ReadModifyWriteRo
 
   /** {@inheritDoc} */
   @Override
-  public ReadModifyWriteRowRequest.Builder adapt(Append operation) {
-    ReadModifyWriteRowRequest.Builder result = ReadModifyWriteRowRequest.newBuilder();
+  public void adapt(Append operation, ReadModifyWriteRowRequest.Builder result) {
     result.setRowKey(ByteString.copyFrom(operation.getRow()));
 
     for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()){
@@ -62,6 +61,5 @@ public class AppendAdapter implements OperationAdapter<Append, ReadModifyWriteRo
         result.addRules(rule.build());
       }
     }
-    return result;
   }
 }
