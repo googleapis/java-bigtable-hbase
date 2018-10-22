@@ -16,9 +16,12 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -120,6 +123,18 @@ public class BigtableConnection extends AbstractBigtableConnection {
   @Override
   public Table getTable(TableName tableName, ExecutorService ignored) throws IOException {
     return new BigtableTable(this, createAdapter(tableName));
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.hbase.client.CommonConnection#getAllRegionInfos(org.apache.hadoop.hbase.TableName)
+   */
+  @Override
+  public List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException {
+    List<HRegionInfo> regionInfos = new CopyOnWriteArrayList<>();
+    for (HRegionLocation location : getRegionLocator(tableName).getAllRegionLocations()) {
+      regionInfos.add(location.getRegionInfo());
+    }
+    return regionInfos;
   }
 
 }

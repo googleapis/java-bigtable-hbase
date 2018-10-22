@@ -48,7 +48,6 @@ import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -99,7 +98,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   private final Configuration configuration;
   private final BigtableOptions options;
-  protected final AbstractBigtableConnection connection;
+  protected final CommonConnection connection;
   protected final BigtableTableAdminClient bigtableTableAdminClient;
 
   protected final BigtableInstanceName bigtableInstanceName;
@@ -113,7 +112,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @param connection a {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection} object.
    * @throws IOException
    */
-  public AbstractBigtableAdmin(AbstractBigtableConnection connection) throws IOException {
+  public AbstractBigtableAdmin(CommonConnection connection) throws IOException {
     LOG.debug("Creating BigtableAdmin");
     configuration = connection.getConfiguration();
     options = connection.getOptions();
@@ -132,7 +131,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public Connection getConnection() {
-    return connection;
+    return (Connection) connection;
   }
 
   /** {@inheritDoc} */
@@ -349,7 +348,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), tableAdapter.adapt(desc, splitKeys));
+    createTable(desc.getTableName(), TableAdapter.adapt(desc, splitKeys));
   }
 
   protected void createTable(TableName tableName, CreateTableRequest.Builder builder) throws IOException {
@@ -365,7 +364,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTableAsync(final HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     LOG.warn("Creating the table synchronously");
-    CreateTableRequest.Builder builder = tableAdapter.adapt(desc, splitKeys);
+    CreateTableRequest.Builder builder = TableAdapter.adapt(desc, splitKeys);
     createTableAsync(builder, desc.getTableName());
   }
 
@@ -700,11 +699,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
-    List<HRegionInfo> regionInfos = new ArrayList<>();
-    for (HRegionLocation location : connection.getRegionLocator(tableName).getAllRegionLocations()) {
-      regionInfos.add(location.getRegionInfo());
-    }
-    return regionInfos;
+    return connection.getAllRegionInfos(tableName);
   }
 
   /** {@inheritDoc} */
