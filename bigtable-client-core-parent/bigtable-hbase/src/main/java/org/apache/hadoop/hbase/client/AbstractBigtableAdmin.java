@@ -18,12 +18,9 @@ package org.apache.hadoop.hbase.client;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
-import com.google.bigtable.admin.v2.ListTablesRequest;
-import com.google.bigtable.admin.v2.ListTablesResponse;
+import com.google.bigtable.admin.v2.InstanceName;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -100,7 +97,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final BigtableOptions options;
   protected final CommonConnection connection;
   protected final BigtableTableAdminClient bigtableTableAdminClient;
-
+  protected final com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient adminClientV2;
   protected final BigtableInstanceName bigtableInstanceName;
   private BigtableClusterName bigtableSnapshotClusterName;
   protected final TableAdapter tableAdapter;
@@ -126,6 +123,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
+
+    adminClientV2 = com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient
+        .create(InstanceName.of(options.getProjectId(), options.getInstanceId()));
   }
 
   /** {@inheritDoc} */
@@ -247,34 +247,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * Lists all table names for the cluster provided in the configuration.
    */
   public TableName[] listTableNames() throws IOException {
-    return asTableNames(requestTableList().getTablesList());
-  }
+    List<com.google.bigtable.admin.v2.TableName> tablesListV2 = adminClientV2.listTables();
+    TableName[] result = new TableName[tablesListV2.size()];
+    for (int i = 0; i < tablesListV2.size(); i++) {
 
-  /**
-   * Request a list of Tables for the cluster.  The {@link Table}s in the response will only
-   * contain fully qualified Bigtable table names, and not column family information.
-   */
-  private ListTablesResponse requestTableList() throws IOException {
-    try {
-      ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-      builder.setParent(bigtableInstanceName.toString());
-      return bigtableTableAdminClient.listTables(builder.build());
-    } catch (Throwable throwable) {
-      throw new IOException("Failed to listTables", throwable);
-    }
-  }
-
-  /**
-   * Convert a list of Bigtable {@link Table}s to hbase {@link TableName}.
-   */
-  private TableName[] asTableNames(List<Table> tablesList) {
-    TableName[] result = new TableName[tablesList.size()];
-    for (int i = 0; i < tablesList.size(); i++) {
-      // This will contain things like project, zone and cluster.
-      String bigtableFullTableName = tablesList.get(i).getName();
-
-      // Strip out the Bigtable info.
-      String name = bigtableInstanceName.toTableId(bigtableFullTableName);
+      // considering only tableName
+      String name = tablesListV2.get(i).getTable();
 
       result[i] = TableName.valueOf(name);
     }
@@ -404,10 +382,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void deleteTable(TableName tableName) throws IOException {
-    Builder deleteBuilder = DeleteTableRequest.newBuilder();
-    deleteBuilder.setName(toBigtableName(tableName));
     try {
-      bigtableTableAdminClient.deleteTable(deleteBuilder.build());
+      adminClientV2.deleteTable(tableName.getNameAsString());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
