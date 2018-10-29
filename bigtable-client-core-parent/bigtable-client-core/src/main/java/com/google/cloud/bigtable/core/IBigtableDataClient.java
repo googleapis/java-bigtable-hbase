@@ -29,6 +29,78 @@ import java.util.concurrent.ExecutionException;
 public interface IBigtableDataClient {
 
   /**
+   * Read a single row. If the row does not exist, the value returned will be null.
+   *
+   * @param tableId a {@link String} object
+   * @param rowKey a {@link ByteString} object
+   * @return a {@link Row} object. A single row.
+   */
+  Row readRow(String tableId, ByteString rowKey);
+
+  /**
+   * Read a single row. If the row does not exist, the value returned will be null.
+   *
+   * @param tableId a {@link String} object
+   * @param rowKey a {@link String} object
+   * @return a {@link Row} object. A single row.
+   */
+  Row readRow(String tableId, String rowKey);
+
+  /**
+   * Read a single row asynchronously. If the row does not exist, the future's value will be null
+   *
+   * @param tableId a {@link String} object
+   * @param rowKey a {@link ByteString} object
+   * @return a {@link ApiFuture} of type {@link Row}
+   */
+  ApiFuture<Row> readRowAsync(String tableId, ByteString rowKey);
+
+  /**
+   * Read a single row asynchronously. If the row does not exist, the future's value will be null
+   *
+   * @param tableId a {@link String} object
+   * @param rowKey a {@link String} object
+   * @return a {@link ApiFuture} of type {@link Row}
+   */
+  ApiFuture<Row> readRowAsync(String tableId, String rowKey);
+
+  /**
+   * Convenience method for synchronously streaming the results of a Query.
+   *
+   * @param query a {@link Query} object.
+   * @return a {@link ServerStream} of type {@link Row}
+   */
+  ServerStream<Row> readRows(Query query);
+
+  /**
+   * Convenience method for asynchronously streaming the results of a Query.
+   *
+   * @param query a {@link models.Query} object.
+   * @param observer a {@link ResponseObserver} of type {@link Row}
+   */
+  void readRowsAsync(Query query, ResponseObserver<Row> observer);
+
+  /**
+   * Convenience method to synchronously return a sample of row keys in the table.
+   * The returned row keys will delimit contiguous sections of the table of approximately equal size,
+   * which can be used to break up the data for distributed tasks like mapreduces.
+   *
+   * @param tableId a {@link String} object
+   * @return a {@link List} of type {@link KeyOffset}
+   */
+  List<KeyOffset> sampleRowKeys(String tableId);
+
+  /**
+   * Convenience method to synchronously return a sample of row keys in the table.
+   * The returned row keys will delimit contiguous sections of the table of approximately equal size,
+   * which can be used to break up the data for distributed tasks like mapreduces.
+   *
+   * @param tableId a {@link String} object
+   * @return a {@link ApiFuture} of type {@link List} of type {@link KeyOffset}
+   */
+  ApiFuture<List<KeyOffset>> sampleRowKeysAsync(String tableId);
+
+  /**
    * Mutate a row atomically.
    *
    * @param rowMutation a {@link RowMutation} model object.
@@ -72,6 +144,33 @@ public interface IBigtableDataClient {
    * Creates BulMutation batcher.
    */
   IBulkMutation createBulkMutationBatcher();
+
+  /**
+   * Mutates multiple rows in a batch. Each individual row is mutated atomically as in MutateRow,
+   * but the entire batch is not executed atomically.
+   *
+   * @return a {@link BulkMutationBatcher} object
+   */
+  BulkMutationBatcher newBulkMutationBatcher();
+
+  /**
+   * Convenience method to mutate multiple rows in a batch. Each individual row is mutated
+   * atomically as in MutateRow, but the entire batch is not executed atomically. Unlike
+   * newBulkMutationBatcher(), this method expects the mutations to be pre-batched.
+   *
+   * @param mutation a {@link BulkMutation} object
+   */
+  void bulkMutateRows(BulkMutation mutation);
+
+  /**
+   * Convenience method to mutate multiple rows in a batch. Each individual row is mutated
+   * atomically as in MutateRow, but the entire batch is not executed atomically. Unlike
+   * newBulkMutationBatcher(), this method expects the mutations to be pre-batched.
+   *
+   * @param mutation a {@link BulkMutation} object
+   * @return a {@link ApiFuture} of type {@link Void}
+   */
+  ApiFuture<Void> bulkMutateRowsAsync(BulkMutation mutation);
 
   /**
    * Mutate a row atomically dependent on a precondition.
