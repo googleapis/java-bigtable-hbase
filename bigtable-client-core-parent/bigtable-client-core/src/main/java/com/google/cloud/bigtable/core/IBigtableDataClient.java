@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.core;
 import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
-import com.google.cloud.bigtable.data.v2.models.BulkMutation;
-import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -172,31 +170,4 @@ public interface IBigtableDataClient {
    * @return a {@link ApiFuture} of type {@link List} of type {@link KeyOffset}
    */
   ApiFuture<List<KeyOffset>> sampleRowKeysAsync(String tableId);
-
-  /**
-   * Mutates multiple rows in a batch. Each individual row is mutated atomically as in MutateRow,
-   * but the entire batch is not executed atomically.
-   *
-   * @return a {@link BulkMutationBatcher} object
-   */
-  BulkMutationBatcher newBulkMutationBatcher();
-
-  /**
-   * Convenience method to mutate multiple rows in a batch. Each individual row is mutated
-   * atomically as in MutateRow, but the entire batch is not executed atomically. Unlike
-   * newBulkMutationBatcher(), this method expects the mutations to be pre-batched.
-   *
-   * @param mutation a {@link BulkMutation} object
-   */
-  void bulkMutateRows(BulkMutation mutation);
-
-  /**
-   * Convenience method to mutate multiple rows in a batch. Each individual row is mutated
-   * atomically as in MutateRow, but the entire batch is not executed atomically. Unlike
-   * newBulkMutationBatcher(), this method expects the mutations to be pre-batched.
-   *
-   * @param mutation a {@link BulkMutation} object
-   * @return a {@link ApiFuture} of type {@link Void}
-   */
-  ApiFuture<Void> bulkMutateRowsAsync(BulkMutation mutation);
 }
