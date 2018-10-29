@@ -63,11 +63,15 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GcRule;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.Snapshot;
+import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.GCRules;
+import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.util.concurrent.Futures;
@@ -99,11 +103,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     createTable(desc, createSplitKeys(startKey, endKey, numRegions));
   }
 
+
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys)
-            .toProto(bigtableInstanceName.toAdminInstanceName()));
+    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys));
   }
 
   /** {@inheritDoc} */
@@ -356,6 +360,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
           }
         });
   }
+
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.hbase.client.Admin#truncateTableAsync(org.apache.hadoop.hbase.TableName, boolean)
