@@ -260,12 +260,21 @@ public class BigtableOptions implements Serializable, Cloneable {
         options.instanceName = null;
       }
 
-      if(options.useBatch) {
+      if (options.useBatch) {
         options.useCachedDataPool = true;
-        options.dataHost = BIGTABLE_BATCH_DATA_HOST_DEFAULT;
+        if (options.dataHost.equals(BIGTABLE_DATA_HOST_DEFAULT)) {
+          options.dataHost = BIGTABLE_BATCH_DATA_HOST_DEFAULT;
+        }
         RetryOptions.Builder retryOptionsBuilder = options.retryOptions.toBuilder();
-        retryOptionsBuilder.setInitialBackoffMillis((int) TimeUnit.SECONDS.toMillis(5));
-        retryOptionsBuilder.setMaxElapsedBackoffMillis((int) TimeUnit.SECONDS.toMillis(5));
+        if (options.retryOptions.getInitialBackoffMillis()
+            == RetryOptions.DEFAULT_INITIAL_BACKOFF_MILLIS) {
+          retryOptionsBuilder.setInitialBackoffMillis((int) TimeUnit.SECONDS.toMillis(5));
+        }
+
+        if (options.retryOptions.getMaxElapsedBackoffMillis()
+            == RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS) {
+          retryOptionsBuilder.setMaxElapsedBackoffMillis((int) TimeUnit.MINUTES.toMillis(5));
+        }
         options.retryOptions = retryOptionsBuilder.build();
       }
       LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
