@@ -16,17 +16,90 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ServerStream;
+import com.google.cloud.bigtable.data.v2.models.BulkMutation;
+import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.KeyOffset;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.protobuf.ByteString;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
  * Interface to access Bigtable data service api.
  */
 public interface IBigtableDataClient {
+
+  /**
+   * Mutate a row atomically.
+   *
+   * @param rowMutation a {@link RowMutation} model object.
+   * @throws ExecutionException if any.
+   * @throws InterruptedException if any.
+   */
+  void mutateRow(RowMutation rowMutation) throws ExecutionException, InterruptedException;
+
+  /**
+   * Mutate a row atomically.
+   *
+   * @param rowMutation a {@link RowMutation} model object.
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
+   *     successful otherwise exception will be thrown.
+   * @throws InterruptedException if any.
+   */
+  ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
+
+  /**
+   * Perform an atomic read-modify-write operation on a row.
+   *
+   * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
+   * @return Row a modified row.
+   * @throws ExecutionException if any.
+   * @throws InterruptedException if any.
+   */
+  Row readModifyWriteRow(ReadModifyWriteRow readModifyWriteRow)
+          throws ExecutionException, InterruptedException;
+
+  /**
+   * Perform an atomic read-modify-write operation on a row.
+   *
+   * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
+   * @return a {@link ApiFuture} of type {@link Row} will be set when request is
+   *     successful otherwise exception will be thrown.
+   * @throws InterruptedException if any.
+   */
+  ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) throws InterruptedException;
+
+  /**
+   * Creates BulMutation batcher.
+   */
+  IBulkMutation createBulkMutationBatcher();
+
+  /**
+   * Mutate a row atomically dependent on a precondition.
+   *
+   * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
+   * @return a {@link ApiFuture} of type {@link Boolean} will be set when request is
+   *     successful otherwise exception will be thrown.
+   */
+  ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
+
+  /**
+   * Mutate a row atomically dependent on a precondition.
+   *
+   * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
+   * @return Boolean returns true if predicate returns any result.
+   * @throws ExecutionException if any.
+   * @throws InterruptedException if any.
+   */
+  Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation)
+          throws ExecutionException, InterruptedException;
 
   /**
    * Read a single row. If the row does not exist, the value returned will be null.
@@ -75,7 +148,7 @@ public interface IBigtableDataClient {
   /**
    * Convenience method for asynchronously streaming the results of a Query.
    *
-   * @param query a {@link models.Query} object.
+   * @param query a {@link Query} object.
    * @param observer a {@link ResponseObserver} of type {@link Row}
    */
   void readRowsAsync(Query query, ResponseObserver<Row> observer);
@@ -99,51 +172,6 @@ public interface IBigtableDataClient {
    * @return a {@link ApiFuture} of type {@link List} of type {@link KeyOffset}
    */
   ApiFuture<List<KeyOffset>> sampleRowKeysAsync(String tableId);
-
-  /**
-   * Mutate a row atomically.
-   *
-   * @param rowMutation a {@link RowMutation} model object.
-   * @throws ExecutionException if any.
-   * @throws InterruptedException if any.
-   */
-  void mutateRow(RowMutation rowMutation) throws ExecutionException, InterruptedException;
-
-  /**
-   * Mutate a row atomically.
-   *
-   * @param rowMutation a {@link RowMutation} model object.
-   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
-   *     successful otherwise exception will be thrown.
-   * @throws InterruptedException if any.
-   */
-  ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
-
-  /**
-   * Perform an atomic read-modify-write operation on a row.
-   *
-   * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
-   * @return Row a modified row.
-   * @throws ExecutionException if any.
-   * @throws InterruptedException if any.
-   */
-  Row readModifyWriteRow(ReadModifyWriteRow readModifyWriteRow)
-      throws ExecutionException, InterruptedException;
-
-  /**
-   * Perform an atomic read-modify-write operation on a row.
-   *
-   * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
-   * @return a {@link ApiFuture} of type {@link Row} will be set when request is
-   *     successful otherwise exception will be thrown.
-   * @throws InterruptedException if any.
-   */
-  ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) throws InterruptedException;
-
-  /**
-   * Creates BulMutation batcher.
-   */
-  IBulkMutation createBulkMutationBatcher();
 
   /**
    * Mutates multiple rows in a batch. Each individual row is mutated atomically as in MutateRow,
@@ -171,24 +199,4 @@ public interface IBigtableDataClient {
    * @return a {@link ApiFuture} of type {@link Void}
    */
   ApiFuture<Void> bulkMutateRowsAsync(BulkMutation mutation);
-
-  /**
-   * Mutate a row atomically dependent on a precondition.
-   *
-   * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
-   * @return a {@link ApiFuture} of type {@link Boolean} will be set when request is
-   *     successful otherwise exception will be thrown.
-   */
-  ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
-
-  /**
-   * Mutate a row atomically dependent on a precondition.
-   *
-   * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
-   * @return Boolean returns true if predicate returns any result.
-   * @throws ExecutionException if any.
-   * @throws InterruptedException if any.
-   */
-  Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation)
-      throws ExecutionException, InterruptedException;
 }
