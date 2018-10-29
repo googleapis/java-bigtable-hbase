@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
+import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.ByteString;
@@ -143,11 +144,6 @@ public class ReadRowsAcceptanceTest {
           && Objects.equals(value, other.value)
           && Objects.equals(label, other.label)
           && Objects.equals(error, other.error);
-    }
-
-    @Override
-    public int hashCode() {
-      return com.google.common.base.Objects.hashCode(rk, fm, qual, ts, value, label, error);
     }
   }
 
