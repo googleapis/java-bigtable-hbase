@@ -147,7 +147,7 @@ public class ReadRowsAcceptanceTest {
 
     @Override
     public int hashCode() {
-      return com.google.common.base.Objects.hashCode(rk, fm, qual, ts, value, label, error);
+      return Objects.hash(rk, fm, qual, ts, value, label, error);
     }
   }
 
