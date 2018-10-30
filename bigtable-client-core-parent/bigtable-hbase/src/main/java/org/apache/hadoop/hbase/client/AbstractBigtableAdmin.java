@@ -20,7 +20,6 @@ import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.GcRule;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.InstanceName;
 import com.google.bigtable.admin.v2.ListTablesRequest;
@@ -28,7 +27,6 @@ import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
-import com.google.cloud.bigtable.admin.v2.models.GCRules;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -36,7 +34,6 @@ import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
@@ -71,6 +68,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 import javax.annotation.Nullable;
+
+import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -359,8 +359,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
       String columnName = column.getNameAsString();
-      GcRule gcRuleProto = ColumnDescriptorAdapter.buildGarbageCollectionRule(column);
-      createReq.addFamily(columnName, GCRules.GCRULES.fromProto(gcRuleProto));
+      // GcRule gcRuleProto = buildGarbageCollectionRule(column);
+      createReq.addFamily(columnName, buildGarbageCollectionRule(column));
     }
     if (splitKeys != null) {
       for (byte[] splitKey : splitKeys) {
@@ -394,8 +394,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
       String columnName = column.getNameAsString();
-      GcRule gcRuleProto = ColumnDescriptorAdapter.buildGarbageCollectionRule(column);
-      createTableRequest.addFamily(columnName, GCRules.GCRULES.fromProto(gcRuleProto));
+      createTableRequest.addFamily(columnName, buildGarbageCollectionRule(column));
     }
     if (splitKeys != null) {
       for (byte[] splitKey : splitKeys) {
@@ -616,10 +615,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     ModifyColumnFamiliesRequest modifyReq =
         ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-
-    GcRule gcRuleProto = ColumnDescriptorAdapter.buildGarbageCollectionRule(column);
-    modifyReq.addFamily(column.getNameAsString(),
-      GCRules.GCRULES.fromProto(gcRuleProto));
+    modifyReq.addFamily(column.getNameAsString(), buildGarbageCollectionRule(column));
 
     modifyColumns(modifyReq);
   }
@@ -629,10 +625,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void modifyColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     ModifyColumnFamiliesRequest modifyReq =
         ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-
-    GcRule gcRuleProto = ColumnDescriptorAdapter.buildGarbageCollectionRule(column);
-    modifyReq.updateFamily(column.getNameAsString(),
-      GCRules.GCRULES.fromProto(gcRuleProto));
+    modifyReq.updateFamily(column.getNameAsString(), buildGarbageCollectionRule(column));
 
     modifyColumns(modifyReq);
   }

@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -114,9 +116,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
     for (ColumnFamilyDescriptor column : desc.getColumnFamilies()) {
       String columnName = column.getNameAsString();
-      GcRule gcRuleProto = ColumnDescriptorAdapter
-          .buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(column));
-      createTableRequest.addFamily(columnName, GCRules.GCRULES.fromProto(gcRuleProto));
+      createTableRequest.addFamily(columnName,
+        buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(column)));
     }
     if (splitKeys != null) {
       for (byte[] splitKey : splitKeys) {
@@ -187,10 +188,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest
             .of(tableName.getNameAsString());
 
-    GcRule gcRuleProto = ColumnDescriptorAdapter
-        .buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc));
     modifyColumnRequest.addFamily(columnFamilyDesc.getNameAsString(),
-      GCRules.GCRULES.fromProto(gcRuleProto));
+      buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
 
     modifyColumns(modifyColumnRequest);
   }
@@ -209,10 +208,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest
             .of(tableName.getNameAsString());
 
-    GcRule gcRuleProto = ColumnDescriptorAdapter
-        .buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc));
     modifyColumnRequest.updateFamily(columnFamilyDesc.getNameAsString(),
-      GCRules.GCRULES.fromProto(gcRuleProto));
+      buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
 
     modifyColumns(modifyColumnRequest);
   }
