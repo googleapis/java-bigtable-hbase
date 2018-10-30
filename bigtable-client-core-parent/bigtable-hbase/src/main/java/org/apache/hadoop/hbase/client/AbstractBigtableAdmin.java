@@ -137,12 +137,18 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public boolean tableExists(TableName tableName) throws IOException {
-    for(TableName existingTableName : listTableNames(tableName.getNameAsString())) {
-      if (existingTableName.equals(tableName)) {
-        return true;
-      }
+    GetTableRequest request = GetTableRequest.newBuilder()
+        .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()))
+        .setView(Table.View.NAME_ONLY)
+        .build();
+    try {
+      return bigtableTableAdminClient.getTable(request) != null;
+    } catch (Throwable t) {
+        if (Status.fromThrowable(t).getCode() == Status.Code.NOT_FOUND) {
+          return false;
+        }
+        throw new IOException("Failure while checking if a table exists", t);
     }
-    return false;
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
