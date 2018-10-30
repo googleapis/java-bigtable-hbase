@@ -57,8 +57,7 @@ public abstract class MutationAdapter<T extends Row>
    * com.google.bigtable.v2.MutateRowsRequest.Entry} is akin to an HBase {@link Mutation}.
    *
    * @param operation The HBase {@link Mutation} to convert
-   * @param mutation The model {@link com.google.cloud.bigtable.data.v2.models.MutationApi<?>}
-   * @return void
+   * @param mutation The model {@link com.google.cloud.bigtable.data.v2.models.MutationApi}
    */
   protected abstract void adaptMutations(
       T operation,
