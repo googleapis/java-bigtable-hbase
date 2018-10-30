@@ -20,6 +20,7 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.MutationApi;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
@@ -198,11 +199,10 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} object.
    */
   public ReadModifyWriteRowRequest adapt(Append append) {
-    ReadModifyWriteRowRequest.Builder builder = ReadModifyWriteRowRequest.newBuilder();
-    //TODO: change APPEND_ADAPTER to adapt to {@link com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow} model
-    Adapters.APPEND_ADAPTER.adapt(append, builder);
-    builder.setTableName(getTableNameString());
-    return builder.build();
+    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
+        .create(bigtableTableName.getTableId(), ByteString.copyFrom(append.getRow()));
+    Adapters.APPEND_ADAPTER.adapt(append, readModifyWriteRow);
+    return readModifyWriteRow.toProto(requestContext);
   }
 
   /**
@@ -212,11 +212,10 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} object.
    */
   public ReadModifyWriteRowRequest adapt(Increment increment) {
-    ReadModifyWriteRowRequest.Builder builder = ReadModifyWriteRowRequest.newBuilder();
-    //TODO: change INCREMENT_ADAPTER to adapt to {@link com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow} model
-    Adapters.INCREMENT_ADAPTER.adapt(increment, builder);
-    builder.setTableName(getTableNameString());
-    return builder.build();
+    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
+        .create(bigtableTableName.getTableId(), ByteString.copyFrom(increment.getRow()));
+    Adapters.INCREMENT_ADAPTER.adapt(increment, readModifyWriteRow);
+    return readModifyWriteRow.toProto(requestContext);
   }
 
   /**
