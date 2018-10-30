@@ -36,7 +36,6 @@ public interface OperationAdapter<T extends Row, U> {
    * @param operation The HBase operation to convert.
    * @param u Type to which HBase operation will be mapped to. Typically it will be
    *          Google Cloud Java Bigtable Models.
-   * @return void
    */
   public void adapt(T operation, U u);
 }
