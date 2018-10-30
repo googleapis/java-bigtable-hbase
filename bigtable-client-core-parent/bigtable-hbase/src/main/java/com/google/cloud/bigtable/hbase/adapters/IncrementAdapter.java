@@ -15,9 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadModifyWriteRule;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -36,17 +34,15 @@ import java.util.NavigableMap;
  * @version $Id: $Id
  */
 public class IncrementAdapter
-    implements OperationAdapter<Increment, ReadModifyWriteRowRequest.Builder>{
+    implements OperationAdapter<Increment, ReadModifyWriteRow>{
 
   /** {@inheritDoc} */
   @Override
-  public void adapt(Increment operation, ReadModifyWriteRowRequest.Builder result) {
+  public void adapt(Increment operation, ReadModifyWriteRow readModifyWriteRow) {
     if (!operation.getTimeRange().isAllTime()) {
       throw new UnsupportedOperationException(
           "Setting the time range in an Increment is not implemented");
     }
-
-    result.setRowKey(ByteString.copyFrom(operation.getRow()));
 
     for (Map.Entry<byte[], NavigableMap<byte[], Long>> familyEntry :
         operation.getFamilyMapOfLongs().entrySet()) {
@@ -56,17 +52,15 @@ public class IncrementAdapter
       List<Cell> mutationCells =
           CellDeduplicationHelper.deduplicateFamily(operation, familyEntry.getKey());
 
-      for (Cell cell : mutationCells){
-        ReadModifyWriteRule.Builder rule = ReadModifyWriteRule.newBuilder();
-        rule.setIncrementAmount(
-            Bytes.toLong(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength()));
-        rule.setFamilyName(familyName);
-        rule.setColumnQualifier(
+      for (Cell cell : mutationCells) {
+        readModifyWriteRow.increment(
+            familyName,
             ByteString.copyFrom(
                 cell.getQualifierArray(),
                 cell.getQualifierOffset(),
-                cell.getQualifierLength()));
-        result.addRules(rule.build());
+                cell.getQualifierLength()),
+            Bytes.toLong(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
+        );
       }
     }
   }
