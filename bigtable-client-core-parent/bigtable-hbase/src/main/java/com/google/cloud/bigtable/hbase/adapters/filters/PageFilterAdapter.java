@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 
@@ -41,7 +41,7 @@ public class PageFilterAdapter extends TypedFilterAdapterBase<PageFilter> {
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, PageFilter filter) throws IOException {
+  public Filter adapt(FilterAdapterContext context, PageFilter filter) throws IOException {
     final long pageSize = filter.getPageSize();
     context.getReadHooks().composePreSendHook(new Function<ReadRowsRequest, ReadRowsRequest>() {
       @Override

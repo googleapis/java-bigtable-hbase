@@ -17,11 +17,8 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.common.collect.ImmutableList;
-import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
@@ -48,14 +45,13 @@ import java.util.List;
         .build();
 
     FuzzyRowFilter filter = new FuzzyRowFilter(testPairs);
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
-    RowFilter expected = FILTERS.interleave()
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter expected = FILTERS.interleave()
         .filter(FILTERS.key().regex("abcd\\C*"))
         .filter(FILTERS.key().regex("\\.f\\Ch\\C*"))
-        .filter(FILTERS.key().regex("\\C\\C\\C\\C\\C*"))
-        .toProto();
+        .filter(FILTERS.key().regex("\\C\\C\\C\\C\\C*"));
 
 
-    Assert.assertEquals(expected, adaptedFilter);
+    Assert.assertEquals(expected.toProto(), adaptedFilter.toProto());
   }
 }

@@ -15,14 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
@@ -87,56 +85,33 @@ public class WhileMatchFilterAdapter extends TypedFilterAdapterBase<WhileMatchFi
    * WhileMatchFilter} instance with a "block all" filter and rescan from the next row.
    */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, WhileMatchFilter filter) throws IOException {
+  public Filters.Filter adapt(FilterAdapterContext context, WhileMatchFilter filter) throws IOException {
     // We need to eventually support more than one {@link WhileMatchFilter}s soon. Checking the size
     // of a list of {@link WhileMatchFilter}s makes more sense than verifying a single boolean flag.
     checkArgument(
         context.getNumberOfWhileMatchFilters() == 0,
         "More than one WhileMatchFilter is not supported.");
     checkNotNull(filter.getFilter(), "The wrapped filter for a WhileMatchFilter cannot be null.");
-    Optional<RowFilter> wrappedFilter = subFilterAdapter.adaptFilter(context, filter.getFilter());
+    Optional<Filters.Filter> wrappedFilter = subFilterAdapter.adaptFilter(context, filter.getFilter());
     checkArgument(
         wrappedFilter.isPresent(), "Unable to adapted the wrapped filter: " + filter.getFilter());
 
     String whileMatchFileterId = context.getNextUniqueId();
-    RowFilter sink = RowFilter.newBuilder().setSink(true).build();
-    RowFilter inLabel =
-        RowFilter.newBuilder()
-            .setApplyLabelTransformer(whileMatchFileterId + IN_LABEL_SUFFIX)
-            .build();
-    RowFilter inLabelAndSink =
-        RowFilter.newBuilder()
-            .setChain(Chain.newBuilder().addAllFilters(ImmutableList.of(inLabel, sink)))
-            .build();
-    RowFilter outLabel =
-        RowFilter.newBuilder()
-            .setApplyLabelTransformer(whileMatchFileterId + OUT_LABEL_SUFFIX)
-            .build();
-    RowFilter outLabelAndSink =
-        RowFilter.newBuilder()
-            .setChain(Chain.newBuilder().addAllFilters(ImmutableList.of(outLabel, sink)))
-            .build();
+    
+    Filters.Filter inLabel = FILTERS.label(whileMatchFileterId + IN_LABEL_SUFFIX);
+    Filters.Filter inLabelAndSink = FILTERS.chain().filter(inLabel).filter(FILTERS.sink());
+   
+    Filters.Filter outLabel = FILTERS.label(whileMatchFileterId + OUT_LABEL_SUFFIX);
+    Filters.Filter outLabelAndSink = FILTERS.chain().filter(outLabel).filter(FILTERS.sink());
 
-    RowFilter all = RowFilter.newBuilder().setPassAllFilter(true).build();
-    RowFilter outInterleave =
-        RowFilter.newBuilder()
-            .setInterleave(
-                Interleave.newBuilder().addAllFilters(ImmutableList.of(outLabelAndSink, all)))
-            .build();
-    RowFilter outChain =
-        RowFilter.newBuilder()
-            .setChain(Chain.newBuilder().addAllFilters(
-                ImmutableList.of(wrappedFilter.get(), outInterleave)))
-            .build();
-    RowFilter rowFilter =
-        RowFilter.newBuilder()
-            .setInterleave(
-                Interleave.newBuilder().addAllFilters(ImmutableList.of(inLabelAndSink, outChain)))
-            .build();
-
+    Filters.Filter outInterleave = FILTERS.interleave().filter(outLabelAndSink).filter(FILTERS.pass());
+    Filters.Filter outChain = FILTERS.chain().filter(wrappedFilter.get()).filter(outInterleave);
+    
+    Filters.Filter finalFilter = FILTERS.interleave().filter(inLabelAndSink).filter(outChain);
+   
     context.addWhileMatchFilter(filter);
-
-    return rowFilter;
+    
+    return finalFilter;
   }
 
   /** {@inheritDoc} */

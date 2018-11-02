@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.RangeSet;
 import java.io.IOException;
@@ -36,10 +36,10 @@ public interface TypedFilterAdapter<S extends Filter> {
    *
    * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
    * @param filter a S object.
-   * @return a {@link com.google.bigtable.v2.RowFilter} object.
+   * @return a {@link com.google.cloud.bigtable.data.v2.models.Filters.Filter} object.
    * @throws java.io.IOException if any.
    */
-  RowFilter adapt(FilterAdapterContext context, S filter) throws IOException;
+  Filters.Filter adapt(FilterAdapterContext context, S filter) throws IOException;
 
   /**
    * Determine if the given filter can be adapted to a Bigtable RowFilter.

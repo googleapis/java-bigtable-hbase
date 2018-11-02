@@ -27,7 +27,6 @@ import org.apache.hadoop.hbase.util.Pair;
 
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 
-import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.QuoteMetaOutputStream;
@@ -40,7 +39,6 @@ import com.google.common.base.Preconditions;
  * @version $Id: $Id
  */
 public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter> {
-  private static final RowFilter ALL_VALUES_FILTER = FILTERS.pass().toProto();
 
   private static Field FUZZY_KEY_DATA_FIELD;
   private static Exception FUZZY_KEY_DATA_FIELD_EXCEPTION;
@@ -56,10 +54,10 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, FuzzyRowFilter filter) throws IOException {
+  public Filter adapt(FilterAdapterContext context, FuzzyRowFilter filter) throws IOException {
     List<Pair<byte[], byte[]>> pairs = extractFuzzyRowFilterPairs(filter);
     if (pairs.isEmpty()) {
-      return ALL_VALUES_FILTER;
+      return FILTERS.pass();
     }
     InterleaveFilter interleave = FILTERS.interleave();
     for (Pair<byte[], byte[]> pair : pairs) {
@@ -70,7 +68,7 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
           createSingleRowFilter(
               pair.getFirst(), pair.getSecond()));
     }
-    return interleave.toProto();
+    return interleave;
   }
 
   private static Filter createSingleRowFilter(byte[] key, byte[] mask) throws IOException {

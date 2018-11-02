@@ -15,11 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class ColumnPrefixFilterAdapter extends TypedFilterAdapterBase<ColumnPref
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, ColumnPrefixFilter filter)
+  public Filter adapt(FilterAdapterContext context, ColumnPrefixFilter filter)
       throws IOException {
     byte[] prefix = filter.getPrefix();
 
@@ -44,12 +45,7 @@ public class ColumnPrefixFilterAdapter extends TypedFilterAdapterBase<ColumnPref
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream(prefix.length * 2);
     ReaderExpressionHelper.writeQuotedRegularExpression(outputStream, prefix);
     outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
-
-    return RowFilter.newBuilder()
-        .setColumnQualifierRegexFilter(
-            ByteString.copyFrom(
-                outputStream.toByteArray()))
-        .build();
+    return FILTERS.chain().filter(FILTERS.qualifier().regex(outputStream.toString()));
   }
 
   /** {@inheritDoc} */

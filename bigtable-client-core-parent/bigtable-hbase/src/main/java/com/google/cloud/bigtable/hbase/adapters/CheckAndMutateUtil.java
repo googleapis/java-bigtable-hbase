@@ -229,7 +229,7 @@ public class CheckAndMutateUtil {
         requestBuilder.addAllTrueMutations(mutations);
       }
       requestBuilder.setPredicateFilter(
-          Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS));
+          Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS).toProto());
 
       return requestBuilder.build();
     }

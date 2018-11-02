@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 
@@ -38,7 +38,7 @@ public class MultipleColumnPrefixFilterAdapter
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(
+  public Filter adapt(
       FilterAdapterContext context,
       MultipleColumnPrefixFilter filter) throws IOException {
     InterleaveFilter interleave = FILTERS.interleave();
@@ -55,7 +55,7 @@ public class MultipleColumnPrefixFilterAdapter
 
       interleave.filter(FILTERS.qualifier().regex(outputStream.toByteString()));
     }
-    return interleave.toProto();
+    return interleave;
   }
 
   /** {@inheritDoc} */
