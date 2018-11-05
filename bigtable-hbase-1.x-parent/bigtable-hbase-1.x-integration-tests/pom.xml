@@ -70,6 +70,8 @@ limitations under the License.
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                     <parallel>classesAndMethods</parallel>
                                     <threadCount>${thread.count}</threadCount>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
@@ -114,6 +116,8 @@ limitations under the License.
                                     <trimStackTrace>false</trimStackTrace>
                                     <parallel>classesAndMethods</parallel>
                                     <threadCount>${thread.count}</threadCount>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
@@ -152,6 +156,8 @@ limitations under the License.
                                     <trimStackTrace>false</trimStackTrace>
                                     <parallel>classesAndMethods</parallel>
                                     <threadCount>${thread.count}</threadCount>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
@@ -193,6 +199,8 @@ limitations under the License.
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                     </systemPropertyVariables>
                                     <trimStackTrace>false</trimStackTrace>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
@@ -247,6 +255,8 @@ limitations under the License.
                                     <trimStackTrace>false</trimStackTrace>
                                     <parallel>classesAndMethods</parallel>
                                     <threadCount>${thread.count}</threadCount>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
