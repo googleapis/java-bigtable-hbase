@@ -392,14 +392,13 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
     LOG.trace("checkAndPut(byte[], byte[], byte[], CompareOp, value, Put)");
-    ConditionalRowMutation conditionalRowMutation =
+    ConditionalRowMutation request =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
             .withPut(put)
             .build();
 
-    CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
     return checkAndMutate(row, request, "checkAndPut");
   }
 
@@ -440,14 +439,13 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
     LOG.trace("checkAndDelete(byte[], byte[], byte[], CompareOp, byte[], Delete)");
-    ConditionalRowMutation conditionalRowMutation =
+    ConditionalRowMutation request =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
             .withDelete(delete)
             .build();
 
-    CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
     return checkAndMutate(row, request, "checkAndDelete");
   }
 
@@ -459,23 +457,23 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     LOG.trace("checkAndMutate(byte[], byte[], byte[], CompareOp, byte[], RowMutations)");
 
-    ConditionalRowMutation conditionalRowMutation =
+    ConditionalRowMutation request =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
             .withMutations(rm)
             .build();
 
-    CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
     return checkAndMutate(row, request, "checkAndMutate");
   }
 
-  private boolean checkAndMutate(final byte[] row, CheckAndMutateRowRequest request, String type)
+  private boolean checkAndMutate(final byte[] row, ConditionalRowMutation request, String type)
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      CheckAndMutateRowResponse response = client.checkAndMutateRow(request);
-      return CheckAndMutateUtil.wasMutationApplied(request, response);
+      CheckAndMutateRowRequest checkAndMutateRowRequest = request.toProto(requestContext);
+      CheckAndMutateRowResponse response = client.checkAndMutateRow(checkAndMutateRowRequest);
+      return CheckAndMutateUtil.wasMutationApplied(checkAndMutateRowRequest, response);
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, row, t);
