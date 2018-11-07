@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
 import java.io.IOException;
@@ -50,7 +53,6 @@ import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -116,6 +118,7 @@ public abstract class AbstractBigtableTable implements Table {
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
+  protected final RequestContext requestContext;
 
   /**
    * Constructed by BigtableConnection
@@ -131,6 +134,9 @@ public abstract class AbstractBigtableTable implements Table {
     this.client = session.getDataClient();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
+    this.requestContext = RequestContext.create(
+        InstanceName.of(options.getProjectId(), options.getInstanceId()),
+        options.getAppProfileId());
   }
 
   /** {@inheritDoc} */
@@ -386,13 +392,14 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
     LOG.trace("checkAndPut(byte[], byte[], byte[], CompareOp, value, Put)");
-    CheckAndMutateRowRequest request =
+    ConditionalRowMutation conditionalRowMutation =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
             .withPut(put)
             .build();
 
+    CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
     return checkAndMutate(row, request, "checkAndPut");
   }
 
@@ -433,13 +440,14 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
     LOG.trace("checkAndDelete(byte[], byte[], byte[], CompareOp, byte[], Delete)");
-    CheckAndMutateRowRequest request =
+    ConditionalRowMutation conditionalRowMutation =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
             .withDelete(delete)
             .build();
 
+    CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
     return checkAndMutate(row, request, "checkAndDelete");
   }
 
@@ -451,13 +459,14 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     LOG.trace("checkAndMutate(byte[], byte[], byte[], CompareOp, byte[], RowMutations)");
 
-    CheckAndMutateRowRequest request =
+    ConditionalRowMutation conditionalRowMutation =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
             .withMutations(rm)
             .build();
 
+    CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
     return checkAndMutate(row, request, "checkAndMutate");
   }
 
