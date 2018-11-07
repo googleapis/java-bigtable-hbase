@@ -54,7 +54,7 @@ public class TestCheckAndMutateUtil {
           .toTableName(TABLE_NAME.getNameAsString());
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext
-          .create(InstanceName.of(BT_TABLE_NAME.getProjectId(), BT_TABLE_NAME.getInstanceId()), "");
+          .create(InstanceName.of(BT_TABLE_NAME.getProjectId(), BT_TABLE_NAME.getInstanceId()), "SomeAppProfileId");
   private static final byte[] rowKey = Bytes.toBytes("rowKey");
   private static final byte[] family = Bytes.toBytes("family");
   private static final byte[] qual = Bytes.toBytes("qual");
@@ -170,7 +170,7 @@ public class TestCheckAndMutateUtil {
   @Test
   /**
    * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a
-   * {@link CheckAndMutateRowRequest} sets a server-side timeatamp (-1) on the {@link Mutation}
+   * {@link ConditionalRowMutation} sets a server-side timeatamp (-1) on the {@link com.google.cloud.bigtable.data.v2.models.Mutation}
    */
   public void testPutServerSideTimestamps() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
@@ -191,7 +191,7 @@ public class TestCheckAndMutateUtil {
   @Test
   /**
    * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a
-   * {@link CheckAndMutateRowRequest} sets a clientr-side timeatamp on the {@link Mutation}
+   * {@link ConditionalRowMutation} sets a clientr-side timeatamp on the {@link com.google.cloud.bigtable.data.v2.models.Mutation}
    * if a user explicitly sets a timestamp on the Put
    */
   public void testPutServerClientTimestamps() throws DoNotRetryIOException {
@@ -214,8 +214,8 @@ public class TestCheckAndMutateUtil {
   @Test
   /**
    * Tests that a CheckAndMutate with a {@link RowMutations} with a {@link Put} which ensures that
-   * the conversion to a {@link CheckAndMutateRowRequest} sets a server-side timeatamp (-1) on the
-   * {@link Mutation}.
+   * the conversion to a {@link ConditionalRowMutation} sets a server-side timeatamp (-1) on the
+   * {@link com.google.cloud.bigtable.data.v2.models.Mutation}.
    */
   public void testRowMutationServerSideTimestamps() throws IOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();

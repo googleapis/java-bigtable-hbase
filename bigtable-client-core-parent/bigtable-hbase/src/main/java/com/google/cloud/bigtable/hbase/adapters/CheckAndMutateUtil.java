@@ -80,7 +80,7 @@ public class CheckAndMutateUtil {
 
   /**
    * This class can be used to convert HBase checkAnd* operations to Bigtable
-   * {@link CheckAndMutateRowRequest}s.
+   * {@link ConditionalRowMutation}s.
    */
   public static class RequestBuilder {
     private final HBaseRequestAdapter hbaseAdapter;
@@ -100,7 +100,7 @@ public class CheckAndMutateUtil {
      * RequestBuilder.
      * </p>
      * @param hbaseAdapter a {@link HBaseRequestAdapter} used to convert HBase
-     *          {@link org.apache.hadoop.hbase.client.Mutation} to Cloud Bigtable {@link Mutation}
+     *          {@link org.apache.hadoop.hbase.client.Mutation} to Cloud Bigtable {@link com.google.cloud.bigtable.data.v2.models.Mutation}
      * @param row the RowKey in which to to check value matching
      * @param family the family in which to check value matching.
      */
@@ -172,24 +172,24 @@ public class CheckAndMutateUtil {
     }
 
     public RequestBuilder withPut(Put put) throws DoNotRetryIOException {
-      adaptException(put.getRow());
+      validateRow(put.getRow());
       hbaseAdapter.adapt(put, mutations);
       return this;
     }
 
     public RequestBuilder withDelete(Delete delete) throws DoNotRetryIOException {
-      adaptException(delete.getRow());
+      validateRow(delete.getRow());
       hbaseAdapter.adapt(delete, mutations);
       return this;
     }
 
     public RequestBuilder withMutations(RowMutations rm) throws DoNotRetryIOException {
-      adaptException(rm.getRow());
+      validateRow(rm.getRow());
       hbaseAdapter.adapt(rm, mutations);
       return this;
     }
 
-    private void adaptException(byte[] actionRow) throws DoNotRetryIOException {
+    private void validateRow(byte[] actionRow) throws DoNotRetryIOException {
       if (!Arrays.equals(actionRow, row)) {
         // The following odd exception message is for compatibility with HBase.
         throw new DoNotRetryIOException("Action's getRow must match the passed row");
