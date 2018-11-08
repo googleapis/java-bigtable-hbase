@@ -118,7 +118,7 @@ public abstract class AbstractBigtableTable implements Table {
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
-  protected final RequestContext requestContext;
+  protected final RequestContext requestContext; // Once the IBigtableDataClient interface is implemented this will be removed
 
   /**
    * Constructed by BigtableConnection

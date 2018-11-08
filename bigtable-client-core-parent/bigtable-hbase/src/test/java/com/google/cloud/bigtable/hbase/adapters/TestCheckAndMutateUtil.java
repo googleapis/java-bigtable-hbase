@@ -170,7 +170,8 @@ public class TestCheckAndMutateUtil {
   @Test
   /**
    * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a
-   * {@link ConditionalRowMutation} sets a server-side timeatamp (-1) on the {@link com.google.cloud.bigtable.data.v2.models.Mutation}
+   * {@link ConditionalRowMutation} sets a server-side timeatamp (-1) on the
+   * {@link com.google.cloud.bigtable.data.v2.models.Mutation}
    */
   public void testPutServerSideTimestamps() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
@@ -191,7 +192,8 @@ public class TestCheckAndMutateUtil {
   @Test
   /**
    * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a
-   * {@link ConditionalRowMutation} sets a clientr-side timeatamp on the {@link com.google.cloud.bigtable.data.v2.models.Mutation}
+   * {@link ConditionalRowMutation} sets a clientr-side timeatamp on the
+   * {@link com.google.cloud.bigtable.data.v2.models.Mutation}
    * if a user explicitly sets a timestamp on the Put
    */
   public void testPutServerClientTimestamps() throws DoNotRetryIOException {

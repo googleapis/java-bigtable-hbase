@@ -85,7 +85,8 @@ public class CheckAndMutateUtil {
   public static class RequestBuilder {
     private final HBaseRequestAdapter hbaseAdapter;
 
-    private final com.google.cloud.bigtable.data.v2.models.Mutation mutations = com.google.cloud.bigtable.data.v2.models.Mutation.createUnsafe();
+    private final com.google.cloud.bigtable.data.v2.models.Mutation mutations = com.google.cloud.bigtable.data.v2.models.Mutation
+        .createUnsafe();
 
     private final byte[] row;
     private final byte[] family;
@@ -100,7 +101,8 @@ public class CheckAndMutateUtil {
      * RequestBuilder.
      * </p>
      * @param hbaseAdapter a {@link HBaseRequestAdapter} used to convert HBase
-     *          {@link org.apache.hadoop.hbase.client.Mutation} to Cloud Bigtable {@link com.google.cloud.bigtable.data.v2.models.Mutation}
+     *          {@link org.apache.hadoop.hbase.client.Mutation} to Cloud Bigtable
+     *          {@link com.google.cloud.bigtable.data.v2.models.Mutation}
      * @param row the RowKey in which to to check value matching
      * @param family the family in which to check value matching.
      */
@@ -200,7 +202,8 @@ public class CheckAndMutateUtil {
       Preconditions.checkState(checkNonExistence || compareOp != null,
           "condition is null. You need to specify the condition by" +
           " calling ifNotExists/ifEquals/ifMatches before executing the request");
-      ConditionalRowMutation conditionalRowMutation = ConditionalRowMutation.create(hbaseAdapter.getBigtableTableName().getTableId(), ByteString.copyFrom(row));
+      ConditionalRowMutation conditionalRowMutation = ConditionalRowMutation
+          .create(hbaseAdapter.getBigtableTableName().getTableId(), ByteString.copyFrom(row));
       Scan scan = new Scan();
       scan.setMaxVersions(1);
       scan.addColumn(family, qualifier);
