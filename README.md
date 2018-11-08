@@ -80,7 +80,7 @@ infrequent product and client library announcements.
    Use the following command to run the Cloud Bigtable integration tests for HBase 1:
 
    ```sh
-   mvn clean integration-test \
+   mvn clean verify \
        -PbigtableIntegrationTest \
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
@@ -89,7 +89,7 @@ infrequent product and client library announcements.
    Use the following command to run the Cloud Bigtable integration tests for HBase 2:
 
    ```sh
-   mvn clean integration-test \
+   mvn clean verify \
        -PbigtableIntegrationTestH2 \
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
@@ -97,10 +97,10 @@ infrequent product and client library announcements.
    
    There are also tests that perform compatibility tests against an HBase Minicluster, which can be invoked with the following commands for HBase 1 and HBase 2 respectively: 
    ```sh
-   mvn clean integration-test -PhbaseLocalMiniClusterTest
+   mvn clean verify -PhbaseLocalMiniClusterTest
    ```
    ```sh
-   mvn clean integration-test -PhbaseLocalMiniClusterTestH2
+   mvn clean verify -PhbaseLocalMiniClusterTestH2
    ```
 
 
