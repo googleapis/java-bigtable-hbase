@@ -18,6 +18,10 @@ package com.google.cloud.bigtable.hbase;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.bigtable.v2.CheckAndMutateRowRequest;
+import com.google.bigtable.v2.CheckAndMutateRowResponse;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
 import java.io.IOException;
@@ -61,8 +65,6 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.Message;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 
-import com.google.bigtable.v2.CheckAndMutateRowRequest;
-import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
@@ -115,6 +117,7 @@ public abstract class AbstractBigtableTable implements Table {
   protected final HBaseRequestAdapter hbaseAdapter;
 
   protected final BigtableDataClient client;
+  protected final IBigtableDataClient bigtableDataClient;
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
@@ -133,6 +136,7 @@ public abstract class AbstractBigtableTable implements Table {
     BigtableSession session = bigtableConnection.getSession();
     this.options = session.getOptions();
     this.client = session.getDataClient();
+    this.bigtableDataClient = session.getBigtableDataClient();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
     this.requestContext = RequestContext.create(
@@ -409,8 +413,8 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("delete(Delete)");
     Span span = TRACER.spanBuilder("BigtableTable.delete").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      MutateRowRequest request = hbaseAdapter.adapt(delete);
-      client.mutateRow(request);
+      RowMutation rowMutation = hbaseAdapter.adapt(delete);
+      bigtableDataClient.mutateRow(rowMutation);
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("delete", delete.getRow(), t);

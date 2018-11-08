@@ -135,12 +135,13 @@ public class HBaseRequestAdapter {
    * <p>adapt.</p>
    *
    * @param delete a {@link org.apache.hadoop.hbase.client.Delete} object.
-   * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   * @return a {@link RowMutation} object.
    */
-  public MutateRowRequest adapt(Delete delete) {
-    RowMutation rowMutation = newRowMutationModel(delete.getRow());
-    adapt(delete, rowMutation);
-    return rowMutation.toProto(requestContext);
+  public RowMutation adapt(Delete delete) {
+    RowMutation rowMutation = RowMutation
+        .create(bigtableTableName.getTableId(), ByteString.copyFrom(delete.getRow()));
+    Adapters.DELETE_ADAPTER.adapt(delete, rowMutation);
+    return rowMutation;
   }
 
   /**
