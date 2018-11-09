@@ -29,12 +29,16 @@ import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
  */
 public class FirstKeyOnlyFilterAdapter extends TypedFilterAdapterBase<FirstKeyOnlyFilter> {
 
-  private static RowFilter LIMIT_ONE = FILTERS.limit().cellsPerRow(1).toProto();
+  private static RowFilter FILTER =
+      FILTERS.chain()
+          .filter(FILTERS.limit().cellsPerRow(1))
+          .filter(FILTERS.value().strip())
+          .toProto();
 
   /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, FirstKeyOnlyFilter filter) {
-    return LIMIT_ONE;
+    return FILTER;
   }
 
   /** {@inheritDoc} */
