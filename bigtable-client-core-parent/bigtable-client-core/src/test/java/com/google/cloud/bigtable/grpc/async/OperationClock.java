@@ -15,10 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.NanoClock;
 import com.google.api.core.ApiClock;
-import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.common.annotations.VisibleForTesting;
 import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -42,6 +41,11 @@ public class OperationClock implements ApiClock {
 
   public OperationClock() {
     this.timeNs = System.nanoTime();
+  }
+
+  @VisibleForTesting
+  void setTime(long time, TimeUnit timeUnit) {
+    this.timeNs = timeUnit.toNanos(time);
   }
 
   @Override
