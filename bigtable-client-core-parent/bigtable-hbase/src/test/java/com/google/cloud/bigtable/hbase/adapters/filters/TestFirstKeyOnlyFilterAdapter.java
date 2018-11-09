@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import com.google.bigtable.v2.RowFilter;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -36,9 +38,10 @@ public class TestFirstKeyOnlyFilterAdapter {
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(new Scan(), null), new FirstKeyOnlyFilter());
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setCellsPerRowLimitFilter(1)
-            .build(),
+        FILTERS.chain()
+            .filter(FILTERS.value().strip())
+            .filter(FILTERS.limit().cellsPerRow(1))
+            .toProto(),
         adaptedFilter);
   }
 }

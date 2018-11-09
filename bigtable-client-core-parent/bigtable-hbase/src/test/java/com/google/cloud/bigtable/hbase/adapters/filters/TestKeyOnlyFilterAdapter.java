@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import java.io.IOException;
 
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.junit.Assert;
@@ -26,6 +27,8 @@ import org.junit.runners.JUnit4;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
+
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 @RunWith(JUnit4.class)
 public class TestKeyOnlyFilterAdapter {
@@ -38,10 +41,12 @@ public class TestKeyOnlyFilterAdapter {
   public void stripValuesIsApplied() throws IOException {
     KeyOnlyFilter filter = new KeyOnlyFilter();
     RowFilter rowFilter = filterAdapter.adapt(emptyScanContext, filter);
-    Chain chain = rowFilter.getChain();
-    Assert.assertTrue(
-        chain.getFilters(0).getStripValueTransformer()
-            || chain.getFilters(1).getStripValueTransformer());
+    Filters f = Filters.FILTERS;
+    Assert.assertEquals(rowFilter,
+        f.chain()
+            .filter(f.limit().cellsPerColumn(1))
+            .filter(f.value().strip())
+            .toProto());
   }
 
   @Test
