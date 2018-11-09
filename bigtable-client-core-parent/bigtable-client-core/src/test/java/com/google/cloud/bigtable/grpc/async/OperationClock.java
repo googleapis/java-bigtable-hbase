@@ -47,6 +47,7 @@ public class OperationClock implements ApiClock {
   void setTime(long time, TimeUnit timeUnit) {
     this.timeNs = timeUnit.toNanos(time);
   }
+
   @Override
   public synchronized long nanoTime() {
     return timeNs + totalSleepTimeNs;
