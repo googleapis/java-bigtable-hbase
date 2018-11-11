@@ -26,21 +26,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-
 @RunWith(JUnit4.class)
 public class TestFirstKeyOnlyFilterAdapter {
 
-  FirstKeyOnlyFilterAdapter adapter = new FirstKeyOnlyFilterAdapter();
+  private final static FirstKeyOnlyFilterAdapter adapter = new FirstKeyOnlyFilterAdapter();
 
   @Test
-  public void onlyTheFirstKeyFromEachRowIsEmitted() throws IOException {
+  public void onlyTheFirstKeyFromEachRowIsEmitted() {
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(new Scan(), null), new FirstKeyOnlyFilter());
     Assert.assertEquals(
         FILTERS.chain()
-            .filter(FILTERS.value().strip())
             .filter(FILTERS.limit().cellsPerRow(1))
+            .filter(FILTERS.value().strip())
             .toProto(),
         adaptedFilter);
   }

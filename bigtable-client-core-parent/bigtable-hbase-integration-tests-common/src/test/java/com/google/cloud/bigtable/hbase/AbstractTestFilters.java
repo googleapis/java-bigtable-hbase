@@ -1370,9 +1370,6 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Get get = new Get(rowKey).setFilter(filter);
     Result result = table.get(get);
     Assert.assertEquals("Should only return 1 keyvalue", 1, result.size());
-    // The following is true for Bigtable, but not HBase.
-//    Assert.assertEquals("Should only have 0 bytes", 0,
-//        result.rawCells()[0].getValueLength());
 
     table.close();
   }
@@ -1386,8 +1383,9 @@ public abstract class AbstractTestFilters extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numCols; ++i) {
-      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), 100L, Bytes.toBytes(goodValue));
-      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), 5000L, Bytes.toBytes(goodValue));
+      byte[] qual = dataHelper.randomData("");
+      put.addColumn(COLUMN_FAMILY, qual, 100L, Bytes.toBytes(goodValue));
+      put.addColumn(COLUMN_FAMILY, qual, 5000L, Bytes.toBytes(goodValue));
     }
     table.put(put);
 
