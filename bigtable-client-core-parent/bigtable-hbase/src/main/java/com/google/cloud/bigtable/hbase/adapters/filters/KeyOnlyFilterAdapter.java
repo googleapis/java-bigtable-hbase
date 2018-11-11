@@ -42,7 +42,7 @@ public class KeyOnlyFilterAdapter extends TypedFilterAdapterBase<KeyOnlyFilter> 
 
   private static RowFilter KEY_ONLY_FILTER =
       FILTERS.chain()
-          .filter(FILTERS.limit().cellsPerRow(1))
+          .filter(FILTERS.limit().cellsPerColumn(1))
           .filter(FILTERS.value().strip())
           .toProto();
 

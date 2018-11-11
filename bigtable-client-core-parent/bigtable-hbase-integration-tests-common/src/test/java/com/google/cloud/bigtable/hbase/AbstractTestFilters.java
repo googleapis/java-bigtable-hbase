@@ -1383,7 +1383,9 @@ public abstract class AbstractTestFilters extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numCols; ++i) {
-      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(goodValue));
+      byte[] qual = dataHelper.randomData("");
+      put.addColumn(COLUMN_FAMILY, qual, 100L, Bytes.toBytes(goodValue));
+      put.addColumn(COLUMN_FAMILY, qual, 5000L, Bytes.toBytes(goodValue));
     }
     table.put(put);
 
@@ -1393,6 +1395,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Get get = new Get(rowKey).setFilter(filter);
     Result result = table.get(get);
     Cell[] cells = result.rawCells();
+    Assert.assertEquals("Should return " + numCols + " cells", numCols, cells.length);
     for (Cell cell : cells) {
       Assert.assertEquals(
           "Should NOT have a length.",
