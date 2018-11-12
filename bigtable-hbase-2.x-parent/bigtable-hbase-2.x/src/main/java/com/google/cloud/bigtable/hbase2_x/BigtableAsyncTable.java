@@ -15,7 +15,6 @@ d * Copyright 2017 Google Inc. All Rights Reserved.
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toList;
 
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;

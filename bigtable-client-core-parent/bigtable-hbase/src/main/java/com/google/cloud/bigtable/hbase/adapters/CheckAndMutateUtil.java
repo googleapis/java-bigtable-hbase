@@ -229,7 +229,9 @@ public class CheckAndMutateUtil {
         }
         conditionalRowMutation.then(mutations);
       }
-      conditionalRowMutation.condition(FILTERS.fromProto(Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS)));
+      conditionalRowMutation.condition(
+          FILTERS.fromProto(Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS))
+      );
 
       return conditionalRowMutation;
     }
