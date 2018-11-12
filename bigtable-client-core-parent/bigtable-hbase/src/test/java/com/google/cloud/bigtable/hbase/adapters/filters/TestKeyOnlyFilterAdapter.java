@@ -42,6 +42,12 @@ public class TestKeyOnlyFilterAdapter {
     Assert.assertTrue(
         chain.getFilters(0).getStripValueTransformer()
             || chain.getFilters(1).getStripValueTransformer());
+    Filters.Filter filters = filterAdapter.adapt(emptyScanContext, filter);
+    Filters f = Filters.FILTERS;
+    Assert.assertEquals(filters.toProto(),
+        f.chain()
+            .filter(f.limit().cellsPerColumn(1))
+            .filter(f.value().strip()).toProto());
   }
 
   @Test

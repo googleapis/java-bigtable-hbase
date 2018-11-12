@@ -68,13 +68,13 @@ public class FilterListAdapter
         return childFilters.get(0);
       } else if (filter.getOperator() == Operator.MUST_PASS_ALL) {
         ChainFilter chain = FILTERS.chain();
-        for(Filters.Filter filterModel: childFilters) {
+        for (Filters.Filter filterModel : childFilters) {
           chain.filter(filterModel);
         }
         return chain;
       } else {
         InterleaveFilter interleave = FILTERS.interleave();
-        for(Filters.Filter filterModel: childFilters) {
+        for (Filters.Filter filterModel : childFilters) {
           interleave.filter(filterModel);
         }
         return interleave;

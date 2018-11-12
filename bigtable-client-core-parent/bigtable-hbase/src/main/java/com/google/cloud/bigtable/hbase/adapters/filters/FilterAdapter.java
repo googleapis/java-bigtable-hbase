@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
@@ -107,6 +108,7 @@ public class FilterAdapter {
         org.apache.hadoop.hbase.filter.RowFilter.class, new RowFilterAdapter());
     adapter.addFilterAdapter(FuzzyRowFilter.class, new FuzzyRowFilterAdapter());
     adapter.addFilterAdapter(FamilyFilter.class, new FamilyFilterAdapter());
+    adapter.addFilterAdapter(BigtableFilter.class, new BigtableFilterAdapter());
 
     // MultiRowRangeFilter only exists in hbase >= 1.1
     try {

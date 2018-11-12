@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
@@ -41,12 +41,16 @@ public class KeyOnlyFilterAdapter extends TypedFilterAdapterBase<KeyOnlyFilter> 
       1L,
       Bytes.toBytes('v'));
 
+
+  private static Filters.Filter KEY_ONLY_FILTER =
+      FILTERS.chain()
+          .filter(FILTERS.limit().cellsPerColumn(1))
+          .filter(FILTERS.value().strip());
+
   /** {@inheritDoc} */
   @Override
-  public Filter adapt(FilterAdapterContext context, KeyOnlyFilter filter) throws IOException {
-    return FILTERS.chain()
-        .filter(FILTERS.limit().cellsPerRow(1))
-        .filter(FILTERS.value().strip());
+  public Filters.Filter adapt(FilterAdapterContext context, KeyOnlyFilter filter) throws IOException {
+    return KEY_ONLY_FILTER;
   }
 
   /** {@inheritDoc} */

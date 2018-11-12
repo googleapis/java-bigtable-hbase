@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,33 +17,25 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.cloud.bigtable.data.v2.models.Filters;
+import java.io.IOException;
 
-import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
+import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 
 /**
- * Adapter for FirstKeyOnlyFilter to RowFilter.
- *
- * @author sduskis
- * @version $Id: $Id
+ * Converts a {@link BigtableFilter} to a {@link RowFilter}.
  */
-public class FirstKeyOnlyFilterAdapter extends TypedFilterAdapterBase<FirstKeyOnlyFilter> {
+public class BigtableFilterAdapter extends TypedFilterAdapterBase<BigtableFilter> {
 
-
-  private static Filters.Filter LIMIT_ONE = FILTERS.chain()
-      .filter(FILTERS.limit().cellsPerRow(1))
-      .filter(FILTERS.value().strip());
-
-  /** {@inheritDoc} */
   @Override
-  public Filters.Filter adapt(FilterAdapterContext context, FirstKeyOnlyFilter filter) {
-    return LIMIT_ONE;
+  public Filter adapt(FilterAdapterContext context, BigtableFilter filter) throws IOException {
+    return FILTERS.fromProto(filter.getRowFilter());
   }
-
-  /** {@inheritDoc} */
+  
   @Override
   public FilterSupportStatus isFilterSupported(FilterAdapterContext context,
-      FirstKeyOnlyFilter filter) {
+      BigtableFilter filter) {
     return FilterSupportStatus.SUPPORTED;
   }
 }

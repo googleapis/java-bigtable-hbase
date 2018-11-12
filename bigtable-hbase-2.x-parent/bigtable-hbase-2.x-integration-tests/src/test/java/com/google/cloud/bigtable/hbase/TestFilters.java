@@ -15,8 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -64,6 +68,33 @@ public class TestFilters extends AbstractTestFilters {
     table.close();
   }
   
+  @Test
+  public void testBigtableFilter() throws IOException {
+    if (!sharedTestEnv.isBigtable()) {
+      return;
+    }
+
+    byte[] rowKey = dataHelper.randomData("cbt-filter-");
+    byte[] qualA = Bytes.toBytes("a");
+    byte[] qualB = Bytes.toBytes("b");
+    byte[] valA = dataHelper.randomData("a");
+    byte[] valB = dataHelper.randomData("b");
+
+    try(Table table = getDefaultTable()){
+      table.put(new Put(rowKey)
+        .addColumn(COLUMN_FAMILY, qualA, valA)
+        .addColumn(COLUMN_FAMILY, qualB, valB));
+
+      Filters.Filter qualAFilter =
+          Filters.FILTERS.qualifier().exactMatch(ByteString.copyFrom(qualA));
+      BigtableFilter bigtableFilter = new BigtableFilter(qualAFilter);
+      Result result = table.get(new Get(rowKey).setFilter(bigtableFilter));
+
+      Assert.assertEquals(1, result.size());
+      Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], valA));
+    }
+  }
+
   /**
    * This test case is used to validate TimestampRangeFilter with Integer.MAX_VALUE #1552
    * 
@@ -71,31 +102,31 @@ public class TestFilters extends AbstractTestFilters {
    */
   @Test
   public void testTimestampRangeFilterWithMaxVal() throws IOException {
-	    // Initialize
-	    long numCols = Integer.MAX_VALUE;
-	    long start = Integer.MAX_VALUE - 2;
-	    String goodValue = "includeThisValue";
-	    Table table = getDefaultTable();
-	    byte[] rowKey = dataHelper.randomData("testRow-TimestampRange-");
-	    Put put = new Put(rowKey);
-	    for (long i = start; i < numCols; ++i) {
-	      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
-	    }
-	    table.put(put);
+      // Initialize
+      long numCols = Integer.MAX_VALUE;
+      long start = Integer.MAX_VALUE - 2;
+      String goodValue = "includeThisValue";
+      Table table = getDefaultTable();
+      byte[] rowKey = dataHelper.randomData("testRow-TimestampRange-");
+      Put put = new Put(rowKey);
+      for (long i = start; i < numCols; ++i) {
+        put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
+      }
+      table.put(put);
 
-	    Filter filter = new TimestampRangeFilter(start, Integer.MAX_VALUE);
-	    
-	    Get get = new Get(rowKey).setFilter(filter);
-	    Result result = table.get(get);
-	    Cell[] cells = result.rawCells();
-	    Assert.assertEquals("Should have all cells.", 2, cells.length);
+      Filter filter = new TimestampRangeFilter(start, Integer.MAX_VALUE);
 
-	    long[] timestamps =
-	        new long[] { cells[0].getTimestamp(), cells[1].getTimestamp() };
-	    Arrays.sort(timestamps);
-	    Assert.assertArrayEquals(new long[] { start, Integer.MAX_VALUE-1 }, timestamps);
+      Get get = new Get(rowKey).setFilter(filter);
+      Result result = table.get(get);
+      Cell[] cells = result.rawCells();
+      Assert.assertEquals("Should have all cells.", 2, cells.length);
 
-	    table.close();
+      long[] timestamps =
+          new long[] { cells[0].getTimestamp(), cells[1].getTimestamp() };
+      Arrays.sort(timestamps);
+      Assert.assertArrayEquals(new long[] { start, Integer.MAX_VALUE-1 }, timestamps);
+
+      table.close();
   }
   
   @Override
