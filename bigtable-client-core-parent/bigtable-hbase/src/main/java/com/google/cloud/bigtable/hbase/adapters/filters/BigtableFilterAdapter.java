@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
-
 import java.io.IOException;
 
 import com.google.bigtable.v2.RowFilter;
@@ -30,9 +28,9 @@ public class BigtableFilterAdapter extends TypedFilterAdapterBase<BigtableFilter
 
   @Override
   public Filter adapt(FilterAdapterContext context, BigtableFilter filter) throws IOException {
-    return FILTERS.fromProto(filter.getRowFilter());
+    return filter.getFilter();
   }
-  
+
   @Override
   public FilterSupportStatus isFilterSupported(FilterAdapterContext context,
       BigtableFilter filter) {
