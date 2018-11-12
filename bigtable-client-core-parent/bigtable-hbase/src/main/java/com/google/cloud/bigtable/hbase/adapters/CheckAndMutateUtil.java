@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.adapters;
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
-import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
@@ -85,8 +84,8 @@ public class CheckAndMutateUtil {
   public static class RequestBuilder {
     private final HBaseRequestAdapter hbaseAdapter;
 
-    private final com.google.cloud.bigtable.data.v2.models.Mutation mutations = com.google.cloud.bigtable.data.v2.models.Mutation
-        .createUnsafe();
+    private final com.google.cloud.bigtable.data.v2.models.Mutation mutations =
+        com.google.cloud.bigtable.data.v2.models.Mutation.createUnsafe();
 
     private final byte[] row;
     private final byte[] family;
