@@ -16,9 +16,11 @@
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.common.base.Throwables;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ForkJoinPool;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.FileBasedSource;
@@ -82,6 +84,11 @@ class CreateTableHelper {
     @Description("The families to add to the new table")
     List<String> getFamilies();
     void setFamilies(List<String> families);
+
+    @Description("Number of threads to use when probing files for splits")
+    @Default.Integer(100)
+    int getSplitConcurrency();
+    void setSplitConcurrency(int threads);
   }
 
   public static void main(String[] args) throws Exception {
@@ -109,23 +116,30 @@ class CreateTableHelper {
         .split(ImportJob.BUNDLE_SIZE, opts);
 
     // Read the start key of each split
-    byte[][] splits = splitSources.stream()
-        .parallel()
-        .map(splitSource -> {
-          try (BoundedReader<KV<ImmutableBytesWritable, Result>> reader = splitSource
-              .createReader(opts)) {
-            if (reader.start()) {
-              return reader.getCurrent().getKey();
-            }
-          } catch (Exception e) {
-            Throwables.propagate(e);
-          }
-          return null;
-        })
-        .filter(Objects::nonNull)
-        .sorted()
-        .map(ImmutableBytesWritable::copyBytes)
-        .toArray(byte[][]::new);
+    ForkJoinPool forkJoinPool = new ForkJoinPool(opts.getSplitConcurrency());
+
+    byte[][] splits = forkJoinPool.submit(new Callable<byte[][]>() {
+      @Override
+      public byte[][] call() {
+        return splitSources.stream()
+            .parallel()
+            .map(splitSource -> {
+              try (BoundedReader<KV<ImmutableBytesWritable, Result>> reader = splitSource
+                  .createReader(opts)) {
+                if (reader.start()) {
+                  return reader.getCurrent().getKey();
+                }
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              return null;
+            })
+            .filter(Objects::nonNull)
+            .sorted()
+            .map(ImmutableBytesWritable::copyBytes)
+            .toArray(byte[][]::new);
+      }
+    }).get();
 
     LOG.info(String.format("Creating a new table with %d splits and the families: %s",
         splits.length, opts.getFamilies()));
