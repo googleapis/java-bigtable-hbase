@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
 import java.io.IOException;
@@ -147,7 +148,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
         byte[] row, byte[] family) {
       this.client = client;
       this.builder = new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
-      this.requestContext = RequestContext.create(InstanceName.of("projectId", "instanceId"), "appProfileId");
+      BigtableTableName bigtableTableName = hbaseAdapter.getBigtableTableName();
+      this.requestContext = RequestContext.create(
+          InstanceName.of(bigtableTableName.getProjectId(), bigtableTableName.getInstanceId()), "");
     }
 
     /**
