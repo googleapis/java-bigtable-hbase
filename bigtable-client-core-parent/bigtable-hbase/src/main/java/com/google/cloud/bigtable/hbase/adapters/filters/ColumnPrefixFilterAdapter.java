@@ -17,12 +17,12 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
+import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
@@ -41,11 +41,13 @@ public class ColumnPrefixFilterAdapter extends TypedFilterAdapterBase<ColumnPref
     byte[] prefix = filter.getPrefix();
 
     // Quoting for RE2 can result in at most length * 2 characters written. Pre-allocate
-    // that much space in the ByteArrayOutputStream to prevent reallocation later.
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(prefix.length * 2);
-    ReaderExpressionHelper.writeQuotedRegularExpression(outputStream, prefix);
+    // that much space in the ByteString.Output to prevent reallocation later.
+    ByteString.Output outputStream = ByteString.newOutput(prefix.length * 2);
+    ReaderExpressionHelper.writeQuotedExpression(outputStream, prefix);
     outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
-    return FILTERS.chain().filter(FILTERS.qualifier().regex(outputStream.toString()));
+    Filter qualifierFilter = FILTERS.qualifier().regex(outputStream.toByteString());
+
+    return FILTERS.chain().filter(qualifierFilter);
   }
 
   /** {@inheritDoc} */

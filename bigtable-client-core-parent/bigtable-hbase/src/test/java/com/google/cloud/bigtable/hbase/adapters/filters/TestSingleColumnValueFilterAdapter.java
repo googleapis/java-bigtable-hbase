@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.bigtable.v2.RowFilter.Condition;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.protobuf.ByteString;
 
@@ -166,8 +167,9 @@ public class TestSingleColumnValueFilterAdapter  {
       byte[] value,
       boolean latestOnly,
       Filters.Filter adaptedFilter) throws IOException {
-    Condition cellSetCondition = adaptedFilter.toProto().getInterleave().getFilters(0).getCondition();
-    Condition cellUnsetCondition = adaptedFilter.toProto().getInterleave().getFilters(1).getCondition();
+    Interleave interleaveFilter = adaptedFilter.toProto().getInterleave();
+    Condition cellSetCondition = interleaveFilter.getFilters(0).getCondition();
+    Condition cellUnsetCondition = interleaveFilter.getFilters(1).getCondition();
 
     // ---------------  Check the conditions -------------------/
 

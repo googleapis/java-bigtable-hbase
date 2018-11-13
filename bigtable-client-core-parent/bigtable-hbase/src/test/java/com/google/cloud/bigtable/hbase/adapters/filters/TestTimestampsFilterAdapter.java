@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.common.collect.ImmutableList;
 
@@ -37,18 +38,17 @@ public class TestTimestampsFilterAdapter {
     // Timestamps are sorted by the filter min -> max
     TimestampsFilter filter = new TimestampsFilter(ImmutableList.of(1L, 10L, 20L));
     Filters.Filter expected = filterAdapter.adapt(emptyScanContext, filter);
-    Assert.assertEquals(3, expected.toProto().getInterleave().getFiltersCount());
+    Interleave expectedInterleaveFilter = expected.toProto().getInterleave();
+    Assert.assertEquals(3, expectedInterleaveFilter.getFiltersCount());
     Assert.assertEquals(
         10000L,
-        expected.toProto()
-            .getInterleave()
+        expectedInterleaveFilter
             .getFilters(1)
             .getTimestampRangeFilter()
             .getStartTimestampMicros());
     Assert.assertEquals(
         11000L,
-        expected.toProto()
-            .getInterleave()
+        expectedInterleaveFilter
             .getFilters(1)
             .getTimestampRangeFilter()
             .getEndTimestampMicros());
