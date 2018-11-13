@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
@@ -149,8 +148,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       this.client = client;
       this.builder = new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
       BigtableTableName bigtableTableName = hbaseAdapter.getBigtableTableName();
-      this.requestContext = RequestContext.create(
-          InstanceName.of(bigtableTableName.getProjectId(), bigtableTableName.getInstanceId()), "");
+      // Once the IBigtableDataClient interface is implemented this will be removed
+      this.requestContext = RequestContext.create(bigtableTableName.toGcbInstanceName(), "");
     }
 
     /**
@@ -233,8 +232,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
     private CompletableFuture<Boolean> call()
         throws IOException {
-      ConditionalRowMutation conditionalRowMutation = builder.build();
-      CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
+      CheckAndMutateRowRequest request = builder.build().toProto(requestContext);
       return client.checkAndMutateRowAsync(request).thenApply(
         response -> CheckAndMutateUtil.wasMutationApplied(request, response));
     }
