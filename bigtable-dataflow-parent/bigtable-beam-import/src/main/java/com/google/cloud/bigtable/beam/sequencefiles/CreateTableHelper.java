@@ -124,10 +124,8 @@ class CreateTableHelper {
     // Read the start key of each split
     ForkJoinPool forkJoinPool = new ForkJoinPool(opts.getSplitConcurrency());
 
-    byte[][] splits = forkJoinPool.submit(new Callable<byte[][]>() {
-      @Override
-      public byte[][] call() {
-        return splitSources.stream()
+    byte[][] splits = forkJoinPool.submit(() ->
+        splitSources.stream()
             .parallel()
             .map(splitSource -> {
               try (BoundedReader<KV<ImmutableBytesWritable, Result>> reader = splitSource
@@ -143,9 +141,8 @@ class CreateTableHelper {
             .filter(Objects::nonNull)
             .sorted()
             .map(ImmutableBytesWritable::copyBytes)
-            .toArray(byte[][]::new);
-      }
-    }).get();
+            .toArray(byte[][]::new)
+    ).get();
 
     LOG.info(String.format("Creating a new table with %d splits and the families: %s",
         splits.length, opts.getFamilies()));
