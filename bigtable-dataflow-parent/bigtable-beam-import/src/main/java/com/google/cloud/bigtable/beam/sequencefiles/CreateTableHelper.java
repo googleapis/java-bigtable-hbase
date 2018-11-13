@@ -28,6 +28,7 @@ import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.options.Validation;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.values.KV;
 import org.apache.commons.logging.Log;
@@ -61,27 +62,32 @@ class CreateTableHelper {
   interface CreateTableOpts extends GcpOptions {
     @Description("The project that contains the table to export. Defaults to --project.")
     @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
+    @Validation.Required
     String getBigtableProject();
     @SuppressWarnings("unused")
     void setBigtableProject(String projectId);
 
     @Description("The Bigtable instance id that contains the table to export.")
+    @Validation.Required
     String getBigtableInstanceId();
     @SuppressWarnings("unused")
     void setBigtableInstanceId(String instanceId);
 
     @Description("The Bigtable table id to export.")
+    @Validation.Required
     String getBigtableTableId();
     @SuppressWarnings("unused")
     void setBigtableTableId(String tableId);
 
     @Description(
         "The fully qualified file pattern to import. Should of the form '[destinationPath]/part-*'")
+    @Validation.Required
     String getSourcePattern();
     @SuppressWarnings("unused")
     void setSourcePattern(String sourcePath);
 
     @Description("The families to add to the new table")
+    @Validation.Required
     List<String> getFamilies();
     void setFamilies(List<String> families);
 
