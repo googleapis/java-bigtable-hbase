@@ -65,15 +65,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.GcRule;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
-import com.google.cloud.bigtable.admin.v2.models.GCRules;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.util.concurrent.Futures;
@@ -173,20 +170,17 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     return response;
   }
 
-
   /**
    * {@inheritDoc}
    * 
    * Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
    * Copying the same code here. //TODO - need to find a better way
    */
-  // TODO(rahulkql): confirm if above case is still valid
   @Override
   public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest modifyColumnRequest =
-        com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest
-            .of(tableName.getNameAsString());
+    ModifyColumnFamiliesRequest modifyColumnRequest =
+        ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
 
     modifyColumnRequest.addFamily(columnFamilyDesc.getNameAsString(),
       buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
@@ -200,12 +194,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    * Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
    * Copying the same code here. //TODO - need to find a better way 
    */
-  // TODO(rahulkql): confirm if above case is still valid
   @Override
   public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest modifyColumnRequest =
-        com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest
+    ModifyColumnFamiliesRequest modifyColumnRequest =
+        ModifyColumnFamiliesRequest
             .of(tableName.getNameAsString());
 
     modifyColumnRequest.updateFamily(columnFamilyDesc.getNameAsString(),
@@ -279,15 +272,16 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     return asyncAdmin.deleteColumnFamily(tableName, columnName);
   }
 
-
   protected CompletableFuture<Void> modifyColumnsAsync(TableName tableName, Modification... modifications) {
-    ModifyColumnFamiliesRequest modifyColumnRequest = ModifyColumnFamiliesRequest
-        .newBuilder()
-        .addAllModifications(Arrays.asList(modifications))
-        .setName(toBigtableName(tableName))
-        .build();
+    ModifyColumnFamiliesRequest modifyColumnRequest =
+        ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
+
+    com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest modifyColumnProto =
+        modifyColumnRequest.toProto(instanceName);
+    modifyColumnProto.getModificationsList().addAll(Arrays.asList(modifications));
+
     return FutureUtils.toCompletableFuture(
-        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnRequest))
+        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnProto))
         .thenApply(r -> null);
   }
 

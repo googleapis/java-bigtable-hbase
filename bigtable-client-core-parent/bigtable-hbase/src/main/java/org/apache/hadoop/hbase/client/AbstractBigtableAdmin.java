@@ -359,7 +359,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
       String columnName = column.getNameAsString();
-      // GcRule gcRuleProto = buildGarbageCollectionRule(column);
       createReq.addFamily(columnName, buildGarbageCollectionRule(column));
     }
     if (splitKeys != null) {
@@ -375,7 +374,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @param createTableRequest a {@link CreateTableRequest} object to send.
    * @throws java.io.IOException if any.
    */
-  // TODO(rahulkql): Update bigtableTableAdminClient to use admin.v2.BigtableTableAdminClient
   protected void createTable(TableName tableName, CreateTableRequest createTableRequest)
       throws IOException {
     try {
@@ -409,7 +407,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @param tableName a {@link TableName} object for exception identification.
    * @throws java.io.IOException if any.
    */
-  // TODO(rahulkql): Update bigtableTableAdminClient to use admin.v2.BigtableTableAdminClient
   protected ListenableFuture<Table> createTableAsync(CreateTableRequest createTableRequest,
       final TableName tableName) throws IOException {
     ListenableFuture<Table> future =
@@ -668,7 +665,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @param builder a {@link ModifyTableBuilder} object to send.
    * @throws java.io.IOException if any.
    */
-  // TODO(rahulkql): remove this once updating hbase2_x.BigtableAdmin#modifyTableAsync
   protected Void modifyColumns(TableName tableName, String columnName,
       String modificationType, ModifyTableBuilder builder) throws IOException {
 
@@ -692,7 +688,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
    *          object to send.
    * @throws java.io.IOException if any.
    */
-  // TODO(rahulkql): Update bigtableTableAdminClient to use admin.v2.BigtableTableAdminClient
   protected Void modifyColumns(ModifyColumnFamiliesRequest modifyReq) throws IOException {
     
     try {
