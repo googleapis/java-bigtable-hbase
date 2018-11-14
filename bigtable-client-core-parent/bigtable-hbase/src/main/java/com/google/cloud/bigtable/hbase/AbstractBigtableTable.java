@@ -15,11 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
-import com.google.bigtable.v2.CheckAndMutateRowRequest;
-import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import io.opencensus.common.Scope;
@@ -45,6 +41,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -121,8 +118,6 @@ public abstract class AbstractBigtableTable implements Table {
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
-  // Once the IBigtableDataClient interface is implemented this will be removed
-  protected final RequestContext requestContext;
 
   /**
    * Constructed by BigtableConnection
@@ -139,9 +134,6 @@ public abstract class AbstractBigtableTable implements Table {
     this.bigtableDataClient = session.getBigtableDataClient();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
-    this.requestContext = RequestContext.create(
-        InstanceName.of(options.getProjectId(), options.getInstanceId()),
-        options.getAppProfileId());
   }
 
   /** {@inheritDoc} */
@@ -355,17 +347,8 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
-    MutateRowRequest request = hbaseAdapter.adapt(put);
-    Span span = TRACER.spanBuilder("BigtableTable.put").startSpan();
-    try (Scope scope = TRACER.withSpan(span);
-        Timer.Context timerContext = metrics.putTimer.time()) {
-      client.mutateRow(request);
-    } catch (Throwable t) {
-      span.setStatus(Status.UNKNOWN);
-      throw logAndCreateIOException("put", put.getRow(), t);
-    } finally{
-      span.end();
-    }
+    RowMutation rowMutation = hbaseAdapter.adapt(put);
+    mutateRow(put, rowMutation, "put");
   }
 
   /** {@inheritDoc} */
@@ -411,16 +394,8 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
-    Span span = TRACER.spanBuilder("BigtableTable.delete").startSpan();
-    try (Scope scope = TRACER.withSpan(span)) {
-      RowMutation rowMutation = hbaseAdapter.adapt(delete);
-      bigtableDataClient.mutateRow(rowMutation);
-    } catch (Throwable t) {
-      span.setStatus(Status.UNKNOWN);
-      throw logAndCreateIOException("delete", delete.getRow(), t);
-    } finally {
-      span.end();
-    }
+    RowMutation rowMutation = hbaseAdapter.adapt(delete);
+    mutateRow(delete, rowMutation, "delete");
   }
 
   /** {@inheritDoc} */
@@ -476,12 +451,22 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      CheckAndMutateRowRequest checkAndMutateRowRequest = request.toProto(requestContext);
-      CheckAndMutateRowResponse response = client.checkAndMutateRow(checkAndMutateRowRequest);
-      return CheckAndMutateUtil.wasMutationApplied(checkAndMutateRowRequest, response);
+      return bigtableDataClient.checkAndMutateRow(request);
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, row, t);
+    } finally {
+      span.end();
+    }
+  }
+
+  public void mutateRow(Mutation mutation, RowMutation rowMutation, String type) throws IOException {
+    Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
+    try(Scope scope = TRACER.withSpan(span)) {
+      bigtableDataClient.mutateRow(rowMutation);
+    } catch (Throwable t) {
+      span.setStatus(Status.UNKNOWN);
+      throw logAndCreateIOException(type, mutation.getRow(), t);
     } finally {
       span.end();
     }

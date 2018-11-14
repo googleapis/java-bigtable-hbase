@@ -29,6 +29,10 @@ import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -36,6 +40,7 @@ import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.protobuf.ByteString;
 
+import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
@@ -83,6 +88,9 @@ public class TestBigtableTable {
   private BigtableDataClient mockClient;
 
   @Mock
+  private IBigtableDataClient mockBigtableDataClient;
+
+  @Mock
   private ResultScanner<FlatRow> mockResultScanner;
 
   public AbstractBigtableTable table;
@@ -110,21 +118,24 @@ public class TestBigtableTable {
     when(mockConnection.getSession()).thenReturn(mockSession);
     when(mockSession.getOptions()).thenReturn(options);
     when(mockSession.getDataClient()).thenReturn(mockClient);
+    when(mockSession.getBigtableDataClient()).thenReturn(mockBigtableDataClient);
     when(mockClient.readFlatRows(isA(ReadRowsRequest.class))).thenReturn(mockResultScanner);
     table = new AbstractBigtableTable(mockConnection, hbaseAdapter){};
   }
 
   @Test
-  public void projectIsPopulatedInMutationRequests() throws IOException {
+  public void projectIsPopulatedInMutationRequests()
+      throws IOException, ExecutionException, InterruptedException {
     table.delete(new Delete(Bytes.toBytes("rowKey1")));
 
-    ArgumentCaptor<MutateRowRequest> argument =
-        ArgumentCaptor.forClass(MutateRowRequest.class);
-    verify(mockClient).mutateRow(argument.capture());
+    ArgumentCaptor<RowMutation> argument =
+        ArgumentCaptor.forClass(RowMutation.class);
+    verify(mockBigtableDataClient).mutateRow(argument.capture());
+    RequestContext requestContext = RequestContext.create(InstanceName.of(TEST_PROJECT, TEST_INSTANCE), "");
 
     Assert.assertEquals(
         "projects/testproject/instances/testinstance/tables/testtable",
-        argument.getValue().getTableName());
+        argument.getValue().toProto(requestContext).getTableName());
   }
 
   @Test

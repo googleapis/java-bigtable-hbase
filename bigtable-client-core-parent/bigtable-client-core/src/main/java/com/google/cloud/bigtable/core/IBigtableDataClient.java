@@ -41,11 +41,9 @@ public interface IBigtableDataClient {
    * Mutate a row atomically.
    *
    * @param rowMutation a {@link RowMutation} model object.
-   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
-   *     successful otherwise exception will be thrown.
-   * @throws InterruptedException if any.
+   * @return a {@link ApiFuture} of type {@link Void} will be set
    */
-  ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
+  ApiFuture<Void> mutateRowAsync(RowMutation rowMutation);
 
   /**
    * Perform an atomic read-modify-write operation on a row.

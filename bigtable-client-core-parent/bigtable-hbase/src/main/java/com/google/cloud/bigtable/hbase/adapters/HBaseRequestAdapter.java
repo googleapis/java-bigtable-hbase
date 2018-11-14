@@ -140,7 +140,7 @@ public class HBaseRequestAdapter {
   public RowMutation adapt(Delete delete) {
     RowMutation rowMutation = RowMutation
         .create(bigtableTableName.getTableId(), ByteString.copyFrom(delete.getRow()));
-    Adapters.DELETE_ADAPTER.adapt(delete, rowMutation);
+    adapt(delete, rowMutation);
     return rowMutation;
   }
 
@@ -223,12 +223,13 @@ public class HBaseRequestAdapter {
    * <p>adapt.</p>
    *
    * @param put a {@link org.apache.hadoop.hbase.client.Put} object.
-   * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   * @return a {@link RowMutation} object.
    */
-  public MutateRowRequest adapt(Put put) {
-    RowMutation rowMutation = newRowMutationModel(put.getRow());
+  public RowMutation adapt(Put put) {
+    RowMutation rowMutation = RowMutation
+        .create(bigtableTableName.getTableId(), ByteString.copyFrom(put.getRow()));
     adapt(put, rowMutation);
-    return rowMutation.toProto(requestContext);
+    return rowMutation;
   }
 
   /**

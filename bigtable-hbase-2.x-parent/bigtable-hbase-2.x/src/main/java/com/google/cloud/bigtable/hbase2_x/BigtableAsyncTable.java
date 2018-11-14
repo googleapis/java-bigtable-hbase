@@ -17,9 +17,8 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import static java.util.stream.Collectors.toList;
 
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
 import java.io.IOException;
@@ -48,8 +47,6 @@ import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 
-import com.google.bigtable.v2.CheckAndMutateRowRequest;
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -85,6 +82,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   private final BigtableAsyncConnection asyncConnection;
   private final BigtableDataClient client;
+  private final IBigtableDataClient bigtableDataClient;
   private final HBaseRequestAdapter hbaseAdapter;
   private final TableName tableName;
   private BatchExecutor batchExecutor;
@@ -94,6 +92,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     this.asyncConnection = asyncConnection;
     BigtableSession session = asyncConnection.getSession();
     this.client = new BigtableDataClient(session.getDataClient());
+    this.bigtableDataClient = ((IBigtableDataClient) client);
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
   }
@@ -140,16 +139,13 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
     private final CheckAndMutateUtil.RequestBuilder builder;
     private final BigtableDataClient client;
-    // Once the IBigtableDataClient interface is implemented this will be removed
-    protected final RequestContext requestContext;
+    private final IBigtableDataClient bigtableDataClient;
 
     public CheckAndMutateBuilderImpl(BigtableDataClient client, HBaseRequestAdapter hbaseAdapter,
         byte[] row, byte[] family) {
       this.client = client;
+      this.bigtableDataClient = ((IBigtableDataClient) client);
       this.builder = new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
-      BigtableTableName bigtableTableName = hbaseAdapter.getBigtableTableName();
-      // Once the IBigtableDataClient interface is implemented this will be removed
-      this.requestContext = RequestContext.create(bigtableTableName.toGcbInstanceName(), "");
     }
 
     /**
@@ -232,9 +228,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
     private CompletableFuture<Boolean> call()
         throws IOException {
-      CheckAndMutateRowRequest request = builder.build().toProto(requestContext);
-      return client.checkAndMutateRowAsync(request).thenApply(
-        response -> CheckAndMutateUtil.wasMutationApplied(request, response));
+      ConditionalRowMutation conditionalRowMutation = builder.build();
+      return FutureUtils.toCompletableFuture(bigtableDataClient.checkAndMutateRowAsync(conditionalRowMutation));
     }
   }
 
@@ -244,8 +239,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Void> delete(Delete delete) {
     // figure out how to time this with Opencensus
-    return client.mutateRowAsync(hbaseAdapter.adapt(delete))
-        .thenApply(r -> null);
+    return FutureUtils
+        .toCompletableFuture(bigtableDataClient.mutateRowAsync(hbaseAdapter.adapt(delete)));
   }
 
   /**
@@ -376,8 +371,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Void> put(Put put) {
     // figure out how to time this with Opencensus
-    return client.mutateRowAsync(hbaseAdapter.adapt(put))
-        .thenApply(r -> null);
+      return FutureUtils.toCompletableFuture(bigtableDataClient.mutateRowAsync(hbaseAdapter.adapt(put)));
   }
 
   /**

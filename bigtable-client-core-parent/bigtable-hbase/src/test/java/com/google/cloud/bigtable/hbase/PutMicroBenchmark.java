@@ -15,9 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -25,6 +27,7 @@ import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 
+import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Put;
@@ -50,6 +53,7 @@ public class PutMicroBenchmark {
   private final static int FAKE_CHANNEL_PUT_COUNT = 100_000;
   private static final int VALUE_SIZE = 100;
   private static BigtableOptions options;
+  private static RequestContext requestContext;
 
   public static void main(String[] args) throws Exception {
     String projectId = args.length > 0 ? args[0] : "project";
@@ -65,12 +69,13 @@ public class PutMicroBenchmark {
     int putCount = useRealConnection ? REAL_CHANNEL_PUT_COUNT : FAKE_CHANNEL_PUT_COUNT;
     HBaseRequestAdapter hbaseAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf(tableId), new Configuration(false));
+    requestContext = RequestContext.create(hbaseAdapter.getBigtableTableName().toGcbInstanceName(), "");
 
     testCreatePuts(10_000);
 
     Put put = createPut();
     System.out.println(String.format("Put size: %d, proto size: %d", put.heapSize(),
-      hbaseAdapter.adapt(put).getSerializedSize()));
+        hbaseAdapter.adapt(put).toProto(requestContext).getSerializedSize()));
     run(hbaseAdapter, put, getChannelPool(useRealConnection), putCount);
   }
 
@@ -122,13 +127,20 @@ public class PutMicroBenchmark {
       final int putCount) throws InterruptedException {
     final BigtableDataClient client = new BigtableDataGrpcClient(cp,
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
+    final IBigtableDataClient bigtableDataClient = ((IBigtableDataClient) client);
 
     Runnable r1 = new Runnable() {
       @Override
       public void run() {
         long start = System.nanoTime();
         for (int i = 0; i < putCount; i++) {
-          client.mutateRow(hbaseAdapter.adapt(put));
+          try {
+            bigtableDataClient.mutateRow(hbaseAdapter.adapt(put));
+          } catch (ExecutionException e) {
+            e.printStackTrace();
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
         }
         print("constantly adapted", start, putCount);
       }
@@ -138,9 +150,15 @@ public class PutMicroBenchmark {
       @Override
       public void run() {
         long start = System.nanoTime();
-        final MutateRowRequest adapted = hbaseAdapter.adapt(put);
+        final RowMutation adapted = hbaseAdapter.adapt(put);
         for (int i = 0; i < putCount; i++) {
-          client.mutateRow(adapted);
+          try {
+            bigtableDataClient.mutateRow(adapted);
+          } catch (ExecutionException e) {
+            e.printStackTrace();
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
         }
         print("preadapted", start, putCount);
       }
