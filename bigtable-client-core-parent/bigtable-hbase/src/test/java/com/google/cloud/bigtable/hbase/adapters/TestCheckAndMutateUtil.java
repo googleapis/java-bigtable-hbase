@@ -113,13 +113,13 @@ public class TestCheckAndMutateUtil {
   public void testPut() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    ConditionalRowMutation conditionalRowMutation = underTest
+    CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
-    CheckAndMutateRowRequest result = conditionalRowMutation.toProto(REQUEST_CONTEXT);
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
     checkPutMutation(result.getTrueMutations(0));
@@ -131,13 +131,13 @@ public class TestCheckAndMutateUtil {
   public void testDelete() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    ConditionalRowMutation conditionalRowMutation = underTest
+    CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withDelete(new Delete(rowKey).addColumns(family, qual))
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
-    CheckAndMutateRowRequest result = conditionalRowMutation.toProto(REQUEST_CONTEXT);
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
     Mutation.DeleteFromColumn delete = result.getTrueMutations(0).getDeleteFromColumn();
@@ -155,13 +155,13 @@ public class TestCheckAndMutateUtil {
     RowMutations rowMutations = new RowMutations(rowKey);
     rowMutations.add(PUT);
 
-    ConditionalRowMutation conditionalRowMutation = underTest
+    CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withMutations(rowMutations)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
-    CheckAndMutateRowRequest result = conditionalRowMutation.toProto(REQUEST_CONTEXT);
     Assert.assertEquals(1, result.getTrueMutationsCount());
     checkPutMutation(result.getTrueMutations(0));
     checkPredicate(result);
@@ -176,13 +176,13 @@ public class TestCheckAndMutateUtil {
   public void testPutServerSideTimestamps() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    ConditionalRowMutation conditionalRowMutation = underTest
+    CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
-    CheckAndMutateRowRequest result = conditionalRowMutation.toProto(REQUEST_CONTEXT);
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
     Mutation.SetCell setCell = result.getTrueMutations(0).getSetCell();
@@ -200,13 +200,13 @@ public class TestCheckAndMutateUtil {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
     long timestamp = (long) (Math.random() * 10000000000L);
-    ConditionalRowMutation conditionalRowMutation = underTest
+    CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withPut(new Put(rowKey).addColumn(family, qual, timestamp, newValue))
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
-    CheckAndMutateRowRequest result = conditionalRowMutation.toProto(REQUEST_CONTEXT);
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
     Mutation.SetCell setCell = result.getTrueMutations(0).getSetCell();
@@ -224,13 +224,13 @@ public class TestCheckAndMutateUtil {
 
     RowMutations rowMutations = new RowMutations(rowKey);
     rowMutations.add(PUT);
-    ConditionalRowMutation conditionalRowMutation = underTest
+    CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withMutations(rowMutations)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
-    CheckAndMutateRowRequest result = conditionalRowMutation.toProto(REQUEST_CONTEXT);
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
     Mutation.SetCell setCell = result.getTrueMutations(0).getSetCell();
@@ -244,13 +244,13 @@ public class TestCheckAndMutateUtil {
   public void testIfNotExists() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    ConditionalRowMutation conditionalRowMutation = underTest
+    CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifNotExists()
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
-    CheckAndMutateRowRequest result = conditionalRowMutation.toProto(REQUEST_CONTEXT);
     Assert.assertEquals(1, result.getFalseMutationsCount());
     checkPutMutation(result.getFalseMutations(0));
 
@@ -270,13 +270,13 @@ public class TestCheckAndMutateUtil {
   public void testNotEqualsNull() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    ConditionalRowMutation conditionalRowMutation = underTest
+    CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifMatches(CompareOp.NOT_EQUAL, null)
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
-    CheckAndMutateRowRequest result = conditionalRowMutation.toProto(REQUEST_CONTEXT);
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
     RowFilter expected = FILTERS.chain()
@@ -301,13 +301,13 @@ public class TestCheckAndMutateUtil {
 
     otherOps.remove(CompareOp.NOT_EQUAL);
     int index = (int) (Math.random() * otherOps.size());
-    ConditionalRowMutation conditionalRowMutation = underTest
+    CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifMatches(otherOps.get(index), null)
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
-    CheckAndMutateRowRequest result = conditionalRowMutation.toProto(REQUEST_CONTEXT);
     Assert.assertEquals(1, result.getFalseMutationsCount());
 
     RowFilter expected = FILTERS.chain()
