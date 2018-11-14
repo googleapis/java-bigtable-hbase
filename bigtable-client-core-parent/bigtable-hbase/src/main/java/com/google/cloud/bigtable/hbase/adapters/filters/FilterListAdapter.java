@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
@@ -25,6 +25,9 @@ import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
+
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,30 +59,34 @@ public class FilterListAdapter
    * {@inheritDoc}
    */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, FilterList filter) throws IOException {
+  public Filters.Filter adapt(FilterAdapterContext context, FilterList filter) throws IOException {
     try (ContextCloseable ignored = context.beginFilterList(filter)) {
-      List<RowFilter> childFilters = collectChildFilters(context, filter);
+      List<Filters.Filter> childFilters = collectChildFilters(context, filter);
       if (childFilters.isEmpty()) {
         return null;
       } else if (childFilters.size() == 1) {
         return childFilters.get(0);
       } else if (filter.getOperator() == Operator.MUST_PASS_ALL) {
-        return RowFilter.newBuilder()
-            .setChain(Chain.newBuilder().addAllFilters(childFilters))
-            .build();
+        ChainFilter chain = FILTERS.chain();
+        for (Filters.Filter filterModel : childFilters) {
+          chain.filter(filterModel);
+        }
+        return chain;
       } else {
-        return RowFilter.newBuilder()
-            .setInterleave(Interleave.newBuilder().addAllFilters(childFilters))
-            .build();
+        InterleaveFilter interleave = FILTERS.interleave();
+        for (Filters.Filter filterModel : childFilters) {
+          interleave.filter(filterModel);
+        }
+        return interleave;
       }
     }
   }
 
-  List<RowFilter> collectChildFilters(FilterAdapterContext context, FilterList filter)
+  List<Filters.Filter> collectChildFilters(FilterAdapterContext context, FilterList filter)
       throws IOException {
-    List<RowFilter> result = new ArrayList<>();
+    List<Filters.Filter> result = new ArrayList<>();
     for (Filter subFilter : filter.getFilters()) {
-      Optional<RowFilter> potentialFilter =
+      Optional<Filters.Filter> potentialFilter =
           subFilterAdapter.adaptFilter(context, subFilter);
       if (potentialFilter.isPresent()) {
         result.add(potentialFilter.get());

@@ -59,7 +59,7 @@ public class GetAdapter implements ReadOperationAdapter<Get> {
     Scan operationAsScan = new Scan(addKeyOnlyFilter(operation));
     scanAdapter.throwIfUnsupportedScan(operationAsScan);
     return ReadRowsRequest.newBuilder()
-        .setFilter(scanAdapter.buildFilter(operationAsScan, readHooks))
+        .setFilter(scanAdapter.buildFilter(operationAsScan, readHooks).toProto())
         .setRows(RowSet.newBuilder().addRowKeys(ByteString.copyFrom(operation.getRow())));
   }
 

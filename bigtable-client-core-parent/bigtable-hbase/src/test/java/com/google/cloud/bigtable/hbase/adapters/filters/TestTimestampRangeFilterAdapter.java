@@ -21,7 +21,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.TimestampRange;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 
 @RunWith(JUnit4.class)
@@ -34,8 +35,9 @@ public class TestTimestampRangeFilterAdapter {
   @Test
   public void timestampFiltersAreAdapted() {
     TimestampRangeFilter filter = new TimestampRangeFilter(10L, 20L);
-    RowFilter rowFilter = filterAdapter.adapt(emptyScanContext, filter);
-    Assert.assertEquals(10000L, rowFilter.getTimestampRangeFilter().getStartTimestampMicros());
-    Assert.assertEquals(20000L, rowFilter.getTimestampRangeFilter().getEndTimestampMicros());
+    Filters.Filter expectedFilter = filterAdapter.adapt(emptyScanContext, filter);
+    TimestampRange expectedTimestampFilter = expectedFilter.toProto().getTimestampRangeFilter();
+    Assert.assertEquals(10000L, expectedTimestampFilter.getStartTimestampMicros());
+    Assert.assertEquals(20000L, expectedTimestampFilter.getEndTimestampMicros());
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
@@ -37,9 +37,9 @@ public class TestColumnPrefixFilterAdapter {
   @Test
   public void columnPrefixFiltersAreAdapted() throws IOException {
     ColumnPrefixFilter filter = new ColumnPrefixFilter(Bytes.toBytes("prefix"));
-    RowFilter rowFilter = adapter.adapt(emptyScanContext, filter);
+    Filters.Filter expected = adapter.adapt(emptyScanContext, filter);
     Assert.assertEquals(
         "prefix\\C*",
-        Bytes.toString(rowFilter.getColumnQualifierRegexFilter().toByteArray()));
+        Bytes.toString(expected.toProto().getColumnQualifierRegexFilter().toByteArray()));
   }
 }

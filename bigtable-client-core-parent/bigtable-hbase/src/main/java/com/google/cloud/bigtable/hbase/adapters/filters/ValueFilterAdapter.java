@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Filters.ValueRangeFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
@@ -40,8 +39,8 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, ValueFilter filter) throws IOException {
-    return toFilter(context, filter).toProto();
+  public Filter adapt(FilterAdapterContext context, ValueFilter filter) throws IOException {
+    return toFilter(context, filter);
   }
 
   public Filter toFilter(FilterAdapterContext context, ValueFilter filter) throws IOException {

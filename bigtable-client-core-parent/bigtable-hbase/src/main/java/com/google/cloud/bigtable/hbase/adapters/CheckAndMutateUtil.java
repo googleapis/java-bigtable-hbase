@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -230,7 +229,7 @@ public class CheckAndMutateUtil {
         conditionalRowMutation.then(mutations);
       }
       conditionalRowMutation.condition(
-          FILTERS.fromProto(Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS))
+         Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS)
       );
 
       return conditionalRowMutation;

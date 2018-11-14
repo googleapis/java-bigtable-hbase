@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import java.io.IOException;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -29,7 +31,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
 
@@ -53,11 +54,8 @@ public class TestRowFilterAdapter {
         new org.apache.hadoop.hbase.filter.RowFilter(
             CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setRowKeyRegexFilter(
-                ByteString.copyFrom(regexp.getBytes()))
-            .build(),
-        adapter.adapt(context, filter));
+        FILTERS.key().regex(regexp).toProto(),  
+        adapter.adapt(context, filter).toProto());
   }
 
   @Test
@@ -68,10 +66,9 @@ public class TestRowFilterAdapter {
         new org.apache.hadoop.hbase.filter.RowFilter(
             CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setRowKeyRegexFilter(ReaderExpressionHelper.quoteRegularExpression(bytes))
-            .build(),
-        adapter.adapt(context, filter));
+        FILTERS.key()
+          .regex(ReaderExpressionHelper.quoteRegularExpression(bytes)).toProto(),
+        adapter.adapt(context, filter).toProto());
   }
 
   @Test
@@ -83,11 +80,8 @@ public class TestRowFilterAdapter {
         new org.apache.hadoop.hbase.filter.RowFilter(
             CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setRowKeyRegexFilter(
-                ByteString.copyFrom(regexp.getBytes()))
-            .build(),
-        adapter.adapt(context, filter));
+        FILTERS.key().regex(regexp).toProto(),
+        adapter.adapt(context, filter).toProto());
   }
 
 
@@ -99,11 +93,8 @@ public class TestRowFilterAdapter {
         new org.apache.hadoop.hbase.filter.RowFilter(
             CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setRowKeyRegexFilter(
-                ByteString.copyFrom(new byte[0]))
-            .build(),
-        adapter.adapt(context, filter));
+        FILTERS.key().regex(ByteString.copyFrom(new byte[0])).toProto(),
+        adapter.adapt(context, filter).toProto());
   }
 
   @Test

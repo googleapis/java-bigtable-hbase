@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.common.collect.Range;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.data.v2.models.Filters;
@@ -113,7 +112,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
    * @param hooks a {@link com.google.cloud.bigtable.hbase.adapters.read.ReadHooks} object.
    * @return a {@link com.google.bigtable.v2.RowFilter} object.
    */
-  public RowFilter buildFilter(Scan scan, ReadHooks hooks) {
+  public Filters.Filter buildFilter(Scan scan, ReadHooks hooks) {
     ChainFilter chain = FILTERS.chain();
     Optional<Filters.Filter> familyFilter = createColumnFamilyFilter(scan);
     if (familyFilter.isPresent()) {
@@ -128,12 +127,12 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       chain.filter(createColumnLimitFilter(scan.getMaxVersions()));
     }
 
-    Optional<RowFilter> userFilter = createUserFilter(scan, hooks);
+    Optional<Filters.Filter> userFilter = createUserFilter(scan, hooks);
     if (userFilter.isPresent()) {
-      chain.filter(FILTERS.fromProto(userFilter.get()));
+      chain.filter(userFilter.get());
     }
 
-    return chain.toProto();
+    return chain;
   }
 
   /** {@inheritDoc} */
@@ -143,7 +142,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder()
         .setRows(toRowSet(scan))
-        .setFilter(buildFilter(scan, readHooks));
+        .setFilter(buildFilter(scan, readHooks).toProto());
 
     if (LIMIT_AVAILABLE && scan.getLimit() > 0) {
       requestBuilder.setRowsLimit(scan.getLimit());
@@ -200,7 +199,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     }
   }
 
-  private Optional<RowFilter> createUserFilter(Scan scan, ReadHooks hooks) {
+  private Optional<Filters.Filter> createUserFilter(Scan scan, ReadHooks hooks) {
     if (scan.getFilter() == null) {
       return Optional.absent();
     }
