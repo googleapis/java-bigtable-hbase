@@ -532,28 +532,24 @@ public class BigtableDataGrpcClient implements BigtableDataClient, IBigtableData
 
   @Override
   public ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) {
-    // Not implemented yet
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public com.google.cloud.bigtable.data.v2.models.Row readModifyWriteRow(
       ReadModifyWriteRow readModifyWriteRow) throws ExecutionException, InterruptedException {
-    // Not implemented yet
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public ApiFuture<com.google.cloud.bigtable.data.v2.models.Row> readModifyWriteRowAsync(
       ReadModifyWriteRow readModifyWriteRow) throws InterruptedException {
-    // Not implemented yet
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public IBulkMutation createBulkMutationBatcher() {
-    // Not implemented yet
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
@@ -573,8 +569,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient, IBigtableData
   @Override
   public Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation)
       throws ExecutionException, InterruptedException {
-    // Not implemented yet
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   private static <I, O> ApiFuture<O> convertToVoidApiFuture(ListenableFuture<I> listenableFuture,
