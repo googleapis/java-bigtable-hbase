@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import java.io.Serializable;
 
 import com.google.api.client.util.Strings;
@@ -119,6 +120,10 @@ public class BigtableInstanceName implements Serializable {
    */
   public String getInstanceName() {
     return instanceName;
+  }
+
+  public InstanceName toGcbInstanceName() {
+    return InstanceName.of(projectId, instanceId);
   }
 
   public BigtableClusterName toClusterName(String clusterId) {

@@ -88,6 +88,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   private final HBaseRequestAdapter hbaseAdapter;
   private final TableName tableName;
   private BatchExecutor batchExecutor;
+  // Once the IBigtableDataClient interface is implemented this will be removed
+  private RequestContext requestContext;
 
   public BigtableAsyncTable(BigtableAsyncConnection asyncConnection,
       HBaseRequestAdapter hbaseAdapter) {
@@ -96,6 +98,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     this.client = new BigtableDataClient(session.getDataClient());
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
+    // Once the IBigtableDataClient interface is implemented this will be removed
+    this.requestContext =
+        RequestContext.create(hbaseAdapter.getBigtableTableName().toGcbInstanceName(), "");
   }
 
   protected synchronized BatchExecutor getBatchExecutor() {
@@ -244,7 +249,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Void> delete(Delete delete) {
     // figure out how to time this with Opencensus
-    return client.mutateRowAsync(hbaseAdapter.adapt(delete))
+    return client.mutateRowAsync(hbaseAdapter.adapt(delete).toProto(requestContext))
         .thenApply(r -> null);
   }
 
@@ -366,7 +371,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
    */
   @Override
   public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
-    return client.mutateRowAsync(hbaseAdapter.adapt(rowMutations))
+    return client.mutateRowAsync(hbaseAdapter.adapt(rowMutations).toProto(requestContext))
         .thenApply(r -> null);
   }
 
@@ -376,7 +381,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Void> put(Put put) {
     // figure out how to time this with Opencensus
-    return client.mutateRowAsync(hbaseAdapter.adapt(put))
+    return client.mutateRowAsync(hbaseAdapter.adapt(put).toProto(requestContext))
         .thenApply(r -> null);
   }
 
