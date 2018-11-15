@@ -468,7 +468,7 @@ public abstract class AbstractBigtableTable implements Table {
   }
 
 
-  public void mutateRow(Mutation mutation, MutateRowRequest mutateRowRequest, String type)
+  private void mutateRow(Mutation mutation, MutateRowRequest mutateRowRequest, String type)
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try(Scope scope = TRACER.withSpan(span)) {
