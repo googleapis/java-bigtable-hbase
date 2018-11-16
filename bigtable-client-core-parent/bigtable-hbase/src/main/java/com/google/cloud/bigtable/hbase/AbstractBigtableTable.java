@@ -352,7 +352,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
-    MutateRowRequest request = hbaseAdapter.adapt(put);
+    MutateRowRequest request = hbaseAdapter.adapt(put).toProto(requestContext);
     mutateRow(put, request, "put");
   }
 
@@ -399,7 +399,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
-    MutateRowRequest request = hbaseAdapter.adapt(delete);
+    MutateRowRequest request = hbaseAdapter.adapt(delete).toProto(requestContext);
     mutateRow(delete, request, "delete");
   }
 
@@ -486,7 +486,7 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("mutateRow(RowMutation)");
     Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      MutateRowRequest request = hbaseAdapter.adapt(rm);
+      MutateRowRequest request = hbaseAdapter.adapt(rm).toProto(requestContext);
       client.mutateRow(request);
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
