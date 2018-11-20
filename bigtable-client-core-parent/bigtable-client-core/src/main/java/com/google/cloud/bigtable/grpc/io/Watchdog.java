@@ -119,8 +119,12 @@ public class Watchdog implements Runnable {
   }
 
   public void stop() {
-    scheduledFuture.cancel(true);
+    ScheduledFuture<?> tmp = scheduledFuture;
     scheduledFuture = null;
+    
+    if (tmp != null) {
+        tmp.cancel(true);
+    }
   }
 
   private class WatchedCall<ReqT, RespT> extends SimpleForwardingClientCall<ReqT, RespT> {

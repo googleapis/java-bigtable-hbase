@@ -121,6 +121,12 @@ public class WatchdogTest {
         "Some upstream exception representing cancellation");
   }
 
+  @Test
+  public void testStopTwice() throws Exception {
+    watchdog.stop();
+    watchdog.stop(); // make sure don't get NPE
+  }
+
   static class FakeClientCall extends ClientCall<String, String> {
 
     Listener<String> listener;
