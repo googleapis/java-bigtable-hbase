@@ -15,13 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x.adapters.admin;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -29,7 +23,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
-import org.apache.hadoop.hbase.util.Bytes;
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -37,7 +30,7 @@ import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 
 /**
- * Need this extended class as {@link TableAdapter#adapt(org.apache.hadoop.hbase.HTableDescriptor)}
+ * Need this extended class as {@link TableAdapter#adapt(CreateTableRequest , org.apache.hadoop.hbase.HTableDescriptor)}
  * is not binary compatible with {@link TableAdapter2x#adapt(TableDescriptor)}
  * 
  * Similarly, {@link ColumnDescriptorAdapter#adapt(HColumnDescriptor)} is not binary compatible with
@@ -48,16 +41,12 @@ import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 public class TableAdapter2x {
   protected static final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
 
-  public static CreateTableRequest.Builder adapt(TableDescriptor desc, byte[][] splitKeys) {
+  public static CreateTableRequest adapt(TableDescriptor desc, byte[][] splitKeys) {
     return TableAdapter.adapt(new HTableDescriptor(desc), splitKeys);
   }
 
-  public static Table adapt(TableDescriptor desc) {
-    return adapt(new HTableDescriptor(desc), null).getTable();
-  }
-
-  public static ColumnFamily toColumnFamily(ColumnFamilyDescriptor column) {
-    return columnDescriptorAdapter.adapt(toHColumnDescriptor(column));
+  public static CreateTableRequest adapt(TableDescriptor desc) {
+    return adapt(new HTableDescriptor(desc), null);
   }
 
   public static HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor column) {

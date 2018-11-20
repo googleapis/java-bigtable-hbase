@@ -69,12 +69,10 @@ import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.Snapshot;
-import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.util.concurrent.Futures;
-import com.google.protobuf.ByteString;
 
 
 /**
@@ -108,21 +106,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
-    CreateTableRequest createTableRequest =
-        CreateTableRequest.of(desc.getTableName().getNameAsString());
-
-    for (ColumnFamilyDescriptor column : desc.getColumnFamilies()) {
-      String columnName = column.getNameAsString();
-      createTableRequest.addFamily(columnName,
-        buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(column)));
-    }
-    if (splitKeys != null) {
-      for (byte[] splitKey : splitKeys) {
-        createTableRequest.addSplit(ByteString.copyFrom(splitKey));
-      }
-    }
-
-    createTable(desc.getTableName(), createTableRequest);
+    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys));
   }
 
   /** {@inheritDoc} */
@@ -376,11 +360,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public Future<Void> modifyTableAsync(TableName tableName, TableDescriptor newDescriptor) {
+    ModifyColumnFamiliesRequest modifyColumnRequest =
+            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
     return asyncAdmin.getDescriptor(tableName).thenApply(descriptor -> ModifyTableBuilder
-        .buildModifications(new HTableDescriptor(newDescriptor), new HTableDescriptor(descriptor)))
-        .thenApply(modifications -> {
+        .buildModifications(new HTableDescriptor(newDescriptor),
+                new HTableDescriptor(descriptor), modifyColumnRequest))
+        .thenApply(modifyRequest -> {
           try {
-            return modifyColumns(tableName, null, "modifyTableAsync", modifications);
+            return modifyColumns(tableName, null, "modifyTableAsync", modifyRequest);
           } catch (IOException e) {
             throw new CompletionException(e);
           }

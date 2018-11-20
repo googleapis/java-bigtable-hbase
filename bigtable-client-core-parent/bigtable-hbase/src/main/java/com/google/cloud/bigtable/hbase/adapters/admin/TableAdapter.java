@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.admin;
 
 import com.google.bigtable.admin.v2.ColumnFamily;
-import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 
@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
+
 /**
  * <p>TableAdapter class.</p>
  *
@@ -41,37 +43,30 @@ public class TableAdapter {
       ColumnDescriptorAdapter.INSTANCE;
   protected final BigtableInstanceName bigtableInstanceName;
 
-
-
   /**
    * <p>adapt.</p>
    *
    * @param desc a {@link org.apache.hadoop.hbase.HTableDescriptor} object.
    * @return a {@link com.google.bigtable.admin.v2.Table} object.
    */
-  protected static Table adapt(HTableDescriptor desc) {
-    Map<String, ColumnFamily> columnFamilies = new HashMap<>();
+  protected static void adapt(CreateTableRequest createTableRequest, HTableDescriptor desc) {
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
       String columnName = column.getNameAsString();
-      ColumnFamily columnFamily = columnDescriptorAdapter.adapt(column);
-      columnFamilies.put(columnName, columnFamily);
+      createTableRequest.addFamily(columnName, buildGarbageCollectionRule(column));
     }
-    return Table.newBuilder().putAllColumnFamilies(columnFamilies).build();
   }
 
-  public static CreateTableRequest.Builder adapt(HTableDescriptor desc, byte[][] splitKeys) {
-    CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setTableId(desc.getTableName().getQualifierAsString());
-    builder.setTable(adapt(desc));
-    addSplitKeys(builder, splitKeys);
-    return builder;
+  public static CreateTableRequest adapt(HTableDescriptor desc, byte[][] splitKeys) {
+    CreateTableRequest createReq = CreateTableRequest.of(desc.getTableName().getNameAsString());
+    adapt(createReq, desc);
+    addSplitKeys(createReq, splitKeys);
+    return createReq;
   }
 
-  public static void addSplitKeys(CreateTableRequest.Builder builder, byte[][] splitKeys) {
+  private static void addSplitKeys(CreateTableRequest createTableRequest, byte[][] splitKeys) {
     if (splitKeys != null) {
       for (byte[] splitKey : splitKeys) {
-        builder.addInitialSplits(
-            CreateTableRequest.Split.newBuilder().setKey(ByteString.copyFrom(splitKey)).build());
+        createTableRequest.addSplit(ByteString.copyFrom(splitKey));
       }
     }
   }

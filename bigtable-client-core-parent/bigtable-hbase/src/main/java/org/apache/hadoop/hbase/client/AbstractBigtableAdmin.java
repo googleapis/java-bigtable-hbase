@@ -355,19 +355,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    CreateTableRequest createReq = CreateTableRequest.of(desc.getTableName().getNameAsString());
-
-    for (HColumnDescriptor column : desc.getColumnFamilies()) {
-      String columnName = column.getNameAsString();
-      createReq.addFamily(columnName, buildGarbageCollectionRule(column));
-    }
-    if (splitKeys != null) {
-      for (byte[] splitKey : splitKeys) {
-        createReq.addSplit(ByteString.copyFrom(splitKey));
-      }
-    }
-
-    createTable(desc.getTableName(), createReq);
+    createTable(desc.getTableName(), TableAdapter.adapt(desc, splitKeys));
   }
 
   /**
@@ -387,19 +375,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTableAsync(final HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     LOG.warn("Creating the table synchronously");
-    CreateTableRequest createTableRequest =
-        CreateTableRequest.of(desc.getTableName().getNameAsString());
-
-    for (HColumnDescriptor column : desc.getColumnFamilies()) {
-      String columnName = column.getNameAsString();
-      createTableRequest.addFamily(columnName, buildGarbageCollectionRule(column));
-    }
-    if (splitKeys != null) {
-      for (byte[] splitKey : splitKeys) {
-        createTableRequest.addSplit(ByteString.copyFrom(splitKey));
-      }
-    }
-    createTableAsync(createTableRequest, desc.getTableName());
+    createTableAsync(TableAdapter.adapt(desc, splitKeys), desc.getTableName());
   }
 
   /**
@@ -644,9 +620,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void modifyTable(TableName tableName, HTableDescriptor newDecriptor) throws IOException {
     if (isTableAvailable(tableName)) {
       try {
-        ModifyTableBuilder builder =
-            ModifyTableBuilder.buildModifications(newDecriptor, getTableDescriptor(tableName));
-        bigtableTableAdminClient.modifyColumnFamily(builder.toProto(toBigtableName(tableName)));
+        ModifyColumnFamiliesRequest modifyColumnRequest =
+                ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
+        ModifyTableBuilder.buildModifications(newDecriptor, getTableDescriptor(tableName), modifyColumnRequest);
+        bigtableTableAdminClient.modifyColumnFamily(modifyColumnRequest.toProto(instanceName));
       } catch (Throwable throwable) {
         throw new IOException(
             String.format("Failed to modify table '%s'", tableName.getNameAsString()), throwable);
@@ -662,14 +639,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @param tableName a {@link TableName} object for error messages.
    * @param columnName a {@link String} object for error messages
    * @param modificationType a {@link String} object for error messages
-   * @param builder a {@link ModifyTableBuilder} object to send.
+   * @param modifyColumnRequest a {@link ModifyColumnFamiliesRequest} object to send.
    * @throws java.io.IOException if any.
    */
   protected Void modifyColumns(TableName tableName, String columnName,
-      String modificationType, ModifyTableBuilder builder) throws IOException {
+      String modificationType, ModifyColumnFamiliesRequest modifyColumnRequest) throws IOException {
 
     try {
-      bigtableTableAdminClient.modifyColumnFamily(builder.toProto(toBigtableName(tableName)));
+      bigtableTableAdminClient.modifyColumnFamily(modifyColumnRequest.toProto(instanceName));
       return null;
     } catch (Throwable throwable) {
       throw new IOException(
@@ -684,7 +661,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /**
    * modifyColumns.
-   * @param builder a {@link com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest}
+   * @param modifyReq a {@link com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest}
    *          object to send.
    * @throws java.io.IOException if any.
    */

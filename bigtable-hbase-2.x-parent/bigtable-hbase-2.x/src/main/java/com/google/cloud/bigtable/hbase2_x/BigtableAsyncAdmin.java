@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
-import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
@@ -25,7 +24,10 @@ import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.bigtable.admin.v2.InstanceName;
 import com.google.bigtable.admin.v2.Table;
+import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
@@ -83,6 +85,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
 
 /**
@@ -101,6 +104,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final CommonConnection asyncConnection;
   private BigtableClusterName bigtableSnapshotClusterName;
   private final Configuration configuration;
+  private InstanceName instanceName;
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
@@ -112,6 +116,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     this.tableAdapter2x = new TableAdapter2x(options);
     this.asyncConnection = asyncConnection;
     this.configuration = asyncConnection.getConfiguration();
+    instanceName =
+            InstanceName.of(bigtableInstanceName.getProjectId(), bigtableInstanceName.getInstanceId());
 
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
@@ -127,9 +133,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       return failedFuture(new IllegalArgumentException("TableName cannot be null"));
     }
 
-    CreateTableRequest.Builder builder = TableAdapter2x.adapt(desc, splitKeys);
-    builder.setParent(bigtableInstanceName.toString());
-    return bigtableTableAdminClient.createTableAsync(builder.build())
+    CreateTableRequest createTableRequest = TableAdapter2x.adapt(desc, splitKeys);
+    return bigtableTableAdminClient.createTableAsync(createTableRequest.toProto(instanceName))
         .handle((resp, ex) -> {
           if (ex != null) {
             throw new CompletionException(
@@ -249,7 +254,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   private CompletableFuture<List<Table>> requestTableList() {
-    ListTablesRequest  request = ListTablesRequest.newBuilder().setParent(bigtableInstanceName.toString()).build();
+    ListTablesRequest request = ListTablesRequest.newBuilder().setParent(bigtableInstanceName.toString()).build();
     return bigtableTableAdminClient.listTablesAsync(request)
         .thenApply(r -> r.getTablesList());
   }
@@ -320,34 +325,46 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> addColumnFamily(TableName tableName,
       ColumnFamilyDescriptor columnFamilyDesc) {
-    return modifyColumns(tableName,
-        ModifyTableBuilder.create().add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+    ModifyColumnFamiliesRequest modifyColumnRequest = ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
+    modifyColumnRequest.addFamily(columnFamilyDesc.getNameAsString(),
+            buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+
+    return modifyColumns(tableName, modifyColumnRequest);
   }
 
 
   @Override
   public CompletableFuture<Void> deleteColumnFamily(TableName tableName,
       byte[] columnName) {
-    return modifyColumns(tableName, ModifyTableBuilder.create().delete(Bytes.toString(columnName)));
+    ModifyColumnFamiliesRequest modifyColumnRequest = ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
+    modifyColumnRequest.dropFamily(Bytes.toString(columnName));
+
+    return modifyColumns(tableName, modifyColumnRequest);
+
   }
 
   @Override
   public CompletableFuture<Void> modifyColumnFamily(TableName tableName,
       ColumnFamilyDescriptor columnFamilyDesc) {
-    return modifyColumns(tableName,
-        ModifyTableBuilder.create().modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+    ModifyColumnFamiliesRequest modifyColumnRequest = ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
+    modifyColumnRequest.updateFamily(columnFamilyDesc.getNameAsString(),
+            buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+
+    return modifyColumns(tableName, modifyColumnRequest);
   }
 
   @Override
   public CompletableFuture<Void> modifyTable(TableDescriptor newDescriptor) {
+    ModifyColumnFamiliesRequest modifyColumnRequest =
+            ModifyColumnFamiliesRequest.of(newDescriptor.getTableName().getNameAsString());
     return getDescriptor(newDescriptor.getTableName())
         .thenApply(descriptor -> ModifyTableBuilder
             .buildModifications(
                 new HTableDescriptor(newDescriptor),
-                new HTableDescriptor(descriptor)))
-        .thenApply(modifications -> {
+                new HTableDescriptor(descriptor) , modifyColumnRequest))
+        .thenApply(modifyRequest -> {
           try {
-            modifyColumns(newDescriptor.getTableName(), modifications).get();
+            modifyColumns(newDescriptor.getTableName(), modifyRequest).get();
           } catch (InterruptedException | ExecutionException e) {
             throw new CompletionException(e);
           }
@@ -359,12 +376,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
    * <p>modifyColumns.</p>
    *
    * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @param modifications a {@link ModifyTableBuilder} object.
+   * @param modifyColumnRequest a {@link ModifyColumnFamiliesRequest} object.
    */
   private CompletableFuture<Void> modifyColumns(TableName tableName,
-      ModifyTableBuilder modifications) {
+            ModifyColumnFamiliesRequest modifyColumnRequest) {
     return bigtableTableAdminClient
-        .modifyColumnFamilyAsync(modifications.toProto(toBigtableName(tableName)))
+        .modifyColumnFamilyAsync(modifyColumnRequest.toProto(instanceName))
         .thenApply(r -> null);
   }
 
