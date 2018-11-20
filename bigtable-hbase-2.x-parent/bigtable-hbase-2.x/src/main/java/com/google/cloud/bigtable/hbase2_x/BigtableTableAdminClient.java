@@ -60,6 +60,7 @@ public class BigtableTableAdminClient {
    *
    * @param request a {@link CreateTableRequest} object.
    */
+  //TODO(rahulkql):update methods to adapt to v2.models.CreateTableRequest
   public CompletableFuture<Table> createTableAsync(CreateTableRequest request) {
     return toCompletableFuture(adminClient.createTableAsync(request));
   }

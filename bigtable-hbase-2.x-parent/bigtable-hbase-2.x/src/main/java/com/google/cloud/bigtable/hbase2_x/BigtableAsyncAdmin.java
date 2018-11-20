@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import com.google.bigtable.admin.v2.InstanceName;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
@@ -101,6 +102,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final CommonConnection asyncConnection;
   private BigtableClusterName bigtableSnapshotClusterName;
   private final Configuration configuration;
+  private final InstanceName instanceName;
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
@@ -112,7 +114,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     this.tableAdapter2x = new TableAdapter2x(options);
     this.asyncConnection = asyncConnection;
     this.configuration = asyncConnection.getConfiguration();
-
+    this.instanceName = InstanceName.of(bigtableInstanceName.getProjectId(), bigtableInstanceName.getInstanceName());
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
@@ -127,9 +129,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       return failedFuture(new IllegalArgumentException("TableName cannot be null"));
     }
 
-    CreateTableRequest.Builder builder = TableAdapter2x.adapt(desc, splitKeys);
-    builder.setParent(bigtableInstanceName.toString());
-    return bigtableTableAdminClient.createTableAsync(builder.build())
+    CreateTableRequest createTableRequest = TableAdapter2x.adapt(desc, splitKeys).toProto(instanceName);
+    return bigtableTableAdminClient.createTableAsync(createTableRequest)
         .handle((resp, ex) -> {
           if (ex != null) {
             throw new CompletionException(

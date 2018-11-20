@@ -20,6 +20,7 @@ import com.google.bigtable.admin.v2.GcRule;
 import com.google.bigtable.admin.v2.GcRule.Intersection;
 import com.google.bigtable.admin.v2.GcRule.RuleCase;
 import com.google.bigtable.admin.v2.GcRule.Union;
+import com.google.cloud.bigtable.admin.v2.models.GCRules.GCRule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -36,6 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
 
 /**
  * Adapt a single instance of an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor} to
@@ -164,12 +167,12 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Construct an Bigtable {@link com.google.bigtable.admin.v2.GcRule} from the given column descriptor.
+   * Construct an Bigtable {@link GCRule} from the given column descriptor.
    *
    * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
-   * @return a {@link com.google.bigtable.admin.v2.GcRule} object.
+   * @return a {@link GCRule} object.
    */
-  public static GcRule buildGarbageCollectionRule(HColumnDescriptor columnDescriptor) {
+  public static GCRule buildGarbageCollectionRule(HColumnDescriptor columnDescriptor) {
     int maxVersions = columnDescriptor.getMaxVersions();
     int minVersions = columnDescriptor.getMinVersions();
     int ttlSeconds = columnDescriptor.getTimeToLive();
@@ -181,12 +184,12 @@ public class ColumnDescriptorAdapter {
       if (maxVersions == Integer.MAX_VALUE) {
         return null;
       } else {
-        return maxVersions(maxVersions);
+        return GCRULES.maxVersions(maxVersions);
       }
     }
 
     // minVersions only comes into play with a TTL:
-    GcRule ageRule = maxAge(ttlSeconds);
+    GCRule ageRule = GCRULES.maxAge(org.threeten.bp.Duration.ofSeconds(ttlSeconds));
     if (minVersions != HColumnDescriptor.DEFAULT_MIN_VERSIONS) {
       // The logic here is: only delete a cell if:
       //  1) the age is older than :ttlSeconds AND
@@ -196,12 +199,12 @@ public class ColumnDescriptorAdapter {
       // Intersection (AND)
       //    - maxAge = :HBase_ttlSeconds
       //    - maxVersions = :HBase_minVersion
-      ageRule = intersection(ageRule, maxVersions(minVersions));
+      ageRule = GCRULES.intersection().rule(ageRule).rule(GCRULES.maxVersions(minVersions));
     }
     if (maxVersions == Integer.MAX_VALUE) {
       return ageRule;
     } else {
-      return union(ageRule, maxVersions(maxVersions));
+      return GCRULES.union().rule(ageRule).rule(GCRULES.maxVersions(maxVersions));
     }
   }
 
@@ -338,9 +341,9 @@ public class ColumnDescriptorAdapter {
     throwIfRequestingUnsupportedFeatures(columnDescriptor);
 
     ColumnFamily.Builder resultBuilder = ColumnFamily.newBuilder();
-    GcRule gcRule = buildGarbageCollectionRule(columnDescriptor);
+    GCRule gcRule = buildGarbageCollectionRule(columnDescriptor);
     if (gcRule != null) {
-      resultBuilder.setGcRule(gcRule);
+      resultBuilder.setGcRule(gcRule.toProto());
     }
     return resultBuilder.build();
   }

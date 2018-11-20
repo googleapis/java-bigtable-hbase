@@ -104,7 +104,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys));
+    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys).toProto(instanceName));
   }
 
   /** {@inheritDoc} */
