@@ -15,12 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import static com.google.cloud.bigtable.data.v2.models.Range.TimestampRange;
+
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.DeleteFromColumn;
-import com.google.bigtable.v2.Mutation.DeleteFromFamily;
-import com.google.bigtable.v2.Mutation.DeleteFromRow;
-import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.protobuf.ByteString;
 
@@ -29,13 +28,12 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Adapt a single Delete operation to a Bigtable RowMutation
+ * Adapt a single Delete operation to a Google Cloud Java
+ * {@link com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -91,17 +89,16 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
     }
   }
 
-  static Mutation.DeleteFromColumn addDeleteFromColumnMods(ByteString familyByteString, Cell cell) {
+  static void addDeleteFromColumnMods(
+      ByteString familyByteString,
+      Cell cell,
+      com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation
+  ) {
 
     ByteString cellQualifierByteString = ByteString.copyFrom(
         cell.getQualifierArray(),
         cell.getQualifierOffset(),
         cell.getQualifierLength());
-
-    Mutation.DeleteFromColumn.Builder deleteBuilder =
-        Mutation.DeleteFromColumn.newBuilder()
-          .setFamilyNameBytes(familyByteString)
-          .setColumnQualifier(cellQualifierByteString);
 
     long endTimestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
         cell.getTimestamp() + 1,
@@ -112,29 +109,24 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
       long startTimestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
         cell.getTimestamp(),
         BigtableConstants.HBASE_TIMEUNIT);
-
-      deleteBuilder.setTimeRange(TimestampRange.newBuilder()
-          .setStartTimestampMicros(startTimestamp)
-          .setEndTimestampMicros(endTimestamp)
-          .build());
+      mutation.deleteCells(familyByteString.toStringUtf8(), cellQualifierByteString, TimestampRange.create(startTimestamp, endTimestamp));
     } else {
       // Delete all cells before a timestamp
       if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
-        deleteBuilder.getTimeRangeBuilder().setEndTimestampMicros(endTimestamp);
+        mutation.deleteCells(familyByteString.toStringUtf8(), cellQualifierByteString, TimestampRange.unbounded().endOpen(endTimestamp));
+      } else {
+        mutation.deleteCells(familyByteString.toStringUtf8(), cellQualifierByteString);
       }
     }
-    return deleteBuilder.build();
   }
 
   @Override
   /** {@inheritDoc} */
-  protected Collection<Mutation> adaptMutations(Delete operation) {
-    List<Mutation> mutations = new ArrayList<>();
+  protected void adaptMutations(Delete operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     if (operation.getFamilyCellMap().isEmpty()) {
       throwIfUnsupportedDeleteRow(operation);
 
-      mutations
-          .add(Mutation.newBuilder().setDeleteFromRow(DeleteFromRow.getDefaultInstance()).build());
+      mutation.deleteRow();
     } else {
       for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
 
@@ -145,17 +137,11 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
             if (isPointDelete(cell)) {
               throwIfUnsupportedPointDelete(cell);
             }
-            mutations.add(Mutation.newBuilder()
-              .setDeleteFromColumn(addDeleteFromColumnMods(familyByteString, cell))
-              .build());
+            addDeleteFromColumnMods(familyByteString, cell, mutation);
           } else if (isFamilyDelete(cell)) {
             throwIfUnsupportedDeleteFamily(cell);
 
-            mutations.add(Mutation.newBuilder()
-              .setDeleteFromFamily(DeleteFromFamily.newBuilder()
-                  .setFamilyNameBytes(familyByteString)
-                  .build())
-              .build());
+            mutation.deleteFamily(familyByteString.toStringUtf8());
           } else if (isFamilyVersionDelete(cell)) {
             throwOnUnsupportedDeleteFamilyVersion(cell);
           } else {
@@ -164,7 +150,6 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
         }
       }
     }
-    return mutations;
   }
 
 
@@ -183,7 +168,7 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
       case DELETE_FROM_COLUMN: {
         DeleteFromColumn deleteFromColumn = mutation.getDeleteFromColumn();
         long timestamp;
-        TimestampRange timeRange = deleteFromColumn.getTimeRange();
+        com.google.bigtable.v2.TimestampRange timeRange = deleteFromColumn.getTimeRange();
         if (timeRange.getStartTimestampMicros() == 0) {
           timestamp = BigtableConstants.HBASE_TIMEUNIT.convert(timeRange.getEndTimestampMicros(),
             BigtableConstants.BIGTABLE_TIMEUNIT) - 1;

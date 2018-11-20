@@ -21,12 +21,12 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Adapt a generic Mutation to a bigtable operation.
+ * Adapt a generic Mutation to a Google Cloud Java
+ * {@link com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
  * This class uses instanceof checking to determine an appropriate adaptation to apply.
  *
@@ -75,13 +75,13 @@ public class HBaseMutationAdapter extends MutationAdapter<Mutation> {
 
   @Override
   /** {@inheritDoc} */
-  protected Collection<com.google.bigtable.v2.Mutation> adaptMutations(Mutation mutation) {
+  protected void adaptMutations(Mutation mutation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutationModel) {
     MutationAdapter<Mutation> adapter = adapterMap.get(mutation.getClass());
     if (adapter == null) {
       throw new UnsupportedOperationException(
           String.format(
               "Cannot adapt mutation of type %s.", mutation.getClass().getCanonicalName()));
     }
-    return adapter.adaptMutations(mutation);
+    adapter.adaptMutations(mutation, mutationModel);
   }
 }

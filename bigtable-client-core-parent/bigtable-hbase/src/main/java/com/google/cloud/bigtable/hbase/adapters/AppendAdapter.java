@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadModifyWriteRule;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -32,36 +31,30 @@ import java.util.Map;
  * @author sduskis
  * @version $Id: $Id
  */
-public class AppendAdapter implements OperationAdapter<Append, ReadModifyWriteRowRequest.Builder> {
+public class AppendAdapter implements OperationAdapter<Append, ReadModifyWriteRow> {
 
   /** {@inheritDoc} */
   @Override
-  public ReadModifyWriteRowRequest.Builder adapt(Append operation) {
-    ReadModifyWriteRowRequest.Builder result = ReadModifyWriteRowRequest.newBuilder();
-    result.setRowKey(ByteString.copyFrom(operation.getRow()));
-
-    for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()){
+  public void adapt(Append operation, ReadModifyWriteRow readModifyWriteRow) {
+    for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
       String familyName = Bytes.toString(entry.getKey());
       // Bigtable applies all appends present in a single RPC. HBase applies only the last
       // mutation present, if any. We remove all but the last mutation for each qualifier here:
       List<Cell> cells = CellDeduplicationHelper.deduplicateFamily(operation, entry.getKey());
 
       for (Cell cell : cells) {
-        ReadModifyWriteRule.Builder rule = ReadModifyWriteRule.newBuilder();
-        rule.setFamilyName(familyName);
-        rule.setColumnQualifier(
+        readModifyWriteRow.append(
+            familyName,
             ByteString.copyFrom(
                 cell.getQualifierArray(),
                 cell.getQualifierOffset(),
-                cell.getQualifierLength()));
-        rule.setAppendValue(
+                cell.getQualifierLength()),
             ByteString.copyFrom(
                 cell.getValueArray(),
                 cell.getValueOffset(),
-                cell.getValueLength()));
-        result.addRules(rule.build());
+                cell.getValueLength())
+        );
       }
     }
-    return result;
   }
 }

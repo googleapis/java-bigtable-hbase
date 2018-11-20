@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.ImmutableRangeSet;
@@ -41,10 +41,10 @@ public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowR
           "MultiRowRange filters can not be contained in MUST_PASS_ONE FilterLists");
 
   @Override
-  public RowFilter adapt(FilterAdapterContext context, MultiRowRangeFilter filter)
+  public Filter adapt(FilterAdapterContext context, MultiRowRangeFilter filter)
       throws IOException {
 
-    return FILTERS.pass().toProto();
+    return FILTERS.pass();
   }
 
   @Override

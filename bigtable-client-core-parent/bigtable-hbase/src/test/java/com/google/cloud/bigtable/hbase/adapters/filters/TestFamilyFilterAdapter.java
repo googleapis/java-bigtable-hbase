@@ -57,7 +57,7 @@ public class TestFamilyFilterAdapter {
             .setRowKeyRegexFilter(
                 ByteString.copyFrom(regexp.getBytes()))
             .build(),
-        adapter.adapt(context, filter));
+        adapter.adapt(context, filter).toProto());
   }
 
   @Test
@@ -69,10 +69,9 @@ public class TestFamilyFilterAdapter {
             CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
         RowFilter.newBuilder()
-            .setRowKeyRegexFilter(
-                ByteString.copyFrom(ReaderExpressionHelper.quoteRegularExpression(bytes)))
+            .setRowKeyRegexFilter(ReaderExpressionHelper.quoteRegularExpression(bytes))
             .build(),
-        adapter.adapt(context, filter));
+        adapter.adapt(context, filter).toProto());
   }
 
   @Test
@@ -88,7 +87,7 @@ public class TestFamilyFilterAdapter {
             .setRowKeyRegexFilter(
                 ByteString.copyFrom(regexp.getBytes()))
             .build(),
-        adapter.adapt(context, filter));
+        adapter.adapt(context, filter).toProto());
   }
 
 
@@ -104,7 +103,7 @@ public class TestFamilyFilterAdapter {
             .setRowKeyRegexFilter(
                 ByteString.copyFrom(new byte[0]))
             .build(),
-        adapter.adapt(context, filter));
+        adapter.adapt(context, filter).toProto());
   }
 
   @Test

@@ -28,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.junit.Assert.assertEquals;
@@ -38,27 +39,30 @@ import static org.junit.Assert.assertEquals;
 public class TestColumnFamilyAdminAsync extends AbstractTestColumnFamilyAdmin {
   @Override
   protected HTableDescriptor getTableDescriptor(TableName tableName) throws Exception {
-    return admin.getTableDescriptor(tableName);
+    return new HTableDescriptor(admin.getDescriptor(tableName));
   }
 
   @Override
   protected void addColumn(byte[] columnName, int version) throws Exception {
-    ColumnFamilyDescriptor descriptor =
-        ColumnFamilyDescriptorBuilder.newBuilder(columnName).setMaxVersions(version)
-            .build();
-    admin.addColumnFamilyAsync(tableName, descriptor).get();
+    admin.addColumnFamilyAsync(tableName, createFamilyDescriptor(columnName, version))
+        .get(1, TimeUnit.MINUTES);
   }
 
   @Override
   protected void modifyColumn(byte[] columnName, int version) throws Exception {
-    ColumnFamilyDescriptor descriptor =
-        ColumnFamilyDescriptorBuilder.newBuilder(columnName).setMaxVersions(version)
-            .build();
-    admin.modifyColumnFamilyAsync(tableName, descriptor).get();
+    admin.modifyColumnFamilyAsync(tableName, createFamilyDescriptor(columnName, version))
+        .get(1, TimeUnit.MINUTES);
   }
 
   @Override
   protected void deleteColumn(byte[] columnName) throws Exception {
-    admin.deleteColumnFamilyAsync(tableName, DELETE_COLUMN_FAMILY).get();
+    admin.deleteColumnFamilyAsync(tableName, DELETE_COLUMN_FAMILY)
+        .get(1, TimeUnit.MINUTES);
   }
+
+  private ColumnFamilyDescriptor createFamilyDescriptor(byte[] columnName, int version) {
+    return ColumnFamilyDescriptorBuilder.newBuilder(columnName).setMaxVersions(version)
+        .build();
+  }
+
 }

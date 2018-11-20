@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.config;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -65,13 +66,16 @@ public class BigtableOptions implements Serializable, Cloneable {
     // 20 Channels seemed to work well on a 4 CPU machine, and this ratio seems to scale well for
     // higher CPU machines. Use no more than 250 Channels by default.
     int availableProcessors = Runtime.getRuntime().availableProcessors();
-    return (int) Math.min(250, Math.max(1, availableProcessors * 4));
+    return Math.min(250, Math.max(1, availableProcessors * 4));
   }
 
   public static BigtableOptions getDefaultOptions() {
-    return new Builder().build();
+    return builder().build();
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
   /**
    * A mutable builder for BigtableConnectionOptions.
    */
@@ -79,6 +83,7 @@ public class BigtableOptions implements Serializable, Cloneable {
 
     private BigtableOptions options = new BigtableOptions();
 
+    @Deprecated
     public Builder() {
       options = new BigtableOptions();
       options.appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
@@ -98,10 +103,11 @@ public class BigtableOptions implements Serializable, Cloneable {
       // the Google Compute Engine metadata service or gcloud configuration in other environments. A
       // user can also override the default behavior with P12 or JSON configuration.
       options.credentialOptions = CredentialOptions.defaultCredentials();
+      options.useBatch = false;
     }
 
     private Builder(BigtableOptions options) {
-      this.options = options;
+      this.options = options.clone();
     }
 
     public Builder setAdminHost(String adminHost) {
@@ -186,6 +192,11 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
+    public Builder setUseBatch(boolean useBatch) {
+      options.useBatch = useBatch;
+      return this;
+    }
+
     /**
      * Apply emulator settings from the relevant environment variable, if set.
      */
@@ -233,7 +244,7 @@ public class BigtableOptions implements Serializable, Cloneable {
       if (options.bulkOptions == null) {
         int maxInflightRpcs =
             BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
-        options.bulkOptions = new BulkOptions.Builder().setMaxInflightRpcs(maxInflightRpcs).build();
+        options.bulkOptions = BulkOptions.builder().setMaxInflightRpcs(maxInflightRpcs).build();
       } else if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
         int maxInflightRpcs =
             BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
@@ -249,6 +260,23 @@ public class BigtableOptions implements Serializable, Cloneable {
         options.instanceName = null;
       }
 
+      if (options.useBatch) {
+        options.useCachedDataPool = true;
+        if (options.dataHost.equals(BIGTABLE_DATA_HOST_DEFAULT)) {
+          options.dataHost = BIGTABLE_BATCH_DATA_HOST_DEFAULT;
+        }
+        RetryOptions.Builder retryOptionsBuilder = options.retryOptions.toBuilder();
+        if (options.retryOptions.getInitialBackoffMillis()
+            == RetryOptions.DEFAULT_INITIAL_BACKOFF_MILLIS) {
+          retryOptionsBuilder.setInitialBackoffMillis((int) TimeUnit.SECONDS.toMillis(5));
+        }
+
+        if (options.retryOptions.getMaxElapsedBackoffMillis()
+            == RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS) {
+          retryOptionsBuilder.setMaxElapsedBackoffMillis((int) TimeUnit.MINUTES.toMillis(5));
+        }
+        options.retryOptions = retryOptionsBuilder.build();
+      }
       LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
               + "admin host %s.",
           options.projectId,
@@ -277,6 +305,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   private CallOptionsConfig callOptionsConfig;
   private CredentialOptions credentialOptions;
   private RetryOptions retryOptions;
+  private boolean useBatch;
 
   @VisibleForTesting
   BigtableOptions() {
@@ -432,7 +461,8 @@ public class BigtableOptions implements Serializable, Cloneable {
         && Objects.equals(credentialOptions, other.credentialOptions)
         && Objects.equals(retryOptions, other.retryOptions)
         && Objects.equals(bulkOptions, other.bulkOptions)
-        && Objects.equals(callOptionsConfig, other.callOptionsConfig);
+        && Objects.equals(callOptionsConfig, other.callOptionsConfig)
+        && Objects.equals(useBatch, other.useBatch);
   }
 
   /** {@inheritDoc} */
@@ -454,6 +484,7 @@ public class BigtableOptions implements Serializable, Cloneable {
         .add("callOptionsConfig", callOptionsConfig)
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .add("useCachedDataPool", useCachedDataPool)
+        .add("useBatch", useBatch)
         .toString();
   }
 
@@ -463,7 +494,7 @@ public class BigtableOptions implements Serializable, Cloneable {
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions.Builder} object.
    */
   public Builder toBuilder() {
-    return new Builder(this.clone());
+    return new Builder(this);
   }
 
   /**
@@ -473,6 +504,10 @@ public class BigtableOptions implements Serializable, Cloneable {
    */
   public boolean useCachedChannel() {
     return useCachedDataPool;
+  }
+
+  public boolean useBatch() {
+    return useBatch;
   }
 
   protected BigtableOptions clone() {

@@ -37,8 +37,8 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
 /**
- * A job that imports data from GCS bucket with SequenceFile format into Cloud Bigtable. This job
- * can be run directly or as a Dataflow template.
+ * A job that imports data from Cloud Storage bucket with HBase SequenceFile format into Cloud Bigtable.
+ * This job can be run directly or as a Dataflow template.
  *
  * <p>Execute the following command to run the job directly:
  *
@@ -83,7 +83,7 @@ public class ImportJob {
   static final long BUNDLE_SIZE = 100 * 1024 * 1024;
 
   public interface ImportOptions extends GcpOptions {
-    @Description("This Bigtable App Profile id. (Replication alpha feature).")
+    @Description("This Bigtable App Profile id.")
     ValueProvider<String> getBigtableAppProfileId();
     @SuppressWarnings("unused")
     void setBigtableAppProfileId(ValueProvider<String> appProfileId);

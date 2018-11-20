@@ -91,14 +91,16 @@ public interface BigtableAsyncUtilities {
           } catch (Throwable t) {
             LOG.error("Could not sendMessage()", t);
             call.cancel("Exception in sendMessage.", t);
-            throw Throwables.propagate(t);
+            Throwables.throwIfUnchecked(t);
+            throw new RuntimeException(t);
           }
           try {
             call.halfClose();
           } catch (Throwable t) {
             LOG.error("Could not halfClose()", t);
             call.cancel("Exception in halfClose.", t);
-            throw Throwables.propagate(t);
+            Throwables.throwIfUnchecked(t);
+            throw new RuntimeException(t);
           }
         }
       };

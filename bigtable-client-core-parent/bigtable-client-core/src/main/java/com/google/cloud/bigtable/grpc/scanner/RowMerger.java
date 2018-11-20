@@ -15,13 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.util.ByteStringComparator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -29,7 +30,6 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
 import com.google.bigtable.v2.RowFilter.Interleave;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
@@ -66,6 +66,8 @@ import io.grpc.stub.StreamObserver;
  * @version $Id: $Id
  */
 public class RowMerger implements StreamObserver<ReadRowsResponse> {
+
+protected static final Logger LOG = new Logger(RowMerger.class);
 
   /**
    * <p>toRows.</p>
@@ -120,14 +122,16 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         final ByteString rowKey = newChunk.getRowKey();
         Preconditions.checkArgument(!rowKey.isEmpty(), "A row key must be set: %s",
           newChunk);
-        Preconditions.checkState(previousKey == null || !rowKey.equals(previousKey),
-          "A commit happened but the same key followed: %s", newChunk);
+        if (previousKey != null &&
+            ByteStringComparator.INSTANCE.compare(previousKey, rowKey) >= 0) {
+          throw new IllegalArgumentException(String
+              .format("Found key '%s' after key '%s'", rowKey.toStringUtf8(),
+                  previousKey.toStringUtf8()));
+        }
         Preconditions.checkArgument(newChunk.hasQualifier(), "A column qualifier must be set: %s",
           newChunk);
-        if (newChunk.getValueSize() > 0) {
-          Preconditions.checkArgument(!newChunk.getCommitRow(),
-            "A row cannot be have a value size and be a commit row: %s", newChunk);
-        }
+        Preconditions.checkArgument(!newChunk.getCommitRow() || newChunk.getValueSize() == 0,
+          "A row cannot be have a value size and be a commit row: %s", newChunk);
       }
 
       @Override
@@ -238,26 +242,38 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    * This class represents the data in the row that's currently being processed.
    */
   private static final class RowInProgress {
+
+    // 50MB is pretty large for a row, so log any rows that are of that size
+    private final static int LARGE_ROW_SIZE = 50 * 1024 * 1024;
+
     private ByteString rowKey;
 
     // cell in progress info
     private CellIdentifier currentId;
-    private ByteArrayOutputStream outputStream;
-
+    private ByteString.Output outputStream;
+    private int currentByteSize = 0;
+    private int loggedAtSize = 0;
 
     private final Map<String, List<FlatRow.Cell>> cells = new TreeMap<>();
+    private int cellCount = 0;
     private List<FlatRow.Cell> currentFamilyRowCells = null;
     private String currentFamily;
     private FlatRow.Cell previousNoLabelCell;
 
     private final void addFullChunk(ReadRowsResponse.CellChunk chunk) {
       Preconditions.checkState(!hasChunkInProgess());
+      currentByteSize += chunk.getSerializedSize();
       addCell(chunk.getValue());
+      if (currentByteSize >= loggedAtSize + LARGE_ROW_SIZE) {
+        LOG.warn("Large row read is in progress. key: `%s`, size: %d, cells: %d",
+            rowKey.toStringUtf8(), currentByteSize, cellCount);
+        loggedAtSize = currentByteSize;
+      }
     }
 
     private final void completeMultiChunkCell() {
       Preconditions.checkArgument(hasChunkInProgess());
-      addCell(ByteStringer.wrap(outputStream.toByteArray()));
+      addCell(outputStream.toByteString());
       outputStream = null;
     }
 
@@ -288,6 +304,8 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         currentFamilyRowCells.add(cell);
         previousNoLabelCell = cell;
       } // else, this is a duplicate cell.
+
+      cellCount++;
     }
 
     /**
@@ -328,7 +346,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
     private void addPartialCellChunk(ReadRowsResponse.CellChunk chunk) throws IOException {
       if (outputStream == null) {
-        outputStream = new ByteArrayOutputStream(chunk.getValueSize());
+        outputStream = ByteString.newOutput();
       }
       chunk.getValue().writeTo(outputStream);
     }
@@ -342,6 +360,11 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     }
 
     private FlatRow buildRow() {
+      if (currentByteSize >= LARGE_ROW_SIZE) {
+        LOG.warn("Large row was read. key: `%s`, size: %d, cellCount: %d",
+            rowKey.toStringUtf8(), currentByteSize, cellCount);
+      }
+
       return new FlatRow(rowKey, flattenCells());
     }
 

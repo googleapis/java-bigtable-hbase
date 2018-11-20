@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.filter;
 
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import java.io.IOException;
 import java.io.Serializable;
 
@@ -25,7 +27,7 @@ import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
@@ -39,23 +41,24 @@ public class BigtableFilter extends FilterBase implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private final RowFilter rowFilter;
+  private final Filters.Filter filter;
 
   public BigtableFilter(Filters.Filter filter) {
-    this.rowFilter = filter.toProto();
+    this.filter = filter;
   }
 
-  private BigtableFilter(RowFilter rowFilter) {
-    this.rowFilter = rowFilter;
+  @Deprecated
+  public BigtableFilter(com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter filter) {
+    this(FILTERS.fromProto(filter.toProto()));
   }
 
   @Override
-  public ReturnCode filterKeyValue(Cell arg0) throws IOException {
+  public ReturnCode filterKeyValue(Cell cell) throws IOException {
     return ReturnCode.SKIP;
   }
 
-  public RowFilter getRowFilter() {
-    return rowFilter;
+  public Filters.Filter getFilter() {
+    return filter;
   }
 
   @Override
@@ -64,17 +67,17 @@ public class BigtableFilter extends FilterBase implements Serializable {
       return false;
     }
     BigtableFilter other = (BigtableFilter) obj;
-    return rowFilter.equals(other.rowFilter);
+    return filter.toProto().equals(other.filter.toProto());
   }
 
   @Override
   public byte[] toByteArray() throws IOException {
-    return rowFilter.toByteArray();
+    return filter.toProto().toByteArray();
   }
 
   public static BigtableFilter parseFrom(final byte[] bytes) throws DeserializationException {
     try {
-      return new BigtableFilter(RowFilter.parseFrom(bytes));
+      return new BigtableFilter(FILTERS.fromProto(RowFilter.parseFrom(bytes)));
     } catch (InvalidProtocolBufferException e) {
       throw new DeserializationException(e);
     }

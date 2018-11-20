@@ -17,7 +17,6 @@
 package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
@@ -42,13 +40,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
  * <p>AbstractTestSnapshot class.</p>
- * 
+ *
  * @author rupeshit
  *
  */
@@ -57,18 +54,18 @@ import org.junit.runners.JUnit4;
 public abstract class AbstractTestSnapshot extends AbstractTest {
 
   protected final byte[] QUALIFIER = dataHelper.randomData("TestSnapshots");
-  
+
   protected TableName tableName = sharedTestEnv.newTestTableName();
   protected final TableName anotherTableName = sharedTestEnv.newTestTableName();
   // The maximum size of a table id or snapshot id is 50. newTestTableName().size() can approach 50.
   // Make sure that the snapshot name and cloned table are within the 50 character limit
   protected final String snapshotName = tableName.getNameAsString().substring(40) + "_snp";
-  protected final String anotherSnapshotName = 
+  protected final String anotherSnapshotName =
       anotherTableName.getNameAsString().substring(40) + "_snp";
   protected final TableName clonedTableName =
       TableName.valueOf(tableName.getNameAsString().substring(40) + "_clone");
   protected HTableDescriptor descriptor;
-  
+
   @After
   public void cleanup() {
     if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
@@ -119,73 +116,81 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       checkSnapshotCount(admin, 0);
     }
   }
-  
+
   @Test
   public void testListSnapshots() throws IOException {
     if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
       return;
     }
     final Pattern allSnapshots = Pattern.compile(snapshotName + ".*");
-    try (Admin admin = getConnection().getAdmin()) {
-      createTable(tableName);
-
-      Map<String, Long> values = createAndPopulateTable(tableName);
-      Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
-      snapshot(snapshotName, tableName);
-      Assert.assertEquals(1, listSnapshotsSize(snapshotName));
-      deleteSnapshot(snapshotName);
-      Assert.assertEquals(0, listSnapshotsSize(snapshotName));
-      snapshot(snapshotName + 1, tableName);
-      snapshot(snapshotName + 2,tableName);
-      Assert.assertEquals(2, listSnapshotsSize(allSnapshots));
-      Assert.assertEquals(1, listSnapshotsSize(Pattern.compile(snapshotName + 1)));
-      Assert.assertEquals(1, listSnapshotsSize(Pattern.compile(snapshotName + 2)));
-      deleteSnapshots(allSnapshots);
-      Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
-    }
+    createTable(tableName);
+    Map<String, Long> values = createAndPopulateTable(tableName);
+    Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
+    snapshot(snapshotName, tableName);
+    Assert.assertEquals(1, listSnapshotsSize(snapshotName));
+    deleteSnapshot(snapshotName);
+    Assert.assertEquals(0, listSnapshotsSize(snapshotName));
+    snapshot(snapshotName + 1, tableName);
+    snapshot(snapshotName + 2,tableName);
+    Assert.assertEquals(2, listSnapshotsSize(allSnapshots));
+    Assert.assertEquals(1, listSnapshotsSize(Pattern.compile(snapshotName + 1)));
+    Assert.assertEquals(1, listSnapshotsSize(Pattern.compile(snapshotName + 2)));
+    deleteSnapshots(allSnapshots);
+    Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
   }
-  
+
   @Test
   public void testTableSnapshots() throws IOException {
     if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
       return;
     }
     final Pattern matchAll =  Pattern.compile(".*");
-    try (Admin admin = getConnection().getAdmin()) {
-      createTable(tableName);
-      createTable(anotherTableName);
-      
-      createAndPopulateTable(tableName);
-      createAndPopulateTable(anotherTableName);
-      Assert.assertEquals(0, 
-          listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString()), matchAll));
-      Assert.assertEquals(0, listTableSnapshotsSize(
-              Pattern.compile(anotherTableName.getNameAsString()), matchAll));
-      snapshot(snapshotName, tableName);
-      Assert.assertEquals(1, 
-          listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString()), matchAll));
-      Assert.assertEquals(0, listTableSnapshotsSize(
-          Pattern.compile(anotherTableName.getNameAsString()), matchAll));
-      snapshot(anotherSnapshotName, anotherTableName);
-      Assert.assertEquals(1, 
-          listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString()), matchAll));
-      Assert.assertEquals(1, listTableSnapshotsSize(
-          Pattern.compile(anotherTableName.getNameAsString()), matchAll));
-      deleteSnapshot(snapshotName);
-      Assert.assertEquals(0, 
-          listTableSnapshotsSize(tableName.getNameAsString(), snapshotName));
-      Assert.assertEquals(0, 
-          listTableSnapshotsSize(anotherTableName.getNameAsString(), snapshotName));
-      Assert.assertEquals(1, 
-          listTableSnapshotsSize(anotherTableName.getNameAsString(), anotherSnapshotName));
-      deleteSnapshot(anotherSnapshotName);
-      Assert.assertEquals(0, 
-          listTableSnapshotsSize(tableName.getNameAsString(), snapshotName));
-      Assert.assertEquals(0, 
-          listTableSnapshotsSize(anotherTableName.getNameAsString(), snapshotName));
-      Assert.assertEquals(0, 
-          listTableSnapshotsSize(anotherTableName.getNameAsString(), anotherSnapshotName));
+    createTable(tableName);
+    createTable(anotherTableName);
+    createAndPopulateTable(tableName);
+    createAndPopulateTable(anotherTableName);
+    Assert.assertEquals(0,
+        listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString()), matchAll));
+    Assert.assertEquals(0, listTableSnapshotsSize(
+        Pattern.compile(anotherTableName.getNameAsString()), matchAll));
+    snapshot(snapshotName, tableName);
+    Assert.assertEquals(1,
+        listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString()), matchAll));
+    Assert.assertEquals(0, listTableSnapshotsSize(
+        Pattern.compile(anotherTableName.getNameAsString()), matchAll));
+    snapshot(anotherSnapshotName, anotherTableName);
+    Assert.assertEquals(1,
+        listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString()), matchAll));
+    Assert.assertEquals(1, listTableSnapshotsSize(
+        Pattern.compile(anotherTableName.getNameAsString()), matchAll));
+    deleteSnapshot(snapshotName);
+    Assert.assertEquals(0,
+        listTableSnapshotsSize(tableName.getNameAsString(), snapshotName));
+    Assert.assertEquals(0,
+        listTableSnapshotsSize(anotherTableName.getNameAsString(), snapshotName));
+    Assert.assertEquals(1,
+        listTableSnapshotsSize(anotherTableName.getNameAsString(), anotherSnapshotName));
+    deleteSnapshot(anotherSnapshotName);
+    Assert.assertEquals(0,
+        listTableSnapshotsSize(tableName.getNameAsString(), snapshotName));
+    Assert.assertEquals(0,
+        listTableSnapshotsSize(anotherTableName.getNameAsString(), snapshotName));
+    Assert.assertEquals(0,
+        listTableSnapshotsSize(anotherTableName.getNameAsString(), anotherSnapshotName));
+  }
+
+  @Test
+  public void testListTableSnapshotWithSingleArgs() throws Exception {
+    if (sharedTestEnv.isBigtable() && !enableTestForBigtable()) {
+      return;
     }
+    sharedTestEnv.createTable(tableName);
+    snapshot(snapshotName, tableName);
+    Assert.assertEquals(1, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+    snapshot(snapshotName+1, tableName);
+    Assert.assertEquals(2, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
+    deleteSnapshot(snapshotName);
+    Assert.assertEquals(1,  listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
   }
 
   private void checkSnapshotCount(Admin admin, int count) throws IOException {
@@ -243,4 +248,5 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       Pattern snapshotNamePattern) throws IOException;
   protected abstract void deleteSnapshots(final Pattern pattern) throws IOException;
   protected abstract void deleteTable(final TableName tableName) throws IOException;
+  protected abstract int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception;
 }

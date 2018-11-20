@@ -17,7 +17,11 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import static java.util.stream.Collectors.toList;
 
-import java.io.Closeable;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
+import io.opencensus.common.Scope;
+import io.opencensus.trace.Status;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -84,6 +88,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   private final HBaseRequestAdapter hbaseAdapter;
   private final TableName tableName;
   private BatchExecutor batchExecutor;
+  // Once the IBigtableDataClient interface is implemented this will be removed
+  private RequestContext requestContext;
 
   public BigtableAsyncTable(BigtableAsyncConnection asyncConnection,
       HBaseRequestAdapter hbaseAdapter) {
@@ -92,6 +98,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     this.client = new BigtableDataClient(session.getDataClient());
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
+    // Once the IBigtableDataClient interface is implemented this will be removed
+    this.requestContext =
+        RequestContext.create(hbaseAdapter.getBigtableTableName().toGcbInstanceName(), "");
   }
 
   protected synchronized BatchExecutor getBatchExecutor() {
@@ -136,11 +145,16 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
     private final CheckAndMutateUtil.RequestBuilder builder;
     private final BigtableDataClient client;
+    // Once the IBigtableDataClient interface is implemented this will be removed
+    protected final RequestContext requestContext;
 
     public CheckAndMutateBuilderImpl(BigtableDataClient client, HBaseRequestAdapter hbaseAdapter,
         byte[] row, byte[] family) {
       this.client = client;
       this.builder = new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
+      BigtableTableName bigtableTableName = hbaseAdapter.getBigtableTableName();
+      // Once the IBigtableDataClient interface is implemented this will be removed
+      this.requestContext = RequestContext.create(bigtableTableName.toGcbInstanceName(), "");
     }
 
     /**
@@ -223,7 +237,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
     private CompletableFuture<Boolean> call()
         throws IOException {
-      CheckAndMutateRowRequest request = builder.build();
+      CheckAndMutateRowRequest request = builder.build().toProto(requestContext);
       return client.checkAndMutateRowAsync(request).thenApply(
         response -> CheckAndMutateUtil.wasMutationApplied(request, response));
     }
@@ -235,7 +249,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Void> delete(Delete delete) {
     // figure out how to time this with Opencensus
-    return client.mutateRowAsync(hbaseAdapter.adapt(delete))
+    return client.mutateRowAsync(hbaseAdapter.adapt(delete).toProto(requestContext))
         .thenApply(r -> null);
   }
 
@@ -357,7 +371,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
    */
   @Override
   public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
-    return client.mutateRowAsync(hbaseAdapter.adapt(rowMutations))
+    return client.mutateRowAsync(hbaseAdapter.adapt(rowMutations).toProto(requestContext))
         .thenApply(r -> null);
   }
 
@@ -367,7 +381,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Void> put(Put put) {
     // figure out how to time this with Opencensus
-    return client.mutateRowAsync(hbaseAdapter.adapt(put))
+    return client.mutateRowAsync(hbaseAdapter.adapt(put).toProto(requestContext))
         .thenApply(r -> null);
   }
 
@@ -396,8 +410,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public ResultScanner getScanner(Scan scan) {
     LOG.trace("getScanner(Scan)");
-    Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
-    try (Closeable c = TRACER.withSpan(span)) {
+    final Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
+    try (Scope scope = TRACER.withSpan(span)) {
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
           client.getClient().readFlatRows(hbaseAdapter.adapt(scan));
       if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
@@ -406,7 +420,10 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       return Adapters.BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner, span);
     } catch (final Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
-
+      span.setStatus(Status.UNKNOWN);
+      // Close the span only when throw an exception and not on finally because if no exception
+      // the span will be ended by the adapter.
+      span.end();
       return new ResultScanner() {
         @Override
         public boolean renewLease() {

@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.hbase.async.TestAsyncScan;
 import com.google.cloud.bigtable.hbase.async.TestAsyncSnapshots;
 import com.google.cloud.bigtable.hbase.async.TestAsyncTruncateTable;
 import com.google.cloud.bigtable.hbase.async.TestBasicAsyncOps;
+import com.google.cloud.bigtable.hbase.async.TestModifyTableAsync;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import org.junit.ClassRule;
 import org.junit.rules.Timeout;
@@ -73,7 +74,9 @@ import java.util.concurrent.TimeUnit;
     TestBasicAsyncOps.class,
     TestAsyncTruncateTable.class,
     TestAsyncSnapshots.class,
-    TestAsyncColumnFamily.class
+    TestAsyncColumnFamily.class,
+    TestModifyTable.class,
+    TestModifyTableAsync.class
 })
 public class IntegrationTests {
 

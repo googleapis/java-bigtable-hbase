@@ -15,7 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import java.io.Closeable;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import io.opencensus.common.Scope;
+import io.opencensus.trace.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,6 +41,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -49,7 +54,6 @@ import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -90,9 +94,11 @@ import io.opencensus.trace.Tracing;
  * @author sduskis
  * @version $Id: $Id
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractBigtableTable implements Table {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractBigtableTable.class);
+
   private static final Tracer TRACER = Tracing.getTracer();
 
   private static class TableMetrics {
@@ -113,6 +119,8 @@ public abstract class AbstractBigtableTable implements Table {
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
+  // Once the IBigtableDataClient interface is implemented this will be removed
+  protected final RequestContext requestContext;
 
   /**
    * Constructed by BigtableConnection
@@ -128,6 +136,9 @@ public abstract class AbstractBigtableTable implements Table {
     this.client = session.getDataClient();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
+    this.requestContext = RequestContext.create(
+        InstanceName.of(options.getProjectId(), options.getInstanceId()),
+        options.getAppProfileId());
   }
 
   /** {@inheritDoc} */
@@ -146,8 +157,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
     try (
-        Closeable ss =
-            TRACER.spanBuilder("BigtableTable.getTableDescriptor").startScopedSpan();
+        Scope scope = TRACER.spanBuilder("BigtableTable.getTableDescriptor").startScopedSpan();
         Admin admin = this.bigtableConnection.getAdmin()) {
       return admin.getTableDescriptor(tableName);
     }
@@ -156,7 +166,7 @@ public abstract class AbstractBigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public boolean exists(Get get) throws IOException {
-    try (Closeable ss = TRACER.spanBuilder("BigtableTable.exists").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.exists").startScopedSpan()) {
       LOG.trace("exists(Get)");
       return !convertToResult(getResults(GetAdapter.setCheckExistenceOnly(get), "exists")).isEmpty();
     }
@@ -166,8 +176,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public boolean[] existsAll(List<Get> gets) throws IOException {
     LOG.trace("existsAll(Get)");
-    try (
-        Closeable ss = TRACER.spanBuilder("BigtableTable.existsAll").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.existsAll").startScopedSpan()) {
       addBatchSizeAnnotation(gets);
       List<Get> existGets = new ArrayList<>(gets.size());
       for(Get get : gets ){
@@ -182,7 +191,7 @@ public abstract class AbstractBigtableTable implements Table {
   public void batch(List<? extends Row> actions, Object[] results)
       throws IOException, InterruptedException {
     LOG.trace("batch(List<>, Object[])");
-    try (Closeable ss = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
       addBatchSizeAnnotation(actions);
       getBatchExecutor().batch(actions, results);
     }
@@ -193,7 +202,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
     LOG.trace("batch(List<>)");
-    try (Closeable ss = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
       addBatchSizeAnnotation(actions);
       return getBatchExecutor().batch(actions);
     }
@@ -204,8 +213,7 @@ public abstract class AbstractBigtableTable implements Table {
   public <R> void batchCallback(List<? extends Row> actions, Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
-    try (Closeable ss =
-        TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
       addBatchSizeAnnotation(actions);
       getBatchExecutor().batchCallback(actions, results, callback);
     }
@@ -217,8 +225,7 @@ public abstract class AbstractBigtableTable implements Table {
   public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback)
       throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Batch.Callback)");
-    try (Closeable ss =
-        TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
       addBatchSizeAnnotation(actions);
       Object[] results = new Object[actions.size()];
       getBatchExecutor().batchCallback(actions, results, callback);
@@ -239,7 +246,7 @@ public abstract class AbstractBigtableTable implements Table {
         throw createRetriesExhaustedWithDetailsException(e, gets.get(0));
       }
     } else {
-      try (Closeable ss = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
+      try (Scope scope = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
         addBatchSizeAnnotation(gets);
         return getBatchExecutor().batch(gets);
       }
@@ -256,7 +263,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    try (Closeable ss = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
       return convertToResult(getResults(get, "get"));
     }
   }
@@ -288,7 +295,7 @@ public abstract class AbstractBigtableTable implements Table {
   public ResultScanner getScanner(Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
     Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
-    try (Closeable c = TRACER.withSpan(span)) {
+    try (Scope scope = TRACER.withSpan(span)) {
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
           client.readFlatRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
@@ -297,6 +304,10 @@ public abstract class AbstractBigtableTable implements Table {
       return Adapters.BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner, span);
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
+      span.setStatus(Status.UNKNOWN);
+      // Close the span only when throw an exception and not on finally because if no exception
+      // the span will be ended by the adapter.
+      span.end();
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner",
@@ -341,13 +352,8 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
-    MutateRowRequest request = hbaseAdapter.adapt(put);
-    try (Closeable ss = TRACER.spanBuilder("BigtableTable.put").startScopedSpan();
-        Timer.Context timerContext = metrics.putTimer.time()) {
-      client.mutateRow(request);
-    } catch (Throwable t) {
-      throw logAndCreateIOException("put", put.getRow(), t);
-    }
+    MutateRowRequest request = hbaseAdapter.adapt(put).toProto(requestContext);
+    mutateRow(put, request, "put");
   }
 
   /** {@inheritDoc} */
@@ -379,7 +385,7 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
     LOG.trace("checkAndPut(byte[], byte[], byte[], CompareOp, value, Put)");
-    CheckAndMutateRowRequest request =
+    ConditionalRowMutation request =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
@@ -393,19 +399,15 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
-    try (Closeable ss = TRACER.spanBuilder("BigtableTable.delete").startScopedSpan()) {
-      MutateRowRequest request = hbaseAdapter.adapt(delete);
-      client.mutateRow(request);
-    } catch (Throwable t) {
-      throw logAndCreateIOException("delete", delete.getRow(), t);
-    }
+    MutateRowRequest request = hbaseAdapter.adapt(delete).toProto(requestContext);
+    mutateRow(delete, request, "delete");
   }
 
   /** {@inheritDoc} */
   @Override
   public void delete(List<Delete> deletes) throws IOException {
     LOG.trace("delete(List<Delete>)");
-    try (Closeable ss = TRACER.spanBuilder("BigtableTable.delete").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.delete").startScopedSpan()) {
       getBatchExecutor().batch(deletes);
     }
   }
@@ -422,7 +424,7 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
     LOG.trace("checkAndDelete(byte[], byte[], byte[], CompareOp, byte[], Delete)");
-    CheckAndMutateRowRequest request =
+    ConditionalRowMutation request =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
@@ -440,7 +442,7 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     LOG.trace("checkAndMutate(byte[], byte[], byte[], CompareOp, byte[], RowMutations)");
 
-    CheckAndMutateRowRequest request =
+    ConditionalRowMutation request =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
             .qualifier(qualifier)
             .ifMatches(compareOp, value)
@@ -450,13 +452,31 @@ public abstract class AbstractBigtableTable implements Table {
     return checkAndMutate(row, request, "checkAndMutate");
   }
 
-  private boolean checkAndMutate(final byte[] row, CheckAndMutateRowRequest request, String type)
+  private boolean checkAndMutate(final byte[] row, ConditionalRowMutation request, String type)
       throws IOException {
-    try (Closeable ss = TRACER.spanBuilder("BigtableTable." + type).startScopedSpan()) {
-      CheckAndMutateRowResponse response = client.checkAndMutateRow(request);
-      return CheckAndMutateUtil.wasMutationApplied(request, response);
+    Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
+    try (Scope scope = TRACER.withSpan(span)) {
+      CheckAndMutateRowRequest checkAndMutateRowRequest = request.toProto(requestContext);
+      CheckAndMutateRowResponse response = client.checkAndMutateRow(checkAndMutateRowRequest);
+      return CheckAndMutateUtil.wasMutationApplied(checkAndMutateRowRequest, response);
     } catch (Throwable t) {
+      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, row, t);
+    } finally {
+      span.end();
+    }
+  }
+
+  private void mutateRow(Mutation mutation, MutateRowRequest mutateRowRequest, String type)
+      throws IOException {
+    Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
+    try (Scope scope = TRACER.withSpan(span)) {
+      client.mutateRow(mutateRowRequest);
+    } catch (Throwable t) {
+      span.setStatus(Status.UNKNOWN);
+      throw logAndCreateIOException(type, mutation.getRow(), t);
+    } finally {
+      span.end();
     }
   }
 
@@ -464,12 +484,15 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
-    try (Closeable ss =
-        TRACER.spanBuilder("BigtableTable.mutateRow").startScopedSpan()) {
-      MutateRowRequest request = hbaseAdapter.adapt(rm);
+    Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
+    try (Scope scope = TRACER.withSpan(span)) {
+      MutateRowRequest request = hbaseAdapter.adapt(rm).toProto(requestContext);
       client.mutateRow(request);
     } catch (Throwable t) {
+      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("mutateRow", rm.getRow(), t);
+    } finally {
+      span.end();
     }
   }
 
@@ -477,8 +500,8 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
-    try (Closeable ss =
-        TRACER.spanBuilder("BigtableTable.append").startScopedSpan()) {
+    Span span = TRACER.spanBuilder("BigtableTable.append").startSpan();
+    try (Scope scope = TRACER.withSpan(span)) {
       ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
       ReadModifyWriteRowResponse response = client.readModifyWriteRow(request);
       // The bigtable API will always return the mutated results. In order to maintain
@@ -489,7 +512,10 @@ public abstract class AbstractBigtableTable implements Table {
         return null;
       }
     } catch (Throwable t) {
+      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("append", append.getRow(), t);
+    } finally {
+      span.end();
     }
   }
 
@@ -497,12 +523,15 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Result increment(Increment increment) throws IOException {
     LOG.trace("increment(Increment)");
-    try (Closeable ss =
-        TRACER.spanBuilder("BigtableTable.increment").startScopedSpan()) {
+    Span span = TRACER.spanBuilder("BigtableTable.increment").startSpan();
+    try (Scope scope = TRACER.withSpan(span)) {
       ReadModifyWriteRowRequest request = hbaseAdapter.adapt(increment);
       return Adapters.ROW_ADAPTER.adaptResponse(client.readModifyWriteRow(request).getRow());
     } catch (Throwable t) {
+      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("increment", increment.getRow(), t);
+    } finally {
+      span.end();
     }
   }
 
@@ -523,7 +552,7 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     LOG.trace("incrementColumnValue(byte[], byte[], byte[], long)");
     try (
-        Closeable ss = TRACER.spanBuilder("BigtableTable.incrementColumnValue").startScopedSpan()) {
+        Scope scope = TRACER.spanBuilder("BigtableTable.incrementColumnValue").startScopedSpan()) {
       Increment incr = new Increment(row);
       incr.addColumn(family, qualifier, amount);
       Result result = increment(incr);

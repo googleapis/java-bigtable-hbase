@@ -38,8 +38,6 @@ import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Gauge;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
-import org.apache.beam.sdk.repackaged.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.sdk.repackaged.com.google.common.base.Preconditions;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -75,10 +73,12 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSes
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
+import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 
 /**
  * <p>
@@ -170,7 +170,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Coder<Result> getDefaultOutputCoder() {
+    public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
 
@@ -487,7 +487,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Coder<Result> getDefaultOutputCoder() {
+    public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
   }
@@ -569,7 +569,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Coder<Result> getDefaultOutputCoder() {
+    public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
 
@@ -630,7 +630,7 @@ public class CloudBigtableIO {
     public boolean advance() throws IOException {
       FlatRow row = scanner.next();
       if (row != null && rangeTracker.tryReturnRecordAt(true,
-        ByteKey.copyFrom(ZeroCopyByteStringUtil.get(row.getRowKey())))) {
+        ByteKey.copyFrom(ByteStringer.extract(row.getRowKey())))) {
         current = FLAT_ROW_ADAPTER.adaptResponse(row);
         rowsRead.addAndGet(1l);
         return true;

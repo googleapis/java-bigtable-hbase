@@ -16,26 +16,10 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import javax.net.ssl.SSLException;
-
+import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
-import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
 import com.google.bigtable.admin.v2.ListClustersResponse;
+import com.google.bigtable.v2.BigtableGrpc;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.BulkOptions;
@@ -51,24 +35,42 @@ import com.google.cloud.bigtable.grpc.async.ThrottlingClientInterceptor;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
+import com.google.cloud.bigtable.grpc.io.Watchdog;
+import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.util.ThreadUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-
+import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.internal.GrpcUtil;
+import io.grpc.MethodDescriptor;
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLException;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
  *
  * <p>The following functionality is handled by this class:
  * <ol>
- *   <li> Created Executors
+ *   <li> Creates Executors
  *   <li> Creates Channels - netty ChannelImpls, ReconnectingChannel and ChannelPools
  *   <li> Creates ChannelInterceptors - auth headers, performance interceptors.
  *   <li> Close anything above that needs to be closed (ExecutorService, CahnnelImpls)
@@ -101,7 +103,7 @@ public class BigtableSession implements Closeable {
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
     ExecutorService connectionStartupExecutor = Executors
-        .newCachedThreadPool(GrpcUtil.getThreadFactory("BigtableSession-startup-%d", true));
+        .newCachedThreadPool(ThreadUtil.getThreadFactory("BigtableSession-startup-%d", true));
 
     connectionStartupExecutor.execute(new Runnable() {
       @Override
@@ -147,6 +149,7 @@ public class BigtableSession implements Closeable {
     return resourceLimiter;
   }
 
+  private Watchdog watchdog;
   private final BigtableDataClient dataClient;
 
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
@@ -191,12 +194,11 @@ public class BigtableSession implements Closeable {
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
     clientInterceptorsList
         .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
-    // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
-    // take as long, but still take time. Get the credentials on one thread, and start up the elg
-    // and scheduledRetries thread pools on another thread.
+
     CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
     RetryOptions retryOptions = options.getRetryOptions();
     CredentialOptions credentialOptions = options.getCredentialOptions();
+
     try {
       ClientInterceptor credentialsInterceptor =
           credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
@@ -206,6 +208,8 @@ public class BigtableSession implements Closeable {
     } catch (GeneralSecurityException e) {
       throw new IOException("Could not initialize credentials.", e);
     }
+
+    clientInterceptorsList.add(setupWatchdog());
 
     clientInterceptors =
         clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
@@ -251,6 +255,18 @@ public class BigtableSession implements Closeable {
       }
     }
     return createManagedPool(host, channelCount);
+  }
+
+  private WatchdogInterceptor setupWatchdog() {
+    Preconditions.checkState(watchdog == null, "Watchdog already setup");
+
+    watchdog = new Watchdog(Clock.SYSTEM,
+        options.getRetryOptions().getReadPartialRowTimeoutMillis());
+    watchdog.start(BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
+
+    return new WatchdogInterceptor(
+        ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()),
+        watchdog);
   }
 
   /**
@@ -487,7 +503,10 @@ public class BigtableSession implements Closeable {
         .forAddress(host, options.getPort());
 
     if (options.usePlaintextNegotiation()) {
-      builder.usePlaintext(true);
+      // NOTE: usePlaintext(true) is deprecated in newer versions of grpc (1.11.0).
+      //       usePlantxext() is the preferred approach, but won't work with older versions.
+      //       This means that plaintext negotiation can't be used with Beam.
+      builder.usePlaintext();
     }
 
     return builder
@@ -501,6 +520,8 @@ public class BigtableSession implements Closeable {
   /** {@inheritDoc} */
   @Override
   public synchronized void close() throws IOException {
+    watchdog.stop();
+
     if (managedChannels.isEmpty()) {
       return;
     }

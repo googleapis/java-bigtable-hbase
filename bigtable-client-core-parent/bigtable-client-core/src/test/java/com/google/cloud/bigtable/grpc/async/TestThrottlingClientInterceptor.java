@@ -45,7 +45,7 @@ public class TestThrottlingClientInterceptor {
 
   @Mock Channel mockChannel;
   @Mock ResourceLimiter mockResourceLimiter;
-  MethodDescriptor methodDescriptor = BigtableGrpc.METHOD_READ_ROWS;
+  MethodDescriptor methodDescriptor = BigtableGrpc.getReadRowsMethod();
   @Mock ClientCall.Listener mockListener;
   @Mock ClientCall mockClientCall;
   ExecutorService executorService;

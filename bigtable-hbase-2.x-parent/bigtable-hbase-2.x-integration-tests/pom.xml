@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-hbase-2.x-parent</artifactId>
-        <version>1.4.1-SNAPSHOT</version>
+        <version>1.6.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-hbase-2.x-integration-tests</artifactId>
@@ -75,6 +75,8 @@ limitations under the License.
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                     <parallel>classesAndMethods</parallel>
                                     <threadCount>${thread.count}</threadCount>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
@@ -117,6 +119,8 @@ limitations under the License.
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                     <parallel>classesAndMethods</parallel>
                                     <threadCount>${thread.count}</threadCount>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
@@ -126,6 +130,20 @@ limitations under the License.
         </profile>
         <profile>
             <id>hbaseLocalMiniClusterTestH2</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-testing-util</artifactId>
+                    <version>${hbase.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-mapreduce</artifactId>
+                    <version>${hbase.version}</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -154,6 +172,8 @@ limitations under the License.
                                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                                     <parallel>classesAndMethods</parallel>
                                     <threadCount>${thread.count}</threadCount>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
@@ -195,6 +215,8 @@ limitations under the License.
                                         <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                                         <compileSource>1.8</compileSource>
                                     </systemPropertyVariables>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
@@ -219,6 +241,8 @@ limitations under the License.
                                 </goals>
                                 <configuration>
                                     <propertyName>bigtable.emulator.endpoint</propertyName>
+                                    <!-- Make sure to fail the build when the suite fails to initialize -->
+                                    <failIfNoTests>true</failIfNoTests>
                                 </configuration>
                             </execution>
                         </executions>
@@ -275,24 +299,6 @@ limitations under the License.
                     <artifactId>bigtable-hbase-2.x-shaded</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-mapreduce</artifactId>
-            <version>${hbase.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-testing-util</artifactId>
-            <version>${hbase.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>

@@ -15,10 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
@@ -27,7 +26,16 @@ import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_MAX_INFLIGHT
 import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.VersionInfo;
+
+import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
@@ -37,13 +45,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
 
 import io.grpc.Status;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.VersionInfo;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 /**
  * Static methods to convert an instance of {@link org.apache.hadoop.conf.Configuration}
@@ -198,6 +199,10 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_USE_BULK_API =
       "google.bigtable.use.bulk.api";
 
+  /** Constant <code>BIGTABLE_USE_BATCH="google.bigtable.use.batch"</code> */
+  public static final String BIGTABLE_USE_BATCH =
+      "google.bigtable.use.batch";
+
   /** Constant <code>BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES="google.bigtable.bulk.max.request.size.b"{trunked}</code> */
   public static final String BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES =
       "google.bigtable.bulk.max.request.size.bytes";
@@ -286,7 +291,7 @@ public class BigtableOptionsFactory {
   public static BigtableOptions fromConfiguration(final Configuration configuration)
       throws IOException {
 
-    BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
+    BigtableOptions.Builder bigtableOptionsBuilder = BigtableOptions.builder();
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
     bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
@@ -307,14 +312,15 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setUsePlaintextNegotiation(
       configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false));
 
+    setBulkOptions(configuration, bigtableOptionsBuilder);
+    setChannelOptions(configuration, bigtableOptionsBuilder);
+    setClientCallOptions(configuration, bigtableOptionsBuilder);
+
     String emulatorHost = configuration.get(BIGTABLE_EMULATOR_HOST_KEY);
     if (emulatorHost != null) {
       bigtableOptionsBuilder.enableEmulator(emulatorHost);
     }
-
-    setBulkOptions(configuration, bigtableOptionsBuilder);
-    setChannelOptions(configuration, bigtableOptionsBuilder);
-    setClientCallOptions(configuration, bigtableOptionsBuilder);
+    bigtableOptionsBuilder.setUseBatch(configuration.getBoolean(BIGTABLE_USE_BATCH, false));
 
     return bigtableOptionsBuilder.build();
   }
@@ -364,7 +370,7 @@ public class BigtableOptionsFactory {
 
   private static void setBulkOptions(final Configuration configuration,
       BigtableOptions.Builder bigtableOptionsBuilder) {
-    BulkOptions.Builder bulkOptionsBuilder = new BulkOptions.Builder();
+    BulkOptions.Builder bulkOptionsBuilder = BulkOptions.builder();
 
     int asyncMutatorCount = configuration.getInt(
         BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
@@ -414,28 +420,31 @@ public class BigtableOptionsFactory {
         BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
       LOG.debug("Using service accounts");
 
-      if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY) != null) {
+      if (configuration instanceof BigtableExtendedConfiguration) {
+        Credentials credentials = ((BigtableExtendedConfiguration) configuration).getCredentials();
+        builder.setCredentialOptions(CredentialOptions.credential(credentials));
+      } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY) != null) {
         String jsonValue = configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY);
         LOG.debug("Using json value");
         builder.setCredentialOptions(
           CredentialOptions.jsonCredentials(jsonValue));
       } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY) != null) {
-        String keyfileLocation =
+        String keyFileLocation =
             configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
-        LOG.debug("Using json keyfile: %s", keyfileLocation);
+        LOG.debug("Using json keyfile: %s", keyFileLocation);
         builder.setCredentialOptions(
           CredentialOptions.jsonCredentials(
-            new FileInputStream(keyfileLocation)));
+            new FileInputStream(keyFileLocation)));
       } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY) != null) {
         String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
         LOG.debug("Service account %s specified.", serviceAccount);
-        String keyfileLocation =
+        String keyFileLocation =
             configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
-        Preconditions.checkState(!isNullOrEmpty(keyfileLocation),
+        Preconditions.checkState(!isNullOrEmpty(keyFileLocation),
           "Key file location must be specified when setting service account email");
-        LOG.debug("Using p12 keyfile: %s", keyfileLocation);
+        LOG.debug("Using p12 keyfile: %s", keyFileLocation);
         builder.setCredentialOptions(
-          CredentialOptions.p12Credential(serviceAccount,  keyfileLocation));
+          CredentialOptions.p12Credential(serviceAccount,  keyFileLocation));
       } else {
         LOG.debug("Using default credentials.");
         builder.setCredentialOptions(
@@ -453,7 +462,7 @@ public class BigtableOptionsFactory {
 
   private static void setClientCallOptions(Configuration configuration,
       BigtableOptions.Builder bigtableOptionsBuilder) {
-    CallOptionsConfig.Builder clientCallOptionsBuilder = new CallOptionsConfig.Builder();
+    CallOptionsConfig.Builder clientCallOptionsBuilder = CallOptionsConfig.builder();
 
     clientCallOptionsBuilder
         .setUseTimeout(configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT));
@@ -465,7 +474,7 @@ public class BigtableOptionsFactory {
   }
 
   private static RetryOptions createRetryOptions(Configuration configuration) {
-    RetryOptions.Builder retryOptionsBuilder = new RetryOptions.Builder();
+    RetryOptions.Builder retryOptionsBuilder = RetryOptions.builder();
     boolean enableRetries = configuration.getBoolean(
         ENABLE_GRPC_RETRIES_KEY, RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES);
     LOG.debug("gRPC retries enabled: %s", enableRetries);

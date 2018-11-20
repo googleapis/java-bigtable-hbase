@@ -51,7 +51,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
   public static BigtableClusterUtilities forInstance(String projectId, String instanceId)
       throws IOException, GeneralSecurityException {
     return new BigtableClusterUtilities(
-        new BigtableOptions.Builder().setProjectId(projectId).setInstanceId(instanceId).build());
+        BigtableOptions.builder().setProjectId(projectId).setInstanceId(instanceId).build());
   }
 
   /**
@@ -67,7 +67,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
       throws IOException, GeneralSecurityException {
     // '-' means all instanceids.
     return new BigtableClusterUtilities(
-        new BigtableOptions.Builder().setProjectId(projectId).setInstanceId("-").build());
+        BigtableOptions.builder().setProjectId(projectId).setInstanceId("-").build());
   }
 
   /**

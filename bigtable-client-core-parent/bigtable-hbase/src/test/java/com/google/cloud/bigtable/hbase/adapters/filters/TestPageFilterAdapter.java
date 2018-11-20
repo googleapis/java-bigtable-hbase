@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
@@ -113,8 +113,8 @@ public class TestPageFilterAdapter {
     ReadHooks hooks = new DefaultReadHooks();
     FilterAdapterContext context = new FilterAdapterContext(new Scan(), hooks);
     PageFilter pageFilter = new PageFilter(20);
-    RowFilter adaptedFilter = pageFilterAdapter.adapt(context, pageFilter);
-    Assert.assertNull("PageFilterAdapter should not return a RowFilter.", adaptedFilter);
+    Filters.Filter adaptedFilter = pageFilterAdapter.adapt(context, pageFilter);
+    Assert.assertNull("PageFilterAdapter should not return a Filters.Filter.", adaptedFilter);
 
     ReadRowsRequest request = ReadRowsRequest.newBuilder().setRowsLimit(100).build();
     ReadRowsRequest postHookRequest = hooks.applyPreSendHook(request);

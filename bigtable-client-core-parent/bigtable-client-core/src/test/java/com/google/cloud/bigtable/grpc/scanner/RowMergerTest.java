@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -23,7 +24,6 @@ import java.util.Arrays;
 
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
-import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.StringValue;
@@ -49,7 +49,7 @@ public class RowMergerTest {
   }
 
   @Test
-  public void testOneCellRow() {
+  public void testOneCellRow_success() {
     CellChunk cellChunk1 = createCell("row_key1", "family", "qualifier", "value", 1, true);
     CellChunk cellChunk2 = createCell("row_key2", "family", "qualifier", "value", 1, true);
     RowMerger underTest = new RowMerger(observer);
@@ -57,6 +57,17 @@ public class RowMergerTest {
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
     verify(observer, times(1)).onNext(eq(toRow(cellChunk1)));
     verify(observer, times(1)).onNext(eq(toRow(cellChunk2)));
+    verify(observer, times(0)).onError(any(Exception.class));
+  }
+
+  @Test
+  public void testOneCellRow_reverse_key() {
+    CellChunk cellChunk1 = createCell("row_key2", "family", "qualifier", "value", 1, true);
+    CellChunk cellChunk2 = createCell("row_key1", "family", "qualifier", "value", 1, true);
+    RowMerger underTest = new RowMerger(observer);
+    underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
+    underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
+    verify(observer, times(1)).onError(any(IllegalArgumentException.class));
   }
 
   @Test

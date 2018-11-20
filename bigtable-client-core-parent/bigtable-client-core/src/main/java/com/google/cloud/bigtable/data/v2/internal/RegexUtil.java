@@ -22,7 +22,7 @@ import com.google.protobuf.ByteString.Output;
 import java.io.IOException;
 import java.io.OutputStream;
 
-@InternalApi
+@Deprecated @InternalApi
 public final class RegexUtil {
   private static final byte[] NULL_BYTES = "\\x00".getBytes();
 

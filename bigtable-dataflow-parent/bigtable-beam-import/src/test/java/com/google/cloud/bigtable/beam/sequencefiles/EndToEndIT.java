@@ -62,7 +62,7 @@ public class EndToEndIT {
   // Column family name used in all test bigtables.
   private static final String CF = "column_family";
 
-  // Full path of the gcs folder where dataflow jars are uploaded to.
+  // Full path of the Cloud Storage folder where dataflow jars are uploaded to.
   private static final String GOOGLE_DATAFLOW_STAGING_LOCATION = "google.dataflow.stagingLocation";
 
 
@@ -88,7 +88,7 @@ public class EndToEndIT {
       cloudTestDataFolder = cloudTestDataFolder + File.separator;
     }
 
-    // GCS config
+    // Cloud Storage config
     GcpOptions gcpOptions = PipelineOptionsFactory.create().as(GcpOptions.class);
     gcpOptions.setProject(projectId);
     gcsUtil = new GcsUtilFactory().create(gcpOptions);

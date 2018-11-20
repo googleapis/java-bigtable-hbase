@@ -15,11 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.protobuf.ByteString;
@@ -28,7 +31,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -50,7 +52,9 @@ public class TestCheckAndMutateUtil {
   private static final BigtableTableName BT_TABLE_NAME =
       new BigtableInstanceName("project", "instance")
           .toTableName(TABLE_NAME.getNameAsString());
-
+  private static final RequestContext REQUEST_CONTEXT =
+      RequestContext
+          .create(InstanceName.of(BT_TABLE_NAME.getProjectId(), BT_TABLE_NAME.getInstanceId()), "SomeAppProfileId");
   private static final byte[] rowKey = Bytes.toBytes("rowKey");
   private static final byte[] family = Bytes.toBytes("family");
   private static final byte[] qual = Bytes.toBytes("qual");
@@ -68,7 +72,14 @@ public class TestCheckAndMutateUtil {
     PutAdapter putAdapter = new PutAdapter(100, true);
     HBaseRequestAdapter.MutationAdapters mutationAdapters =
         new HBaseRequestAdapter.MutationAdapters(putAdapter);
-    requestAdapter = new HBaseRequestAdapter(TABLE_NAME, BT_TABLE_NAME, mutationAdapters);
+    requestAdapter = new HBaseRequestAdapter(
+        TABLE_NAME,
+        BT_TABLE_NAME,
+        mutationAdapters,
+        RequestContext.create(
+            InstanceName.of(BT_TABLE_NAME.getProjectId(), BT_TABLE_NAME.getInstanceId()),
+            "APP_PROFILE_ID"
+        ));
   }
 
   private static void checkPredicate(CheckAndMutateRowRequest result) {
@@ -106,7 +117,8 @@ public class TestCheckAndMutateUtil {
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -123,7 +135,8 @@ public class TestCheckAndMutateUtil {
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withDelete(new Delete(rowKey).addColumns(family, qual))
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -141,11 +154,13 @@ public class TestCheckAndMutateUtil {
 
     RowMutations rowMutations = new RowMutations(rowKey);
     rowMutations.add(PUT);
+
     CheckAndMutateRowRequest result = underTest
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withMutations(rowMutations)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
     checkPutMutation(result.getTrueMutations(0));
@@ -155,7 +170,8 @@ public class TestCheckAndMutateUtil {
   @Test
   /**
    * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a
-   * {@link CheckAndMutateRowRequest} sets a server-side timeatamp (-1) on the {@link Mutation}
+   * {@link ConditionalRowMutation} sets a server-side timeatamp (-1) on the
+   * {@link com.google.cloud.bigtable.data.v2.models.Mutation}
    */
   public void testPutServerSideTimestamps() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
@@ -164,7 +180,8 @@ public class TestCheckAndMutateUtil {
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -175,7 +192,8 @@ public class TestCheckAndMutateUtil {
   @Test
   /**
    * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a
-   * {@link CheckAndMutateRowRequest} sets a clientr-side timeatamp on the {@link Mutation}
+   * {@link ConditionalRowMutation} sets a clientr-side timeatamp on the
+   * {@link com.google.cloud.bigtable.data.v2.models.Mutation}
    * if a user explicitly sets a timestamp on the Put
    */
   public void testPutServerClientTimestamps() throws DoNotRetryIOException {
@@ -186,7 +204,8 @@ public class TestCheckAndMutateUtil {
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withPut(new Put(rowKey).addColumn(family, qual, timestamp, newValue))
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -197,8 +216,8 @@ public class TestCheckAndMutateUtil {
   @Test
   /**
    * Tests that a CheckAndMutate with a {@link RowMutations} with a {@link Put} which ensures that
-   * the conversion to a {@link CheckAndMutateRowRequest} sets a server-side timeatamp (-1) on the
-   * {@link Mutation}.
+   * the conversion to a {@link ConditionalRowMutation} sets a server-side timeatamp (-1) on the
+   * {@link com.google.cloud.bigtable.data.v2.models.Mutation}.
    */
   public void testRowMutationServerSideTimestamps() throws IOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
@@ -209,7 +228,8 @@ public class TestCheckAndMutateUtil {
         .qualifier(qual)
         .ifMatches(CompareOp.EQUAL, checkValue)
         .withMutations(rowMutations)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -228,7 +248,8 @@ public class TestCheckAndMutateUtil {
         .qualifier(qual)
         .ifNotExists()
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getFalseMutationsCount());
     checkPutMutation(result.getFalseMutations(0));
@@ -253,7 +274,8 @@ public class TestCheckAndMutateUtil {
         .qualifier(qual)
         .ifMatches(CompareOp.NOT_EQUAL, null)
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -283,7 +305,8 @@ public class TestCheckAndMutateUtil {
         .qualifier(qual)
         .ifMatches(otherOps.get(index), null)
         .withPut(PUT)
-        .build();
+        .build()
+        .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getFalseMutationsCount());
 

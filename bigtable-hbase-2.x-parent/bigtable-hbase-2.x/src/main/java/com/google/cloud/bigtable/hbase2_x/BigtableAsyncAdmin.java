@@ -23,26 +23,22 @@ import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
-import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import io.grpc.Status;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
-import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerName;
@@ -52,12 +48,11 @@ import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
-import org.apache.hadoop.hbase.client.BigtableAsyncConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
 import org.apache.hadoop.hbase.client.RegionInfo;
-import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.TableDescriptor;
@@ -72,7 +67,6 @@ import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -82,6 +76,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -102,13 +98,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final BigtableTableAdminClient bigtableTableAdminClient;
   private final BigtableInstanceName bigtableInstanceName;
   private final TableAdapter2x tableAdapter2x;
-  private final BigtableAsyncConnection asyncConnection;
+  private final CommonConnection asyncConnection;
   private BigtableClusterName bigtableSnapshotClusterName;
   private final Configuration configuration;
-  private final BigtableSession bigtableSession;
 
-
-  public BigtableAsyncAdmin(BigtableAsyncConnection asyncConnection) throws IOException {
+  public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
     this.options = asyncConnection.getOptions();
     this.bigtableTableAdminClient = new BigtableTableAdminClient(
@@ -123,7 +117,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
-    this.bigtableSession = asyncConnection.getSession();
   }
 
   /** {@inheritDoc} */
@@ -134,7 +127,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       return failedFuture(new IllegalArgumentException("TableName cannot be null"));
     }
 
-    CreateTableRequest.Builder builder = tableAdapter2x.adapt(desc, splitKeys);
+    CreateTableRequest.Builder builder = TableAdapter2x.adapt(desc, splitKeys);
     builder.setParent(bigtableInstanceName.toString());
     return bigtableTableAdminClient.createTableAsync(builder.build())
         .handle((resp, ex) -> {
@@ -208,8 +201,19 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Boolean> tableExists(TableName tableName) {
-    return listTableNames(Optional.of(Pattern.compile(tableName.getNameAsString())))
-        .thenApply(r -> r.stream().anyMatch(e -> e.equals(tableName)));
+    GetTableRequest request = GetTableRequest.newBuilder()
+        .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()))
+        .setView(Table.View.NAME_ONLY)
+        .build();
+    return bigtableTableAdminClient.getTableAsync(request)
+        .thenApply(r -> true)
+        .exceptionally(e -> {
+            if(Status.fromThrowable(e).getCode() == Status.Code.NOT_FOUND) {
+              return false;
+            } else {
+              throw new CompletionException("Could not get the table", e);
+            }
+        });
   }
 
   private CompletableFuture<List<TableName>> listTableNames(Optional<Pattern> tableNamePattern) {
@@ -301,17 +305,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Void> deleteColumnFamily(TableName tableName,
-      byte[] columnName) {
-    return modifyColumn(tableName, Modification
-        .newBuilder()
-        .setId(Bytes.toString(columnName))
-        .setDrop(true)
-        .build()
-    );
-  }
-
-  @Override
   public CompletableFuture<Void> deleteSnapshot(String snapshotName) {
     return CompletableFuture.supplyAsync(() -> {
       try {
@@ -332,14 +325,61 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         .thenApply(deleteSnapshotsFunc());
   }
 
+  //  ******************* START COLUMN FAMILY MODIFICATION  ************************
+
+  /** {@inheritDoc} */
   @Override
-  public CompletableFuture<Void> modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc) {
-    return modifyColumn(tableName, Modification
-        .newBuilder()
-        .setId(columnFamilyDesc.getNameAsString())
-        .setUpdate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
-        .build());
+  public CompletableFuture<Void> addColumnFamily(TableName tableName,
+      ColumnFamilyDescriptor columnFamilyDesc) {
+    return modifyColumns(tableName,
+        ModifyTableBuilder.create().add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
+
+
+  @Override
+  public CompletableFuture<Void> deleteColumnFamily(TableName tableName,
+      byte[] columnName) {
+    return modifyColumns(tableName, ModifyTableBuilder.create().delete(Bytes.toString(columnName)));
+  }
+
+  @Override
+  public CompletableFuture<Void> modifyColumnFamily(TableName tableName,
+      ColumnFamilyDescriptor columnFamilyDesc) {
+    return modifyColumns(tableName,
+        ModifyTableBuilder.create().modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+  }
+
+  @Override
+  public CompletableFuture<Void> modifyTable(TableDescriptor newDescriptor) {
+    return getDescriptor(newDescriptor.getTableName())
+        .thenApply(descriptor -> ModifyTableBuilder
+            .buildModifications(
+                new HTableDescriptor(newDescriptor),
+                new HTableDescriptor(descriptor)))
+        .thenApply(modifications -> {
+          try {
+            modifyColumns(newDescriptor.getTableName(), modifications).get();
+          } catch (InterruptedException | ExecutionException e) {
+            throw new CompletionException(e);
+          }
+          return null;
+        });
+  }
+
+  /**
+   * <p>modifyColumns.</p>
+   *
+   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
+   * @param modifications a {@link ModifyTableBuilder} object.
+   */
+  private CompletableFuture<Void> modifyColumns(TableName tableName,
+      ModifyTableBuilder modifications) {
+    return bigtableTableAdminClient
+        .modifyColumnFamilyAsync(modifications.toProto(toBigtableName(tableName)))
+        .thenApply(r -> null);
+  }
+
+  //  ******************* END COLUMN FAMILY MODIFICATION  ************************
 
   /**
    * Restore the specified snapshot on the original table.
@@ -507,7 +547,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         bigtableTableAdminClient.listSnapshotsAsync(request)
             .thenApply(r -> r.getSnapshotsList()
                 .stream()
-                .map(BigtableAsyncAdmin::toSnapshotDesscription)
+                .map(BigtableAsyncAdmin::toSnapshotDescription)
                 .collect(Collectors.toList())
             )
     );
@@ -516,18 +556,19 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<List<SnapshotDescription>> listSnapshots(Pattern pattern) {
     return listSnapshots().thenApply(r ->
-        filter(r, d -> pattern.matcher(d.getName()).matches()));
+        filter(r, d -> pattern == null || pattern.matcher(d.getName()).matches()));
   }
 
   @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern tableNamePattern,
-      Pattern pattern) {
-    return listSnapshots(pattern).thenApply(r ->
-       filter(r, d -> pattern.matcher(d.getTableNameAsString()).matches())
+      Pattern snapshotPattern) {
+    return listSnapshots(snapshotPattern).thenApply(r ->
+       filter(r, d -> tableNamePattern == null ||
+           tableNamePattern.matcher(d.getTableNameAsString()).matches())
     );
   }
 
-  private static SnapshotDescription toSnapshotDesscription(Snapshot snapshot) {
+  private static SnapshotDescription toSnapshotDescription(Snapshot snapshot) {
     return new SnapshotDescription(
         snapshot.getName(),
         TableName.valueOf(snapshot.getSourceTable().getName()));
@@ -540,13 +581,16 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   // ****** TO BE IMPLEMENTED [start] ******
 
   @Override
-  public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern arg0) {
-    throw new UnsupportedOperationException("listTableSnapshots"); // TODO
+  public CompletableFuture<Void> cloneTableSchema(TableName tableName, TableName tableName1,
+      boolean preserveSplits) {
+    throw new UnsupportedOperationException("cloneTableSchema"); // TODO
   }
 
   @Override
-  public CompletableFuture<Void> modifyTable(TableDescriptor arg0) {
-    throw new UnsupportedOperationException("modifyTable"); // TODO
+  public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern tableNamePattern) {
+    return listSnapshots().thenApply(r -> 
+    		filter(r, d->tableNamePattern == null || 
+    		tableNamePattern.matcher(d.getTableNameAsString()).matches()));
   }
 
   @Override
@@ -564,31 +608,41 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<List<RegionInfo>> getRegions(TableName tableName) {
-    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
-    SampledRowKeysAdapter sampledRowKeysAdapter = getSampledRowKeysAdapter(tableName, serverName);
-    SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setTableName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
-    return FutureUtils
-        .toCompletableFuture(bigtableSession.getDataClient().sampleRowKeysAsync(request.build()))
-        .thenApplyAsync(result ->
-            sampledRowKeysAdapter.adaptResponse(result)
-                .stream()
-                .map(location -> location.getRegion())
-                .collect(Collectors.toList())
-        );
+    return CompletableFuture.supplyAsync(() -> {
+      try {
+        return new CopyOnWriteArrayList<RegionInfo>(asyncConnection.getAllRegionInfos(tableName));
+      } catch (IOException e) {
+        throw new CompletionException(e);
+      }
+    });
   }
 
-  private SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableNameAdapter,
-      ServerName serverNameAdapter) {
-    return new SampledRowKeysAdapter(tableNameAdapter, serverNameAdapter) {
-      @Override
-      protected HRegionLocation createRegionLocation(byte[] startKey,
-          byte[] endKey) {
-        RegionInfo regionInfo = RegionInfoBuilder.newBuilder(tableNameAdapter)
-            .setStartKey(startKey).setEndKey(endKey).build();
-        return new HRegionLocation(regionInfo, serverNameAdapter);
+
+  private BigtableClusterName getSnapshotClusterName() throws IOException {
+    if (bigtableSnapshotClusterName == null) {
+      try {
+        bigtableSnapshotClusterName = getClusterName();
+      } catch (IllegalStateException e) {
+        throw new IllegalStateException(
+            "Failed to determine which cluster to use for snapshots, please configure it using "
+                + BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY);
       }
-    };
+    }
+    return bigtableSnapshotClusterName;
+  }
+
+  private BigtableClusterName getClusterName() throws IOException {
+    return asyncConnection.getSession().getClusterName();
+  }
+
+  /**
+   * <p>toBigtableName.</p>
+   *
+   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
+   * @return a {@link java.lang.String} object.
+   */
+  private String toBigtableName(TableName tableName) {
+    return bigtableInstanceName.toTableNameStr(tableName.getNameAsString());
   }
 
   // ****** TO BE IMPLEMENTED [end] ******
@@ -597,16 +651,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Boolean> abortProcedure(long arg0, boolean arg1) {
     throw new UnsupportedOperationException("abortProcedure"); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public CompletableFuture<Void> addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc) {
-    return modifyColumn(tableName, Modification
-        .newBuilder()
-        .setId(columnFamilyDesc.getNameAsString())
-        .setCreate(tableAdapter2x.toColumnFamily(columnFamilyDesc))
-        .build());
   }
 
   /** {@inheritDoc} */
@@ -649,8 +693,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> decommissionRegionServers(List<ServerName> arg0, boolean arg1) {
     throw new UnsupportedOperationException("decommissionRegionServers"); // TODO
   }
-
-
+  
   @Override
   public CompletableFuture<Void> deleteNamespace(String arg0) {
     throw new UnsupportedOperationException("deleteNamespace"); // TODO
@@ -1108,47 +1151,5 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Boolean> splitSwitch(boolean arg0) {
     throw new UnsupportedOperationException("splitSwitch"); // TODO
-  }
-
-  private BigtableClusterName getSnapshotClusterName() throws IOException {
-    if (bigtableSnapshotClusterName == null) {
-      try {
-        bigtableSnapshotClusterName = getClusterName();
-      } catch (IllegalStateException e) {
-        throw new IllegalStateException(
-            "Failed to determine which cluster to use for snapshots, please configure it using "
-                + BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY);
-      }
-    }
-    return bigtableSnapshotClusterName;
-  }
-
-  /**
-   * <p>modifyColumn.</p>
-   *
-   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @param modification an array of {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification} objectss
-   */
-  private CompletableFuture<Void> modifyColumn(TableName tableName, Modification... modifications) {
-    ModifyColumnFamiliesRequest request = ModifyColumnFamiliesRequest
-        .newBuilder()
-        .addAllModifications(Arrays.asList(modifications))
-        .setName(toBigtableName(tableName))
-        .build();
-    return bigtableTableAdminClient.modifyColumnFamilyAsync(request).thenApply(r -> null);
-  }
-
-  private BigtableClusterName getClusterName() throws IOException {
-    return asyncConnection.getSession().getClusterName();
-  }
-
-  /**
-   * <p>toBigtableName.</p>
-   *
-   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @return a {@link java.lang.String} object.
-   */
-  private String toBigtableName(TableName tableName) {
-    return bigtableInstanceName.toTableNameStr(tableName.getNameAsString());
   }
 }

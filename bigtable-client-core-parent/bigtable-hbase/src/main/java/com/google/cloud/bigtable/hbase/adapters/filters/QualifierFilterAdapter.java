@@ -15,13 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.QualifierRangeFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.models.Filters.QualifierRangeFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
@@ -51,16 +49,14 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, QualifierFilter filter)
+  public Filter adapt(FilterAdapterContext context, QualifierFilter filter)
       throws IOException {
     if (filter.getComparator() instanceof RegexStringComparator) {
       return adaptRegexStringComparator(
-          filter.getOperator(), (RegexStringComparator) filter.getComparator())
-          .toProto();
+          filter.getOperator(), (RegexStringComparator) filter.getComparator());
     } else if (filter.getComparator() instanceof BinaryComparator) {
       return adaptBinaryComparator(
-          context, filter.getOperator(), (BinaryComparator) filter.getComparator())
-          .toProto();
+          context, filter.getOperator(), (BinaryComparator) filter.getComparator());
     }
     throw new IllegalStateException(
         String.format(
@@ -71,8 +67,7 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
   private Filter adaptBinaryComparator(
       FilterAdapterContext context, CompareOp compareOp, BinaryComparator comparator)
       throws IOException {
-    byte[] quoted = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
-    ByteString quotedValue = ByteStringer.wrap(quoted);
+    ByteString quotedValue = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
     switch (compareOp) {
       case LESS:
         return range(context).endOpen(quotedValue);

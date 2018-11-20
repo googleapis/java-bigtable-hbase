@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.cloud.bigtable.util.ThreadUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
@@ -34,8 +35,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import io.grpc.internal.GrpcUtil;
 
 public class RecreateConnectionDriver {
   
@@ -54,7 +53,7 @@ public class RecreateConnectionDriver {
     final TableName tableName = TableName.valueOf(tableNameStr);
     final AtomicBoolean finished = new AtomicBoolean(false);
     ExecutorService executor = Executors.newFixedThreadPool(numThreads,
-      GrpcUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
+      ThreadUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
     ScheduledExecutorService finishExecutor = setupShutdown(finished);
     try (Connection connection = connect(projectId, instanceId)) {
       setupTable(tableName, connection);
@@ -112,7 +111,7 @@ public class RecreateConnectionDriver {
 
   static ScheduledExecutorService setupShutdown(final AtomicBoolean finished) {
     ScheduledExecutorService finishExecutor =
-        Executors.newScheduledThreadPool(1, GrpcUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
+        Executors.newScheduledThreadPool(1, ThreadUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
     finishExecutor.schedule(new Runnable() {
       @Override
       public void run() {

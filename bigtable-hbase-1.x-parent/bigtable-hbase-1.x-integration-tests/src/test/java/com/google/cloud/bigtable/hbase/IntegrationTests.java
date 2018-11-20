@@ -17,13 +17,8 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
 import org.junit.ClassRule;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
@@ -51,7 +46,8 @@ import org.junit.runners.Suite;
     TestListTables.class,
     TestPut.class,
     TestTimestamp.class,
-    TestTruncateTable.class
+    TestTruncateTable.class,
+    TestModifyTable.class
 })
 public class IntegrationTests {
   private static final int TIME_OUT_MINUTES =

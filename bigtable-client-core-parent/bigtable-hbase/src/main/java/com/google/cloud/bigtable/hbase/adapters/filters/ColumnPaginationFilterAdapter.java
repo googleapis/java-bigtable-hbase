@@ -15,10 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
-import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.ChainFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
@@ -41,8 +40,9 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, ColumnPaginationFilter filter)
+  public Filter adapt(FilterAdapterContext context, ColumnPaginationFilter filter)
       throws IOException {
+    //REVISIT:
     if (filter.getColumnOffset() != null) {
       byte[] family = context.getScan().getFamilies()[0];
       ByteString startQualifier = ByteString.copyFrom(filter.getColumnOffset());
@@ -68,7 +68,7 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
    * qualifier, those cells that pass an option intermediate filter
    * and are less than the limit per row.
    */
-  private RowFilter createChain(
+  private Filter createChain(
       ColumnPaginationFilter filter, Filter intermediate) {
     ChainFilter chain = FILTERS.chain();
     chain.filter(FILTERS.limit().cellsPerColumn(1));
@@ -76,7 +76,7 @@ public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<Column
       chain.filter(intermediate);
     }
     chain.filter(FILTERS.limit().cellsPerRow(filter.getLimit()));
-    return chain.toProto();
+    return chain;
   }
 
   /** {@inheritDoc} */

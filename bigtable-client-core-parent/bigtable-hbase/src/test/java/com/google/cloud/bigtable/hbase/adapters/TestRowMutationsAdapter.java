@@ -17,10 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 
 import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.Mutation;
-import com.google.bigtable.v2.Mutation.SetCell;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.protobuf.ByteString;
 
 //import org.apache.hadoop.hbase.client.Mutation;
@@ -37,11 +37,21 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 
 @RunWith(JUnit4.class)
 public class TestRowMutationsAdapter {
+
+  private static final String PROJECT_ID = "test-project-id";
+  private static final String INSTANCE_ID = "test-instance-id";
+  private static final String TABLE_ID = "test-table-id";
+  private static final String APP_PROFILE_ID = "test-app-profile-id";
+  private static final RequestContext REQUEST_CONTEXT = RequestContext.create(
+      InstanceName.of(PROJECT_ID, INSTANCE_ID),
+      APP_PROFILE_ID
+  );
 
   @Mock
   private MutationAdapter<org.apache.hadoop.hbase.client.Mutation> mutationAdapter;
@@ -59,7 +69,10 @@ public class TestRowMutationsAdapter {
   public void testRowKeyIsSet() {
     byte[] rowKey = dataHelper.randomData("rk-1");
     RowMutations mutations = new RowMutations(rowKey);
-    MutateRowRequest.Builder result = adapter.adapt(mutations);
+    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+    adapter.adapt(mutations, mutation);
+    MutateRowRequest result = toMutateRowRequest(rowKey, mutation);
     Assert.assertArrayEquals(rowKey, result.getRowKey().toByteArray());
   }
 
@@ -84,41 +97,24 @@ public class TestRowMutationsAdapter {
         new Put(rowKey)
             .addColumn(family2, qualifier2, value2));
 
-    // When mockAdapter is asked to adapt the above mutations, we'll return these responses:
-    List<Mutation> response1 = Arrays.asList(Mutation.newBuilder()
-        .setSetCell(SetCell.newBuilder()
-            .setColumnQualifier(ByteString.copyFrom(qualifier1))
-            .setFamilyNameBytes(ByteString.copyFrom(family1))
-            .setValue(ByteString.copyFrom(value1)))
-        .build());
-
-    List<Mutation> response2 = Arrays.asList(Mutation.newBuilder()
-      .setSetCell(SetCell.newBuilder()
-            .setColumnQualifier(ByteString.copyFrom(qualifier2))
-            .setFamilyNameBytes(ByteString.copyFrom(family2))
-            .setValue(ByteString.copyFrom(value2)))
-      .build());
-
-    Mockito
-        .when(mutationAdapter
-            .adaptMutations(Matchers.any(org.apache.hadoop.hbase.client.Mutation.class)))
-        .thenReturn(response1)
-        .thenReturn(response2);
-
-    // Adapt the RowMutations to a RowMutation:
-    MutateRowRequest.Builder result = adapter.adapt(mutations);
+    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.create();
+    // Adapt the RowMutations to a Mutation:
+    adapter.adapt(mutations, mutation);
+    MutateRowRequest result = toMutateRowRequest(rowKey, mutation);
     Assert.assertArrayEquals(rowKey, result.getRowKey().toByteArray());
 
-    // Verify mutations.getMutations(0) is in the first position in result.mods.
-    Assert.assertArrayEquals(family1,
-        result.getMutations(0).getSetCell().getFamilyNameBytes().toByteArray());
-    Assert.assertArrayEquals(qualifier1,
-        result.getMutations(0).getSetCell().getColumnQualifier().toByteArray());
+    Mockito.verify(mutationAdapter, times(2)).adaptMutations(any(
+        org.apache.hadoop.hbase.client.Mutation.class),Matchers.eq(mutation));
+  }
 
-    //Verify mutations.getMutation(1) is in the second position in result.mods.
-    Assert.assertArrayEquals(family2,
-        result.getMutations(1).getSetCell().getFamilyNameBytes().toByteArray());
-    Assert.assertArrayEquals(qualifier2,
-        result.getMutations(1).getSetCell().getColumnQualifier().toByteArray());
+  private MutateRowRequest toMutateRowRequest(byte[] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
+    RowMutation rowMutation = toRowMutationModel(rowKey, mutation);
+    MutateRowRequest.Builder builder = rowMutation.toProto(REQUEST_CONTEXT).toBuilder();
+    return builder.build();
+  }
+
+  private RowMutation toRowMutationModel(byte [] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
+    return RowMutation.create(TABLE_ID, ByteString.copyFrom(rowKey), mutation);
   }
 }

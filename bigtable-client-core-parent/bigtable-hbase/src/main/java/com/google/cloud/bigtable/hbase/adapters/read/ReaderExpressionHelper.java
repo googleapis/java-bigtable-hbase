@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.ByteArrayOutputStream;
@@ -31,47 +32,17 @@ import java.io.OutputStream;
 public class ReaderExpressionHelper {
   /** Constant <code>ANY_BYTE="\\C"</code> */
   public static final String ANY_BYTE = "\\C";
-  /** Constant <code>ANY_BYTE="\\C"</code> */
+  /** Constant <code>ANY_BYTES="\\C+"</code> */
+  public static final String ANY_BYTES = "\\C+";
+  /** Constant <code>ALL_BYTES="\\C*"</code> */
   public static final String ALL_BYTES = "\\C*";
   /** Constant <code>ANY_BYTE_BYTES=Bytes.toBytes(ANY_BYTE)</code> */
   public static final byte[] ANY_BYTE_BYTES = Bytes.toBytes(ANY_BYTE);
   /** Constant <code>ANY_BYTE_BYTES=Bytes.toBytes(ANY_BYTE)</code> */
   public static final byte[] ALL_BYTE_BYTES = Bytes.toBytes(ALL_BYTES);
-  /** Constant <code>ALL_QUALIFIERS="\\C*"</code> */
-  public static final String ALL_QUALIFIERS = ALL_BYTES;
   /** Constant <code>ALL_QUALIFIERS_BYTES=Bytes.toBytes(ALL_QUALIFIERS)</code> */
   public static final byte[] ALL_QUALIFIERS_BYTES = ALL_BYTE_BYTES;
-  /** Constant <code>ALL_FAMILIES=".*"</code> */
-  public static final String ALL_FAMILIES = ".*";
-  /** Constant <code>ALL_FAMILIES_BYTES=Bytes.toBytes(ALL_FAMILIES)</code> */
-  public static final byte[] ALL_FAMILIES_BYTES = Bytes.toBytes(ALL_FAMILIES);
-  /** Constant <code>ALL_VERSIONS="all"</code> */
-  public static final String ALL_VERSIONS = "all";
-  /** Constant <code>ALL_VERSIONS_BYTES=Bytes.toBytes(ALL_VERSIONS)</code> */
-  public static final byte[] ALL_VERSIONS_BYTES = Bytes.toBytes(ALL_VERSIONS);
-  /** Constant <code>LATEST_VERSION="latest"</code> */
-  public static final String LATEST_VERSION = "latest";
-  /** Constant <code>INTERLEAVE_CHARACTERS=Bytes.toBytes(" + ")</code> */
-  public static final byte[] INTERLEAVE_CHARACTERS = Bytes.toBytes(" + ");
-  /** Constant <code>PIPE_CHARACTER_BYTES=Bytes.toBytes(" | ")</code> */
-  public static final byte[] PIPE_CHARACTER_BYTES = Bytes.toBytes(" | ");
   private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
-
-  /**
-   * Write unquoted to the OutputStream applying just Bigtable reader
-   * expression quoting. Used when the supplied value is NOT a regular expression.
-   *
-   * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
-   * @param outputStream A stream to write quoted output to
-   * @throws java.io.IOException if any.
-   */
-  public static void writeFilterQuotedExpression(byte[] unquoted, OutputStream outputStream)
-      throws IOException{
-    QuoteFilterExpressionStream quoteFilterExpressionStream =
-        new QuoteFilterExpressionStream(outputStream);
-    quoteFilterExpressionStream.write(unquoted);
-    quoteFilterExpressionStream.close();
-  }
 
   /**
    * Write unquoted to the OutputStream applying both RE2:QuoteMeta and Bigtable reader
@@ -93,10 +64,10 @@ public class ReaderExpressionHelper {
    * @return an array of byte.
    * @throws java.io.IOException if any.
    */
-  public static byte[] quoteRegularExpression(byte[] unquoted) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream(unquoted.length * 2);
-    writeQuotedRegularExpression(baos, unquoted);
-    return baos.toByteArray();
+  public static ByteString quoteRegularExpression(byte[] unquoted) throws IOException {
+    ByteString.Output output = ByteString.newOutput(unquoted.length * 2);
+    writeQuotedRegularExpression(output, unquoted);
+    return output.toByteString();
   }
 
   /**

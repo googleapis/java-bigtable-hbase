@@ -97,7 +97,7 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  */
 public class ExportJob {
   public interface ExportOptions extends GcpOptions {
-    @Description("This Bigtable App Profile id. (Replication alpha feature).")
+    @Description("This Bigtable App Profile id.")
     ValueProvider<String> getBigtableAppProfileId();
     @SuppressWarnings("unused")
     void setBigtableAppProfileId(ValueProvider<String> appProfileId);

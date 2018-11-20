@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
@@ -24,21 +24,24 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import java.io.IOException;
 
 @RunWith(JUnit4.class)
 public class TestFirstKeyOnlyFilterAdapter {
 
-  FirstKeyOnlyFilterAdapter adapter = new FirstKeyOnlyFilterAdapter();
+  private final static FirstKeyOnlyFilterAdapter adapter = new FirstKeyOnlyFilterAdapter();
 
   @Test
   public void onlyTheFirstKeyFromEachRowIsEmitted() throws IOException {
-    RowFilter adaptedFilter = adapter.adapt(
+    Filters.Filter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(new Scan(), null), new FirstKeyOnlyFilter());
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setCellsPerRowLimitFilter(1)
-            .build(),
-        adaptedFilter);
+      FILTERS.chain()
+            .filter(FILTERS.limit().cellsPerRow(1))
+            .filter(FILTERS.value().strip())
+            .toProto(),
+        adaptedFilter.toProto());
   }
 }

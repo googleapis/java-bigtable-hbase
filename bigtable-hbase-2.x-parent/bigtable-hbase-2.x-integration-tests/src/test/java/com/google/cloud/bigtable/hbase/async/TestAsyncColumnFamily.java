@@ -52,7 +52,7 @@ public class TestAsyncColumnFamily extends AbstractTestColumnFamilyAdmin {
   @Override
   protected HTableDescriptor getTableDescriptor(TableName tableName) throws Exception {
     try {
-      return (HTableDescriptor) asyncAdmin.getDescriptor(tableName).get();
+      return new HTableDescriptor(asyncAdmin.getDescriptor(tableName).get());
     } catch(ExecutionException e) {
       throw (Exception) e.getCause();
     }

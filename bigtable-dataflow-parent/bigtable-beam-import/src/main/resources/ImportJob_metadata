@@ -1,6 +1,6 @@
 {
   "name": "ImportJob",
-  "description": "A pipeline that import data from GCS in SequenceFile format to Cloud Bigtable.",
+  "description": "A pipeline that import data from Cloud Storage in SequenceFile format to Cloud Bigtable.",
   "parameters": [{
     "name": "bigtableProject",
     "label": "Project ID",

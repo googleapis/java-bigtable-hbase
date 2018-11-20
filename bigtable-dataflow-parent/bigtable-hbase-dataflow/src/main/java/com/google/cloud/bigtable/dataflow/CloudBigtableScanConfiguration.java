@@ -18,13 +18,13 @@ package com.google.cloud.bigtable.dataflow;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import org.apache.hadoop.hbase.client.Scan;
 
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.util.ByteStringer;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.batch.common.ByteStringUtil;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;

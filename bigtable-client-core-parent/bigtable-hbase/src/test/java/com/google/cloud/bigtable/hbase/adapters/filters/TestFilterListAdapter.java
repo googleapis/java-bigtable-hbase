@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
@@ -67,10 +67,10 @@ public class TestFilterListAdapter {
   public void interleavedFiltersAreAdapted() throws IOException {
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ONE);
     List<Filter> filters = filterList.getFilters();
-    RowFilter rowFilter = adapt(filterList);
-    Assert.assertEquals(filters.size(), rowFilter.getInterleave().getFiltersCount());
+    Filters.Filter expectedFilter = adapt(filterList);
+    Assert.assertEquals(filters.size(), expectedFilter.toProto().getInterleave().getFiltersCount());
     for (int i = 0; i < filters.size(); i++) {
-      Assert.assertEquals(adapt(filters.get(i)), rowFilter.getInterleave().getFilters(i));
+      Assert.assertEquals(adapt(filters.get(i)).toProto(), expectedFilter.toProto().getInterleave().getFilters(i));
     }
   }
 
@@ -78,10 +78,10 @@ public class TestFilterListAdapter {
   public void chainedFiltersAreAdapted() throws IOException {
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ALL);
     List<Filter> filters = filterList.getFilters();
-    RowFilter rowFilter = adapt(filterList);
-    Assert.assertEquals(filters.size(), rowFilter.getChain().getFiltersCount());
+    Filters.Filter expectedFilter = adapt(filterList);
+    Assert.assertEquals(filters.size(), expectedFilter.toProto().getChain().getFiltersCount());
     for (int i = 0; i < filters.size(); i++) {
-      Assert.assertEquals(adapt(filters.get(i)), rowFilter.getChain().getFilters(i));
+      Assert.assertEquals(adapt(filters.get(i)).toProto(), expectedFilter.toProto().getChain().getFilters(i));
     }
   }
 
@@ -140,14 +140,14 @@ public class TestFilterListAdapter {
         new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
         pageFilter);
     FilterAdapter adapter = FilterAdapter.buildAdapter();
-    Optional<RowFilter> adapted =
+    Optional<Filters.Filter> adapted =
         adapter.adaptFilter(new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
             filterList);
     Assert.assertTrue(adapted.isPresent());
-    Optional<RowFilter> qualifierAdapted =
+    Optional<Filters.Filter> qualifierAdapted =
         adapter.adaptFilter(new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
             filterList.getFilters().get(0));
-    Assert.assertEquals(qualifierAdapted.get(), adapted.get());
+    Assert.assertEquals(qualifierAdapted.get().toProto(), adapted.get().toProto());
   }
 
   @Test
@@ -227,7 +227,7 @@ public class TestFilterListAdapter {
     Assert.assertEquals(expected, actual);
   }
 
-  protected RowFilter adapt(Filter filter) throws IOException {
+  protected Filters.Filter adapt(Filter filter) throws IOException {
     return filterAdapter.adaptFilter(emptyScanContext, filter).get();
   }
 

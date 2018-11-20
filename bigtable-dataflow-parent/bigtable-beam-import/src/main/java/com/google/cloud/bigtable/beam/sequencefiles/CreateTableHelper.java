@@ -16,9 +16,11 @@
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.common.base.Throwables;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ForkJoinPool;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.FileBasedSource;
@@ -26,6 +28,7 @@ import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.options.Validation;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.values.KV;
 import org.apache.commons.logging.Log;
@@ -59,29 +62,39 @@ class CreateTableHelper {
   interface CreateTableOpts extends GcpOptions {
     @Description("The project that contains the table to export. Defaults to --project.")
     @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
+    @Validation.Required
     String getBigtableProject();
     @SuppressWarnings("unused")
     void setBigtableProject(String projectId);
 
     @Description("The Bigtable instance id that contains the table to export.")
+    @Validation.Required
     String getBigtableInstanceId();
     @SuppressWarnings("unused")
     void setBigtableInstanceId(String instanceId);
 
     @Description("The Bigtable table id to export.")
+    @Validation.Required
     String getBigtableTableId();
     @SuppressWarnings("unused")
     void setBigtableTableId(String tableId);
 
     @Description(
         "The fully qualified file pattern to import. Should of the form '[destinationPath]/part-*'")
+    @Validation.Required
     String getSourcePattern();
     @SuppressWarnings("unused")
     void setSourcePattern(String sourcePath);
 
     @Description("The families to add to the new table")
+    @Validation.Required
     List<String> getFamilies();
     void setFamilies(List<String> families);
+
+    @Description("Number of threads to use when probing files for splits")
+    @Default.Integer(100)
+    int getSplitConcurrency();
+    void setSplitConcurrency(int threads);
   }
 
   public static void main(String[] args) throws Exception {
@@ -109,23 +122,27 @@ class CreateTableHelper {
         .split(ImportJob.BUNDLE_SIZE, opts);
 
     // Read the start key of each split
-    byte[][] splits = splitSources.stream()
-        .parallel()
-        .map(splitSource -> {
-          try (BoundedReader<KV<ImmutableBytesWritable, Result>> reader = splitSource
-              .createReader(opts)) {
-            if (reader.start()) {
-              return reader.getCurrent().getKey();
-            }
-          } catch (Exception e) {
-            Throwables.propagate(e);
-          }
-          return null;
-        })
-        .filter(Objects::nonNull)
-        .sorted()
-        .map(ImmutableBytesWritable::copyBytes)
-        .toArray(byte[][]::new);
+    ForkJoinPool forkJoinPool = new ForkJoinPool(opts.getSplitConcurrency());
+
+    byte[][] splits = forkJoinPool.submit(() ->
+        splitSources.stream()
+            .parallel()
+            .map(splitSource -> {
+              try (BoundedReader<KV<ImmutableBytesWritable, Result>> reader = splitSource
+                  .createReader(opts)) {
+                if (reader.start()) {
+                  return reader.getCurrent().getKey();
+                }
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              return null;
+            })
+            .filter(Objects::nonNull)
+            .sorted()
+            .map(ImmutableBytesWritable::copyBytes)
+            .toArray(byte[][]::new)
+    ).get();
 
     LOG.info(String.format("Creating a new table with %d splits and the families: %s",
         splits.length, opts.getFamilies()));

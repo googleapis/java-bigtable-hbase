@@ -17,13 +17,17 @@ package com.google.cloud.bigtable.grpc.io;
 
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
+import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.util.ThreadUtil;
 import com.google.common.base.Preconditions;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import io.grpc.ClientInterceptor;
+import io.grpc.auth.ClientAuthInterceptor;
 import io.grpc.internal.GrpcUtil;
 
 import java.io.IOException;
@@ -51,7 +55,7 @@ public class CredentialInterceptorCache {
   }
 
   private final ExecutorService executor =
-      Executors.newCachedThreadPool(GrpcUtil.getThreadFactory("Credentials-Refresh-%d", true));
+      Executors.newCachedThreadPool(ThreadUtil.getThreadFactory("Credentials-Refresh-%d", true));
 
   private ClientInterceptor defaultCredentialInterceptor;
 
@@ -97,6 +101,18 @@ public class CredentialInterceptorCache {
     if (credentials == null) {
       return null;
     }
+
+    if (credentials instanceof ServiceAccountJwtAccessCredentials) {
+      ClientInterceptor jwtAuthInterceptor =
+          new ClientAuthInterceptor(credentials, MoreExecutors.directExecutor());
+
+      if (isDefaultCredentials) {
+        defaultCredentialInterceptor = jwtAuthInterceptor;
+      }
+
+      return jwtAuthInterceptor;
+    }
+
     Preconditions.checkState(
         credentials instanceof OAuth2Credentials,
         String.format(

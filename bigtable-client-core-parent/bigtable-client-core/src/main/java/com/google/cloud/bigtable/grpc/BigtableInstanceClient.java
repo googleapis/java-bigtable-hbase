@@ -162,101 +162,73 @@ public interface BigtableInstanceClient {
   Operation partialUpdateInstance(PartialUpdateInstanceRequest request);
 
   /**
-   * This is a private alpha release of Cloud Bigtable replication. This feature
-   * is not currently available to most Cloud Bigtable customers. This feature
-   * might be changed in backward-incompatible ways and is not recommended for
-   * production use. It is not subject to any SLA or deprecation policy.
-   * Creates an app profile within an instance.
-   * 
+   * Create an application profile.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/app-profiles">App Profiles</a>
    * @param request a {@link com.google.bigtable.admin.v2.CreateAppProfileRequest} object.
    * @return a {@link com.google.bigtable.admin.v2.AppProfile} object.
    */
   AppProfile createAppProfile(CreateAppProfileRequest request);
 
   /**
-   * This is a private alpha release of Cloud Bigtable replication. This feature
-   * is not currently available to most Cloud Bigtable customers. This feature
-   * might be changed in backward-incompatible ways and is not recommended for
-   * production use. It is not subject to any SLA or deprecation policy.
-   * Gets information about an app profile.
-   *  
+   * Get an application profile.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/app-profiles">App Profiles</a>
    * @param request a {@link com.google.bigtable.admin.v2.GetAppProfileRequest} object.
    * @return a {@link com.google.bigtable.admin.v2.AppProfile} object.
    */
   AppProfile getAppProfile(GetAppProfileRequest request);
 
   /**
-   * This is a private alpha release of Cloud Bigtable replication. This feature
-   * is not currently available to most Cloud Bigtable customers. This feature
-   * might be changed in backward-incompatible ways and is not recommended for
-   * production use. It is not subject to any SLA or deprecation policy.
-   * Lists information about app profiles in an instance.
-   * 
+   * List application profiles.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/app-profiles">App Profiles</a>
    * @param request a {@link com.google.bigtable.admin.v2.ListAppProfilesRequest} object. 
    * @return a {@link com.google.bigtable.admin.v2.ListAppProfilesResponse} object.
    */
   ListAppProfilesResponse listAppProfiles(ListAppProfilesRequest request);
 
   /**
-   * This is a private alpha release of Cloud Bigtable replication. This feature
-   * is not currently available to most Cloud Bigtable customers. This feature
-   * might be changed in backward-incompatible ways and is not recommended for
-   * production use. It is not subject to any SLA or deprecation policy.
-   * Updates an app profile within an instance.
-   * 
+   /**
+   * Update an application profile.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/app-profiles">App Profiles</a>
    * @param request a {@link com.google.bigtable.admin.v2.UpdateAppProfileRequest} object.
    * @return a {@link com.google.longrunning.Operation} object.
    */
   Operation updateAppProfile(UpdateAppProfileRequest request);
 
   /**
-   * This is a private alpha release of Cloud Bigtable replication. This feature
-   * is not currently available to most Cloud Bigtable customers. This feature
-   * might be changed in backward-incompatible ways and is not recommended for
-   * production use. It is not subject to any SLA or deprecation policy.
-   * Deletes an app profile from an instance.
-   * 
+   * Delete an application profile.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/app-profiles">App Profiles</a>
    * @param request a {@link com.google.bigtable.admin.v2.DeleteAppProfileRequest} object. 
    * @return a {@link com.google.protobuf.Empty} object.
    */
   Empty deleteAppProfile(DeleteAppProfileRequest request);
 
   /**
-   * This is a private alpha release of Cloud Bigtable instance level
-   * permissions. This feature is not currently available to most Cloud Bigtable
-   * customers. This feature might be changed in backward-incompatible ways and
-   * is not recommended for production use. It is not subject to any SLA or
-   * deprecation policy.
-   * Gets the access control policy for an instance resource. Returns an empty
-   * policy if an instance exists but does not have a policy set.
-   * 
+   * Get an IAM policy.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access control</a>
    * @param request a {@link com.google.iam.v1.GetIamPolicyRequest} object.
    * @return a {@link com.google.iam.v1.Policy} object.
    */
   Policy getIamPolicy(GetIamPolicyRequest request);
 
   /**
-   * This is a private alpha release of Cloud Bigtable instance level
-   * permissions. This feature is not currently available to most Cloud Bigtable
-   * customers. This feature might be changed in backward-incompatible ways and
-   * is not recommended for production use. It is not subject to any SLA or
-   * deprecation policy.
-   * Sets the access control policy on an instance resource. Replaces any
-   * existing policy.
-   * 
+   * Set an IAM policy.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access control</a>
    * @param request a {@link com.google.iam.v1.SetIamPolicyRequest} object.
    * @return a {@link com.google.iam.v1.Policy} object.
    */
   Policy setIamPolicy(SetIamPolicyRequest request);
 
   /**
-   * This is a private alpha release of Cloud Bigtable instance level
-   * permissions. This feature is not currently available to most Cloud Bigtable
-   * customers. This feature might be changed in backward-incompatible ways and
-   * is not recommended for production use. It is not subject to any SLA or
-   * deprecation policy.
-   * Returns permissions that the caller has on the specified instance resource.
-   * 
+   * Tests an IAM policy.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access control</a>
    * @param request a {@link com.google.iam.v1.TestIamPermissionsRequest} object.
    * @return a {@link com.google.iam.v1.TestIamPermissionsResponse} object.
    */

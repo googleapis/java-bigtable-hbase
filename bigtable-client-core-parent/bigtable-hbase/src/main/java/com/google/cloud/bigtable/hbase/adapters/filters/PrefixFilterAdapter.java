@@ -15,18 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.cloud.bigtable.util.RowKeyUtil;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 
@@ -42,13 +40,13 @@ public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
    * {@inheritDoc}
    */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, PrefixFilter filter)
+  public Filter adapt(FilterAdapterContext context, PrefixFilter filter)
       throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream(filter.getPrefix().length * 2);
-    ReaderExpressionHelper.writeQuotedRegularExpression(baos, filter.getPrefix());
+    ByteString.Output output = ByteString.newOutput(filter.getPrefix().length * 2);
+    ReaderExpressionHelper.writeQuotedRegularExpression(output, filter.getPrefix());
     // Unquoted all bytes:
-    baos.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
-    return FILTERS.key().regex(ByteStringer.wrap(baos.toByteArray())).toProto();
+    output.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
+    return FILTERS.key().regex(output.toByteString());
   }
 
   /**

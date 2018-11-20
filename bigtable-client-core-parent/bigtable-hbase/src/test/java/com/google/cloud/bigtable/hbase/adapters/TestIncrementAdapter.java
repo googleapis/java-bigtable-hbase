@@ -17,6 +17,9 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRule;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
 
@@ -36,6 +39,11 @@ public class TestIncrementAdapter {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
+  private static final String PROJECT_ID = "test-project-id";
+  private static final String INSTANCE_ID = "test-instance-id";
+  private static final String TABLE_ID = "test-table-id";
+  private static final String APP_PROFILE_ID = "test-app-profile-id";
+  private RequestContext requestContext = RequestContext.create(InstanceName.of(PROJECT_ID, INSTANCE_ID), APP_PROFILE_ID);
   protected IncrementAdapter incrementAdapter = new IncrementAdapter();
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
@@ -43,7 +51,10 @@ public class TestIncrementAdapter {
   public void testBasicRowKeyIncrement() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Increment incr = new Increment(rowKey);
-    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
+        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    incrementAdapter.adapt(incr, readModifyWriteRow);
+    ReadModifyWriteRowRequest requestBuilder = readModifyWriteRow.toProto(requestContext);
     ByteString adaptedRowKey = requestBuilder.getRowKey();
     Assert.assertArrayEquals(rowKey, adaptedRowKey.toByteArray());
   }
@@ -58,7 +69,10 @@ public class TestIncrementAdapter {
     Increment incr = new Increment(rowKey);
     incr.addColumn(family, qualifier, amount);
 
-    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
+        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    incrementAdapter.adapt(incr, readModifyWriteRow);
+    ReadModifyWriteRowRequest requestBuilder = readModifyWriteRow.toProto(requestContext);
 
     Assert.assertEquals(1, requestBuilder.getRulesCount());
     ReadModifyWriteRule rule = requestBuilder.getRules(0);
@@ -84,7 +98,10 @@ public class TestIncrementAdapter {
     incr.addColumn(family1, qualifier1, amount1);
     incr.addColumn(family2, qualifier2, amount2);
 
-    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
+        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    incrementAdapter.adapt(incr, readModifyWriteRow);
+    ReadModifyWriteRowRequest requestBuilder = readModifyWriteRow.toProto(requestContext);
     Assert.assertEquals(2, requestBuilder.getRulesCount());
 
     ReadModifyWriteRule rule = requestBuilder.getRules(0);
@@ -118,7 +135,10 @@ public class TestIncrementAdapter {
     incr.addColumn(family2, qualifier2, amount2);
     incr.addColumn(family2, qualifier2, amount3);
 
-    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
+        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    incrementAdapter.adapt(incr, readModifyWriteRow);
+    ReadModifyWriteRowRequest requestBuilder = readModifyWriteRow.toProto(requestContext);
     Assert.assertEquals(2, requestBuilder.getRulesCount());
 
     ReadModifyWriteRule rule = requestBuilder.getRules(0);
@@ -142,6 +162,8 @@ public class TestIncrementAdapter {
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Setting the time range in an Increment is not implemented");
 
-    incrementAdapter.adapt(incr);
+    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
+        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    incrementAdapter.adapt(incr, readModifyWriteRow);
   }
 }

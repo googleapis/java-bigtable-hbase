@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import io.grpc.internal.GrpcUtil;
+import com.google.cloud.bigtable.util.ThreadUtil;
 import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -101,7 +101,7 @@ public class ManyThreadDriver {
     final TableName tableName = TableName.valueOf(tableNameStr);
     final AtomicBoolean finished = new AtomicBoolean(false);
     ExecutorService executor = Executors.newFixedThreadPool(numThreads,
-      GrpcUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
+      ThreadUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
     ScheduledExecutorService finishExecutor = setupShutdown(finished);
     try (Connection connection = BigtableConfiguration.connect(projectId, instanceId)) {
       setupTable(tableName, connection);
@@ -144,7 +144,7 @@ public class ManyThreadDriver {
 
   static ScheduledExecutorService setupShutdown(final AtomicBoolean finished) {
     ScheduledExecutorService finishExecutor =
-        Executors.newScheduledThreadPool(1, GrpcUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
+        Executors.newScheduledThreadPool(1, ThreadUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
     finishExecutor.schedule(new Runnable() {
       @Override
       public void run() {

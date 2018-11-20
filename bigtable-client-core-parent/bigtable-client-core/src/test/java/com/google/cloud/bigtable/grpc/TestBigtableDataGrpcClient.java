@@ -51,7 +51,6 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.RowRange;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -79,9 +78,6 @@ public class TestBigtableDataGrpcClient {
   @Mock
   ClientCall mockClientCall;
 
-  @Mock
-  NanoClock nanoClock;
-
   BigtableDataGrpcClient defaultClient;
 
   @Before
@@ -93,9 +89,9 @@ public class TestBigtableDataGrpcClient {
   }
 
   protected BigtableDataGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
-    RetryOptions retryOptions =
-        RetryOptionsUtil.createTestRetryOptions(nanoClock, allowRetriesWithoutTimestamp);
-    BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
+    RetryOptions retryOptions = RetryOptions.builder()
+            .setAllowRetriesWithoutTimestamp(allowRetriesWithoutTimestamp).build();
+    BigtableOptions options = BigtableOptions.builder().setRetryOptions(retryOptions).build();
     doAnswer(new Answer<Void>(){
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
@@ -107,7 +103,7 @@ public class TestBigtableDataGrpcClient {
   }
 
   @Test
-  public void testRetyableMutateRow() throws Exception {
+  public void testRetryableMutateRow() {
     MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     setResponse(MutateRowResponse.getDefaultInstance());
     defaultClient.mutateRow(request);
@@ -115,14 +111,14 @@ public class TestBigtableDataGrpcClient {
   }
 
   @Test
-  public void testRetyableMutateRowAsync() {
+  public void testRetryableMutateRowAsync() {
     MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     defaultClient.mutateRowAsync(request);
     verifyRequestCalled(request);
   }
 
   @Test
-  public void testRetyableCheckAndMutateRow() throws Exception {
+  public void testRetryableCheckAndMutateRow() {
     CheckAndMutateRowRequest request =
         CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     setResponse(CheckAndMutateRowResponse.getDefaultInstance());
@@ -131,7 +127,7 @@ public class TestBigtableDataGrpcClient {
   }
 
   @Test
-  public void testRetyableCheckAndMutateRowAsync() {
+  public void testRetryableCheckAndMutateRowAsync() {
     CheckAndMutateRowRequest request =
         CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     defaultClient.checkAndMutateRowAsync(request);

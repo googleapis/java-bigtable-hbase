@@ -22,10 +22,13 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
+import io.opencensus.common.Scope;
+import io.opencensus.contrib.grpc.util.StatusConverter;
+import io.opencensus.trace.Span;
+import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import io.grpc.Status;
 
-import java.io.Closeable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +47,7 @@ import javax.annotation.concurrent.GuardedBy;
 public class OAuthCredentialsCache {
 
   private static final Logger LOG = new Logger(OAuthCredentialsCache.class);
+  private static final Tracer TRACER = Tracing.getTracer();
   private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
 
   @VisibleForTesting
@@ -227,37 +231,40 @@ public class OAuthCredentialsCache {
    * This method should not be called while holding the refresh lock
    */
   private HeaderCacheElement syncRefresh(long timeout, TimeUnit timeUnit) {
-    try (Closeable ss = Tracing.getTracer().spanBuilder("CredentialsRefresh").startScopedSpan()) {
+    Span span = TRACER.spanBuilder("Bigtable.CredentialsRefresh").startSpan();
+    try (Scope scope = TRACER.withSpan(span)) {
       return asyncRefresh().get(timeout, timeUnit);
     } catch (InterruptedException e) {
       LOG.warn("Interrupted while trying to refresh google credentials.", e);
+      Status status = Status.UNAUTHENTICATED
+          .withDescription("Authentication was interrupted.")
+          .withCause(e);
+      span.setStatus(StatusConverter.fromGrpcStatus(status));
       Thread.currentThread().interrupt();
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-              .withDescription("Authentication was interrupted.")
-              .withCause(e)
-      );
+      return new HeaderCacheElement(status);
     } catch (ExecutionException e) {
       LOG.warn("ExecutionException while trying to refresh google credentials.", e);
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-              .withDescription("ExecutionException during Authentication.")
-              .withCause(e)
-      );
+      Status status = Status.UNAUTHENTICATED
+          .withDescription("ExecutionException during Authentication.")
+          .withCause(e);
+      span.setStatus(StatusConverter.fromGrpcStatus(status));
+      return new HeaderCacheElement(status);
     } catch (TimeoutException e) {
       LOG.warn("TimeoutException while trying to refresh google credentials.", e);
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-              .withDescription("TimeoutException during Authentication.")
-              .withCause(e)
-      );
+      Status status = Status.UNAUTHENTICATED
+          .withDescription("TimeoutException during Authentication.")
+          .withCause(e);
+      span.setStatus(StatusConverter.fromGrpcStatus(status));
+      return new HeaderCacheElement(status);
     } catch (Exception e) {
       LOG.warn("Unexpected execption while trying to refresh google credentials.", e);
-      return new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-              .withDescription("Unexpected execption during Authentication.")
-              .withCause(e)
-      );
+      Status status = Status.UNAUTHENTICATED
+          .withDescription("Unexpected execption during Authentication.")
+          .withCause(e);
+      span.setStatus(StatusConverter.fromGrpcStatus(status));
+      return new HeaderCacheElement(status);
+    } finally {
+      span.end();
     }
   }
 

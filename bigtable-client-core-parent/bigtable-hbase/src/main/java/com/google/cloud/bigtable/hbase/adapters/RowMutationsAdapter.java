@@ -15,17 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RowMutations;
 
 /**
- * An adapter that adapts a {@link org.apache.hadoop.hbase.client.RowMutations} object into an Bigtable
- * {@link com.google.bigtable.v2.MutateRowRequest}.
+ * An adapter that adapts a {@link org.apache.hadoop.hbase.client.RowMutations} object into Google Cloud Java
+ * {@link com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -44,11 +39,12 @@ public class RowMutationsAdapter extends MutationAdapter<RowMutations>{
   }
 
   @Override
-  protected Collection<com.google.bigtable.v2.Mutation> adaptMutations(RowMutations operation) {
-    List<com.google.bigtable.v2.Mutation> result = new ArrayList<>();
+  protected void adaptMutations(
+      RowMutations operation,
+      com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutationApi
+  ) {
     for (Mutation mutation : operation.getMutations()) {
-      result.addAll(mutationAdapter.adaptMutations(mutation));
+      mutationAdapter.adaptMutations(mutation, mutationApi);
     }
-    return result;
   }
 }

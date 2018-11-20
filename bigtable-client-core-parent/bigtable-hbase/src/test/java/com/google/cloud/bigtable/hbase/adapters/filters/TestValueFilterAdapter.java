@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import java.io.IOException;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -30,10 +32,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Interleave;
-import com.google.bigtable.v2.ValueRange;
-import com.google.bigtable.v2.ValueRange.Builder;
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
@@ -47,10 +47,6 @@ public class TestValueFilterAdapter {
   Scan emptyScan = new Scan();
   FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
-  protected static RowFilter toRowFilter(Builder valueRange) {
-    return RowFilter.newBuilder().setValueRangeFilter(valueRange).build();
-  }
-
   @Test
   public void testValueFilterFiltersOnValue() {
 
@@ -59,44 +55,46 @@ public class TestValueFilterAdapter {
   @Test
   public void testLessThanValueFilter() throws IOException {
     assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.LESS,
-      toRowFilter(ValueRange.newBuilder().setEndValueOpen(ByteString.copyFrom(FOO_BYTES))));
+      FILTERS.value().range().endOpen(ByteString.copyFrom(FOO_BYTES)));
   }
 
   @Test
   public void testLessThanEqualValueFilter() throws IOException {
     assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.LESS_OR_EQUAL,
-      toRowFilter(ValueRange.newBuilder().setEndValueClosed(FOO_BYTESTRING)));
+      FILTERS.value().range().endClosed(FOO_BYTESTRING));
   }
 
   @Test
   public void testEqualValueFilter() throws IOException {
-    Builder valueRange = ValueRange.newBuilder()
-        .setStartValueClosed(FOO_BYTESTRING)
-        .setEndValueClosed(FOO_BYTESTRING);
-    assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.EQUAL, toRowFilter(valueRange));
+    assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.EQUAL, 
+      FILTERS.value().range().startClosed(FOO_BYTESTRING).endClosed(FOO_BYTESTRING));
   }
 
   @Test
   public void testGreaterThanValueFilter() throws IOException {
     assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.GREATER,
-      toRowFilter(ValueRange.newBuilder().setStartValueOpen(FOO_BYTESTRING)));
+      FILTERS.value().range().startOpen(FOO_BYTESTRING));
   }
 
   @Test
   public void testGreaterThanEqualValueFilter() throws IOException {
     assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.GREATER_OR_EQUAL,
-      toRowFilter(ValueRange.newBuilder().setStartValueClosed(FOO_BYTESTRING)));
+      FILTERS.value().range().startClosed(FOO_BYTESTRING));
+  }
+
+  @Test
+  public void testNotEqualEmptyStringValueFilter() throws IOException {
+    assertAdaptedForm(new BinaryComparator("".getBytes()), CompareOp.NOT_EQUAL,
+      FILTERS.value().regex(ReaderExpressionHelper.ANY_BYTES));
   }
 
   @Test
   public void testNotEqualValueFilter() throws IOException {
     assertAdaptedForm(FOO_BINARY_COMPARATOR, CompareOp.NOT_EQUAL,
-      RowFilter.newBuilder()
-          .setInterleave(Interleave.newBuilder()
-              .addFilters(toRowFilter(ValueRange.newBuilder().setEndValueOpen(FOO_BYTESTRING)))
-              .addFilters(toRowFilter(ValueRange.newBuilder().setStartValueOpen(FOO_BYTESTRING))))
-          .build());
- }
+      FILTERS.interleave()
+          .filter(FILTERS.value().range().endOpen(FOO_BYTESTRING))
+          .filter(FILTERS.value().range().startOpen(FOO_BYTESTRING)));
+  }
 
   @Test
   public void testRegexValueFilter() throws IOException {
@@ -104,16 +102,14 @@ public class TestValueFilterAdapter {
     assertAdaptedForm(
         new RegexStringComparator(pattern),
         CompareOp.EQUAL,
-        RowFilter.newBuilder()
-            .setValueRegexFilter(ByteString.copyFromUtf8(pattern))
-            .build());
+        FILTERS.value().regex(pattern));
   }
 
   private void assertAdaptedForm(
-      ByteArrayComparable comparable, CompareFilter.CompareOp op, RowFilter expectedFilter)
+      ByteArrayComparable comparable, CompareFilter.CompareOp op, Filters.Filter expectedFilter)
       throws IOException {
     ValueFilter filter = new ValueFilter(op, comparable);
-    RowFilter actualFilter = adapter.adapt(emptyScanContext, filter);
-    Assert.assertEquals(expectedFilter, actualFilter);
+    Filters.Filter actualFilter = adapter.adapt(emptyScanContext, filter);
+    Assert.assertEquals(expectedFilter.toProto(), actualFilter.toProto());
   }
 }

@@ -31,15 +31,12 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 
 /**
- * Adapt an HBase {@link Put} Operation into a Cloud Bigtable {@link
- * com.google.bigtable.v2.MutateRowRequest.Builder} or {@link
- * com.google.bigtable.v2.MutateRowsRequest.Entry}.
+ * Adapt an HBase {@link Put} Operation into a Google Cloud Java
+ * {@link com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -77,7 +74,7 @@ public class PutAdapter extends MutationAdapter<Put> {
   }
 
   @Override
-  protected Collection<Mutation> adaptMutations(Put operation) {
+  protected void adaptMutations(Put operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     if (operation.isEmpty()) {
       throw new IllegalArgumentException("No columns to insert");
     }
@@ -87,7 +84,6 @@ public class PutAdapter extends MutationAdapter<Put> {
     long currentTimestampMicros = setClientTimestamp ? clock.currentTimeMillis() * 1000 : -1;
     final int rowLength = operation.getRow().length;
 
-    List<Mutation> mutations = new ArrayList<>(operation.size());
     for (Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
       ByteString familyString = ByteString.copyFrom(entry.getKey());
       int familySize = familyString.size();
@@ -116,18 +112,14 @@ public class PutAdapter extends MutationAdapter<Put> {
         if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
           timestampMicros = TimestampConverter.hbase2bigtable(cell.getTimestamp());
         }
-
-        mutations.add(Mutation.newBuilder()
-            .setSetCell(SetCell.newBuilder()
-                .setFamilyNameBytes(familyString)
-                .setColumnQualifier(cellQualifierByteString)
-                .setValue(value)
-                .setTimestampMicros(timestampMicros)
-                .build())
-            .build());
+        mutation.setCell(
+            familyString.toStringUtf8(),
+            cellQualifierByteString,
+            timestampMicros,
+            value
+        );
       }
     }
-    return mutations;
   }
 
   /**
@@ -161,5 +153,9 @@ public class PutAdapter extends MutationAdapter<Put> {
           getBytes(setCell.getColumnQualifier()), timestampHbase, getBytes(setCell.getValue())));
     }
     return put;
+  }
+
+  boolean isSetClientTimestamp() {
+    return setClientTimestamp;
   }
 }

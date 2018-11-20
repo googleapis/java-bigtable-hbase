@@ -15,22 +15,19 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.data.v2.wrappers.Filters.FILTERS;
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import com.google.cloud.bigtable.config.Logger;
+import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.wrappers.Filters.InterleaveFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.QuoteMetaOutputStream;
 import com.google.common.base.Preconditions;
@@ -42,7 +39,6 @@ import com.google.common.base.Preconditions;
  * @version $Id: $Id
  */
 public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter> {
-  private static final RowFilter ALL_VALUES_FILTER = FILTERS.pass().toProto();
 
   private static Field FUZZY_KEY_DATA_FIELD;
   private static Exception FUZZY_KEY_DATA_FIELD_EXCEPTION;
@@ -58,10 +54,10 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, FuzzyRowFilter filter) throws IOException {
+  public Filter adapt(FilterAdapterContext context, FuzzyRowFilter filter) throws IOException {
     List<Pair<byte[], byte[]>> pairs = extractFuzzyRowFilterPairs(filter);
     if (pairs.isEmpty()) {
-      return ALL_VALUES_FILTER;
+      return FILTERS.pass();
     }
     InterleaveFilter interleave = FILTERS.interleave();
     for (Pair<byte[], byte[]> pair : pairs) {
@@ -72,26 +68,24 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
           createSingleRowFilter(
               pair.getFirst(), pair.getSecond()));
     }
-    new Logger(FuzzyRowFilterAdapter.class).error("Adapted: " + interleave.toProto());
-    return interleave.toProto();
+    return interleave;
   }
 
   private static Filter createSingleRowFilter(byte[] key, byte[] mask) throws IOException {
-    ByteArrayOutputStream baos =
-        new ByteArrayOutputStream(key.length * 2);
-    QuoteMetaOutputStream quotingStream = new QuoteMetaOutputStream(baos);
+    ByteString.Output output = ByteString.newOutput(key.length * 2);
+    QuoteMetaOutputStream quotingStream = new QuoteMetaOutputStream(output);
     for (int i = 0; i < mask.length; i++) {
       if (mask[i] == -1) {
         quotingStream.write(key[i]);
       } else {
         // Write unquoted to match any byte at this position:
-        baos.write(ReaderExpressionHelper.ANY_BYTE_BYTES);
+        output.write(ReaderExpressionHelper.ANY_BYTE_BYTES);
       }
     }
     // match any trailing bytes
-    baos.write(ReaderExpressionHelper.ALL_BYTE_BYTES);
+    output.write(ReaderExpressionHelper.ALL_BYTE_BYTES);
     quotingStream.close();
-    return FILTERS.key().regex(Bytes.toString(baos.toByteArray()));
+    return FILTERS.key().regex(output.toByteString());
   }
 
   @SuppressWarnings("unchecked")

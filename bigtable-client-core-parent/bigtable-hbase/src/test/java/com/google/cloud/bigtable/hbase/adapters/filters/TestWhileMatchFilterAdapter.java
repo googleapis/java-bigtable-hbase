@@ -15,17 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import static com.google.cloud.bigtable.hbase.adapters.filters.WhileMatchFilterAdapter.IN_LABEL_SUFFIX;
 import static com.google.cloud.bigtable.hbase.adapters.filters.WhileMatchFilterAdapter.OUT_LABEL_SUFFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
-import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Scan;
@@ -78,11 +76,11 @@ public class TestWhileMatchFilterAdapter {
     ValueFilter valueFilter =
         new ValueFilter(CompareFilter.CompareOp.LESS, new BinaryComparator(Bytes.toBytes("12")));
     WhileMatchFilter filter = new WhileMatchFilter(valueFilter);
-    RowFilter rowFilter = instance.adapt(emptyScanContext, filter);
-    RowFilter expectedFilter = buildExpectedRowFilter(
+    Filters.Filter actualFilter = instance.adapt(emptyScanContext, filter);
+    Filters.Filter expectedFilter = buildExpectedRowFilter(
         filterAdapter.adaptFilter(emptyScanContext, valueFilter).get(),
         emptyScanContext.getCurrentUniqueId());
-    assertEquals(expectedFilter, rowFilter);
+    assertEquals(expectedFilter.toProto(), actualFilter.toProto());
   }
 
   @Test
@@ -97,40 +95,20 @@ public class TestWhileMatchFilterAdapter {
     instance.adapt(emptyScanContext, filter);
   }
 
-  private static RowFilter buildExpectedRowFilter(
-      RowFilter wrappedFilter, String whileMatchFileterId) {
-    RowFilter sink = RowFilter.newBuilder().setSink(true).build();
-    RowFilter inLabel =
-        RowFilter.newBuilder()
-            .setApplyLabelTransformer(whileMatchFileterId + IN_LABEL_SUFFIX)
-            .build();
-    RowFilter outLabel =
-        RowFilter.newBuilder()
-            .setApplyLabelTransformer(whileMatchFileterId + OUT_LABEL_SUFFIX)
-            .build();
-    RowFilter outLabelAndSink =
-        RowFilter.newBuilder()
-            .setChain(Chain.newBuilder().addAllFilters(ImmutableList.of(outLabel, sink)))
-            .build();
+  private static Filters.Filter buildExpectedRowFilter(
+      Filters.Filter wrappedFilter, String whileMatchFileterId) {
+    
+    Filters.Filter sink = FILTERS.sink();
+    Filters.Filter inLabel = FILTERS.label(whileMatchFileterId + IN_LABEL_SUFFIX);
+    
+    Filters.Filter outLabel = FILTERS.label(whileMatchFileterId + OUT_LABEL_SUFFIX);
+    Filters.Filter outLabelAndSink = FILTERS.chain().filter(outLabel).filter(sink);
 
-    RowFilter all = RowFilter.newBuilder().setPassAllFilter(true).build();
-    RowFilter outInterleave =
-        RowFilter.newBuilder()
-            .setInterleave(
-                Interleave.newBuilder().addAllFilters(ImmutableList.of(outLabelAndSink, all)))
-            .build();
-    return RowFilter.newBuilder()
-        .setInterleave(Interleave.newBuilder()
-            .addAllFilters(ImmutableList.of(
-                RowFilter.newBuilder()
-                    .setChain(Chain.newBuilder()
-                        .addAllFilters(ImmutableList.of(inLabel, sink)))
-                    .build(),
-                RowFilter.newBuilder()
-                    .setChain(Chain.newBuilder()
-                        .addAllFilters(ImmutableList.of(wrappedFilter, outInterleave)))
-                    .build())))
-        .build();
+    Filters.Filter all = FILTERS.pass();
+    Filters.Filter outInterleave = FILTERS.interleave().filter(outLabelAndSink).filter(all);
+    return FILTERS.interleave()
+        .filter(FILTERS.chain().filter(inLabel).filter(sink))
+        .filter(FILTERS.chain().filter(wrappedFilter).filter(outInterleave));
   }
 
   @Test
