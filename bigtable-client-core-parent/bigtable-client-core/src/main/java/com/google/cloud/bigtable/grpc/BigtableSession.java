@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
@@ -152,6 +153,8 @@ public class BigtableSession implements Closeable {
   private Watchdog watchdog;
   private final BigtableDataClient dataClient;
 
+  private final BigtableDataGrpcClientWrapper clientWrapper;
+
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
   // synchronous operations.
   private final BigtableDataClient throttlingDataClient;
@@ -225,6 +228,9 @@ public class BigtableSession implements Closeable {
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
     dataClient.setCallOptionsFactory(callOptionsFactory);
 
+    this.clientWrapper =
+        new BigtableDataGrpcClientWrapper(((BigtableDataGrpcClient) dataClient), options);
+
     // Async operations can run amok, so they need to have some throttling. The throttling is
     // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
     // and since a new Channel is needed, a new BigtableDataGrpcClient instance is needed as well.
@@ -297,6 +303,15 @@ public class BigtableSession implements Closeable {
    */
   public BigtableDataClient getDataClient() {
     return dataClient;
+  }
+
+  /**
+   * <p>Getter for the field <code>IBigtableDataClient</code>.</p>
+   *
+   * @return a {@link IBigtableDataClient} object.
+   */
+  public BigtableDataGrpcClientWrapper getClientWrapper() {
+    return clientWrapper;
   }
 
   /**
