@@ -114,7 +114,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     this.tableAdapter2x = new TableAdapter2x(options);
     this.asyncConnection = asyncConnection;
     this.configuration = asyncConnection.getConfiguration();
-    this.instanceName = InstanceName.of(bigtableInstanceName.getProjectId(), bigtableInstanceName.getInstanceName());
+    this.instanceName = InstanceName.of(bigtableInstanceName.getProjectId(), bigtableInstanceName.getInstanceId());
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
