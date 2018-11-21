@@ -32,7 +32,7 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.BigtableDataGrpcClientWrapper;
+import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -87,7 +87,7 @@ public class TestBigtableTable {
   private BigtableDataClient mockClient;
 
   @Mock
-  private BigtableDataGrpcClientWrapper mockBigtableDataClient;
+  private BigtableDataClientWrapper mockBigtableDataClient;
 
   @Mock
   private ResultScanner<FlatRow> mockResultScanner;
