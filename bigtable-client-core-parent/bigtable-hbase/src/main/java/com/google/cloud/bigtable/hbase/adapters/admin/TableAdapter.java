@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.admin;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.bigtable.admin.v2.Table;
@@ -43,14 +44,15 @@ public class TableAdapter {
       ColumnDescriptorAdapter.INSTANCE;
   protected final BigtableInstanceName bigtableInstanceName;
 
-
-
   /**
    * <p>adapt.</p>
    *
-   * @param desc a {@link org.apache.hadoop.hbase.HTableDescriptor} object.
-   * @return a {@link com.google.bigtable.admin.v2.Table} object.
+   * This method adapts ColumnFamily to CreateTableRequest.
+   *
+   * @param  createTableRequest a {@link CreateTableRequest}
+   * @param desc a {@link HTableDescriptor} object.
    */
+  @InternalApi
   protected static void adapt(CreateTableRequest createTableRequest, HTableDescriptor desc) {
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
       String columnName = column.getNameAsString();
@@ -58,6 +60,7 @@ public class TableAdapter {
     }
   }
 
+  @InternalApi
   public static CreateTableRequest adapt(HTableDescriptor desc, byte[][] splitKeys) {
     CreateTableRequest createTableRequest = CreateTableRequest.of(desc.getTableName().getNameAsString());
     adapt(createTableRequest, desc);
@@ -89,6 +92,7 @@ public class TableAdapter {
    * @param table a {@link com.google.bigtable.admin.v2.Table} object.
    * @return a {@link org.apache.hadoop.hbase.HTableDescriptor} object.
    */
+  @InternalApi
   public HTableDescriptor adapt(Table table) {
     String tableId = bigtableInstanceName.toTableId(table.getName());
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableId));

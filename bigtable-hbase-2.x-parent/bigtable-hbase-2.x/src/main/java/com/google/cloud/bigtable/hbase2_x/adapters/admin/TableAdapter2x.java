@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x.adapters.admin;
 
+import com.google.api.core.InternalApi;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,7 +39,7 @@ import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 
 /**
  * Need this extended class as {@link TableAdapter#adapt(CreateTableRequest, HTableDescriptor)}
- * is not binary compatible with {@link TableAdapter2x#adapt(TableDescriptor)}
+ * is not binary compatible with {@link TableAdapter2x#adapt(TableDescriptor, byte[][])}
  * 
  * Similarly, {@link ColumnDescriptorAdapter#adapt(HColumnDescriptor)} is not binary compatible with
  * {@link ColumnFamilyDescriptor}.
@@ -48,16 +49,9 @@ import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 public class TableAdapter2x {
   protected static final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
 
+  @InternalApi
   public static CreateTableRequest adapt(TableDescriptor desc, byte[][] splitKeys) {
     return TableAdapter.adapt(new HTableDescriptor(desc), splitKeys);
-  }
-
-  public static CreateTableRequest adapt(TableDescriptor desc) {
-    return adapt(new HTableDescriptor(desc), null);
-  }
-
-  public static ColumnFamily toColumnFamily(ColumnFamilyDescriptor column) {
-    return columnDescriptorAdapter.adapt(toHColumnDescriptor(column));
   }
 
   public static HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor column) {
@@ -79,6 +73,7 @@ public class TableAdapter2x {
    * @param table a {@link com.google.bigtable.admin.v2.Table} object.
    * @return a {@link TableDescriptor} object.
    */
+  @InternalApi
   public TableDescriptor adapt(Table table) {
     return new TableAdapter(bigtableInstanceName).adapt(table);
   }
