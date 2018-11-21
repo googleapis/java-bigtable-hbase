@@ -56,6 +56,10 @@ public class TableAdapter2x {
     return adapt(new HTableDescriptor(desc), null);
   }
 
+  public static ColumnFamily toColumnFamily(ColumnFamilyDescriptor column) {
+    return columnDescriptorAdapter.adapt(toHColumnDescriptor(column));
+  }
+
   public static HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor column) {
     TableDescriptor desc =
         TableDescriptorBuilder.newBuilder(TableName.valueOf("N_A")).setColumnFamily(column)
