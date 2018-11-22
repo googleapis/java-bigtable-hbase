@@ -354,13 +354,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), TableAdapter.adapt(desc, splitKeys));
+    createTable(desc.getTableName(), TableAdapter.adapt(desc, splitKeys)
+            .toProto(bigtableInstanceName.toAdminInstanceName()));
   }
 
-  protected void createTable(TableName tableName, CreateTableRequest.Builder builder) throws IOException {
-    builder.setParent(bigtableInstanceName.toString());
+  //TODO(rahulkql):update methods to adapt to v2.models.CreateTableRequest
+  protected void createTable(TableName tableName, CreateTableRequest request) throws IOException {
     try {
-      bigtableTableAdminClient.createTable(builder.build());
+      bigtableTableAdminClient.createTable(request);
     } catch (Throwable throwable) {
       throw convertToTableExistsException(tableName, throwable);
     }
@@ -370,14 +371,15 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTableAsync(final HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     LOG.warn("Creating the table synchronously");
-    CreateTableRequest.Builder builder = TableAdapter.adapt(desc, splitKeys);
-    createTableAsync(builder, desc.getTableName());
+    CreateTableRequest request = TableAdapter.adapt(desc, splitKeys)
+            .toProto(bigtableInstanceName.toAdminInstanceName());
+    createTableAsync(request, desc.getTableName());
   }
 
-  protected ListenableFuture<Table> createTableAsync(CreateTableRequest.Builder builder,
+  //TODO(rahulkql):update methods to adapt to v2.models.CreateTableRequest
+  protected ListenableFuture<Table> createTableAsync(CreateTableRequest request,
       final TableName tableName) throws IOException {
-    builder.setParent(bigtableInstanceName.toString());
-    ListenableFuture<Table> future = bigtableTableAdminClient.createTableAsync(builder.build());
+    ListenableFuture<Table> future = bigtableTableAdminClient.createTableAsync(request);
     final SettableFuture<Table> settableFuture = SettableFuture.create();
     Futures.addCallback(future, new FutureCallback<Table>() {
       @Override public void onSuccess(@Nullable Table result) {

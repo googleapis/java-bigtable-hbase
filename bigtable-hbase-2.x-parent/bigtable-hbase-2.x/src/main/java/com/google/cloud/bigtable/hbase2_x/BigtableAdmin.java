@@ -72,7 +72,6 @@ import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.util.concurrent.Futures;
 
-
 /**
  * HBase 2.x specific implementation of {@link AbstractBigtableAdmin}.
  * @author spollapally
@@ -100,11 +99,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     createTable(desc, createSplitKeys(startKey, endKey, numRegions));
   }
 
-
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys));
+    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys)
+            .toProto(bigtableInstanceName.toAdminInstanceName()));
   }
 
   /** {@inheritDoc} */
@@ -357,7 +356,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
           }
         });
   }
-
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.hbase.client.Admin#truncateTableAsync(org.apache.hadoop.hbase.TableName, boolean)
