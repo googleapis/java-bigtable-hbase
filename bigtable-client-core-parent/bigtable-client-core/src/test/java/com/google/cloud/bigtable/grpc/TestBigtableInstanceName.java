@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -96,5 +97,16 @@ public class TestBigtableInstanceName {
   public void testNoInstanceName() {
     expectedException.expect(IllegalArgumentException.class);
     new BigtableInstanceName("project", "");
+  }
+
+  @Test
+  public void testGcbInstanceName(){
+    Assert.assertTrue(bigtableInstanceName.toGcbInstanceName() instanceof InstanceName);
+  }
+
+  @Test
+  public void testAdminInstanceName(){
+    Assert.assertTrue(bigtableInstanceName.toAdminInstanceName() instanceof
+            com.google.bigtable.admin.v2.InstanceName);
   }
 }

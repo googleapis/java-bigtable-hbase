@@ -15,7 +15,6 @@
  */
 package org.apache.hadoop.hbase.client;
 
-import com.google.bigtable.admin.v2.InstanceName;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
@@ -105,7 +104,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   protected final BigtableInstanceName bigtableInstanceName;
   private BigtableClusterName bigtableSnapshotClusterName;
   protected final TableAdapter tableAdapter;
-  protected final InstanceName instanceName;
 
   /**
    * <p>
@@ -123,7 +121,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     disabledTables = connection.getDisabledTables();
     bigtableInstanceName = options.getInstanceName();
     tableAdapter = new TableAdapter(bigtableInstanceName);
-    this.instanceName = InstanceName.of(bigtableInstanceName.getProjectId(), bigtableInstanceName.getInstanceId());
 
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
@@ -357,13 +354,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), TableAdapter.adapt(desc, splitKeys).toProto(instanceName));
+    createTable(desc.getTableName(), TableAdapter.adapt(desc, splitKeys)
+            .toProto(bigtableInstanceName.toAdminInstanceName()));
   }
 
   //TODO(rahulkql):update methods to adapt to v2.models.CreateTableRequest
-  protected void createTable(TableName tableName, CreateTableRequest createTableRequest) throws IOException {
+  protected void createTable(TableName tableName, CreateTableRequest request) throws IOException {
     try {
-      bigtableTableAdminClient.createTable(createTableRequest);
+      bigtableTableAdminClient.createTable(request);
     } catch (Throwable throwable) {
       throw convertToTableExistsException(tableName, throwable);
     }
@@ -373,14 +371,15 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTableAsync(final HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     LOG.warn("Creating the table synchronously");
-    CreateTableRequest createTableRequest = TableAdapter.adapt(desc, splitKeys).toProto(instanceName);
-    createTableAsync(createTableRequest, desc.getTableName());
+    CreateTableRequest request = TableAdapter.adapt(desc, splitKeys)
+            .toProto(bigtableInstanceName.toAdminInstanceName());
+    createTableAsync(request, desc.getTableName());
   }
 
   //TODO(rahulkql):update methods to adapt to v2.models.CreateTableRequest
-  protected ListenableFuture<Table> createTableAsync(CreateTableRequest createTableRequest,
+  protected ListenableFuture<Table> createTableAsync(CreateTableRequest request,
       final TableName tableName) throws IOException {
-    ListenableFuture<Table> future = bigtableTableAdminClient.createTableAsync(createTableRequest);
+    ListenableFuture<Table> future = bigtableTableAdminClient.createTableAsync(request);
     final SettableFuture<Table> settableFuture = SettableFuture.create();
     Futures.addCallback(future, new FutureCallback<Table>() {
       @Override public void onSuccess(@Nullable Table result) {

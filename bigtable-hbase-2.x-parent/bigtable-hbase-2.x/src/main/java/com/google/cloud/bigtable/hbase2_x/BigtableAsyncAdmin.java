@@ -15,7 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import com.google.bigtable.admin.v2.InstanceName;
+import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
+
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
@@ -84,8 +85,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
-
 /**
  * Bigtable implementation of {@link AsyncAdmin}
  *
@@ -102,7 +101,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final CommonConnection asyncConnection;
   private BigtableClusterName bigtableSnapshotClusterName;
   private final Configuration configuration;
-  private final InstanceName instanceName;
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
@@ -114,7 +112,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     this.tableAdapter2x = new TableAdapter2x(options);
     this.asyncConnection = asyncConnection;
     this.configuration = asyncConnection.getConfiguration();
-    this.instanceName = InstanceName.of(bigtableInstanceName.getProjectId(), bigtableInstanceName.getInstanceId());
+
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
@@ -129,8 +127,9 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       return failedFuture(new IllegalArgumentException("TableName cannot be null"));
     }
 
-    CreateTableRequest createTableRequest = TableAdapter2x.adapt(desc, splitKeys).toProto(instanceName);
-    return bigtableTableAdminClient.createTableAsync(createTableRequest)
+    CreateTableRequest request = TableAdapter2x.adapt(desc, splitKeys)
+            .toProto(bigtableInstanceName.toAdminInstanceName());
+    return bigtableTableAdminClient.createTableAsync(request)
         .handle((resp, ex) -> {
           if (ex != null) {
             throw new CompletionException(
@@ -617,7 +616,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       }
     });
   }
-
 
   private BigtableClusterName getSnapshotClusterName() throws IOException {
     if (bigtableSnapshotClusterName == null) {

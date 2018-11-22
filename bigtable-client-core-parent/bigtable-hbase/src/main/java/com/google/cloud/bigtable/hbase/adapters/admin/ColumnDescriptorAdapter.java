@@ -15,30 +15,26 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.admin;
 
+import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
+
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.GcRule;
-import com.google.bigtable.admin.v2.GcRule.Intersection;
 import com.google.bigtable.admin.v2.GcRule.RuleCase;
-import com.google.bigtable.admin.v2.GcRule.Union;
 import com.google.cloud.bigtable.admin.v2.models.GCRules.GCRule;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.protobuf.Duration;
+import org.threeten.bp.Duration;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
 
 /**
  * Adapt a single instance of an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor} to
@@ -189,7 +185,7 @@ public class ColumnDescriptorAdapter {
     }
 
     // minVersions only comes into play with a TTL:
-    GCRule ageRule = GCRULES.maxAge(org.threeten.bp.Duration.ofSeconds(ttlSeconds));
+    GCRule ageRule = GCRULES.maxAge(Duration.ofSeconds(ttlSeconds));
     if (minVersions != HColumnDescriptor.DEFAULT_MIN_VERSIONS) {
       // The logic here is: only delete a cell if:
       //  1) the age is older than :ttlSeconds AND
@@ -206,34 +202,6 @@ public class ColumnDescriptorAdapter {
     } else {
       return GCRULES.union().rule(ageRule).rule(GCRULES.maxVersions(maxVersions));
     }
-  }
-
-  @VisibleForTesting
-  static GcRule intersection(GcRule... rules) {
-    return GcRule.newBuilder()
-        .setIntersection(Intersection.newBuilder().addAllRules(Arrays.asList(rules)).build())
-        .build();
-  }
-
-  @VisibleForTesting
-  static GcRule union(GcRule... rules) {
-    return GcRule.newBuilder()
-        .setUnion(Union.newBuilder().addAllRules(Arrays.asList(rules)).build())
-        .build();
-  }
-
-  private static Duration duration(int ttlSeconds) {
-    return Duration.newBuilder().setSeconds(ttlSeconds).build();
-  }
-
-  @VisibleForTesting
-  static GcRule maxAge(int ttlSeconds) {
-    return GcRule.newBuilder().setMaxAge(duration(ttlSeconds)).build();
-  }
-
-  @VisibleForTesting
-  static GcRule maxVersions(int maxVersions) {
-    return GcRule.newBuilder().setMaxNumVersions(maxVersions).build();
   }
 
   /**
