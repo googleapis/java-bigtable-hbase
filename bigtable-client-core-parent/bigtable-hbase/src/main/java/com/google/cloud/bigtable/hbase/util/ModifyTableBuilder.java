@@ -15,29 +15,20 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
+import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 /**
  * Utilitiy to create {@link ModifyColumnFamiliesRequest} from HBase {@link HColumnDescriptor}s.
  */
 public class ModifyTableBuilder {
-
-  private static final ColumnDescriptorAdapter ADAPTER = new ColumnDescriptorAdapter();
-
-  public static ModifyTableBuilder create() {
-    return new ModifyTableBuilder();
-  }
 
   private static Set<String> getColumnNames(HTableDescriptor tableDescriptor) {
     Set<String> names = new HashSet<>();
@@ -48,22 +39,25 @@ public class ModifyTableBuilder {
   }
 
   /**
-   * This method will build list of of protobuf {@link ModifyColumnFamiliesRequest.Modification} objects based on a diff of the
+   * This method will build {@link ModifyColumnFamiliesRequest} objects based on a diff of the
    * new and existing set of column descriptors.  This is for use in
    * {@link org.apache.hadoop.hbase.client.Admin#modifyTable(TableName, HTableDescriptor)}.
    */
-  public static ModifyTableBuilder buildModifications(
-      HTableDescriptor newTableDescriptor,
-      HTableDescriptor currentTableDescriptors) {
-    ModifyTableBuilder builder = new ModifyTableBuilder();
+  public static ModifyColumnFamiliesRequest buildModifications(
+          HTableDescriptor newTableDescriptor,
+          HTableDescriptor currentTableDescriptors,
+          ModifyColumnFamiliesRequest request) {
     Set<String> currentColumnNames = getColumnNames(currentTableDescriptors);
     Set<String> newColumnNames = getColumnNames(newTableDescriptor);
 
     for (HColumnDescriptor hColumnDescriptor : newTableDescriptor.getFamilies()) {
-      if (currentColumnNames.contains(hColumnDescriptor.getNameAsString())) {
-        builder.modify(hColumnDescriptor);
+      String columnName = hColumnDescriptor.getNameAsString();
+      if (currentColumnNames.contains(columnName)) {
+        request.updateFamily(columnName,
+                buildGarbageCollectionRule(hColumnDescriptor));
       } else {
-        builder.add(hColumnDescriptor);
+        request.addFamily(columnName,
+                buildGarbageCollectionRule(hColumnDescriptor));
       }
     }
 
@@ -71,47 +65,8 @@ public class ModifyTableBuilder {
     columnsToRemove.removeAll(newColumnNames);
 
     for (String column : columnsToRemove) {
-      builder.delete(column);
+      request.dropFamily(column);
     }
-    return builder;
-  }
-
-  private final List<ModifyColumnFamiliesRequest.Modification> modifications = new ArrayList<>();
-
-  public ModifyTableBuilder add(HColumnDescriptor descriptor) {
-    String columnName = descriptor.getNameAsString();
-    modifications.add(ModifyColumnFamiliesRequest.Modification
-        .newBuilder()
-        .setId(columnName)
-        .setCreate(ADAPTER.adapt(descriptor))
-        .build());
-    return this;
-  }
-
-  public ModifyTableBuilder modify(HColumnDescriptor descriptor) {
-    String columnName = descriptor.getNameAsString();
-    modifications.add(ModifyColumnFamiliesRequest.Modification
-        .newBuilder()
-        .setId(columnName)
-        .setUpdate(ADAPTER.adapt(descriptor))
-        .build());
-    return this;
-  }
-
-  public ModifyTableBuilder delete(String name) {
-    modifications.add(ModifyColumnFamiliesRequest.Modification
-        .newBuilder()
-        .setId(name)
-        .setDrop(true)
-        .build());
-    return this;
-  }
-
-  public ModifyColumnFamiliesRequest toProto(String name) {
-    return ModifyColumnFamiliesRequest
-        .newBuilder()
-        .setName(name)
-        .addAllModifications(modifications)
-        .build();
+    return request;
   }
 }

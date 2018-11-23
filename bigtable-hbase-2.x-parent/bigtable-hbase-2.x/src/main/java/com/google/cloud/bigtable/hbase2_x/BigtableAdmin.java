@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
+import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModifications;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,10 +68,8 @@ import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.Snapshot;
-import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
+import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.util.concurrent.Futures;
 
@@ -102,8 +103,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys)
-            .toProto(bigtableInstanceName.toAdminInstanceName()));
+    createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys));
   }
 
   /** {@inheritDoc} */
@@ -132,7 +132,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     return response;
 
   }
-  
+
   @Override
   public List<SnapshotDescription> listSnapshots()
       throws IOException {
@@ -145,37 +145,44 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     List<SnapshotDescription> response = new ArrayList<>();
     for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
       response.add(new SnapshotDescription(
-          snapshot.getName(), 
+          snapshot.getName(),
           TableName.valueOf(snapshot.getSourceTable().getName())));
     }
     return response;
   }
 
-
   /**
    * {@inheritDoc}
-   * 
+   *
    * Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
    * Copying the same code here. //TODO - need to find a better way
    */
   @Override
   public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "add",
-        ModifyTableBuilder.create().add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+    ModifyColumnFamiliesRequest request =
+            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
+    request.addFamily(columnFamilyDesc.getNameAsString(),
+            buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+
+    modifyColumns(request);
   }
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
-   * Copying the same code here. //TODO - need to find a better way 
+   * Copying the same code here. //TODO - need to find a better way
    */
   @Override
   public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "modify",
-        ModifyTableBuilder.create().modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+    ModifyColumnFamiliesRequest request =
+            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
+    request.updateFamily(columnFamilyDesc.getNameAsString(),
+            buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+
+    modifyColumns(request);
   }
 
   /** {@inheritDoc} */
@@ -243,18 +250,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     return asyncAdmin.deleteColumnFamily(tableName, columnName);
   }
 
-
-  protected CompletableFuture<Void> modifyColumnsAsync(TableName tableName, Modification... modifications) {
-    ModifyColumnFamiliesRequest modifyColumnRequest = ModifyColumnFamiliesRequest
-        .newBuilder()
-        .addAllModifications(Arrays.asList(modifications))
-        .setName(toBigtableName(tableName))
-        .build();
-    return FutureUtils.toCompletableFuture(
-        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnRequest))
-        .thenApply(r -> null);
-  }
-
   protected CompletableFuture<Void> deleteTableAsyncInternal(TableName tableName) {
     DeleteTableRequest deleteTableRequest = DeleteTableRequest.newBuilder()
         .setName(toBigtableName(tableName))
@@ -263,7 +258,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         bigtableTableAdminClient.deleteTableAsync(deleteTableRequest))
         .thenApply(r -> null);
   }
-  
+
   @Override
   public Future<Void> deleteTableAsync(TableName tableName) throws IOException {
     return deleteTableAsyncInternal(tableName);
@@ -292,13 +287,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public List<TableDescriptor> listTableDescriptors(Pattern pattern, boolean includeSysTables) 
+  public List<TableDescriptor> listTableDescriptors(Pattern pattern, boolean includeSysTables)
       throws IOException {
     return Arrays.asList(listTables(pattern,includeSysTables));
   }
 
   @Override
-  public List<TableDescriptor> listTableDescriptorsByNamespace(byte[] namespace) 
+  public List<TableDescriptor> listTableDescriptorsByNamespace(byte[] namespace)
       throws IOException {
     final String namespaceStr = Bytes.toString(namespace);
     return Arrays.asList(listTableDescriptorsByNamespace(namespaceStr));
@@ -323,7 +318,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public Future<Void> modifyColumnFamilyAsync(TableName tableName, 
+  public Future<Void> modifyColumnFamilyAsync(TableName tableName,
       ColumnFamilyDescriptor columnFamily) throws IOException {
     return asyncAdmin.modifyColumnFamily(tableName, columnFamily);
   }
@@ -337,7 +332,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
     super.modifyTable(tableName, new HTableDescriptor(tableDescriptor));
   }
-  
+
   @Override
   public Future<Void> modifyTableAsync(TableDescriptor tableDescriptor)
       throws IOException {
@@ -346,15 +341,18 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public Future<Void> modifyTableAsync(TableName tableName, TableDescriptor newDescriptor) {
-    return asyncAdmin.getDescriptor(tableName).thenApply(descriptor -> ModifyTableBuilder
-        .buildModifications(new HTableDescriptor(newDescriptor), new HTableDescriptor(descriptor)))
-        .thenApply(modifications -> {
-          try {
-            return modifyColumns(tableName, null, "modifyTableAsync", modifications);
-          } catch (IOException e) {
-            throw new CompletionException(e);
-          }
-        });
+    ModifyColumnFamiliesRequest request =
+            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
+    return asyncAdmin.getDescriptor(tableName)
+        .thenApply(descriptor -> buildModifications(new HTableDescriptor(newDescriptor),
+                    new HTableDescriptor(descriptor), request))
+            .thenApply(modifyRequest -> {
+              try {
+                return modifyColumns(modifyRequest);
+              } catch (IOException e) {
+                throw new CompletionException(e);
+              }
+            });
   }
 
   /* (non-Javadoc)
