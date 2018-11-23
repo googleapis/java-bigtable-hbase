@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
+import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModifications;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -67,13 +68,10 @@ import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
-import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.util.concurrent.Futures;
-
 
 /**
  * HBase 2.x specific implementation of {@link AbstractBigtableAdmin}.
@@ -163,13 +161,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    ModifyColumnFamiliesRequest modifyColumnRequest =
+    ModifyColumnFamiliesRequest request =
         ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-
-    modifyColumnRequest.addFamily(columnFamilyDesc.getNameAsString(),
+    request.addFamily(columnFamilyDesc.getNameAsString(),
       buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
 
-    modifyColumns(modifyColumnRequest);
+    modifyColumns(request);
   }
 
   /**
@@ -181,14 +178,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    ModifyColumnFamiliesRequest modifyColumnRequest =
-        ModifyColumnFamiliesRequest
-            .of(tableName.getNameAsString());
-
-    modifyColumnRequest.updateFamily(columnFamilyDesc.getNameAsString(),
+    ModifyColumnFamiliesRequest request =
+        ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
+    request.updateFamily(columnFamilyDesc.getNameAsString(),
       buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
 
-    modifyColumns(modifyColumnRequest);
+    modifyColumns(request);
   }
 
   /** {@inheritDoc} */
@@ -254,19 +249,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public Future<Void> deleteColumnFamilyAsync(TableName tableName, byte[] columnName) {
     return asyncAdmin.deleteColumnFamily(tableName, columnName);
-  }
-
-  protected CompletableFuture<Void> modifyColumnsAsync(TableName tableName, Modification... modifications) {
-    ModifyColumnFamiliesRequest modifyColumnRequest =
-        ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-
-    com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest modifyColumnProto =
-        modifyColumnRequest.toProto(instanceName);
-    modifyColumnProto.getModificationsList().addAll(Arrays.asList(modifications));
-
-    return FutureUtils.toCompletableFuture(
-        bigtableTableAdminClient.modifyColumnFamilyAsync(modifyColumnProto))
-        .thenApply(r -> null);
   }
 
   protected CompletableFuture<Void> deleteTableAsyncInternal(TableName tableName) {
@@ -360,18 +342,18 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public Future<Void> modifyTableAsync(TableName tableName, TableDescriptor newDescriptor) {
-    ModifyColumnFamiliesRequest modifyColumnRequest =
+    ModifyColumnFamiliesRequest request =
             ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    return asyncAdmin.getDescriptor(tableName).thenApply(descriptor -> ModifyTableBuilder
-        .buildModifications(new HTableDescriptor(newDescriptor),
-                new HTableDescriptor(descriptor), modifyColumnRequest))
+    return asyncAdmin.getDescriptor(tableName)
+      .thenApply(descriptor -> buildModifications(new HTableDescriptor(newDescriptor),
+                new HTableDescriptor(descriptor), request))
         .thenApply(modifyRequest -> {
           try {
-            return modifyColumns(tableName, null, "modifyTableAsync", modifyRequest);
+            return modifyColumns(modifyRequest);
           } catch (IOException e) {
             throw new CompletionException(e);
           }
-        });
+      });
   }
 
 

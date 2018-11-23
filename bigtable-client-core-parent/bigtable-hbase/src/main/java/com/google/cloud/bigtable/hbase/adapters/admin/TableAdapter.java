@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.admin;
 
+import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
+
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.bigtable.admin.v2.Table;
@@ -26,11 +29,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
-
-import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 
 /**
  * <p>TableAdapter class.</p>
@@ -38,6 +37,7 @@ import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAda
  * @author sduskis
  * @version $Id: $Id
  */
+@InternalApi
 public class TableAdapter {
   private static final ColumnDescriptorAdapter columnDescriptorAdapter =
       ColumnDescriptorAdapter.INSTANCE;
@@ -46,27 +46,31 @@ public class TableAdapter {
   /**
    * <p>adapt.</p>
    *
-   * @param desc a {@link org.apache.hadoop.hbase.HTableDescriptor} object.
-   * @return a {@link com.google.bigtable.admin.v2.Table} object.
+   * This method adapts ColumnFamily to CreateTableRequest.
+   *
+   * @param desc a {@link HTableDescriptor} object.
+   * @param  request a {@link CreateTableRequest}
    */
-  protected static void adapt(CreateTableRequest createTableRequest, HTableDescriptor desc) {
-    for (HColumnDescriptor column : desc.getColumnFamilies()) {
-      String columnName = column.getNameAsString();
-      createTableRequest.addFamily(columnName, buildGarbageCollectionRule(column));
+  protected static void adapt(HTableDescriptor desc, CreateTableRequest request) {
+    if(request != null) {
+      for (HColumnDescriptor column : desc.getColumnFamilies()) {
+        String columnName = column.getNameAsString();
+        request.addFamily(columnName, buildGarbageCollectionRule(column));
+      }
     }
   }
 
   public static CreateTableRequest adapt(HTableDescriptor desc, byte[][] splitKeys) {
-    CreateTableRequest createReq = CreateTableRequest.of(desc.getTableName().getNameAsString());
-    adapt(createReq, desc);
-    addSplitKeys(createReq, splitKeys);
-    return createReq;
+    CreateTableRequest request = CreateTableRequest.of(desc.getTableName().getNameAsString());
+    adapt(desc, request);
+    addSplitKeys(splitKeys, request);
+    return request;
   }
 
-  private static void addSplitKeys(CreateTableRequest createTableRequest, byte[][] splitKeys) {
+  public static void addSplitKeys(byte[][] splitKeys, CreateTableRequest request) {
     if (splitKeys != null) {
       for (byte[] splitKey : splitKeys) {
-        createTableRequest.addSplit(ByteString.copyFrom(splitKey));
+        request.addSplit(ByteString.copyFrom(splitKey));
       }
     }
   }
@@ -84,8 +88,8 @@ public class TableAdapter {
   /**
    * <p>adapt.</p>
    *
-   * @param table a {@link com.google.bigtable.admin.v2.Table} object.
-   * @return a {@link org.apache.hadoop.hbase.HTableDescriptor} object.
+   * @param table a {@link Table} object.
+   * @return a {@link HTableDescriptor} object.
    */
   public HTableDescriptor adapt(Table table) {
     String tableId = bigtableInstanceName.toTableId(table.getName());
