@@ -15,10 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
+import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModifications;
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
-import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
@@ -28,6 +29,8 @@ import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
@@ -127,9 +130,9 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       return failedFuture(new IllegalArgumentException("TableName cannot be null"));
     }
 
-    CreateTableRequest request = TableAdapter2x.adapt(desc, splitKeys)
-            .toProto(bigtableInstanceName.toAdminInstanceName());
-    return bigtableTableAdminClient.createTableAsync(request)
+    CreateTableRequest request = TableAdapter2x.adapt(desc, splitKeys);
+    return bigtableTableAdminClient.createTableAsync(
+            request.toProto(bigtableInstanceName.toAdminInstanceName()))
         .handle((resp, ex) -> {
           if (ex != null) {
             throw new CompletionException(
@@ -332,21 +335,21 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> addColumnFamily(TableName tableName,
       ColumnFamilyDescriptor columnFamilyDesc) {
     return modifyColumns(tableName,
-        ModifyTableBuilder.create().add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+        ModifyTableBuilder.newBuilder(tableName).add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
 
   @Override
   public CompletableFuture<Void> deleteColumnFamily(TableName tableName,
       byte[] columnName) {
-    return modifyColumns(tableName, ModifyTableBuilder.create().delete(Bytes.toString(columnName)));
+    return modifyColumns(tableName, ModifyTableBuilder.newBuilder(tableName).delete(Bytes.toString(columnName)));
   }
 
   @Override
   public CompletableFuture<Void> modifyColumnFamily(TableName tableName,
       ColumnFamilyDescriptor columnFamilyDesc) {
     return modifyColumns(tableName,
-        ModifyTableBuilder.create().modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+        ModifyTableBuilder.newBuilder(tableName).modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   @Override
@@ -374,8 +377,9 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
    */
   private CompletableFuture<Void> modifyColumns(TableName tableName,
       ModifyTableBuilder modifications) {
+    ModifyColumnFamiliesRequest request = modifications.build();
     return bigtableTableAdminClient
-        .modifyColumnFamilyAsync(modifications.toProto(toBigtableName(tableName)))
+        .modifyColumnFamilyAsync(request.toProto(bigtableInstanceName.toAdminInstanceName()))
         .thenApply(r -> null);
   }
 
@@ -588,8 +592,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern tableNamePattern) {
-    return listSnapshots().thenApply(r -> 
-    		filter(r, d->tableNamePattern == null || 
+    return listSnapshots().thenApply(r ->
+    		filter(r, d->tableNamePattern == null ||
     		tableNamePattern.matcher(d.getTableNameAsString()).matches()));
   }
 
@@ -692,7 +696,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> decommissionRegionServers(List<ServerName> arg0, boolean arg1) {
     throw new UnsupportedOperationException("decommissionRegionServers"); // TODO
   }
-  
+
   @Override
   public CompletableFuture<Void> deleteNamespace(String arg0) {
     throw new UnsupportedOperationException("deleteNamespace"); // TODO

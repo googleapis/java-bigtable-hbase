@@ -15,28 +15,31 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
+import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 /**
  * Utilitiy to create {@link ModifyColumnFamiliesRequest} from HBase {@link HColumnDescriptor}s.
  */
+@InternalApi
 public class ModifyTableBuilder {
 
-  private static final ColumnDescriptorAdapter ADAPTER = new ColumnDescriptorAdapter();
 
-  public static ModifyTableBuilder create() {
-    return new ModifyTableBuilder();
+  private ModifyTableBuilder(String tableId){
+    this.request = ModifyColumnFamiliesRequest.of(tableId);
+  }
+
+  public static ModifyTableBuilder newBuilder(TableName tableName){
+    return new ModifyTableBuilder(tableName.getNameAsString());
   }
 
   private static Set<String> getColumnNames(HTableDescriptor tableDescriptor) {
@@ -48,22 +51,26 @@ public class ModifyTableBuilder {
   }
 
   /**
-   * This method will build list of of protobuf {@link ModifyColumnFamiliesRequest.Modification} objects based on a diff of the
+   * This method will build {@link ModifyColumnFamiliesRequest} objects based on a diff of the
    * new and existing set of column descriptors.  This is for use in
    * {@link org.apache.hadoop.hbase.client.Admin#modifyTable(TableName, HTableDescriptor)}.
    */
   public static ModifyTableBuilder buildModifications(
-      HTableDescriptor newTableDescriptor,
-      HTableDescriptor currentTableDescriptors) {
-    ModifyTableBuilder builder = new ModifyTableBuilder();
-    Set<String> currentColumnNames = getColumnNames(currentTableDescriptors);
-    Set<String> newColumnNames = getColumnNames(newTableDescriptor);
+          HTableDescriptor newTableDesc,
+          HTableDescriptor currentTableDesc) {
+    Preconditions.checkNotNull(newTableDesc);
+    Preconditions.checkNotNull(currentTableDesc);
 
-    for (HColumnDescriptor hColumnDescriptor : newTableDescriptor.getFamilies()) {
-      if (currentColumnNames.contains(hColumnDescriptor.getNameAsString())) {
-        builder.modify(hColumnDescriptor);
+    ModifyTableBuilder requestBuilder = ModifyTableBuilder.newBuilder(currentTableDesc.getTableName());
+    Set<String> currentColumnNames = getColumnNames(currentTableDesc);
+    Set<String> newColumnNames = getColumnNames(newTableDesc);
+
+    for (HColumnDescriptor hColumnDescriptor : newTableDesc.getFamilies()) {
+      String columnName = hColumnDescriptor.getNameAsString();
+      if (currentColumnNames.contains(columnName)) {
+        requestBuilder.modify(hColumnDescriptor);
       } else {
-        builder.add(hColumnDescriptor);
+        requestBuilder.add(hColumnDescriptor);
       }
     }
 
@@ -71,47 +78,31 @@ public class ModifyTableBuilder {
     columnsToRemove.removeAll(newColumnNames);
 
     for (String column : columnsToRemove) {
-      builder.delete(column);
+      requestBuilder.delete(column);
     }
-    return builder;
+    return requestBuilder;
   }
 
-  private final List<ModifyColumnFamiliesRequest.Modification> modifications = new ArrayList<>();
+  private final ModifyColumnFamiliesRequest request;
 
-  public ModifyTableBuilder add(HColumnDescriptor descriptor) {
-    String columnName = descriptor.getNameAsString();
-    modifications.add(ModifyColumnFamiliesRequest.Modification
-        .newBuilder()
-        .setId(columnName)
-        .setCreate(ADAPTER.adapt(descriptor))
-        .build());
+  public ModifyTableBuilder add(HColumnDescriptor addColumnFamily) {
+    this.request.addFamily(addColumnFamily.getNameAsString(),
+            buildGarbageCollectionRule(addColumnFamily));
     return this;
   }
 
-  public ModifyTableBuilder modify(HColumnDescriptor descriptor) {
-    String columnName = descriptor.getNameAsString();
-    modifications.add(ModifyColumnFamiliesRequest.Modification
-        .newBuilder()
-        .setId(columnName)
-        .setUpdate(ADAPTER.adapt(descriptor))
-        .build());
+  public ModifyTableBuilder modify(HColumnDescriptor modifyColumnFamily) {
+    this.request.updateFamily(modifyColumnFamily.getNameAsString(),
+            buildGarbageCollectionRule(modifyColumnFamily));
     return this;
   }
 
-  public ModifyTableBuilder delete(String name) {
-    modifications.add(ModifyColumnFamiliesRequest.Modification
-        .newBuilder()
-        .setId(name)
-        .setDrop(true)
-        .build());
+  public ModifyTableBuilder delete(String familyId) {
+    this.request.dropFamily(familyId);
     return this;
   }
 
-  public ModifyColumnFamiliesRequest toProto(String name) {
-    return ModifyColumnFamiliesRequest
-        .newBuilder()
-        .setName(name)
-        .addAllModifications(modifications)
-        .build();
+  public ModifyColumnFamiliesRequest build(){
+    return request;
   }
 }
