@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase2_x;
 import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModifications;
 
+import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -160,12 +161,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    ModifyColumnFamiliesRequest request =
-            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    request.addFamily(columnFamilyDesc.getNameAsString(),
-            buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
-
-    modifyColumns(request);
+    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "add",
+            ModifyTableBuilder.newBuilder(tableName).add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   /**
@@ -177,12 +174,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    ModifyColumnFamiliesRequest request =
-            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    request.updateFamily(columnFamilyDesc.getNameAsString(),
-            buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
-
-    modifyColumns(request);
+    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "modify",
+        ModifyTableBuilder.newBuilder(tableName).modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   /** {@inheritDoc} */
@@ -341,18 +334,15 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public Future<Void> modifyTableAsync(TableName tableName, TableDescriptor newDescriptor) {
-    ModifyColumnFamiliesRequest request =
-            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    return asyncAdmin.getDescriptor(tableName)
-        .thenApply(descriptor -> buildModifications(new HTableDescriptor(newDescriptor),
-                    new HTableDescriptor(descriptor), request))
-            .thenApply(modifyRequest -> {
-              try {
-                return modifyColumns(modifyRequest);
-              } catch (IOException e) {
-                throw new CompletionException(e);
-              }
-            });
+    return asyncAdmin.getDescriptor(tableName).thenApply(descriptor -> ModifyTableBuilder
+        .buildModifications(new HTableDescriptor(newDescriptor), new HTableDescriptor(descriptor)))
+        .thenApply(modifications -> {
+          try {
+            return modifyColumns(tableName, null, "modifyTableAsync", modifications);
+          } catch (IOException e) {
+            throw new CompletionException(e);
+          }
+        });
   }
 
   /* (non-Javadoc)

@@ -37,6 +37,7 @@ import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import io.grpc.Status;
 import org.apache.hadoop.conf.Configuration;
@@ -333,59 +334,52 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> addColumnFamily(TableName tableName,
       ColumnFamilyDescriptor columnFamilyDesc) {
-    ModifyColumnFamiliesRequest request = ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    request.addFamily(columnFamilyDesc.getNameAsString(),
-            buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
-
-    return modifyColumns(request);
+    return modifyColumns(tableName,
+        ModifyTableBuilder.newBuilder(tableName).add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
 
   @Override
   public CompletableFuture<Void> deleteColumnFamily(TableName tableName,
       byte[] columnName) {
-    ModifyColumnFamiliesRequest request = ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    request.dropFamily(Bytes.toString(columnName));
-
-    return modifyColumns(request);
+    return modifyColumns(tableName, ModifyTableBuilder.newBuilder(tableName).delete(Bytes.toString(columnName)));
   }
 
   @Override
   public CompletableFuture<Void> modifyColumnFamily(TableName tableName,
       ColumnFamilyDescriptor columnFamilyDesc) {
-    ModifyColumnFamiliesRequest request = ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    request.updateFamily(columnFamilyDesc.getNameAsString(),
-            buildGarbageCollectionRule(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
-
-    return modifyColumns(request);
+    return modifyColumns(tableName,
+        ModifyTableBuilder.newBuilder(tableName).modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   @Override
   public CompletableFuture<Void> modifyTable(TableDescriptor newDescriptor) {
-    ModifyColumnFamiliesRequest request =
-            ModifyColumnFamiliesRequest.of(newDescriptor.getTableName().getNameAsString());
     return getDescriptor(newDescriptor.getTableName())
-            .thenApply(descriptor -> buildModifications(
-                    new HTableDescriptor(newDescriptor),
-                    new HTableDescriptor(descriptor) , request))
-            .thenApply(modifyRequest -> {
-              try {
-                modifyColumns(modifyRequest).get();
-              } catch (InterruptedException | ExecutionException e) {
-                throw new CompletionException(e);
-              }
-              return null;
-            });
+        .thenApply(descriptor -> ModifyTableBuilder
+            .buildModifications(
+                new HTableDescriptor(newDescriptor),
+                new HTableDescriptor(descriptor)))
+        .thenApply(modifications -> {
+          try {
+            modifyColumns(newDescriptor.getTableName(), modifications).get();
+          } catch (InterruptedException | ExecutionException e) {
+            throw new CompletionException(e);
+          }
+          return null;
+        });
   }
 
   /**
    * <p>modifyColumns.</p>
    *
-   * @param request a {@link ModifyColumnFamiliesRequest} object.
+   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
+   * @param modifications a {@link ModifyTableBuilder} object.
    */
-  private CompletableFuture<Void> modifyColumns(ModifyColumnFamiliesRequest request) {
-    return bigtableTableAdminClient.modifyColumnFamilyAsync(
-        request.toProto(bigtableInstanceName.toAdminInstanceName()))
+  private CompletableFuture<Void> modifyColumns(TableName tableName,
+      ModifyTableBuilder modifications) {
+    ModifyColumnFamiliesRequest request = modifications.build();
+    return bigtableTableAdminClient
+        .modifyColumnFamilyAsync(request.toProto(bigtableInstanceName.toAdminInstanceName()))
         .thenApply(r -> null);
   }
 

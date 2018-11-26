@@ -15,7 +15,6 @@
  */
 package org.apache.hadoop.hbase.client;
 
-import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModifications;
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
@@ -37,6 +36,7 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
+import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -589,31 +589,23 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-    ModifyColumnFamiliesRequest request =
-            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    request.addFamily(column.getNameAsString(), buildGarbageCollectionRule(column));
-
-    modifyColumns(request);
+    modifyColumns(tableName, column.getNameAsString(), "add",
+        ModifyTableBuilder.newBuilder(tableName).add(column));
   }
 
   /** {@inheritDoc} */
   @Override
   public void modifyColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-    ModifyColumnFamiliesRequest request =
-            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    request.updateFamily(column.getNameAsString(), buildGarbageCollectionRule(column));
-
-    modifyColumns(request);
+    modifyColumns(tableName, column.getNameAsString(), "modify",
+        ModifyTableBuilder.newBuilder(tableName).modify(column));
   }
 
   /** {@inheritDoc} */
   @Override
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
-    ModifyColumnFamiliesRequest request =
-            ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-    request.dropFamily(Bytes.toString(columnName));
-
-    modifyColumns(request);
+    String name = Bytes.toString(columnName);
+    modifyColumns(tableName, name, "delete",
+        ModifyTableBuilder.newBuilder(tableName).delete(name));
   }
 
   /** {@inheritDoc} */
@@ -622,8 +614,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     if (isTableAvailable(tableName)) {
       try {
         ModifyColumnFamiliesRequest request =
-                ModifyColumnFamiliesRequest.of(tableName.getNameAsString());
-        buildModifications(newDecriptor, getTableDescriptor(tableName), request);
+            buildModifications(newDecriptor, getTableDescriptor(tableName)).build();
         bigtableTableAdminClient.modifyColumnFamily(
                 request.toProto(bigtableInstanceName.toAdminInstanceName()));
       } catch (Throwable throwable) {
@@ -638,17 +629,27 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * <p>modifyColumns.</p>
    *
-   * @param request a {@link ModifyColumnFamiliesRequest} object to send.
+   * @param tableName a {@link TableName} object for error messages.
+   * @param columnName a {@link String} object for error messages
+   * @param modificationType a {@link String} object for error messages
+   * @param builder a {@link ModifyTableBuilder} object to send.
    * @throws java.io.IOException if any.
    */
-  protected Void modifyColumns(ModifyColumnFamiliesRequest request) throws IOException {
+  protected Void modifyColumns(TableName tableName, String columnName,
+      String modificationType, ModifyTableBuilder builder) throws IOException {
+    ModifyColumnFamiliesRequest request = builder.build();
     try {
       bigtableTableAdminClient.modifyColumnFamily(
               request.toProto(bigtableInstanceName.toAdminInstanceName()));
       return null;
     } catch (Throwable throwable) {
       throw new IOException(
-              "Failed to while modifying column", throwable);
+          String.format(
+              "Failed to %s column '%s' in table '%s'",
+              modificationType,
+              columnName,
+              tableName.getNameAsString()),
+          throwable);
     }
   }
 
@@ -1399,5 +1400,4 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void rollWALWriter(ServerName serverName) throws IOException, FailedLogCloseException {
     throw new UnsupportedOperationException("rollWALWriter");  // TODO
   }
-
 }

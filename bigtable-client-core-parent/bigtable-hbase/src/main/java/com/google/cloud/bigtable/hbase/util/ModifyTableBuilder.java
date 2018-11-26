@@ -15,7 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -28,7 +30,17 @@ import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAda
 /**
  * Utilitiy to create {@link ModifyColumnFamiliesRequest} from HBase {@link HColumnDescriptor}s.
  */
+@InternalApi
 public class ModifyTableBuilder {
+
+
+  private ModifyTableBuilder(String tableId){
+    this.request = ModifyColumnFamiliesRequest.of(tableId);
+  }
+
+  public static ModifyTableBuilder newBuilder(TableName tableName){
+    return new ModifyTableBuilder(tableName.getNameAsString());
+  }
 
   private static Set<String> getColumnNames(HTableDescriptor tableDescriptor) {
     Set<String> names = new HashSet<>();
@@ -43,21 +55,22 @@ public class ModifyTableBuilder {
    * new and existing set of column descriptors.  This is for use in
    * {@link org.apache.hadoop.hbase.client.Admin#modifyTable(TableName, HTableDescriptor)}.
    */
-  public static ModifyColumnFamiliesRequest buildModifications(
-          HTableDescriptor newTableDescriptor,
-          HTableDescriptor currentTableDescriptors,
-          ModifyColumnFamiliesRequest request) {
-    Set<String> currentColumnNames = getColumnNames(currentTableDescriptors);
-    Set<String> newColumnNames = getColumnNames(newTableDescriptor);
+  public static ModifyTableBuilder buildModifications(
+          HTableDescriptor newTableDesc,
+          HTableDescriptor currentTableDesc) {
+    Preconditions.checkNotNull(newTableDesc);
+    Preconditions.checkNotNull(currentTableDesc);
 
-    for (HColumnDescriptor hColumnDescriptor : newTableDescriptor.getFamilies()) {
+    ModifyTableBuilder requestBuilder = ModifyTableBuilder.newBuilder(currentTableDesc.getTableName());
+    Set<String> currentColumnNames = getColumnNames(currentTableDesc);
+    Set<String> newColumnNames = getColumnNames(newTableDesc);
+
+    for (HColumnDescriptor hColumnDescriptor : newTableDesc.getFamilies()) {
       String columnName = hColumnDescriptor.getNameAsString();
       if (currentColumnNames.contains(columnName)) {
-        request.updateFamily(columnName,
-                buildGarbageCollectionRule(hColumnDescriptor));
+        requestBuilder.modify(hColumnDescriptor);
       } else {
-        request.addFamily(columnName,
-                buildGarbageCollectionRule(hColumnDescriptor));
+        requestBuilder.add(hColumnDescriptor);
       }
     }
 
@@ -65,8 +78,31 @@ public class ModifyTableBuilder {
     columnsToRemove.removeAll(newColumnNames);
 
     for (String column : columnsToRemove) {
-      request.dropFamily(column);
+      requestBuilder.delete(column);
     }
+    return requestBuilder;
+  }
+
+  private final ModifyColumnFamiliesRequest request;
+
+  public ModifyTableBuilder add(HColumnDescriptor addColumnFamily) {
+    this.request.addFamily(addColumnFamily.getNameAsString(),
+            buildGarbageCollectionRule(addColumnFamily));
+    return this;
+  }
+
+  public ModifyTableBuilder modify(HColumnDescriptor modifyColumnFamily) {
+    this.request.updateFamily(modifyColumnFamily.getNameAsString(),
+            buildGarbageCollectionRule(modifyColumnFamily));
+    return this;
+  }
+
+  public ModifyTableBuilder delete(String familyId) {
+    this.request.dropFamily(familyId);
+    return this;
+  }
+
+  public ModifyColumnFamiliesRequest build(){
     return request;
   }
 }
