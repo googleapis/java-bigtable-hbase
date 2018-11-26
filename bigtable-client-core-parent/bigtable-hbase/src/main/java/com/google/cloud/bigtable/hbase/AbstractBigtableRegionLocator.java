@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -91,7 +92,7 @@ public abstract class AbstractBigtableRegionLocator {
             public List<HRegionLocation> apply(@Nullable List<SampleRowKeysResponse> input) {
               return adapter.adaptResponse(input);
             }
-          });
+          }, MoreExecutors.directExecutor());
       Futures.addCallback(this.regionsFuture, new FutureCallback<List<HRegionLocation>>() {
         @Override public void onSuccess(@Nullable List<HRegionLocation> result) {
         }
@@ -100,7 +101,7 @@ public abstract class AbstractBigtableRegionLocator {
             regionsFuture = null;
           }
         }
-      });
+      }, MoreExecutors.directExecutor());
       regionsFetchTimeMillis = System.currentTimeMillis();
       return this.regionsFuture;
     } catch(Throwable throwable) {

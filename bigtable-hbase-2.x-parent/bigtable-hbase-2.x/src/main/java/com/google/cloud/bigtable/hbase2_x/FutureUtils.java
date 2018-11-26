@@ -55,7 +55,7 @@ public class FutureUtils {
         completableFuture.complete(t);
       }
     };
-    Futures.addCallback(listenableFuture, callback);
+    Futures.addCallback(listenableFuture, callback, MoreExecutors.directExecutor());
 
     return completableFuture;
   }
