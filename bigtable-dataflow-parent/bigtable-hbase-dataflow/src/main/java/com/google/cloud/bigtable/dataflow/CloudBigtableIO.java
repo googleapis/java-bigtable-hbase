@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import static com.google.bigtable.repackaged.com.google.api.client.repackaged.com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.io.IOException;
@@ -29,6 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
@@ -48,7 +48,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
@@ -1327,7 +1326,7 @@ public class CloudBigtableIO {
   }
 
   private static void checkNotNullOrEmpty(String value, String type) {
-    checkArgument(
+    Preconditions.checkArgument(
         !isNullOrEmpty(value), "A " + type + " must be set to configure Bigtable properly.");
   }
 
