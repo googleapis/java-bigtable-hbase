@@ -41,6 +41,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
@@ -399,7 +400,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       @Override public void onFailure(Throwable t) {
         settableFuture.setException(convertToTableExistsException(tableName, t));
       }
-    });
+    }, MoreExecutors.directExecutor());
     return settableFuture;
   }
 
