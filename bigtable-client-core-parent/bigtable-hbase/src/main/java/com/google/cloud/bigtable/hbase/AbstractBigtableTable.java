@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.hbase;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
 import java.io.IOException;
@@ -116,6 +118,7 @@ public abstract class AbstractBigtableTable implements Table {
   protected final HBaseRequestAdapter hbaseAdapter;
 
   protected final BigtableDataClient client;
+  protected final BigtableDataClientWrapper clientWrapper;
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
@@ -134,6 +137,7 @@ public abstract class AbstractBigtableTable implements Table {
     BigtableSession session = bigtableConnection.getSession();
     this.options = session.getOptions();
     this.client = session.getDataClient();
+    this.clientWrapper = session.getClientWrapper();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
     this.requestContext = RequestContext.create(
@@ -352,7 +356,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
-    MutateRowRequest request = hbaseAdapter.adapt(put).toProto(requestContext);
+    RowMutation request = hbaseAdapter.adapt(put);
     mutateRow(put, request, "put");
   }
 
@@ -399,7 +403,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
-    MutateRowRequest request = hbaseAdapter.adapt(delete).toProto(requestContext);
+    RowMutation request = hbaseAdapter.adapt(delete);
     mutateRow(delete, request, "delete");
   }
 
@@ -467,11 +471,11 @@ public abstract class AbstractBigtableTable implements Table {
     }
   }
 
-  private void mutateRow(Mutation mutation, MutateRowRequest mutateRowRequest, String type)
+  private void mutateRow(Mutation mutation, RowMutation mutateRowRequest, String type)
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      client.mutateRow(mutateRowRequest);
+      clientWrapper.mutateRow(mutateRowRequest);
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, mutation.getRow(), t);
