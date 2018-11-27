@@ -229,7 +229,7 @@ public class BigtableSession implements Closeable {
     dataClient.setCallOptionsFactory(callOptionsFactory);
 
     this.clientWrapper =
-        new BigtableDataClientWrapper(((BigtableDataGrpcClient) dataClient), options);
+        new BigtableDataClientWrapper(dataClient, options);
 
     // Async operations can run amok, so they need to have some throttling. The throttling is
     // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
@@ -306,9 +306,9 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * <p>Getter for the field <code>IBigtableDataClient</code>.</p>
+   * <p>Getter for the field <code>clientWrapper</code>.</p>
    *
-   * @return a {@link IBigtableDataClient} object.
+   * @return a {@link BigtableDataClientWrapper} object.
    */
   public BigtableDataClientWrapper getClientWrapper() {
     return clientWrapper;
