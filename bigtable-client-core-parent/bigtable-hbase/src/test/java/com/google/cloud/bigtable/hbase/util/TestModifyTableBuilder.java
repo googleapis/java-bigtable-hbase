@@ -34,66 +34,62 @@ public class TestModifyTableBuilder {
   private static final String PROJECT_ID = "fakeProject";
   private static final String INSTANCE_ID = "fakeInstance";
   private static final String TABLE_ID = "myTable";
-  private static final String INSTANCE_NAME = "projects/" + PROJECT_ID + "/instances/" + INSTANCE_ID;
-  private static final String TABLE_NAME = INSTANCE_NAME + "/tables/" + TABLE_ID;
   private static final String COLUMN_FAMILY = "myColumnFamily";
 
-  private ModifyTableBuilder modifyTableBuilder;
   private InstanceName instanceName;
-
   @Before
-  public void setUp(){
-    modifyTableBuilder = ModifyTableBuilder.newBuilder(TableName.valueOf(TABLE_ID));
+  public void setUp() {
     instanceName = InstanceName.of(PROJECT_ID, INSTANCE_ID);
   }
 
   @Test
-  public void TestBuildModificationForAddFamily(){
+  public void testBuildModificationForAddFamily(){
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     HColumnDescriptor addColumn = new HColumnDescriptor(COLUMN_FAMILY);
     tableDescriptor.addFamily(addColumn);
     ModifyTableBuilder actualRequest = ModifyTableBuilder
-            .buildModifications(tableDescriptor, new HTableDescriptor(TableName.valueOf(TABLE_ID)));
+        .buildModifications(tableDescriptor, new HTableDescriptor(TableName.valueOf(TABLE_ID)));
 
     ModifyColumnFamiliesRequest expectedRequest = ModifyColumnFamiliesRequest.of(TABLE_ID)
-            .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
+        .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
 
     Assert.assertEquals(expectedRequest.toProto(instanceName),
-            actualRequest.build().toProto(instanceName));
+        actualRequest.build().toProto(instanceName));
   }
 
   @Test
-  public void TestBuildModificationForUpdateFamily(){
+  public void testBuildModificationForUpdateFamily(){
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     HColumnDescriptor addColumn = new HColumnDescriptor(COLUMN_FAMILY);
     tableDescriptor.addFamily(addColumn);
     ModifyTableBuilder actualRequest = ModifyTableBuilder
-            .buildModifications(tableDescriptor, new HTableDescriptor(tableDescriptor));
+        .buildModifications(tableDescriptor, new HTableDescriptor(tableDescriptor));
 
     ModifyColumnFamiliesRequest expectedRequest = ModifyColumnFamiliesRequest.of(TABLE_ID)
-            .updateFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
+        .updateFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
 
     Assert.assertEquals(expectedRequest.toProto(instanceName),
-            actualRequest.build().toProto(instanceName));
+        actualRequest.build().toProto(instanceName));
   }
 
   @Test
-  public void TestBuildModificationForDropFamily(){
-    String NEW_COLUMN_FAMILY = "anotherColumnFamily";
+  public void testBuildModificationForDropFamily(){
+    final String NEW_COLUMN_FAMILY = "anotherColumnFamily";
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     HColumnDescriptor addColumn = new HColumnDescriptor(COLUMN_FAMILY);
     tableDescriptor.addFamily(addColumn);
     HTableDescriptor newTableDesc = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     HColumnDescriptor newColumnDesc = new HColumnDescriptor(NEW_COLUMN_FAMILY);
     newTableDesc.addFamily(newColumnDesc);
-    ModifyTableBuilder actualRequest = ModifyTableBuilder
-            .buildModifications(tableDescriptor, newTableDesc);
+
+    ModifyTableBuilder actualRequest =
+        ModifyTableBuilder.buildModifications(tableDescriptor, newTableDesc);
 
     ModifyColumnFamiliesRequest expectedRequest = ModifyColumnFamiliesRequest.of(TABLE_ID)
-            .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn))
-            .dropFamily(NEW_COLUMN_FAMILY);
+        .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn))
+        .dropFamily(NEW_COLUMN_FAMILY);
 
     Assert.assertEquals(expectedRequest.toProto(instanceName),
-            actualRequest.build().toProto(instanceName));
+        actualRequest.build().toProto(instanceName));
   }
 }
