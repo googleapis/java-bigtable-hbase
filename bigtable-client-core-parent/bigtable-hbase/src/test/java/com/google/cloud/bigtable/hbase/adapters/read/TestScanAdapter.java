@@ -37,6 +37,7 @@ import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
@@ -69,6 +70,8 @@ public class TestScanAdapter {
       throw new IllegalStateException("Read hooks not supported in TestScanAdapter.");
     }
   };
+  public static final String START_KEY = "startKey";
+  public static final String STOP_KEY = "stopKey";
 
   private static RowRange toRange(byte[] start, byte[] stop) {
     return RowRange.newBuilder().setStartKeyClosed(ByteStringer.wrap(start))
@@ -96,7 +99,7 @@ public class TestScanAdapter {
 
   @Test
   public void testStartDefault() {
-    byte[] startKey = Bytes.toBytes("startKey");
+    byte[] startKey = Bytes.toBytes(START_KEY);
     Scan scan = new Scan().withStartRow(startKey);
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
     RowSet expected = toRowSet(
@@ -106,7 +109,7 @@ public class TestScanAdapter {
 
   @Test
   public void testStartInclusive() {
-    byte[] startKey = Bytes.toBytes("startKey");
+    byte[] startKey = Bytes.toBytes(START_KEY);
     Scan scan = new Scan().withStartRow(startKey, true);
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
     RowSet expected = toRowSet(
@@ -116,7 +119,7 @@ public class TestScanAdapter {
 
   @Test
   public void testStartExclusive() {
-    byte[] startKey = Bytes.toBytes("startKey");
+    byte[] startKey = Bytes.toBytes(START_KEY);
     Scan scan = new Scan().withStartRow(startKey, false);
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
     RowSet expected = toRowSet(
@@ -126,7 +129,7 @@ public class TestScanAdapter {
 
   @Test
   public void testStopDefault() {
-    byte[] stopKey = Bytes.toBytes("stopKey");
+    byte[] stopKey = Bytes.toBytes(STOP_KEY);
     Scan scan = new Scan().withStopRow(stopKey);
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
     RowSet expected = toRowSet(
@@ -136,7 +139,7 @@ public class TestScanAdapter {
 
   @Test
   public void testStopInclusive() {
-    byte[] stopKey = Bytes.toBytes("stopKey");
+    byte[] stopKey = Bytes.toBytes(STOP_KEY);
     Scan scan = new Scan().withStopRow(stopKey, true);
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
     RowSet expected = toRowSet(
@@ -146,7 +149,7 @@ public class TestScanAdapter {
 
   @Test
   public void testStopExclusive() {
-    byte[] stopKey = Bytes.toBytes("stopKey");
+    byte[] stopKey = Bytes.toBytes(STOP_KEY);
     Scan scan = new Scan().withStopRow(stopKey, false);
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
     RowSet expected = toRowSet(
@@ -156,8 +159,8 @@ public class TestScanAdapter {
 
   @Test
   public void testStartAndEndKeysAreSet() {
-    byte[] startKey = Bytes.toBytes("startKey");
-    byte[] stopKey = Bytes.toBytes("stopKey");
+    byte[] startKey = Bytes.toBytes(START_KEY);
+    byte[] stopKey = Bytes.toBytes(STOP_KEY);
     Scan scan = new Scan()
         .withStartRow(startKey)
         .withStopRow(stopKey);
@@ -167,8 +170,8 @@ public class TestScanAdapter {
 
   @Test
   public void testStartAndEndKeysNonDefault() {
-    byte[] startKey = Bytes.toBytes("startKey");
-    byte[] stopKey = Bytes.toBytes("stopKey");
+    byte[] startKey = Bytes.toBytes(START_KEY);
+    byte[] stopKey = Bytes.toBytes(STOP_KEY);
     Scan scan = new Scan()
         .withStartRow(startKey, false)
         .withStopRow(stopKey, true);
@@ -203,8 +206,8 @@ public class TestScanAdapter {
     byte[] row1 = Bytes.toBytes("row1");
     byte[] row2 = Bytes.toBytes("row2");
 
-    byte[] startRow = Bytes.toBytes("startKey");
-    byte[] stopRow = Bytes.toBytes("stopKey");
+    byte[] startRow = Bytes.toBytes(START_KEY);
+    byte[] stopRow = Bytes.toBytes(STOP_KEY);
 
     byte[] prefix = Bytes.toBytes("prefix");
     byte[] prefixEnd = calculatePrefixEnd(prefix);
@@ -309,5 +312,18 @@ public class TestScanAdapter {
     Scan scan = new Scan().setLimit(10);
     int adaptedLimit = (int) scanAdapter.adapt(scan, throwingReadHooks).build().getRowsLimit();
     Assert.assertEquals(scan.getLimit(), adaptedLimit);
+  }
+
+  @Test
+  public void testIsGetScan() throws IOException {
+    byte[] key = Bytes.toBytes("key");
+    Get get = new Get(key);
+    get.setMaxVersions(Integer.MAX_VALUE);
+    Scan scan = new Scan(get);
+    RowSet actual = scanAdapter.adapt(scan, throwingReadHooks).build().getRows();
+    RowSet expected = RowSet.newBuilder()
+        .addRowKeys(ByteString.copyFrom(key))
+        .build();
+    Assert.assertEquals(expected, actual);
   }
 }
