@@ -66,15 +66,11 @@ public class TemplateUtils {
     private final ValueProvider<String> filter;
     private ReadRowsRequest cachedRequest;
 
-    RequestValueProvider(
-        ValueProvider<String> start,
-        ValueProvider<String> stop,
-        ValueProvider<Integer> maxVersion,
-        ValueProvider<String> filter) {
-      this.start = start;
-      this.stop = stop;
-      this.maxVersion = maxVersion;
-      this.filter = filter;
+    RequestValueProvider(ExportOptions options) {
+      this.start = options.getBigtableStartRow();
+      this.stop = options.getBigtableStopRow();
+      this.maxVersion = options.getBigtableMaxVersions();
+      this.filter = options.getBigtableFilter();
     }
 
     @Override
@@ -123,19 +119,14 @@ public class TemplateUtils {
   }
 
   /** Builds CloudBigtableScanConfiguration from input runtime parameters for export job. */
-  public static CloudBigtableScanConfiguration BuildExportConfig(ExportOptions opts) {
-    ValueProvider<ReadRowsRequest> request =
-        new RequestValueProvider(
-            opts.getBigtableStartRow(),
-            opts.getBigtableStopRow(),
-            opts.getBigtableMaxVersions(),
-            opts.getBigtableFilter());
+  public static CloudBigtableScanConfiguration BuildExportConfig(ExportOptions options) {
+    ValueProvider<ReadRowsRequest> request = new RequestValueProvider(options);
     CloudBigtableScanConfiguration.Builder configBuilder =
         new CloudBigtableScanConfiguration.Builder()
-            .withProjectId(opts.getBigtableProject())
-            .withInstanceId(opts.getBigtableInstanceId())
-            .withTableId(opts.getBigtableTableId())
-            .withAppProfileId(opts.getBigtableAppProfileId())
+            .withProjectId(options.getBigtableProject())
+            .withInstanceId(options.getBigtableInstanceId())
+            .withTableId(options.getBigtableTableId())
+            .withAppProfileId(options.getBigtableAppProfileId())
             .withRequest(request);
 
     return configBuilder.build();
