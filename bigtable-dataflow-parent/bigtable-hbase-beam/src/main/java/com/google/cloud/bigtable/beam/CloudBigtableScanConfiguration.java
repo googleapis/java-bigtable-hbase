@@ -15,6 +15,10 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;

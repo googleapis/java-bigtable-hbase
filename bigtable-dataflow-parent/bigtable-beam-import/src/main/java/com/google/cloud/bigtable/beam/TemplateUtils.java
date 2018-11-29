@@ -16,6 +16,9 @@
 package com.google.cloud.bigtable.beam;
 
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -65,12 +68,19 @@ public class TemplateUtils {
     private final ValueProvider<Integer> maxVersion;
     private final ValueProvider<String> filter;
     private ReadRowsRequest cachedRequest;
+    private final ExportOptions options;
+    private final RequestContext requestContext;
 
     RequestValueProvider(ExportOptions options) {
       this.start = options.getBigtableStartRow();
       this.stop = options.getBigtableStopRow();
       this.maxVersion = options.getBigtableMaxVersions();
       this.filter = options.getBigtableFilter();
+      this.options = options;
+      this.requestContext = RequestContext.create(
+              InstanceName.of(options.getBigtableProject().get(),
+                      options.getBigtableInstanceId().get()),
+              options.getBigtableAppProfileId().get());
     }
 
     @Override
@@ -95,8 +105,10 @@ public class TemplateUtils {
         }
 
         ReadHooks readHooks = new DefaultReadHooks();
-        ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-        cachedRequest = readHooks.applyPreSendHook(builder.build());
+        Query query = Query.create(options.getBigtableTableId().get());
+        Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
+        readHooks.applyPreSendHook(query);
+        cachedRequest = query.toProto(requestContext);
       }
       return cachedRequest;
     }

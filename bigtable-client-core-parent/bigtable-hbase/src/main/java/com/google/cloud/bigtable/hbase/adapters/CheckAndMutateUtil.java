@@ -21,6 +21,7 @@ import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.common.base.Function;
@@ -46,13 +47,13 @@ public class CheckAndMutateUtil {
   // them (which they shouldn't since we built the filter), throw an exception.
   private static final ReadHooks UNSUPPORTED_READ_HOOKS = new ReadHooks() {
     @Override
-    public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
+    public void composePreSendHook(Function<Query, Query> newHook) {
       throw new IllegalStateException(
           "We built a bad Filter for conditional mutation.");
     }
 
     @Override
-    public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
+    public void applyPreSendHook(Query query) {
       throw new UnsupportedOperationException(
           "We built a bad Filter for conditional mutation.");
     }
