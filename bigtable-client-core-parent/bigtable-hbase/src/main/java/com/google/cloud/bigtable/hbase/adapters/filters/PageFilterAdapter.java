@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.common.base.Function;
@@ -50,6 +49,7 @@ public class PageFilterAdapter extends TypedFilterAdapterBase<PageFilter> {
         return query.limit(pageSize);
       }
     });
+    // This filter cannot be translated to a RowFilter, all logic is done as a read hook.
     return null;
   }
 

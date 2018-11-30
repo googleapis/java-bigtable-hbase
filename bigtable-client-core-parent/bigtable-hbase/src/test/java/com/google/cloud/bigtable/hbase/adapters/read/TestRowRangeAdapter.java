@@ -39,11 +39,15 @@ public class TestRowRangeAdapter {
   private final RequestContext requestContext = RequestContext.create(
           InstanceName.of("ProjectId", "InstanceId"),
           "AppProfile");
+
   private RowRangeAdapter adapter;
+
+  private Query query;
 
   @Before
   public void setup() {
     this.adapter = new RowRangeAdapter();
+    this.query = Query.create("tableId");
   }
 
   @Test
@@ -52,7 +56,6 @@ public class TestRowRangeAdapter {
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
     assertEquals(ImmutableRangeSet.builder().build(), out);
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -70,8 +73,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -95,8 +96,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -120,8 +119,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -145,8 +142,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -170,8 +165,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -189,8 +182,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -204,7 +195,6 @@ public class TestRowRangeAdapter {
                 .setEndKeyOpen(ByteString.EMPTY)
         )
         .build();
-
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
     RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
@@ -233,8 +223,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -257,8 +245,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -281,8 +267,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -305,8 +289,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }
@@ -347,8 +329,6 @@ public class TestRowRangeAdapter {
         .build();
 
     assertEquals(expected, out);
-
-    Query query = Query.create(TABLE_ID);
     adapter.rangeSetToByteStringRange(out, query);
     assertEquals(in, query.toProto(requestContext).getRows());
   }

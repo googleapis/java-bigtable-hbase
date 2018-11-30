@@ -58,14 +58,6 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class TestScanAdapter {
 
-  public static final String STOP_KEY = "stopKey";
-  public static final String START_KEY = "startKey";
-  private final String TABLE_ID = "tableId";
-  private final RequestContext requestContext = RequestContext.create(
-          InstanceName.of("ProjectId", "InstanceId"),
-          "AppProfile");
-  private Query query;
-
   private final static ScanAdapter scanAdapter = new ScanAdapter(
       FilterAdapter.buildAdapter(), new RowRangeAdapter()
   );
@@ -80,6 +72,9 @@ public class TestScanAdapter {
       throw new IllegalStateException("Read hooks not supported in TestScanAdapter.");
     }
   };
+
+  public static final String START_KEY = "startKey";
+  public static final String STOP_KEY = "stopKey";
 
   private static RowRange toRange(byte[] start, byte[] stop) {
     return RowRange.newBuilder().setStartKeyClosed(ByteStringer.wrap(start))
@@ -97,9 +92,15 @@ public class TestScanAdapter {
     return prefixEnd;
   }
 
+  private final RequestContext requestContext = RequestContext.create(
+      InstanceName.of("ProjectId", "InstanceId"),
+      "AppProfile");
+
+  private Query query;
+
   @Before
   public void setUp(){
-    query = Query.create(TABLE_ID);
+    query = Query.create("tableId");
   }
 
   @Test
@@ -290,16 +291,16 @@ public class TestScanAdapter {
   /** Make sure that the scan rowSet is unaffected when the filter is not set */
   public void testNarrowedScanWithoutFilter() {
     Scan scan = new Scan()
-        .withStartRow(START_KEY.getBytes())
-        .withStopRow(STOP_KEY.getBytes());
+        .withStartRow("a".getBytes())
+        .withStopRow("z".getBytes());
 
     scanAdapter.adapt(scan, throwingReadHooks, query);
     RowSet result = query.toProto(requestContext).getRows();
     RowSet expected = RowSet.newBuilder()
         .addRowRanges(
             RowRange.newBuilder()
-                .setStartKeyClosed(ByteString.copyFromUtf8(START_KEY))
-                .setEndKeyOpen(ByteString.copyFromUtf8(STOP_KEY))
+                .setStartKeyClosed(ByteString.copyFromUtf8("a"))
+                .setEndKeyOpen(ByteString.copyFromUtf8("z"))
         )
         .build();
 
@@ -310,16 +311,16 @@ public class TestScanAdapter {
   public void testEmptyFilterList(){
     Scan scan = new Scan()
         .setFilter(new FilterList())
-        .withStartRow(START_KEY.getBytes())
-        .withStopRow(STOP_KEY.getBytes());
+        .withStartRow("a".getBytes())
+        .withStopRow("z".getBytes());
 
     scanAdapter.adapt(scan, throwingReadHooks, query);
     RowSet result = query.toProto(requestContext).getRows();
     RowSet expected = RowSet.newBuilder()
         .addRowRanges(
             RowRange.newBuilder()
-                .setStartKeyClosed(ByteString.copyFromUtf8(START_KEY))
-                .setEndKeyOpen(ByteString.copyFromUtf8(STOP_KEY))
+                .setStartKeyClosed(ByteString.copyFromUtf8("a"))
+                .setEndKeyOpen(ByteString.copyFromUtf8("z"))
         )
         .build();
 
@@ -341,7 +342,6 @@ public class TestScanAdapter {
     get.setMaxVersions(Integer.MAX_VALUE);
     Scan scan = new Scan(get);
     scanAdapter.adapt(scan, throwingReadHooks, query);
-
     RowSet actual = query.toProto(requestContext).getRows();
     RowSet expected = RowSet.newBuilder()
         .addRowKeys(ByteString.copyFrom(key))
