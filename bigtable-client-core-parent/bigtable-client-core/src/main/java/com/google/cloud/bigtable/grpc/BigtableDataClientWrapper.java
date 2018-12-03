@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
@@ -54,6 +55,15 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
 
   @Override
   public ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) {
+    throw new UnsupportedOperationException("Not implemented yet");
+  }
+
+  public void mutateRows(RowMutation rowMutation) {
+    MutateRowsRequest mutateRowsRequest = rowMutation.toBulkProto(requestContext);
+    delegate.mutateRows(mutateRowsRequest);
+  }
+
+  public ApiFuture<Void> mutateRowsAsync(RowMutation rowMutation) {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 
