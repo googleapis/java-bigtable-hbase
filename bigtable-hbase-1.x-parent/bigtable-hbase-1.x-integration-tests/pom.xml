@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-hbase-1.x-parent</artifactId>
-        <version>1.7.0</version>
+        <version>1.7.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-hbase-1.x-integration-tests</artifactId>
