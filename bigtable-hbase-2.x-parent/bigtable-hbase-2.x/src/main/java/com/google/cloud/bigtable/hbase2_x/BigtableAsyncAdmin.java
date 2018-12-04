@@ -204,19 +204,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Boolean> tableExists(TableName tableName) {
-    GetTableRequest request = GetTableRequest.newBuilder()
-        .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()))
-        .setView(Table.View.NAME_ONLY)
-        .build();
-    return bigtableTableAdminClient.getTableAsync(request)
-        .thenApply(r -> true)
-        .exceptionally(e -> {
-            if(Status.fromThrowable(e).getCode() == Status.Code.NOT_FOUND) {
-              return false;
-            } else {
-              throw new CompletionException("Could not get the table", e);
-            }
-        });
+    return listTableNames(Optional.of(Pattern.compile(tableName.getNameAsString())))
+        .thenApply(r -> r.stream().anyMatch(e -> e.equals(tableName)));
   }
 
   private CompletableFuture<List<TableName>> listTableNames(Optional<Pattern> tableNamePattern) {
