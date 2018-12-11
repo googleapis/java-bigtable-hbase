@@ -53,53 +53,6 @@ import io.opencensus.trace.AttributeValue;
 public class RetryingReadRowsOperation extends
     AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, String> implements ScanHandler {
 
-  private class CallToStreamObserverAdapter extends ClientCallStreamObserver<ReadRowsRequest> {
-    private boolean autoFlowControlEnabled = true;
-
-    @Override
-    public void onNext(ReadRowsRequest value) {
-      getCall().sendMessage(value);
-    }
-
-    @Override
-    public void onError(Throwable t) {
-      getCall().cancel("Cancelled by client with StreamObserver.onError()", t);
-    }
-
-    @Override
-    public void onCompleted() {
-      getCall().halfClose();
-    }
-
-    @Override
-    public boolean isReady() {
-      return getCall().isReady();
-    }
-
-    @Override
-    public void setOnReadyHandler(Runnable onReadyHandler) {
-    }
-
-    @Override
-    public void disableAutoInboundFlowControl() {
-      autoFlowControlEnabled = false;
-    }
-
-    @Override
-    public void request(int count) {
-      getCall().request(count);
-    }
-
-    @Override
-    public void setMessageCompression(boolean enable) {
-      getCall().setMessageCompression(enable);
-    }
-
-    @Override
-    public void cancel(@Nullable String s, @Nullable Throwable throwable) {
-      getCall().cancel(s, throwable);
-    }
-  }
 
   private final ReadRowsRequestManager requestManager;
   private final StreamObserver<FlatRow> rowObserver;
@@ -107,7 +60,6 @@ public class RetryingReadRowsOperation extends
 
   // The number of times we've retried after a timeout
   private int timeoutRetryCount = 0;
-  private final CallToStreamObserverAdapter adapter;
   private StreamObserver<ReadRowsResponse> resultObserver;
   private int totalRowsProcessed = 0;
   private volatile ReadRowsRequest nextRequest;
@@ -125,7 +77,6 @@ public class RetryingReadRowsOperation extends
         clock);
     this.rowObserver = observer;
     this.rowMerger = new RowMerger(rowObserver);
-    this.adapter = new CallToStreamObserverAdapter();
     this.requestManager = new ReadRowsRequestManager(request);
     this.nextRequest = request;
   }
@@ -149,11 +100,11 @@ public class RetryingReadRowsOperation extends
     try {
       // restart the clock.
       super.run();
-      // pre-fetch one more result, for performance reasons.
-      adapter.request(1);
       if (rowObserver instanceof ClientResponseObserver) {
         ((ClientResponseObserver<ReadRowsRequest, FlatRow>) rowObserver).beforeStart(adapter);
       }
+      // pre-fetch one more result, for performance reasons.
+      adapter.request(1);
     } catch (Exception e) {
       setException(e);
     }
@@ -191,7 +142,7 @@ public class RetryingReadRowsOperation extends
         updateLastFoundKey(message.getLastScannedRowKey());
       }
 
-      if (adapter.autoFlowControlEnabled) {
+      if (adapter.isAutoFlowControlEnabled()) {
         adapter.request(1);
       }
 

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import io.grpc.stub.ClientCallStreamObserver;
 import io.opencensus.common.Scope;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -87,6 +88,68 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
   };
 
+  protected class StreamObserverAdapter extends ClientCallStreamObserver<RequestT> {
+    private boolean autoFlowControlEnabled = true;
+
+    @Override
+    public void onNext(RequestT value) {
+      synchronized (callLock) {
+        call.sendMessage(value);
+      }
+    }
+
+    @Override
+    public void onError(Throwable t) {
+      cancel("Cancelled by client with StreamObserver.onError()", t);
+    }
+
+    @Override
+    public void onCompleted() {
+      synchronized (callLock) {
+        call.halfClose();
+      }
+    }
+
+    @Override
+    public boolean isReady() {
+      synchronized (callLock) {
+        return call.isReady();
+      }
+    }
+
+    @Override
+    public void setOnReadyHandler(Runnable onReadyHandler) {
+    }
+
+    @Override
+    public void disableAutoInboundFlowControl() {
+      autoFlowControlEnabled = false;
+    }
+
+    @Override
+    public void request(int count) {
+      synchronized (callLock) {
+        call.request(count);
+      }
+    }
+
+    @Override
+    public void setMessageCompression(boolean enable) {
+      synchronized (callLock) {
+        call.setMessageCompression(enable);
+      }
+    }
+
+    @Override
+    public void cancel(@Nullable String s, @Nullable Throwable throwable) {
+      AbstractRetryingOperation.this.cancel(s, throwable);
+    }
+
+    public boolean isAutoFlowControlEnabled() {
+      return autoFlowControlEnabled;
+    }
+  }
+
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
   private static final Tracer TRACER = Tracing.getTracer();
@@ -146,6 +209,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected final Span operationSpan;
 
+  protected final StreamObserverAdapter adapter;
+
   /**
    * <p>Constructor for AbstractRetryingRpcListener.</p>
    *
@@ -176,6 +241,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
     this.clock = clock;
     this.exponentialRetryAlgorithm = createRetryAlgorithm(clock);
+    this.adapter = new StreamObserverAdapter();
   }
 
   /** {@inheritDoc} */
@@ -396,15 +462,11 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     }
   }
 
-  protected ClientCall<RequestT, ResponseT> getCall() {
-    return call;
-  }
-
   /**
    * Returns the {@link CallOptions} that a user set for the entire Operation, which can span multiple RPCs/retries.
    * @return The {@link CallOptions}
    */
-  protected CallOptions getOperationCallOptions() {
+  private CallOptions getOperationCallOptions() {
     return callOptions;
   }
 
@@ -457,13 +519,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     return completionFuture;
   }
 
-  /**
-   * Cancels the RPC.
-   */
-  public void cancel() {
-    cancel("User requested cancelation.");
-  }
-
   public ResultT getBlockingResult() {
     try {
       return getAsyncResult().get();
@@ -478,11 +533,30 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   /**
+   * Cancels the RPC.
+   */
+  public void cancel() {
+    cancel("User requested cancellation.");
+  }
+
+  /**
    * Cancels the RPC with a specific message.
    *
    * @param message
    */
   protected void cancel(final String message) {
-    call.cancel(message, null);
+    cancel(message, null);
+  }
+
+
+  /**
+   * Cancels the RPC with a specific message.
+   *
+   * @param message
+   */
+  protected void cancel(final String message, Throwable t) {
+    synchronized (callLock) {
+      call.cancel(message, t);
+    }
   }
 }
