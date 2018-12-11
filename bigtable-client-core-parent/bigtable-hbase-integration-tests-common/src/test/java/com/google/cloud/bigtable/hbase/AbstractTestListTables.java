@@ -77,8 +77,8 @@ public abstract class AbstractTestListTables extends AbstractTest {
     String tablePrefix = sharedTestEnv.newTestTableName().toString() + "-";
 
     try (Admin admin = getConnection().getAdmin()) {
-      TableName tableName1 = TableName.valueOf(tablePrefix + "-1");
-      TableName tableName2 = TableName.valueOf(tablePrefix + "-2");
+      TableName tableName1 = TableName.valueOf(tablePrefix + "1");
+      TableName tableName2 = TableName.valueOf(tablePrefix + "2");
       addTable(tableName1);
       addTable(tableName2);
 
@@ -108,14 +108,14 @@ public abstract class AbstractTestListTables extends AbstractTest {
       }
 
       {
-        List<TableName> tableList = listTableNames(admin, Pattern.compile(tablePrefix + ".*"));
+        List<TableName> tableList = listTableNames(admin, Pattern.compile(tableName1 + ".*"));
         Assert.assertTrue(tableList.contains(tableName1));
         Assert.assertFalse(tableList.contains(tableName2));
       }
       
       {
         List<TableName> tableList = 
-            listTableNamesUsingDescriptors(admin, Pattern.compile(tablePrefix + ".*"));
+            listTableNamesUsingDescriptors(admin, Pattern.compile(tableName1 + ".*"));
         Assert.assertTrue(tableList.contains(tableName1));
         Assert.assertFalse(tableList.contains(tableName2));
         Assert.assertEquals(1, tableList.size());

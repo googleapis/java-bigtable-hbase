@@ -102,7 +102,8 @@ class BigtableEnv extends SharedTestEnv {
         if (matcher.matches()) {
           String timestampStr = matcher.group(1);
           long timestamp = Long.parseLong(timestampStr, 16);
-          if (System.currentTimeMillis() - timestamp < TimeUnit.MINUTES.toMillis(30)) {
+          if (System.currentTimeMillis() - timestamp < TimeUnit.MINUTES.toMillis(15)) {
+            LOG.info("Found fresh table, ignoring: " + tableName);
             continue;
           }
         }
