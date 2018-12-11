@@ -301,9 +301,8 @@ public class TestIncrement extends AbstractTest {
   public void testIncrementWithMaxVersions() throws IOException {
     // Initialize data
     byte[] incrementFamily = Bytes.toBytes("i");
-    byte[] incrementTable = Bytes.toBytes("increment_table");
 
-    TableName incrementTableName = TableName.valueOf(incrementTable);
+    TableName incrementTableName = sharedTestEnv.newTestTableName();
     Admin admin = getConnection().getAdmin();
     HTableDescriptor tableDescriptor = new HTableDescriptor(incrementTableName);
     tableDescriptor.addFamily(new HColumnDescriptor(incrementFamily).setMaxVersions(1));

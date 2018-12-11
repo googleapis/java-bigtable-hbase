@@ -74,13 +74,11 @@ public abstract class AbstractTestListTables extends AbstractTest {
    */
   @Test
   public void testTableNames() throws Exception {
+    String tablePrefix = sharedTestEnv.newTestTableName().toString() + "-";
+
     try (Admin admin = getConnection().getAdmin()) {
-      // This prefix is required because there are regex checks on list_table1 and list_table2.
-      // In HBase 2.* tests, there are multiple subclasses to AbstractTestListTables, and each subclass
-      // needs a unique namespace on which to run the regex checks, since they might run in paralle.
-      String prefix = randomAlphanumeric(8);
-      TableName tableName1 = TableName.valueOf("list_table1-" + prefix + randomAlphanumeric(8));
-      TableName tableName2 = TableName.valueOf("list_table2-" + prefix + randomAlphanumeric(8));
+      TableName tableName1 = TableName.valueOf(tablePrefix + "-1");
+      TableName tableName2 = TableName.valueOf(tablePrefix + "-2");
       addTable(tableName1);
       addTable(tableName2);
 
@@ -110,14 +108,14 @@ public abstract class AbstractTestListTables extends AbstractTest {
       }
 
       {
-        List<TableName> tableList = listTableNames(admin, Pattern.compile("list_table1-" + prefix + ".*"));
+        List<TableName> tableList = listTableNames(admin, Pattern.compile(tablePrefix + ".*"));
         Assert.assertTrue(tableList.contains(tableName1));
         Assert.assertFalse(tableList.contains(tableName2));
       }
       
       {
         List<TableName> tableList = 
-            listTableNamesUsingDescriptors(admin, Pattern.compile("list_table1-" + prefix + ".*"));
+            listTableNamesUsingDescriptors(admin, Pattern.compile(tablePrefix + ".*"));
         Assert.assertTrue(tableList.contains(tableName1));
         Assert.assertFalse(tableList.contains(tableName2));
         Assert.assertEquals(1, tableList.size());
@@ -136,8 +134,8 @@ public abstract class AbstractTestListTables extends AbstractTest {
   @Test
   public void testDeleteTable() throws Exception {
     try (Admin admin = getConnection().getAdmin()) {
-      TableName tableName1 = TableName.valueOf("del_table1-" + UUID.randomUUID().toString());
-      TableName tableName2 = TableName.valueOf("del_table2-" + UUID.randomUUID().toString());
+      TableName tableName1 = sharedTestEnv.newTestTableName();
+      TableName tableName2 = sharedTestEnv.newTestTableName();
 
       addTable(tableName1);
       addTable(tableName2);
