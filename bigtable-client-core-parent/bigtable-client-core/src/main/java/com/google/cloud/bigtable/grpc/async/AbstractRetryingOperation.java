@@ -63,30 +63,6 @@ import org.threeten.bp.temporal.ChronoUnit;
 public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT>  {
 
-  @SuppressWarnings("rawtypes")
-  private static final ClientCall NULL_CALL = new ClientCall() {
-
-    @Override
-    public void start(Listener responseListener, Metadata headers) {
-    }
-
-    @Override
-    public void request(int numMessages) {
-    }
-
-    @Override
-    public void cancel(String message, Throwable cause) {
-    }
-
-    @Override
-    public void halfClose() {
-    }
-
-    @Override
-    public void sendMessage(Object message) {
-    }
-  };
-
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
   private static final Tracer TRACER = Tracing.getTracer();
@@ -139,8 +115,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected int failedCount = 0;
 
   protected final GrpcFuture<ResultT> completionFuture;
-  private Object callLock = new String("");
-  private ClientCall<RequestT, ResponseT> call = NULL_CALL;
+
+  protected final CallWrapper<RequestT, ResponseT> callWrapper;
+
   protected Timer.Context operationTimerContext;
   protected Timer.Context rpcTimerContext;
 
@@ -176,15 +153,14 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
     this.clock = clock;
     this.exponentialRetryAlgorithm = createRetryAlgorithm(clock);
+    this.callWrapper = new CallWrapper<>();
   }
 
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
     try (Scope scope = TRACER.withSpan(operationSpan)) {
-      synchronized (callLock) {
-        call = NULL_CALL;
-      }
+      callWrapper.resetCall();
       rpcTimerContext.close();
       // OK
       if (status.isOk()) {
@@ -384,20 +360,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         ImmutableMap.of("attempt", AttributeValue.longAttributeValue(failedCount))));
       Metadata metadata = new Metadata();
       metadata.merge(originalMetadata);
-      synchronized (callLock) {
-        // There's a subtle race condition in RetryingStreamOperation which requires a separate
-        // newCall/start split. The call variable needs to be set before onMessage() happens; that
-        // usually will occur, but some unit tests broke with a merged newCall and start.
-        call = rpc.newCall(getRpcCallOptions());
-        rpc.start(getRetryRequest(), this, metadata, call);
-      }
+      callWrapper.setCallAndStart(rpc, getRpcCallOptions(), getRetryRequest(), this, metadata);
     } catch (Exception e) {
       setException(e);
     }
-  }
-
-  protected ClientCall<RequestT, ResponseT> getCall() {
-    return call;
   }
 
   /**
@@ -483,6 +449,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @param message
    */
   protected void cancel(final String message) {
-    call.cancel(message, null);
+    callWrapper.cancel(message, null);
   }
 }
