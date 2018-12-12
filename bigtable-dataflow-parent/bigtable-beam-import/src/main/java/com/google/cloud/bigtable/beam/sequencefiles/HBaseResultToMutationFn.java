@@ -49,7 +49,7 @@ class HBaseResultToMutationFn
 
   private static final long serialVersionUID = 1L;
 
-  private static final int MAX_CELLS = 100_000;
+  private static final int MAX_CELLS = 100_000 - 1;
 
   private static final Predicate<Cell> IS_DELETE_MARKER_FILTER =  new Predicate<Cell>() {
     @Override
