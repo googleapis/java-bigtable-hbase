@@ -126,10 +126,7 @@ public class CloudBigtableScanConfigurationTest {
             .withKeys(START_ROW, STOP_ROW)
             .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
             .build();
-    Assert.assertEquals(withRegularParameters.getProjectId(), withRuntimeParameters.getProjectId());
-    Assert.assertEquals(withRegularParameters.getInstanceId(), withRuntimeParameters.getInstanceId());
-    Assert.assertEquals(withRegularParameters.getRequest(), withRuntimeParameters.getRequest());
-    Assert.assertEquals(withRegularParameters.getRowRange(), withRuntimeParameters.getRowRange());
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
 
     // Verify with requests.
     ReadRowsRequest updatedRequest = withRegularParameters.getRequest();
@@ -139,6 +136,6 @@ public class CloudBigtableScanConfigurationTest {
             .toBuilder()
             .withRequest(StaticValueProvider.of(updatedRequest))
             .build();
-    Assert.assertEquals(withRegularParameters.getRequest(), withRuntimeParameters.getRequest());
+    Assert.assertEquals(withRegularParameters, withRuntimeParameters);
   }
 }

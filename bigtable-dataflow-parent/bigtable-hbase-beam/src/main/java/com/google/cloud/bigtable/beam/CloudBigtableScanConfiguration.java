@@ -15,14 +15,11 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.nio.charset.CharacterCodingException;
 import java.util.Map;
 import java.util.Objects;
 
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
-import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.options.ValueProvider;
@@ -37,8 +34,7 @@ import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
-import org.apache.hadoop.hbase.filter.ParseFilter;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.filter.Filter;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -70,7 +66,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
     private Scan scan;
     private ValueProvider<ReadRowsRequest> request;
-    private ValueProvider<Integer> maxVersion;
 
     public Builder() {
     }
@@ -262,10 +257,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * <p>Overrides {@link CloudBigtableTableConfiguration.Builder#withTableId(String)}
-     * so that it returns {@link CloudBigtableScanConfiguration.Builder}.</p>
+     * {@inheritDoc} Overrides {@link CloudBigtableTableConfiguration.Builder#withTableId(String)}
+     * so that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
     Builder withTableId(ValueProvider<String> tableId) {
@@ -274,41 +267,20 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     /**
-     * builder method that allows a Source to configure the request with cell's maxVersion.
-     * @param maxVersion cell max version.
-     * so that it returns {@link CloudBigtableScanConfiguration.Builder}.
-     */
-    Builder withMaxVersion(ValueProvider<Integer> maxVersion) {
-      this.maxVersion = maxVersion;
-      return this;
-    }
-    /**
      * Builds the {@link CloudBigtableScanConfiguration}.
      * @return The new {@link CloudBigtableScanConfiguration}.
      */
     @Override
     public CloudBigtableScanConfiguration build() {
       if (request == null) {
-        if (scan == null) {
+        if(scan == null){
           scan = new Scan();
-        } else {
-          additionalConfiguration.put("startRow",
-              StaticValueProvider.of(Bytes.toString(scan.getStartRow())));
-          additionalConfiguration.put("stopRow",
-              StaticValueProvider.of(Bytes.toString(scan.getStopRow())));
-          if(scan.getFilter() != null) {
-            try {
-              byte[] serializeFilter = scan.getFilter().toByteArray();
-              additionalConfiguration.put("filter",
-                  StaticValueProvider.of(Bytes.toString(serializeFilter)));
-            } catch (IOException ioException) {
-              throw new RuntimeException(ioException);
-            }
-          }
         }
+        request = new RequestWithScanValueProvider(scan.getStartRow(), scan.getStopRow(),
+            scan.getMaxVersions(), scan.getFilter());
       }
       return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
-          request, maxVersion, additionalConfiguration);
+          request, additionalConfiguration);
     }
   }
 
@@ -324,79 +296,40 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     private final ValueProvider<String> instanceId;
     private final ValueProvider<String> tableId;
     private final ValueProvider<ReadRowsRequest> request;
-    private final ValueProvider<Integer> maxVersion;
-    private final Map<String, ValueProvider<String>> additionalConfiguration;
     private ReadRowsRequest cachedRequest;
 
     RequestWithTableNameValueProvider(
         ValueProvider<String> projectId,
         ValueProvider<String> instanceId,
         ValueProvider<String> tableId,
-        ValueProvider<ReadRowsRequest> request,
-        ValueProvider<Integer> maxVersion,
-        Map<String, ValueProvider<String>> additionalConfiguration) {
+        ValueProvider<ReadRowsRequest> request) {
       this.projectId = projectId;
       this.instanceId = instanceId;
       this.tableId = tableId;
       this.request = request;
-      this.maxVersion = maxVersion;
-      this.additionalConfiguration = additionalConfiguration;
     }
 
     @Override
     public ReadRowsRequest get() {
       if (cachedRequest == null) {
-        if(request != null && request.get() != null){
-          cachedRequest = request.get();
+        if (request.get().getTableName().isEmpty()) {
+          BigtableInstanceName bigtableInstanceName =
+              new BigtableInstanceName(projectId.get(), instanceId.get());
+          String fullTableName = bigtableInstanceName.toTableNameStr(tableId.get());
+          cachedRequest = request.get().toBuilder().setTableName(fullTableName).build();
         } else {
-          Scan scan = new Scan();
-          ReadHooks readHooks = new DefaultReadHooks();
-
-          ValueProvider<String> start = additionalConfiguration.get("startRow");
-          ValueProvider<String> stop = additionalConfiguration.get("stopRow");
-          ValueProvider<String> filter = additionalConfiguration.get("filter");
-
-          if (isNotEmpty(start)) {
-            scan.setStartRow(start.get().getBytes());
-          }
-          if (isNotEmpty(stop)) {
-            scan.setStopRow(stop.get().getBytes());
-          }
-          if (maxVersion != null && maxVersion.get() != null) {
-            scan.setMaxVersions(maxVersion.get());
-          }
-          if (isNotEmpty(filter)) {
-            try {
-              scan.setFilter(new ParseFilter().parseFilterString(filter.get()));
-            } catch (CharacterCodingException e) {
-              throw new RuntimeException(e);
-            }
-          }
-
-          ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-          ReadRowsRequest request = readHooks.applyPreSendHook(builder.build());
-
-          if (request.getTableName().isEmpty()) {
-            BigtableInstanceName bigtableInstanceName =
-                new BigtableInstanceName(projectId.get(), instanceId.get());
-            String fullTableName = bigtableInstanceName.toTableNameStr(tableId.get());
-            cachedRequest = request.toBuilder().setTableName(fullTableName).build();
-          } else {
-            cachedRequest = request;
-          }
+          cachedRequest = request.get();
         }
       }
       return cachedRequest;
     }
 
-    private boolean isNotEmpty(ValueProvider<String> value){
-      return !(value == null || value.get() == null || value.get().isEmpty());
-    }
     @Override
     public boolean isAccessible() {
       return projectId.isAccessible()
           && instanceId.isAccessible()
-          && tableId.isAccessible();
+          && tableId.isAccessible()
+          && request.isAccessible();
     }
 
     @Override
@@ -414,7 +347,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
    * @param tableId The table to connect to in the instance.
-   * @param maxVersion an integer value for cell's max version.
+   * @param request The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
   protected CloudBigtableScanConfiguration(
@@ -422,11 +355,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<String> instanceId,
       ValueProvider<String> tableId,
       ValueProvider<ReadRowsRequest> request,
-      ValueProvider<Integer> maxVersion,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId,
-        request, maxVersion, additionalConfiguration);
+    this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, request);
   }
 
   /**
@@ -510,5 +441,62 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     super.populateDisplayData(builder);
     builder.add(
         DisplayData.item("readRowsRequest", getDisplayValue(request)).withLabel("ReadRowsRequest"));
+  }
+
+  private static class RequestWithScanValueProvider
+      implements ValueProvider<ReadRowsRequest>, Serializable {
+    private final byte[] start;
+    private final byte[] stop;
+    private final int maxVersion;
+    private final Filter filter;
+    private ReadRowsRequest cachedRequest;
+
+    RequestWithScanValueProvider(
+        byte[] start,
+        byte[] stop,
+        int maxVersion,
+        Filter filter
+    ){
+      this.start = start;
+      this.stop = stop;
+      this.maxVersion = maxVersion;
+      this.filter = filter;
+    }
+
+    @Override
+    public ReadRowsRequest get() {
+      if(cachedRequest == null ){
+        Scan scan = new Scan();
+        if (start != null && start.length != 0) {
+          scan.setStartRow(start);
+        }
+        if (stop != null && stop.length != 0) {
+          scan.setStopRow(stop);
+        }
+        if (maxVersion != 0) {
+          scan.setMaxVersions(maxVersion);
+        }
+        if(filter != null){
+          scan.setFilter(filter);
+        }
+        ReadHooks readHooks = new DefaultReadHooks();
+        ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
+        cachedRequest = readHooks.applyPreSendHook(builder.build());
+      }
+      return cachedRequest;
+    }
+
+    @Override
+    public boolean isAccessible() {
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      if (isAccessible()) {
+        return String.valueOf(get());
+      }
+      return CloudBigtableConfiguration.VALUE_UNAVAILABLE;
+    }
   }
 }
