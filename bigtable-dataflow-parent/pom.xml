@@ -33,11 +33,6 @@ limitations under the License.
     <modules>
         <module>bigtable-hbase-beam</module>
         <module>bigtable-beam-import</module>
-        <!--
-           NOTE: bigtable-hbase-dataflow is deprecated, but some users still have to use it.
-           This should likely be removed towards the end of 2018
-        -->
-        <module>bigtable-hbase-dataflow</module>
     </modules>
 
     <build>
