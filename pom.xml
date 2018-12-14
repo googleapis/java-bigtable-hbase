@@ -59,7 +59,7 @@ limitations under the License.
         <hamcrest.version>1.3</hamcrest.version>
 
         <!-- google-cloud-java related dependency versions -->
-        <google-cloud.version>0.71.0-alpha</google-cloud.version>
+        <google-cloud.version>0.73.0-alpha</google-cloud.version>
         <opencensus.version>0.15.0</opencensus.version>
         <guava.version>26.0-android</guava.version>
 
@@ -73,7 +73,7 @@ limitations under the License.
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
 
-        <beam.version>2.7.0</beam.version>
+        <beam.version>2.9.0</beam.version>
     </properties>
 
     <distributionManagement>
