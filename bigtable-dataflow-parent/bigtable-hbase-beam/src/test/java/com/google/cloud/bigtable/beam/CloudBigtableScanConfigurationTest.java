@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import java.util.Arrays;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.hadoop.hbase.client.Scan;
@@ -137,5 +138,24 @@ public class CloudBigtableScanConfigurationTest {
             .withRequest(StaticValueProvider.of(updatedRequest))
             .build();
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
+  }
+
+  @Test
+  public void testRowKeys(){
+    byte[] PREFIX = "PRE".getBytes();
+    Scan scan = new Scan()
+        .setStartRow(START_ROW)
+        .setStopRow(STOP_ROW)
+        .setRowPrefixFilter(PREFIX);
+    CloudBigtableScanConfiguration scanConfiguration =
+        new CloudBigtableScanConfiguration.Builder()
+            .withTableId(StaticValueProvider.of(TABLE))
+            .withProjectId(StaticValueProvider.of(PROJECT))
+            .withInstanceId(StaticValueProvider.of(INSTANCE))
+            .withScan(scan)
+            .withConfiguration("somekey", StaticValueProvider.of("somevalue"))
+            .build();
+    Assert.assertTrue(Arrays.equals(PREFIX, scanConfiguration.getStartRow()));
+    Assert.assertFalse(Arrays.equals(PREFIX, scanConfiguration.getStopRow()));
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +35,6 @@ import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
-import org.apache.hadoop.hbase.filter.Filter;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -272,15 +272,19 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public CloudBigtableScanConfiguration build() {
+      RowSet rowSet = null;
       if (request == null) {
-        if(scan == null){
+        if (scan == null) {
           scan = new Scan();
         }
-        request = new RequestWithScanValueProvider(scan.getStartRow(), scan.getStopRow(),
-            scan.getMaxVersions(), scan.getFilter());
+        BigtableExtendedScan extendedScan = new BigtableExtendedScan();
+        extendedScan.addRange(scan.getStartRow(), scan.getStopRow());
+        extendedScan.setMaxVersions(scan.getMaxVersions());
+        extendedScan.setFilter(scan.getFilter());
+        rowSet = extendedScan.getRowSet();
       }
       return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
-          request, additionalConfiguration);
+          request, rowSet, additionalConfiguration);
     }
   }
 
@@ -295,23 +299,38 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     private final ValueProvider<String> projectId;
     private final ValueProvider<String> instanceId;
     private final ValueProvider<String> tableId;
-    private final ValueProvider<ReadRowsRequest> request;
+    ValueProvider<ReadRowsRequest> request;
+    private final RowSet rowSet;
     private ReadRowsRequest cachedRequest;
 
     RequestWithTableNameValueProvider(
         ValueProvider<String> projectId,
         ValueProvider<String> instanceId,
         ValueProvider<String> tableId,
-        ValueProvider<ReadRowsRequest> request) {
+        RowSet rowSet) {
       this.projectId = projectId;
       this.instanceId = instanceId;
       this.tableId = tableId;
-      this.request = request;
+      this.rowSet = rowSet;
     }
 
     @Override
     public ReadRowsRequest get() {
       if (cachedRequest == null) {
+        if (request == null) {
+          ReadHooks readHooks = new DefaultReadHooks();
+          BigtableExtendedScan scan = new BigtableExtendedScan();
+          if (rowSet != null) {
+            for (RowRange range : rowSet.getRowRangesList()) {
+              scan.addRange(range);
+            }
+            for (ByteString rowKey : rowSet.getRowKeysList()) {
+              scan.addRowKey(ByteStringer.extract(rowKey));
+            }
+          }
+          ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
+          request = StaticValueProvider.of(readHooks.applyPreSendHook(builder.build()));
+        }
         if (request.get().getTableName().isEmpty()) {
           BigtableInstanceName bigtableInstanceName =
               new BigtableInstanceName(projectId.get(), instanceId.get());
@@ -328,8 +347,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     public boolean isAccessible() {
       return projectId.isAccessible()
           && instanceId.isAccessible()
-          && tableId.isAccessible()
-          && request.isAccessible();
+          && tableId.isAccessible();
     }
 
     @Override
@@ -348,6 +366,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @param instanceId The instance ID.
    * @param tableId The table to connect to in the instance.
    * @param request The {@link ReadRowsRequest} that will be used to filter the table.
+   * @Param rowSet The {@link RowSet} it may contain {@link RowRange} from {@link Scan}.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
   protected CloudBigtableScanConfiguration(
@@ -355,9 +374,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<String> instanceId,
       ValueProvider<String> tableId,
       ValueProvider<ReadRowsRequest> request,
+      RowSet rowSet,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, request);
+    if (rowSet != null) {
+      request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, rowSet);
+    }
+    this.request = request;
   }
 
   /**
@@ -441,62 +464,5 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     super.populateDisplayData(builder);
     builder.add(
         DisplayData.item("readRowsRequest", getDisplayValue(request)).withLabel("ReadRowsRequest"));
-  }
-
-  private static class RequestWithScanValueProvider
-      implements ValueProvider<ReadRowsRequest>, Serializable {
-    private final byte[] start;
-    private final byte[] stop;
-    private final int maxVersion;
-    private final Filter filter;
-    private ReadRowsRequest cachedRequest;
-
-    RequestWithScanValueProvider(
-        byte[] start,
-        byte[] stop,
-        int maxVersion,
-        Filter filter
-    ){
-      this.start = start;
-      this.stop = stop;
-      this.maxVersion = maxVersion;
-      this.filter = filter;
-    }
-
-    @Override
-    public ReadRowsRequest get() {
-      if(cachedRequest == null ){
-        Scan scan = new Scan();
-        if (start != null && start.length != 0) {
-          scan.setStartRow(start);
-        }
-        if (stop != null && stop.length != 0) {
-          scan.setStopRow(stop);
-        }
-        if (maxVersion != 0) {
-          scan.setMaxVersions(maxVersion);
-        }
-        if(filter != null){
-          scan.setFilter(filter);
-        }
-        ReadHooks readHooks = new DefaultReadHooks();
-        ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-        cachedRequest = readHooks.applyPreSendHook(builder.build());
-      }
-      return cachedRequest;
-    }
-
-    @Override
-    public boolean isAccessible() {
-      return true;
-    }
-
-    @Override
-    public String toString() {
-      if (isAccessible()) {
-        return String.valueOf(get());
-      }
-      return CloudBigtableConfiguration.VALUE_UNAVAILABLE;
-    }
   }
 }
