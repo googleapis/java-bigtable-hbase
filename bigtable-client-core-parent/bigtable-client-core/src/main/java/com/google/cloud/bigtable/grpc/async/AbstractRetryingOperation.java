@@ -116,7 +116,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected final GrpcFuture<ResultT> completionFuture;
 
-  protected final CallWrapper<RequestT, ResponseT> callWrapper;
+  protected final CallController<RequestT, ResponseT> callWrapper;
 
   protected Timer.Context operationTimerContext;
   protected Timer.Context rpcTimerContext;
@@ -153,7 +153,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
     this.clock = clock;
     this.exponentialRetryAlgorithm = createRetryAlgorithm(clock);
-    this.callWrapper = new CallWrapper<>();
+    this.callWrapper = new CallController<>();
   }
 
   /** {@inheritDoc} */

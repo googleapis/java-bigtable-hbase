@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
@@ -25,8 +26,11 @@ import javax.annotation.Nullable;
 /**
  * Wraps a {@Link ClientCall}, and implements {@ClientCallStreamObserver} to allow access to the call's
  * underlying functionality.
+ * <p>
+ *   This class is intended to be used by the user to control flow and the life of the call.
+ * </p>
  */
-public class CallWrapper<RequestT, ResponseT>
+public class CallController<RequestT, ResponseT>
     extends ClientCallStreamObserver<RequestT> {
   @SuppressWarnings("rawtypes")
   private static final ClientCall NULL_CALL = new ClientCall() {
@@ -71,17 +75,22 @@ public class CallWrapper<RequestT, ResponseT>
 
   @Override
   public void onNext(RequestT value) {
-    call.sendMessage(value);
+    throw new UnsupportedOperationException("onNext() and client-streaming are not supported.");
   }
 
   @Override
+  /**
+   * Cancels a request on an error.
+   *
+   * @see com.google.cloud.bigtable.grpc.scanner.RowMerger#onError(Throwable)
+   */
   public void onError(Throwable t) {
     call.cancel("Cancelled by client with StreamObserver.onError()", t);
   }
 
   @Override
   public void onCompleted() {
-    call.halfClose();
+    throw new UnsupportedOperationException("onCompleted() and client-streaming are not supported.");
   }
 
   @Override
@@ -93,12 +102,23 @@ public class CallWrapper<RequestT, ResponseT>
   public void setOnReadyHandler(Runnable onReadyHandler) {
   }
 
+  /**
+   * Disable automatic calls to {@link ClientCall#request(int)}, and the user will explicitly request
+   * more results using {@link #request(int)}.  Currently, this is only used for reading rows.
+   *
+   * @see com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader#beforeStart(ClientCallStreamObserver)
+   * @see ResponseQueueReader#getNextMergedRow()
+   */
   @Override
   public void disableAutoInboundFlowControl() {
     autoFlowControlEnabled = false;
   }
 
   @Override
+  /*
+  Note: The request count may not be perfectly right, if there's a situation where request(1) is called
+  at the same time as an RPC failure.
+   */
   public void request(int count) {
     call.request(count);
   }
