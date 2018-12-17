@@ -84,7 +84,7 @@ public class CallController<RequestT, ResponseT>
    *
    * @see com.google.cloud.bigtable.grpc.scanner.RowMerger#onError(Throwable)
    */
-  public void onError(Throwable t) {
+  public synchronized void onError(Throwable t) {
     call.cancel("Cancelled by client with StreamObserver.onError()", t);
   }
 
@@ -94,12 +94,13 @@ public class CallController<RequestT, ResponseT>
   }
 
   @Override
-  public boolean isReady() {
+  public synchronized boolean isReady() {
     return call.isReady();
   }
 
   @Override
   public void setOnReadyHandler(Runnable onReadyHandler) {
+    throw UnsupportedOperationException("setOnReadHandler");
   }
 
   /**
@@ -119,17 +120,17 @@ public class CallController<RequestT, ResponseT>
   Note: The request count may not be perfectly right, if there's a situation where request(1) is called
   at the same time as an RPC failure.
    */
-  public void request(int count) {
+  public synchronized void request(int count) {
     call.request(count);
   }
 
   @Override
-  public void setMessageCompression(boolean enable) {
+  public synchronized void setMessageCompression(boolean enable) {
     call.setMessageCompression(enable);
   }
 
   @Override
-  public void cancel(@Nullable String s, @Nullable Throwable throwable) {
+  public synchronized void cancel(@Nullable String s, @Nullable Throwable throwable) {
     call.cancel(s, throwable);
   }
 
