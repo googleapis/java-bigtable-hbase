@@ -31,12 +31,12 @@ which makes it easy for development teams to get started.
 ### Using the Java client
 
 * Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven).
-  * bigtable-hbase-1.x: use for standalone applications where you are in control your dependencies.
-  * bigtable-hbase-1.x-hadoop: use in hadoop environments
-  * bigtable-hbase-1.x-mapreduce: use for map/reduce utilities
+  * bigtable-hbase-1.x: use for standalone applications where you are in control of your dependencies.
+  * bigtable-hbase-1.x-hadoop: use in hadoop environments.
+  * bigtable-hbase-1.x-mapreduce: use for map/reduce utilities.
   * bigtable-hbase-1.x-shaded: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
-  * bigtable-hbase-2.x: use for standalone applications where you are in control your dependencies.  This includes an HBase async client.
-  * bigtable-hbase-2.x-hadoop: use in hadoop environments
+  * bigtable-hbase-2.x: use for standalone applications where you are in control of your dependencies.  This includes an HBase async client.
+  * bigtable-hbase-2.x-hadoop: use in hadoop environments.
   * bigtable-hbase-2.x-shaded: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
 
   Maven:
@@ -63,7 +63,7 @@ which makes it easy for development teams to get started.
 ## Questions and discussions
 
 If you have questions or run into issues with Google Cloud Bigtable or the
-client libraries, you can use any of the following forums:
+client libraries, use any of the following forums:
 
 * Stack Overflow: tag questions with [`google-cloud-bigtable`][stackoverflow-link]
 * Mailing list: [google-cloud-bigtable-discuss@][google-cloud-bigtable-discuss]
@@ -74,8 +74,8 @@ infrequent product and client library announcements.
 
 ## Developing and testing
 
-1. Running `mvn clean install` will build and install Cloud Bigtable client artifacts to your local repository, and then run the unit tests.
-2. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above).
+1. Run `mvn clean install` to build and install Cloud Bigtable client artifacts to your local repository, and then run the unit tests.
+2. There is also a suite of integration tests that connect to a cluster you have access to, via the authentication credentials that were loaded during the Google Cloud SDK configuration step (see above).
 
    Use the following command to run the Cloud Bigtable integration tests for HBase 1:
 
@@ -104,7 +104,7 @@ infrequent product and client library announcements.
    ```
 
 
-   You can run those commands at the top of the project, or you can run then at the appropriate integration-tests project.  
+   You can run those commands at the top of the project, or you can run them at the appropriate integration-tests project.  
    
    Developer's NOTE: You can build the project faster by running the following command, and then run the integration test command from the appropriate integration test directory:
    
@@ -114,9 +114,9 @@ infrequent product and client library announcements.
    -am clean install
    ```
 
-NOTE: This project uses extensive shading which IDEs have trouble with. To over come these issues,
-you can disable the `with-shaded` profile in your IDE to force it to resolve the dependencies from your local
-maven repository. When you disable that profile, you have to attach workspace sources to local maven repository jars.
+NOTE: This project uses extensive shading which IDEs have trouble with. To overcome these issues,
+disable the `with-shaded` profile in your IDE to force it to resolve the dependencies from your local
+maven repository. When you disable that profile, attach workspace sources to the local maven repository jars.
 
 ## Clients and Repositories
 
