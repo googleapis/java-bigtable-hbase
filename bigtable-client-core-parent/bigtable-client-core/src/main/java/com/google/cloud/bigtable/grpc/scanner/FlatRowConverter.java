@@ -19,7 +19,10 @@ import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class converts between instances of {@link FlatRow} and {@link Row}.
@@ -94,5 +97,22 @@ public class FlatRowConverter {
       }
     }
     return builder.build();
+  }
+
+  public static com.google.cloud.bigtable.data.v2.models.Row convertToModelRow(FlatRow row) {
+    if (row == null) {
+      return null;
+    }
+    List<RowCell> rowCellList = new ArrayList<>();
+    for (FlatRow.Cell cell : row.getCells()) {
+      rowCellList.add(toRowCell(cell));
+    }
+
+    return com.google.cloud.bigtable.data.v2.models.Row.create(row.getRowKey(), rowCellList);
+  }
+
+  private static RowCell toRowCell(FlatRow.Cell cell) {
+    return RowCell.create(cell.getFamily(), cell.getQualifier(), cell.getTimestamp(),
+        cell.getLabels(), cell.getValue());
   }
 }
