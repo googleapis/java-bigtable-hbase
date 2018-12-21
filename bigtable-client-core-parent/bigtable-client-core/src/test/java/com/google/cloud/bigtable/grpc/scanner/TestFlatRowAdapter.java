@@ -20,13 +20,14 @@ import com.google.common.collect.ImmutableList;
 
 import com.google.protobuf.ByteString;
 
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestFlatRowModelAdapter {
+public class TestFlatRowAdapter {
 
-  private final FlatRowModelAdapter adapter = new FlatRowModelAdapter();
+  private final FlatRowAdapter adapter = new FlatRowAdapter();
   private RowAdapter.RowBuilder<FlatRow> rowBuilder;
 
   @Before
@@ -120,4 +121,41 @@ public class TestFlatRowModelAdapter {
 
     Assert.assertFalse(adapter.isScanMarkerRow(rowBuilder.finishRow()));
   }
+
+  @Test
+  public void testFamilyOrdering(){
+    ByteString value = ByteString.copyFromUtf8("my-value");
+    ByteString qualifier = ByteString.copyFromUtf8("qualifier");
+    List<String> labels = ImmutableList.of("my-label");
+    String[] familyNames = {"aa", "bb", "ew", "fd", "zz"};
+    rowBuilder.startRow(ByteString.copyFromUtf8("firstKey"));
+    rowBuilder.startCell("zz", qualifier, 72, labels,
+        value.size());
+    rowBuilder.cellValue(value);
+    rowBuilder.finishCell();
+    rowBuilder.startCell("bb", qualifier, 2309223, labels,
+        value.size());
+    rowBuilder.cellValue(value);
+    rowBuilder.finishCell();
+    rowBuilder.startCell("aa", qualifier, 873, labels,
+        value.size());
+    rowBuilder.cellValue(value);
+    rowBuilder.finishCell();
+    rowBuilder.startCell("fd", qualifier, 726, labels,
+        value.size());
+    rowBuilder.cellValue(value);
+    rowBuilder.finishCell();
+    rowBuilder.startCell("ew", qualifier, System.currentTimeMillis(), labels,
+        value.size());
+    rowBuilder.cellValue(value);
+    rowBuilder.finishCell();
+
+    FlatRow row = rowBuilder.finishRow();
+    Assert.assertEquals("firstKey", row.getRowKey().toStringUtf8());
+    List<FlatRow.Cell> cells  = row.getCells();
+    for(int i =0; i<cells.size(); i++){
+      Assert.assertEquals(familyNames[i], cells.get(i).getFamily());
+    }
+  }
+
 }
