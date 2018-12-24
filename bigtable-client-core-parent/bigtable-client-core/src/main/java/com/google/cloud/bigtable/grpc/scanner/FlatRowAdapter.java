@@ -17,12 +17,12 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.cloud.bigtable.data.v2.models.RowAdapter;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow.Cell;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 /**
@@ -30,6 +30,7 @@ import java.util.TreeMap;
  */
 public class FlatRowAdapter implements RowAdapter<FlatRow> {
 
+  /** {@inheritDoc} */
   @Override
   public RowBuilder<FlatRow> createRowBuilder() {
     return new FlatRowAdapter.FlatRowBuilder();
@@ -37,26 +38,28 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
 
   public class FlatRowBuilder implements RowBuilder<FlatRow> {
     private ByteString currentKey;
-    private Map<String, List<Cell>> cells = new TreeMap<>();
-    private List<Cell> familyCells = null;
-
     private String family;
     private ByteString qualifier;
     private List<String> labels;
     private long timestamp;
     private ByteString value;
 
+    //Map to hold family & cells record in lexicographical order.
+    private Map<String, List<Cell>> cells = new TreeMap<>();
+    private List<Cell> currentFamilyCells = null;
     private String previousFamily;
     private int totalCellCount = 0;
 
     public FlatRowBuilder() {
     }
 
+    /** {@inheritDoc} */
     @Override
     public void startRow(ByteString rowKey) {
       this.currentKey = rowKey;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void startCell(String family, ByteString qualifier, long timestamp, List<String> labels,
         long size) {
@@ -67,6 +70,7 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
       this.value = ByteString.EMPTY;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void cellValue(ByteString value) {
       this.value = this.value.concat(value);
@@ -90,15 +94,15 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
      */
     @Override
     public void finishCell() {
-      if (!Objects.equal(this.family, this.previousFamily)) {
+      if (!Objects.equals(this.family, this.previousFamily)) {
         previousFamily = this.family;
-        familyCells = new ArrayList<>();
-        cells.put(this.family, this.familyCells);
+        currentFamilyCells = new ArrayList<>();
+        cells.put(this.family, this.currentFamilyCells);
       }
 
       FlatRow.Cell cell  = new FlatRow.Cell(this.family, this.qualifier, this.timestamp,
                     this.value, this.labels);
-      this.familyCells.add(cell);
+      this.currentFamilyCells.add(cell);
       totalCellCount++;
   }
 
@@ -119,30 +123,35 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
       return new FlatRow(this.currentKey, combined.build());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void reset() {
       this.currentKey = null;
-      this.cells = new TreeMap<>();
       this.family = null;
       this.qualifier = null;
       this.labels = null;
       this.timestamp = 0L;
       this.value = null;
+      this.cells = new TreeMap<>();
+      this.currentFamilyCells = null;
       this.previousFamily = null;
       this.totalCellCount = 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlatRow createScanMarkerRow(ByteString rowKey) {
       return new FlatRow(rowKey, ImmutableList.<Cell>of());
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isScanMarkerRow(FlatRow row) {
     return row.getCells() == null || row.getCells().isEmpty();
   }
 
+  /** {@inheritDoc} */
   @Override
   public ByteString getKey(FlatRow row) {
     return row.getRowKey();
