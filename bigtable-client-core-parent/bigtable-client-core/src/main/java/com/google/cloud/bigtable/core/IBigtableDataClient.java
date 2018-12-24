@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -41,11 +42,11 @@ public interface IBigtableDataClient {
    * Mutate a row atomically.
    *
    * @param rowMutation a {@link RowMutation} model object.
-   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
+   * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
    *     successful otherwise exception will be thrown.
    * @throws InterruptedException if any.
    */
-  ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
+  ListenableFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
 
   /**
    * Perform an atomic read-modify-write operation on a row.
@@ -80,7 +81,7 @@ public interface IBigtableDataClient {
    * @return a {@link ApiFuture} of type {@link Boolean} will be set when request is
    *     successful otherwise exception will be thrown.
    */
-  ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
+  ListenableFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
 
   /**
    * Mutate a row atomically dependent on a precondition.

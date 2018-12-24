@@ -16,7 +16,10 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.bigtable.v2.CheckAndMutateRowRequest;
+import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
@@ -26,6 +29,11 @@ import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * This class implements the {@link IBigtableDataClient} interface which provides access to google cloud
@@ -53,8 +61,17 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   }
 
   @Override
-  public ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) {
-    throw new UnsupportedOperationException("Not implemented yet");
+  public ListenableFuture<Void> mutateRowAsync(RowMutation rowMutation) {
+    ListenableFuture<MutateRowResponse> response =
+        delegate.mutateRowAsync(rowMutation.toProto(requestContext));
+    return  Futures.transform(response, new Function<MutateRowResponse, Void>() {
+
+      @NullableDecl
+      @Override
+      public Void apply(@NullableDecl MutateRowResponse input) {
+        return null;
+      }
+    }, MoreExecutors.directExecutor());
   }
 
   @Override
@@ -73,12 +90,39 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   }
 
   @Override
-  public ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation) {
-    throw new UnsupportedOperationException("Not implemented yet");
+  public ListenableFuture<Boolean> checkAndMutateRowAsync(
+      ConditionalRowMutation conditionalRowMutation) {
+    final CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
+    final ListenableFuture<CheckAndMutateRowResponse> response =
+        delegate.checkAndMutateRowAsync(request);
+    return Futures.transform(response, new Function<CheckAndMutateRowResponse, Boolean>() {
+      @NullableDecl
+      @Override
+      public Boolean apply(@NullableDecl CheckAndMutateRowResponse input) {
+        return wasMutationApplied(request, input);
+      }
+    }, MoreExecutors.directExecutor());
   }
 
   @Override
   public Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation) {
-    throw new UnsupportedOperationException("Not implemented yet");
+    CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
+    CheckAndMutateRowResponse response =
+        delegate.checkAndMutateRow(conditionalRowMutation.toProto(requestContext));
+    return wasMutationApplied(request, response);
+  }
+
+  /**
+   * This method is referred from CheckAndMutateUtil#wasMutationApplied
+   */
+  private static boolean wasMutationApplied(CheckAndMutateRowRequest request,
+      CheckAndMutateRowResponse response) {
+
+    // If we have true mods, we want the predicate to have matched.
+    // If we have false mods, we did not want the predicate to have matched.
+    return (request.getTrueMutationsCount() > 0
+        && response.getPredicateMatched()) || (
+        request.getFalseMutationsCount() > 0
+            && !response.getPredicateMatched());
   }
 }

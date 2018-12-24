@@ -18,16 +18,23 @@ package com.google.cloud.bigtable.grpc;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.bigtable.v2.CheckAndMutateRowRequest;
+import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -39,25 +46,102 @@ public class TestBigtableDataClientWrapper {
   private static final String APP_PROFILE_ID = "appProfileId";
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext.create(InstanceName.of(PROJECT_ID, INSTANCE_ID), APP_PROFILE_ID);
-  private BigtableDataClient bigtableDataClient;
+
   private BigtableOptions options;
-  private BigtableDataClientWrapper bigtableDataClientWrapper;
+  private BigtableDataClientWrapper clientWrapper;
+  @Mock
+  private BigtableDataClient client;
+
+  @Mock
+  private ListenableFuture<MutateRowResponse> mockMutateRowAsync;
 
   @Before
   public void setUp() {
-    bigtableDataClient = Mockito.mock(BigtableDataClient.class);
     options = BigtableOptions.builder().setProjectId(PROJECT_ID).setInstanceId(INSTANCE_ID)
         .setAppProfileId(APP_PROFILE_ID).build();
-    bigtableDataClientWrapper = new BigtableDataClientWrapper(bigtableDataClient, options);
+    clientWrapper = new BigtableDataClientWrapper(client, options);
   }
 
   @Test
   public void testMutateRow() {
     RowMutation rowMutation = RowMutation.create(TABLE_ID, "key");
     MutateRowRequest mutateRowRequest = rowMutation.toProto(REQUEST_CONTEXT);
-    when(bigtableDataClient.mutateRow(mutateRowRequest))
+    when(client.mutateRow(mutateRowRequest))
         .thenReturn(MutateRowResponse.getDefaultInstance());
-    bigtableDataClientWrapper.mutateRow(rowMutation);
-    verify(bigtableDataClient).mutateRow(mutateRowRequest);
+    clientWrapper.mutateRow(rowMutation);
+    verify(client).mutateRow(mutateRowRequest);
+  }
+
+  @Test
+  public void testMutateRowAsync() {
+    RowMutation rowMutation = RowMutation.create(TABLE_ID, "key");
+    MutateRowRequest request = rowMutation.toProto(REQUEST_CONTEXT);
+    when(client.mutateRowAsync(request)).thenReturn(mockMutateRowAsync);
+    clientWrapper.mutateRowAsync(rowMutation);
+    verify(client).mutateRowAsync(request);
+  }
+
+  @Test
+  public void testTrueMutationRow(){
+    Mutation mutation = Mutation.create();
+    mutation.setCell("family", "qualifier", "some other value");
+    ConditionalRowMutation conditonalMutation =
+        ConditionalRowMutation.create(TABLE_ID, "first" + "-row" + "-key").then(mutation);
+    CheckAndMutateRowRequest request = conditonalMutation.toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowResponse response = CheckAndMutateRowResponse.newBuilder()
+        .setPredicateMatched(true).build();
+    when(client.checkAndMutateRow(request)).thenReturn(response);
+    Boolean actual = clientWrapper.checkAndMutateRow(conditonalMutation);
+    verify(client).checkAndMutateRow(request);
+    Assert.assertTrue(actual);
+  }
+
+  @Test
+  public void testFalseMutationRow(){
+    Mutation mutation = Mutation.create();
+    mutation.setCell("family", "qualifier", "some other value");
+    ConditionalRowMutation conditonalMutation =
+        ConditionalRowMutation.create(TABLE_ID, "first" + "-row" + "-key").otherwise(mutation);
+    CheckAndMutateRowRequest request = conditonalMutation.toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowResponse response = CheckAndMutateRowResponse.newBuilder()
+        .setPredicateMatched(false).build();
+    when(client.checkAndMutateRow(request)).thenReturn(response);
+    Boolean actual = clientWrapper.checkAndMutateRow(conditonalMutation);
+    verify(client).checkAndMutateRow(request);
+    Assert.assertTrue(actual);
+  }
+
+  @Test
+  public void testTrueMutationRowAsync() throws Exception{
+    Mutation mutation = Mutation.create();
+    mutation.setCell("family", "qualifier", "some other value");
+    ConditionalRowMutation conditonalMutation =
+        ConditionalRowMutation.create(TABLE_ID, "first" + "-row" + "-key").then(mutation);
+    CheckAndMutateRowRequest request = conditonalMutation.toProto(REQUEST_CONTEXT);
+
+    CheckAndMutateRowResponse response = CheckAndMutateRowResponse.newBuilder()
+        .setPredicateMatched(true).build();
+    ListenableFuture<CheckAndMutateRowResponse> future = Futures.immediateFuture(response);
+
+    when(client.checkAndMutateRowAsync(request)).thenReturn(future);
+    ListenableFuture<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
+    verify(client).checkAndMutateRowAsync(request);
+    Assert.assertTrue(actual.get());
+  }
+
+  @Test
+  public void testFalseMutationRowAsync() throws Exception{
+    Mutation mutation = Mutation.create();
+    mutation.setCell("family", "qualifier", "some other value");
+    ConditionalRowMutation conditonalMutation =
+        ConditionalRowMutation.create(TABLE_ID, "first" + "-row" + "-key").otherwise(mutation);
+    CheckAndMutateRowRequest request = conditonalMutation.toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowResponse response = CheckAndMutateRowResponse.newBuilder()
+        .setPredicateMatched(false).build();
+    ListenableFuture<CheckAndMutateRowResponse> future = Futures.immediateFuture(response);
+    when(client.checkAndMutateRowAsync(request)).thenReturn(future);
+    ListenableFuture<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
+    verify(client).checkAndMutateRowAsync(request);
+    Assert.assertTrue(actual.get());
   }
 }
