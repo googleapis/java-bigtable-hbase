@@ -44,8 +44,14 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
     private long timestamp;
     private ByteString value;
 
-    //Map to hold family & cells record in lexicographical order.
+    /*
+     * cells contains list of {@link Cell} for all the families.
+     */
     private Map<String, List<Cell>> cells = new TreeMap<>();
+
+    /*
+     * currentFamilyCells is buffered with current family's {@link Cell}s.
+     */
     private List<Cell> currentFamilyCells = null;
     private String previousFamily;
     private int totalCellCount = 0;
@@ -148,7 +154,7 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
   /** {@inheritDoc} */
   @Override
   public boolean isScanMarkerRow(FlatRow row) {
-    return row.getCells() == null || row.getCells().isEmpty();
+    return row.getCells().isEmpty();
   }
 
   /** {@inheritDoc} */
