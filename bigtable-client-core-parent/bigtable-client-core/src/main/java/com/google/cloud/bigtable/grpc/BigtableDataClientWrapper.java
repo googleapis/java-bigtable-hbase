@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import static com.google.cloud.bigtable.util.DataWrapperUtil.convert;
-import static com.google.cloud.bigtable.util.DataWrapperUtil.wasMutationApplied;
-
+import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
+import com.google.bigtable.v2.Column;
+import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
@@ -31,11 +31,14 @@ import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
+import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.protobuf.ByteString;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
@@ -129,5 +132,40 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
     CheckAndMutateRowResponse response =
         delegate.checkAndMutateRow(conditionalRowMutation.toProto(requestContext));
     return wasMutationApplied(request, response);
+  }
+
+  /**
+   * This method is referred from CheckAndMutateUtil#wasMutationApplied
+   */
+  private static boolean wasMutationApplied(CheckAndMutateRowRequest request,
+      CheckAndMutateRowResponse response) {
+
+    // If we have true mods, we want the predicate to have matched.
+    // If we have false mods, we did not want the predicate to have matched.
+    return (request.getTrueMutationsCount() > 0
+        && response.getPredicateMatched()) || (
+        request.getFalseMutationsCount() > 0
+            && !response.getPredicateMatched());
+  }
+
+  /**
+   * This method converts instances of {@link com.google.bigtable.v2.Row} to {@link Row}.
+   *
+   * @param row an instance of {@link com.google.bigtable.v2.Row} type.
+   * @return {@link Row} an instance of {@link Row}.
+   */
+  private static Row convert(com.google.bigtable.v2.Row row) {
+    ImmutableList.Builder<RowCell> rowCells  = new ImmutableList.Builder<>();
+    for (Family family : row.getFamiliesList()) {
+      String familyName = family.getName();
+      for (Column column : family.getColumnsList()) {
+        ByteString qualifier = column.getQualifier();
+        for (Cell cell : column.getCellsList()) {
+          rowCells.add(RowCell.create(familyName, qualifier, cell.getTimestampMicros(),
+              cell.getLabelsList(), cell.getValue()));
+        }
+      }
+    }
+    return Row.create(row.getKey(), rowCells.build());
   }
 }

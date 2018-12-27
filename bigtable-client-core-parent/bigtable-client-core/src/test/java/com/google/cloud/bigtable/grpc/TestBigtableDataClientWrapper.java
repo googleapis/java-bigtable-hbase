@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import static com.google.cloud.bigtable.util.DataWrapperUtil.convert;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -37,17 +36,17 @@ import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
+import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-import com.google.cloud.bigtable.util.DataWrapperUtil;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
-import java.util.concurrent.Future;
-import org.junit.Assert;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -58,6 +57,14 @@ public class TestBigtableDataClientWrapper {
   private static final String INSTANCE_ID = "instanceId";
   private static final String TABLE_ID = "tableId";
   private static final String APP_PROFILE_ID = "appProfileId";
+  private static final ByteString QUALIFIER_1 = ByteString.copyFromUtf8("qualifier1");
+  private static final ByteString QUALIFIER_2 = ByteString.copyFromUtf8("qualifier2");
+  private static final int TIMESTAMP = 12345;
+  private static final String LABEL = "label";
+  private static final List<String> LABEL_LIST = Arrays.asList(LABEL);
+  private static final ByteString VALUE = ByteString.copyFromUtf8("test-value");
+  private static final ByteString ROW_KEY = ByteString.copyFromUtf8("test-key");
+
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext.create(InstanceName.of(PROJECT_ID, INSTANCE_ID), APP_PROFILE_ID);
 
@@ -158,17 +165,20 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testReadModifyWrite(){
+  public void testReadModifyWriteWithOneCell(){
     ReadModifyWriteRow readModify = ReadModifyWriteRow.create(TABLE_ID, "test-key");
     ReadModifyWriteRowRequest request = readModify.toProto(REQUEST_CONTEXT);
     Row expectedRow = buildRow();
     ReadModifyWriteRowResponse response =
         ReadModifyWriteRowResponse.newBuilder().setRow(expectedRow).build();
+    RowCell rowCell = RowCell.create("firstFamily", QUALIFIER_1, TIMESTAMP, LABEL_LIST, VALUE);
+    com.google.cloud.bigtable.data.v2.models.Row modelRow =
+        com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Arrays.asList(rowCell));
 
     when(client.readModifyWriteRow(request)).thenReturn(response);
     com.google.cloud.bigtable.data.v2.models.Row actualRow =
         clientWrapper.readModifyWriteRow(readModify);
-    assertEquals(convert(expectedRow), actualRow);
+    assertEquals(modelRow, actualRow);
     verify(client).readModifyWriteRow(request);
   }
 
@@ -181,30 +191,90 @@ public class TestBigtableDataClientWrapper {
         ReadModifyWriteRowResponse.newBuilder().setRow(expectedRow).build();
     ListenableFuture<ReadModifyWriteRowResponse> listenableResponse =
         Futures.immediateFuture(response);
+    RowCell rowCell = RowCell.create("firstFamily", QUALIFIER_1, TIMESTAMP, LABEL_LIST, VALUE);
+    com.google.cloud.bigtable.data.v2.models.Row modelRow =
+        com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Arrays.asList(rowCell));
 
     when(client.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
     ListenableFuture<com.google.cloud.bigtable.data.v2.models.Row> output =
         clientWrapper.readModifyWriteRowAsync(readModify);
+    assertEquals(modelRow, output.get());
     verify(client).readModifyWriteRowAsync(request);
-    Assert.assertEquals(convert(expectedRow), output.get());
   }
 
   private static Row buildRow() {
-    Cell cell =
-        Cell.newBuilder()
-            .setValue(ByteString.copyFromUtf8("test-value"))
-            .setTimestampMicros(12345)
-            .addLabels("lable-1")
-            .build();
+    Cell cell = Cell.newBuilder()
+        .setValue(VALUE)
+        .setTimestampMicros(TIMESTAMP)
+        .addLabels(LABEL)
+        .build();
     return Row.newBuilder()
-        .setKey(ByteString.copyFromUtf8("test-key"))
+        .setKey(ROW_KEY)
         .addFamilies(Family.newBuilder()
             .setName("firstFamily")
             .addColumns(Column.newBuilder()
-                .setQualifier(ByteString.copyFromUtf8("qualifier1"))
+                .setQualifier(QUALIFIER_1)
                 .addCells(cell)
                 .build())
             .build())
         .build();
+  }
+
+  @Test
+  public void testReadModifyWriteWithMultipleCell(){
+    Row row = Row.newBuilder()
+        .setKey(ROW_KEY)
+        .addFamilies(Family.newBuilder()
+            .setName("firstFamily")
+            .addColumns(Column.newBuilder()
+                .setQualifier(QUALIFIER_1)
+                .addCells(Cell.newBuilder()
+                    .setValue(VALUE)
+                    .setTimestampMicros(TIMESTAMP)
+                    .addLabels(LABEL)
+                    .build())
+                .build())
+            .addColumns(Column.newBuilder()
+                .setQualifier(QUALIFIER_2)
+                .addCells(Cell.newBuilder()
+                    .setValue(VALUE)
+                    .setTimestampMicros(TIMESTAMP)
+                    .addLabels(LABEL)
+                    .build())
+                .addCells(Cell.newBuilder()
+                    .setValue(VALUE)
+                    .setTimestampMicros(54321)
+                    .addLabels(LABEL)
+                    .build())
+                .build())
+            .build())
+        .addFamilies(Family.newBuilder()
+            .setName("secondFamily")
+            .addColumns(Column.newBuilder()
+                .setQualifier(QUALIFIER_1)
+                .addCells(Cell.newBuilder()
+                    .setValue(VALUE)
+                    .setTimestampMicros(TIMESTAMP)
+                    .addLabels(LABEL)
+                    .build())
+                .build()))
+        .build();
+    ReadModifyWriteRowResponse response =
+        ReadModifyWriteRowResponse.newBuilder().setRow(row).build();
+    ReadModifyWriteRow readModify = ReadModifyWriteRow.create(TABLE_ID, "test-key");
+    ReadModifyWriteRowRequest request = readModify.toProto(REQUEST_CONTEXT);
+    ImmutableList.Builder<RowCell> rowCells = ImmutableList.builder();
+    rowCells.add(RowCell.create("firstFamily", QUALIFIER_1, TIMESTAMP, LABEL_LIST, VALUE));
+    rowCells.add(RowCell.create("firstFamily", QUALIFIER_2, TIMESTAMP, LABEL_LIST, VALUE));
+    rowCells.add(RowCell.create("firstFamily", QUALIFIER_2, 54321, LABEL_LIST, VALUE));
+    rowCells.add(RowCell.create("secondFamily", QUALIFIER_1, TIMESTAMP, LABEL_LIST, VALUE));
+    com.google.cloud.bigtable.data.v2.models.Row expectedModelRow =
+        com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, rowCells.build());
+
+    when(client.readModifyWriteRow(request)).thenReturn(response);
+    com.google.cloud.bigtable.data.v2.models.Row actualRow =
+        clientWrapper.readModifyWriteRow(readModify);
+    assertEquals(expectedModelRow, actualRow);
+    verify(client).readModifyWriteRow(request);
   }
 }

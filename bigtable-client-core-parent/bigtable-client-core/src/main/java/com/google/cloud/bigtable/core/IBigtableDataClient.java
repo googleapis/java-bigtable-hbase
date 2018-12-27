@@ -19,7 +19,6 @@ import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -45,6 +44,7 @@ public interface IBigtableDataClient {
    *     successful otherwise exception will be thrown.
    * @throws InterruptedException if any.
    */
+  //TODO(rahulkql): Once its adapted to v2.models then change the return type to ApiFuture
   ListenableFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
 
   /**
@@ -66,6 +66,7 @@ public interface IBigtableDataClient {
    *     successful otherwise exception will be thrown.
    * @throws InterruptedException if any.
    */
+  //TODO(rahulkql): Once its adapted to v2.models then change the return type to ApiFuture
   ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) throws InterruptedException;
 
   /**
@@ -80,6 +81,7 @@ public interface IBigtableDataClient {
    * @return a {@link ListenableFuture} of type {@link Boolean} will be set when request is
    *     successful otherwise exception will be thrown.
    */
+  //TODO(rahulkql): Once its adapted to v2.models then change the return type to ApiFuture
   ListenableFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
 
   /**
