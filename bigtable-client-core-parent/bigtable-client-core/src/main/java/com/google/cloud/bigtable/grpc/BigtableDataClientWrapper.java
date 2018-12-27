@@ -15,11 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import com.google.api.core.ApiFuture;
+import static com.google.cloud.bigtable.util.DataWrapperUtil.convert;
+import static com.google.cloud.bigtable.util.DataWrapperUtil.wasMutationApplied;
+
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
+import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
@@ -54,18 +57,19 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
         );
   }
 
+  /** {@inheritDoc} */
   @Override
   public void mutateRow(RowMutation rowMutation) {
     MutateRowRequest mutateRowRequest = rowMutation.toProto(requestContext);
     delegate.mutateRow(mutateRowRequest);
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListenableFuture<Void> mutateRowAsync(RowMutation rowMutation) {
     ListenableFuture<MutateRowResponse> response =
         delegate.mutateRowAsync(rowMutation.toProto(requestContext));
     return  Futures.transform(response, new Function<MutateRowResponse, Void>() {
-
       @NullableDecl
       @Override
       public Void apply(@NullableDecl MutateRowResponse input) {
@@ -74,21 +78,35 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
     }, MoreExecutors.directExecutor());
   }
 
+  /** {@inheritDoc} */
   @Override
   public Row readModifyWriteRow(ReadModifyWriteRow readModifyWriteRow) {
-    throw new UnsupportedOperationException("Not implemented yet");
+    ReadModifyWriteRowResponse response =
+        delegate.readModifyWriteRow(readModifyWriteRow.toProto(requestContext));
+    return convert(response.getRow());
   }
 
+  /** {@inheritDoc} */
   @Override
-  public ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) {
-    throw new UnsupportedOperationException("Not implemented yet");
+  public ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) {
+    ListenableFuture<ReadModifyWriteRowResponse> response =
+        delegate.readModifyWriteRowAsync(readModifyWriteRow.toProto(requestContext));
+    return Futures.transform(response, new Function<ReadModifyWriteRowResponse, Row>() {
+      @NullableDecl
+      @Override
+      public Row apply(@NullableDecl ReadModifyWriteRowResponse input) {
+        return convert(input.getRow());
+      }
+    }, MoreExecutors.directExecutor());
   }
 
+  /** {@inheritDoc} */
   @Override
   public IBulkMutation createBulkMutationBatcher() {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListenableFuture<Boolean> checkAndMutateRowAsync(
       ConditionalRowMutation conditionalRowMutation) {
@@ -104,25 +122,12 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
     }, MoreExecutors.directExecutor());
   }
 
+  /** {@inheritDoc} */
   @Override
   public Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation) {
     CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
     CheckAndMutateRowResponse response =
         delegate.checkAndMutateRow(conditionalRowMutation.toProto(requestContext));
     return wasMutationApplied(request, response);
-  }
-
-  /**
-   * This method is referred from CheckAndMutateUtil#wasMutationApplied
-   */
-  private static boolean wasMutationApplied(CheckAndMutateRowRequest request,
-      CheckAndMutateRowResponse response) {
-
-    // If we have true mods, we want the predicate to have matched.
-    // If we have false mods, we did not want the predicate to have matched.
-    return (request.getTrueMutationsCount() > 0
-        && response.getPredicateMatched()) || (
-        request.getFalseMutationsCount() > 0
-            && !response.getPredicateMatched());
   }
 }
