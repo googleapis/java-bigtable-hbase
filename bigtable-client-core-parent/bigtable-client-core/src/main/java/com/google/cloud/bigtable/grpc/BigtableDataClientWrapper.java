@@ -43,7 +43,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * This class implements the {@link IBigtableDataClient} interface which provides access to google cloud
- * java
+ * java.
  */
 public class BigtableDataClientWrapper implements IBigtableDataClient {
 
@@ -135,13 +135,13 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   }
 
   /**
-   * This method is referred from CheckAndMutateUtil#wasMutationApplied
+   * This method is referred from CheckAndMutateUtil#wasMutationApplied.
    */
   private static boolean wasMutationApplied(CheckAndMutateRowRequest request,
       CheckAndMutateRowResponse response) {
 
-    // If we have true mods, we want the predicate to have matched.
-    // If we have false mods, we did not want the predicate to have matched.
+    // If we have true mods, we want the predicate to match.
+    // If we have false mods, we do not want the predicate to match.
     return (request.getTrueMutationsCount() > 0
         && response.getPredicateMatched()) || (
         request.getFalseMutationsCount() > 0
