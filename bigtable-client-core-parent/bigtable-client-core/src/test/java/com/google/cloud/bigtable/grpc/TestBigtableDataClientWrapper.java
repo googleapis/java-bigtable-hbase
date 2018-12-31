@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,7 +43,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,7 +62,7 @@ public class TestBigtableDataClientWrapper {
   private static final ByteString QUALIFIER_2 = ByteString.copyFromUtf8("qualifier2");
   private static final int TIMESTAMP = 12345;
   private static final String LABEL = "label";
-  private static final List<String> LABEL_LIST = Arrays.asList(LABEL);
+  private static final List<String> LABEL_LIST = Collections.singletonList(LABEL);
   private static final ByteString VALUE = ByteString.copyFromUtf8("test-value");
   private static final ByteString ROW_KEY = ByteString.copyFromUtf8("test-key");
 
@@ -102,7 +103,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testTrueMutationRow(){
+  public void testCheckMutateRow(){
     Mutation mutation = Mutation.create();
     mutation.setCell("family", "qualifier", "some other value");
     ConditionalRowMutation conditonalMutation =
@@ -117,22 +118,22 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testFalseMutationRow(){
+  public void testCheckMutateRowWhenNoPredicateMatch(){
     Mutation mutation = Mutation.create();
     mutation.setCell("family", "qualifier", "some other value");
     ConditionalRowMutation conditonalMutation =
-        ConditionalRowMutation.create(TABLE_ID, "first" + "-row" + "-key").otherwise(mutation);
+        ConditionalRowMutation.create(TABLE_ID, "first" + "-row" + "-key").then(mutation);
     CheckAndMutateRowRequest request = conditonalMutation.toProto(REQUEST_CONTEXT);
     CheckAndMutateRowResponse response =
         CheckAndMutateRowResponse.newBuilder().setPredicateMatched(false).build();
     when(client.checkAndMutateRow(request)).thenReturn(response);
     Boolean actual = clientWrapper.checkAndMutateRow(conditonalMutation);
     verify(client).checkAndMutateRow(request);
-    assertTrue(actual);
+    assertFalse(actual);
   }
 
   @Test
-  public void testTrueMutationRowAsync() throws Exception{
+  public void testCheckMutateRowAsync() throws Exception{
     Mutation mutation = Mutation.create();
     mutation.setCell("family", "qualifier", "some other value");
     ConditionalRowMutation conditonalMutation =
@@ -149,19 +150,20 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testFalseMutationRowAsync() throws Exception{
+  public void testCheckMutateRowAsyncWhenNoPredicateMatch() throws Exception{
     Mutation mutation = Mutation.create();
     mutation.setCell("family", "qualifier", "some other value");
     ConditionalRowMutation conditonalMutation =
-        ConditionalRowMutation.create(TABLE_ID, "first" + "-row" + "-key").otherwise(mutation);
+        ConditionalRowMutation.create(TABLE_ID, "first" + "-row" + "-key").then(mutation);
     CheckAndMutateRowRequest request = conditonalMutation.toProto(REQUEST_CONTEXT);
     CheckAndMutateRowResponse response =
         CheckAndMutateRowResponse.newBuilder().setPredicateMatched(false).build();
     ListenableFuture<CheckAndMutateRowResponse> future = Futures.immediateFuture(response);
+
     when(client.checkAndMutateRowAsync(request)).thenReturn(future);
     ListenableFuture<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
     verify(client).checkAndMutateRowAsync(request);
-    assertTrue(actual.get());
+    assertFalse(actual.get());
   }
 
   @Test
@@ -173,7 +175,7 @@ public class TestBigtableDataClientWrapper {
         ReadModifyWriteRowResponse.newBuilder().setRow(expectedRow).build();
     RowCell rowCell = RowCell.create("firstFamily", QUALIFIER_1, TIMESTAMP, LABEL_LIST, VALUE);
     com.google.cloud.bigtable.data.v2.models.Row modelRow =
-        com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Arrays.asList(rowCell));
+        com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Collections.singletonList(rowCell));
 
     when(client.readModifyWriteRow(request)).thenReturn(response);
     com.google.cloud.bigtable.data.v2.models.Row actualRow =
@@ -193,7 +195,7 @@ public class TestBigtableDataClientWrapper {
         Futures.immediateFuture(response);
     RowCell rowCell = RowCell.create("firstFamily", QUALIFIER_1, TIMESTAMP, LABEL_LIST, VALUE);
     com.google.cloud.bigtable.data.v2.models.Row modelRow =
-        com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Arrays.asList(rowCell));
+        com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Collections.singletonList(rowCell));
 
     when(client.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
     ListenableFuture<com.google.cloud.bigtable.data.v2.models.Row> output =

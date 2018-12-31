@@ -38,8 +38,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.protobuf.ByteString;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import javax.annotation.Nullable;
 
 /**
  * This class implements the {@link IBigtableDataClient} interface which provides access to google cloud
@@ -73,9 +72,9 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
     ListenableFuture<MutateRowResponse> response =
         delegate.mutateRowAsync(rowMutation.toProto(requestContext));
     return  Futures.transform(response, new Function<MutateRowResponse, Void>() {
-      @NullableDecl
+      @Nullable
       @Override
-      public Void apply(@NullableDecl MutateRowResponse input) {
+      public Void apply(@Nullable MutateRowResponse mutateRowResponse) {
         return null;
       }
     }, MoreExecutors.directExecutor());
@@ -86,7 +85,7 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   public Row readModifyWriteRow(ReadModifyWriteRow readModifyWriteRow) {
     ReadModifyWriteRowResponse response =
         delegate.readModifyWriteRow(readModifyWriteRow.toProto(requestContext));
-    return convert(response.getRow());
+    return transformResponse(response);
   }
 
   /** {@inheritDoc} */
@@ -95,10 +94,9 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
     ListenableFuture<ReadModifyWriteRowResponse> response =
         delegate.readModifyWriteRowAsync(readModifyWriteRow.toProto(requestContext));
     return Futures.transform(response, new Function<ReadModifyWriteRowResponse, Row>() {
-      @NullableDecl
       @Override
-      public Row apply(@NullableDecl ReadModifyWriteRowResponse input) {
-        return convert(input.getRow());
+      public Row apply(ReadModifyWriteRowResponse readModifyRowResponse) {
+        return transformResponse(readModifyRowResponse);
       }
     }, MoreExecutors.directExecutor());
   }
@@ -117,10 +115,10 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
     final ListenableFuture<CheckAndMutateRowResponse> response =
         delegate.checkAndMutateRowAsync(request);
     return Futures.transform(response, new Function<CheckAndMutateRowResponse, Boolean>() {
-      @NullableDecl
+
       @Override
-      public Boolean apply(@NullableDecl CheckAndMutateRowResponse input) {
-        return wasMutationApplied(request, input);
+      public Boolean apply(CheckAndMutateRowResponse checkAndMutateRowResponse) {
+        return checkAndMutateRowResponse.getPredicateMatched();
       }
     }, MoreExecutors.directExecutor());
   }
@@ -128,44 +126,33 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation) {
-    CheckAndMutateRowRequest request = conditionalRowMutation.toProto(requestContext);
     CheckAndMutateRowResponse response =
         delegate.checkAndMutateRow(conditionalRowMutation.toProto(requestContext));
-    return wasMutationApplied(request, response);
+    return response.getPredicateMatched();
   }
 
   /**
-   * This method is referred from CheckAndMutateUtil#wasMutationApplied.
-   */
-  private static boolean wasMutationApplied(CheckAndMutateRowRequest request,
-      CheckAndMutateRowResponse response) {
-
-    // If we have true mods, we want the predicate to match.
-    // If we have false mods, we do not want the predicate to match.
-    return (request.getTrueMutationsCount() > 0
-        && response.getPredicateMatched()) || (
-        request.getFalseMutationsCount() > 0
-            && !response.getPredicateMatched());
-  }
-
-  /**
-   * This method converts instances of {@link com.google.bigtable.v2.Row} to {@link Row}.
+   * This method converts instances of {@link ReadModifyWriteRowResponse} to {@link Row}.
    *
-   * @param row an instance of {@link com.google.bigtable.v2.Row} type.
-   * @return {@link Row} an instance of {@link Row}.
+   * @param response an instance of {@link ReadModifyWriteRowResponse} type.
+   * @return an instance of {@link Row}.
    */
-  private static Row convert(com.google.bigtable.v2.Row row) {
-    ImmutableList.Builder<RowCell> rowCells  = new ImmutableList.Builder<>();
-    for (Family family : row.getFamiliesList()) {
-      String familyName = family.getName();
+  private Row transformResponse(ReadModifyWriteRowResponse response) {
+    ImmutableList.Builder<RowCell> rowCells  = ImmutableList.builder();
+
+    for (Family family : response.getRow().getFamiliesList()) {
       for (Column column : family.getColumnsList()) {
-        ByteString qualifier = column.getQualifier();
         for (Cell cell : column.getCellsList()) {
-          rowCells.add(RowCell.create(familyName, qualifier, cell.getTimestampMicros(),
-              cell.getLabelsList(), cell.getValue()));
+          rowCells.add(
+              RowCell.create(
+                  family.getName(),
+                  column.getQualifier(),
+                  cell.getTimestampMicros(),
+                  cell.getLabelsList(),
+                  cell.getValue()));
         }
       }
     }
-    return Row.create(row.getKey(), rowCells.build());
+    return Row.create(response.getRow().getKey(), rowCells.build());
   }
 }

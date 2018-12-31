@@ -44,7 +44,7 @@ public interface IBigtableDataClient {
    *     successful otherwise exception will be thrown.
    * @throws InterruptedException if any.
    */
-  //TODO(rahulkql): Once its adapted to v2.models then change the return type to ApiFuture.
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
 
   /**
@@ -66,7 +66,7 @@ public interface IBigtableDataClient {
    *     successful otherwise exception will be thrown.
    * @throws InterruptedException if any.
    */
-  //TODO(rahulkql): Once its adapted to v2.models then change the return type to ApiFuture.
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) throws InterruptedException;
 
   /**
@@ -81,7 +81,7 @@ public interface IBigtableDataClient {
    * @return a {@link ListenableFuture} of type {@link Boolean} will be set when request is
    *     successful otherwise exception will be thrown.
    */
-  //TODO(rahulkql): Once its adapted to v2.models then change the return type to ApiFuture.
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
 
   /**
