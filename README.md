@@ -122,7 +122,7 @@ maven repository. When you disable that profile, attach workspace sources to the
 
 | Name | Language | Repository | latest version | status |
 | --- | --- | --- | --- | --- |
-| Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bitgable-examples][maven-examples-repo] | | |
+| Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bigtable-examples][maven-examples-repo] | | |
 | HBase client | Java | [GoogleCloudPlatform/cloud-bigtable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
 | Cloud Bigtable GoLang | Go | [googleapis/google-cloud-go](https://github.com/googleapis/google-cloud-go) | N/A | GA |
 | Cloud Bigtable Java | java | [googleapis/google-cloud-java](http://github.com/googleapis/google-cloud-java) | [![Maven][maven-google-cloud-java-shield]][maven-google-cloud-java-maven-search] | Beta |
