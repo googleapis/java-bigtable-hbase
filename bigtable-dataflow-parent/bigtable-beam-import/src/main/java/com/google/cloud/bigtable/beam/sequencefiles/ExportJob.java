@@ -62,7 +62,7 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  *    --zone=[ZONE] \
  *    --bigtableInstanceId=[INSTANCE] \
  *    --bigtableTableId=[TABLE] \
- *    --destination=gs://[BUCLET]/[EXPORT_PATH] \
+ *    --destination=gs://[BUCKET]/[EXPORT_PATH] \
  *    --maxNumWorkers=[nodes * 10]"
  * }
  * </pre>
