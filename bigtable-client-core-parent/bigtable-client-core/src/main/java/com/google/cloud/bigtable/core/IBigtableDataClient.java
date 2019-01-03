@@ -15,12 +15,11 @@
  */
 package com.google.cloud.bigtable.core;
 
-import com.google.api.core.ApiFuture;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -41,17 +40,18 @@ public interface IBigtableDataClient {
    * Mutate a row atomically.
    *
    * @param rowMutation a {@link RowMutation} model object.
-   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
+   * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
    *     successful otherwise exception will be thrown.
    * @throws InterruptedException if any.
    */
-  ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
+  ListenableFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
 
   /**
    * Perform an atomic read-modify-write operation on a row.
    *
    * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
-   * @return Row a modified row.
+   * @return {@link Row} a modified row.
    * @throws ExecutionException if any.
    * @throws InterruptedException if any.
    */
@@ -62,11 +62,12 @@ public interface IBigtableDataClient {
    * Perform an atomic read-modify-write operation on a row.
    *
    * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
-   * @return a {@link ApiFuture} of type {@link Row} will be set when request is
+   * @return a {@link ListenableFuture} of type {@link Row} will be set when request is
    *     successful otherwise exception will be thrown.
    * @throws InterruptedException if any.
    */
-  ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) throws InterruptedException;
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
+  ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) throws InterruptedException;
 
   /**
    * Creates BulMutation batcher.
@@ -77,16 +78,17 @@ public interface IBigtableDataClient {
    * Mutate a row atomically dependent on a precondition.
    *
    * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
-   * @return a {@link ApiFuture} of type {@link Boolean} will be set when request is
+   * @return a {@link ListenableFuture} of type {@link Boolean} will be set when request is
    *     successful otherwise exception will be thrown.
    */
-  ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
+  ListenableFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
 
   /**
    * Mutate a row atomically dependent on a precondition.
    *
    * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
-   * @return Boolean returns true if predicate returns any result.
+   * @return returns true if predicate returns any result.
    * @throws ExecutionException if any.
    * @throws InterruptedException if any.
    */
