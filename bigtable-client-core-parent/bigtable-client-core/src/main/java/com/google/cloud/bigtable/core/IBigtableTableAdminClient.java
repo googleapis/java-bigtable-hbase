@@ -39,6 +39,7 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link CreateTableRequest} object.
    */
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Table> createTableAsync(CreateTableRequest request);
 
   /**
@@ -54,6 +55,7 @@ public interface IBigtableTableAdminClient {
    *
    * @return a {@link ListenableFuture} that returns a {@link Table} object.
    */
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Table> getTableAsync(String tableId);
 
   /**
@@ -69,6 +71,7 @@ public interface IBigtableTableAdminClient {
    * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
    *   successful otherwise exception will be thrown.
    */
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<List<String>> listTablesAsync();
 
   /**
@@ -83,6 +86,7 @@ public interface IBigtableTableAdminClient {
    * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
    *  successful otherwise exception will be thrown.
    */
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Void> deleteTableAsync(String tableId);
 
   /**
@@ -100,6 +104,7 @@ public interface IBigtableTableAdminClient {
    * @return a {@link ListenableFuture} that returns {@link Table} object that contains
    *  the updated table structure.
    */
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Table> modifyFamiliesAsync(ModifyColumnFamiliesRequest request);
 
   /**
@@ -117,5 +122,6 @@ public interface IBigtableTableAdminClient {
    * @param rowKeyPrefix
    * @return a {@link ListenableFuture} that returns {@link Void} object.
    */
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix);
 }

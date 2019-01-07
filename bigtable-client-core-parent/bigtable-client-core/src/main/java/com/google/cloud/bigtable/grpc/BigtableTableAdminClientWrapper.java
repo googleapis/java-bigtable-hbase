@@ -33,7 +33,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * This class implements the {@link IBigtableTableAdminClient} interface which provides access to
@@ -69,10 +68,9 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
     return Futures.transform(adminClient.createTableAsync(requestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
-
           @Override
-          public Table apply(com.google.bigtable.admin.v2.Table input) {
-            return Table.fromProto(input);
+          public Table apply(com.google.bigtable.admin.v2.Table table) {
+            return Table.fromProto(table);
           }
         }, MoreExecutors.directExecutor());
   }
@@ -96,10 +94,9 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
     return Futures.transform(adminClient.getTableAsync(request),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
-          @Nullable
           @Override
-          public Table apply(@Nullable com.google.bigtable.admin.v2.Table input) {
-            return Table.fromProto(input);
+          public Table apply(com.google.bigtable.admin.v2.Table table) {
+            return Table.fromProto(table);
           }
         }, MoreExecutors.directExecutor());
   }
@@ -161,9 +158,8 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
         .build();
 
     return Futures.transform(adminClient.deleteTableAsync(request), new Function<Empty, Void>() {
-      @Nullable
       @Override
-      public Void apply(@Nullable Empty input) {
+      public Void apply(Empty empty) {
         return null;
       }
     }, MoreExecutors.directExecutor());
@@ -181,10 +177,9 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
     return Futures.transform(adminClient.modifyColumnFamilyAsync(request.toProto(instanceName.toAdminInstanceName())),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
-      @Nullable
       @Override
-      public Table apply(@Nullable com.google.bigtable.admin.v2.Table input) {
-        return Table.fromProto(input);
+      public Table apply(com.google.bigtable.admin.v2.Table table) {
+        return Table.fromProto(table);
       }
     }, MoreExecutors.directExecutor());
   }
@@ -208,9 +203,8 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
         .build();
 
     return Futures.transform(adminClient.dropRowRangeAsync(request), new Function<Empty, Void>() {
-      @Nullable
       @Override
-      public Void apply(@Nullable Empty input) {
+      public Void apply(Empty empty) {
           return null;
       }
     }, MoreExecutors.directExecutor());
