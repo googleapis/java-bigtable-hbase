@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
-  public class TestBigtableTableAdminClientWrapper {
+public class TestBigtableTableAdminClientWrapper {
   private static final String PROJECT_ID = "projectId";
   private static final String INSTANCE_ID = "instanceId";
   private static final String TABLE_ID = "tableId";
