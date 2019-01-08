@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.com.google.cloud.bigtable.hbase2_x.adapt
 import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
 
 import com.google.bigtable.admin.v2.ColumnFamily;
-import com.google.bigtable.admin.v2.InstanceName;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.GCRules;
@@ -47,14 +46,12 @@ public class TestTableAdapter2x {
   private static final String COLUMN_FAMILY = "myColumnFamily";
 
   private TableAdapter2x tableAdapter2x;
-  private InstanceName instanceName;
 
   @Before
   public void setUp(){
     BigtableOptions bigtableOptions = BigtableOptions.builder().setProjectId(PROJECT_ID)
             .setInstanceId(INSTANCE_ID).build();
     tableAdapter2x = new TableAdapter2x(bigtableOptions);
-    instanceName = InstanceName.of(PROJECT_ID, INSTANCE_ID);
   }
 
   @Test
@@ -70,8 +67,8 @@ public class TestTableAdapter2x {
     CreateTableRequest expectedRequest = CreateTableRequest.of(TABLE_ID);
     TableAdapter.addSplitKeys(splits, expectedRequest);
     Assert.assertEquals(
-            expectedRequest.toProto(instanceName),
-            actualRequest.toProto(instanceName));
+            expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+            actualRequest.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test

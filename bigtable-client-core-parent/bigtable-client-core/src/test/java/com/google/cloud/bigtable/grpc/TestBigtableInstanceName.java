@@ -103,10 +103,4 @@ public class TestBigtableInstanceName {
   public void testGcbInstanceName(){
     Assert.assertTrue(bigtableInstanceName.toGcbInstanceName() instanceof InstanceName);
   }
-
-  @Test
-  public void testAdminInstanceName(){
-    Assert.assertTrue(bigtableInstanceName.toAdminInstanceName() instanceof
-            com.google.bigtable.admin.v2.InstanceName);
-  }
 }

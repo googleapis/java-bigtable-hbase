@@ -132,7 +132,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
     CreateTableRequest request = TableAdapter2x.adapt(desc, splitKeys);
     return bigtableTableAdminClient.createTableAsync(
-            request.toProto(bigtableInstanceName.toAdminInstanceName()))
+            request.toProto(options.getProjectId(), options.getInstanceId()))
         .handle((resp, ex) -> {
           if (ex != null) {
             throw new CompletionException(
@@ -368,7 +368,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       ModifyTableBuilder modifications) {
     ModifyColumnFamiliesRequest request = modifications.build();
     return bigtableTableAdminClient
-        .modifyColumnFamilyAsync(request.toProto(bigtableInstanceName.toAdminInstanceName()))
+        .modifyColumnFamilyAsync(request.toProto(options.getProjectId(), options.getInstanceId()))
         .thenApply(r -> null);
   }
 

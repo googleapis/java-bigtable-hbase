@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters.admin;
 
 import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
 import com.google.bigtable.admin.v2.ColumnFamily;
-import com.google.bigtable.admin.v2.InstanceName;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.GCRules.GCRule;
@@ -43,13 +42,11 @@ public class TestTableAdapter {
   private static final String COLUMN_FAMILY = "myColumnFamily";
 
   private TableAdapter tableAdapter;
-  private InstanceName instanceName;
 
   @Before
   public void setUp(){
     BigtableInstanceName bigtableInstanceName = new BigtableInstanceName(PROJECT_ID, INSTANCE_ID);
     tableAdapter = new TableAdapter(bigtableInstanceName);
-    instanceName = InstanceName.of(PROJECT_ID, INSTANCE_ID);
   }
 
   @Test
@@ -65,8 +62,8 @@ public class TestTableAdapter {
     CreateTableRequest expectedRequest = CreateTableRequest.of(TABLE_ID);
     TableAdapter.addSplitKeys(splits, expectedRequest);
     Assert.assertEquals(
-            expectedRequest.toProto(instanceName),
-            actualRequest.toProto(instanceName));
+            expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+            actualRequest.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
 
@@ -78,8 +75,8 @@ public class TestTableAdapter {
 
     CreateTableRequest expectedRequest = CreateTableRequest.of(TABLE_ID);
     Assert.assertEquals(
-            expectedRequest.toProto(instanceName),
-            actualRequest.toProto(instanceName));
+            expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+            actualRequest.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
@@ -94,7 +91,7 @@ public class TestTableAdapter {
     GCRule gcRule = ColumnDescriptorAdapter.buildGarbageCollectionRule(columnDesc);
     CreateTableRequest expected =
             CreateTableRequest.of(TABLE_ID).addFamily(COLUMN_FAMILY, gcRule);
-    Assert.assertEquals(request.toProto(instanceName), expected.toProto(instanceName));
+    Assert.assertEquals(request.toProto(PROJECT_ID, INSTANCE_ID), expected.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
 

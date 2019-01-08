@@ -126,11 +126,6 @@ public class BigtableInstanceName implements Serializable {
     return InstanceName.of(projectId, instanceId);
   }
 
-  //TODO(rahulkql): Refactor once google-cloud-java/issues/4091 is resolved.
-  public com.google.bigtable.admin.v2.InstanceName toAdminInstanceName() {
-    return com.google.bigtable.admin.v2.InstanceName.of(projectId, instanceId);
-  }
-
   public BigtableClusterName toClusterName(String clusterId) {
     return new BigtableClusterName(instanceName + "/clusters/" + clusterId);
   }
