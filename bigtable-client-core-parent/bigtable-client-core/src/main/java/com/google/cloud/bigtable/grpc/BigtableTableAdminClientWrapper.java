@@ -50,15 +50,14 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
     Preconditions.checkNotNull(adminClient);
     Preconditions.checkNotNull(options);
     this.adminClient = adminClient;
-    this.instanceName = new BigtableInstanceName(options.getProjectId(),
-        options.getInstanceId());
+    this.instanceName = options.getInstanceName();
   }
 
   /** {@inheritDoc} */
   @Override
   public Table createTable(CreateTableRequest request) {
     com.google.bigtable.admin.v2.CreateTableRequest requestProto =
-        request.toProto(instanceName.toAdminInstanceName());
+        request.toProto(instanceName.getProjectId(), instanceName.getInstanceId());
     adminClient.createTable(requestProto);
 
     return getTable(requestProto.getTableId());
@@ -68,7 +67,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   @Override
   public ListenableFuture<Table> createTableAsync(CreateTableRequest request) {
     com.google.bigtable.admin.v2.CreateTableRequest requestProto =
-        request.toProto(instanceName.toAdminInstanceName());
+        request.toProto(instanceName.getProjectId(), instanceName.getInstanceId());
 
     return Futures.transform(adminClient.createTableAsync(requestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
@@ -174,7 +173,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   @Override
   public Table modifyFamilies(ModifyColumnFamiliesRequest request) {
     com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest modifyColumnRequestProto =
-        request.toProto(instanceName.toAdminInstanceName());
+        request.toProto(instanceName.getProjectId(), instanceName.getInstanceId());
 
     return Table.fromProto(adminClient.modifyColumnFamily(modifyColumnRequestProto));
   }
@@ -183,7 +182,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   @Override
   public ListenableFuture<Table> modifyFamiliesAsync(ModifyColumnFamiliesRequest request) {
     com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest modifyColumnRequestProto =
-        request.toProto(instanceName.toAdminInstanceName());
+        request.toProto(instanceName.getProjectId(), instanceName.getInstanceId());
 
     return Futures.transform(adminClient.modifyColumnFamilyAsync(modifyColumnRequestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {

@@ -82,12 +82,12 @@ public class TestBigtableTableAdminClientWrapper {
     CreateTableRequest request = CreateTableRequest.of(TABLE_ID);
     GetTableRequest getTableRequest = GetTableRequest.newBuilder().setName(TABLE_NAME).build();
 
-    doNothing().when(mockAdminClient).createTable(request.toProto(INSTANCE_NAME.toAdminInstanceName()));
+    doNothing().when(mockAdminClient).createTable(request.toProto(PROJECT_ID, INSTANCE_ID));
     when(mockAdminClient.getTable(getTableRequest)).thenReturn(createTableData());
     Table response = clientWrapper.createTable(request);
 
     assertEquals(Table.fromProto(createTableData()), response);
-    verify(mockAdminClient).createTable(request.toProto(INSTANCE_NAME.toAdminInstanceName()));
+    verify(mockAdminClient).createTable(request.toProto(PROJECT_ID, INSTANCE_ID));
     verify(mockAdminClient).getTable(getTableRequest);
   }
 
@@ -95,12 +95,12 @@ public class TestBigtableTableAdminClientWrapper {
   public void testCreateTableAsync() throws Exception{
     CreateTableRequest request = CreateTableRequest.of(TABLE_ID);
 
-    when(mockAdminClient.createTableAsync(request.toProto(INSTANCE_NAME.toAdminInstanceName())))
+    when(mockAdminClient.createTableAsync(request.toProto(PROJECT_ID, INSTANCE_ID)))
         .thenReturn(immediateFuture(createTableData()));
     ListenableFuture<Table> response = clientWrapper.createTableAsync(request);
 
     assertEquals(Table.fromProto(createTableData()), response.get());
-    verify(mockAdminClient).createTableAsync(request.toProto(INSTANCE_NAME.toAdminInstanceName()));
+    verify(mockAdminClient).createTableAsync(request.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
@@ -191,12 +191,12 @@ public class TestBigtableTableAdminClientWrapper {
             .addFamily(COLUMN_FAMILY, GCRULES.maxVersions(1))
             .updateFamily(UPDATE_FAMILY, GCRULES.defaultRule());
 
-    when(mockAdminClient.modifyColumnFamily(request.toProto(INSTANCE_NAME.toAdminInstanceName())))
+    when(mockAdminClient.modifyColumnFamily(request.toProto(PROJECT_ID, INSTANCE_ID)))
         .thenReturn(createTableData());
     Table response = clientWrapper.modifyFamilies(request);
 
     assertEquals(Table.fromProto(createTableData()), response);
-    verify(mockAdminClient).modifyColumnFamily(request.toProto(INSTANCE_NAME.toAdminInstanceName()));
+    verify(mockAdminClient).modifyColumnFamily(request.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
@@ -207,12 +207,12 @@ public class TestBigtableTableAdminClientWrapper {
             .addFamily(COLUMN_FAMILY, GCRULES.maxVersions(1))
             .updateFamily(UPDATE_FAMILY, GCRULES.defaultRule());
 
-    when(mockAdminClient.modifyColumnFamilyAsync(request.toProto(INSTANCE_NAME.toAdminInstanceName())))
+    when(mockAdminClient.modifyColumnFamilyAsync(request.toProto(PROJECT_ID, INSTANCE_ID)))
         .thenReturn(immediateFuture(createTableData()));
     ListenableFuture<Table> response = clientWrapper.modifyFamiliesAsync(request);
 
     assertEquals(Table.fromProto(createTableData()), response.get());
-    verify(mockAdminClient).modifyColumnFamilyAsync(request.toProto(INSTANCE_NAME.toAdminInstanceName()));
+    verify(mockAdminClient).modifyColumnFamilyAsync(request.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
