@@ -363,7 +363,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
           throws IOException {
     try {
       bigtableTableAdminClient.createTable(
-              request.toProto(bigtableInstanceName.toAdminInstanceName()));
+              request.toProto(options.getProjectId(), options.getInstanceId()));
     } catch (Throwable throwable) {
       throw convertToTableExistsException(tableName, throwable);
     }
@@ -385,7 +385,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
             CreateTableRequest request) throws IOException {
     ListenableFuture<Table> future =
             bigtableTableAdminClient.createTableAsync(
-                    request.toProto(bigtableInstanceName.toAdminInstanceName()));
+                    request.toProto(options.getProjectId(), options.getInstanceId()));
     final SettableFuture<Table> settableFuture = SettableFuture.create();
     Futures.addCallback(future, new FutureCallback<Table>() {
       @Override public void onSuccess(@Nullable Table result) {
@@ -612,7 +612,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
         ModifyColumnFamiliesRequest request =
             buildModifications(newDecriptor, getTableDescriptor(tableName)).build();
         bigtableTableAdminClient.modifyColumnFamily(
-                request.toProto(bigtableInstanceName.toAdminInstanceName()));
+                request.toProto(options.getProjectId(), options.getInstanceId()));
       } catch (Throwable throwable) {
         throw new IOException(
             String.format("Failed to modify table '%s'", tableName.getNameAsString()), throwable);
@@ -636,7 +636,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     ModifyColumnFamiliesRequest request = builder.build();
     try {
       bigtableTableAdminClient.modifyColumnFamily(
-              request.toProto(bigtableInstanceName.toAdminInstanceName()));
+              request.toProto(options.getProjectId(), options.getInstanceId()));
       return null;
     } catch (Throwable throwable) {
       throw new IOException(

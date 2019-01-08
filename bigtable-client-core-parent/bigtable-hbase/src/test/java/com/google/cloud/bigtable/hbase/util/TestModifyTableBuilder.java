@@ -17,13 +17,11 @@ package com.google.cloud.bigtable.hbase.util;
 
 import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 
-import com.google.bigtable.admin.v2.InstanceName;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -36,12 +34,6 @@ public class TestModifyTableBuilder {
   private static final String TABLE_ID = "myTable";
   private static final String COLUMN_FAMILY = "myColumnFamily";
 
-  private InstanceName instanceName;
-  @Before
-  public void setUp() {
-    instanceName = InstanceName.of(PROJECT_ID, INSTANCE_ID);
-  }
-
   @Test
   public void testBuildModificationForAddFamily(){
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_ID));
@@ -53,8 +45,8 @@ public class TestModifyTableBuilder {
     ModifyColumnFamiliesRequest expectedRequest = ModifyColumnFamiliesRequest.of(TABLE_ID)
         .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
 
-    Assert.assertEquals(expectedRequest.toProto(instanceName),
-        actualRequest.build().toProto(instanceName));
+    Assert.assertEquals(expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+        actualRequest.build().toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
@@ -68,8 +60,8 @@ public class TestModifyTableBuilder {
     ModifyColumnFamiliesRequest expectedRequest = ModifyColumnFamiliesRequest.of(TABLE_ID)
         .updateFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
 
-    Assert.assertEquals(expectedRequest.toProto(instanceName),
-        actualRequest.build().toProto(instanceName));
+    Assert.assertEquals(expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+        actualRequest.build().toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
@@ -89,7 +81,7 @@ public class TestModifyTableBuilder {
         .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn))
         .dropFamily(NEW_COLUMN_FAMILY);
 
-    Assert.assertEquals(expectedRequest.toProto(instanceName),
-        actualRequest.build().toProto(instanceName));
+    Assert.assertEquals(expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+        actualRequest.build().toProto(PROJECT_ID, INSTANCE_ID));
   }
 }
