@@ -52,10 +52,10 @@ public class TestBigtableTableAdminClientWrapper {
   private static final String APP_PROFILE_ID = "appProfileId";
   private static final String COLUMN_FAMILY = "myColumnFamily";
   private static final String ROW_KEY_PREFIX = "row-key-val";
-  public static final String UPDATE_FAMILY = "update-family";
-  public static final String TEST_TABLE_ID_1 = "test-table-1";
-  public static final String TEST_TABLE_ID_2 = "test-table-2";
-  public static final String TEST_TABLE_ID_3 = "test-table-3";
+  private static final String UPDATE_FAMILY = "update-family";
+  private static final String TEST_TABLE_ID_1 = "test-table-1";
+  private static final String TEST_TABLE_ID_2 = "test-table-2";
+  private static final String TEST_TABLE_ID_3 = "test-table-3";
 
   private BigtableOptions options = BigtableOptions.builder()
       .setProjectId(PROJECT_ID)

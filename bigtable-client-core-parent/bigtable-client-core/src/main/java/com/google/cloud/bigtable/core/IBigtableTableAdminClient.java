@@ -22,7 +22,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.List;
 
 /**
- * Interface to access Bigtable gax table admin API.
+ * Interface to wrap {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} with
+ * Google-Cloud-java's models.
  */
 public interface IBigtableTableAdminClient {
 

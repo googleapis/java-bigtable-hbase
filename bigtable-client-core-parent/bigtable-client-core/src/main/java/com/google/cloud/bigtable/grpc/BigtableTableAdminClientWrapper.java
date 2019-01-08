@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -33,18 +34,21 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
- * This class implements the {@link IBigtableTableAdminClient} interface which provides access to
- * google cloud java.
+ * This class implements the {@link IBigtableTableAdminClient} interface and wraps
+ * {@link BigtableTableAdminClient} with Google-cloud-java's models.
  */
 public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClient {
 
   private final BigtableTableAdminClient adminClient;
   private final BigtableInstanceName instanceName;
 
-  public BigtableTableAdminClientWrapper(BigtableTableAdminClient adminClient,
-      BigtableOptions options){
+  public BigtableTableAdminClientWrapper(@Nonnull BigtableTableAdminClient adminClient,
+      @Nonnull BigtableOptions options){
+    Preconditions.checkNotNull(adminClient);
+    Preconditions.checkNotNull(options);
     this.adminClient = adminClient;
     this.instanceName = new BigtableInstanceName(options.getProjectId(),
         options.getInstanceId());
@@ -69,8 +73,8 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
     return Futures.transform(adminClient.createTableAsync(requestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
           @Override
-          public Table apply(com.google.bigtable.admin.v2.Table table) {
-            return Table.fromProto(table);
+          public Table apply(com.google.bigtable.admin.v2.Table tableProto) {
+            return Table.fromProto(tableProto);
           }
         }, MoreExecutors.directExecutor());
   }
@@ -78,25 +82,25 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   /** {@inheritDoc} */
   @Override
   public Table getTable(String tableId) {
-    GetTableRequest request = GetTableRequest.newBuilder()
+    GetTableRequest requestProto = GetTableRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
         .build();
 
-    return Table.fromProto(adminClient.getTable(request));
+    return Table.fromProto(adminClient.getTable(requestProto));
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<Table> getTableAsync(String tableId) {
-    GetTableRequest request = GetTableRequest.newBuilder()
+    GetTableRequest requestProto = GetTableRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
         .build();
 
-    return Futures.transform(adminClient.getTableAsync(request),
+    return Futures.transform(adminClient.getTableAsync(requestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
           @Override
-          public Table apply(com.google.bigtable.admin.v2.Table table) {
-            return Table.fromProto(table);
+          public Table apply(com.google.bigtable.admin.v2.Table tableProto) {
+            return Table.fromProto(tableProto);
           }
         }, MoreExecutors.directExecutor());
   }
@@ -104,16 +108,16 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   /** {@inheritDoc} */
   @Override
   public List<String> listTables() {
-    ListTablesRequest request = ListTablesRequest.newBuilder()
+    ListTablesRequest requestProto = ListTablesRequest.newBuilder()
         .setParent(instanceName.toString())
         .build();
 
-    ListTablesResponse response = adminClient.listTables(request);
+    ListTablesResponse response = adminClient.listTables(requestProto);
 
     ImmutableList.Builder<String> tableIdsBuilder =
         ImmutableList.builderWithExpectedSize(response.getTablesList().size());
-    for(com.google.bigtable.admin.v2.Table table : response.getTablesList()){
-      tableIdsBuilder.add(instanceName.toTableId(table.getName()));
+    for(com.google.bigtable.admin.v2.Table tableProto : response.getTablesList()){
+      tableIdsBuilder.add(instanceName.toTableId(tableProto.getName()));
     }
 
     return tableIdsBuilder.build();
@@ -132,8 +136,8 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
       public List<String> apply(ListTablesResponse input) {
         ImmutableList.Builder<String> tableIdsBuilder =
             ImmutableList.builderWithExpectedSize(input.getTablesList().size());
-        for(com.google.bigtable.admin.v2.Table table : input.getTablesList()){
-          tableIdsBuilder.add(instanceName.toTableId(table.getName()));
+        for(com.google.bigtable.admin.v2.Table tableProto : input.getTablesList()){
+          tableIdsBuilder.add(instanceName.toTableId(tableProto.getName()));
         }
 
         return tableIdsBuilder.build();
@@ -147,6 +151,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
     DeleteTableRequest request = DeleteTableRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
         .build();
+
     adminClient.deleteTable(request);
   }
 
@@ -168,18 +173,23 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   /** {@inheritDoc} */
   @Override
   public Table modifyFamilies(ModifyColumnFamiliesRequest request) {
-    return Table.fromProto(adminClient.modifyColumnFamily(request.toProto(instanceName.toAdminInstanceName())));
+    com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest modifyColumnRequestProto =
+        request.toProto(instanceName.toAdminInstanceName());
+
+    return Table.fromProto(adminClient.modifyColumnFamily(modifyColumnRequestProto));
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<Table> modifyFamiliesAsync(ModifyColumnFamiliesRequest request) {
+    com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest modifyColumnRequestProto =
+        request.toProto(instanceName.toAdminInstanceName());
 
-    return Futures.transform(adminClient.modifyColumnFamilyAsync(request.toProto(instanceName.toAdminInstanceName())),
+    return Futures.transform(adminClient.modifyColumnFamilyAsync(modifyColumnRequestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
       @Override
-      public Table apply(com.google.bigtable.admin.v2.Table table) {
-        return Table.fromProto(table);
+      public Table apply(com.google.bigtable.admin.v2.Table tableProto) {
+        return Table.fromProto(tableProto);
       }
     }, MoreExecutors.directExecutor());
   }
@@ -187,22 +197,23 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   /** {@inheritDoc} */
   @Override
   public void dropRowRange(String tableId, String rowKeyPrefix) {
-    DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
+    DropRowRangeRequest requestProto = DropRowRangeRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
         .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix))
         .build();
-    adminClient.dropRowRange(request);
+
+    adminClient.dropRowRange(requestProto);
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
-    DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
+    DropRowRangeRequest requestProto = DropRowRangeRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
         .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix))
         .build();
 
-    return Futures.transform(adminClient.dropRowRangeAsync(request), new Function<Empty, Void>() {
+    return Futures.transform(adminClient.dropRowRangeAsync(requestProto), new Function<Empty, Void>() {
       @Override
       public Void apply(Empty empty) {
           return null;
