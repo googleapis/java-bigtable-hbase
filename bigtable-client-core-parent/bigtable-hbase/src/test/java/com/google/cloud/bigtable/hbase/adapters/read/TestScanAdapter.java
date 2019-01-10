@@ -23,7 +23,6 @@ import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
@@ -92,9 +91,8 @@ public class TestScanAdapter {
     return prefixEnd;
   }
 
-  private final RequestContext requestContext = RequestContext.create(
-      InstanceName.of("ProjectId", "InstanceId"),
-      "AppProfile");
+  private final RequestContext requestContext =
+      RequestContext.create("ProjectId", "InstanceId", "AppProfile");
 
   private Query query;
 

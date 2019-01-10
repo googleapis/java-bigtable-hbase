@@ -15,13 +15,17 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_APP_PROFILE_ID;
+import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_INSTANCE_ID;
+import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_PROJECT_ID;
+import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_TABLE_ID;
+
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import java.io.Serializable;
@@ -105,9 +109,11 @@ public class TemplateUtils {
         }
 
         ReadHooks readHooks = new DefaultReadHooks();
-        Query query = Query.create(options.getBigtableTableId().get());
-        Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
+        Query query = Query.create(PLACEHOLDER_TABLE_ID);
+        RequestContext requestContext = RequestContext
+            .create(PLACEHOLDER_PROJECT_ID, PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
         readHooks.applyPreSendHook(query);
+
         cachedRequest = query.toProto(requestContext);
       }
       return cachedRequest;

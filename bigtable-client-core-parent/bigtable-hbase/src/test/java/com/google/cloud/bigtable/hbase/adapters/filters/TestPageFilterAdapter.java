@@ -15,10 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
@@ -114,9 +112,8 @@ public class TestPageFilterAdapter {
   @Test
   public void pageFilterIsAppliedToReadRowsRequest() throws IOException {
     final String TABLE_ID = "tableId";
-    final RequestContext requestContext = RequestContext.create(
-            InstanceName.of("ProjectId", "InstanceId"),
-            "AppProfile");
+    final RequestContext requestContext =
+        RequestContext.create("ProjectId", "InstanceId", "AppProfile");
     ReadHooks hooks = new DefaultReadHooks();
     FilterAdapterContext context = new FilterAdapterContext(new Scan(), hooks);
     PageFilter pageFilter = new PageFilter(20);

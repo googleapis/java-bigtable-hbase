@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
@@ -48,9 +47,8 @@ public class TestGetAdapter {
   public static final String FAMILY_ID = "f1";
   public static final String QUALIFIER_ID = "q1";
   private final String TABLE_ID = "tableId";
-  private final RequestContext requestContext = RequestContext.create(
-          InstanceName.of("ProjectId", "InstanceId"),
-          "AppProfile");
+  private final RequestContext requestContext =
+      RequestContext.create("ProjectId", "InstanceId", "AppProfile");
   private Query query;
 
   private GetAdapter getAdapter =
