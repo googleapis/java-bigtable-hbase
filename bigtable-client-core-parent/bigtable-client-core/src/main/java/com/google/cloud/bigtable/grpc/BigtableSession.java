@@ -26,7 +26,7 @@ import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
@@ -160,6 +160,7 @@ public class BigtableSession implements Closeable {
   private final BigtableDataClient throttlingDataClient;
 
   private BigtableTableAdminClient tableAdminClient;
+  private IBigtableTableAdminClient adminClientWrapper;
   private BigtableInstanceGrpcClient instanceAdminClient;
 
   private final BigtableOptions options;
@@ -375,6 +376,19 @@ public class BigtableSession implements Closeable {
           BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
     }
     return tableAdminClient;
+  }
+
+  /**
+   * <p>Getter for the field <code>adminClientWrapper</code>.</p>
+   *
+   * @return a {@link BigtableTableAdminClientWrapper} object.
+   * @throws java.io.IOException if any.
+   */
+  public synchronized IBigtableTableAdminClient getTableAdminClientWrapper() throws IOException {
+    if (adminClientWrapper == null) {
+      adminClientWrapper = new BigtableTableAdminClientWrapper(getTableAdminClient(), options);
+    }
+    return adminClientWrapper;
   }
 
   /**
