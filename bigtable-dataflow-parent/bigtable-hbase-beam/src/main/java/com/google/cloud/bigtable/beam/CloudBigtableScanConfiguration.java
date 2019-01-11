@@ -291,12 +291,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
           ReadRowsRequest.Builder builder = request.get().toBuilder();
           builder.setTableName(fullTableName);
 
+          //Resetting the PLACEHOLDER_APP_PROFILE_ID with Empty ByteString.
+          builder.setAppProfileIdBytes(ByteString.EMPTY);
+
           ValueProvider<String> appProfileId = additionalConfiguration.get(APP_PROFILE_ID_KEY);
           if (additionalConfiguration.containsKey(APP_PROFILE_ID_KEY)
-              && !Strings.isNullOrEmpty(appProfileId.get())) {
+              && appProfileId.isAccessible()) {
             builder.setAppProfileId(appProfileId.get());
           }
-
           cachedRequest = builder.build();
         } else {
           cachedRequest = request.get();
