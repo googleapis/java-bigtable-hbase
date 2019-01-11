@@ -216,9 +216,10 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void dropRowRange(){
+  public void dropRowRangeForDeleteByPrefix(){
     DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
         .setName(TABLE_NAME)
+        .setDeleteAllDataFromTable(false)
         .setRowKeyPrefix(ByteString.copyFromUtf8(ROW_KEY_PREFIX))
         .build();
 
@@ -229,15 +230,43 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void dropRowRangeAsync(){
+  public void dropRowRangeForTruncate(){
     DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
         .setName(TABLE_NAME)
+        .setDeleteAllDataFromTable(true)
+        .build();
+
+    doNothing().when(mockAdminClient).dropRowRange(request);
+    clientWrapper.dropRowRange(TABLE_ID, request.getRowKeyPrefix().toStringUtf8());
+
+    verify(mockAdminClient).dropRowRange(request);
+  }
+
+  @Test
+  public void dropRowRangeAsyncForDeleteByPrefix(){
+    DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
+        .setName(TABLE_NAME)
+        .setDeleteAllDataFromTable(false)
         .setRowKeyPrefix(ByteString.copyFromUtf8(ROW_KEY_PREFIX))
         .build();
 
     when(mockAdminClient.dropRowRangeAsync(request))
         .thenReturn(immediateFuture(Empty.newBuilder().build()));
     clientWrapper.dropRowRangeAsync(TABLE_ID, ROW_KEY_PREFIX);
+
+    verify(mockAdminClient).dropRowRangeAsync(request);
+  }
+
+  @Test
+  public void dropRowRangeAsyncForTruncate(){
+    DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
+        .setName(TABLE_NAME)
+        .setDeleteAllDataFromTable(true)
+        .build();
+
+    when(mockAdminClient.dropRowRangeAsync(request))
+        .thenReturn(immediateFuture(Empty.newBuilder().build()));
+    clientWrapper.dropRowRangeAsync(TABLE_ID, request.getRowKeyPrefix().toStringUtf8());
 
     verify(mockAdminClient).dropRowRangeAsync(request);
   }

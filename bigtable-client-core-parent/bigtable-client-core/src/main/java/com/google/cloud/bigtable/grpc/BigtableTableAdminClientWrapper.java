@@ -27,6 +27,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -196,23 +197,34 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   /** {@inheritDoc} */
   @Override
   public void dropRowRange(String tableId, String rowKeyPrefix) {
-    DropRowRangeRequest requestProto = DropRowRangeRequest.newBuilder()
+    DropRowRangeRequest.Builder dropRequestProtoBuiler = DropRowRangeRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
-        .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix))
-        .build();
+        .setDeleteAllDataFromTable(true);
 
-    adminClient.dropRowRange(requestProto);
+    if(!Strings.isNullOrEmpty(rowKeyPrefix)){
+      dropRequestProtoBuiler
+          .setDeleteAllDataFromTable(false)
+          .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix));
+    }
+
+    adminClient.dropRowRange(dropRequestProtoBuiler.build());
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
-    DropRowRangeRequest requestProto = DropRowRangeRequest.newBuilder()
+    DropRowRangeRequest.Builder dropRequestProtoBuiler = DropRowRangeRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
-        .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix))
-        .build();
+        .setDeleteAllDataFromTable(true);
 
-    return Futures.transform(adminClient.dropRowRangeAsync(requestProto), new Function<Empty, Void>() {
+    if(!Strings.isNullOrEmpty(rowKeyPrefix)){
+      dropRequestProtoBuiler
+          .setDeleteAllDataFromTable(false)
+          .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix));
+    }
+
+    return Futures.transform(adminClient.dropRowRangeAsync(dropRequestProtoBuiler.build()),
+        new Function<Empty, Void>() {
       @Override
       public Void apply(Empty empty) {
           return null;
