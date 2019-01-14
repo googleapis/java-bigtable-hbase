@@ -18,8 +18,8 @@ package com.google.cloud.bigtable.grpc;
 import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import java.io.Serializable;
 
-import com.google.api.client.util.Strings;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 /**
  * This class encapsulates a Bigtable instance name.  An instance name is of the form

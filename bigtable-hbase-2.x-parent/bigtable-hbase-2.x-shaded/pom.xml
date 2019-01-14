@@ -163,108 +163,140 @@ limitations under the License.
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
-              <artifactSet>
-                <excludes>
-                  <!-- exclude user visible deps -->
-                  <exclude>io.dropwizard.metrics:metrics-core</exclude>
-                  <exclude>commons-logging:commons-logging</exclude>
-                  <exclude>com.google.code.findbugs:jsr305</exclude>
-                  <!-- exclude hbase-shaded-client & all of its dependencies -->
-                  <exclude>org.apache.hbase:hbase-shaded-client</exclude>
-                  <exclude>org.slf4j:slf4j-api</exclude>
-                  <exclude>org.slf4j:slf4j-log4j12</exclude>
-                  <exclude>org.slf4j:slf4j-api</exclude>
-                  <exclude>log4j:log4j</exclude>
-                  <exclude>org.apache.htrace:htrace-core</exclude>
-                  <exclude>com.github.stephenc.findbugs:findbugs-annotations</exclude>
-                  <exclude>log4j:log4j</exclude>
-                  <exclude>junit:junit</exclude>
-                  <exclude>org.hamcrest:hamcrest-core</exclude>
-                  <exclude>javax.inject:javax.inject</exclude>
-                  <exclude>org.apache.htrace:htrace-core4</exclude>
-                  <exclude>org.apache.yetus:audience-annotations</exclude>
-                </excludes>
-              </artifactSet>
-              <relocations>
-                <relocation>
-                  <pattern>com.google</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.com.google</shadedPattern>
-                  <excludes>
-                    <!-- don't shade our public hbase implementation. This includes com.google.cloud.bigtable.hbase.*
-                     and references to com.google.cloud.bigtable.hbase2_x in the version specific jars.
+                <artifactSet>
+                    <includes>
+                        <include>com.fasterxml.jackson.core:jackson-core</include>
+                        <include>com.google.api-client:google-api-client</include>
+                        <include>com.google.api.grpc:grpc-google-cloud-bigtable-admin-v2</include>
+                        <include>com.google.api.grpc:grpc-google-cloud-bigtable-v2</include>
+                        <include>com.google.api.grpc:grpc-google-common-protos</include>
+                        <include>com.google.api.grpc:proto-google-cloud-bigtable-admin-v2</include>
+                        <include>com.google.api.grpc:proto-google-cloud-bigtable-v2</include>
+                        <include>com.google.api.grpc:proto-google-cloud-trace-v2</include>
+                        <include>com.google.api.grpc:proto-google-common-protos</include>
+                        <include>com.google.api.grpc:proto-google-iam-v1</include>
+                        <include>com.google.api:api-common</include>
+                        <include>com.google.api:gax-grpc</include>
+                        <include>com.google.api:gax</include>
+                        <include>com.google.auth:google-auth-library-credentials</include>
+                        <include>com.google.auth:google-auth-library-oauth2-http</include>
+                        <include>com.google.cloud.bigtable:bigtable-client-core</include>
+                        <include>com.google.cloud.bigtable:bigtable-hbase-2.x</include>
+                        <include>com.google.cloud.bigtable:bigtable-hbase</include>
+                        <include>com.google.cloud:google-cloud-bigtable-admin</include>
+                        <include>com.google.cloud:google-cloud-bigtable</include>
+                        <include>com.google.cloud:google-cloud-core-grpc</include>
+                        <include>com.google.cloud:google-cloud-core-http</include>
+                        <include>com.google.cloud:google-cloud-core</include>
+                        <include>com.google.cloud:google-cloud-trace</include>
+                        <include>com.google.code.gson:gson</include>
+                        <include>com.google.guava:guava</include>
+                        <include>com.google.http-client:google-http-client-appengine</include>
+                        <include>com.google.http-client:google-http-client-jackson2</include>
+                        <include>com.google.http-client:google-http-client</include>
+                        <include>com.google.oauth-client:google-oauth-client</include>
+                        <include>com.google.protobuf:protobuf-java-util</include>
+                        <include>com.google.protobuf:protobuf-java</include>
+                        <include>com.lmax:disruptor</include>
+                        <include>commons-codec:commons-codec</include>
+                        <include>io.grpc:grpc-auth</include>
+                        <include>io.grpc:grpc-context</include>
+                        <include>io.grpc:grpc-core</include>
+                        <include>io.grpc:grpc-netty-shaded</include>
+                        <include>io.grpc:grpc-protobuf-lite</include>
+                        <include>io.grpc:grpc-protobuf</include>
+                        <include>io.grpc:grpc-stub</include>
+                        <include>io.opencensus:opencensus-api</include>
+                        <include>io.opencensus:opencensus-contrib-grpc-metrics</include>
+                        <include>io.opencensus:opencensus-contrib-grpc-util</include>
+                        <include>io.opencensus:opencensus-contrib-http-util</include>
+                        <include>io.opencensus:opencensus-contrib-monitored-resource-util</include>
+                        <include>io.opencensus:opencensus-contrib-zpages</include>
+                        <include>io.opencensus:opencensus-exporter-trace-stackdriver</include>
+                        <include>io.opencensus:opencensus-impl-core</include>
+                        <include>io.opencensus:opencensus-impl</include>
+                        <include>org.checkerframework:checker-compat-qual</include>
+                        <include>org.threeten:threetenbp</include>
+                    </includes>
+                </artifactSet>
+                <relocations>
+                    <relocation>
+                        <pattern>com.google</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.com.google</shadedPattern>
+                        <excludes>
+                            <!-- don't shade our public hbase implementation. This includes com.google.cloud.bigtable.hbase.*
+                             and references to com.google.cloud.bigtable.hbase1_x in the version specific jars.
+                            -->
+                            <exclude>com.google.cloud.bigtable.hbase*.**</exclude>
+                            <exclude>com.google.cloud.bigtable.metrics.**</exclude>
+
+                            <!-- in case maven is called with overlapping goals (ie. mvn install verify),
+                            avoid double relocation -->
+                            <exclude>com.google.bigtable.repackaged.**</exclude>
+                        </excludes>
+                    </relocation>
+
+                    <relocation>
+                        <pattern>com.fasterxml</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.com.faster.xml</shadedPattern>
+                    </relocation>
+                    <relocation>
+                        <pattern>com.twitter</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.com.twitter</shadedPattern>
+                    </relocation>
+                    <relocation>
+                        <pattern>org.json</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.org.json</shadedPattern>
+                    </relocation>
+                    <relocation>
+                        <pattern>org.threeten</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.org.threeten</shadedPattern>
+                    </relocation>
+                    <relocation>
+                        <pattern>org.checkerframework</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>
+                    </relocation>
+                    <relocation>
+                        <pattern>org.apache.commons.codec</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
+                    </relocation>
+
+                    <!-- Take special care of grpc-netty-shaded, it uses the package
+                         io.grpc.netty.shaded.io.grpc.netty, which will cause the
+                         ServicesResourceTransformer to replace both occurrences of io.grpc
+                     -->
+                    <relocation>
+                        <pattern>io.grpc.netty.shaded.io.grpc.netty</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.io.grpc.netty</shadedPattern>
+                    </relocation>
+                    <relocation>
+                        <pattern>io.grpc</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
+                    </relocation>
+
+                    <!-- Opencensus related shading -->
+                    <relocation>
+                        <pattern>com.lmax</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.com.lmax</shadedPattern>
+                    </relocation>
+                    <relocation>
+                        <pattern>io.opencensus</pattern>
+                        <shadedPattern>com.google.bigtable.repackaged.io.opencensus</shadedPattern>
+                    </relocation>
+                    <!-- Relocate netty, taking care to keep the prefix consistent for native tcnative
+                      libs. For details see:
+                        https://github.com/netty/netty/pull/6995
+                        https://github.com/grpc/grpc-java/pull/2485
                     -->
-                    <exclude>com.google.cloud.bigtable.hbase*.**</exclude>
-                    <exclude>com.google.cloud.bigtable.metrics.**</exclude>
-
-                    <!-- in case maven is called with overlapping goals (ie. mvn install verify),
-                    avoid double relocation -->
-                    <exclude>com.google.bigtable.repackaged.**</exclude>
-                  </excludes>
-                </relocation>
-
-                <relocation>
-                  <pattern>com.fasterxml</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.com.faster.xml</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.twitter</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.com.twitter</shadedPattern>
-                </relocation>
-
-                <!-- Take special care of grpc-netty-shaded, it uses the package
-                     io.grpc.netty.shaded.io.grpc.netty, which will cause the
-                     ServicesResourceTransformer to replace both occurrences of io.grpc
-                 -->
-                <relocation>
-                  <pattern>io.grpc.netty.shaded.io.grpc.netty</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.io.grpc.netty</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>io.grpc</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
-                </relocation>
-
-                <!-- Opencensus related shading -->
-                <relocation>
-                  <pattern>io.opencensus</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.io.opencensus</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.json</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.org.json</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.lmax</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.com.lmax</shadedPattern>
-                </relocation>
-
-                <!-- Relocate netty, taking care to keep the prefix consistent for native tcnative
-                  libs. For details see:
-                    https://github.com/netty/netty/pull/6995
-                    https://github.com/grpc/grpc-java/pull/2485
-                -->
-                <relocation>
-                  <pattern>META-INF/native/libio_grpc_netty_shaded_netty</pattern>
-                  <shadedPattern>META-INF/native/libcom_google_bigtable_repackaged_io_grpc_netty_shaded_netty</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>META-INF/native/io_grpc_netty_shaded_netty</pattern>
-                  <shadedPattern>META-INF/native/com_google_bigtable_repackaged_io_grpc_netty_shaded_netty</shadedPattern>
-                </relocation>
-
-                <relocation>
-                  <pattern>org.joda</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.org.joda</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.apache.http</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.org.apache.http</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.apache.commons.codec</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
-                </relocation>
-              </relocations>
+                    <relocation>
+                        <pattern>META-INF/native/libio_grpc_netty_shaded_netty</pattern>
+                        <shadedPattern>META-INF/native/libcom_google_bigtable_repackaged_io_grpc_netty_shaded_netty</shadedPattern>
+                    </relocation>
+                    <relocation>
+                        <pattern>META-INF/native/io_grpc_netty_shaded_netty</pattern>
+                        <shadedPattern>META-INF/native/com_google_bigtable_repackaged_io_grpc_netty_shaded_netty</shadedPattern>
+                    </relocation>
+                </relocations>
             </configuration>
           </execution>
         </executions>

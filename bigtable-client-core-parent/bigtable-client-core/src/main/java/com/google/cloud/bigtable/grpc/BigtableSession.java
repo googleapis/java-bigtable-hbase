@@ -17,7 +17,6 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.util.Clock;
-import com.google.api.client.util.Strings;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -43,6 +42,7 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.util.ThreadUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
@@ -50,6 +50,7 @@ import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.MethodDescriptor;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;

@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.api.client.util.Preconditions;
 import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.grpc.io.Watchdog.State;
 import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
@@ -29,6 +28,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 
