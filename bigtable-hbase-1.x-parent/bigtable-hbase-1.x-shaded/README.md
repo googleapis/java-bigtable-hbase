@@ -1,6 +1,17 @@
-This artifact is used in situations where dependencies don't converge properly.  Hadoop is one of
-those environments.  Hadoop uses really old versions of netty, protobuf and guava.  The simplest
-way to deal with that problem is to have a shaded jar.
+This artifact is used in situations where dependencies don't converge properly.  One way to deal
+with the  problem of convergence is to use a shaded jar with package relocation.
+
+`bigtable-hbase` itself uses `hbase-shaded-client`, since `hbase-client` has dependencies which
+conflict with `bigtable-hbase`'s dependencies.
+
+Apache Beam is an example of complex convergence.  The `bigtable-hbase` shaded artifacts work well
+there, and the use of the `bigtable-hbase` shaded jar can be seen in the `bigtable-hbase-beam`
+pom.xml.
+
+Hadoop is another one of those environments with complex convergence.  Hadoop uses really old
+versions of netty, protobuf and guava.  Hadoop environments also uses the standard `hbase-client`.
+The `bigtable-hbase-*-hadoop` uses the `bigtable-hbase-*-shaded`  and the `hbase-client`
+artifacts.
 
 ** NOTE TO DEVELOPERS:
 Shading can complicate dependency upgrades.  If you upgrade something, and your testing find that

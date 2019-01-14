@@ -164,57 +164,26 @@ limitations under the License.
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
                 <artifactSet>
-                    <includes>
-                        <include>com.fasterxml.jackson.core:jackson-core</include>
-                        <include>com.google.api-client:google-api-client</include>
-                        <include>com.google.api.grpc:grpc-google-cloud-bigtable-admin-v2</include>
-                        <include>com.google.api.grpc:grpc-google-cloud-bigtable-v2</include>
-                        <include>com.google.api.grpc:grpc-google-common-protos</include>
-                        <include>com.google.api.grpc:proto-google-cloud-bigtable-admin-v2</include>
-                        <include>com.google.api.grpc:proto-google-cloud-bigtable-v2</include>
-                        <include>com.google.api.grpc:proto-google-cloud-trace-v2</include>
-                        <include>com.google.api.grpc:proto-google-common-protos</include>
-                        <include>com.google.api.grpc:proto-google-iam-v1</include>
-                        <include>com.google.api:api-common</include>
-                        <include>com.google.api:gax-grpc</include>
-                        <include>com.google.api:gax</include>
-                        <include>com.google.auth:google-auth-library-credentials</include>
-                        <include>com.google.auth:google-auth-library-oauth2-http</include>
-                        <include>com.google.cloud.bigtable:bigtable-client-core</include>
-                        <include>com.google.cloud.bigtable:bigtable-hbase-2.x</include>
-                        <include>com.google.cloud.bigtable:bigtable-hbase</include>
-                        <include>com.google.cloud:google-cloud-bigtable-admin</include>
-                        <include>com.google.cloud:google-cloud-bigtable</include>
-                        <include>com.google.cloud:google-cloud-core-grpc</include>
-                        <include>com.google.cloud:google-cloud-core-http</include>
-                        <include>com.google.cloud:google-cloud-core</include>
-                        <include>com.google.cloud:google-cloud-trace</include>
+                  <excludes>
+                    <exclude>com.google.api.grpc:proto-google-cloud-trace-v1</exclude>
+                  </excludes>
+                  <includes>
+                    <include>com.fasterxml.jackson.core:jackson-core</include>
+                    <include>com.google.api-client:google-api-client</include>
+                    <include>com.google.api.grpc:*</include>
+                        <include>com.google.api:*</include>
+                        <include>com.google.auth:*</include>
+                        <include>com.google.cloud.bigtable:*</include>
+                        <include>com.google.cloud:*</include>
                         <include>com.google.code.gson:gson</include>
                         <include>com.google.guava:guava</include>
-                        <include>com.google.http-client:google-http-client-appengine</include>
-                        <include>com.google.http-client:google-http-client-jackson2</include>
-                        <include>com.google.http-client:google-http-client</include>
-                        <include>com.google.oauth-client:google-oauth-client</include>
+                        <include>com.google.http-client:*</include>
                         <include>com.google.protobuf:protobuf-java-util</include>
                         <include>com.google.protobuf:protobuf-java</include>
                         <include>com.lmax:disruptor</include>
                         <include>commons-codec:commons-codec</include>
-                        <include>io.grpc:grpc-auth</include>
-                        <include>io.grpc:grpc-context</include>
-                        <include>io.grpc:grpc-core</include>
-                        <include>io.grpc:grpc-netty-shaded</include>
-                        <include>io.grpc:grpc-protobuf-lite</include>
-                        <include>io.grpc:grpc-protobuf</include>
-                        <include>io.grpc:grpc-stub</include>
-                        <include>io.opencensus:opencensus-api</include>
-                        <include>io.opencensus:opencensus-contrib-grpc-metrics</include>
-                        <include>io.opencensus:opencensus-contrib-grpc-util</include>
-                        <include>io.opencensus:opencensus-contrib-http-util</include>
-                        <include>io.opencensus:opencensus-contrib-monitored-resource-util</include>
-                        <include>io.opencensus:opencensus-contrib-zpages</include>
-                        <include>io.opencensus:opencensus-exporter-trace-stackdriver</include>
-                        <include>io.opencensus:opencensus-impl-core</include>
-                        <include>io.opencensus:opencensus-impl</include>
+                        <include>io.grpc:*</include>
+                        <include>io.opencensus:*</include>
                         <include>org.checkerframework:checker-compat-qual</include>
                         <include>org.threeten:threetenbp</include>
                     </includes>
