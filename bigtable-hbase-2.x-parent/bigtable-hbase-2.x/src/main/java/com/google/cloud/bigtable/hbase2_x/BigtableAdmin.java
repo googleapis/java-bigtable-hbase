@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
-import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -345,10 +344,10 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
    }
-   // rowKeyPrefix set to Empty ByteString to truncate data from specified table.
+   // rowKeyPrefix set to Empty String which truncates data from specified table.
    return FutureUtils.toCompletableFuture(
         tableAdminClientWrapper
-          .dropRowRangeAsync(tableName.getNameAsString(), ByteString.EMPTY.toStringUtf8()))
+          .dropRowRangeAsync(tableName.getNameAsString(), ""))
         .thenApply(r -> null);
   }
   /* ******* Unsupported methods *********** */

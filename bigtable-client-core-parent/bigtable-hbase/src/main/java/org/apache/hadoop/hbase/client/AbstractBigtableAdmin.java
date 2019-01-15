@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModif
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
@@ -41,7 +40,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import io.grpc.Status;
 import org.apache.hadoop.conf.Configuration;
@@ -745,7 +743,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
-    issueBulkDelete(tableName, DropRowRangeRequest.newBuilder().setDeleteAllDataFromTable(true));
+    issueBulkDelete(tableName, "");
     disabledTables.remove(tableName);
   }
 
@@ -757,18 +755,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @throws java.io.IOException if any.
    */
   public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
-    issueBulkDelete(
-        tableName,
-        DropRowRangeRequest.newBuilder()
-            .setDeleteAllDataFromTable(false)
-            .setRowKeyPrefix(ByteString.copyFrom(prefix)));
+    issueBulkDelete(tableName, Bytes.toString(prefix));
   }
 
-  private void issueBulkDelete(TableName tableName, DropRowRangeRequest.Builder deleteRequest)
+  private void issueBulkDelete(TableName tableName, String rowKeyPrefix)
       throws IOException {
     try {
       tableAdminClientWrapper
-          .dropRowRange(tableName.getNameAsString(), deleteRequest.getRowKeyPrefix().toStringUtf8());
+          .dropRowRange(tableName.getNameAsString(), rowKeyPrefix);
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);
