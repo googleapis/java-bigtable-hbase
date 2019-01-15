@@ -16,14 +16,20 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.KeyOffset;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Interface to access Bigtable data service api.
+ * Interface to wrap {@link com.google.cloud.bigtable.grpc.BigtableDataClient} with
+ * Google-Cloud-java's models.
  */
 public interface IBigtableDataClient {
 
@@ -31,10 +37,8 @@ public interface IBigtableDataClient {
    * Mutate a row atomically.
    *
    * @param rowMutation a {@link RowMutation} model object.
-   * @throws ExecutionException if any.
-   * @throws InterruptedException if any.
    */
-  void mutateRow(RowMutation rowMutation) throws ExecutionException, InterruptedException;
+  void mutateRow(RowMutation rowMutation);
 
   /**
    * Mutate a row atomically.
@@ -42,21 +46,17 @@ public interface IBigtableDataClient {
    * @param rowMutation a {@link RowMutation} model object.
    * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
    *     successful otherwise exception will be thrown.
-   * @throws InterruptedException if any.
    */
   //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Void> mutateRowAsync(RowMutation rowMutation) throws InterruptedException;
+  ListenableFuture<Void> mutateRowAsync(RowMutation rowMutation);
 
   /**
    * Perform an atomic read-modify-write operation on a row.
    *
    * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
    * @return {@link Row} a modified row.
-   * @throws ExecutionException if any.
-   * @throws InterruptedException if any.
    */
-  Row readModifyWriteRow(ReadModifyWriteRow readModifyWriteRow)
-      throws ExecutionException, InterruptedException;
+  Row readModifyWriteRow(ReadModifyWriteRow readModifyWriteRow);
 
   /**
    * Perform an atomic read-modify-write operation on a row.
@@ -64,10 +64,9 @@ public interface IBigtableDataClient {
    * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
    * @return a {@link ListenableFuture} of type {@link Row} will be set when request is
    *     successful otherwise exception will be thrown.
-   * @throws InterruptedException if any.
    */
   //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) throws InterruptedException;
+  ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow);
 
   /**
    * Creates {@link IBulkMutation} batcher.
@@ -92,6 +91,66 @@ public interface IBigtableDataClient {
    * @throws ExecutionException if any.
    * @throws InterruptedException if any.
    */
-  Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation)
-      throws ExecutionException, InterruptedException;
+  Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation);
+
+  /**
+   * Sample row keys from a table.
+   *
+   * @param tableId a String object.
+   * @return an immutable {@link List} object.
+   */
+  List<KeyOffset> sampleRowKeys(String tableId);
+
+  /**
+   * Sample row keys from a table, returning a Future that will complete when the sampling has
+   * completed.
+   *
+   * @param tableId a String object.
+   * @return a {@link ListenableFuture} object.
+   */
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
+  ListenableFuture< List<KeyOffset>> sampleRowKeysAsync(String tableId);
+
+  /**
+   * Perform a scan over {@link Row}s, in key order.
+   *
+   * @param request a {@link Query} object.
+   * @return a {@link Row} object.
+   */
+  ResultScanner<Row> readRows(Query request);
+
+  /**
+   * Read multiple {@link Row}s into an in-memory list, in key order.
+   *
+   * @return a {@link ListenableFuture} that will finish when
+   * all reads have completed.
+   * @param request a {@link Query} object.
+   */
+  ListenableFuture<List<Row>> readRowsAsync(Query request);
+
+  /**
+   * Returns a list of {@link FlatRow}s, in key order.
+   *
+   * @param request a {@link Query} object.
+   * @return a List with {@link FlatRow}s.
+   */
+  List<FlatRow> readFlatRowsList(Query request);
+
+  /**
+   * Perform a scan over {@link FlatRow}s, in key order.
+   *
+   * @param request a {@link Query} object.
+   * @return a {@link ResultScanner} object.
+   */
+  ResultScanner<FlatRow> readFlatRows(Query request);
+
+  /**
+   * Read multiple {@link FlatRow}s into an in-memory list, in key order.
+   *
+   * @return a {@link ListenableFuture} that will finish when
+   * all reads have completed.
+   * @param request a {@link Query} object.
+   */
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
+  ListenableFuture<List<FlatRow>> readFlatRowsAsync(Query request);
 }
