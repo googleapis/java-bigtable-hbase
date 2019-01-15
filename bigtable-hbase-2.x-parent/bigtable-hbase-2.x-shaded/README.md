@@ -10,7 +10,7 @@ pom.xml.
 
 Hadoop is another one of those environments with complex convergence.  Hadoop uses really old
 versions of netty, protobuf and guava.  Hadoop environments also uses the standard `hbase-client`.
-The `bigtable-hbase-*-hadoop` uses the `bigtable-hbase-*-shaded`  and the `hbase-client`
+The `bigtable-hbase-*-hadoop` uses the `bigtable-hbase-*-shaded` and the `hbase-client`
 artifacts.
 
 ** NOTE TO DEVELOPERS:
@@ -19,7 +19,7 @@ there's a `ClassNotFound`, or something similar, you will have update the pom.xm
 of this project in the `org.apache.maven.plugins:maven-shade-plugin` section:
 
 1. You'll have to add an `<include>` for your dependency.  One way to  find the right package is
-by runing `mvn clean package` on this project, and looking through the excluded libraries.
+by running `mvn clean package` on this project, and looking through the excluded libraries.
 
 2. Add a `<relocation>` for the new inclusion
 
