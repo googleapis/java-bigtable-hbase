@@ -197,17 +197,17 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   /** {@inheritDoc} */
   @Override
   public void dropRowRange(String tableId, String rowKeyPrefix) {
-    DropRowRangeRequest.Builder dropRequestProtoBuiler = DropRowRangeRequest.newBuilder()
+    DropRowRangeRequest.Builder dropRequestProtoBuilder = DropRowRangeRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
         .setDeleteAllDataFromTable(true);
 
     if(!Strings.isNullOrEmpty(rowKeyPrefix)){
-      dropRequestProtoBuiler
+      dropRequestProtoBuilder
           .setDeleteAllDataFromTable(false)
           .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix));
     }
 
-    adminClient.dropRowRange(dropRequestProtoBuiler.build());
+    adminClient.dropRowRange(dropRequestProtoBuilder.build());
   }
 
   /** {@inheritDoc} */
