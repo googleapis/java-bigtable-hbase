@@ -183,6 +183,7 @@ limitations under the License.
                   <exclude>javax.inject:javax.inject</exclude>
                   <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>org.apache.yetus:audience-annotations</exclude>
+                  <exclude>javax.annotation:javax.annotation-api</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -263,6 +264,18 @@ limitations under the License.
                 <relocation>
                   <pattern>org.apache.commons.codec</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.threeten</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.threeten</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.checkerframework</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.codehaus</pattern>
+                   <shadedPattern>com.google.bigtable.repackaged.org.codehaus</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
