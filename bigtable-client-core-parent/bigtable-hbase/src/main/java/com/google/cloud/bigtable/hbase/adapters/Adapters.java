@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.cloud.bigtable.hbase.adapters.read.ModelRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowRangeAdapter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Append;
@@ -38,6 +39,8 @@ import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
 public final class Adapters {
   /** Constant <code>ROW_ADAPTER</code> */
   public static final RowAdapter ROW_ADAPTER = new RowAdapter();
+  /** Constant <code>MODEL_ROW_ADAPTER</code> */
+  public static final ModelRowAdapter MODEL_ROW_ADAPTER = new ModelRowAdapter();
   /** Constant <code>FLAT_ROW_ADAPTER</code> */
   public static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
   /** Constant <code>APPEND_ADAPTER</code> */
