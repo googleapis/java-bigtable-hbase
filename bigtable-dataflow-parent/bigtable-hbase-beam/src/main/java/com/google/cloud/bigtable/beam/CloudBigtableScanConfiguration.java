@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
@@ -63,7 +64,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Builds a {@link CloudBigtableScanConfiguration}.
    */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
-    private Scan scan;
     private ValueProvider<ReadRowsRequest> request;
 
     public Builder() {
@@ -76,8 +76,10 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withScan(Scan scan) {
-      this.scan = scan;
-      this.request = null;
+      Preconditions.checkArgument(scan != null, "Scan cannot be null");
+      ReadHooks readHooks = new DefaultReadHooks();
+      ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
+      withRequest(readHooks.applyPreSendHook(builder.build()));
       return this;
     }
 
@@ -97,7 +99,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     Builder withRequest(ValueProvider<ReadRowsRequest> request) {
       this.request = request;
-      this.scan = null;
       return this;
     }
 
@@ -272,12 +273,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     @Override
     public CloudBigtableScanConfiguration build() {
       if (request == null) {
-        ReadHooks readHooks = new DefaultReadHooks();
-        if (scan == null) {
-          scan = new Scan();
-        }
-        ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-        request =  StaticValueProvider.of(readHooks.applyPreSendHook(builder.build()));
+        withScan(new Scan());
       }
       return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
           request, additionalConfiguration);
