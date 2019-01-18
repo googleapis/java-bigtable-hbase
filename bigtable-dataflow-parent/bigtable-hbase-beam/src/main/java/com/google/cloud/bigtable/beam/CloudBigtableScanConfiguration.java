@@ -84,8 +84,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     Builder withQuery(Query query) {
-      RequestContext dummyContext = RequestContext.create("Dummy Project", "Dummy Instance", "")
-      this.withRequest(query.toProto(dummyContext).toBuilder().setTableName("").build())
+      RequestContext dummyContext = RequestContext.create("Dummy Project", "Dummy Instance", "");
+      return this.withRequest(query.toProto(dummyContext).toBuilder().setTableName("").build());
     }
 
     /**
