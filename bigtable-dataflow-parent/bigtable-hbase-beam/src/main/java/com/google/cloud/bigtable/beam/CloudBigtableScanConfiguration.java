@@ -19,6 +19,8 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
@@ -79,6 +81,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       this.scan = scan;
       this.request = null;
       return this;
+    }
+
+    Builder withQuery(Query query) {
+      RequestContext dummyContext = RequestContext.create("Dummy Project", "Dummy Instance", "")
+      this.withRequest(query.toProto(dummyContext).toBuilder().setTableName("").build())
     }
 
     /**
