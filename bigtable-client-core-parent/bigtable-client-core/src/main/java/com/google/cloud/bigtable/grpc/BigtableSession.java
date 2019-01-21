@@ -98,7 +98,10 @@ public class BigtableSession implements Closeable {
   static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
 
   static {
-    performWarmup();
+    if (!System.getProperty("BIGTABLE_SESSION_SKIP_WARMUP", "")
+        .equalsIgnoreCase("true")) {
+      performWarmup();
+    }
   }
 
   private static void performWarmup() {
