@@ -70,7 +70,7 @@ public interface IBigtableDataClient {
   ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) throws InterruptedException;
 
   /**
-   * Creates BulMutation batcher.
+   * Creates {@link IBulkMutation} batcher.
    */
   IBulkMutation createBulkMutationBatcher();
 
