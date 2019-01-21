@@ -313,9 +313,9 @@ public class TestBigtableDataClientWrapper {
     when(client.sampleRowKeys(requestProto)).thenReturn(sampleKeys.build());
 
     List<KeyOffset> keyOffsetList = clientWrapper.sampleRowKeys(TABLE_ID);
-    assertEquals(keyOffsetList.get(0).geyKey(), ROW_KEY_1);
-    assertEquals(keyOffsetList.get(1).geyKey(), ROW_KEY_2);
-    assertEquals(keyOffsetList.get(2).geyKey(), ROW_KEY_3);
+    assertEquals(keyOffsetList.get(0).getKey(), ROW_KEY_1);
+    assertEquals(keyOffsetList.get(1).getKey(), ROW_KEY_2);
+    assertEquals(keyOffsetList.get(2).getKey(), ROW_KEY_3);
     verify(client).sampleRowKeys(requestProto);
   }
 
@@ -339,9 +339,9 @@ public class TestBigtableDataClientWrapper {
     when(client.sampleRowKeysAsync(requestProto)).thenReturn(Futures.immediateFuture(responseProtos));
 
     List<KeyOffset> keyOffsetList = clientWrapper.sampleRowKeysAsync(TABLE_ID).get();
-    assertEquals(keyOffsetList.get(0).geyKey(), ROW_KEY_1);
-    assertEquals(keyOffsetList.get(1).geyKey(), ROW_KEY_2);
-    assertEquals(keyOffsetList.get(2).geyKey(), ROW_KEY_3);
+    assertEquals(keyOffsetList.get(0).getKey(), ROW_KEY_1);
+    assertEquals(keyOffsetList.get(1).getKey(), ROW_KEY_2);
+    assertEquals(keyOffsetList.get(2).getKey(), ROW_KEY_3);
     verify(client).sampleRowKeysAsync(requestProto);
   }
 
