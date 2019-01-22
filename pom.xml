@@ -62,6 +62,7 @@ limitations under the License.
         <google-cloud.version>0.78.0-alpha</google-cloud.version>
         <opencensus.version>0.17.0</opencensus.version>
         <guava.version>26.0-android</guava.version>
+        <checkerframework.version>2.5.2</checkerframework.version>
 
         <!-- hbase dependency versions -->
         <hbase.version.1>1.4.5</hbase.version.1>
