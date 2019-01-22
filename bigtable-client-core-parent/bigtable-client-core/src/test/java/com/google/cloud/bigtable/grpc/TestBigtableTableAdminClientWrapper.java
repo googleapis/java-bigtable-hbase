@@ -237,7 +237,7 @@ public class TestBigtableTableAdminClientWrapper {
         .build();
 
     doNothing().when(mockAdminClient).dropRowRange(request);
-    clientWrapper.dropRowRange(TABLE_ID, request.getRowKeyPrefix().toStringUtf8());
+    clientWrapper.dropRowRange(TABLE_ID, null);
 
     verify(mockAdminClient).dropRowRange(request);
   }
@@ -266,7 +266,7 @@ public class TestBigtableTableAdminClientWrapper {
 
     when(mockAdminClient.dropRowRangeAsync(request))
         .thenReturn(immediateFuture(Empty.newBuilder().build()));
-    clientWrapper.dropRowRangeAsync(TABLE_ID, request.getRowKeyPrefix().toStringUtf8());
+    clientWrapper.dropRowRangeAsync(TABLE_ID, null);
 
     verify(mockAdminClient).dropRowRangeAsync(request);
   }

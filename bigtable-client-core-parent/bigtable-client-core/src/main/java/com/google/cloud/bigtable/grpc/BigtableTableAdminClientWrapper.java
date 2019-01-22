@@ -114,8 +114,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
     ListTablesResponse response = adminClient.listTables(requestProto);
 
-    ImmutableList.Builder<String> tableIdsBuilder =
-        ImmutableList.builderWithExpectedSize(response.getTablesList().size());
+    ImmutableList.Builder<String> tableIdsBuilder = ImmutableList.builder();
     for(com.google.bigtable.admin.v2.Table tableProto : response.getTablesList()){
       tableIdsBuilder.add(instanceName.toTableId(tableProto.getName()));
     }
@@ -134,8 +133,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
     return Futures.transform(response, new Function<ListTablesResponse, List<String>>() {
       @Override
       public List<String> apply(ListTablesResponse input) {
-        ImmutableList.Builder<String> tableIdsBuilder =
-            ImmutableList.builderWithExpectedSize(input.getTablesList().size());
+        ImmutableList.Builder<String> tableIdsBuilder = ImmutableList.builder();
         for(com.google.bigtable.admin.v2.Table tableProto : input.getTablesList()){
           tableIdsBuilder.add(instanceName.toTableId(tableProto.getName()));
         }
@@ -197,38 +195,37 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   /** {@inheritDoc} */
   @Override
   public void dropRowRange(String tableId, String rowKeyPrefix) {
-    DropRowRangeRequest.Builder dropRequestProtoBuilder = DropRowRangeRequest.newBuilder()
-        .setName(instanceName.toTableNameStr(tableId))
-        .setDeleteAllDataFromTable(true);
 
-    if(!Strings.isNullOrEmpty(rowKeyPrefix)){
-      dropRequestProtoBuilder
-          .setDeleteAllDataFromTable(false)
-          .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix));
-    }
-
-    adminClient.dropRowRange(dropRequestProtoBuilder.build());
+    adminClient.dropRowRange(buildDropRowRangeRequest(tableId, rowKeyPrefix));
   }
 
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
-    DropRowRangeRequest.Builder dropRequestProtoBuiler = DropRowRangeRequest.newBuilder()
-        .setName(instanceName.toTableNameStr(tableId))
-        .setDeleteAllDataFromTable(true);
 
-    if(!Strings.isNullOrEmpty(rowKeyPrefix)){
+    return Futures.transform(
+        adminClient.dropRowRangeAsync(buildDropRowRangeRequest(tableId, rowKeyPrefix)),
+        new Function<Empty, Void>() {
+          @Override
+          public Void apply(Empty empty) {
+            return null;
+          }
+        }, MoreExecutors.directExecutor());
+  }
+
+  private DropRowRangeRequest buildDropRowRangeRequest(String tableId, String rowKeyPrefix) {
+    DropRowRangeRequest.Builder dropRequestProtoBuiler =
+        DropRowRangeRequest.newBuilder()
+            .setName(instanceName.toTableNameStr(tableId));
+
+    if (!Strings.isNullOrEmpty(rowKeyPrefix)) {
       dropRequestProtoBuiler
           .setDeleteAllDataFromTable(false)
           .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix));
+    } else {
+      dropRequestProtoBuiler.setDeleteAllDataFromTable(true);
     }
 
-    return Futures.transform(adminClient.dropRowRangeAsync(dropRequestProtoBuiler.build()),
-        new Function<Empty, Void>() {
-      @Override
-      public Void apply(Empty empty) {
-          return null;
-      }
-    }, MoreExecutors.directExecutor());
+    return dropRequestProtoBuiler.build();
   }
 }
