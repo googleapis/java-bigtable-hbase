@@ -15,12 +15,6 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.APP_PROFILE_ID_KEY;
-
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.InstanceName;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
@@ -52,6 +46,10 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
 
   private static final long serialVersionUID = 2435897354284600685L;
+  protected static final String PLACEHOLDER_TABLE_ID = "PLACEHOLDER_TABLE_ID";
+  protected static final String PLACEHOLDER_PROJECT_ID = "PLACEHOLDER_PROJECT_ID";
+  protected static final String PLACEHOLDER_INSTANCE_ID = "PLACEHOLDER_INSTANCE_ID";
+  protected static final String PLACEHOLDER_APP_PROFILE_ID = "PLACEHOLDER_APP_PROFILE_ID";
 
   /**
    * Converts a {@link CloudBigtableTableConfiguration} object to a
@@ -85,15 +83,19 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     public Builder withScan(Scan scan) {
       Preconditions.checkArgument(scan != null, "Scan cannot be null");
+      Query query = Query.create(PLACEHOLDER_TABLE_ID);
       ReadHooks readHooks = new DefaultReadHooks();
-      ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-      withRequest(readHooks.applyPreSendHook(builder.build()));
+      Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
+      readHooks.applyPreSendHook(query);
+      withQuery(query);
       return this;
     }
 
     Builder withQuery(Query query) {
-      RequestContext dummyContext = RequestContext.create("Dummy Project", "Dummy Instance", "");
-      return this.withRequest(query.toProto(dummyContext).toBuilder().setTableName("").build());
+      RequestContext dummyContext = RequestContext
+          .create(PLACEHOLDER_PROJECT_ID, PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
+      return this.withRequest(
+          query.toProto(dummyContext).toBuilder().setTableName("").setAppProfileId("").build());
     }
 
     /**
@@ -263,43 +265,26 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     private final ValueProvider<String> tableId;
     private final ValueProvider<ReadRowsRequest> request;
     private ReadRowsRequest cachedRequest;
-    private Map<String, ValueProvider<String>> additionalConfiguration;
 
     RequestWithTableNameValueProvider(
         ValueProvider<String> projectId,
         ValueProvider<String> instanceId,
         ValueProvider<String> tableId,
-        ValueProvider<ReadRowsRequest> request,
-        Map<String, ValueProvider<String>> additionalConfiguration) {
+        ValueProvider<ReadRowsRequest> request) {
       this.projectId = projectId;
       this.instanceId = instanceId;
       this.tableId = tableId;
       this.request = request;
-      this.additionalConfiguration = additionalConfiguration;
     }
 
     @Override
     public ReadRowsRequest get() {
       if (cachedRequest == null) {
-        String tableName = request.get().getTableName();
-
-        if (tableName.isEmpty() || tableName.contains(PLACEHOLDER_TABLE_ID)) {
+        if (request.get().getTableName().isEmpty()) {
           BigtableInstanceName bigtableInstanceName =
               new BigtableInstanceName(projectId.get(), instanceId.get());
           String fullTableName = bigtableInstanceName.toTableNameStr(tableId.get());
-
-          ReadRowsRequest.Builder builder = request.get().toBuilder();
-          builder.setTableName(fullTableName);
-
-          //Resetting the PLACEHOLDER_APP_PROFILE_ID with Empty ByteString.
-          builder.setAppProfileIdBytes(ByteString.EMPTY);
-
-          ValueProvider<String> appProfileId = additionalConfiguration.get(APP_PROFILE_ID_KEY);
-          if (additionalConfiguration.containsKey(APP_PROFILE_ID_KEY)
-              && appProfileId.isAccessible()) {
-            builder.setAppProfileId(appProfileId.get());
-          }
-          cachedRequest = builder.build();
+          cachedRequest = request.get().toBuilder().setTableName(fullTableName).build();
         } else {
           cachedRequest = request.get();
         }
@@ -340,7 +325,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<ReadRowsRequest> request,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, request, additionalConfiguration);
+    this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, request);
   }
 
   /**

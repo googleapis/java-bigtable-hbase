@@ -29,7 +29,6 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -46,11 +45,10 @@ public class TestGetAdapter {
   public static final String PREFIX_DATA = "rk1";
   public static final String FAMILY_ID = "f1";
   public static final String QUALIFIER_ID = "q1";
-  private final String TABLE_ID = "tableId";
+
   private final RequestContext requestContext =
       RequestContext.create("ProjectId", "InstanceId", "AppProfile");
-  private Query query;
-
+  private final Query query = Query.create("tableId");
   private GetAdapter getAdapter =
       new GetAdapter(new ScanAdapter(FilterAdapter.buildAdapter(), new RowRangeAdapter()));
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -70,11 +68,6 @@ public class TestGetAdapter {
     Get get = new Get(rowKey);
     get.setMaxVersions(Integer.MAX_VALUE);
     return get;
-  }
-
-  @Before
-  public void setUp(){
-    query = Query.create(TABLE_ID);
   }
 
   @Test

@@ -39,12 +39,11 @@ public class TestRowRangeAdapter {
 
   private RowRangeAdapter adapter;
 
-  private Query query;
+  private final Query query = Query.create("tableId");
 
   @Before
   public void setup() {
     this.adapter = new RowRangeAdapter();
-    this.query = Query.create("tableId");
   }
 
   @Test

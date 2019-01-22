@@ -20,7 +20,7 @@ import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 
 /**
- * Converts a {@link TimestampRangeFilter} into a Cloud Bigtable {@link RowFilter}.
+ * Converts a {@link TimestampRangeFilter} into a Cloud Bigtable {@link Filter}.
  */
 public class TimestampRangeFilterAdapter extends TypedFilterAdapterBase<TimestampRangeFilter> {
 

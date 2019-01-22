@@ -44,7 +44,6 @@ import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -93,13 +92,7 @@ public class TestScanAdapter {
 
   private final RequestContext requestContext =
       RequestContext.create("ProjectId", "InstanceId", "AppProfile");
-
-  private Query query;
-
-  @Before
-  public void setUp(){
-    query = Query.create("tableId");
-  }
+  private final Query query = Query.create("tableId");
 
   @Test
   public void testNewScan() {
@@ -334,7 +327,7 @@ public class TestScanAdapter {
   }
 
   @Test
-  public void testIsGetScan() throws IOException{
+  public void testIsGetScan() throws IOException {
     byte[] key = Bytes.toBytes("key");
     Get get = new Get(key);
     get.setMaxVersions(Integer.MAX_VALUE);
