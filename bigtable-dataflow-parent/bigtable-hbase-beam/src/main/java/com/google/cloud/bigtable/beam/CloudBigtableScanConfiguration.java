@@ -46,6 +46,10 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
 
   private static final long serialVersionUID = 2435897354284600685L;
+  protected static final String PLACEHOLDER_TABLE_ID = "PLACEHOLDER_TABLE_ID";
+  protected static final String PLACEHOLDER_PROJECT_ID = "PLACEHOLDER_PROJECT_ID";
+  protected static final String PLACEHOLDER_INSTANCE_ID = "PLACEHOLDER_INSTANCE_ID";
+  protected static final String PLACEHOLDER_APP_PROFILE_ID = "PLACEHOLDER_APP_PROFILE_ID";
 
   /**
    * Converts a {@link CloudBigtableTableConfiguration} object to a
@@ -79,15 +83,19 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     public Builder withScan(Scan scan) {
       Preconditions.checkArgument(scan != null, "Scan cannot be null");
+      Query query = Query.create(PLACEHOLDER_TABLE_ID);
       ReadHooks readHooks = new DefaultReadHooks();
-      ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-      withRequest(readHooks.applyPreSendHook(builder.build()));
+      Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
+      readHooks.applyPreSendHook(query);
+      withQuery(query);
       return this;
     }
 
     Builder withQuery(Query query) {
-      RequestContext dummyContext = RequestContext.create("Dummy Project", "Dummy Instance", "");
-      return this.withRequest(query.toProto(dummyContext).toBuilder().setTableName("").build());
+      RequestContext dummyContext = RequestContext
+          .create(PLACEHOLDER_PROJECT_ID, PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
+      return this.withRequest(
+          query.toProto(dummyContext).toBuilder().setTableName("").setAppProfileId("").build());
     }
 
     /**

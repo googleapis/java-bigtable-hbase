@@ -17,7 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
+import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.data.v2.models.Range.ByteStringRange;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
@@ -25,15 +28,16 @@ import com.google.common.collect.TreeRangeSet;
 import com.google.protobuf.ByteString;
 
 /**
- * Adapter to convert between a Bigtable RowSet and guava's RangeSet.
+ * Adapter to convert between a Bigtable {@link RowSet} and guava's {@link RangeSet}.
  */
 public class RowRangeAdapter {
 
   /**
-   * Convert bigtable's RowSet -> Guava's RangeSet.
+   * Convert bigtable's {@link RowSet} -> Guava's {@link RangeSet}.
    * Note that this will normalize the ranges, such that: overlapping keys and ranges will be merged
    * and empty range keys will be converted in boundless ranges.
    */
+  @VisibleForTesting
   RangeSet<RowKeyWrapper> rowSetToRangeSet(RowSet btRowSet) {
     RangeSet<RowKeyWrapper> rangeSet = TreeRangeSet.create();
     for (RowRange btRowRange : btRowSet.getRowRangesList()) {
@@ -46,7 +50,7 @@ public class RowRangeAdapter {
   }
 
   /**
-   * Convert Bigtable's RowRange -> guava Range.
+   * Convert Bigtable's {@link RowRange} -> guava {@link Range}.
    */
   private Range<RowKeyWrapper> rowRangeToRange(RowRange btRange) {
     final BoundType startBound;
@@ -69,10 +73,6 @@ public class RowRangeAdapter {
         throw new IllegalArgumentException("Unexpected start key case: " +
             btRange.getStartKeyCase());
     }
-    // Bigtable doesn't allow empty row keys, so an empty start row which is open or closed is
-    // considered unbounded. ie. all row keys are bigger than the empty key (no need to
-    // differentiate between open/closed)
-    final boolean startUnbounded = startKey.isEmpty();
 
     final BoundType endBound;
     final ByteString endKey;
@@ -92,6 +92,21 @@ public class RowRangeAdapter {
       default:
         throw new IllegalArgumentException("Unexpected end key case: " + btRange.getEndKeyCase());
     }
+
+    return boundedRange(startBound, startKey, endBound, endKey);
+  }
+
+  /**
+   * To determine {@link Range<RowKeyWrapper>} based start/end key & {@link BoundType}.
+   */
+  @VisibleForTesting
+  Range<RowKeyWrapper> boundedRange(BoundType startBound, ByteString startKey, BoundType endBound,
+      ByteString endKey) {
+    // Bigtable doesn't allow empty row keys, so an empty start row which is open or closed is
+    // considered unbounded. ie. all row keys are bigger than the empty key (no need to
+    // differentiate between open/closed)
+    final boolean startUnbounded = startKey.isEmpty();
+
     // Bigtable doesn't allow empty row keys, so an empty end row which is open or closed is
     // considered unbounded. ie. all row keys are smaller than the empty end key (no need to
     // differentiate between open/closed)
@@ -110,11 +125,11 @@ public class RowRangeAdapter {
   }
 
   /**
-   * Convert guava's RangeSet to Bigtable's RowSet. Please note that this will convert
+   * Convert guava's {@link RangeSet} to Bigtable's {@link ByteStringRange}. Please note that this will convert
    * boundless ranges into unset key cases.
    */
-  RowSet rangeSetToRowSet(RangeSet<RowKeyWrapper> guavaRangeSet) {
-    RowSet.Builder rowSet = RowSet.newBuilder();
+  @VisibleForTesting
+  void rangeSetToByteStringRange(RangeSet<RowKeyWrapper> guavaRangeSet, Query query) {
 
     for (Range<RowKeyWrapper> guavaRange : guavaRangeSet.asRanges()) {
       // Is it a point?
@@ -122,18 +137,18 @@ public class RowRangeAdapter {
           && guavaRange.hasUpperBound() && guavaRange.upperBoundType() == BoundType.CLOSED
           && guavaRange.lowerEndpoint().equals(guavaRange.upperEndpoint())) {
 
-        rowSet.addRowKeys(guavaRange.lowerEndpoint().getKey());
+        query.rowKey(guavaRange.lowerEndpoint().getKey());
       } else {
-        RowRange.Builder btRange = RowRange.newBuilder();
+        ByteStringRange byteRange = ByteStringRange.unbounded();
 
         // Handle start key
         if (guavaRange.hasLowerBound()) {
           switch (guavaRange.lowerBoundType()) {
             case CLOSED:
-              btRange.setStartKeyClosed(guavaRange.lowerEndpoint().getKey());
+              byteRange.startClosed(guavaRange.lowerEndpoint().getKey());
               break;
             case OPEN:
-              btRange.setStartKeyOpen(guavaRange.lowerEndpoint().getKey());
+              byteRange.startOpen(guavaRange.lowerEndpoint().getKey());
               break;
             default:
               throw new IllegalArgumentException("Unexpected lower bound type: "
@@ -145,19 +160,18 @@ public class RowRangeAdapter {
         if (guavaRange.hasUpperBound()) {
           switch (guavaRange.upperBoundType()) {
             case CLOSED:
-              btRange.setEndKeyClosed(guavaRange.upperEndpoint().getKey());
+              byteRange.endClosed(guavaRange.upperEndpoint().getKey());
               break;
             case OPEN:
-              btRange.setEndKeyOpen(guavaRange.upperEndpoint().getKey());
+              byteRange.endOpen(guavaRange.upperEndpoint().getKey());
               break;
             default:
               throw new IllegalArgumentException("Unexpected upper bound type: " +
                   guavaRange.upperBoundType());
           }
         }
-        rowSet.addRowRanges(btRange);
+        query.range(byteRange);
       }
     }
-    return rowSet.build();
   }
 }
