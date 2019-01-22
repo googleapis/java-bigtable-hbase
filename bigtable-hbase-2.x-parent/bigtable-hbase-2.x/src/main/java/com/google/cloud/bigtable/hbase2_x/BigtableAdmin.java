@@ -15,9 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
-import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModifications;
-
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,12 +62,9 @@ import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.Snapshot;
-import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.util.concurrent.Futures;
 
@@ -244,11 +238,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   protected CompletableFuture<Void> deleteTableAsyncInternal(TableName tableName) {
-    DeleteTableRequest deleteTableRequest = DeleteTableRequest.newBuilder()
-        .setName(toBigtableName(tableName))
-        .build();
     return FutureUtils.toCompletableFuture(
-        bigtableTableAdminClient.deleteTableAsync(deleteTableRequest))
+        tableAdminClientWrapper.deleteTableAsync(tableName.getNameAsString()))
         .thenApply(r -> null);
   }
 
@@ -353,10 +344,10 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
    }
-   DropRowRangeRequest.Builder deleteRequest = DropRowRangeRequest.newBuilder().setDeleteAllDataFromTable(true);
+   // rowKeyPrefix set to Empty String which truncates data from specified table.
    return FutureUtils.toCompletableFuture(
-        bigtableTableAdminClient
-          .dropRowRangeAsync(deleteRequest.setName(toBigtableName(tableName)).build()))
+        tableAdminClientWrapper
+          .dropRowRangeAsync(tableName.getNameAsString(), ""))
         .thenApply(r -> null);
   }
   /* ******* Unsupported methods *********** */
