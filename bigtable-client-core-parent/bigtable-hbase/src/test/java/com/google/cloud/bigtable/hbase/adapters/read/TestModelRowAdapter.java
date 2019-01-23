@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class TestModelRowAdapter {
   private static final ByteString QUALIFIER_2 = ByteString.copyFromUtf8("qualifier2");
   private static final long TIMESTAMP_MS_1 = 12345600;
   private static final long TIMESTAMP_MS_2 = 65432100;
+  private static final long TIMESTAMP_MS_3 = 92929292;
   private static final long TIMESTAMP_MILLS_1 = TIMESTAMP_MS_1/1000;
   private static final long TIMESTAMP_MILLS_2 = TIMESTAMP_MS_2/1000;
   private static final String LABEL = "label";
@@ -69,23 +70,26 @@ public class TestModelRowAdapter {
   }
 
   @Test
-  public void testAdaptResWithRow(){
+  public void testAdaptResWithMultipleRow(){
     ImmutableList.Builder<RowCell> rowCells = ImmutableList.builder();
     rowCells.add(RowCell.create(FAMILY_1, QUALIFIER_1, TIMESTAMP_MS_1, LABEL_LIST, VALUE_1));
     rowCells.add(RowCell.create(FAMILY_1, QUALIFIER_2, TIMESTAMP_MS_2, LABEL_LIST, VALUE_2));
     rowCells.add(RowCell.create(FAMILY_2, QUALIFIER_2, TIMESTAMP_MS_2, LABEL_LIST, VALUE_3));
     rowCells.add(RowCell.create(FAMILY_2, QUALIFIER_1, TIMESTAMP_MS_1, LABEL_LIST, VALUE_4));
-    //Added duplicate row
+
+    //Added duplicate row, should be ignored
     rowCells.add(RowCell.create(FAMILY_2, QUALIFIER_1, TIMESTAMP_MS_1, LABEL_LIST, VALUE_4));
-    //Added Row with label
-    rowCells.add(RowCell.create(FAMILY_1, QUALIFIER_2, TIMESTAMP_MILLS_1,
+
+    //Row containing Label, Should be ignored
+    rowCells.add(RowCell.create(FAMILY_1, QUALIFIER_2, TIMESTAMP_MS_3,
         Collections.singletonList(LABEL), VALUE_1));
     Row inputRow = Row.create(ROW_KEY, rowCells.build());
+
     Result result = adapter.adaptResponse(inputRow);
     assertEquals(4, result.rawCells().length);
 
-    // The duplicate row and label cells have been removed. The timestamp micros get converted to
-    // millisecond accuracy.
+    // Duplicate row and row with label cells should be removed. The timestamp micros gets
+    // converted to millisecond accuracy.
     byte[] keyArray = ByteStringer.extract(ROW_KEY);
     org.apache.hadoop.hbase.Cell[] expectedCells = new org.apache.hadoop.hbase.Cell[] {
         new com.google.cloud.bigtable.hbase.adapters.read.RowCell(keyArray, FAMILY_1.getBytes(),
