@@ -262,7 +262,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
 
     try {
-      return tableAdapter.adapt(bigtableTableAdminClient.getTable(request));
+      return tableAdapter.adapt(Table.fromProto(bigtableTableAdminClient.getTable(request)));
     } catch (Throwable throwable) {
       if (Status.fromThrowable(throwable).getCode() == Status.Code.NOT_FOUND) {
         throw new TableNotFoundException(tableName);

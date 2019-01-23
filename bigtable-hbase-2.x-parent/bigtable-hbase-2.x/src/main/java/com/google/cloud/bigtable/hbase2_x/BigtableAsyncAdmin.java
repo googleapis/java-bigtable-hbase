@@ -15,9 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
-import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModifications;
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
@@ -234,6 +232,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
          r.stream()
             .filter(t -> !tableNamePattern.isPresent() ||
                 tableNamePattern.get().matcher(bigtableInstanceName.toTableId(t.getName())).matches())
+            .map(tableProto-> com.google.cloud.bigtable.admin.v2.models.Table.fromProto(tableProto))
             .map(tableAdapter2x::adapt)
             .collect(Collectors.toList())
       );
@@ -291,7 +290,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
           throw new CompletionException(ex);
         }
       } else {
-        return tableAdapter2x.adapt(resp);
+        return tableAdapter2x.adapt(com.google.cloud.bigtable.admin.v2.models.Table.fromProto(resp));
       }
     });
   }

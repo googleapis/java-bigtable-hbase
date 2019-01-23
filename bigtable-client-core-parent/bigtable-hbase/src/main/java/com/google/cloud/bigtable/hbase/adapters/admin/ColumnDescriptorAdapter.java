@@ -317,16 +317,19 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Convert a Bigtable {@link com.google.bigtable.admin.v2.ColumnFamily} to an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor}.
+   * Convert a Bigtable {@link com.google.cloud.bigtable.admin.v2.models.ColumnFamily} to an
+   * HBase {@link HColumnDescriptor}.
    * See {@link #convertGarbageCollectionRule(GcRule, HColumnDescriptor)} for more info.
    *
-   * @param familyName a {@link java.lang.String} object.
-   * @param columnFamily a {@link com.google.bigtable.admin.v2.ColumnFamily} object.
+   * @param columnFamily a {@link com.google.cloud.bigtable.admin.v2.models.ColumnFamily} object.
    * @return a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
    */
-  public HColumnDescriptor adapt(String familyName, ColumnFamily columnFamily) {
-    HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(familyName);
-    convertGarbageCollectionRule(columnFamily.getGcRule(), hColumnDescriptor);
+  public HColumnDescriptor adapt(com.google.cloud.bigtable.admin.v2.models.ColumnFamily columnFamily) {
+    HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(columnFamily.getId());
+    GCRule gcRule = columnFamily.getGCRule();
+    if(gcRule != null){
+      convertGarbageCollectionRule(gcRule.toProto(), hColumnDescriptor);
+    }
     return hColumnDescriptor;
   }
 }

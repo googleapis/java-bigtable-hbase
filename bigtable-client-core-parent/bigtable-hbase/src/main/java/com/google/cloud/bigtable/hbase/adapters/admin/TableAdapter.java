@@ -18,9 +18,9 @@ package com.google.cloud.bigtable.hbase.adapters.admin;
 import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter.buildGarbageCollectionRule;
 
 import com.google.api.core.InternalApi;
-import com.google.bigtable.admin.v2.ColumnFamily;
+import com.google.cloud.bigtable.admin.v2.models.ColumnFamily;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
-import com.google.bigtable.admin.v2.Table;
+import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 
 import com.google.common.base.Preconditions;
@@ -92,10 +92,9 @@ public class TableAdapter {
    * @return a {@link HTableDescriptor} object.
    */
   public HTableDescriptor adapt(Table table) {
-    String tableId = bigtableInstanceName.toTableId(table.getName());
-    HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableId));
-    for (Entry<String, ColumnFamily> entry : table.getColumnFamiliesMap().entrySet()) {
-      tableDescriptor.addFamily(columnDescriptorAdapter.adapt(entry.getKey(), entry.getValue()));
+    HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(table.getId()));
+    for(ColumnFamily columnFamily : table.getColumnFamilies()){
+      tableDescriptor.addFamily(columnDescriptorAdapter.adapt(columnFamily));
     }
     return tableDescriptor;
   }

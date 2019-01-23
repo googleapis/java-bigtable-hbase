@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,7 +115,7 @@ public class TestColumnDescriptorAdapter {
     descriptor.setTimeToLive(ttl);
     ColumnFamily result = adapter.adapt(descriptor);
     GCRules.GCRule expected = GCRULES.union().rule(GCRULES.maxAge(Duration.ofSeconds(ttl)))
-            .rule(GCRULES.maxVersions(1));
+        .rule(GCRULES.maxVersions(1));
     Assert.assertEquals(expected.toProto(), result.getGcRule());
   }
 
@@ -123,9 +123,8 @@ public class TestColumnDescriptorAdapter {
   public void ttlIsPreservedInColumnFamily() {
     // TTL of 1 day (in microseconds):
     GCRules.GCRule expected = GCRULES.union().rule(GCRULES.maxAge(Duration.ofSeconds(86400)))
-            .rule(GCRULES.maxVersions(1));
-    HColumnDescriptor descriptor =
-        adapter.adapt("family", columnFamily(expected));
+        .rule(GCRULES.maxVersions(1));
+    HColumnDescriptor descriptor = adapter.adapt(columnFamily(expected));
     Assert.assertEquals(1, descriptor.getMaxVersions());
     Assert.assertEquals(86400, descriptor.getTimeToLive());
   }
@@ -141,7 +140,7 @@ public class TestColumnDescriptorAdapter {
   @Test
   public void maxVersionsIsPreservedInColumnFamily() {
     GCRules.GCRule expected = GCRULES.maxVersions(10);
-    HColumnDescriptor descriptor = adapter.adapt("family", columnFamily(expected));
+    HColumnDescriptor descriptor = adapter.adapt(columnFamily(expected));
     Assert.assertEquals(10, descriptor.getMaxVersions());
   }
 
@@ -156,8 +155,7 @@ public class TestColumnDescriptorAdapter {
 
   @Test
   public void minMaxTtlInColumnFamily() {
-    HColumnDescriptor descriptor = adapter.adapt("family",
-            columnFamily(minMaxRule(10, 86400, 20)));
+    HColumnDescriptor descriptor = adapter.adapt(columnFamily(minMaxRule(10, 86400, 20)));
     Assert.assertEquals(20, descriptor.getMaxVersions());
     Assert.assertEquals(10, descriptor.getMinVersions());
     Assert.assertEquals(86400, descriptor.getTimeToLive());
@@ -174,12 +172,15 @@ public class TestColumnDescriptorAdapter {
   @Test
   public void minVersionsMustBeLessThanMaxversionInExpression() {
     expectedException.expect(IllegalArgumentException.class);
-    adapter.adapt("family", columnFamily(minMaxRule(20, 86400, 10)));
+    adapter.adapt(columnFamily(minMaxRule(20, 86400, 10)));
   }
 
   @Test
   public void testBlankExpression(){
-    HColumnDescriptor descriptor = adapter.adapt("family", ColumnFamily.getDefaultInstance());
+    com.google.cloud.bigtable.admin.v2.models.ColumnFamily columnFamily =
+        com.google.cloud.bigtable.admin.v2.models.ColumnFamily.fromProto("family",
+            ColumnFamily.getDefaultInstance());
+    HColumnDescriptor descriptor = adapter.adapt(columnFamily);
     Assert.assertEquals(Integer.MAX_VALUE, descriptor.getMaxVersions());
     Assert.assertEquals(null, ColumnDescriptorAdapter.buildGarbageCollectionRule(descriptor));
   }
@@ -198,24 +199,24 @@ public class TestColumnDescriptorAdapter {
   public void testAdaptWithColumnFamilyForMaxAge(){
     int ttl = 86400;
     GCRule maxAgeGCRule = GCRULES.maxAge(Duration.ofSeconds(ttl));
-    ColumnFamily columnFamily = ColumnFamily.newBuilder().setGcRule(maxAgeGCRule.toProto()).build();
-    HColumnDescriptor actual = adapter.adapt(FAMILY_NAME, columnFamily);
+    HColumnDescriptor actual = adapter.adapt(columnFamily(maxAgeGCRule));
     Assert.assertEquals(ttl, actual.getTimeToLive());
   }
 
-  private static ColumnFamily columnFamily(GCRule rule) {
-    return ColumnFamily.newBuilder().setGcRule(rule.toProto()).build();
+  private static com.google.cloud.bigtable.admin.v2.models.ColumnFamily columnFamily(GCRule rule) {
+    return com.google.cloud.bigtable.admin.v2.models.ColumnFamily.fromProto("family",
+        ColumnFamily.newBuilder().setGcRule(rule.toProto()).build());
   }
 
   private GCRule minMaxRule(int minVersions, int ttl, int maxVersions) {
     GCRule intersection = GCRULES.intersection().rule(GCRULES.maxAge(Duration.ofSeconds(ttl)))
-            .rule(GCRULES.maxVersions(minVersions));
+        .rule(GCRULES.maxVersions(minVersions));
     return GCRULES.union().rule(intersection).rule(GCRULES.maxVersions(maxVersions));
   }
 
   private GCRule minMaxIntersectionRule(int minVersions, int ttl, int maxVersions) {
     GCRule intersection = GCRULES.intersection().rule(GCRULES.maxAge(Duration.ofSeconds(ttl)))
-            .rule(GCRULES.maxVersions(minVersions));
+        .rule(GCRULES.maxVersions(minVersions));
     return intersection;
   }
 }

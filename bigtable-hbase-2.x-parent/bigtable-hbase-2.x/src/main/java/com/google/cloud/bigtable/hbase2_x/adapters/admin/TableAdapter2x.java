@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase2_x.adapters.admin;
 import com.google.api.core.InternalApi;
 
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -25,7 +26,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
-import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
@@ -63,7 +63,7 @@ public class TableAdapter2x {
   /**
    * <p>adapt.</p>
    *
-   * @param table a {@link com.google.bigtable.admin.v2.Table} object.
+   * @param table a {@link Table} object.
    * @return a {@link TableDescriptor} object.
    */
   public TableDescriptor adapt(Table table) {
