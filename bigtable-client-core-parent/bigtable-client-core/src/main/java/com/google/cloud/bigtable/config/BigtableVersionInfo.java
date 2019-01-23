@@ -11,7 +11,7 @@ public class BigtableVersionInfo {
   public static final String CLIENT_VERSION = getVersion();
   public static final String JDK_VERSION = getJavaVersion();
 
-  public static final String CORE_UESR_AGENT = "bigtable-" + CLIENT_VERSION +",jdk-" + JDK_VERSION;
+  public static final String CORE_USER_AGENT = "bigtable-" + CLIENT_VERSION +",jdk-" + JDK_VERSION;
 
   /**
    * Gets user agent from bigtable-version.properties. Returns a default dev user agent with current
