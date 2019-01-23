@@ -544,7 +544,7 @@ public class BigtableSession implements Closeable {
     return builder
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
-        .userAgent(BigtableVersionInfo.CORE_UESR_AGENT + "," + options.getUserAgent())
+        .userAgent(BigtableVersionInfo.CORE_USER_AGENT + "," + options.getUserAgent())
         .intercept(interceptors)
         .build();
   }
