@@ -31,6 +31,7 @@ import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
@@ -77,11 +78,10 @@ public class BigtableTableAdminClient {
   /**
    * Lists the names of all tables in an instance asynchronously.
    *
-   * @param request a {@link ListTablesRequest} object.
-   * @return a {@link CompletableFuture} that returns a {@link ListTablesResponse} object.
+   * @return a {@link CompletableFuture} that returns a {@link List} object containing tableId.
    */
-  public CompletableFuture<ListTablesResponse> listTablesAsync(ListTablesRequest request) {
-    return toCompletableFuture(adminClient.listTablesAsync(request));
+  public CompletableFuture<List<String>> listTablesAsync() {
+    return toCompletableFuture(adminClientWrapper.listTablesAsync());
   }
 
   /**
