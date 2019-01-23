@@ -431,6 +431,4 @@ public class TestBigtableVeneerSettingsFactory {
     assertTrue(
         adminSettings.getStubSettings().getCredentialsProvider() instanceof NoCredentialsProvider);
   }
-
-
 }

@@ -53,7 +53,7 @@ import org.junit.runners.JUnit4;
 import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
 
 /**
- * This class tests UserAgent's on netty server.
+ * This class tests value present in User-Agent's on netty server.
  */
 @RunWith(JUnit4.class)
 public class TestUserAgent {

@@ -286,6 +286,7 @@ public class BigtableVeneerSettingsFactory {
 
     InstantiatingGrpcChannelProvider.Builder builder =
         InstantiatingGrpcChannelProvider.newBuilder()
+            .setChannelsPerCpu(2)
             .setHeaderProvider(headers)
             .setEndpoint(endpoint)
             .setPoolSize(options.getChannelCount())
