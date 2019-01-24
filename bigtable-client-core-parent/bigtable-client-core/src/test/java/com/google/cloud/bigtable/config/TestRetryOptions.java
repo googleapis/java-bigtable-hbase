@@ -52,16 +52,16 @@ public class TestRetryOptions {
   }
 
   @Test
-  public void testGetStatusCodesWhenDefaultCodes() {
+  public void testGetRetryableStatusCodesWhenDefaultCodes() {
     RetryOptions options = RetryOptions.getDefaultOptions();
-    assertEquals(RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES_SET, options.getStatusCodes());
+    assertEquals(RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES_SET, options.getRetryableStatusCodes());
   }
 
   @Test
-  public void testGetStatusCodesWhenDisabledDeadLineExceed() {
+  public void testGetRetryableStatusCodesWhenDisabledDeadLineExceed() {
     RetryOptions options = RetryOptions.builder().setRetryOnDeadlineExceeded(false).build();
     assertEquals(
         ImmutableSet.of(Status.Code.UNAVAILABLE, Status.Code.ABORTED, Status.Code.UNAUTHENTICATED),
-        options.getStatusCodes());
+        options.getRetryableStatusCodes());
   }
 }

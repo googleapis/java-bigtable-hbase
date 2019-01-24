@@ -338,11 +338,11 @@ public class RetryOptions implements Serializable, Cloneable {
   }
 
   /**
-   * Should returns {@link Set} of available {@link Status.Code}.
+   * Should returns {@link Set} of {@link Status.Code} based on which RPC retries.
    *
    * @return a {@link Set}.
    */
-  public Set<Status.Code> getStatusCodes() {
+  public Set<Status.Code> getRetryableStatusCodes() {
     return ImmutableSet.copyOf(statusToRetryOn);
   }
 
