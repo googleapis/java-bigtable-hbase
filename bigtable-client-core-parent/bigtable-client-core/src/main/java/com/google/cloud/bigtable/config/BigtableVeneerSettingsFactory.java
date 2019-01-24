@@ -21,18 +21,23 @@ import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.grpc.GrpcStatusCode;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
+import com.google.common.collect.ImmutableSet;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
 
@@ -56,6 +61,7 @@ public class BigtableVeneerSettingsFactory {
 
   // 256 MB, server has 256 MB limit.
   private final static int MAX_MESSAGE_SIZE = 1 << 28;
+
   /**
    * To create an instance of {@link BigtableDataSettings} from {@link BigtableOptions}.
    *
@@ -125,18 +131,34 @@ public class BigtableVeneerSettingsFactory {
     return adminBuilder.build();
   }
 
+  /** Creates {@link CredentialsProvider} based on {@link CredentialOptions}. */
+  private static CredentialsProvider buildCredentialProvider(
+      CredentialOptions credentialOptions) throws IOException {
+    try {
+      final Credentials credentials = CredentialFactory.getCredentials(credentialOptions);
+      if (credentials == null) {
+        LOG.info("Enabling the use of null credentials. This should not be used in production.");
+        return NoCredentialsProvider.create();
+      }
+
+      return FixedCredentialsProvider.create(credentials);
+    } catch (GeneralSecurityException exception) {
+      throw new IOException("Could not initialize credentials.", exception);
+    }
+  }
+
   /** Builds {@link BatchingSettings} based on {@link BulkOptions} configuration. */
   private static void buildBulkMutationsSettings(Builder builder, BigtableOptions options) {
     BulkOptions bulkOptions = options.getBulkOptions();
-    BatchingSettings.Builder batchSettingsBuilder = BatchingSettings.newBuilder();
+    BatchingSettings.Builder batchBuilder =
+        builder.bulkMutationsSettings().getBatchingSettings().toBuilder();
 
     long autoFlushMs = bulkOptions.getAutoflushMs();
     long bulkMaxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();
     long maxInflightRpcs = bulkOptions.getMaxInflightRpcs();
-    long shortRpcTimeoutMs = options.getCallOptionsConfig().getShortRpcTimeoutMs();
 
     if (autoFlushMs > 0) {
-      batchSettingsBuilder.setDelayThreshold(ofMillis(autoFlushMs));
+      batchBuilder.setDelayThreshold(ofMillis(autoFlushMs));
     }
     FlowControlSettings.Builder flowControlBuilder = FlowControlSettings.newBuilder();
     if (maxInflightRpcs > 0) {
@@ -145,82 +167,20 @@ public class BigtableVeneerSettingsFactory {
           .setMaxOutstandingElementCount(maxInflightRpcs * bulkMaxRowKeyCount);
     }
 
-    batchSettingsBuilder
+    batchBuilder
         .setIsEnabled(bulkOptions.useBulkApi())
         .setElementCountThreshold(Long.valueOf(bulkOptions.getBulkMaxRowKeyCount()))
         .setRequestByteThreshold(bulkOptions.getBulkMaxRequestSize())
         .setFlowControlSettings(flowControlBuilder.build());
 
+    RetrySettings retrySettings =
+        buildIdempotentRetrySettings(builder.bulkMutationsSettings().getRetrySettings(), options);
+
     // TODO(rahulkql): implement bulkMutationThrottling & bulkMutationRpcTargetMs, once available
     builder.bulkMutationsSettings()
-        .setBatchingSettings(batchSettingsBuilder.build())
-        .setSimpleTimeoutNoRetries(
-            ofMillis(shortRpcTimeoutMs));
-  }
-
-  /** To build BigtableDataSettings#sampleRowKeysSettings with default Retry settings. */
-  private static void buildSampleRowKeysSettings(Builder builder, BigtableOptions options) {
-    builder.sampleRowKeysSettings()
-        .setRetrySettings(buildIdempotentRetrySettings(options));
-  }
-
-  /** To build BigtableDataSettings#mutateRowSettings with default Retry settings. */
-  private static void buildMutateRowSettings(Builder builder, BigtableOptions options) {
-    builder.mutateRowSettings()
-        .setRetrySettings(buildIdempotentRetrySettings(options));
-  }
-
-  /** To build default Retry settings for Point Read. */
-  private static void buildReadRowSettings(Builder builder, BigtableOptions options) {
-    RetryOptions retryOptions = options.getRetryOptions();
-
-    RetrySettings.Builder retryBuilder = RetrySettings.newBuilder()
-        .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
-        .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
-        .setMaxRetryDelay(ofMillis(retryOptions.getMaxElapsedBackoffMillis()))
-        .setMaxAttempts(retryOptions.getMaxScanTimeoutRetries());
-
-    // configurations for RPC timeouts
-    Duration readPartialRowTimeout = ofMillis(retryOptions.getReadPartialRowTimeoutMillis());
-    retryBuilder
-        .setInitialRpcTimeout(readPartialRowTimeout)
-        .setMaxRpcTimeout(readPartialRowTimeout)
-        .setTotalTimeout(ofMillis(options.getCallOptionsConfig().getLongRpcTimeoutMs()));
-
-    builder.readRowSettings()
-        .setRetrySettings(retryBuilder.build());
-  }
-
-  /** To build BigtableDataSettings#readRowsSettings with default Retry settings. */
-  private static void buildReadRowsSettings(Builder builder, BigtableOptions options) {
-    RetryOptions retryOptions = options.getRetryOptions();
-
-    RetrySettings.Builder retryBuilder = RetrySettings.newBuilder()
-        .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
-        .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
-        .setMaxRetryDelay(ofMillis(retryOptions.getMaxElapsedBackoffMillis()))
-        .setMaxAttempts(retryOptions.getMaxScanTimeoutRetries());
-
-    // configurations for RPC timeouts
-    Duration readPartialRowTimeout = ofMillis(retryOptions.getReadPartialRowTimeoutMillis());
-    retryBuilder
-        .setInitialRpcTimeout(readPartialRowTimeout)
-        .setMaxRpcTimeout(readPartialRowTimeout)
-        .setTotalTimeout(ofMillis(options.getCallOptionsConfig().getLongRpcTimeoutMs()));
-
-    builder.readRowsSettings()
-        .setRetrySettings(retryBuilder.build());
-  }
-
-  /**
-   * Builds BigtableDataSettings#readModifyWriteRowSettings when short timeout is other
-   * than 60_000 ms.
-   */
-  private static void buildReadModifyWriteSettings(Builder builder, long rpcTimeoutMs) {
-    if(rpcTimeoutMs != SHORT_TIMEOUT_MS_DEFAULT) {
-      builder.readModifyWriteRowSettings()
-          .setSimpleTimeoutNoRetries(ofMillis(rpcTimeoutMs));
-    }
+        .setBatchingSettings(batchBuilder.build())
+        .setRetrySettings(retrySettings)
+        .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
   }
 
   /**
@@ -234,11 +194,76 @@ public class BigtableVeneerSettingsFactory {
     }
   }
 
-  /** Creates default {@link RetrySettings} for all idempotent method. */
-  private static RetrySettings buildIdempotentRetrySettings(BigtableOptions options) {
+  /**
+   * Builds BigtableDataSettings#readModifyWriteRowSettings when short timeout is other
+   * than 60_000 ms.
+   */
+  private static void buildReadModifyWriteSettings(Builder builder, long rpcTimeoutMs) {
+    if(rpcTimeoutMs != SHORT_TIMEOUT_MS_DEFAULT) {
+      builder.readModifyWriteRowSettings()
+          .setSimpleTimeoutNoRetries(ofMillis(rpcTimeoutMs));
+    }
+  }
+
+  /** To build BigtableDataSettings#sampleRowKeysSettings with default Retry settings. */
+  private static void buildSampleRowKeysSettings(Builder builder, BigtableOptions options) {
+    RetrySettings retrySettings =
+        buildIdempotentRetrySettings(builder.sampleRowKeysSettings().getRetrySettings(), options);
+
+    builder.sampleRowKeysSettings()
+        .setRetrySettings(retrySettings)
+        .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
+  }
+
+  /** To build BigtableDataSettings#mutateRowSettings with default Retry settings. */
+  private static void buildMutateRowSettings(Builder builder, BigtableOptions options) {
+    RetrySettings retrySettings =
+        buildIdempotentRetrySettings(builder.mutateRowSettings().getRetrySettings(), options);
+
+    builder.mutateRowSettings()
+        .setRetrySettings(retrySettings)
+        .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
+  }
+
+  /** To build default Retry settings for Point Read. */
+  private static void buildReadRowSettings(Builder builder, BigtableOptions options) {
+    RetrySettings retrySettings =
+        buildIdempotentRetrySettings(builder.readRowSettings().getRetrySettings(), options);
+
+    builder.readRowSettings()
+        .setRetrySettings(retrySettings)
+        .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
+  }
+
+  /** To build BigtableDataSettings#readRowsSettings with default Retry settings. */
+  private static void buildReadRowsSettings(Builder builder, BigtableOptions options) {
     RetryOptions retryOptions = options.getRetryOptions();
 
-    RetrySettings.Builder retryBuilder = RetrySettings.newBuilder()
+    RetrySettings.Builder retryBuilder = builder.readRowsSettings().getRetrySettings().toBuilder()
+        .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
+        .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
+        .setMaxRetryDelay(ofMillis(retryOptions.getMaxElapsedBackoffMillis()))
+        .setMaxAttempts(retryOptions.getMaxScanTimeoutRetries());
+
+    // configurations for RPC timeouts
+    Duration readPartialRowTimeout = ofMillis(retryOptions.getReadPartialRowTimeoutMillis());
+    retryBuilder
+        .setInitialRpcTimeout(readPartialRowTimeout)
+        .setMaxRpcTimeout(readPartialRowTimeout)
+        .setTotalTimeout(ofMillis(options.getCallOptionsConfig().getLongRpcTimeoutMs()));
+
+    builder.readRowsSettings()
+        .setRetrySettings(retryBuilder.build())
+        .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
+  }
+
+  /** Creates {@link RetrySettings} for non-streaming idempotent method. */
+  private static RetrySettings buildIdempotentRetrySettings(RetrySettings retrySettings,
+      BigtableOptions options) {
+    RetryOptions retryOptions = options.getRetryOptions();
+    RetrySettings.Builder retryBuilder = retrySettings.toBuilder();
+
+    retryBuilder
         .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
         .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
         .setMaxRetryDelay(ofMillis(retryOptions.getMaxElapsedBackoffMillis()))
@@ -258,20 +283,14 @@ public class BigtableVeneerSettingsFactory {
     return retryBuilder.build();
   }
 
-  /** Creates {@link CredentialsProvider} based on {@link CredentialOptions}. */
-  private static CredentialsProvider buildCredentialProvider(
-      CredentialOptions credentialOptions) throws IOException {
-    try {
-      final Credentials credentials = CredentialFactory.getCredentials(credentialOptions);
-      if (credentials == null) {
-        LOG.info("Enabling the use of null credentials. This should not be used in production.");
-        return NoCredentialsProvider.create();
-      }
-
-      return FixedCredentialsProvider.create(credentials);
-    } catch (GeneralSecurityException exception) {
-      throw new IOException("Could not initialize credentials.", exception);
+  private static Set<StatusCode.Code> buildRetryCodes(RetryOptions retryOptions) {
+    ImmutableSet.Builder<StatusCode.Code> statusCodeBuilder =
+        ImmutableSet.builderWithExpectedSize(retryOptions.getStatusCodes().size());
+    for (Status.Code retryCode : retryOptions.getStatusCodes()) {
+      statusCodeBuilder.add(GrpcStatusCode.of(retryCode).getCode());
     }
+
+    return statusCodeBuilder.build();
   }
 
   /** Creates {@link TransportChannelProvider} based on Channel Negotiation type. */
