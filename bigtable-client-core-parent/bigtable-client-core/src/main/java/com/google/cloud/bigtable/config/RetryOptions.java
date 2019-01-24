@@ -338,7 +338,7 @@ public class RetryOptions implements Serializable, Cloneable {
   }
 
   /**
-   * Should returns {@link Set} of {@link Status.Code} based on which RPC retries.
+   * Returns {@link Set} of {@link Status.Code} that allow RPC retries.
    *
    * @return a {@link Set}.
    */
