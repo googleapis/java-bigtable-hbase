@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.MutationApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -37,8 +36,6 @@ import org.apache.hadoop.hbase.client.Scan;
 
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
@@ -103,10 +100,8 @@ public class HBaseRequestAdapter {
     this(tableName,
         options.getInstanceName().toTableName(tableName.getQualifierAsString()),
         mutationAdapters,
-        RequestContext.create(
-            InstanceName.of(options.getProjectId(), options.getInstanceId()),
-            options.getAppProfileId()
-        ));
+        RequestContext
+            .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId()));
   }
 
 
@@ -171,54 +166,54 @@ public class HBaseRequestAdapter {
    * <p>adapt.</p>
    *
    * @param get a {@link Get} object.
-   * @return a {@link ReadRowsRequest} object.
+   * @return a {@link Query} object.
    */
-  public ReadRowsRequest adapt(Get get) {
+  public Query adapt(Get get) {
     ReadHooks readHooks = new DefaultReadHooks();
     Query query = Query.create(bigtableTableName.getTableId());
     Adapters.GET_ADAPTER.adapt(get, readHooks, query);
     readHooks.applyPreSendHook(query);
-    return query.toProto(requestContext);
+    return query;
   }
 
   /**
    * <p>adapt.</p>
    *
    * @param scan a {@link Scan} object.
-   * @return a {@link ReadRowsRequest} object.
+   * @return a {@link Query} object.
    */
-  public ReadRowsRequest adapt(Scan scan) {
+  public Query adapt(Scan scan) {
     ReadHooks readHooks = new DefaultReadHooks();
     Query query = Query.create(bigtableTableName.getTableId());
     Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
     readHooks.applyPreSendHook(query);
-    return query.toProto(requestContext);
+    return query;
   }
 
   /**
    * <p>adapt.</p>
    *
-   * @param append a {@link org.apache.hadoop.hbase.client.Append} object.
-   * @return a {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} object.
+   * @param append a {@link Append} object.
+   * @return a {@link ReadModifyWriteRow} object.
    */
-  public ReadModifyWriteRowRequest adapt(Append append) {
+  public ReadModifyWriteRow adapt(Append append) {
     ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
         .create(bigtableTableName.getTableId(), ByteString.copyFrom(append.getRow()));
     Adapters.APPEND_ADAPTER.adapt(append, readModifyWriteRow);
-    return readModifyWriteRow.toProto(requestContext);
+    return readModifyWriteRow;
   }
 
   /**
    * <p>adapt.</p>
    *
-   * @param increment a {@link org.apache.hadoop.hbase.client.Increment} object.
-   * @return a {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} object.
+   * @param increment a {@link Increment} object.
+   * @return a {@link ReadModifyWriteRow} object.
    */
-  public ReadModifyWriteRowRequest adapt(Increment increment) {
+  public ReadModifyWriteRow adapt(Increment increment) {
     ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
         .create(bigtableTableName.getTableId(), ByteString.copyFrom(increment.getRow()));
     Adapters.INCREMENT_ADAPTER.adapt(increment, readModifyWriteRow);
-    return readModifyWriteRow.toProto(requestContext);
+    return readModifyWriteRow;
   }
 
   /**

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +69,8 @@ public class BigtableBufferedMutatorHelper {
   private BulkMutation bulkMutation = null;
 
   private BigtableOptions options;
+  // Once the IBigtableDataClient interface is implemented this will be removed
+  protected final RequestContext requestContext;
 
   /**
    * <p>
@@ -91,6 +94,8 @@ public class BigtableBufferedMutatorHelper {
     this.asyncExecutor = session.createAsyncExecutor();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.bulkMutation = session.createBulkMutation(tableName);
+    this.requestContext = RequestContext
+        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
   }
 
   public void close() throws IOException {
@@ -186,9 +191,12 @@ public class BigtableBufferedMutatorHelper {
       } else if (mutation instanceof Delete) {
         future = bulkMutation.add(adapter.adaptEntry((Delete) mutation));
       } else if (mutation instanceof Increment) {
-        future = asyncExecutor.readModifyWriteRowAsync(adapter.adapt((Increment) mutation));
+        future =
+            asyncExecutor.readModifyWriteRowAsync(
+                adapter.adapt((Increment) mutation).toProto(requestContext));
       } else if (mutation instanceof Append) {
-        future = asyncExecutor.readModifyWriteRowAsync(adapter.adapt((Append) mutation));
+        future = asyncExecutor.readModifyWriteRowAsync(
+            adapter.adapt((Append) mutation).toProto(requestContext));
       } else {
         future = Futures.immediateFailedFuture(new IllegalArgumentException(
             "Encountered unknown mutation type: " + mutation.getClass()));

@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import io.opencensus.common.Scope;
@@ -140,9 +139,8 @@ public abstract class AbstractBigtableTable implements Table {
     this.clientWrapper = session.getClientWrapper();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
-    this.requestContext = RequestContext.create(
-        InstanceName.of(options.getProjectId(), options.getInstanceId()),
-        options.getAppProfileId());
+    this.requestContext = RequestContext
+        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
   }
 
   /** {@inheritDoc} */
@@ -274,7 +272,7 @@ public abstract class AbstractBigtableTable implements Table {
 
   private FlatRow getResults(Get get, String method) throws IOException {
     try (Timer.Context ignored = metrics.getTimer.time()) {
-      List<FlatRow> list = client.readFlatRowsList(hbaseAdapter.adapt(get));
+      List<FlatRow> list = client.readFlatRowsList(hbaseAdapter.adapt(get).toProto(requestContext));
       switch(list.size()) {
       case 0:
         return null;
@@ -301,7 +299,7 @@ public abstract class AbstractBigtableTable implements Table {
     Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
-          client.readFlatRows(hbaseAdapter.adapt(scan));
+          client.readFlatRows(hbaseAdapter.adapt(scan).toProto(requestContext));
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
       }
@@ -506,7 +504,7 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("append(Append)");
     Span span = TRACER.spanBuilder("BigtableTable.append").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
+      ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append).toProto(requestContext);
       ReadModifyWriteRowResponse response = client.readModifyWriteRow(request);
       // The bigtable API will always return the mutated results. In order to maintain
       // compatibility, simply return null when results were not requested.
@@ -529,7 +527,7 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("increment(Increment)");
     Span span = TRACER.spanBuilder("BigtableTable.increment").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      ReadModifyWriteRowRequest request = hbaseAdapter.adapt(increment);
+      ReadModifyWriteRowRequest request = hbaseAdapter.adapt(increment).toProto(requestContext);
       return Adapters.ROW_ADAPTER.adaptResponse(client.readModifyWriteRow(request).getRow());
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);

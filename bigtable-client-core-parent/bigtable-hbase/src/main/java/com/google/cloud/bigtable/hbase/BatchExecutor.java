@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -157,6 +158,8 @@ public class BatchExecutor {
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
   protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Info, "batch.latency");
+  // Once the IBigtableDataClient interface is implemented this will be removed
+  private final RequestContext requestContext;
 
   /**
    * Constructor for BatchExecutor.
@@ -170,6 +173,8 @@ public class BatchExecutor {
     this.asyncExecutor = session.createAsyncExecutor();
     this.options = session.getOptions();
     this.requestAdapter = requestAdapter;
+    this.requestContext = RequestContext
+        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
   }
 
   /**
@@ -201,15 +206,17 @@ public class BatchExecutor {
   private ListenableFuture<?> issueAsyncRequest(BulkOperation bulkOperation, Row row) {
     try {
       if (row instanceof Get) {
-        return bulkOperation.bulkRead.add(requestAdapter.adapt((Get) row));
+        return bulkOperation.bulkRead.add(requestAdapter.adapt((Get) row).toProto(requestContext));
       } else if (row instanceof Put) {
         return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((Put) row));
       } else if (row instanceof Delete) {
         return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((Delete) row));
       } else if (row instanceof Append) {
-        return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Append) row));
+        return asyncExecutor.readModifyWriteRowAsync(
+            requestAdapter.adapt((Append) row).toProto(requestContext));
       } else if (row instanceof Increment) {
-        return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Increment) row));
+        return asyncExecutor.readModifyWriteRowAsync(
+            requestAdapter.adapt((Increment) row).toProto(requestContext));
       } else if (row instanceof RowMutations) {
         return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((RowMutations) row));
       }
