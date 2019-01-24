@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 
@@ -337,7 +336,16 @@ public class RetryOptions implements Serializable, Cloneable {
   public boolean isRetryable(Status.Code code) {
     return statusToRetryOn.contains(code);
   }
-  
+
+  /**
+   * Returns {@link Set} of {@link Status.Code} that allow RPC retries.
+   *
+   * @return a {@link Set}.
+   */
+  public Set<Status.Code> getRetryableStatusCodes() {
+    return ImmutableSet.copyOf(statusToRetryOn);
+  }
+
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {

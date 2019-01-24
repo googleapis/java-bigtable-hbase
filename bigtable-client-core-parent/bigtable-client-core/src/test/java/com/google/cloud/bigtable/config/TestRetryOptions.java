@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.common.collect.ImmutableSet;
 import io.grpc.Status;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,5 +50,18 @@ public class TestRetryOptions {
     assertEquals(
         retryOnDeadlineExceeded, options.isRetryable(Status.DEADLINE_EXCEEDED.getCode()));
   }
-}
 
+  @Test
+  public void testGetRetryableStatusCodesWhenDefaultCodes() {
+    RetryOptions options = RetryOptions.getDefaultOptions();
+    assertEquals(RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES_SET, options.getRetryableStatusCodes());
+  }
+
+  @Test
+  public void testGetRetryableStatusCodesWhenDisabledDeadLineExceed() {
+    RetryOptions options = RetryOptions.builder().setRetryOnDeadlineExceeded(false).build();
+    assertEquals(
+        ImmutableSet.of(Status.Code.UNAVAILABLE, Status.Code.ABORTED, Status.Code.UNAUTHENTICATED),
+        options.getRetryableStatusCodes());
+  }
+}
