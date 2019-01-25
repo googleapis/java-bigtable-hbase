@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Interface to support batching multiple RowMutation request in to singe grpc request.
+ * Interface to support batching multiple RowMutation request into a single grpc request.
  */
 public interface IBulkMutation {
   long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
@@ -36,7 +36,7 @@ public interface IBulkMutation {
   void sendUnsent();
 
   /**
-   * @return false if there are any outstanding {@link MutateRowRequest} that still need to be sent.
+   * @return false if there are any outstanding {@link MutateRowRequest} that still needs to be sent.
    */
   boolean isFlushed();
 
