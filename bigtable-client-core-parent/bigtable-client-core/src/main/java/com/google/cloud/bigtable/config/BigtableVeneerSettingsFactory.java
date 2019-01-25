@@ -15,6 +15,11 @@
  */
 package com.google.cloud.bigtable.config;
 
+import static com.google.api.client.util.Preconditions.checkState;
+import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
+import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
+import static org.threeten.bp.Duration.ofMillis;
+
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowControlSettings;
@@ -40,11 +45,6 @@ import java.security.GeneralSecurityException;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
-
-import static com.google.api.client.util.Preconditions.checkState;
-import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
-import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
-import static org.threeten.bp.Duration.ofMillis;
 
 /**
  * Static methods to convert an instance of {@link BigtableOptions} to a
@@ -283,10 +283,10 @@ public class BigtableVeneerSettingsFactory {
     return retryBuilder.build();
   }
 
+  /** Creates {@link Set} of {@link StatusCode.Code} from {@link Status.Code} */
   private static Set<StatusCode.Code> buildRetryCodes(RetryOptions retryOptions) {
-    ImmutableSet.Builder<StatusCode.Code> statusCodeBuilder =
-        ImmutableSet.builderWithExpectedSize(retryOptions.getStatusCodes().size());
-    for (Status.Code retryCode : retryOptions.getStatusCodes()) {
+    ImmutableSet.Builder<StatusCode.Code> statusCodeBuilder = ImmutableSet.builder();
+    for (Status.Code retryCode : retryOptions.getRetryableStatusCodes()) {
       statusCodeBuilder.add(GrpcStatusCode.of(retryCode).getCode());
     }
 

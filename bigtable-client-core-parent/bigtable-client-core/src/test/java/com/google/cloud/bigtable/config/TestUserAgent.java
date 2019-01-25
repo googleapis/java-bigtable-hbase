@@ -60,9 +60,9 @@ public class TestUserAgent {
 
   private static final Logger logger = new Logger(TestUserAgent.class);
 
-  private static final String TEST_PROJECT_ID = "Project-Id";
-  private static final String TEST_INSTANCE_ID = "instance";
-  private static final String TEST_USER_AGENT = "VENEER_ADAPTER";
+  private static final String TEST_PROJECT_ID = "ProjectId";
+  private static final String TEST_INSTANCE_ID = "InstanceId";
+  private static final String TEST_USER_AGENT = "test-user-agent";
   private static final Pattern EXPECTED_HEADER_PATTERN =
       Pattern.compile(".*" + TEST_USER_AGENT + ".*");
   private static final String TABLE_ID = "my-table-id";

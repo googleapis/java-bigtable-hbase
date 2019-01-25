@@ -66,6 +66,7 @@ public class TestBigtableVeneerSettingsFactory {
 
   private static final String ACTUAL_PROJECT_ID = System.getProperty("test.client.project.id");
   private static final String ACTUAL_INSTANCE_ID = System.getProperty("test.client.instance.id");
+
   private static final String TEST_PROJECT_ID = "fakeProjectID";
   private static final String TEST_INSTANCE_ID = "fakeInstanceID";
   private static final String TEST_USER_AGENT = "sampleUserAgent";
@@ -75,7 +76,7 @@ public class TestBigtableVeneerSettingsFactory {
    * RetryCodes for idempotent Rpcs.
    */
   private static final Set<Code> DEFAULT_RETRY_CODES =
-      ImmutableSet.of(Code.DEADLINE_EXCEEDED, Code.UNAVAILABLE);
+      ImmutableSet.of(Code.DEADLINE_EXCEEDED, Code.UNAVAILABLE, Code.ABORTED, Code.UNAUTHENTICATED);
 
   private static final boolean endToEndArgMissing =
       Strings.isNullOrEmpty(ACTUAL_PROJECT_ID) && Strings.isNullOrEmpty(ACTUAL_INSTANCE_ID);
@@ -253,7 +254,8 @@ public class TestBigtableVeneerSettingsFactory {
   public void testWithNullCredentials() throws IOException {
     BigtableOptions options =
         BigtableOptions.builder()
-            .setProjectId(TEST_PROJECT_ID).setInstanceId(TEST_INSTANCE_ID)
+            .setProjectId(TEST_PROJECT_ID)
+            .setInstanceId(TEST_INSTANCE_ID)
             .setCredentialOptions(CredentialOptions.nullCredential())
             .setUserAgent(TEST_USER_AGENT).build();
     dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
@@ -278,6 +280,9 @@ public class TestBigtableVeneerSettingsFactory {
     verifyRetry(dataSettings.mutateRowSettings().getRetrySettings());
     assertEquals(DEFAULT_RETRY_CODES, dataSettings.mutateRowSettings().getRetryableCodes());
 
+    //bulkMutationsSettings
+    verifyRetry(dataSettings.bulkMutationsSettings().getRetrySettings());
+    assertEquals(DEFAULT_RETRY_CODES, dataSettings.bulkMutationsSettings().getRetryableCodes());
   }
 
   private void verifyRetry(RetrySettings retrySettings) {
@@ -314,10 +319,6 @@ public class TestBigtableVeneerSettingsFactory {
 
     //Verifying RetrySettings & RetryCodes of non-retryable methods.
 
-    //bulkMutationsSettings
-    verifyDisabledRetry(dataSettings.bulkMutationsSettings().getRetrySettings());
-    assertTrue(dataSettings.bulkMutationsSettings().getRetryableCodes().isEmpty());
-
     //readModifyWriteRowSettings
     verifyDisabledRetry(dataSettings.readModifyWriteRowSettings().getRetrySettings());
     assertTrue(dataSettings.readModifyWriteRowSettings().getRetryableCodes().isEmpty());
@@ -327,14 +328,14 @@ public class TestBigtableVeneerSettingsFactory {
     assertTrue(dataSettings.checkAndMutateRowSettings().getRetryableCodes().isEmpty());
   }
 
-  private void verifyDisabledRetry(RetrySettings ret) {
-    assertEquals(Duration.ZERO , ret.getInitialRetryDelay());
-    assertEquals(1.0 , ret.getRetryDelayMultiplier(), 0);
-    assertEquals(Duration.ZERO, ret.getMaxRetryDelay());
-    assertEquals(1, ret.getMaxAttempts());
-    assertEquals(SHORT_TIMEOUT_MS, ret.getInitialRpcTimeout().toMillis());
-    assertEquals(SHORT_TIMEOUT_MS, ret.getMaxRpcTimeout().toMillis());
-    assertEquals(SHORT_TIMEOUT_MS, ret.getTotalTimeout().toMillis());
+  private void verifyDisabledRetry(RetrySettings retrySettings) {
+    assertEquals(Duration.ZERO , retrySettings.getInitialRetryDelay());
+    assertEquals(1 , retrySettings.getRetryDelayMultiplier(), 0);
+    assertEquals(Duration.ZERO, retrySettings.getMaxRetryDelay());
+    assertEquals(1, retrySettings.getMaxAttempts());
+    assertEquals(SHORT_TIMEOUT_MS, retrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(SHORT_TIMEOUT_MS, retrySettings.getMaxRpcTimeout().toMillis());
+    assertEquals(SHORT_TIMEOUT_MS, retrySettings.getTotalTimeout().toMillis());
   }
 
   @Test
