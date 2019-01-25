@@ -36,7 +36,7 @@ public interface IBulkMutation {
   void sendUnsent();
 
   /**
-   * @return false if there are any outstanding {@link MutateRowRequest} that still needs to be sent.
+   * @return false if there is any outstanding {@link MutateRowRequest} that still needs to be sent.
    */
   boolean isFlushed();
 
