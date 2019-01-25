@@ -19,11 +19,11 @@ import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture
 
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
+import com.google.cloud.bigtable.data.v2.models.Row;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -75,9 +75,9 @@ public class BigtableDataClient {
    * the mutation has completed.
    * @param request a {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} object.
    */
-  public CompletableFuture<ReadModifyWriteRowResponse>
-      readModifyWriteRowAsync(ReadModifyWriteRowRequest request){
-    return toCompletableFuture(dataClient.readModifyWriteRowAsync(request));
+  public CompletableFuture<Row>
+      readModifyWriteRowAsync(ReadModifyWriteRow request){
+    return toCompletableFuture(clientWrapper.readModifyWriteRowAsync(request));
   }
 
   /**

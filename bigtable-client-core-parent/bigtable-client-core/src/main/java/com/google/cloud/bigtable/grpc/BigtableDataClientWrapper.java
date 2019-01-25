@@ -15,11 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
@@ -31,11 +28,11 @@ import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.DefaultRowAdapter;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
-import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
@@ -95,7 +92,7 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   public Row readModifyWriteRow(ReadModifyWriteRow readModifyWriteRow) {
     ReadModifyWriteRowResponse response =
         delegate.readModifyWriteRow(readModifyWriteRow.toProto(requestContext));
-    return transformResponse(response);
+    return new DefaultRowAdapter().createRowFromProto(response.getRow());
   }
 
   /** {@inheritDoc} */
@@ -105,8 +102,8 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
         delegate.readModifyWriteRowAsync(readModifyWriteRow.toProto(requestContext));
     return Futures.transform(response, new Function<ReadModifyWriteRowResponse, Row>() {
       @Override
-      public Row apply(ReadModifyWriteRowResponse readModifyRowResponse) {
-        return transformResponse(readModifyRowResponse);
+      public Row apply(ReadModifyWriteRowResponse response) {
+        return new DefaultRowAdapter().createRowFromProto(response.getRow());
       }
     }, MoreExecutors.directExecutor());
   }
@@ -260,30 +257,5 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   @Override
   public void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer) {
     delegate.readFlatRows(request.toProto(requestContext), observer);
-  }
-
-  /**
-   * This method converts instances of {@link ReadModifyWriteRowResponse} to {@link Row}.
-   *
-   * @param response an instance of {@link ReadModifyWriteRowResponse} type.
-   * @return an instance of {@link Row}.
-   */
-  private Row transformResponse(ReadModifyWriteRowResponse response) {
-    ImmutableList.Builder<RowCell> rowCells  = ImmutableList.builder();
-
-    for (Family family : response.getRow().getFamiliesList()) {
-      for (Column column : family.getColumnsList()) {
-        for (Cell cell : column.getCellsList()) {
-          rowCells.add(
-              RowCell.create(
-                  family.getName(),
-                  column.getQualifier(),
-                  cell.getTimestampMicros(),
-                  cell.getLabelsList(),
-                  cell.getValue()));
-        }
-      }
-    }
-    return Row.create(response.getRow().getKey(), rowCells.build());
   }
 }

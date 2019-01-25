@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -50,8 +51,6 @@ import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -115,10 +114,10 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
    */
   @Override
   public CompletableFuture<Result> append(Append append) {
-    ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append).toProto(requestContext);
-    Function<? super ReadModifyWriteRowResponse, ? extends Result> adaptRowFunction = response ->
-        append.isReturnResults()
-            ? Adapters.ROW_ADAPTER.adaptResponse(response.getRow())
+    ReadModifyWriteRow request = hbaseAdapter.adapt(append);
+    Function<? super com.google.cloud.bigtable.data.v2.models.Row, ? extends Result>
+        adaptRowFunction = response -> append.isReturnResults()
+            ? Adapters.ROW_ADAPTER.adaptResponse(response)
             : null;
     return client.readModifyWriteRowAsync(request).thenApply(adaptRowFunction);
   }
@@ -362,8 +361,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
    */
   @Override
   public CompletableFuture<Result> increment(Increment increment) {
-    return client.readModifyWriteRowAsync(hbaseAdapter.adapt(increment).toProto(requestContext))
-        .thenApply(response -> Adapters.ROW_ADAPTER.adaptResponse(response.getRow()));
+    return client.readModifyWriteRowAsync(hbaseAdapter.adapt(increment))
+        .thenApply(Adapters.ROW_ADAPTER::adaptResponse);
   }
 
   /**
