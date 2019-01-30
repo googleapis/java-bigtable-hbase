@@ -181,7 +181,7 @@ limitations under the License.
 
                         <offlineLinks>
                             <offlineLink>
-                                <url>http://google.github.io/guava/releases/19.0/api/docs/</url>
+                                <url>https://google.github.io/guava/releases/20.0/api/docs/</url>
                                 <location>${basedir}/javadoc/guava-docs</location>
                             </offlineLink>
                             <offlineLink>
@@ -189,7 +189,7 @@ limitations under the License.
                                 <location>${basedir}/javadoc/hbase-docs</location>
                             </offlineLink>
                             <offlineLink>
-                                <url>http://atetric.com/atetric/javadoc/com.google.protobuf/protobuf-java/3.0.2/</url>
+                                <url>https://javadoc.io/doc/com.google.protobuf/protobuf-java/3.6.1/</url>
                                 <location>${basedir}/javadoc/protobuf-docs</location>
                             </offlineLink>
                         </offlineLinks>
@@ -214,10 +214,11 @@ limitations under the License.
                             <configuration>
                                 <!--
                                 javadoc excluded packages:
+                                    com.google.cloud.bigtable.beam{.sequencefiles}  (Breaks with javadoc:aggregate, handled separately)
                                     com.google.cloud.bigtable.dataflow{import,}     (Breaks with javadoc:aggregate, handled separately)
                                     com.google.clooud.*                             (Ignore, a hack/workaround for separate maven issue)
                                 -->
-                                <excludePackageNames>com.google.cloud.bigtable.dataflow:com.google.cloud.bigtable.dataflowimport:com.google.clooud</excludePackageNames>
+                                <excludePackageNames>com.google.cloud.bigtable.beam:com.google.cloud.bigtable.beam.sequencefiles:com.google.cloud.bigtable.dataflow:com.google.cloud.bigtable.dataflowimport:com.google.clooud</excludePackageNames>
                             </configuration>
                         </execution>
                     </executions>
