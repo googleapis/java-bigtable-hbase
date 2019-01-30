@@ -189,7 +189,7 @@ limitations under the License.
                                 <location>${basedir}/javadoc/hbase-docs</location>
                             </offlineLink>
                             <offlineLink>
-                                <url>https://javadoc.io/doc/com.google.protobuf/protobuf-java/3.6.1/</url>
+                                <url>https://static.javadoc.io/com.google.protobuf/protobuf-java/3.6.1/</url>
                                 <location>${basedir}/javadoc/protobuf-docs</location>
                             </offlineLink>
                         </offlineLinks>
