@@ -19,6 +19,7 @@ import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
+import com.google.common.collect.ImmutableList;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.apache.hadoop.hbase.Cell;
@@ -37,7 +38,7 @@ public class ModelRowAdapter implements ResponseAdapter<Row, Result> {
       return new Result();
     }
 
-    SortedSet<Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
+    ImmutableList.Builder<Cell> hbaseCellBuilder = ImmutableList.builder();
     byte[] rowKey = ByteStringer.extract(response.getKey());
     for (com.google.cloud.bigtable.data.v2.models.RowCell rowCell : response.getCells()) {
       // Cells with labels are for internal use, do not return them.
@@ -55,9 +56,10 @@ public class ModelRowAdapter implements ResponseAdapter<Row, Result> {
           hbaseTimestamp,
           ByteStringer.extract(rowCell.getValue()));
 
-      hbaseCells.add(keyValue);
+      hbaseCellBuilder.add(keyValue);
     }
 
+    ImmutableList<Cell> hbaseCells = hbaseCellBuilder.build();
     return Result.create(hbaseCells.toArray(new Cell[hbaseCells.size()]));
   }
 }

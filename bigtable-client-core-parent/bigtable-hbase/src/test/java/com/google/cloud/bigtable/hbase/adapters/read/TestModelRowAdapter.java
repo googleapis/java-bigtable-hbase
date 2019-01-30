@@ -77,9 +77,6 @@ public class TestModelRowAdapter {
     rowCells.add(RowCell.create(FAMILY_2, QUALIFIER_2, TIMESTAMP_MS_2, LABEL_LIST, VALUE_3));
     rowCells.add(RowCell.create(FAMILY_2, QUALIFIER_1, TIMESTAMP_MS_1, LABEL_LIST, VALUE_4));
 
-    //Added duplicate row, should be ignored
-    rowCells.add(RowCell.create(FAMILY_2, QUALIFIER_1, TIMESTAMP_MS_1, LABEL_LIST, VALUE_4));
-
     //Row containing Label, Should be ignored
     rowCells.add(RowCell.create(FAMILY_1, QUALIFIER_2, TIMESTAMP_MS_3,
         Collections.singletonList(LABEL), VALUE_1));
@@ -97,9 +94,9 @@ public class TestModelRowAdapter {
         new com.google.cloud.bigtable.hbase.adapters.read.RowCell(keyArray, FAMILY_1.getBytes(),
             QUALIFIER_2.toByteArray(), TIMESTAMP_MILLS_2, VALUE_2.toByteArray()),
         new com.google.cloud.bigtable.hbase.adapters.read.RowCell(keyArray, FAMILY_2.getBytes(),
-            QUALIFIER_1.toByteArray(), TIMESTAMP_MILLS_1, VALUE_3.toByteArray()),
+            QUALIFIER_2.toByteArray(), TIMESTAMP_MILLS_2, VALUE_3.toByteArray()),
         new com.google.cloud.bigtable.hbase.adapters.read.RowCell(keyArray, FAMILY_2.getBytes(),
-            QUALIFIER_2.toByteArray(), TIMESTAMP_MILLS_2, VALUE_4.toByteArray()),
+            QUALIFIER_1.toByteArray(), TIMESTAMP_MILLS_1, VALUE_4.toByteArray()),
     };
     assertArrayEquals(expectedCells, result.rawCells());
   }
