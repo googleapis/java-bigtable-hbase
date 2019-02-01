@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModif
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
@@ -258,36 +257,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
       return null;
     }
 
-    String bigtableTableName = toBigtableName(tableName);
-    GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
-
     try {
-      return tableAdapter.adapt(Table.fromProto(bigtableTableAdminClient.getTable(request)));
+      return tableAdapter.adapt(tableAdminClientWrapper.getTable(tableName.getNameAsString()));
     } catch (Throwable throwable) {
       if (Status.fromThrowable(throwable).getCode() == Status.Code.NOT_FOUND) {
         throw new TableNotFoundException(tableName);
       }
       throw new IOException("Failed to getTableDescriptor() on " + tableName, throwable);
     }
-  }
-
-  // Used by the Hbase shell but not defined by Admin. Will be removed once the
-  // shell is switch to use the methods defined in the interface.
-  /**
-   * <p>getTableNames.</p>
-   *
-   * @param regex a {@link java.lang.String} object.
-   * @return an array of {@link java.lang.String} objects.
-   * @throws java.io.IOException if any.
-   */
-  @Deprecated
-  public String[] getTableNames(String regex) throws IOException {
-    HTableDescriptor[] tableDescriptors = listTables(regex);
-    String[] tableNames = new String[tableDescriptors.length];
-    for (int i = 0; i < tableDescriptors.length; i++) {
-      tableNames[i] = tableDescriptors[i].getNameAsString();
-    }
-    return tableNames;
   }
 
   /** {@inheritDoc} */
