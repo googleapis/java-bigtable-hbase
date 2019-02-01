@@ -71,10 +71,6 @@ public class BigtableTableName {
     return tableId;
   }
 
-  public InstanceName toGcbInstanceName() {
-    return InstanceName.of(projectId, instanceId);
-  }
-
   /** {@inheritDoc} */
   @Override
   public String toString() {
