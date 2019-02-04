@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModif
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
@@ -258,11 +257,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
       return null;
     }
 
-    String bigtableTableName = toBigtableName(tableName);
-    GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
-
     try {
-      return tableAdapter.adapt(bigtableTableAdminClient.getTable(request));
+      return tableAdapter.adapt(tableAdminClientWrapper.getTable(tableName.getNameAsString()));
     } catch (Throwable throwable) {
       if (Status.fromThrowable(throwable).getCode() == Status.Code.NOT_FOUND) {
         throw new TableNotFoundException(tableName);
@@ -276,18 +272,18 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * <p>getTableNames.</p>
    *
-   * @param regex a {@link java.lang.String} object.
-   * @return an array of {@link java.lang.String} objects.
-   * @throws java.io.IOException if any.
+   * @param regex a {@link String} object.
+   * @return an array of {@link String} objects.
+   * @throws IOException if any.
    */
   @Deprecated
   public String[] getTableNames(String regex) throws IOException {
-    HTableDescriptor[] tableDescriptors = listTables(regex);
-    String[] tableNames = new String[tableDescriptors.length];
-    for (int i = 0; i < tableDescriptors.length; i++) {
-      tableNames[i] = tableDescriptors[i].getNameAsString();
+    TableName[] tableNames = listTableNames(regex);
+    String[] tableIds = new String[tableNames.length];
+    for (int i = 0; i < tableNames.length; i++) {
+      tableIds[i] = tableNames[i].getNameAsString();
     }
-    return tableNames;
+    return tableIds;
   }
 
   /** {@inheritDoc} */

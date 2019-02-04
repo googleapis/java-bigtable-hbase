@@ -105,7 +105,8 @@ public class TestTableAdapter {
     Table table = Table.newBuilder()
             .setName(TABLE_NAME)
             .putColumnFamilies(COLUMN_FAMILY, columnFamily).build();
-    HTableDescriptor actualTableDesc = tableAdapter.adapt(table);
+    HTableDescriptor actualTableDesc = tableAdapter.adapt(
+        com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
 
     HTableDescriptor expected = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     expected.addFamily(new HColumnDescriptor(COLUMN_FAMILY));

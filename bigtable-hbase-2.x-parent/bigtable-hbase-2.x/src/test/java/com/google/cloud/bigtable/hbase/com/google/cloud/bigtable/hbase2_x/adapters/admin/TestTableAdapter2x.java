@@ -27,7 +27,10 @@ import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
+import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
@@ -82,7 +85,8 @@ public class TestTableAdapter2x {
     Table table = Table.newBuilder()
             .setName(TABLE_NAME)
             .putColumnFamilies(COLUMN_FAMILY, columnFamily).build();
-    TableDescriptor actualTableDesc = tableAdapter2x.adapt(table);
+    TableDescriptor actualTableDesc = tableAdapter2x.adapt(
+        com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
 
     TableDescriptor expected = new HTableDescriptor(TableName.valueOf(TABLE_ID))
             .addFamily(new HColumnDescriptor(COLUMN_FAMILY));
