@@ -115,7 +115,7 @@ public class TestColumnDescriptorAdapter {
     descriptor.setTimeToLive(ttl);
     ColumnFamily result = adapter.adapt(descriptor);
     GCRules.GCRule expected = GCRULES.union().rule(GCRULES.maxAge(Duration.ofSeconds(ttl)))
-        .rule(GCRULES.maxVersions(1));
+            .rule(GCRULES.maxVersions(1));
     Assert.assertEquals(expected.toProto(), result.getGcRule());
   }
 
@@ -123,7 +123,7 @@ public class TestColumnDescriptorAdapter {
   public void ttlIsPreservedInColumnFamily() {
     // TTL of 1 day (in microseconds):
     GCRules.GCRule expected = GCRULES.union().rule(GCRULES.maxAge(Duration.ofSeconds(86400)))
-        .rule(GCRULES.maxVersions(1));
+            .rule(GCRULES.maxVersions(1));
     HColumnDescriptor descriptor = adapter.adapt(columnFamily(expected));
     Assert.assertEquals(1, descriptor.getMaxVersions());
     Assert.assertEquals(86400, descriptor.getTimeToLive());
@@ -203,6 +203,7 @@ public class TestColumnDescriptorAdapter {
     Assert.assertEquals(ttl, actual.getTimeToLive());
   }
 
+  //TODO: Remove this method and create ColumnFamily along with GCRule instead of using proto.
   private static com.google.cloud.bigtable.admin.v2.models.ColumnFamily columnFamily(GCRule rule) {
     return com.google.cloud.bigtable.admin.v2.models.ColumnFamily.fromProto("family",
         ColumnFamily.newBuilder().setGcRule(rule.toProto()).build());
@@ -210,13 +211,7 @@ public class TestColumnDescriptorAdapter {
 
   private GCRule minMaxRule(int minVersions, int ttl, int maxVersions) {
     GCRule intersection = GCRULES.intersection().rule(GCRULES.maxAge(Duration.ofSeconds(ttl)))
-        .rule(GCRULES.maxVersions(minVersions));
+            .rule(GCRULES.maxVersions(minVersions));
     return GCRULES.union().rule(intersection).rule(GCRULES.maxVersions(maxVersions));
-  }
-
-  private GCRule minMaxIntersectionRule(int minVersions, int ttl, int maxVersions) {
-    GCRule intersection = GCRULES.intersection().rule(GCRULES.maxAge(Duration.ofSeconds(ttl)))
-        .rule(GCRULES.maxVersions(minVersions));
-    return intersection;
   }
 }

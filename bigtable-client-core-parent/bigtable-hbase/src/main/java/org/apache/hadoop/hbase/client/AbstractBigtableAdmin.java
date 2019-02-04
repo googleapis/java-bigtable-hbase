@@ -267,6 +267,25 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
   }
 
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  /**
+   * <p>getTableNames.</p>
+   *
+   * @param regex a {@link String} object.
+   * @return an array of {@link String} objects.
+   * @throws IOException if any.
+   */
+  @Deprecated
+  public String[] getTableNames(String regex) throws IOException {
+    TableName[] tableNames = listTableNames(regex);
+    String[] tableIds = new String[tableNames.length];
+    for (int i = 0; i < tableNames.length; i++) {
+      tableIds[i] = tableNames[i].getNameAsString();
+    }
+    return tableIds;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc) throws IOException {

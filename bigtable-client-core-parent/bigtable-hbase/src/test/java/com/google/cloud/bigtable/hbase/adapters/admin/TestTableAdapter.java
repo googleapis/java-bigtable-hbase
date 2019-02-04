@@ -17,9 +17,9 @@ package com.google.cloud.bigtable.hbase.adapters.admin;
 
 import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
 import com.google.bigtable.admin.v2.ColumnFamily;
+import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.GCRules.GCRule;
-import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -102,10 +102,11 @@ public class TestTableAdapter {
     GCRule gcRule = GCRULES.maxVersions(1);
     ColumnFamily columnFamily = ColumnFamily.newBuilder()
             .setGcRule(gcRule.toProto()).build();
-    Table table = Table.fromProto(com.google.bigtable.admin.v2.Table.newBuilder()
+    Table table = Table.newBuilder()
             .setName(TABLE_NAME)
-            .putColumnFamilies(COLUMN_FAMILY, columnFamily).build());
-    HTableDescriptor actualTableDesc = tableAdapter.adapt(table);
+            .putColumnFamilies(COLUMN_FAMILY, columnFamily).build();
+    HTableDescriptor actualTableDesc = tableAdapter.adapt(
+        com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
 
     HTableDescriptor expected = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     expected.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
