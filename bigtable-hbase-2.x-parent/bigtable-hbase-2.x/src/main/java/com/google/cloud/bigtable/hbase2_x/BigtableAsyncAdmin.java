@@ -232,7 +232,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
          r.stream()
             .filter(t -> !tableNamePattern.isPresent() ||
                 tableNamePattern.get().matcher(bigtableInstanceName.toTableId(t.getName())).matches())
-            .map(tableProto-> com.google.cloud.bigtable.admin.v2.models.Table.fromProto(tableProto))
+            .map(tableProto -> com.google.cloud.bigtable.admin.v2.models.Table.fromProto(tableProto))
             .map(tableAdapter2x::adapt)
             .collect(Collectors.toList())
       );
