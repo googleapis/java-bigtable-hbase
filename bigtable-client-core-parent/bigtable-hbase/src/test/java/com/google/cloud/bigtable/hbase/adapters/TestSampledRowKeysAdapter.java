@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.HConstants;
@@ -45,7 +45,7 @@ public class TestSampledRowKeysAdapter {
 
   @Test
   public void testEmptyRowList() {
-    List<SampleRowKeysResponse> rowKeys = new ArrayList<>();
+    List<KeyOffset> rowKeys = new ArrayList<>();
     List<HRegionLocation> locations = adapter.adaptResponse(rowKeys);
     Assert.assertEquals(1, locations.size());
     HRegionLocation location = locations.get(0);
@@ -66,10 +66,8 @@ public class TestSampledRowKeysAdapter {
   public void testOneRow() {
     byte[] rowKey = Bytes.toBytes("row");
 
-    List<SampleRowKeysResponse> responses = new ArrayList<>();
-    SampleRowKeysResponse.Builder responseBuilder = SampleRowKeysResponse.newBuilder();
-    responseBuilder.setRowKey(ByteString.copyFrom(rowKey));
-    responses.add(responseBuilder.build());
+    List<KeyOffset> responses = new ArrayList<>();
+    responses.add(KeyOffset.create(ByteString.copyFrom(rowKey), 0));
 
     List<HRegionLocation> locations = adapter.adaptResponse(responses);
     Assert.assertEquals(2, locations.size());
@@ -96,10 +94,8 @@ public class TestSampledRowKeysAdapter {
   public void testEmptyRow() {
     byte[] rowKey = new byte[0];
 
-    List<SampleRowKeysResponse> responses = new ArrayList<>();
-    SampleRowKeysResponse.Builder responseBuilder = SampleRowKeysResponse.newBuilder();
-    responseBuilder.setRowKey(ByteString.copyFrom(rowKey));
-    responses.add(responseBuilder.build());
+    List<KeyOffset> responses = new ArrayList<>();
+    responses.add(KeyOffset.create(ByteString.copyFrom(rowKey), 0));
 
     List<HRegionLocation> locations = adapter.adaptResponse(responses);
     Assert.assertEquals(1, locations.size());

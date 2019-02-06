@@ -29,7 +29,7 @@ import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
@@ -39,7 +39,6 @@ import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.protobuf.ByteString;
 
-import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
@@ -76,6 +75,8 @@ public class TestBigtableTable {
   public static final String TEST_PROJECT = "testproject";
   public static final String TEST_TABLE = "testtable";
   public static final String TEST_INSTANCE = "testinstance";
+  public static final RequestContext REQUEST_CONTEXT =
+      RequestContext.create(TEST_PROJECT, TEST_INSTANCE, "");
 
   @Mock
   private AbstractBigtableConnection mockConnection;
@@ -118,23 +119,21 @@ public class TestBigtableTable {
     when(mockSession.getOptions()).thenReturn(options);
     when(mockSession.getDataClient()).thenReturn(mockClient);
     when(mockSession.getClientWrapper()).thenReturn(mockBigtableDataClient);
-    when(mockClient.readFlatRows(isA(ReadRowsRequest.class))).thenReturn(mockResultScanner);
+    when(mockBigtableDataClient.readFlatRows(isA(Query.class))).thenReturn(mockResultScanner);
     table = new AbstractBigtableTable(mockConnection, hbaseAdapter){};
   }
 
   @Test
   public void projectIsPopulatedInMutationRequests()
-      throws IOException, ExecutionException, InterruptedException {
+      throws IOException {
     table.delete(new Delete(Bytes.toBytes("rowKey1")));
 
     ArgumentCaptor<RowMutation> argument = ArgumentCaptor.forClass(RowMutation.class);
     verify(mockBigtableDataClient).mutateRow(argument.capture());
-    RequestContext requestContext =
-        RequestContext.create(InstanceName.of(TEST_PROJECT, TEST_INSTANCE), "");
 
     Assert.assertEquals(
         "projects/testproject/instances/testinstance/tables/testtable",
-        argument.getValue().toProto(requestContext).getTableName());
+        argument.getValue().toProto(REQUEST_CONTEXT).getTableName());
   }
 
   @Test
@@ -145,14 +144,13 @@ public class TestBigtableTable {
                 Bytes.toBytes("family"),
                 Bytes.toBytes("qualifier")));
 
-    ArgumentCaptor<ReadRowsRequest> argument =
-        ArgumentCaptor.forClass(ReadRowsRequest.class);
+    ArgumentCaptor<Query> argument = ArgumentCaptor.forClass(Query.class);
 
-    verify(mockClient).readFlatRowsList(argument.capture());
+    verify(mockBigtableDataClient).readFlatRowsList(argument.capture());
 
     Assert.assertEquals(
         "projects/testproject/instances/testinstance/tables/testtable",
-        argument.getValue().getTableName());
+        argument.getValue().toProto(REQUEST_CONTEXT).getTableName());
     Chain expectedColumnSpecFilter =
         Chain.newBuilder()
           .addFilters(
@@ -171,7 +169,7 @@ public class TestBigtableTable {
 
     Assert.assertEquals(
         expectedColumnSpecFilter,
-        argument.getValue().getFilter().getChain());
+        argument.getValue().toProto(REQUEST_CONTEXT).getFilter().getChain());
   }
 
   @Test
@@ -208,7 +206,7 @@ public class TestBigtableTable {
   
   @Test
   public void getScanner_withBigtableResultScannerAdapter() throws IOException {
-    when(mockClient.readFlatRows(isA(ReadRowsRequest.class))).thenReturn(mockResultScanner);
+    when(mockBigtableDataClient.readFlatRows(isA(Query.class))).thenReturn(mockResultScanner);
     // A row with no matching label. In case of {@link BigtableResultScannerAdapter} the result is
     // non-null.
     FlatRow row = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("row_key"))
@@ -231,7 +229,7 @@ public class TestBigtableTable {
     assertEquals(1, cells.size());
     assertEquals("value", new String(CellUtil.cloneValue(cells.get(0))));
     
-    verify(mockClient).readFlatRows(isA(ReadRowsRequest.class));
+    verify(mockBigtableDataClient).readFlatRows(isA(Query.class));
     verify(mockResultScanner).next();
   }
 
@@ -252,7 +250,7 @@ public class TestBigtableTable {
     org.apache.hadoop.hbase.client.ResultScanner resultScanner = table.getScanner(scan);
     assertNull(resultScanner.next());
 
-    verify(mockClient).readFlatRows(isA(ReadRowsRequest.class));
+    verify(mockBigtableDataClient).readFlatRows(isA(Query.class));
     verify(mockResultScanner).next();
   }
 }

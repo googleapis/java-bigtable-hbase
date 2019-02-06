@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.RegionLocator;
@@ -27,7 +28,6 @@ import org.apache.hadoop.hbase.util.Pair;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
 
 /**
  * <p>BigtableRegionLocator class.</p>
@@ -45,10 +45,10 @@ public abstract class BigtableRegionLocator extends AbstractBigtableRegionLocato
    *
    * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
    * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
+   * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClientWrapper} object.
    */
-  public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableDataClient client) {
-    super(tableName,options,client);
+  public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableDataClientWrapper client) {
+    super(tableName, options, client);
   }
 
   /** {@inheritDoc} */
