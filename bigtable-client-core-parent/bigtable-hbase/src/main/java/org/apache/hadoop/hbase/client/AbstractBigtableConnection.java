@@ -226,7 +226,7 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
     RegionLocator locator = getCachedLocator(tableName);
 
     if (locator == null) {
-      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClient()) {
+      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getClientWrapper()) {
 
         @Override
         public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
