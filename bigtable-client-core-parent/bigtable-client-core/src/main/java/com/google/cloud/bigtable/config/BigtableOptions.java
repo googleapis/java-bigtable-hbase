@@ -301,6 +301,8 @@ public class BigtableOptions implements Serializable, Cloneable {
   private boolean useCachedDataPool;
 
   private BigtableInstanceName instanceName;
+
+  // TODO: remove the `transient` modifier once RequestContext is Serializable.
   private transient RequestContext requestContext;
 
   private BulkOptions bulkOptions;
