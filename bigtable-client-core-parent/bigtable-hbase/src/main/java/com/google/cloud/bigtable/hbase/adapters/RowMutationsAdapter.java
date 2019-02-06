@@ -39,12 +39,13 @@ public class RowMutationsAdapter extends MutationAdapter<RowMutations>{
   }
 
   @Override
-  protected void adaptMutations(
+  /** {@inheritDoc} */
+  public void adapt(
       RowMutations operation,
       com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutationApi
   ) {
     for (Mutation mutation : operation.getMutations()) {
-      mutationAdapter.adaptMutations(mutation, mutationApi);
+      mutationAdapter.adapt(mutation, mutationApi);
     }
   }
 }
