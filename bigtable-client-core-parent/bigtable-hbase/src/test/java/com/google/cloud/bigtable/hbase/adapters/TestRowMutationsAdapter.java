@@ -104,7 +104,7 @@ public class TestRowMutationsAdapter {
     MutateRowRequest result = toMutateRowRequest(rowKey, mutation);
     Assert.assertArrayEquals(rowKey, result.getRowKey().toByteArray());
 
-    Mockito.verify(mutationAdapter, times(2)).adaptMutations(any(
+    Mockito.verify(mutationAdapter, times(2)).adapt(any(
         org.apache.hadoop.hbase.client.Mutation.class),Matchers.eq(mutation));
   }
 
