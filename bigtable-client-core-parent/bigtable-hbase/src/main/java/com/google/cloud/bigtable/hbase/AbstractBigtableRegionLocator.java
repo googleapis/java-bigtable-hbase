@@ -21,8 +21,8 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
@@ -54,13 +54,13 @@ public abstract class AbstractBigtableRegionLocator {
 
   protected final TableName tableName;
   private ListenableFuture<List<HRegionLocation>> regionsFuture;
-  private final BigtableDataClientWrapper client;
+  private final IBigtableDataClient client;
   private final SampledRowKeysAdapter adapter;
   private final BigtableTableName bigtableTableName;
   private long regionsFetchTimeMillis;
 
   public AbstractBigtableRegionLocator(TableName tableName, BigtableOptions options,
-      BigtableDataClientWrapper client) {
+      IBigtableDataClient client) {
     this.tableName = tableName;
     this.client = client;
     this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());

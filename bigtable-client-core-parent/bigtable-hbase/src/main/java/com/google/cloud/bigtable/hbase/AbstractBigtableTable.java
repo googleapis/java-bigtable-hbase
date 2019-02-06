@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
 import java.io.IOException;
@@ -65,7 +65,6 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -117,7 +116,7 @@ public abstract class AbstractBigtableTable implements Table {
   protected final HBaseRequestAdapter hbaseAdapter;
 
   protected final BigtableDataClient client;
-  protected final BigtableDataClientWrapper clientWrapper;
+  protected final IBigtableDataClient clientWrapper;
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();

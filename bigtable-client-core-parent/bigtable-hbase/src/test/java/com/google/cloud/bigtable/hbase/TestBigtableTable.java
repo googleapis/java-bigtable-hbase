@@ -23,16 +23,15 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -88,7 +87,7 @@ public class TestBigtableTable {
   private BigtableDataClient mockClient;
 
   @Mock
-  private BigtableDataClientWrapper mockBigtableDataClient;
+  private IBigtableDataClient mockBigtableDataClient;
 
   @Mock
   private ResultScanner<FlatRow> mockResultScanner;

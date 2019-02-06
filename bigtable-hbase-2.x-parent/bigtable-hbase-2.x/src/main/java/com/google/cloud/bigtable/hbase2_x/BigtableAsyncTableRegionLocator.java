@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -38,7 +38,7 @@ public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocat
   HRegionLocation hRegionLocation = null;
 
   public BigtableAsyncTableRegionLocator(TableName tableName, BigtableOptions options,
-      BigtableDataClientWrapper client) {
+      IBigtableDataClient client) {
     super(tableName, options, client);
   }
 
