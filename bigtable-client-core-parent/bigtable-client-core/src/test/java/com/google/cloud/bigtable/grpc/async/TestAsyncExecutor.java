@@ -62,26 +62,9 @@ public class TestAsyncExecutor {
     Assert.assertFalse(underTest.hasInflightRequests());
   }
 
-  @Test
-  public void testMutation() throws InterruptedException {
-    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
-    underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-    Assert.assertTrue(underTest.hasInflightRequests());
-    future.set("");
-    Assert.assertFalse(underTest.hasInflightRequests());
-  }
 
   @Test
-  public void testCheckAndMutate() throws InterruptedException {
-    when(client.checkAndMutateRowAsync(any(CheckAndMutateRowRequest.class))).thenReturn(future);
-    underTest.checkAndMutateRowAsync(CheckAndMutateRowRequest.getDefaultInstance());
-    Assert.assertTrue(underTest.hasInflightRequests());
-    future.set("");
-    Assert.assertFalse(underTest.hasInflightRequests());
-  }
-
-  @Test
-  public void testReadWriteModify() throws InterruptedException {
+  public void testReadWriteModify()  {
     when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(future);
     underTest.readModifyWriteRowAsync(ReadModifyWriteRowRequest.getDefaultInstance());
     Assert.assertTrue(underTest.hasInflightRequests());
@@ -90,30 +73,9 @@ public class TestAsyncExecutor {
   }
 
   @Test
-  public void testReadRowsAsync() throws InterruptedException {
-    when(client.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(future);
-    underTest.readRowsAsync(ReadRowsRequest.getDefaultInstance());
-    Assert.assertTrue(underTest.hasInflightRequests());
-    future.set("");
-    Assert.assertFalse(underTest.hasInflightRequests());
-  }
-
-  @Test
-  public void testReadFlatRowsAsync() throws InterruptedException {
-    when(client.readFlatRowsAsync(any(ReadRowsRequest.class))).thenReturn(future);
-    underTest.readFlatRowsAsync(ReadRowsRequest.getDefaultInstance());
-    Assert.assertTrue(underTest.hasInflightRequests());
-    future.set("");
-    Assert.assertFalse(underTest.hasInflightRequests());
-  }
-
-  @Test
-  public void testInvalidMutation() throws Exception {
-    try {
-      when(client.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());
-      underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-    } catch(Exception ignored) {
-    }
+  public void testInvalidMutation() {
+    when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenThrow(new RuntimeException());
+    underTest.readModifyWriteRowAsync(ReadModifyWriteRowRequest.getDefaultInstance());
     future.set(ReadRowsResponse.getDefaultInstance());
     Assert.assertFalse(underTest.hasInflightRequests());
   }
