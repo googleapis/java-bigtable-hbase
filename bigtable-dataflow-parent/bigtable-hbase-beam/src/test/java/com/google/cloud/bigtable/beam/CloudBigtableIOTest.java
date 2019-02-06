@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -109,7 +110,7 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSampleRowKeys() throws Exception {
-    List<SampleRowKeysResponse> sampleRowKeys = new ArrayList<>();
+    List<KeyOffset> sampleRowKeys = new ArrayList<>();
     int count = (int) (AbstractSource.COUNT_MAX_SPLIT_COUNT * 3 - 5);
     byte[][] keys = Bytes.split("A".getBytes(), "Z".getBytes(), count-2);
     long tabletSize = 2L * 1024L * 1024L * 1024L;
@@ -117,10 +118,7 @@ public class CloudBigtableIOTest {
     for (byte[] currentKey : keys) {
       boundary += tabletSize;
       try {
-        sampleRowKeys.add(SampleRowKeysResponse.newBuilder()
-          .setRowKey(ByteString.copyFrom(currentKey))
-          .setOffsetBytes(boundary)
-          .build());
+        sampleRowKeys.add(KeyOffset.create(ByteString.copyFrom(currentKey), boundary));
       } catch (NoClassDefFoundError e) {
         // This could cause some problems for javadoc or cobertura because of the shading magic we
         // do.
