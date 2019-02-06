@@ -74,7 +74,6 @@ public class AsyncExecutor {
    *
    * @param request The {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
-   * @throws java.lang.InterruptedException if any.
    */
   public ListenableFuture<ReadModifyWriteRowResponse>
       readModifyWriteRowAsync(ReadModifyWriteRowRequest request) {

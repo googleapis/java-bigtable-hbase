@@ -40,6 +40,7 @@ import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.hadoop.hbase.client.RowMutations;
 
 /**
  * A helper for Bigtable's {@link org.apache.hadoop.hbase.client.BufferedMutator} implementations.
@@ -66,9 +67,9 @@ public class BigtableBufferedMutatorHelper {
   private final HBaseRequestAdapter adapter;
   private final AsyncExecutor asyncExecutor;
 
-  private BulkMutation bulkMutation = null;
+  private final BulkMutation bulkMutation;
 
-  private BigtableOptions options;
+  private final BigtableOptions options;
   // Once the IBigtableDataClient interface is implemented this will be removed
   protected final RequestContext requestContext;
 
@@ -142,6 +143,9 @@ public class BigtableBufferedMutatorHelper {
   public List<ListenableFuture<?>> mutate(List<? extends Mutation> mutations) {
     closedReadLock.lock();
     try {
+      if (closed) {
+        throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
+      }
       List<ListenableFuture<?>> futures = new ArrayList<>(mutations.size());
       for (Mutation mutation : mutations) {
         futures.add(offer(mutation));
@@ -171,15 +175,33 @@ public class BigtableBufferedMutatorHelper {
   }
 
   /**
+   *
+   * @param mutation
+   * @return
+   */
+  public ListenableFuture<?> mutate(final RowMutations mutation) {
+    closedReadLock.lock();
+    try {
+      if (closed) {
+        throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
+      }
+      if (mutation == null) {
+        return Futures.immediateFailedFuture(
+            new IllegalArgumentException("Cannot perform a mutation on a null object."));
+      } else {
+        return bulkMutation.add(adapter.adaptEntry(mutation));
+      }
+    } finally {
+      closedReadLock.unlock();
+    }
+  }
+
+  /**
    * Send the operations to the async executor asynchronously.  The conversion from hbase
    * object to cloud bigtable proto and the async call both take time (microseconds worth) that
    * could be parallelized, or at least removed from the user's thread.
    */
   private ListenableFuture<?> offer(Mutation mutation) {
-    if (closed) {
-      Futures.immediateFailedFuture(
-        new IllegalStateException("Cannot mutate when the BufferedMutator is closed."));
-    }
     ListenableFuture<?> future = null;
     try {
       if (mutation == null) {

@@ -88,8 +88,6 @@ public interface IBigtableDataClient {
    *
    * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
    * @return returns true if predicate returns any result.
-   * @throws ExecutionException if any.
-   * @throws InterruptedException if any.
    */
   Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation);
 
