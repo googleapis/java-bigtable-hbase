@@ -138,8 +138,7 @@ public abstract class AbstractBigtableTable implements Table {
     this.clientWrapper = session.getClientWrapper();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
-    this.requestContext = RequestContext
-        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+    this.requestContext = session.getDataRequestContext();
   }
 
   /** {@inheritDoc} */

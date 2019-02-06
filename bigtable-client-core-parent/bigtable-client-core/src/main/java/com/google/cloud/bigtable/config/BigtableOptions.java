@@ -405,7 +405,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   /**
    * <p>Getter for the field <code>instanceName</code>.</p>
    *
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableInstanceName} object.
+   * @return a {@link BigtableInstanceName} object.
    */
   public BigtableInstanceName getInstanceName() {
     return instanceName;

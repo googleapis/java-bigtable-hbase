@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -87,6 +88,8 @@ public class TestBigtableBufferedMutator {
     MockitoAnnotations.initMocks(this);
     when(mockSession.createAsyncExecutor()).thenReturn(mockAsyncExecutor);
     when(mockSession.createBulkMutation(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
+    when(mockSession.getDataRequestContext())
+        .thenReturn(RequestContext.create("project", "instance", ""));
   }
 
   @After
@@ -145,6 +148,7 @@ public class TestBigtableBufferedMutator {
     verify(mockAsyncExecutor, times(1))
         .readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class));
   }
+
   @Test
   public void testInvalidPut() throws Exception {
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class)))

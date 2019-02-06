@@ -123,8 +123,7 @@ public class TestBigtableTable {
   }
 
   @Test
-  public void projectIsPopulatedInMutationRequests()
-      throws IOException {
+  public void projectIsPopulatedInMutationRequests() throws IOException {
     table.delete(new Delete(Bytes.toBytes("rowKey1")));
 
     ArgumentCaptor<RowMutation> argument = ArgumentCaptor.forClass(RowMutation.class);

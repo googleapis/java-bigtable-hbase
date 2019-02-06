@@ -104,7 +104,6 @@ public class HBaseRequestAdapter {
             .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId()));
   }
 
-
   /**
    * <p>Constructor for HBaseRequestAdapter.</p>
    *

@@ -150,9 +150,8 @@ public class BatchExecutor {
    */
   public BatchExecutor(BigtableSession session, HBaseRequestAdapter requestAdapter) {
     this.requestAdapter = requestAdapter;
+    this.requestContext = session.getDataRequestContext();
     this.options = session.getOptions();
-    this.requestContext = RequestContext
-        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
     this.bulkRead = session.createBulkRead(requestAdapter.getBigtableTableName());
     this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(
         requestAdapter,
