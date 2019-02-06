@@ -45,6 +45,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import io.grpc.stub.StreamObserver;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -252,6 +254,12 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   @Override
   public ListenableFuture<List<FlatRow>> readFlatRowsAsync(Query request) {
     return delegate.readFlatRowsAsync(request.toProto(requestContext));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer) {
+    delegate.readFlatRows(request.toProto(requestContext), observer);
   }
 
   /**

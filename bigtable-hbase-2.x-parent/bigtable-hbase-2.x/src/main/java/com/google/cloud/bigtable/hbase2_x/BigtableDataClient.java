@@ -29,6 +29,8 @@ import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 
 /**
@@ -40,9 +42,12 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 public class BigtableDataClient {
 
   private final com.google.cloud.bigtable.grpc.BigtableDataClient dataClient;
+  private final IBigtableDataClient clientWrapper;
 
-  public BigtableDataClient(com.google.cloud.bigtable.grpc.BigtableDataClient dataClient) {
+  public BigtableDataClient(com.google.cloud.bigtable.grpc.BigtableDataClient dataClient,
+      IBigtableDataClient clientWrapper) {
     this.dataClient = dataClient;
+    this.clientWrapper = clientWrapper;
   }
 
   /**
@@ -52,8 +57,8 @@ public class BigtableDataClient {
    * the mutation has completed.
    * @param request a {@link com.google.bigtable.v2.MutateRowRequest} object.
    */
-  public CompletableFuture<MutateRowResponse> mutateRowAsync(MutateRowRequest request) {
-    return toCompletableFuture(dataClient.mutateRowAsync(request));
+  public CompletableFuture<Void> mutateRowAsync(RowMutation request) {
+    return toCompletableFuture(clientWrapper.mutateRowAsync(request));
   }
 
   /**
@@ -78,18 +83,6 @@ public class BigtableDataClient {
   public CompletableFuture<ReadModifyWriteRowResponse>
       readModifyWriteRowAsync(ReadModifyWriteRowRequest request){
     return toCompletableFuture(dataClient.readModifyWriteRowAsync(request));
-  }
-
-  /**
-   * Sample row keys from a table, returning a Future that will complete when the sampling has
-   * completed.
-   *
-   * @param request a {@link com.google.bigtable.v2.SampleRowKeysRequest} object.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} object.
-   */
-  public CompletableFuture<List<SampleRowKeysResponse>>
-      sampleRowKeysAsync(SampleRowKeysRequest request) {
-    return toCompletableFuture(dataClient.sampleRowKeysAsync(request));
   }
 
   /**

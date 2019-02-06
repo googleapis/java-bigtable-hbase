@@ -24,6 +24,8 @@ import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.grpc.stub.StreamObserver;
+
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -151,4 +153,12 @@ public interface IBigtableDataClient {
    */
   //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<List<FlatRow>> readFlatRowsAsync(Query request);
+
+  /**
+   * Read {@link FlatRow} asynchronously, and pass them to a stream observer to be processed.
+   *
+   * @param request  a {@link Query} object.
+   * @param observer a {@link StreamObserver} object.
+   */
+  void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer);
 }
