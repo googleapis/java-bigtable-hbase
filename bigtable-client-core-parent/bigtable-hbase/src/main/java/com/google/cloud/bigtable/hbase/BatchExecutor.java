@@ -23,11 +23,8 @@ import java.util.concurrent.ExecutionException;
 
 import javax.annotation.Nullable;
 
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
@@ -39,9 +36,6 @@ import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -57,7 +51,11 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * Class to help BigtableTable with batch operations on an BigtableClient.
+ * Class to help BigtableTable with batch operations on an BigtableClient, such as
+ * {@link org.apache.hadoop.hbase.client.Table#batch(List, Object[])}.
+ * {@link org.apache.hadoop.hbase.client.Table#put(List)} and
+ * {@link org.apache.hadoop.hbase.client.Table#get(List)}.  This class relies on implementations found
+ * in {@link BulkRead} and in {@link BigtableBufferedMutatorHelper}.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -135,31 +133,13 @@ public class BatchExecutor {
     }
   }
 
-  protected static class BulkOperation {
-    private BulkMutation bulkMutation;
-    private BulkRead bulkRead;
-
-    protected BulkOperation(
-        BigtableSession session,
-        BigtableTableName tableName) {
-      this.bulkRead = session.createBulkRead(tableName);
-      this.bulkMutation = session.createBulkMutation(tableName);
-    }
-
-    protected void flush() {
-      // If there is a bulk mutation in progress, then send it.
-      bulkMutation.sendUnsent();
-      bulkRead.flush();
-    }
-  }
-
-  protected final BigtableSession session;
-  protected final AsyncExecutor asyncExecutor;
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
   protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Info, "batch.latency");
   // Once the IBigtableDataClient interface is implemented this will be removed
   private final RequestContext requestContext;
+  private final BigtableBufferedMutatorHelper bufferedMutatorHelper;
+  private final BulkRead bulkRead;
 
   /**
    * Constructor for BatchExecutor.
@@ -169,19 +149,20 @@ public class BatchExecutor {
    *     object.
    */
   public BatchExecutor(BigtableSession session, HBaseRequestAdapter requestAdapter) {
-    this.session = session;
-    this.asyncExecutor = session.createAsyncExecutor();
-    this.options = session.getOptions();
     this.requestAdapter = requestAdapter;
+    this.options = session.getOptions();
     this.requestContext = RequestContext
         .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+    this.bulkRead = session.createBulkRead(requestAdapter.getBigtableTableName());
+    this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(
+        requestAdapter,
+        null, // configuration isn't passed in, but also isn't used in BigtableBufferedMutatorHelper
+        session);
   }
 
   /**
    * Issue a single RPC recording the result into {@code results[index]} and if not-null, invoking
    * the supplied callback.
-   * @param bulkOperation An object that encapsulates a set of Mutations and Reads that happen via a
-   *          bulk API.
    * @param row The action to perform
    * @param callback The callback to invoke when the RPC completes and we have results
    * @param results An array of results, into which we should store the result of the operation
@@ -191,34 +172,26 @@ public class BatchExecutor {
    * @return A ListenableFuture that will have the result when the RPC completes.
    */
   private <R extends Row, T> ListenableFuture<Result> issueAsyncRowRequest(
-      BulkOperation bulkOperation, Row row, Batch.Callback<T> callback, Object[] results,
+      Row row, Batch.Callback<T> callback, Object[] results,
       int index) {
-    LOG.trace("issueRowRequest(BulkOperation, Row, Batch.Callback, Object[], index");
+    LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
     SettableFuture<Result> resultFuture = SettableFuture.create();
     RpcResultFutureCallback<T> futureCallback =
         new RpcResultFutureCallback<T>(row, callback, index, results, resultFuture);
     results[index] = null;
-    Futures.addCallback(issueAsyncRequest(bulkOperation, row),
+    Futures.addCallback(issueAsyncRequest(row),
         futureCallback, MoreExecutors.directExecutor());
     return resultFuture;
   }
 
-  private ListenableFuture<?> issueAsyncRequest(BulkOperation bulkOperation, Row row) {
+  private ListenableFuture<?> issueAsyncRequest(Row row) {
     try {
       if (row instanceof Get) {
-        return bulkOperation.bulkRead.add(requestAdapter.adapt((Get) row).toProto(requestContext));
-      } else if (row instanceof Put) {
-        return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((Put) row));
-      } else if (row instanceof Delete) {
-        return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((Delete) row));
-      } else if (row instanceof Append) {
-        return asyncExecutor.readModifyWriteRowAsync(
-            requestAdapter.adapt((Append) row).toProto(requestContext));
-      } else if (row instanceof Increment) {
-        return asyncExecutor.readModifyWriteRowAsync(
-            requestAdapter.adapt((Increment) row).toProto(requestContext));
+        return bulkRead.add(requestAdapter.adapt((Get) row).toProto(requestContext));
+      } else if (row instanceof Mutation) {
+        return bufferedMutatorHelper.mutate((Mutation) row);
       } else if (row instanceof RowMutations) {
-        return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((RowMutations) row));
+        return bufferedMutatorHelper.mutate((RowMutations) row);
       }
     } catch (Throwable e) {
       return Futures.immediateFailedFuture(new IOException("Could not process the batch", e));
@@ -246,16 +219,16 @@ public class BatchExecutor {
 
   public <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) {
-    BulkOperation bulkOperation = new BulkOperation(session, requestAdapter.getBigtableTableName());
     try {
       List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
       for (int i = 0; i < actions.size(); i++) {
-        resultFutures
-            .add(issueAsyncRowRequest(bulkOperation, actions.get(i), callback, results, i));
+        resultFutures.add(issueAsyncRowRequest(actions.get(i), callback, results, i));
       }
       return resultFutures;
     } finally {
-      bulkOperation.flush();
+      // If there is a bulk mutation in progress, then send it.
+      bufferedMutatorHelper.sendUnsent();
+      bulkRead.flush();
     }
   }
 
@@ -312,7 +285,7 @@ public class BatchExecutor {
         } catch (ExecutionException e) {
           problemActions.add(actions.get(i));
           problems.add(e.getCause());
-          hosts.add(options.getDataHost().toString());
+          hosts.add(options.getDataHost());
         }
       }
       if (problems.size() > 0) {
