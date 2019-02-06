@@ -42,7 +42,6 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
@@ -112,25 +111,23 @@ public class TestBigtableBufferedMutator {
   }
 
   @Test
-  public void testPut() throws IOException, InterruptedException {
+  public void testPut() throws IOException{
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(SIMPLE_PUT);
-    verify(mockAsyncExecutor, times(0)).mutateRowAsync(any(MutateRowRequest.class));
     verify(mockBulkMutation, times(1)).add(any(MutateRowsRequest.Entry.class));
   }
 
   @Test
-  public void testDelete() throws IOException, InterruptedException {
+  public void testDelete() throws IOException {
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(new Delete(EMPTY_BYTES));
-    verify(mockAsyncExecutor, times(0)).mutateRowAsync(any(MutateRowRequest.class));
     verify(mockBulkMutation, times(1)).add(any(MutateRowsRequest.Entry.class));
   }
 
   @Test
-  public void testIncrement() throws IOException, InterruptedException {
+  public void testIncrement() throws IOException {
     when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class)))
         .thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
@@ -140,7 +137,7 @@ public class TestBigtableBufferedMutator {
   }
 
   @Test
-  public void testAppend() throws IOException, InterruptedException {
+  public void testAppend() throws IOException {
     when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class)))
         .thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
@@ -168,7 +165,6 @@ public class TestBigtableBufferedMutator {
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(future);
     final BigtableBufferedMutator underTest = createMutator(config);
     underTest.mutate(SIMPLE_PUT);
-    verify(mockAsyncExecutor, times(0)).mutateRowAsync(any(MutateRowRequest.class));
     verify(mockBulkMutation, times(1)).add(any(MutateRowsRequest.Entry.class));
     underTest.flush();
     verify(mockBulkMutation, times(1)).flush();
