@@ -74,7 +74,8 @@ public class PutAdapter extends MutationAdapter<Put> {
   }
 
   @Override
-  protected void adaptMutations(Put operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
+  /** {@inheritDoc} */
+  public void adapt(Put operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     if (operation.isEmpty()) {
       throw new IllegalArgumentException("No columns to insert");
     }
