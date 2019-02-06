@@ -51,7 +51,11 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * Class to help BigtableTable with batch operations on an BigtableClient.
+ * Class to help BigtableTable with batch operations on an BigtableClient, such as
+ * {@link org.apache.hadoop.hbase.client.Table#batch(List, Object[])}.
+ * {@link org.apache.hadoop.hbase.client.Table#put(List)} and
+ * {@link org.apache.hadoop.hbase.client.Table#get(List)}.  This class relies on implementations found
+ * in {@link BulkRead} and in {@link BigtableBufferedMutatorHelper}.
  *
  * @author sduskis
  * @version $Id: $Id
