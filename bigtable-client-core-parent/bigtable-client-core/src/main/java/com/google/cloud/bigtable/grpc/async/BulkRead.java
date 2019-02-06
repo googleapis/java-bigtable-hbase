@@ -24,12 +24,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import com.google.common.base.Preconditions;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -65,7 +67,7 @@ public class BulkRead {
         }
       };
 
-  private final BigtableDataClient client;
+  private final BigtableDataClientWrapper client;
   private final int batchSizes;
   private final ExecutorService threadPool;
   private final String tableName;
@@ -74,12 +76,12 @@ public class BulkRead {
 
   /**
    * Constructor for BulkRead.
-   * @param client a {@link BigtableDataClient} object.
+   * @param client a {@link BigtableDataClientWrapper} object.
    * @param tableName a {@link BigtableTableName} object.
    * @param batchSizes The number of keys to lookup per RPC.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
-  public BulkRead(BigtableDataClient client, BigtableTableName tableName, int batchSizes,
+  public BulkRead(BigtableDataClientWrapper client, BigtableTableName tableName, int batchSizes,
       ExecutorService threadPool) {
     this.client = client;
     this.tableName = tableName.toString();
@@ -176,12 +178,15 @@ public class BulkRead {
     @Override
     public void run() {
       try {
-        ResultScanner<FlatRow> scanner = client.readFlatRows(ReadRowsRequest.newBuilder()
+        Query query = Query.fromProto(ReadRowsRequest.newBuilder()
             .setTableName(tableName)
             .setFilter(filter)
+
+            // TODO: Query.addRowKeys(List<ByteString>) would be super helpful, and allow
+            // this class to construct a Query without passing in a proto
             .setRows(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
-            .build()
-        );
+            .build());
+        ResultScanner<FlatRow> scanner = client.readFlatRows(query);
         while (true) {
           FlatRow row = scanner.next();
           if (row == null) {

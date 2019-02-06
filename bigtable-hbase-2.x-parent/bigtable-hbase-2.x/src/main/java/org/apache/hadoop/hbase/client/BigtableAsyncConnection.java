@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -277,7 +278,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
-    return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getDataClient());
+    return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getClientWrapper());
   }
 
   @Override
@@ -336,11 +337,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
     request.setTableName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
-    List<SampleRowKeysResponse> sampleRowKeyResponse = this.session.getDataClient().sampleRowKeys(request.build());
+    List<KeyOffset> sampleRowKeyResponse = this.session.getClientWrapper().sampleRowKeys(tableName.getNameAsString());
 
     return getSampledRowKeysAdapter(tableName, serverName).adaptResponse(sampleRowKeyResponse)
         .stream()
-        .map(location -> location.getRegionInfo())
+        .map(HRegionLocation::getRegionInfo)
         .collect(Collectors.toCollection(CopyOnWriteArrayList::new));
   }
 
