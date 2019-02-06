@@ -94,7 +94,7 @@ public class BigtableBufferedMutatorHelper {
     this.asyncExecutor = session.createAsyncExecutor();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.bulkMutation = session.createBulkMutation(tableName);
-    this.requestContext = options.getRequestContext();
+    this.requestContext = session.getDataRequestContext();
   }
 
   public void close() throws IOException {

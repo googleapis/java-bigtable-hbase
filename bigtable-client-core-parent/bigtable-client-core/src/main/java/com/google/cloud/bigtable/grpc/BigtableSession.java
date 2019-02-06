@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
@@ -307,6 +308,14 @@ public class BigtableSession implements Closeable {
    */
   public BigtableDataClient getDataClient() {
     return dataClient;
+  }
+
+  /**
+   * @return a {@link RequestContext} object for use with {@link #getDataClient()} during the
+   * transition to {@link #getClientWrapper()}.
+   */
+  public RequestContext getDataRequestContext() {
+    return RequestContext.create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
   }
 
   /**

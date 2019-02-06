@@ -173,7 +173,7 @@ public class BatchExecutor {
     this.asyncExecutor = session.createAsyncExecutor();
     this.options = session.getOptions();
     this.requestAdapter = requestAdapter;
-    this.requestContext = options.getRequestContext();
+    this.requestContext = session.getDataRequestContext();
   }
 
   /**

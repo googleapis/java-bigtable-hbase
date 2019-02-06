@@ -100,10 +100,9 @@ public class HBaseRequestAdapter {
     this(tableName,
         options.getInstanceName().toTableName(tableName.getQualifierAsString()),
         mutationAdapters,
-        options.getRequestContext()
-    );
+        RequestContext
+            .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId()));
   }
-
 
   /**
    * <p>Constructor for HBaseRequestAdapter.</p>
