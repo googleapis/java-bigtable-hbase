@@ -456,9 +456,8 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      CheckAndMutateRowRequest checkAndMutateRowRequest = request.toProto(requestContext);
-      CheckAndMutateRowResponse response = client.checkAndMutateRow(checkAndMutateRowRequest);
-      return CheckAndMutateUtil.wasMutationApplied(checkAndMutateRowRequest, response);
+      Boolean wasApplied = clientWrapper.checkAndMutateRow(request);
+      return CheckAndMutateUtil.wasMutationApplied(request, wasApplied);
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, row, t);

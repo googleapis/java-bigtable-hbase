@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
@@ -235,11 +236,10 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       }
     }
 
-    private CompletableFuture<Boolean> call()
-        throws IOException {
-      CheckAndMutateRowRequest request = builder.build().toProto(requestContext);
-      return client.checkAndMutateRowAsync(request).thenApply(
-        response -> CheckAndMutateUtil.wasMutationApplied(request, response));
+    private CompletableFuture<Boolean> call() {
+      ConditionalRowMutation mutation = builder.build();
+      return client.checkAndMutateRowAsync(mutation.toProto(requestContext)).thenApply(
+        response -> CheckAndMutateUtil.wasMutationApplied(mutation, response.getPredicateMatched()));
     }
   }
 

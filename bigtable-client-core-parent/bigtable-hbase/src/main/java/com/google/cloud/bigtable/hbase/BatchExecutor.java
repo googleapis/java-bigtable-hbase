@@ -219,9 +219,6 @@ public class BatchExecutor {
       } else if (row instanceof RowMutations) {
         return bulkOperation.bulkMutation.add(requestAdapter.adaptEntry((RowMutations) row));
       }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      return Futures.immediateFailedFuture(new IOException("Could not process the batch due to interrupt", e));
     } catch (Throwable e) {
       return Futures.immediateFailedFuture(new IOException("Could not process the batch", e));
     }
