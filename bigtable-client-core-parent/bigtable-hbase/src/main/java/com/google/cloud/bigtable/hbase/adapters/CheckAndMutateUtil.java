@@ -19,6 +19,7 @@ import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -62,20 +63,20 @@ public class CheckAndMutateUtil {
   /**
    * <p>wasMutationApplied.</p>
    *
-   * @param request a {@link com.google.bigtable.v2.CheckAndMutateRowRequest} object.
-   * @param response a {@link com.google.bigtable.v2.CheckAndMutateRowResponse} object.
+   * @param request a {@link ConditionalRowMutation} object.
+   * @param predicateMatched a {@link Boolean} object.
    * @return a boolean.
    */
   public static boolean wasMutationApplied(
-      CheckAndMutateRowRequest request,
-      CheckAndMutateRowResponse response) {
+      ConditionalRowMutation request,
+      Boolean predicateMatched) {
 
+    CheckAndMutateRowRequest proto =
+        request.toProto(RequestContext.create("SomeProject", "Some Instance", ""));
     // If we have true mods, we want the predicate to have matched.
     // If we have false mods, we did not want the predicate to have matched.
-    return (request.getTrueMutationsCount() > 0
-        && response.getPredicateMatched())
-        || (request.getFalseMutationsCount() > 0
-        && !response.getPredicateMatched());
+    return (proto.getTrueMutationsCount() > 0  && predicateMatched)
+        || (proto.getFalseMutationsCount() > 0 && !predicateMatched);
   }
 
   /**
