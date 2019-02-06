@@ -24,9 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.Query;
-import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import com.google.common.base.Preconditions;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
@@ -67,7 +66,7 @@ public class BulkRead {
         }
       };
 
-  private final BigtableDataClientWrapper client;
+  private final IBigtableDataClient client;
   private final int batchSizes;
   private final ExecutorService threadPool;
   private final String tableName;
@@ -76,12 +75,12 @@ public class BulkRead {
 
   /**
    * Constructor for BulkRead.
-   * @param client a {@link BigtableDataClientWrapper} object.
+   * @param client a {@link IBigtableDataClient} object.
    * @param tableName a {@link BigtableTableName} object.
    * @param batchSizes The number of keys to lookup per RPC.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
-  public BulkRead(BigtableDataClientWrapper client, BigtableTableName tableName, int batchSizes,
+  public BulkRead(IBigtableDataClient client, BigtableTableName tableName, int batchSizes,
       ExecutorService threadPool) {
     this.client = client;
     this.tableName = tableName.toString();
