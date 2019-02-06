@@ -181,7 +181,7 @@ limitations under the License.
 
                         <offlineLinks>
                             <offlineLink>
-                                <url>https://google.github.io/guava/releases/20.0/api/docs/</url>
+                                <url>https://google.github.io/guava/releases/27.0-jre/api/docs/</url>
                                 <location>${basedir}/javadoc/guava-docs</location>
                             </offlineLink>
                             <offlineLink>
