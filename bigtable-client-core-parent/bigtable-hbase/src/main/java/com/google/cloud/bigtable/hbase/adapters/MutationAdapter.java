@@ -38,16 +38,6 @@ public abstract class MutationAdapter<T extends Row>
     return ByteStringer.extract(bs);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public final void adapt(T operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
-    adaptMutations(operation, mutation);
-  }
-
-  public final void toEntry(T operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
-    adaptMutations(operation, mutation);
-  }
-
   /**
    * Converts an HBase {@link Mutation} which represents a set of changes to a single row from an
    * HBase perspective to a Google Cloud Java {@link com.google.cloud.bigtable.data.v2.models.Mutation}
@@ -59,7 +49,8 @@ public abstract class MutationAdapter<T extends Row>
    * @param operation The HBase {@link Mutation} to convert
    * @param mutation The model {@link com.google.cloud.bigtable.data.v2.models.MutationApi}
    */
-  protected abstract void adaptMutations(
+  @Override
+  public abstract void adapt(
       T operation,
       com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation
   );

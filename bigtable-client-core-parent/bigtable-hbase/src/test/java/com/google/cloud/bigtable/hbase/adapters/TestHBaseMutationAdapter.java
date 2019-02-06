@@ -81,37 +81,37 @@ public class TestHBaseMutationAdapter {
   @Test
   public void testPutIsAdapted() {
     Put put = new Put(dataHelper.randomData("rk1"));
-    adapter.adaptMutations(put, mutation);
+    adapter.adapt(put, mutation);
 
     Mockito.verify(putAdapter, Mockito.times(1))
-        .adaptMutations(Mockito.any(Put.class), Mockito.eq(mutation));
+        .adapt(Mockito.any(Put.class), Mockito.eq(mutation));
   }
 
   @Test
   public void testDeleteIsAdapted() {
     Delete delete = new Delete(dataHelper.randomData("rk1"));
-    adapter.adaptMutations(delete, mutation);
+    adapter.adapt(delete, mutation);
 
     Mockito.verify(deleteAdapter, Mockito.times(1))
-        .adaptMutations(Mockito.any(Delete.class), Mockito.eq(mutation));
+        .adapt(Mockito.any(Delete.class), Mockito.eq(mutation));
   }
 
   @Test
   public void testAppendIsAdapted() {
     Append append = new Append(dataHelper.randomData("rk1"));
-    adapter.adaptMutations(append, mutation);
+    adapter.adapt(append, mutation);
 
     Mockito.verify(appendAdapter, Mockito.times(1))
-        .adaptMutations(Mockito.any(Append.class), Mockito.eq(mutation));
+        .adapt(Mockito.any(Append.class), Mockito.eq(mutation));
   }
 
   @Test
   public void testIncrementIsAdapted() {
     Increment increment = new Increment(dataHelper.randomData("rk1"));
-    adapter.adaptMutations(increment, mutation);
+    adapter.adapt(increment, mutation);
 
     Mockito.verify(incrementAdapter, Mockito.times(1))
-        .adaptMutations(Mockito.any(Increment.class), Mockito.eq(mutation));
+        .adapt(Mockito.any(Increment.class), Mockito.eq(mutation));
   }
 
   @Test
@@ -122,6 +122,6 @@ public class TestHBaseMutationAdapter {
     expectedException.expectMessage("Cannot adapt mutation of type");
     expectedException.expectMessage("UnknownMutation");
 
-    adapter.adaptMutations(unknownMutation, mutation);
+    adapter.adapt(unknownMutation, mutation);
   }
 }

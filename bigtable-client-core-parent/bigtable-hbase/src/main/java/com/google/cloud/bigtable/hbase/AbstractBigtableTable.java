@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
 import java.io.IOException;
@@ -65,7 +65,6 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -117,7 +116,7 @@ public abstract class AbstractBigtableTable implements Table {
   protected final HBaseRequestAdapter hbaseAdapter;
 
   protected final BigtableDataClient client;
-  protected final BigtableDataClientWrapper clientWrapper;
+  protected final IBigtableDataClient clientWrapper;
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
@@ -270,9 +269,9 @@ public abstract class AbstractBigtableTable implements Table {
     }
   }
 
-  private FlatRow getResults(Get get, String method) throws IOException {
+  private FlatRow getResults(Get get, String method) {
     try (Timer.Context ignored = metrics.getTimer.time()) {
-      List<FlatRow> list = client.readFlatRowsList(hbaseAdapter.adapt(get).toProto(requestContext));
+      List<FlatRow> list = clientWrapper.readFlatRowsList(hbaseAdapter.adapt(get));
       switch(list.size()) {
       case 0:
         return null;
@@ -298,8 +297,8 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("getScanner(Scan)");
     Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
-          client.readFlatRows(hbaseAdapter.adapt(scan).toProto(requestContext));
+      com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow>
+          scanner = clientWrapper.readFlatRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
       }
@@ -458,9 +457,8 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      CheckAndMutateRowRequest checkAndMutateRowRequest = request.toProto(requestContext);
-      CheckAndMutateRowResponse response = client.checkAndMutateRow(checkAndMutateRowRequest);
-      return CheckAndMutateUtil.wasMutationApplied(checkAndMutateRowRequest, response);
+      Boolean wasApplied = clientWrapper.checkAndMutateRow(request);
+      return CheckAndMutateUtil.wasMutationApplied(request, wasApplied);
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, row, t);
@@ -488,8 +486,7 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("mutateRow(RowMutation)");
     Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      MutateRowRequest request = hbaseAdapter.adapt(rm).toProto(requestContext);
-      client.mutateRow(request);
+      clientWrapper.mutateRow(hbaseAdapter.adapt(rm));
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("mutateRow", rm.getRow(), t);

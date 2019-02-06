@@ -122,7 +122,7 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
 
   @Override
   /** {@inheritDoc} */
-  protected void adaptMutations(Delete operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
+  public void adapt(Delete operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     if (operation.getFamilyCellMap().isEmpty()) {
       throwIfUnsupportedDeleteRow(operation);
 
