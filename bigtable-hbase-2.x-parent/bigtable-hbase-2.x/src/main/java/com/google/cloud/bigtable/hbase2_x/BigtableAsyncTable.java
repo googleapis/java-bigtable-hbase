@@ -99,8 +99,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     this.tableName = hbaseAdapter.getTableName();
     // Once the IBigtableDataClient interface is implemented this will be removed
     BigtableOptions options = asyncConnection.getOptions();
-    this.requestContext = RequestContext
-        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+    this.requestContext = options.getRequestContext();
   }
 
   protected synchronized BatchExecutor getBatchExecutor() {

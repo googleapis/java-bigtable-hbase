@@ -47,7 +47,7 @@ public class PutAdapterPerf {
     HBaseRequestAdapter adapter =
         new HBaseRequestAdapter(options,
             TableName.valueOf("tableName"), new Configuration());
-    requestContext = RequestContext.create(options.getInstanceName().toGcbInstanceName(), "");
+    requestContext = options.getRequestContext();
     for (int i = 0; i < 10; i++) {
       putAdapterPerf(adapter, put);
     }

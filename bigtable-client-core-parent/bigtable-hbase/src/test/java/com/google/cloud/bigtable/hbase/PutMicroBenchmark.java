@@ -67,7 +67,7 @@ public class PutMicroBenchmark {
     int putCount = useRealConnection ? REAL_CHANNEL_PUT_COUNT : FAKE_CHANNEL_PUT_COUNT;
     HBaseRequestAdapter hbaseAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf(tableId), new Configuration(false));
-    requestContext = RequestContext.create(options.getInstanceName().toGcbInstanceName(), "");
+    requestContext = options.getRequestContext();
 
     testCreatePuts(10_000);
 

@@ -29,7 +29,6 @@ import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
@@ -39,7 +38,6 @@ import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.protobuf.ByteString;
 
-import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
@@ -123,14 +121,12 @@ public class TestBigtableTable {
   }
 
   @Test
-  public void projectIsPopulatedInMutationRequests()
-      throws IOException, ExecutionException, InterruptedException {
+  public void projectIsPopulatedInMutationRequests() throws IOException {
     table.delete(new Delete(Bytes.toBytes("rowKey1")));
 
     ArgumentCaptor<RowMutation> argument = ArgumentCaptor.forClass(RowMutation.class);
     verify(mockBigtableDataClient).mutateRow(argument.capture());
-    RequestContext requestContext =
-        RequestContext.create(InstanceName.of(TEST_PROJECT, TEST_INSTANCE), "");
+    RequestContext requestContext = mockSession.getOptions().getRequestContext();
 
     Assert.assertEquals(
         "projects/testproject/instances/testinstance/tables/testtable",

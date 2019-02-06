@@ -100,8 +100,8 @@ public class HBaseRequestAdapter {
     this(tableName,
         options.getInstanceName().toTableName(tableName.getQualifierAsString()),
         mutationAdapters,
-        RequestContext
-            .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId()));
+        options.getRequestContext()
+    );
   }
 
 

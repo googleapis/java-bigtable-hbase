@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.annotations.VisibleForTesting;
@@ -300,6 +301,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   private boolean useCachedDataPool;
 
   private BigtableInstanceName instanceName;
+  private transient RequestContext requestContext;
 
   private BulkOptions bulkOptions;
   private CallOptionsConfig callOptionsConfig;
@@ -405,10 +407,25 @@ public class BigtableOptions implements Serializable, Cloneable {
   /**
    * <p>Getter for the field <code>instanceName</code>.</p>
    *
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableInstanceName} object.
+   * @return a {@link BigtableInstanceName} object.
    */
   public BigtableInstanceName getInstanceName() {
     return instanceName;
+  }
+
+  /**
+   * <p>Getter for the field <code>instanceName</code>.</p>
+   *
+   * @return a {@link RequestContext} object.
+   */
+  public RequestContext getRequestContext() {
+    if (requestContext == null && instanceName != null) {
+      // RequestContext is not Serializable, so it is declared transient
+      // and is built as needed.
+      requestContext =
+          RequestContext.create(projectId, instanceId, appProfileId);
+    }
+    return requestContext;
   }
 
   /**
