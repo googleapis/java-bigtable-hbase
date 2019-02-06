@@ -17,6 +17,7 @@
 
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
@@ -252,10 +253,10 @@ public class CloudBigtableIOIntegrationTest {
       try {
         CloudBigtableIO.Source source =
             (CloudBigtableIO.Source) CloudBigtableIO.read(createScanConfig(tableName));
-        List<SampleRowKeysResponse> sampleRowKeys = source.getSampleRowKeys();
+        List<KeyOffset> sampleRowKeys = source.getSampleRowKeys();
         LOG.info("Creating BoundedSource in testEstimatedAndSplitForSmallTable()");
         long estimatedSizeBytes = source.getEstimatedSizeBytes(null);
-        SampleRowKeysResponse lastSample = sampleRowKeys.get(sampleRowKeys.size() - 1);
+        KeyOffset lastSample = sampleRowKeys.get(sampleRowKeys.size() - 1);
         Assert.assertEquals(lastSample.getOffsetBytes(), estimatedSizeBytes);
 
         LOG.info("Creating Bundles in testEstimatedAndSplitForSmallTable()");
@@ -294,10 +295,10 @@ public class CloudBigtableIOIntegrationTest {
         LOG.info("Getting Source in testEstimatedAndSplitForLargeTable()");
         CloudBigtableIO.Source source =
             (CloudBigtableIO.Source) CloudBigtableIO.read(createScanConfig(tableName));
-        List<SampleRowKeysResponse> sampleRowKeys = source.getSampleRowKeys();
+        List<KeyOffset> sampleRowKeys = source.getSampleRowKeys();
         LOG.info("Getting estimated size in testEstimatedAndSplitForLargeTable()");
         long estimatedSizeBytes = source.getEstimatedSizeBytes(null);
-        SampleRowKeysResponse lastSample = sampleRowKeys.get(sampleRowKeys.size() - 1);
+        KeyOffset lastSample = sampleRowKeys.get(sampleRowKeys.size() - 1);
         Assert.assertEquals(lastSample.getOffsetBytes(), estimatedSizeBytes);
 
         LOG.info("Getting Bundles in testEstimatedAndSplitForLargeTable()");

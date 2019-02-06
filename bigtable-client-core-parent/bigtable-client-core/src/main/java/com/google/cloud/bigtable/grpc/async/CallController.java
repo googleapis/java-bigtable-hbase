@@ -24,7 +24,7 @@ import io.grpc.stub.ClientCallStreamObserver;
 import javax.annotation.Nullable;
 
 /**
- * Wraps a {@Link ClientCall}, and implements {@ClientCallStreamObserver} to allow access to the call's
+ * Wraps a {@link ClientCall}, and implements {@link ClientCallStreamObserver} to allow access to the call's
  * underlying functionality.
  * <p>
  *   This class is intended to be used by the user to control flow and the life of the call.

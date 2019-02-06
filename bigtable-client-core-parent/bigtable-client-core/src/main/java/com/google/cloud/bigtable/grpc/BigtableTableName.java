@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

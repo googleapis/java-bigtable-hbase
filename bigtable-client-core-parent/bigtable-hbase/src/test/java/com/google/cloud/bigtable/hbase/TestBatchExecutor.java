@@ -24,7 +24,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -70,7 +69,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -134,8 +132,9 @@ public class TestBatchExecutor {
   private HBaseRequestAdapter requestAdapter;
 
   private BigtableOptions options;
+
   @Before
-  public void setup() throws InterruptedException {
+  public void setup() {
     options = BigtableOptions.builder()
         .setProjectId("projectId")
         .setInstanceId("instanceId")
@@ -196,28 +195,25 @@ public class TestBatchExecutor {
 
   @Test
   public void testShutdownService() throws Exception {
-    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class)))
-        .thenThrow(new IllegalStateException("closed"));
+    when(mockFuture.get()).thenThrow(new IllegalStateException("closed"));
     try {
       batch(Arrays.asList(randomPut()));
     } catch (RetriesExhaustedWithDetailsException e) {
       Assert.assertEquals(1, e.getCauses().size());
-      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
+      Assert.assertEquals(IllegalStateException.class, e.getCause(0).getClass());
     }
   }
 
   @Test
   public void testAsyncException() throws Exception {
     String message = "Something bad happened";
-    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class)))
-        .thenThrow(new RuntimeException(message));
+    when(mockFuture.get()).thenThrow(new RuntimeException(message));
     try {
       batch(Arrays.asList(randomPut()));
     } catch (RetriesExhaustedWithDetailsException e) {
       Assert.assertEquals(1, e.getCauses().size());
-      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
-      Assert.assertEquals(RuntimeException.class, e.getCause(0).getCause().getClass());
-      Assert.assertEquals(message, e.getCause(0).getCause().getMessage());
+      Assert.assertEquals(RuntimeException.class, e.getCause(0).getClass());
+      Assert.assertEquals(message, e.getCause(0).getMessage());
     }
   }
 

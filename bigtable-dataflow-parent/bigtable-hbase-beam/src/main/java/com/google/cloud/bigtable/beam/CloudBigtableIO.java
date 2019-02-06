@@ -26,6 +26,8 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -66,7 +68,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
@@ -163,7 +164,7 @@ public class CloudBigtableIO {
      */
     private final CloudBigtableScanConfiguration configuration;
 
-    private transient List<SampleRowKeysResponse> sampleRowKeys;
+    private transient List<KeyOffset> sampleRowKeys;
 
     AbstractSource(CloudBigtableScanConfiguration configuration) {
       this.configuration = configuration;
@@ -185,8 +186,8 @@ public class CloudBigtableIO {
       List<SourceWithKeys> splits = new ArrayList<>();
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
-      for (SampleRowKeysResponse response : getSampleRowKeys()) {
-        byte[] endKey = response.getRowKey().toByteArray();
+      for (KeyOffset response : getSampleRowKeys()) {
+        byte[] endKey = response.getKey().toByteArray();
         // Avoid empty regions.
         if (Bytes.equals(startKey, endKey) && startKey.length > 0) {
           continue;
@@ -274,11 +275,11 @@ public class CloudBigtableIO {
 
     /**
      * Performs a call to get sample row keys from
-     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest)}
+     * {@link CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)}
      * if they are not yet cached. The sample row keys give information about tablet key boundaries
      * and estimated sizes.
      */
-    public synchronized List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
+    public synchronized List<KeyOffset> getSampleRowKeys() throws IOException {
       if (sampleRowKeys == null) {
         sampleRowKeys = new CloudBigtableServiceImpl().getSampleRowKeys(getConfiguration());
       }
@@ -286,7 +287,7 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    void setSampleRowKeys(List<SampleRowKeysResponse> sampleRowKeys) {
+    void setSampleRowKeys(List<KeyOffset> sampleRowKeys) {
       this.sampleRowKeys = sampleRowKeys;
     }
 
@@ -317,8 +318,8 @@ public class CloudBigtableIO {
 
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
-      for (SampleRowKeysResponse response : getSampleRowKeys()) {
-        byte[] currentEndKey = response.getRowKey().toByteArray();
+      for (KeyOffset response : getSampleRowKeys()) {
+        byte[] currentEndKey = response.getKey().toByteArray();
         // Avoid empty regions.
         if (Bytes.equals(startKey, currentEndKey) && startKey.length != 0) {
           continue;
@@ -418,7 +419,7 @@ public class CloudBigtableIO {
     /**
      * Splits the table based on keys that belong to tablets, known as "regions" in the HBase API.
      * The current implementation uses the HBase {@link RegionLocator} interface, which calls
-     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest)}
+     * {@link  CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)}
      * under the covers. A {@link SourceWithKeys} may correspond to a single region or a portion of
      * a region.
      * <p>
@@ -451,7 +452,7 @@ public class CloudBigtableIO {
 
     /**
      * Gets an estimated size based on data returned from
-     * {@link BigtableDataClient#sampleRowKeys(com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysRequest)}.
+     * {@link CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)}.
      * The estimate will be high if a {@link Scan} is set on the
      * {@link CloudBigtableScanConfiguration}; in such cases, the estimate will not take the Scan
      * into account, and will return a larger estimate than what the {@link CloudBigtableIO.Reader}
@@ -468,8 +469,8 @@ public class CloudBigtableIO {
 
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
-      for (SampleRowKeysResponse response : getSampleRowKeys()) {
-        byte[] currentEndKey = response.getRowKey().toByteArray();
+      for (KeyOffset response : getSampleRowKeys()) {
+        byte[] currentEndKey = response.getKey().toByteArray();
         // Avoid empty regions.
         if (Bytes.equals(startKey, currentEndKey) && startKey.length != 0) {
           continue;
@@ -620,7 +621,7 @@ public class CloudBigtableIO {
 
       // This will use cached data channels under the covers.
       session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(config));
-      scanner = session.getDataClient().readFlatRows(source.getConfiguration().getRequest());
+      scanner = session.getClientWrapper().readFlatRows(Query.fromProto(source.getConfiguration().getRequest()));
     }
 
     /**
