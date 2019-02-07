@@ -17,9 +17,9 @@ package com.google.cloud.bigtable.hbase.filter;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import java.io.IOException;
 import java.io.Serializable;
 
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -27,7 +27,6 @@ import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
 
 import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
@@ -47,13 +46,8 @@ public class BigtableFilter extends FilterBase implements Serializable {
     this.filter = filter;
   }
 
-  @Deprecated
-  public BigtableFilter(com.google.cloud.bigtable.data.v2.wrappers.Filters.Filter filter) {
-    this(FILTERS.fromProto(filter.toProto()));
-  }
-
   @Override
-  public ReturnCode filterKeyValue(Cell cell) throws IOException {
+  public ReturnCode filterKeyValue(Cell cell) {
     return ReturnCode.SKIP;
   }
 
@@ -71,7 +65,7 @@ public class BigtableFilter extends FilterBase implements Serializable {
   }
 
   @Override
-  public byte[] toByteArray() throws IOException {
+  public byte[] toByteArray() {
     return filter.toProto().toByteArray();
   }
 
