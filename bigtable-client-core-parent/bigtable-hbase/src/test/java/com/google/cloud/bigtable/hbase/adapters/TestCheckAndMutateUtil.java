@@ -75,11 +75,7 @@ public class TestCheckAndMutateUtil {
     requestAdapter = new HBaseRequestAdapter(
         TABLE_NAME,
         BT_TABLE_NAME,
-        mutationAdapters,
-        RequestContext.create(
-            InstanceName.of(BT_TABLE_NAME.getProjectId(), BT_TABLE_NAME.getInstanceId()),
-            "APP_PROFILE_ID"
-        ));
+        mutationAdapters);
   }
 
   private static void checkPredicate(CheckAndMutateRowRequest result) {
