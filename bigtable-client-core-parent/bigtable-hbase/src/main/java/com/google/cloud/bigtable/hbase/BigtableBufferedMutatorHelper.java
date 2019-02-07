@@ -15,7 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -189,7 +191,7 @@ public class BigtableBufferedMutatorHelper {
         return Futures.immediateFailedFuture(
             new IllegalArgumentException("Cannot perform a mutation on a null object."));
       } else {
-        return bulkMutation.add(adapter.adaptEntry(mutation));
+        return bulkMutation.add(toEntry(adapter.adaptEntry(mutation)));
       }
     } finally {
       closedReadLock.unlock();
@@ -208,9 +210,9 @@ public class BigtableBufferedMutatorHelper {
         future = Futures.immediateFailedFuture(
           new IllegalArgumentException("Cannot perform a mutation on a null object."));
       } else if (mutation instanceof Put) {
-        future = bulkMutation.add(adapter.adaptEntry((Put) mutation));
+        future = bulkMutation.add(toEntry(adapter.adaptEntry((Put) mutation)));
       } else if (mutation instanceof Delete) {
-        future = bulkMutation.add(adapter.adaptEntry((Delete) mutation));
+        future = bulkMutation.add(toEntry(adapter.adaptEntry((Delete) mutation)));
       } else if (mutation instanceof Increment) {
         future =
             asyncExecutor.readModifyWriteRowAsync(
@@ -230,6 +232,9 @@ public class BigtableBufferedMutatorHelper {
     return future;
   }
 
+  private MutateRowsRequest.Entry toEntry(RowMutation rowMutation) {
+    return rowMutation.toBulkProto(requestContext).getEntries(0);
+  }
 
   /**
    * <p>hasInflightRequests.</p>
