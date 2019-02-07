@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -23,15 +25,13 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -84,9 +84,6 @@ public class TestBigtableTable {
   private BigtableSession mockSession;
 
   @Mock
-  private BigtableDataClient mockClient;
-
-  @Mock
   private IBigtableDataClient mockBigtableDataClient;
 
   @Mock
@@ -116,7 +113,6 @@ public class TestBigtableTable {
     when(mockConnection.getConfiguration()).thenReturn(config);
     when(mockConnection.getSession()).thenReturn(mockSession);
     when(mockSession.getOptions()).thenReturn(options);
-    when(mockSession.getDataClient()).thenReturn(mockClient);
     when(mockSession.getClientWrapper()).thenReturn(mockBigtableDataClient);
     when(mockBigtableDataClient.readFlatRows(isA(Query.class))).thenReturn(mockResultScanner);
     table = new AbstractBigtableTable(mockConnection, hbaseAdapter){};
@@ -146,28 +142,21 @@ public class TestBigtableTable {
 
     verify(mockBigtableDataClient).readFlatRowsList(argument.capture());
 
-    Assert.assertEquals(
-        "projects/testproject/instances/testinstance/tables/testtable",
-        argument.getValue().toProto(REQUEST_CONTEXT).getTableName());
-    Chain expectedColumnSpecFilter =
-        Chain.newBuilder()
-          .addFilters(
-              RowFilter.newBuilder()
-                  .setChain(
-                      Chain.newBuilder()
-                          .addFilters(
-                              RowFilter.newBuilder()
-                                  .setFamilyNameRegexFilter("family"))
-                          .addFilters(
-                              RowFilter.newBuilder()
-                                  .setColumnQualifierRegexFilter(
-                                      ByteString.copyFromUtf8("qualifier")))))
-            .addFilters(RowFilter.newBuilder().setCellsPerColumnLimitFilter(1))
-        .build();
+    ReadRowsRequest actualRequest = argument.getValue().toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(
-        expectedColumnSpecFilter,
-        argument.getValue().toProto(REQUEST_CONTEXT).getFilter().getChain());
+        "projects/testproject/instances/testinstance/tables/testtable",
+        actualRequest.getTableName());
+
+    Assert.assertEquals(
+        FILTERS.chain()
+            .filter(
+                FILTERS.chain()
+                    .filter(FILTERS.family().regex("family"))
+                    .filter(FILTERS.qualifier().regex("qualifier"))
+            )
+            .filter(FILTERS.limit().cellsPerColumn(1)).toProto(),
+        actualRequest.getFilter());
   }
 
   @Test
@@ -176,7 +165,7 @@ public class TestBigtableTable {
         new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
     assertFalse(AbstractBigtableTable.hasWhileMatchFilter(filter));
   }
-  
+
   @Test
   public void hasWhileMatchFilter_yesAtTopLevel() {
     QualifierFilter filter =
@@ -184,7 +173,7 @@ public class TestBigtableTable {
     WhileMatchFilter whileMatchFilter = new WhileMatchFilter(filter);
     assertTrue(AbstractBigtableTable.hasWhileMatchFilter(whileMatchFilter));
   }
-  
+
   @Test
   public void hasWhileMatchFilter_noInNested() {
     QualifierFilter filter =
@@ -201,7 +190,7 @@ public class TestBigtableTable {
     FilterList filterList = new FilterList(whileMatchFilter);
     assertTrue(AbstractBigtableTable.hasWhileMatchFilter(filterList));
   }
-  
+
   @Test
   public void getScanner_withBigtableResultScannerAdapter() throws IOException {
     when(mockBigtableDataClient.readFlatRows(isA(Query.class))).thenReturn(mockResultScanner);
@@ -226,7 +215,7 @@ public class TestBigtableTable {
         result.getColumnCells("family_name".getBytes(), "q_name".getBytes());
     assertEquals(1, cells.size());
     assertEquals("value", new String(CellUtil.cloneValue(cells.get(0))));
-    
+
     verify(mockBigtableDataClient).readFlatRows(isA(Query.class));
     verify(mockResultScanner).next();
   }
