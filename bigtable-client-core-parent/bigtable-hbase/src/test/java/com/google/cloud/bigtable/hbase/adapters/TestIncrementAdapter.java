@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.adapters;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRule;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
@@ -43,7 +42,7 @@ public class TestIncrementAdapter {
   private static final String INSTANCE_ID = "test-instance-id";
   private static final String TABLE_ID = "test-table-id";
   private static final String APP_PROFILE_ID = "test-app-profile-id";
-  private RequestContext requestContext = RequestContext.create(InstanceName.of(PROJECT_ID, INSTANCE_ID), APP_PROFILE_ID);
+  private RequestContext requestContext = RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
   protected IncrementAdapter incrementAdapter = new IncrementAdapter();
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 

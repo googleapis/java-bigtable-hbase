@@ -20,7 +20,6 @@ import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
@@ -28,14 +27,9 @@ import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -47,10 +41,8 @@ public class TestPutAdapter {
   private static final String INSTANCE_ID = "test-instance-id";
   private static final String TABLE_ID = "test-table-id";
   private static final String APP_PROFILE_ID = "test-app-profile-id";
-  private static final RequestContext REQUEST_CONTEXT = RequestContext.create(
-      InstanceName.of(PROJECT_ID, INSTANCE_ID),
-      APP_PROFILE_ID
-  );
+  private static final RequestContext REQUEST_CONTEXT =
+      RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
 
   protected final PutAdapter adapter = new PutAdapter(-1);
   protected final DataGenerationHelper dataHelper = new DataGenerationHelper();
