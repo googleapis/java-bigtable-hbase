@@ -84,10 +84,7 @@ public class TestRowAdapter {
                     .setValue(ByteString.copyFrom(value1)))
                 .addCells(Cell.newBuilder() // Same family, same column, but different timestamps.
                   .setTimestampMicros(ts2Micros)
-                  .setValue(ByteString.copyFrom(value2)))
-                .addCells(Cell.newBuilder() // With label
-                    .setValue(ByteString.copyFromUtf8("withLabel"))
-                    .addLabels("label")))
+                  .setValue(ByteString.copyFrom(value2))))
             .addColumns(Column.newBuilder()
                 .setQualifier(ByteString.copyFrom(qualifier2))
                 .addCells(Cell.newBuilder() // Same family, same timestamp, but different column.
