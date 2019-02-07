@@ -37,7 +37,6 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.Futures;
@@ -67,7 +66,6 @@ public class BigtableBufferedMutatorHelper {
   private boolean closed = false;
 
   private final HBaseRequestAdapter adapter;
-  private final AsyncExecutor asyncExecutor;
 
   private final BulkMutation bulkMutation;
 
@@ -94,7 +92,6 @@ public class BigtableBufferedMutatorHelper {
     this.adapter = adapter;
     this.configuration = configuration;
     this.options = session.getOptions();
-    this.asyncExecutor = session.createAsyncExecutor();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.bulkMutation = session.createBulkMutation(tableName);
     this.requestContext = session.getDataRequestContext();
@@ -104,7 +101,6 @@ public class BigtableBufferedMutatorHelper {
     closedWriteLock.lock();
     try {
       flush();
-      asyncExecutor.flush();
       closed = true;
     } finally {
       closedWriteLock.unlock();
@@ -121,7 +117,6 @@ public class BigtableBufferedMutatorHelper {
         throw new IOException("flush() was interrupted", e);
       }
     }
-    asyncExecutor.flush();
   }
 
   public void sendUnsent() {
@@ -214,11 +209,10 @@ public class BigtableBufferedMutatorHelper {
       } else if (mutation instanceof Delete) {
         future = bulkMutation.add(toEntry(adapter.adaptEntry((Delete) mutation)));
       } else if (mutation instanceof Increment) {
-        future =
-            asyncExecutor.readModifyWriteRowAsync(
-                adapter.adapt((Increment) mutation).toProto(requestContext));
+        future = bulkMutation.readModifyWrite(
+            adapter.adapt((Increment) mutation).toProto(requestContext));
       } else if (mutation instanceof Append) {
-        future = asyncExecutor.readModifyWriteRowAsync(
+        future = bulkMutation.readModifyWrite(
             adapter.adapt((Append) mutation).toProto(requestContext));
       } else {
         future = Futures.immediateFailedFuture(new IllegalArgumentException(
@@ -242,7 +236,6 @@ public class BigtableBufferedMutatorHelper {
    * @return a boolean.
    */
   public boolean hasInflightRequests() {
-    return this.asyncExecutor.hasInflightRequests()
-        || (bulkMutation != null && !bulkMutation.isFlushed());
+    return bulkMutation != null && !bulkMutation.isFlushed();
   }
 }
