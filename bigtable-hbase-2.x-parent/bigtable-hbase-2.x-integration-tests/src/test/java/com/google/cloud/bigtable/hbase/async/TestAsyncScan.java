@@ -136,6 +136,32 @@ public class TestAsyncScan extends AbstractAsyncTest {
     Assert.assertEquals(rowKeys.length, lock.get().intValue());
   }
 
+  @Test
+  public void testNextAfterClose() throws IOException {
+    Table table = getDefaultTable();
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+
+    table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value));
+
+    Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
+    ResultScanner resultScanner = table.getScanner(scan);
+
+    Assert.assertNotNull(resultScanner.next());
+
+    // The scanner should close here.
+    Assert.assertNull(resultScanner.next());
+
+    // This shouldn't throw an exception
+    Assert.assertNull(resultScanner.next());
+
+    resultScanner.close();
+
+    // This shouldn't throw an exception
+    Assert.assertNull(resultScanner.next());
+  }
+
   private static void verify(Result result) {
     Assert.assertEquals(values.length, result.size());
     for (int i = 0; i < values.length; ++i) {
