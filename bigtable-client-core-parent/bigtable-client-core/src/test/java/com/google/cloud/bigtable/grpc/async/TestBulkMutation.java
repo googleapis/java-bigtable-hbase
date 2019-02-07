@@ -29,6 +29,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.bigtable.v2.ReadModifyWriteRowRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowResponse;
+import com.google.bigtable.v2.ReadRowsResponse;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -172,6 +175,7 @@ public class TestBulkMutation {
     }
   }
 
+  @Test
   public void testCallableTooFewStatuses() throws Exception {
     ListenableFuture<MutateRowResponse> rowFuture1 = underTest.add(createRequestEntry());
     ListenableFuture<MutateRowResponse> rowFuture2 = underTest.add(createRequestEntry());
@@ -198,6 +202,7 @@ public class TestBulkMutation {
     }
   }
 
+  @Test
   public void testRunOutOfTime() throws Exception {
     ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequestEntry());
     setResponse(Status.DEADLINE_EXCEEDED);
@@ -365,6 +370,23 @@ public class TestBulkMutation {
         Collections.nCopies((int) BulkMutation.MAX_NUMBER_OF_MUTATIONS, bigRequest.getMutations(0))
     );
     underTest.add(bigRequest.build());
+  }
+
+  @Test
+  public void testReadWriteModify()  {
+    SettableFuture<ReadModifyWriteRowResponse> future = SettableFuture.create();
+    when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(future);
+    underTest.readModifyWrite(ReadModifyWriteRowRequest.getDefaultInstance());
+    Assert.assertTrue(operationAccountant.hasInflightOperations());
+    future.set(ReadModifyWriteRowResponse.getDefaultInstance());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
+  }
+
+  @Test
+  public void testInvalidMutation() {
+    when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenThrow(new RuntimeException());
+    underTest.readModifyWrite(ReadModifyWriteRowRequest.getDefaultInstance());
+    Assert.assertFalse(operationAccountant.hasInflightOperations());
   }
 
   private BulkMutation createBulkMutation() {
