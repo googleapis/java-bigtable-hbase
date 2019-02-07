@@ -29,7 +29,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
@@ -325,28 +324,6 @@ public class BigtableSession implements Closeable {
    */
   public IBigtableDataClient getClientWrapper() {
     return clientWrapper;
-  }
-
-  /**
-   * <p>createAsyncExecutor.</p>
-   *
-   * @return a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
-   */
-  public AsyncExecutor createAsyncExecutor() {
-    return new AsyncExecutor(throttlingDataClient);
-  }
-
-  /**
-   * <p>createBulkMutation.</p>
-   *
-   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
-   * @param asyncExecutor a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
-   * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
-   * @deprecated use {@link #createBulkMutation(BigtableTableName)} instead.
-   */
-  @Deprecated
-  public BulkMutation createBulkMutation(BigtableTableName tableName, AsyncExecutor asyncExecutor) {
-    return createBulkMutation(tableName);
   }
 
   /**

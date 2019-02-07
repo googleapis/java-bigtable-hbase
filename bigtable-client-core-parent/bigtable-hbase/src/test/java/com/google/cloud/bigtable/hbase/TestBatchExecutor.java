@@ -31,7 +31,6 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -119,9 +118,6 @@ public class TestBatchExecutor {
   private BigtableSession mockBigtableSession;
 
   @Mock
-  private AsyncExecutor mockAsyncExecutor;
-
-  @Mock
   private BulkRead mockBulkRead;
 
   @Mock
@@ -147,8 +143,7 @@ public class TestBatchExecutor {
 
     MockitoAnnotations.initMocks(this);
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(mockFuture);
-    when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
-    when(mockBigtableSession.createAsyncExecutor()).thenReturn(mockAsyncExecutor);
+    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getDataRequestContext()).thenReturn(requetsContext);
     when(mockBigtableSession.createBulkMutation(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);

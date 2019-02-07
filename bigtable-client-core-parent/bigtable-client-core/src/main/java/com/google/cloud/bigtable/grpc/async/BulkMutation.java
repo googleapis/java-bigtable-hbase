@@ -16,6 +16,8 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.bigtable.v2.ReadModifyWriteRowRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -443,6 +445,29 @@ public class BulkMutation {
       }
     }
 
+    return future;
+  }
+
+
+  /**
+   * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readModifyWriteRow(ReadModifyWriteRowRequest)} on the
+   * {@link com.google.bigtable.v2.ReadModifyWriteRowRequest}. This method may block if
+   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
+   *
+   * @param request The {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} to send.
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
+   */
+  public ListenableFuture<ReadModifyWriteRowResponse> readModifyWrite(
+      ReadModifyWriteRowRequest request) {
+    // Wait until both the memory and rpc count maximum requirements are achieved before getting a
+    // unique id used to track this request.
+    ListenableFuture<ReadModifyWriteRowResponse> future;
+    try {
+      future = client.readModifyWriteRowAsync(request);
+    } catch (Throwable e) {
+      future = Futures.immediateFailedFuture(e);
+    }
+    operationAccountant.registerOperation(future);
     return future;
   }
 
