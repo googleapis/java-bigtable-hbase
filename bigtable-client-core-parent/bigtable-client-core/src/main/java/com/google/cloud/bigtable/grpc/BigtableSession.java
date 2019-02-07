@@ -408,7 +408,9 @@ public class BigtableSession implements Closeable {
    *
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableInstanceClient} object.
    * @throws java.io.IOException if any.
+   * @deprecated Use {@link com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminClient} instead.
    */
+  @Deprecated
   public synchronized BigtableInstanceClient getInstanceAdminClient() throws IOException {
     if (instanceAdminClient == null) {
       ManagedChannel channel = createManagedPool(options.getAdminHost(), 1);

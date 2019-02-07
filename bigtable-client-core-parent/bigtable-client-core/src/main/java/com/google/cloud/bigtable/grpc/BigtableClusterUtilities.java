@@ -34,7 +34,10 @@ import java.util.concurrent.TimeUnit;
  * This is a utility that can be used to resize a cluster. This is useful to use 20 minutes before a
  * large job to increase Cloud Bigtable capacity and 20 minutes after a large batch job to reduce
  * the size.
+ *
+ * @deprecated Use {@link com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminClient} instead.
  */
+@Deprecated
 public class BigtableClusterUtilities implements AutoCloseable {
   private static Logger logger = new Logger(BigtableClusterUtilities.class);
 

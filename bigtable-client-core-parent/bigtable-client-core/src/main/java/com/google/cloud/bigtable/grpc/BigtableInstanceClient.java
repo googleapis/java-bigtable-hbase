@@ -52,7 +52,10 @@ import com.google.protobuf.Empty;
  *
  * @author sduskis
  * @version $Id: $Id
+ *
+ * @deprecated Use {@link com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminClient} instead.
  */
+@Deprecated
 public interface BigtableInstanceClient {
   /**
    * Create an instance within a project.

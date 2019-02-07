@@ -60,7 +60,9 @@ import io.grpc.protobuf.StatusProto;
  *
  * @author sduskis
  * @version $Id: $Id
+ * @deprecated Use {@link com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminClient} instead.
  */
+@Deprecated
 public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
 
   private final BigtableInstanceAdminGrpc.BigtableInstanceAdminBlockingStub instanceClient;
