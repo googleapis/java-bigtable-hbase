@@ -56,6 +56,8 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
     byte[] previousFamilyBytes = null;
     String previousFamily = null;
     for (FlatRow.Cell cell : cells) {
+      // Cells with labels are for internal use, do not return them.
+      // TODO: the filtering logic should be moved into a WhileMatchFilter specific extension.
       if (cell.getLabels().isEmpty()) {
         String family = cell.getFamily();
         byte[] familyBytes = !Objects.equal(family, previousFamily)

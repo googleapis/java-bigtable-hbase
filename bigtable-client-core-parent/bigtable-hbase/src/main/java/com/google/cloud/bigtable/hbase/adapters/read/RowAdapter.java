@@ -56,11 +56,6 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
         byte[] columnQualifier = ByteStringer.extract(column.getQualifier());
 
         for (Cell cell : column.getCellsList()) {
-          // Cells with labels are for internal use, do not return them.
-          // TODO(kevinsi4508): Filter out targeted {@link WhileMatchFilter} labels.
-          if (cell.getLabelsCount() > 0) {
-            continue;
-          }
 
           // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
           // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
