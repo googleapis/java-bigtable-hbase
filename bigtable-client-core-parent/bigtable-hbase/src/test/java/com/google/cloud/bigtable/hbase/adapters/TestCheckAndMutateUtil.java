@@ -22,7 +22,6 @@ import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.protobuf.ByteString;
@@ -48,13 +47,14 @@ import java.util.concurrent.TimeUnit;
 @RunWith(JUnit4.class)
 public class TestCheckAndMutateUtil {
 
+  private static final String PROJECT_ID = "project";
+  private static final String INSTANCE_ID = "instance";
   private static final TableName TABLE_NAME = TableName.valueOf("SomeTable");
   private static final BigtableTableName BT_TABLE_NAME =
-      new BigtableInstanceName("project", "instance")
+      new BigtableInstanceName(PROJECT_ID, INSTANCE_ID)
           .toTableName(TABLE_NAME.getNameAsString());
   private static final RequestContext REQUEST_CONTEXT =
-      RequestContext
-          .create(InstanceName.of(BT_TABLE_NAME.getProjectId(), BT_TABLE_NAME.getInstanceId()), "SomeAppProfileId");
+      RequestContext.create(PROJECT_ID, INSTANCE_ID, "SomeAppProfileId");
   private static final byte[] rowKey = Bytes.toBytes("rowKey");
   private static final byte[] family = Bytes.toBytes("family");
   private static final byte[] qual = Bytes.toBytes("qual");
@@ -76,10 +76,8 @@ public class TestCheckAndMutateUtil {
         TABLE_NAME,
         BT_TABLE_NAME,
         mutationAdapters,
-        RequestContext.create(
-            InstanceName.of(BT_TABLE_NAME.getProjectId(), BT_TABLE_NAME.getInstanceId()),
-            "APP_PROFILE_ID"
-        ));
+        RequestContext.create(PROJECT_ID, INSTANCE_ID, "APP_PROFILE_ID")
+    );
   }
 
   private static void checkPredicate(CheckAndMutateRowRequest result) {

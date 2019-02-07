@@ -18,13 +18,11 @@ package com.google.cloud.bigtable.hbase.adapters;
 import java.util.concurrent.TimeUnit;
 
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -36,9 +34,6 @@ import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 @RunWith(JUnit4.class)
 public class TestDeleteAdapter {
@@ -47,16 +42,13 @@ public class TestDeleteAdapter {
   private static final String INSTANCE_ID = "test-instance-id";
   private static final String TABLE_ID = "test-table-id";
   private static final String APP_PROFILE_ID = "test-app-profile-id";
-  private static final RequestContext REQUEST_CONTEXT = RequestContext.create(
-      InstanceName.of(PROJECT_ID, INSTANCE_ID),
-      APP_PROFILE_ID
-  );
+  private static final RequestContext REQUEST_CONTEXT =
+      RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
   protected DeleteAdapter deleteAdapter = new DeleteAdapter();
-  protected QualifierTestHelper qualifierTestHelper = new QualifierTestHelper();
   protected DataGenerationHelper randomHelper = new DataGenerationHelper();
 
   @Test

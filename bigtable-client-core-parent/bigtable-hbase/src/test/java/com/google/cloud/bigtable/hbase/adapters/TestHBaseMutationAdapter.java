@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.InstanceName;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 
 import java.util.Collections;
