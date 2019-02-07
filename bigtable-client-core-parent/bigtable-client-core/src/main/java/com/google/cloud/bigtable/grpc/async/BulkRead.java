@@ -25,11 +25,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.common.base.Preconditions;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -69,7 +69,7 @@ public class BulkRead {
   private final IBigtableDataClient client;
   private final int batchSizes;
   private final ExecutorService threadPool;
-  private final String tableName;
+  private final String tableId;
 
   private final Map<RowFilter, Batch> batches;
 
@@ -83,7 +83,7 @@ public class BulkRead {
   public BulkRead(IBigtableDataClient client, BigtableTableName tableName, int batchSizes,
       ExecutorService threadPool) {
     this.client = client;
-    this.tableName = tableName.toString();
+    this.tableId = tableName.getTableId();
     this.batchSizes = batchSizes;
     this.threadPool = threadPool;
     this.batches = new HashMap<>();
@@ -137,7 +137,7 @@ public class BulkRead {
      * operation is complete. The value of the {@link Multimap} is a {@link SettableFuture} of
      * a {@link List} of {@link FlatRow}s.  The {@link Multimap} is used because a user could request
      * the same key multiple times in the same batch. The {@link List} of {@link FlatRow}s mimics the
-     * interface of {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)}.
+     * interface of {@link IBigtableDataClient#readRowsAsync(Query)}.
      */
     private final Multimap<ByteString, SettableFuture<FlatRow>> futures;
 
@@ -177,14 +177,13 @@ public class BulkRead {
     @Override
     public void run() {
       try {
-        Query query = Query.fromProto(ReadRowsRequest.newBuilder()
-            .setTableName(tableName)
-            .setFilter(filter)
+        Query query = Query.create(tableId)
+            .filter(Filters.FILTERS.fromProto(filter));
 
-            // TODO: Query.addRowKeys(List<ByteString>) would be super helpful, and allow
-            // this class to construct a Query without passing in a proto
-            .setRows(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
-            .build());
+        for(ByteString key : futures.keys()) {
+          query.rowKey(key);
+        }
+
         ResultScanner<FlatRow> scanner = client.readFlatRows(query);
         while (true) {
           FlatRow row = scanner.next();
