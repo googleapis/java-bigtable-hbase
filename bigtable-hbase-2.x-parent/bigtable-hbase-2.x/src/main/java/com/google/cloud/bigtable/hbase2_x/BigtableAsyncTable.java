@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import static java.util.stream.Collectors.toList;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
@@ -51,10 +50,8 @@ import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 
-import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -241,8 +238,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
     private CompletableFuture<Boolean> call() {
       ConditionalRowMutation mutation = builder.build();
-      return client.checkAndMutateRowAsync(mutation.toProto(requestContext)).thenApply(
-        response -> CheckAndMutateUtil.wasMutationApplied(mutation, response.getPredicateMatched()));
+      return client.checkAndMutateRowAsync(mutation).thenApply(
+        response -> CheckAndMutateUtil.wasMutationApplied(mutation, response));
     }
   }
 
@@ -274,8 +271,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
    */
   @Override
   public CompletableFuture<Result> get(Get get) {
-    ReadRowsRequest request = hbaseAdapter.adapt(get).toProto(requestContext);
-    return client.readFlatRowsAsync(request).thenApply(BigtableAsyncTable::toResult);
+    return client.readFlatRowsAsync(hbaseAdapter.adapt(get))
+        .thenApply(BigtableAsyncTable::toResult);
   }
 
   /**
@@ -405,7 +402,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       throw new UnsupportedOperationException(
           "scanAll with while match filter is not allowed");
     }
-    return client.readFlatRowsAsync(hbaseAdapter.adapt(scan).toProto(requestContext))
+    return client.readFlatRowsAsync(hbaseAdapter.adapt(scan))
          .thenApply(list -> map(list, Adapters.FLAT_ROW_ADAPTER::adaptResponse));
   }
 
