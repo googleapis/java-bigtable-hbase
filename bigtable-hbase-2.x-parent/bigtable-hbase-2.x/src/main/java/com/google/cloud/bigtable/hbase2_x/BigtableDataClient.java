@@ -17,18 +17,13 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
 
+import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.bigtable.v2.CheckAndMutateRowRequest;
-import com.google.bigtable.v2.CheckAndMutateRowResponse;
-import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -53,9 +48,9 @@ public class BigtableDataClient {
   /**
    * Mutate a row atomically.
    *
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
+   * @return a {@link CompletableFuture} that will finish when
    * the mutation has completed.
-   * @param request a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   * @param request a {@link RowMutation} object.
    */
   public CompletableFuture<Void> mutateRowAsync(RowMutation request) {
     return toCompletableFuture(clientWrapper.mutateRowAsync(request));
@@ -64,13 +59,13 @@ public class BigtableDataClient {
   /**
    * Mutate a row atomically dependent on a precondition.
    *
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
+   * @return a {@link CompletableFuture} that will finish when
    * the mutation has completed.
-   * @param request a {@link com.google.bigtable.v2.CheckAndMutateRowRequest} object.
+   * @param request a {@link ConditionalRowMutation} object.
    */
-  public CompletableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
-      CheckAndMutateRowRequest request){
-    return toCompletableFuture(dataClient.checkAndMutateRowAsync(request));
+  public CompletableFuture<Boolean> checkAndMutateRowAsync(
+      ConditionalRowMutation request){
+    return toCompletableFuture(clientWrapper.checkAndMutateRowAsync(request));
   }
 
   /**
@@ -88,12 +83,12 @@ public class BigtableDataClient {
   /**
    * Read multiple {@link FlatRow}s into an in-memory list, in key order.
    *
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
+   * @return a {@link CompletableFuture} that will finish when
    * all reads have completed.
-   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   * @param request a {@link Query} object.
    */
-  public CompletableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request) {
-    return toCompletableFuture(dataClient.readFlatRowsAsync(request));
+  public CompletableFuture<List<FlatRow>> readFlatRowsAsync(Query request) {
+    return toCompletableFuture(clientWrapper.readFlatRowsAsync(request));
   }
 
   public com.google.cloud.bigtable.grpc.BigtableDataClient getClient() {
