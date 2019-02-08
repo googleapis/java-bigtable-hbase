@@ -15,7 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.DefaultRowAdapter;
+import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +35,6 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
 import com.google.common.base.Preconditions;
-import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -104,10 +106,13 @@ public class BatchExecutor {
       try {
         if (message instanceof FlatRow) {
           result = Adapters.FLAT_ROW_ADAPTER.adaptResponse((FlatRow) message);
-        } else if (message instanceof com.google.bigtable.v2.Row) {
-          result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v2.Row) message);
         } else if (message instanceof ReadModifyWriteRowResponse) {
-          result = Adapters.ROW_ADAPTER.adaptResponse(((ReadModifyWriteRowResponse) message).getRow());
+          ReadModifyWriteRowResponse response = ((ReadModifyWriteRowResponse) message);
+          com.google.cloud.bigtable.data.v2.models.Row row =
+              new DefaultRowAdapter().createRowFromProto(response.getRow());
+          result = Adapters.ROW_ADAPTER.adaptResponse(row);
+        } else if (message instanceof com.google.cloud.bigtable.data.v2.models.Row) {
+          result = Adapters.ROW_ADAPTER.adaptResponse((com.google.cloud.bigtable.data.v2.models.Row) message);
         }
       } catch(Throwable throwable) {
         onFailure(throwable);
@@ -136,7 +141,7 @@ public class BatchExecutor {
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
   protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Info, "batch.latency");
-  // Once the IBigtableDataClient interface is implemented this will be removed
+  // Once the IBigtableDataClient interface is implemented, this will be removed.
   private final RequestContext requestContext;
   private final BigtableBufferedMutatorHelper bufferedMutatorHelper;
   private final BulkRead bulkRead;

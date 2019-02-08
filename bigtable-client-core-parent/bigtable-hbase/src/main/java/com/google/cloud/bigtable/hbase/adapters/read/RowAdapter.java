@@ -15,21 +15,19 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.bigtable.v2.Cell;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
-import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * Adapt between a {@link com.google.bigtable.v2.Row} and an hbase client {@link org.apache.hadoop.hbase.client.Result}.
+ * Adapt between a {@link Row} and an hbase client {@link Result}.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -46,33 +44,28 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
       return new Result();
     }
 
-    SortedSet<org.apache.hadoop.hbase.Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
+    SortedSet<Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
     byte[] rowKey = ByteStringer.extract(response.getKey());
 
-    for (Family family : response.getFamiliesList()) {
-      byte[] familyNameBytes = Bytes.toBytes(family.getName());
+    for (com.google.cloud.bigtable.data.v2.models.RowCell rowCell : response.getCells()) {
 
-      for (Column column : family.getColumnsList()) {
-        byte[] columnQualifier = ByteStringer.extract(column.getQualifier());
+      byte[] familyNameBytes = Bytes.toBytes(rowCell.getFamily());
+      byte[] columnQualifier = ByteStringer.extract(rowCell.getQualifier());
 
-        for (Cell cell : column.getCellsList()) {
+      // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
+      // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
+      // HBase will treat them as duplicates.
+      long hbaseTimestamp = TimestampConverter.bigtable2hbase(rowCell.getTimestamp());
+      RowCell keyValue = new RowCell(
+          rowKey,
+          familyNameBytes,
+          columnQualifier,
+          hbaseTimestamp,
+          ByteStringer.extract(rowCell.getValue()));
 
-          // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
-          // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
-          // HBase will treat them as duplicates.
-          long hbaseTimestamp = TimestampConverter.bigtable2hbase(cell.getTimestampMicros());
-          RowCell keyValue = new RowCell(
-              rowKey,
-              familyNameBytes,
-              columnQualifier,
-              hbaseTimestamp,
-              ByteStringer.extract(cell.getValue()));
-
-          hbaseCells.add(keyValue);
-        }
-      }
+      hbaseCells.add(keyValue);
     }
 
-    return Result.create(hbaseCells.toArray(new org.apache.hadoop.hbase.Cell[hbaseCells.size()]));
+    return Result.create(hbaseCells.toArray(new Cell[hbaseCells.size()]));
   }
 }
