@@ -16,20 +16,18 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
-import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GetSnapshotRequest;
-import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
-import com.google.bigtable.admin.v2.Table;
+import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 
@@ -47,11 +45,13 @@ import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture
 public class BigtableTableAdminClient {
 
   private final com.google.cloud.bigtable.grpc.BigtableTableAdminClient adminClient;
-
+  private final IBigtableTableAdminClient adminClientWrapper;
 
   public BigtableTableAdminClient(
-      com.google.cloud.bigtable.grpc.BigtableTableAdminClient adminClient) {
+      com.google.cloud.bigtable.grpc.BigtableTableAdminClient adminClient,
+      IBigtableTableAdminClient adminClientWrapper) {
     this.adminClient = adminClient;
+    this.adminClientWrapper = adminClientWrapper;
   }
 
   /**
@@ -61,17 +61,17 @@ public class BigtableTableAdminClient {
    * @param request a {@link CreateTableRequest} object.
    */
   public CompletableFuture<Table> createTableAsync(CreateTableRequest request) {
-    return toCompletableFuture(adminClient.createTableAsync(request));
+    return toCompletableFuture(adminClientWrapper.createTableAsync(request));
   }
 
   /**
    * Gets the details of a table asynchronously.
    *
-   * @param request a {@link GetTableRequest} object.
+   * @param tableId a {@link String} object.
    * @return a {@link CompletableFuture} that returns a {@link Table} object.
    */
-  public CompletableFuture<Table> getTableAsync(GetTableRequest request) {
-    return toCompletableFuture(adminClient.getTableAsync(request));
+  public CompletableFuture<Table> getTableAsync(String tableId) {
+    return toCompletableFuture(adminClientWrapper.getTableAsync(tableId));
   }
 
   /**
@@ -87,11 +87,11 @@ public class BigtableTableAdminClient {
   /**
    * Permanently deletes a specified table and all of its data.
    *
-   * @param request a {@link DeleteTableRequest} object.
-   * @return a {@link CompletableFuture} that returns {@link Empty} object.
+   * @param tableId a {@link String} object.
+   * @return a {@link CompletableFuture} that returns {@link Void} object.
    */
-  public CompletableFuture<Empty> deleteTableAsync(DeleteTableRequest request){
-    return toCompletableFuture(adminClient.deleteTableAsync(request));
+  public CompletableFuture<Void> deleteTableAsync(String tableId){
+    return toCompletableFuture(adminClientWrapper.deleteTableAsync(tableId));
   }
 
   /**
@@ -102,17 +102,18 @@ public class BigtableTableAdminClient {
    *         table structure.
    */
   public CompletableFuture<Table> modifyColumnFamilyAsync(ModifyColumnFamiliesRequest request) {
-    return toCompletableFuture(adminClient.modifyColumnFamilyAsync(request));
+    return toCompletableFuture(adminClientWrapper.modifyFamiliesAsync(request));
   }
 
   /**
    * Permanently deletes all rows in a range.
    *
-   * @param request a {@link DropRowRangeRequest} object.
-   * @return a {@link CompletableFuture} that returns {@link Empty} object.
+   * @param tableId a {@link String} object.
+   * @param rowKeyPrefix a {@link String} object.
+   * @return a {@link CompletableFuture} that returns {@link Void} object.
    */
-  public CompletableFuture<Empty> dropRowRangeAsync(DropRowRangeRequest request) {
-    return toCompletableFuture(adminClient.dropRowRangeAsync(request));
+  public CompletableFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
+    return toCompletableFuture(adminClientWrapper.dropRowRangeAsync(tableId, rowKeyPrefix));
   }
 
 
