@@ -16,8 +16,9 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadModifyWriteRowResponse;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
+import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -341,6 +342,7 @@ public class BulkMutation {
 
   private final String tableName;
   private final BigtableDataClient client;
+  private final IBigtableDataClient clientWrapper;
   private final OperationAccountant operationAccountant;
   private final ScheduledExecutorService retryExecutorService;
   private final int maxRowKeyCount;
@@ -358,6 +360,8 @@ public class BulkMutation {
    *          {@link MutateRowRequest}s will be sent.
    * @param client a {@link BigtableDataClient} object on which to perform RPCs.
    *          RPCs that this object performed.
+   * @param clienWrapper a {@link IBigtableDataClient} object on which to perform RPCs.
+   *          RPCs that this object performed.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
    *          retries.
    * @param bulkOptions a {@link BulkOptions} with the user specified options for the behavior of
@@ -366,19 +370,22 @@ public class BulkMutation {
   public BulkMutation(
       BigtableTableName tableName,
       BigtableDataClient client,
+      IBigtableDataClient clientWrapper,
       ScheduledExecutorService retryExecutorService,
       BulkOptions bulkOptions) {
-    this(tableName, client, new OperationAccountant(), retryExecutorService, bulkOptions);
+    this(tableName, client, clientWrapper, new OperationAccountant(), retryExecutorService, bulkOptions);
   }
 
   BulkMutation(
       BigtableTableName tableName,
       BigtableDataClient client,
+      IBigtableDataClient clientWrapper,
       OperationAccountant operationAccountant,
       ScheduledExecutorService retryExecutorService,
       BulkOptions bulkOptions) {
     this.tableName = tableName.toString();
     this.client = client;
+    this.clientWrapper = clientWrapper;
     this.retryExecutorService = retryExecutorService;
     this.operationAccountant = operationAccountant;
     this.maxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();
@@ -450,20 +457,19 @@ public class BulkMutation {
 
 
   /**
-   * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readModifyWriteRow(ReadModifyWriteRowRequest)} on the
-   * {@link com.google.bigtable.v2.ReadModifyWriteRowRequest}. This method may block if
+   * Performs a {@link IBigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRow)} on the
+   * {@link ReadModifyWriteRow}. This method may block if
    * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
    *
-   * @param request The {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} to send.
+   * @param request The {@link ReadModifyWriteRow} to send.
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
    */
-  public ListenableFuture<ReadModifyWriteRowResponse> readModifyWrite(
-      ReadModifyWriteRowRequest request) {
+  public ListenableFuture<Row> readModifyWrite(ReadModifyWriteRow request) {
     // Wait until both the memory and rpc count maximum requirements are achieved before getting a
     // unique id used to track this request.
-    ListenableFuture<ReadModifyWriteRowResponse> future;
+    ListenableFuture<Row> future;
     try {
-      future = client.readModifyWriteRowAsync(request);
+      future = clientWrapper.readModifyWriteRowAsync(request);
     } catch (Throwable e) {
       future = Futures.immediateFailedFuture(e);
     }

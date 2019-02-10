@@ -83,21 +83,6 @@ public class FlatRowConverter {
         .build();
   }
 
-  public static FlatRow convert(Row row) {
-    FlatRow.Builder builder = FlatRow.newBuilder().withRowKey(row.getKey());
-    for (Family family : row.getFamiliesList()) {
-      String familyName = family.getName();
-      for (Column column : family.getColumnsList()) {
-        ByteString qualifier = column.getQualifier();
-        for (Cell cell : column.getCellsList()) {
-          builder.addCell(familyName, qualifier, cell.getTimestampMicros(), cell.getValue(),
-            cell.getLabelsList());
-        }
-      }
-    }
-    return builder.build();
-  }
-
   public static com.google.cloud.bigtable.data.v2.models.Row convertToModelRow(FlatRow row) {
     if (row == null || row.getCells() == null) {
       return null;

@@ -15,43 +15,34 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.client.Mutation;
+import com.google.cloud.bigtable.data.v2.models.MutationApi;
 import org.apache.hadoop.hbase.client.Row;
 
-import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 /**
- * Adapt an HBase {@link Mutation} Operation into a Google Cloud Java
- * {@link com.google.cloud.bigtable.data.v2.models.Mutation}.
+ * Adapt an HBase {@link Row} Operation into a Google Cloud Java
+ * {@link MutationApi}.
  *
  * @author sduskis
  * @version $Id: $Id
  */
 public abstract class MutationAdapter<T extends Row>
-    implements OperationAdapter<T, com.google.cloud.bigtable.data.v2.models.MutationApi<?>> {
+    implements OperationAdapter<T, MutationApi<?>> {
 
   protected static byte[] getBytes(ByteString bs) {
     return ByteStringer.extract(bs);
   }
 
   /**
-   * Converts an HBase {@link Mutation} which represents a set of changes to a single row from an
-   * HBase perspective to a Google Cloud Java {@link com.google.cloud.bigtable.data.v2.models.Mutation}
-   * which represent the set of changes. The name "Mutation" represents a more granular change in
-   * Bigtable than an HBase "Mutation"; An HBase {@link Cell} is akin to a Cloud Bigtable {@link
-   * com.google.bigtable.v2.Mutation}. A CloudBigtable {@link MutateRowRequest} or {@link
-   * com.google.bigtable.v2.MutateRowsRequest.Entry} is akin to an HBase {@link Mutation}.
+   * Converts an HBase {@link Row} which represents a set of changes to a single row from an
+   * HBase perspective to a Google Cloud Java {@link MutationApi}
+   * which represent the set of changes.
    *
-   * @param operation The HBase {@link Mutation} to convert
-   * @param mutation The model {@link com.google.cloud.bigtable.data.v2.models.MutationApi}
+   * @param operation The HBase {@link Row} to convert
+   * @param mutation The model {@link MutationApi}
    */
   @Override
-  public abstract void adapt(
-      T operation,
-      com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation
-  );
+  public abstract void adapt(T operation, MutationApi<?> mutation);
 }

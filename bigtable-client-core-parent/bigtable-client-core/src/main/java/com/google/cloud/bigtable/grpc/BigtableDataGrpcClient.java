@@ -28,7 +28,6 @@ import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 import com.google.bigtable.v2.BigtableGrpc;

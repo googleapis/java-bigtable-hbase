@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.Logger;
 
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;

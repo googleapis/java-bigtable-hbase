@@ -70,8 +70,6 @@ public class BigtableBufferedMutatorHelper {
   private final BulkMutation bulkMutation;
 
   private final BigtableOptions options;
-  // Once the IBigtableDataClient interface is implemented this will be removed
-  protected final RequestContext requestContext;
 
   /**
    * <p>
@@ -94,7 +92,6 @@ public class BigtableBufferedMutatorHelper {
     this.options = session.getOptions();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.bulkMutation = session.createBulkMutation(tableName);
-    this.requestContext = session.getDataRequestContext();
   }
 
   public void close() throws IOException {
@@ -209,11 +206,9 @@ public class BigtableBufferedMutatorHelper {
       } else if (mutation instanceof Delete) {
         future = bulkMutation.add(toEntry(adapter.adaptEntry((Delete) mutation)));
       } else if (mutation instanceof Increment) {
-        future = bulkMutation.readModifyWrite(
-            adapter.adapt((Increment) mutation).toProto(requestContext));
+        future = bulkMutation.readModifyWrite(adapter.adapt((Increment) mutation));
       } else if (mutation instanceof Append) {
-        future = bulkMutation.readModifyWrite(
-            adapter.adapt((Append) mutation).toProto(requestContext));
+        future = bulkMutation.readModifyWrite(adapter.adapt((Append) mutation));
       } else {
         future = Futures.immediateFailedFuture(new IllegalArgumentException(
             "Encountered unknown mutation type: " + mutation.getClass()));
@@ -227,7 +222,7 @@ public class BigtableBufferedMutatorHelper {
   }
 
   private MutateRowsRequest.Entry toEntry(RowMutation rowMutation) {
-    return rowMutation.toBulkProto(requestContext).getEntries(0);
+    return rowMutation.toBulkProto(RequestContext.create("p", "i", "a")).getEntries(0);
   }
 
   /**

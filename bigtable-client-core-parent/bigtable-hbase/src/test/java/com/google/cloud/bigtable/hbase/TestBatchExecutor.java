@@ -25,10 +25,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
@@ -143,7 +143,7 @@ public class TestBatchExecutor {
 
     MockitoAnnotations.initMocks(this);
     when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(mockFuture);
-    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
+    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRow.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getDataRequestContext()).thenReturn(requetsContext);
     when(mockBigtableSession.createBulkMutation(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);
@@ -159,7 +159,7 @@ public class TestBatchExecutor {
 
   @Test
   public void testGet() throws Exception {
-    when(mockBulkRead.add(any(ReadRowsRequest.class))).thenReturn(mockFuture);
+    when(mockBulkRead.add(any(Query.class))).thenReturn(mockFuture);
     final byte[] key = randomBytes(8);
     FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
     setFuture(ImmutableList.of(response));
@@ -227,7 +227,7 @@ public class TestBatchExecutor {
             .build();
 
     RuntimeException exception = new RuntimeException("Something bad happened");
-    when(mockBulkRead.add(any(ReadRowsRequest.class)))
+    when(mockBulkRead.add(any(Query.class)))
         .thenReturn(Futures.immediateFuture(response1))
         .thenReturn(Futures.<FlatRow> immediateFailedFuture(exception));
 
@@ -245,7 +245,7 @@ public class TestBatchExecutor {
 
   @Test
   public void testGetCallback() throws Exception {
-    when(mockBulkRead.add(any(ReadRowsRequest.class))).thenReturn(mockFuture);
+    when(mockBulkRead.add(any(Query.class))).thenReturn(mockFuture);
     byte[] key = randomBytes(8);
     FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
     setFuture(ImmutableList.of(response));
@@ -274,7 +274,7 @@ public class TestBatchExecutor {
     }
 
     // Test 10 gets, but return only 9 to test the row not found case.
-    when(mockBulkRead.add(any(ReadRowsRequest.class)))
+    when(mockBulkRead.add(any(Query.class)))
         .then(new Answer<ListenableFuture<FlatRow>>() {
           final AtomicInteger counter = new AtomicInteger();
 
@@ -291,7 +291,7 @@ public class TestBatchExecutor {
 
     BatchExecutor underTest = createExecutor(options);
     Result[] results = underTest.batch(gets);
-    verify(mockBulkRead, times(10)).add(any(ReadRowsRequest.class));
+    verify(mockBulkRead, times(10)).add(any(Query.class));
     verify(mockBulkRead, times(1)).flush();
     Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
     for (int i = 1; i < results.length; i++) {

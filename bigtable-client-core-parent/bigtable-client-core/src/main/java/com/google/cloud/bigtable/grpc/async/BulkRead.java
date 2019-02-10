@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.common.base.Preconditions;
@@ -56,6 +57,7 @@ public class BulkRead {
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BulkRead.class);
+  private static final RequestContext DUMMY_CONTEXT = RequestContext.create("p", "r", "");
 
   private static final Comparator<Entry<ByteString, SettableFuture<FlatRow>>> ENTRY_SORTER =
       new Comparator<Entry<ByteString, SettableFuture<FlatRow>>>() {
@@ -80,8 +82,8 @@ public class BulkRead {
    * @param batchSizes The number of keys to lookup per RPC.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
-  public BulkRead(IBigtableDataClient client, BigtableTableName tableName, int batchSizes,
-      ExecutorService threadPool) {
+  public BulkRead(IBigtableDataClient client,
+      BigtableTableName tableName, int batchSizes, ExecutorService threadPool) {
     this.client = client;
     this.tableId = tableName.getTableId();
     this.batchSizes = batchSizes;
@@ -97,8 +99,10 @@ public class BulkRead {
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated
    *     with the {@link FlatRow} that corresponds to the request
    */
-  public ListenableFuture<FlatRow> add(ReadRowsRequest request) {
-    Preconditions.checkNotNull(request);
+  public ListenableFuture<FlatRow> add(Query query) {
+    Preconditions.checkNotNull(query);
+    ReadRowsRequest request = query.toProto(DUMMY_CONTEXT);
+
     Preconditions.checkArgument(request.getRows().getRowKeysCount() == 1);
     ByteString rowKey = request.getRows().getRowKeysList().get(0);
     Preconditions.checkArgument(!rowKey.equals(ByteString.EMPTY));

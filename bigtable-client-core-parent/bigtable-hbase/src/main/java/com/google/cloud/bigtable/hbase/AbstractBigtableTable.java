@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.core.IBigtableDataClient;
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
@@ -117,8 +116,6 @@ public abstract class AbstractBigtableTable implements Table {
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
-  // Once the IBigtableDataClient interface is implemented this will be removed
-  protected final RequestContext requestContext;
 
   /**
    * Constructed by BigtableConnection
@@ -135,7 +132,6 @@ public abstract class AbstractBigtableTable implements Table {
     this.clientWrapper = session.getClientWrapper();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
-    this.requestContext = session.getDataRequestContext();
   }
 
   /** {@inheritDoc} */

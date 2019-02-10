@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
@@ -48,7 +47,7 @@ public class TestPutAdapter {
   protected final DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   @Test
-  public void testSingleCellIsConverted() throws IOException {
+  public void testSingleCellIsConverted() {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family = dataHelper.randomData("f");
     byte[] qualifier = dataHelper.randomData("qual");
@@ -57,14 +56,11 @@ public class TestPutAdapter {
 
     Put hbasePut = new Put(row);
     hbasePut.addColumn(family, qualifier, timestamp, value);
-    com.google.cloud.bigtable.data.v2.models.Mutation mutationModel =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    adapter.adapt(hbasePut, mutationModel);
-    MutateRowRequest rowMutationBuilder = toMutateRowRequest(row, mutationModel);
-    Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
+    MutateRowRequest request = adapt(hbasePut);
+    Assert.assertArrayEquals(row, request.getRowKey().toByteArray());
 
-    Assert.assertEquals(1, rowMutationBuilder.getMutationsCount());
-    Mutation mutation = rowMutationBuilder.getMutations(0);
+    Assert.assertEquals(1, request.getMutationsCount());
+    Mutation mutation = request.getMutations(0);
 
     Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
     SetCell setCell = mutation.getSetCell();
@@ -75,35 +71,10 @@ public class TestPutAdapter {
         TimeUnit.MILLISECONDS.toMicros(timestamp),
         setCell.getTimestampMicros());
     Assert.assertArrayEquals(value, setCell.getValue().toByteArray());
-
-    testTwoWay(hbasePut, adapter);
   }
 
-  private void testTwoWay(Put put, PutAdapter adapter) throws IOException {
-    testTwoWay(put, adapter, false);
-  }
-
-  private void testTwoWay(Put put, PutAdapter adapter, boolean useUnsafe) throws IOException {
-    com.google.cloud.bigtable.data.v2.models.Mutation firstMutationModel =
-        newMutationBuilder(useUnsafe);
-    adapter.adapt(put, firstMutationModel);
-    MutateRowRequest firstAdapt = toMutateRowRequest(put.getRow(), firstMutationModel);
-    // mutation -> put -> mutation;
-    com.google.cloud.bigtable.data.v2.models.Mutation secondMutationModel =
-        newMutationBuilder(useUnsafe);
-    adapter.adapt(adapter.adapt(firstAdapt), secondMutationModel);
-    MutateRowRequest secondAdapt = toMutateRowRequest(put.getRow(), secondMutationModel);
-    Assert.assertEquals(firstAdapt, secondAdapt);
-  }
-
-  private com.google.cloud.bigtable.data.v2.models.Mutation newMutationBuilder(boolean unsafe) {
-    if(unsafe) {
-      return com.google.cloud.bigtable.data.v2.models.Mutation.createUnsafe();
-    }
-    return com.google.cloud.bigtable.data.v2.models.Mutation.create();
-  }
   @Test
-  public void testMultipleCellsInOneFamilyAreConverted() throws IOException {
+  public void testMultipleCellsInOneFamilyAreConverted() {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
@@ -117,14 +88,11 @@ public class TestPutAdapter {
     hbasePut.addColumn(family, qualifier1, timestamp1, value1);
     hbasePut.addColumn(family, qualifier2, timestamp2, value2);
 
-    com.google.cloud.bigtable.data.v2.models.Mutation mutationModel =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    adapter.adapt(hbasePut, mutationModel);
-    MutateRowRequest rowMutationBuilder = toMutateRowRequest(row, mutationModel);
-    Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
+    MutateRowRequest request = adapt(hbasePut);
+    Assert.assertArrayEquals(row, request.getRowKey().toByteArray());
 
-    Assert.assertEquals(2, rowMutationBuilder.getMutationsCount());
-    Mutation mutation = rowMutationBuilder.getMutations(0);
+    Assert.assertEquals(2, request.getMutationsCount());
+    Mutation mutation = request.getMutations(0);
 
     Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
     SetCell setCell = mutation.getSetCell();
@@ -135,7 +103,7 @@ public class TestPutAdapter {
         setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
 
-    Mutation mod2 = rowMutationBuilder.getMutations(1);
+    Mutation mod2 = request.getMutations(1);
     SetCell setCell2 = mod2.getSetCell();
     Assert.assertArrayEquals(family, setCell2.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier2, setCell2.getColumnQualifier().toByteArray());
@@ -143,12 +111,10 @@ public class TestPutAdapter {
         TimeUnit.MILLISECONDS.toMicros(timestamp2),
         setCell2.getTimestampMicros());
     Assert.assertArrayEquals(value2, setCell2.getValue().toByteArray());
-
-    testTwoWay(hbasePut, adapter);
   }
 
   @Test
-  public void testMultipleCellsInMultipleFamiliesAreConverted() throws IOException {
+  public void testMultipleCellsInMultipleFamiliesAreConverted() {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] family2 = dataHelper.randomData("f2");
@@ -163,14 +129,12 @@ public class TestPutAdapter {
     hbasePut.addColumn(family1, qualifier1, timestamp1, value1);
     hbasePut.addColumn(family2, qualifier2, timestamp2, value2);
 
-    com.google.cloud.bigtable.data.v2.models.Mutation mutationModel =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    adapter.adapt(hbasePut, mutationModel);
-    MutateRowRequest rowMutationBuilder = toMutateRowRequest(row, mutationModel);
-    Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
+    MutateRowRequest request = adapt(hbasePut);
 
-    Assert.assertEquals(2, rowMutationBuilder.getMutationsCount());
-    Mutation mutation1 = rowMutationBuilder.getMutations(0);
+    Assert.assertArrayEquals(row, request.getRowKey().toByteArray());
+
+    Assert.assertEquals(2, request.getMutationsCount());
+    Mutation mutation1 = request.getMutations(0);
 
     Assert.assertEquals(MutationCase.SET_CELL, mutation1.getMutationCase());
     SetCell setCell = mutation1.getSetCell();
@@ -181,7 +145,7 @@ public class TestPutAdapter {
         setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
 
-    Mutation mutation2 = rowMutationBuilder.getMutations(1);
+    Mutation mutation2 = request.getMutations(1);
     SetCell setCell2 = mutation2.getSetCell();
     Assert.assertArrayEquals(family2, setCell2.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier2, setCell2.getColumnQualifier().toByteArray());
@@ -189,28 +153,29 @@ public class TestPutAdapter {
         TimeUnit.MILLISECONDS.toMicros(timestamp2),
         setCell2.getTimestampMicros());
     Assert.assertArrayEquals(value2, setCell2.getValue().toByteArray());
-
-    testTwoWay(hbasePut, adapter);
   }
 
   @Test
-  public void testUnsetTimestampsArePopulated() throws IOException {
+  public void testUnsetTimestampsArePopulated() {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
     byte[] value1 = dataHelper.randomData("v1");
     long startTimeMillis = System.currentTimeMillis();
 
-    Put hbasePut = new Put(row).addColumn(family1, qualifier1, value1);
+    Put hbasePut = new Put(row)
+        .addColumn(family1, qualifier1, value1);
 
-    com.google.cloud.bigtable.data.v2.models.Mutation mutationModel =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    adapter.adapt(hbasePut, mutationModel);
-    MutateRowRequest rowMutationBuilder = toMutateRowRequest(row, mutationModel);
-    Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
+    com.google.cloud.bigtable.data.v2.models.Mutation unsafeMutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.createUnsafe();
+    adapter.adapt(hbasePut, unsafeMutation);
+    MutateRowRequest request = RowMutation
+        .create(TABLE_ID, ByteString.copyFrom(hbasePut.getRow()), unsafeMutation)
+        .toProto(REQUEST_CONTEXT);
+    Assert.assertArrayEquals(row, request.getRowKey().toByteArray());
 
-    Assert.assertEquals(1, rowMutationBuilder.getMutationsCount());
-    Mutation mutation = rowMutationBuilder.getMutations(0);
+    Assert.assertEquals(1, request.getMutationsCount());
+    Mutation mutation = request.getMutations(0);
 
     Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
     SetCell setCell = mutation.getSetCell();
@@ -220,12 +185,10 @@ public class TestPutAdapter {
     Assert.assertTrue(startTimeMillis * 1000 <= setCell.getTimestampMicros());
     Assert.assertTrue(setCell.getTimestampMicros() <= System.currentTimeMillis() * 1000);
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
-
-    testTwoWay(hbasePut, adapter);
   }
 
   @Test
-  public void testUnsetTimestampsAreNotPopulated() throws IOException {
+  public void testUnsetTimestampsAreNotPopulated() {
     PutAdapter adapter = new PutAdapter(-1, false);
 
     byte[] row = dataHelper.randomData("rk-");
@@ -234,15 +197,12 @@ public class TestPutAdapter {
     byte[] value1 = dataHelper.randomData("v1");
 
     Put hbasePut = new Put(row).addColumn(family1, qualifier1, value1);
+    MutateRowRequest request = adapt(hbasePut);
 
-    com.google.cloud.bigtable.data.v2.models.Mutation mutationModel =
-        com.google.cloud.bigtable.data.v2.models.Mutation.createUnsafe();
-    adapter.adapt(hbasePut, mutationModel);
-    MutateRowRequest rowMutationBuilder = toMutateRowRequest(row, mutationModel);
-    Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
+    Assert.assertArrayEquals(row, request.getRowKey().toByteArray());
 
-    Assert.assertEquals(1, rowMutationBuilder.getMutationsCount());
-    Mutation mutation = rowMutationBuilder.getMutations(0);
+    Assert.assertEquals(1, request.getMutationsCount());
+    Mutation mutation = request.getMutations(0);
 
     Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
     SetCell setCell = mutation.getSetCell();
@@ -251,19 +211,17 @@ public class TestPutAdapter {
     Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
     Assert.assertEquals(-1, setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
-
-    testTwoWay(hbasePut, adapter, true);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyPut() {
     byte[] row = dataHelper.randomData("rk-");
     Put emptyPut = new Put(row);
-    adapter.adapt(emptyPut, com.google.cloud.bigtable.data.v2.models.Mutation.create());
+    adapt(emptyPut);
   }
 
   @Test
-  public void testRetry() throws IOException{
+  public void testRetry() {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
@@ -271,23 +229,16 @@ public class TestPutAdapter {
 
     Put hbasePut = new Put(row, System.currentTimeMillis());
     hbasePut.addColumn(family1, qualifier1, value1);
-    com.google.cloud.bigtable.data.v2.models.Mutation mutationModel =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    adapter.adapt(hbasePut, mutationModel);
-    MutateRowRequest request = toMutateRowRequest(row, mutationModel);
+    MutateRowRequest request = adapt(hbasePut);
 
     // Is the Put retryable?
     Assert.assertTrue(BigtableDataGrpcClient.IS_RETRYABLE_MUTATION.apply(request));
-    testTwoWay(hbasePut, adapter);
   }
 
-  private MutateRowRequest toMutateRowRequest(byte[] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
-    RowMutation rowMutation = toRowMutationModel(rowKey, mutation);
-    MutateRowRequest.Builder builder = rowMutation.toProto(REQUEST_CONTEXT).toBuilder();
-    return builder.build();
+  private MutateRowRequest adapt(Put put) {
+    RowMutation rowMutation = RowMutation.create(TABLE_ID, ByteString.copyFrom(put.getRow()));
+    adapter.adapt(put, rowMutation);
+    return rowMutation.toProto(REQUEST_CONTEXT);
   }
 
-  private RowMutation toRowMutationModel(byte [] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
-    return RowMutation.create(TABLE_ID, ByteString.copyFrom(rowKey), mutation);
-  }
 }

@@ -156,8 +156,7 @@ public class BigtableSession implements Closeable {
 
   private Watchdog watchdog;
   private final BigtableDataClient dataClient;
-
-  private final IBigtableDataClient clientWrapper;
+  private final RequestContext dataRequestContext;
 
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
   // synchronous operations.
@@ -199,6 +198,8 @@ public class BigtableSession implements Closeable {
         options.getAdminHost());
     LOG.info("Bigtable options: %s.", options);
 
+    this.dataRequestContext = RequestContext
+        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
     clientInterceptorsList
         .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
@@ -233,8 +234,6 @@ public class BigtableSession implements Closeable {
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
     dataClient.setCallOptionsFactory(callOptionsFactory);
 
-    this.clientWrapper = new BigtableDataClientWrapper(dataClient, options);
-
     // Async operations can run amok, so they need to have some throttling. The throttling is
     // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
     // and since a new Channel is needed, a new BigtableDataGrpcClient instance is needed as well.
@@ -250,7 +249,7 @@ public class BigtableSession implements Closeable {
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
 
     // Defer the creation of both the tableAdminClient until we need them.
-    }
+  }
 
   private ManagedChannel getDataChannelPool() throws IOException {
     String host = options.getDataHost();
@@ -314,7 +313,7 @@ public class BigtableSession implements Closeable {
    * transition to {@link #getClientWrapper()}.
    */
   public RequestContext getDataRequestContext() {
-    return RequestContext.create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+    return dataRequestContext;
   }
 
   /**
@@ -323,7 +322,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link IBigtableDataClient} object.
    */
   public IBigtableDataClient getClientWrapper() {
-    return clientWrapper;
+    return new BigtableDataClientWrapper(dataClient, getDataRequestContext());
   }
 
   /**
@@ -336,6 +335,7 @@ public class BigtableSession implements Closeable {
     return new BulkMutation(
         tableName,
         throttlingDataClient,
+        new BigtableDataClientWrapper(throttlingDataClient, getDataRequestContext()),
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
         options.getBulkOptions());
   }
@@ -347,7 +347,8 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkRead} object.
    */
   public BulkRead createBulkRead(BigtableTableName tableName) {
-    return new BulkRead(clientWrapper, tableName, options.getBulkOptions().getBulkMaxRowKeyCount(),
+    return new BulkRead(getClientWrapper(), tableName,
+        options.getBulkOptions().getBulkMaxRowKeyCount(),
         BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool()
     );
   }

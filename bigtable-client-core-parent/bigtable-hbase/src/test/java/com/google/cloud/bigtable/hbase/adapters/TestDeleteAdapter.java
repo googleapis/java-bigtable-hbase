@@ -55,19 +55,14 @@ public class TestDeleteAdapter {
   public void testFullRowDelete() {
     byte[] rowKey = randomHelper.randomData("rk1-");
     Delete delete = new Delete(rowKey);
-    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    deleteAdapter.adapt(delete, mutation);
-    MutateRowRequest rowMutation = toMutateRowRequest(rowKey, mutation);
+    MutateRowRequest request = adapt(delete);
 
-    Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
-    Assert.assertEquals(1, rowMutation.getMutationsCount());
+    Assert.assertArrayEquals(rowKey, request.getRowKey().toByteArray());
+    Assert.assertEquals(1, request.getMutationsCount());
 
-    Mutation.MutationCase mutationCase = rowMutation.getMutations(0).getMutationCase();
+    Mutation.MutationCase mutationCase = request.getMutations(0).getMutationCase();
 
     Assert.assertEquals(MutationCase.DELETE_FROM_ROW, mutationCase);
-
-    testTwoWayAdapt(delete, deleteAdapter);
   }
 
   @Test
@@ -87,23 +82,18 @@ public class TestDeleteAdapter {
     byte[] family = randomHelper.randomData("family1-");
     Delete delete = new Delete(rowKey);
     delete.addFamily(family);
-    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    deleteAdapter.adapt(delete, mutation);
-    MutateRowRequest rowMutation = toMutateRowRequest(rowKey, mutation);
+    MutateRowRequest request = adapt(delete);
 
-    Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
-    Assert.assertEquals(1, rowMutation.getMutationsCount());
+    Assert.assertArrayEquals(rowKey, request.getRowKey().toByteArray());
+    Assert.assertEquals(1, request.getMutationsCount());
 
-    MutationCase mutationCase = rowMutation.getMutations(0).getMutationCase();
+    MutationCase mutationCase = request.getMutations(0).getMutationCase();
 
     Assert.assertEquals(MutationCase.DELETE_FROM_FAMILY, mutationCase);
 
     Mutation.DeleteFromFamily deleteFromFamily =
-        rowMutation.getMutations(0).getDeleteFromFamily();
+        request.getMutations(0).getDeleteFromFamily();
     Assert.assertArrayEquals(family, deleteFromFamily.getFamilyNameBytes().toByteArray());
-
-    testTwoWayAdapt(delete, deleteAdapter);
   }
 
   @Test
@@ -129,29 +119,24 @@ public class TestDeleteAdapter {
 
     Delete delete = new Delete(rowKey);
     delete.addColumn(family, qualifier, hbaseTimestamp);
-    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    deleteAdapter.adapt(delete, mutation);
-    MutateRowRequest rowMutation = toMutateRowRequest(rowKey, mutation);
+    MutateRowRequest request = adapt(delete);
 
-    Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
-    Assert.assertEquals(1, rowMutation.getMutationsCount());
+    Assert.assertArrayEquals(rowKey, request.getRowKey().toByteArray());
+    Assert.assertEquals(1, request.getMutationsCount());
 
-    MutationCase mutationCase = rowMutation.getMutations(0).getMutationCase();
+    MutationCase mutationCase = request.getMutations(0).getMutationCase();
 
     Assert.assertEquals(MutationCase.DELETE_FROM_COLUMN, mutationCase);
 
     Mutation.DeleteFromColumn deleteFromColumn =
-        rowMutation.getMutations(0).getDeleteFromColumn();
+        request.getMutations(0).getDeleteFromColumn();
     Assert.assertArrayEquals(family, deleteFromColumn.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier, deleteFromColumn.getColumnQualifier().toByteArray());
-    Assert.assertTrue(rowMutation.getMutations(0).getDeleteFromColumn().hasTimeRange());
+    Assert.assertTrue(request.getMutations(0).getDeleteFromColumn().hasTimeRange());
 
     TimestampRange timeStampRange = deleteFromColumn.getTimeRange();
     Assert.assertEquals(bigtableStartTimestamp, timeStampRange.getStartTimestampMicros());
     Assert.assertEquals(bigtableEndTimestamp, timeStampRange.getEndTimestampMicros());
-
-    testTwoWayAdapt(delete, deleteAdapter);
   }
 
   @Test
@@ -179,26 +164,21 @@ public class TestDeleteAdapter {
 
     Delete delete = new Delete(rowKey);
     delete.addColumns(family, qualifier, hbaseTimestamp);
-    com.google.cloud.bigtable.data.v2.models.Mutation mutation =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    deleteAdapter.adapt(delete, mutation);
-    MutateRowRequest rowMutation = toMutateRowRequest(rowKey, mutation);
+    MutateRowRequest request = adapt(delete);
 
-    Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
-    Assert.assertEquals(1, rowMutation.getMutationsCount());
+    Assert.assertArrayEquals(rowKey, request.getRowKey().toByteArray());
+    Assert.assertEquals(1, request.getMutationsCount());
     Assert.assertEquals(
-        MutationCase.DELETE_FROM_COLUMN, rowMutation.getMutations(0).getMutationCase());
+        MutationCase.DELETE_FROM_COLUMN, request.getMutations(0).getMutationCase());
 
     Mutation.DeleteFromColumn deleteFromColumn =
-        rowMutation.getMutations(0).getDeleteFromColumn();
+        request.getMutations(0).getDeleteFromColumn();
     Assert.assertArrayEquals(qualifier, deleteFromColumn.getColumnQualifier().toByteArray());
-    Assert.assertTrue(rowMutation.getMutations(0).getDeleteFromColumn().hasTimeRange());
+    Assert.assertTrue(request.getMutations(0).getDeleteFromColumn().hasTimeRange());
 
     TimestampRange timeRange = deleteFromColumn.getTimeRange();
     Assert.assertEquals(0L, timeRange.getStartTimestampMicros());
     Assert.assertEquals(bigtableTimestamp, timeRange.getEndTimestampMicros());
-
-    testTwoWayAdapt(delete, deleteAdapter);
   }
 
   @Test
@@ -217,33 +197,9 @@ public class TestDeleteAdapter {
     deleteAdapter.adapt(delete, com.google.cloud.bigtable.data.v2.models.Mutation.create());
   }
 
-  /**
-   * Convert the {@link Delete} to a {@link Mutation}, back to a {@link Delete}, back to
-   * {@link Mutation}. Compare the two mutations for equality. This ensures that the adapt
-   * process is idempotent.
-   */
-  private void testTwoWayAdapt(Delete delete, DeleteAdapter adapter) {
-    // delete -> mutation
-    com.google.cloud.bigtable.data.v2.models.Mutation firstMutation =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    adapter.adapt(delete, firstMutation);
-    MutateRowRequest firstAdapt = toMutateRowRequest(delete.getRow(), firstMutation);
-    // mutation -> delete -> mutation;
-    com.google.cloud.bigtable.data.v2.models.Mutation secondMutation =
-        com.google.cloud.bigtable.data.v2.models.Mutation.create();
-    adapter.adapt(adapter.adapt(firstAdapt), secondMutation);
-    MutateRowRequest secondAdapt = toMutateRowRequest(delete.getRow(), secondMutation);
-    // The round trips
-    Assert.assertEquals(firstAdapt, secondAdapt);
-  }
-
-  private MutateRowRequest toMutateRowRequest(byte[] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
-    RowMutation rowMutation = toRowMutationModel(rowKey, mutation);
-    MutateRowRequest.Builder builder = rowMutation.toProto(REQUEST_CONTEXT).toBuilder();
-    return builder.build();
-  }
-
-  private RowMutation toRowMutationModel(byte [] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
-    return RowMutation.create(TABLE_ID, ByteString.copyFrom(rowKey), mutation);
+  private MutateRowRequest adapt(Delete delete) {
+    RowMutation rowMutation = RowMutation.create(TABLE_ID, ByteString.copyFrom(delete.getRow()));
+    deleteAdapter.adapt(delete, rowMutation);
+    return rowMutation.toProto(REQUEST_CONTEXT);
   }
 }

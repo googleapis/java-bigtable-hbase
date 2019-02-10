@@ -33,7 +33,6 @@ import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
@@ -80,9 +79,6 @@ public class TestBigtableDataClientWrapper {
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
 
-  private BigtableOptions options =
-      BigtableOptions.builder().setProjectId(PROJECT_ID).setInstanceId(INSTANCE_ID)
-        .setAppProfileId(APP_PROFILE_ID).build();
   @Mock
   private BigtableDataClient client;
 
@@ -93,7 +89,7 @@ public class TestBigtableDataClientWrapper {
 
   @Before
   public void setUp() {
-    clientWrapper = new BigtableDataClientWrapper(client, options);
+    clientWrapper = new BigtableDataClientWrapper(client, REQUEST_CONTEXT);
   }
 
   @Test
