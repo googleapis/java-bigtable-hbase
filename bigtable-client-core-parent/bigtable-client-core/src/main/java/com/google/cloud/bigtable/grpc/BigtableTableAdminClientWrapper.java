@@ -213,6 +213,24 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
         }, MoreExecutors.directExecutor());
   }
 
+  @Override
+  public ListenableFuture<List<Table>> listModelTableAsync() {
+    ListTablesRequest request =
+        ListTablesRequest.newBuilder().setParent(instanceName.toString()).build();
+
+    return Futures.transform(adminClient.listTablesAsync(request),
+        new Function<ListTablesResponse, List<Table>>() {
+          @Override
+          public List<Table> apply(ListTablesResponse response) {
+            ImmutableList.Builder<Table> tables = ImmutableList.builder();
+            for (com.google.bigtable.admin.v2.Table tableProto : response.getTablesList()) {
+              tables.add(Table.fromProto(tableProto));
+            }
+            return tables.build();
+          }
+        }, MoreExecutors.directExecutor());
+  }
+
   private DropRowRangeRequest buildDropRowRangeRequest(String tableId, String rowKeyPrefix) {
     DropRowRangeRequest.Builder dropRequestProtoBuiler =
         DropRowRangeRequest.newBuilder()

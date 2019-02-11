@@ -81,21 +81,7 @@ import java.util.concurrent.TimeUnit;
 public class IntegrationTests {
 
   private static final int TIME_OUT_MINUTES =
-      Integer.getInteger("integration.test.timeout.minutes", 7);
-
-//  static{
-//    System.setProperty("google.bigtable.connection.impl",
-//        "com.google.cloud.bigtable.hbase2_x.BigtableConnection");
-//    System.setProperty("google.bigtable.async.connection.impl",
-//        "org.apache.hadoop.hbase.client.BigtableAsyncConnection");
-//    System.setProperty("google.bigtable.registry.impl",
-//        "org.apache.hadoop.hbase.client.BigtableAsyncRegistry");
-
-//
-//    System.setProperty("google.bigtable.project.id", "grass-clump-479");
-//    System.setProperty("google.bigtable.instance.id", "java-samples");
-//
-//  }
+      Integer.getInteger("integration.test.timeout.minutes", 3);
 
   @ClassRule
   public static Timeout timeoutRule = new Timeout(TIME_OUT_MINUTES, TimeUnit.MINUTES);
