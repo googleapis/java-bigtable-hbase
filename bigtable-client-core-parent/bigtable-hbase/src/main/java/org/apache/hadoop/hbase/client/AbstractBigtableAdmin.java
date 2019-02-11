@@ -28,7 +28,6 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
@@ -97,7 +96,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final Configuration configuration;
   private final BigtableOptions options;
   protected final CommonConnection connection;
-  protected final BigtableTableAdminClient bigtableTableAdminClient;
   protected final IBigtableTableAdminClient tableAdminClientWrapper;
   protected final BigtableInstanceName bigtableInstanceName;
   private BigtableClusterName bigtableSnapshotClusterName;
@@ -115,7 +113,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     configuration = connection.getConfiguration();
     options = connection.getOptions();
     this.connection = connection;
-    bigtableTableAdminClient = connection.getSession().getTableAdminClient();
     disabledTables = connection.getDisabledTables();
     bigtableInstanceName = options.getInstanceName();
     tableAdapter = new TableAdapter(bigtableInstanceName);
@@ -848,7 +845,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       );
     }
 
-    ListenableFuture<Operation> future = bigtableTableAdminClient
+    ListenableFuture<Operation> future = tableAdminClientWrapper
         .snapshotTableAsync(requestBuilder.build());
 
     return Futures.getChecked(future, IOException.class);
@@ -890,7 +887,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
         .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
         .build();
     Operation operation = Futures
-        .getChecked(bigtableTableAdminClient.createTableFromSnapshotAsync(request),
+        .getChecked(tableAdminClientWrapper.createTableFromSnapshotAsync(request),
             IOException.class);
 
     try {
@@ -932,7 +929,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
         .setName(btSnapshotName)
         .build();
 
-    Futures.getUnchecked(bigtableTableAdminClient.deleteSnapshotAsync(request));
+    Futures.getUnchecked(tableAdminClientWrapper.deleteSnapshotAsync(request));
   }
 
   /**

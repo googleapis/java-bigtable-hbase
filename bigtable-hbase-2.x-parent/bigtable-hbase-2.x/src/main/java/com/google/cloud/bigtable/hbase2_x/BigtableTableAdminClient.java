@@ -124,7 +124,7 @@ public class BigtableTableAdminClient {
    * @return The long running {@link Operation} for the request.
    */
   public CompletableFuture<Operation> snapshotTableAsync(SnapshotTableRequest request) {
-    return toCompletableFuture(adminClient.snapshotTableAsync(request));
+    return toCompletableFuture(adminClientWrapper.snapshotTableAsync(request));
   }
 
   /**
@@ -133,7 +133,7 @@ public class BigtableTableAdminClient {
    * @return The {@link Snapshot} definied by the request.
    */
   public CompletableFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request) {
-    return toCompletableFuture(adminClient.getSnapshotAsync(request));
+    return toCompletableFuture(adminClientWrapper.getSnapshotAsync(request));
   }
 
   /**
@@ -142,15 +142,15 @@ public class BigtableTableAdminClient {
    * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
    */
   public CompletableFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request) {
-    return toCompletableFuture(adminClient.listSnapshotsAsync(request));
+    return toCompletableFuture(adminClientWrapper.listSnapshotsAsync(request));
   }
 
   /**
    * Permanently deletes the specified snapshot.
    * @param request a {@link DeleteSnapshotRequest} object.
    */
-  public CompletableFuture<Empty> deleteSnapshotAsync(DeleteSnapshotRequest request) {
-    return toCompletableFuture(adminClient.deleteSnapshotAsync(request));
+  public CompletableFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request) {
+    return toCompletableFuture(adminClientWrapper.deleteSnapshotAsync(request));
   }
 
   /**
@@ -159,6 +159,6 @@ public class BigtableTableAdminClient {
    * @return The long running {@link Operation} for the request.
    */
   public CompletableFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request) {
-    return toCompletableFuture(adminClient.createTableFromSnapshotAsync(request));
+    return toCompletableFuture(adminClientWrapper.createTableFromSnapshotAsync(request));
   }
 }
