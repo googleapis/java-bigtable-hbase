@@ -42,6 +42,7 @@ import io.grpc.stub.StreamObserver;
  * @author sduskis
  * @version $Id: $Id
  */
+// TODO: rename this class to differentiate it from `BigtableDataClient` amd `IBigtableDataClient`
 public interface BigtableDataClient {
 
   /**

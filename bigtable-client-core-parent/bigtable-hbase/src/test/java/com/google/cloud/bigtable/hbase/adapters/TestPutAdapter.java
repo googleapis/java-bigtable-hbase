@@ -197,7 +197,12 @@ public class TestPutAdapter {
     byte[] value1 = dataHelper.randomData("v1");
 
     Put hbasePut = new Put(row).addColumn(family1, qualifier1, value1);
-    MutateRowRequest request = adapt(hbasePut);
+    com.google.cloud.bigtable.data.v2.models.Mutation unsafeMutation =
+        com.google.cloud.bigtable.data.v2.models.Mutation.createUnsafe();
+    adapter.adapt(hbasePut, unsafeMutation);
+    RowMutation rowMutation =
+        RowMutation.create(TABLE_ID, ByteString.copyFrom(hbasePut.getRow()), unsafeMutation);
+    MutateRowRequest request = rowMutation.toProto(REQUEST_CONTEXT);
 
     Assert.assertArrayEquals(row, request.getRowKey().toByteArray());
 

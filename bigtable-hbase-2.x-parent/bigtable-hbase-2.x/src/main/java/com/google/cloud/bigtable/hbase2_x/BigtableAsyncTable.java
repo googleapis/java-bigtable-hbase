@@ -79,7 +79,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     return list.stream().map(f).collect(toList());
   }
 
-  private final  asyncConnection;
+  private final BigtableAsyncConnection asyncConnection;
   private final BigtableDataClient client;
   private final IBigtableDataClient clientWrapper;
   private final HBaseRequestAdapter hbaseAdapter;

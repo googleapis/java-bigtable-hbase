@@ -66,10 +66,9 @@ public class BigtableBufferedMutatorHelper {
   private boolean closed = false;
 
   private final HBaseRequestAdapter adapter;
-
   private final BulkMutation bulkMutation;
-
   private final BigtableOptions options;
+  private final RequestContext requestContext;
 
   /**
    * <p>
@@ -92,6 +91,7 @@ public class BigtableBufferedMutatorHelper {
     this.options = session.getOptions();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.bulkMutation = session.createBulkMutation(tableName);
+    this.requestContext = session.getDataRequestContext();
   }
 
   public void close() throws IOException {
@@ -222,7 +222,7 @@ public class BigtableBufferedMutatorHelper {
   }
 
   private MutateRowsRequest.Entry toEntry(RowMutation rowMutation) {
-    return rowMutation.toBulkProto(RequestContext.create("p", "i", "a")).getEntries(0);
+    return rowMutation.toBulkProto(requestContext).getEntries(0);
   }
 
   /**
