@@ -144,8 +144,8 @@ public class HBaseRequestAdapter {
   /**
    * <p>adapt.</p>
    *
-   * @param delete a {@link org.apache.hadoop.hbase.client.Delete} object.
-   * @return a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} object.
+   * @param delete a {@link Delete} object.
+   * @return a {@link RowMutation} object.
    */
   public RowMutation adaptEntry(Delete delete) {
     RowMutation rowMutation = newRowMutationModel(delete.getRow());
@@ -232,8 +232,8 @@ public class HBaseRequestAdapter {
   /**
    * <p>adaptEntry.</p>
    *
-   * @param put a {@link org.apache.hadoop.hbase.client.Put} object.
-   * @return a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} object.
+   * @param put a {@link Put} object.
+   * @return a {@link RowMutation} object.
    */
   public RowMutation adaptEntry(Put put) {
     RowMutation rowMutation = newRowMutationModel(put.getRow());
@@ -257,7 +257,7 @@ public class HBaseRequestAdapter {
    * <p>adapt.</p>
    *
    * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
-   * @param mutationApi a {@link com.google.cloud.bigtable.data.v2.models.MutationApi} object.
+   * @param mutationApi a {@link MutationApi} object.
    */
   @InternalApi
   public void adapt(RowMutations mutations, MutationApi<?> mutationApi) {
@@ -268,7 +268,7 @@ public class HBaseRequestAdapter {
    * <p>adaptEntry.</p>
    *
    * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
-   * @return a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} object.
+   * @return a {@link RowMutation} object.
    */
   public RowMutation adaptEntry(RowMutations mutations) {
     RowMutation rowMutation = newRowMutationModel(mutations.getRow());
@@ -280,7 +280,7 @@ public class HBaseRequestAdapter {
    * <p>adapt.</p>
    *
    * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
-   * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   * @return a {@link RowMutation} object.
    */
   public RowMutation adapt(org.apache.hadoop.hbase.client.Mutation mutation) {
     RowMutation rowMutation = newRowMutationModel(mutation.getRow());
@@ -292,10 +292,10 @@ public class HBaseRequestAdapter {
    * <p>adapt.</p>
    *
    * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
-   * @param mutationApi a {@link com.google.cloud.bigtable.data.v2.models.MutationApi} object.
+   * @param mutationApi a {@link MutationApi} object.
    */
   @InternalApi
-  public void adapt(org.apache.hadoop.hbase.client.Mutation mutation, MutationApi<?> mutationApi) {
+  private void adapt(org.apache.hadoop.hbase.client.Mutation mutation, MutationApi<?> mutationApi) {
     mutationAdapters.hbaseMutationAdapter.adapt(mutation, mutationApi);
   }
 

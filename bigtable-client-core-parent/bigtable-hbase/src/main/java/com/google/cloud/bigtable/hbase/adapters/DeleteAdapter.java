@@ -17,9 +17,6 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import static com.google.cloud.bigtable.data.v2.models.Range.TimestampRange;
 
-import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.Mutation;
-import com.google.bigtable.v2.Mutation.DeleteFromColumn;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.protobuf.ByteString;
 
@@ -150,53 +147,5 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
         }
       }
     }
-  }
-
-
-  /**
-   * <p>adapt.</p>
-   *
-   * @param request a {@link com.google.bigtable.v2.MutateRowRequest} object.
-   * @return a {@link org.apache.hadoop.hbase.client.Delete} object.
-   */
-  public Delete adapt(MutateRowRequest request) {
-    Delete delete = new Delete(request.getRowKey().toByteArray());
-
-    boolean isDeleteRow = false;
-    for (Mutation mutation : request.getMutationsList()) {
-      switch (mutation.getMutationCase()) {
-      case DELETE_FROM_COLUMN: {
-        DeleteFromColumn deleteFromColumn = mutation.getDeleteFromColumn();
-        long timestamp;
-        com.google.bigtable.v2.TimestampRange timeRange = deleteFromColumn.getTimeRange();
-        if (timeRange.getStartTimestampMicros() == 0) {
-          timestamp = BigtableConstants.HBASE_TIMEUNIT.convert(timeRange.getEndTimestampMicros(),
-            BigtableConstants.BIGTABLE_TIMEUNIT) - 1;
-          delete.addColumns(getBytes(deleteFromColumn.getFamilyNameBytes()),
-            getBytes(deleteFromColumn.getColumnQualifier()), timestamp);
-        } else {
-          timestamp = BigtableConstants.HBASE_TIMEUNIT.convert(timeRange.getStartTimestampMicros(),
-            BigtableConstants.BIGTABLE_TIMEUNIT);
-          delete.addColumn(getBytes(deleteFromColumn.getFamilyNameBytes()),
-            getBytes(deleteFromColumn.getColumnQualifier()), timestamp);
-        }
-
-        break;
-      }
-      case DELETE_FROM_FAMILY:
-        delete.addFamily(getBytes(mutation.getDeleteFromFamily().getFamilyNameBytes()));
-        break;
-      case DELETE_FROM_ROW:
-        isDeleteRow = true;
-        break;
-      default:
-        throw new IllegalArgumentException("DeleteAdapter does not support " + mutation.getMutationCase() + ".");
-      }
-    }
-    if (isDeleteRow && !delete.getFamilyCellMap().isEmpty()) {
-      throw new IllegalArgumentException(
-          "DeleteAdapter does not support DELETE_FROM_ROW with other operations.");
-    }
-    return delete;
   }
 }

@@ -16,8 +16,6 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
-import com.google.bigtable.v2.CheckAndMutateRowResponse;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
@@ -71,6 +69,8 @@ public class CheckAndMutateUtil {
       ConditionalRowMutation request,
       Boolean predicateMatched) {
 
+
+    // TODO: ConditionalRowMutation should have methods to check if it has true/false mutations
     CheckAndMutateRowRequest proto =
         request.toProto(RequestContext.create("SomeProject", "Some Instance", ""));
     // If we have true mods, we want the predicate to have matched.

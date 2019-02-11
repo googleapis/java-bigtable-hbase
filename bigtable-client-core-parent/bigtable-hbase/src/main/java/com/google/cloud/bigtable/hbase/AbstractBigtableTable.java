@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.core.IBigtableDataClient;
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
@@ -66,7 +65,6 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -112,30 +110,25 @@ public abstract class AbstractBigtableTable implements Table {
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter hbaseAdapter;
 
-  protected final BigtableDataClient client;
   protected final IBigtableDataClient clientWrapper;
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
-  // Once the IBigtableDataClient interface is implemented this will be removed
-  protected final RequestContext requestContext;
 
   /**
    * Constructed by BigtableConnection
    *
-   * @param bigtableConnection a {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection} object.
-   * @param hbaseAdapter a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter} object.
+   * @param bigtableConnection a {@link AbstractBigtableConnection} object.
+   * @param hbaseAdapter a {@link HBaseRequestAdapter} object.
    */
   public AbstractBigtableTable(AbstractBigtableConnection bigtableConnection,
       HBaseRequestAdapter hbaseAdapter) {
     this.bigtableConnection = bigtableConnection;
     BigtableSession session = bigtableConnection.getSession();
     this.options = session.getOptions();
-    this.client = session.getDataClient();
     this.clientWrapper = session.getClientWrapper();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
-    this.requestContext = session.getDataRequestContext();
   }
 
   /** {@inheritDoc} */

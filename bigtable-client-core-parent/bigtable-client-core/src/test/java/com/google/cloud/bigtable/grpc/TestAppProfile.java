@@ -32,6 +32,7 @@ import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.common.base.Preconditions;
@@ -205,14 +206,11 @@ public class TestAppProfile {
 
   @Test
   public void testBulkRead() throws Exception {
-    BigtableTableName fakeTableName = new BigtableTableName(
-        "projects/fake-project/instances/fake-instance/tables/fake-table");
+    String tableId = "fake-table";
+    BigtableTableName fakeTableName =
+        defaultSession.getOptions().getInstanceName().toTableName(tableId);
 
-    ReadRowsRequest readRowsRequest = ReadRowsRequest.newBuilder()
-        .setTableName(fakeTableName.toString())
-        .setRows(RowSet.newBuilder().addRowKeys(ByteString.copyFromUtf8("fake-key")))
-        .build();
-
+    Query readRowsRequest = Query.create(tableId).rowKey("fake-key");
 
     BulkRead bulkRead = defaultSession.createBulkRead(fakeTableName);
     bulkRead.add(readRowsRequest);

@@ -28,7 +28,6 @@ import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 
-import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -81,12 +80,11 @@ public abstract class AbstractBigtableRegionLocator {
       return this.regionsFuture;
     }
 
-    SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setTableName(bigtableTableName.toString());
-    LOG.debug("Sampling rowkeys for table %s", request.getTableName());
+    LOG.debug("Sampling rowkeys for table %s", bigtableTableName.toString());
 
     try {
-      ListenableFuture<List<KeyOffset>> future = client.sampleRowKeysAsync(bigtableTableName.getTableId());
+      ListenableFuture<List<KeyOffset>> future =
+          client.sampleRowKeysAsync(bigtableTableName.getTableId());
       this.regionsFuture = Futures
           .transform(future, new Function<List<KeyOffset>, List<HRegionLocation>>() {
             @Override

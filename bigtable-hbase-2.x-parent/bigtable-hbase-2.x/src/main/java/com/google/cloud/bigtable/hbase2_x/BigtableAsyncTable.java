@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.hbase2_x;
 import static java.util.stream.Collectors.toList;
 
 import com.google.cloud.bigtable.core.IBigtableDataClient;
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -87,19 +85,16 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   private final HBaseRequestAdapter hbaseAdapter;
   private final TableName tableName;
   private BatchExecutor batchExecutor;
-  // Once the IBigtableDataClient interface is implemented this will be removed
-  private RequestContext requestContext;
 
   public BigtableAsyncTable(BigtableAsyncConnection asyncConnection,
       HBaseRequestAdapter hbaseAdapter) {
     this.asyncConnection = asyncConnection;
     BigtableSession session = asyncConnection.getSession();
-    this.client = new BigtableDataClient(session.getDataClient(), session.getClientWrapper());
+    this.client = new BigtableDataClient(session.getClientWrapper());
     this.clientWrapper = asyncConnection.getSession().getClientWrapper();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
     // Once the IBigtableDataClient interface is implemented this will be removed
-    this.requestContext = session.getDataRequestContext();
   }
 
   protected synchronized BatchExecutor getBatchExecutor() {
@@ -114,12 +109,11 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
    */
   @Override
   public CompletableFuture<Result> append(Append append) {
-    ReadModifyWriteRow request = hbaseAdapter.adapt(append);
-    Function<? super com.google.cloud.bigtable.data.v2.models.Row, ? extends Result>
-        adaptRowFunction = response -> append.isReturnResults()
-            ? Adapters.ROW_ADAPTER.adaptResponse(response)
-            : null;
-    return client.readModifyWriteRowAsync(request).thenApply(adaptRowFunction);
+    return client.readModifyWriteRowAsync(hbaseAdapter.adapt(append))
+        .thenApply(response ->
+            append.isReturnResults()
+                ? Adapters.ROW_ADAPTER.adaptResponse(response)
+                : null);
   }
 
   /**
@@ -144,17 +138,11 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
     private final CheckAndMutateUtil.RequestBuilder builder;
     private final BigtableDataClient client;
-    // Once the IBigtableDataClient interface is implemented this will be removed
-    protected final RequestContext requestContext;
 
     public CheckAndMutateBuilderImpl(BigtableDataClient client, HBaseRequestAdapter hbaseAdapter,
         byte[] row, byte[] family) {
       this.client = client;
       this.builder = new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
-      BigtableTableName bigtableTableName = hbaseAdapter.getBigtableTableName();
-      // Once the IBigtableDataClient interface is implemented this will be removed
-      this.requestContext = RequestContext
-          .create(bigtableTableName.getProjectId(), bigtableTableName.getInstanceId(), "");
     }
 
     /**

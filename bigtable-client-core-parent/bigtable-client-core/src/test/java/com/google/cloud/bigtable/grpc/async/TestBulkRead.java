@@ -113,7 +113,7 @@ public class TestBulkRead {
     when(mockClient.readFlatRows(any(Query.class))).thenReturn(mockScanner);
     FlatRow row = createRow(ByteString.copyFromUtf8("Key"));
     when(mockScanner.next()).thenReturn(row).thenReturn(null);
-    ReadRowsRequest request = createRequest(row.getRowKey());
+    Query request = createRequest(row.getRowKey());
     ListenableFuture<FlatRow> future1 = underTest.add(request);
     ListenableFuture<FlatRow> future2 = underTest.add(request);
     underTest.flush();
@@ -233,8 +233,8 @@ public class TestBulkRead {
    * Helper to generate a {@link FlatRow} for a row key.
    * @param key
    */
-  private static ReadRowsRequest createRequest(ByteString key) {
-    return ReadRowsRequest.newBuilder().setRows(RowSet.newBuilder().addRowKeys(key)).build();
+  private static Query createRequest(ByteString key) {
+    return Query.create("table").rowKey(key);
   }
 
   /**

@@ -22,7 +22,6 @@ import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
@@ -60,10 +59,9 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   private final RequestContext requestContext;
 
   public BigtableDataClientWrapper(BigtableDataClient bigtableDataClient,
-      BigtableOptions options) {
+      RequestContext requestContext) {
     this.delegate = bigtableDataClient;
-    this.requestContext = RequestContext.create(options.getProjectId(), options.getInstanceId(),
-        options.getAppProfileId());
+    this.requestContext = requestContext;
   }
 
   /** {@inheritDoc} */

@@ -58,7 +58,7 @@ public class TestFlatRowConverter {
             .build())
           .build())
         .build();
-    testBothWays(simpleRow, expectedRow);
+    Assert.assertEquals(expectedRow, FlatRowConverter.convert(simpleRow));
   }
 
   @Test
@@ -96,7 +96,7 @@ public class TestFlatRowConverter {
             .addCells(asProtoCell(simpleCell3))
             .build()))
         .build();
-    testBothWays(simpleRow, expectedRow);
+    Assert.assertEquals(expectedRow, FlatRowConverter.convert(simpleRow));
   }
 
   @Test
@@ -131,11 +131,6 @@ public class TestFlatRowConverter {
         com.google.cloud.bigtable.data.v2.models.Row.create(ByteString.copyFromUtf8("key"),
             rowCells);
     Assert.assertEquals(row, FlatRowConverter.convertToModelRow(simpleRow));
-  }
-
-  private void testBothWays(FlatRow simpleRow, Row row) {
-    Assert.assertEquals(row, FlatRowConverter.convert(simpleRow));
-    Assert.assertEquals(simpleRow, FlatRowConverter.convert(row));
   }
 
   private ByteString toByteString(final String string) {

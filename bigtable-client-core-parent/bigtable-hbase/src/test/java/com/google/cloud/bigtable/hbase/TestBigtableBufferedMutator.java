@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -45,7 +46,6 @@ import org.mockito.MockitoAnnotations;
 
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -83,8 +83,7 @@ public class TestBigtableBufferedMutator {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     when(mockSession.createBulkMutation(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
-    when(mockSession.getDataRequestContext())
-        .thenReturn(RequestContext.create("project", "instance", ""));
+    when(mockSession.getDataRequestContext()).thenReturn(RequestContext.create("p", "i", "a"));
   }
 
   @After
@@ -126,22 +125,22 @@ public class TestBigtableBufferedMutator {
 
   @Test
   public void testIncrement() throws IOException {
-    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRowRequest.class)))
+    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRow.class)))
         .thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(new Increment(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, 1));
     verify(mockBulkMutation, times(1))
-        .readModifyWrite(any(ReadModifyWriteRowRequest.class));
+        .readModifyWrite(any(ReadModifyWriteRow.class));
   }
 
   @Test
   public void testAppend() throws IOException {
-    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRowRequest.class)))
+    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRow.class)))
         .thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(new Append(EMPTY_BYTES).add(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES));
     verify(mockBulkMutation, times(1))
-        .readModifyWrite(any(ReadModifyWriteRowRequest.class));
+        .readModifyWrite(any(ReadModifyWriteRow.class));
   }
 
   @Test

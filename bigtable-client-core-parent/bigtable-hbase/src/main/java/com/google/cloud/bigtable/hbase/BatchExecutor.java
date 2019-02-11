@@ -15,10 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.v2.ReadModifyWriteRowResponse;
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.DefaultRowAdapter;
-import com.google.cloud.bigtable.grpc.BigtableDataClientWrapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,11 +102,6 @@ public class BatchExecutor {
       try {
         if (message instanceof FlatRow) {
           result = Adapters.FLAT_ROW_ADAPTER.adaptResponse((FlatRow) message);
-        } else if (message instanceof ReadModifyWriteRowResponse) {
-          ReadModifyWriteRowResponse response = ((ReadModifyWriteRowResponse) message);
-          com.google.cloud.bigtable.data.v2.models.Row row =
-              new DefaultRowAdapter().createRowFromProto(response.getRow());
-          result = Adapters.ROW_ADAPTER.adaptResponse(row);
         } else if (message instanceof com.google.cloud.bigtable.data.v2.models.Row) {
           result = Adapters.ROW_ADAPTER.adaptResponse((com.google.cloud.bigtable.data.v2.models.Row) message);
         }
@@ -142,7 +133,6 @@ public class BatchExecutor {
   protected final HBaseRequestAdapter requestAdapter;
   protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Info, "batch.latency");
   // Once the IBigtableDataClient interface is implemented, this will be removed.
-  private final RequestContext requestContext;
   private final BigtableBufferedMutatorHelper bufferedMutatorHelper;
   private final BulkRead bulkRead;
 
@@ -155,7 +145,6 @@ public class BatchExecutor {
    */
   public BatchExecutor(BigtableSession session, HBaseRequestAdapter requestAdapter) {
     this.requestAdapter = requestAdapter;
-    this.requestContext = session.getDataRequestContext();
     this.options = session.getOptions();
     this.bulkRead = session.createBulkRead(requestAdapter.getBigtableTableName());
     this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(
@@ -191,7 +180,7 @@ public class BatchExecutor {
   private ListenableFuture<?> issueAsyncRequest(Row row) {
     try {
       if (row instanceof Get) {
-        return bulkRead.add(requestAdapter.adapt((Get) row).toProto(requestContext));
+        return bulkRead.add(requestAdapter.adapt((Get) row));
       } else if (row instanceof Mutation) {
         return bufferedMutatorHelper.mutate((Mutation) row);
       } else if (row instanceof RowMutations) {

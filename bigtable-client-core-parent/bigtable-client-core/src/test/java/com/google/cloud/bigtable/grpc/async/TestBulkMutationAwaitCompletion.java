@@ -30,6 +30,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,6 +71,9 @@ public class TestBulkMutationAwaitCompletion {
 
   @Mock
   private BigtableDataClient mockClient;
+
+  @Mock
+  private IBigtableDataClient mockClientWrapper;
 
   @Mock
   private ScheduledExecutorService mockScheduler;
@@ -296,6 +300,7 @@ public class TestBulkMutationAwaitCompletion {
         new BulkMutation(
             TestBulkMutation.TABLE_NAME,
             mockClient,
+            mockClientWrapper,
             operationAccountant,
             mockScheduler,
             options);

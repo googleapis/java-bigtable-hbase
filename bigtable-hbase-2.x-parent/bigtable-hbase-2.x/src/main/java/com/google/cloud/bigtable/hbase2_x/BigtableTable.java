@@ -148,7 +148,7 @@ public class BigtableTable extends AbstractBigtableTable {
 
   @Override
   public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
-    BigtableDataClient asyncClient = new BigtableDataClient(this.client, this.clientWrapper);
+    BigtableDataClient asyncClient = new BigtableDataClient(this.clientWrapper);
     final BigtableAsyncTable.CheckAndMutateBuilderImpl delegate =
         new BigtableAsyncTable.CheckAndMutateBuilderImpl(asyncClient, hbaseAdapter, row, family);
     return new CheckAndMutateBuilder() {
