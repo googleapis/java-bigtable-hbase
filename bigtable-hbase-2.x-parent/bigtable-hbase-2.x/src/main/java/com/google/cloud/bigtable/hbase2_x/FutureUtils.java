@@ -16,9 +16,7 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
-import com.google.cloud.bigtable.config.Logger;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -32,9 +30,6 @@ import com.google.common.util.concurrent.MoreExecutors;
  * @author spollapally
  */
 public class FutureUtils {
-
-  public static final ExecutorService DIRECT_EXECUTOR = MoreExecutors.newDirectExecutorService();
-  static Logger logger = new Logger(FutureUtils.class);
 
   public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
     CompletableFuture<T> completableFuture = new CompletableFuture<T>() {
