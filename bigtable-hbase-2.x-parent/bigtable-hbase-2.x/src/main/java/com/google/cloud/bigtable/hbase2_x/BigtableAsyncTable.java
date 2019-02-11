@@ -79,7 +79,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     return list.stream().map(f).collect(toList());
   }
 
-  private final BigtableAsyncConnection asyncConnection;
+  private final  asyncConnection;
   private final BigtableDataClient client;
   private final IBigtableDataClient clientWrapper;
   private final HBaseRequestAdapter hbaseAdapter;
@@ -90,7 +90,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       HBaseRequestAdapter hbaseAdapter) {
     this.asyncConnection = asyncConnection;
     BigtableSession session = asyncConnection.getSession();
-    this.client = new BigtableDataClient(session.getDataClient(), session.getClientWrapper());
+    this.client = new BigtableDataClient(session.getClientWrapper());
     this.clientWrapper = asyncConnection.getSession().getClientWrapper();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();

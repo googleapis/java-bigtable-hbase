@@ -36,12 +36,9 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
  */
 public class BigtableDataClient {
 
-  private final com.google.cloud.bigtable.grpc.BigtableDataClient dataClient;
   private final IBigtableDataClient clientWrapper;
 
-  public BigtableDataClient(com.google.cloud.bigtable.grpc.BigtableDataClient dataClient,
-      IBigtableDataClient clientWrapper) {
-    this.dataClient = dataClient;
+  public BigtableDataClient(IBigtableDataClient clientWrapper) {
     this.clientWrapper = clientWrapper;
   }
 
@@ -89,9 +86,5 @@ public class BigtableDataClient {
    */
   public CompletableFuture<List<FlatRow>> readFlatRowsAsync(Query request) {
     return toCompletableFuture(clientWrapper.readFlatRowsAsync(request));
-  }
-
-  public com.google.cloud.bigtable.grpc.BigtableDataClient getClient() {
-    return dataClient;
   }
 }
