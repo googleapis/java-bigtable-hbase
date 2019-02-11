@@ -105,7 +105,8 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
           patTableNames.stream().anyMatch(e -> tableName.equals(e)));
 
       // test listTables all
-      List<TableDescriptor> allTableDescriptors = asyncAdmin.listTableDescriptors().get();
+      List<TableDescriptor> allTableDescriptors =
+          asyncAdmin.listTableDescriptors(Pattern.compile("test_table2.*"), false).get();
       assertTrue("listTables-all should list atleast one table", allTableDescriptors.size() > 0);
       assertTrue("listTables-all should contain tableName" + tableName,
           allTableDescriptors.stream().anyMatch(e -> tableName.equals(e.getTableName())));

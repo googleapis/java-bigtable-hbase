@@ -211,6 +211,10 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return bigtableTableAdminClient.listTablesAsync().thenApply(r ->
       r.stream()
           .filter(e -> !tableNamePattern.isPresent() || tableNamePattern.get().matcher(e).matches())
+          .map(s->{
+            System.out.println("listTableNames: " + s);
+            return s;
+          })
           .map(TableName::valueOf)
           .collect(Collectors.toList())
     );
@@ -229,58 +233,29 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   private CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern) {
-    /*
-      This is three step solution to get TableDescriptor, but it also fails with disabled
-      Table NOT_FOUND.
-     */
     CompletableFuture<List<CompletableFuture<Table>>> futureTables =
         bigtableTableAdminClient.listTablesAsync()
             .thenApply(r -> r.stream()
-                .filter(q->!disabledTables.contains(TableName.valueOf(q)))
+                .filter(t -> !tableNamePattern.isPresent() ||
+                    tableNamePattern.get().matcher(t).matches())
+                .map(s->{
+                  System.out.println("listTables: " + s);
+                  return s;
+                })
                 .map(q -> bigtableTableAdminClient.getTableAsync(q))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList()))
+        .exceptionally(ex -> {
+          LOG.error("Error While Fetching Table", ex);
+          return null;
+        });
 
-    CompletableFuture<List<Table>> nonBlockingFuture = futureTables.thenCompose(s ->
+    return futureTables.thenCompose(s ->
         CompletableFuture.allOf(s.toArray(new CompletableFuture[0]))
             .thenApply(v -> s.stream()
                 .map(element -> element.join())
+                .map(tableAdapter2x::adapt)
                 .collect(Collectors.toList()))
-
     );
-//    return nonBlockingFuture.thenApply(r ->
-//        r.stream()
-//            .filter(t -> !tableNamePattern.isPresent() ||
-//                tableNamePattern.get().matcher(t.getId()).matches())
-//            .map(tableAdapter2x::adapt)
-//            .collect(Collectors.toList())
-//    );
-
-
-    /*
-      Tried filtering out disabledTable before fetching getDescriptor, but fails with table
-      NOT_FOUND.
-     */
-//    return bigtableTableAdminClient.listTablesAsync().thenApply(r->r.stream()
-//        .filter(t -> !tableNamePattern.isPresent() ||
-//                            tableNamePattern.get().matcher(t).matches())
-//        .map(TableName::valueOf)
-//        .filter(f->!disabledTables.contains(f))
-//        .map(this::getDescriptor)
-//        .map(CompletableFuture::join)
-//        .collect(Collectors.toList()));
-
-
-    /*
-      Added new operation in IBigtableTableAdminClient#listModelTables, which fetch List<Table>
-      atomically. It runs fine with all existing test case(But this operation is not available
-      in v2.BigtableTableClient).
-     */
-    return toCompletableFuture(adminClientWrapper.listModelTableAsync())
-        .thenApply(s->s.stream()
-            .filter(t -> !tableNamePattern.isPresent() ||
-                tableNamePattern.get().matcher(t.getId()).matches())
-            .map(tableAdapter2x::adapt)
-            .collect(Collectors.toList()));
   }
 
   /** {@inheritDoc} */
@@ -294,39 +269,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<List<TableDescriptor>> listTableDescriptors(Pattern pattern, boolean includeSysTables) {
     return listTables(Optional.of(pattern));
   }
-
-  private CompletableFuture<List<Table>> requestTableList() {
-
-    CompletableFuture<List<CompletableFuture<Table>>> futureTables =
-        bigtableTableAdminClient.listTablesAsync()
-        .thenApply(r -> r.stream()
-        .filter(q->!disabledTables.contains(TableName.valueOf(q)))
-        .map(q -> bigtableTableAdminClient.getTableAsync(q))
-            .collect(Collectors.toList()));
-
-    CompletableFuture<List<Table>> firstResult = futureTables.thenCompose(s ->
-        CompletableFuture.allOf(s.toArray(new CompletableFuture[0]))
-        .thenApply(v -> s.stream()
-            .map(element -> element.join())
-            .collect(Collectors.toList()))
-
-    );
-
-    /*
-     * With non-async operations only, still few tables got disabled before
-     * adminClientWrapper#getTables executes.
-     */
-//    CompletableFuture<List<Table>> secondResult =
-//        CompletableFuture.supplyAsync(() -> adminClientWrapper.listTables()
-//            .parallelStream()
-//            .map(x -> adminClientWrapper.getTable(x))
-//            .collect(Collectors.toList())
-//    );
-
-    return firstResult;
-  }
-
-
 
   /** {@inheritDoc} */
   @Override
@@ -361,7 +303,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
             return tableAdapter2x.adapt(resp);
           }
     });
-
   }
 
   @Override
