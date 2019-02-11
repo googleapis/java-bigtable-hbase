@@ -360,7 +360,7 @@ public class BulkMutation {
    *          {@link MutateRowRequest}s will be sent.
    * @param client a {@link BigtableDataClient} object on which to perform RPCs.
    *          RPCs that this object performed.
-   * @param clienWrapper a {@link IBigtableDataClient} object on which to perform RPCs.
+   * @param clientWrapper a {@link IBigtableDataClient} object on which to perform RPCs.
    *          RPCs that this object performed.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
    *          retries.
