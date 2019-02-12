@@ -16,12 +16,10 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
-import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
@@ -29,7 +27,6 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -97,8 +94,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final Set<TableName> disabledTables;
   private final BigtableOptions options;
   private final BigtableTableAdminClient bigtableTableAdminClient;
-  private final IBigtableTableAdminClient adminClientWrapper;
-  private final com.google.cloud.bigtable.grpc.BigtableTableAdminClient grpcAdminClient;
   private final BigtableInstanceName bigtableInstanceName;
   private final TableAdapter2x tableAdapter2x;
   private final CommonConnection asyncConnection;
@@ -109,10 +104,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     LOG.debug("Creating BigtableAsyncAdmin");
     this.options = asyncConnection.getOptions();
     BigtableSession session = asyncConnection.getSession();
-    this.grpcAdminClient = session.getTableAdminClient();
-    this.adminClientWrapper = session.getTableAdminClientWrapper();
-    this.bigtableTableAdminClient = new BigtableTableAdminClient(grpcAdminClient,
-        adminClientWrapper);
+    this.bigtableTableAdminClient = new BigtableTableAdminClient(
+        session.getTableAdminClient(), session.getTableAdminClientWrapper());
     this.disabledTables = asyncConnection.getDisabledTables();
     this.bigtableInstanceName = options.getInstanceName();
     this.tableAdapter2x = new TableAdapter2x(options);
@@ -211,10 +204,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return bigtableTableAdminClient.listTablesAsync().thenApply(r ->
       r.stream()
           .filter(e -> !tableNamePattern.isPresent() || tableNamePattern.get().matcher(e).matches())
-          .map(s->{
-            System.out.println("listTableNames: " + s);
-            return s;
-          })
           .map(TableName::valueOf)
           .collect(Collectors.toList())
     );
@@ -234,28 +223,24 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   private CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern) {
     CompletableFuture<List<CompletableFuture<Table>>> futureTables =
-        bigtableTableAdminClient.listTablesAsync()
-            .thenApply(r -> r.stream()
+        bigtableTableAdminClient.listTablesAsync().thenApply(r ->
+            r.stream()
                 .filter(t -> !tableNamePattern.isPresent() ||
                     tableNamePattern.get().matcher(t).matches())
-                .map(s->{
-                  System.out.println("listTables: " + s);
-                  return s;
-                })
-                .map(q -> bigtableTableAdminClient.getTableAsync(q))
-                .collect(Collectors.toList()))
-        .exceptionally(ex -> {
-          LOG.error("Error While Fetching Table", ex);
-          return null;
-        });
+            .map(q -> bigtableTableAdminClient.getTableAsync(q)
+                .exceptionally(ex -> {
+                  LOG.error("Error while fetching Table", ex);
+                  return null;
+                }))
+            .collect(Collectors.toList()));
 
-    return futureTables.thenCompose(s ->
-        CompletableFuture.allOf(s.toArray(new CompletableFuture[0]))
+    return futureTables
+        .thenCompose(s -> CompletableFuture.allOf(s.toArray(new CompletableFuture[0]))
             .thenApply(v -> s.stream()
-                .map(element -> element.join())
+                .map(CompletableFuture::join)
+                .filter(Objects::nonNull)
                 .map(tableAdapter2x::adapt)
-                .collect(Collectors.toList()))
-    );
+                .collect(Collectors.toList())));
   }
 
   /** {@inheritDoc} */

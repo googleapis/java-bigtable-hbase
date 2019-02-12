@@ -125,14 +125,4 @@ public interface IBigtableTableAdminClient {
    */
   //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix);
-
-  /**
-   * Created this operation to get List of Table atomically (instead using
-   * IBigtableTableAdminClient#listTableAsync which returns List of String for individual tableId)s.
-   *
-   * @return a {@link ListenableFuture} of type {@link List} of {@link Table} will be set when
-   * request is
-   * successful otherwise exception will be thrown.
-   */
-  ListenableFuture<List<Table>> listModelTableAsync();
 }
