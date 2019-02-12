@@ -15,10 +15,18 @@
  */
 package com.google.cloud.bigtable.core;
 
+import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
+import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
+import com.google.bigtable.admin.v2.GetSnapshotRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
+import com.google.bigtable.admin.v2.Snapshot;
+import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.longrunning.Operation;
 import java.util.List;
 
 /**
@@ -125,4 +133,39 @@ public interface IBigtableTableAdminClient {
    */
   //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
   ListenableFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix);
+
+  // ////////////// SNAPSHOT methods /////////////
+  /**
+   * Creates a new snapshot from a table in a specific cluster.
+   * @param request a {@link SnapshotTableRequest} object.
+   * @return The long running {@link Operation} for the request.
+   */
+  ListenableFuture<Operation> snapshotTableAsync(SnapshotTableRequest request);
+
+  /**
+   * Gets metadata information about the specified snapshot.
+   * @param request a {@link GetSnapshotRequest} object.
+   * @return The {@link Snapshot} definied by the request.
+   */
+  ListenableFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request);
+
+  /**
+   * Lists all snapshots associated with the specified cluster.
+   * @param request a {@link ListSnapshotsRequest} object.
+   * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
+   */
+  ListenableFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request);
+
+  /**
+   * Permanently deletes the specified snapshot.
+   * @param request a {@link DeleteSnapshotRequest} object.
+   */
+  ListenableFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request);
+
+  /**
+   * Creates a new table from a snapshot.
+   * @param request a {@link CreateTableFromSnapshotRequest} object.
+   * @return The long running {@link Operation} for the request.
+   */
+  ListenableFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request);
 }

@@ -23,18 +23,27 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.bigtable.admin.v2.ColumnFamily;
+import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
+import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GetSnapshotRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
+import com.google.bigtable.admin.v2.Snapshot;
+import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.GCRules;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import java.util.List;
@@ -269,6 +278,69 @@ public class TestBigtableTableAdminClientWrapper {
     clientWrapper.dropRowRangeAsync(TABLE_ID, null);
 
     verify(mockAdminClient).dropRowRangeAsync(request);
+  }
+
+  @Test
+  public void testSnapshotTableAsync() throws Exception {
+    SnapshotTableRequest request = SnapshotTableRequest.newBuilder()
+        .setSnapshotId("snaphsotId")
+        .setName(TABLE_NAME)
+        .build();
+    Operation response = Operation.getDefaultInstance();
+    when(mockAdminClient.snapshotTableAsync(request)).thenReturn(Futures.immediateFuture(response));
+    ListenableFuture<Operation> actualResponse = clientWrapper.snapshotTableAsync(request);
+    assertEquals(response, actualResponse.get());
+    verify(mockAdminClient).snapshotTableAsync(request);
+  }
+
+  @Test
+  public void testGetSnapshotAsync() throws Exception {
+    GetSnapshotRequest request = GetSnapshotRequest.newBuilder()
+        .setName(TABLE_NAME)
+        .build();
+    Snapshot response = Snapshot.getDefaultInstance();
+    when(mockAdminClient.getSnapshotAsync(request)).thenReturn(Futures.immediateFuture(response));
+    ListenableFuture<Snapshot> actualResponse = clientWrapper.getSnapshotAsync(request);
+    assertEquals(response, actualResponse.get());
+    verify(mockAdminClient).getSnapshotAsync(request);
+  }
+
+  @Test
+  public void testListSnapshotsAsync() throws Exception {
+    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder()
+        .setParent(TABLE_NAME)
+        .build();
+    ListSnapshotsResponse response = ListSnapshotsResponse.getDefaultInstance();
+    when(mockAdminClient.listSnapshotsAsync(request)).thenReturn(Futures.immediateFuture(response));
+    ListenableFuture<ListSnapshotsResponse> actualResponse = clientWrapper.listSnapshotsAsync(request);
+    assertEquals(response, actualResponse.get());
+    verify(mockAdminClient).listSnapshotsAsync(request);
+  }
+
+
+  @Test
+  public void testDeleteSnapshotAsync() {
+    DeleteSnapshotRequest request = DeleteSnapshotRequest.newBuilder()
+        .setName(TABLE_NAME)
+        .build();
+    when(mockAdminClient.deleteSnapshotAsync(request))
+        .thenReturn(Futures.immediateFuture(Empty.getDefaultInstance()));
+    clientWrapper.deleteSnapshotAsync(request);
+    verify(mockAdminClient).deleteSnapshotAsync(request);
+  }
+
+  @Test
+  public void testCreateTableFromSnapshotAsync() throws Exception {
+    CreateTableFromSnapshotRequest request = CreateTableFromSnapshotRequest.newBuilder()
+        .setTableId(TABLE_ID)
+        .setSourceSnapshot("test-snapshot")
+        .build();
+    Operation response = Operation.getDefaultInstance();
+    when(mockAdminClient.createTableFromSnapshotAsync(request))
+        .thenReturn(Futures.immediateFuture(response));
+    ListenableFuture<Operation> actualResponse = clientWrapper.createTableFromSnapshotAsync(request);
+    assertEquals(response, actualResponse.get());
+    verify(mockAdminClient).createTableFromSnapshotAsync(request);
   }
 
   private static com.google.bigtable.admin.v2.Table createTableData(){

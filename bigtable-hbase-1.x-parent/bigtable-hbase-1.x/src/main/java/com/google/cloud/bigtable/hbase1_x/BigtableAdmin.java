@@ -140,7 +140,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         .build();
 
     ListSnapshotsResponse snapshotList = Futures.getChecked(
-        bigtableTableAdminClient.listSnapshotsAsync(request),
+        tableAdminClientWrapper.listSnapshotsAsync(request),
         IOException.class
     );
 

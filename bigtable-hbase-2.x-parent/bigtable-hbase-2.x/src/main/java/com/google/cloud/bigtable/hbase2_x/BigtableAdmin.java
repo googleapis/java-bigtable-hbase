@@ -135,7 +135,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         .setParent(getSnapshotClusterName().toString())
         .build();
 
-    ListSnapshotsResponse snapshotList = Futures.getChecked(bigtableTableAdminClient
+    ListSnapshotsResponse snapshotList = Futures.getChecked(tableAdminClientWrapper
         .listSnapshotsAsync(request), IOException.class);
     List<SnapshotDescription> response = new ArrayList<>();
     for (Snapshot snapshot : snapshotList.getSnapshotsList()) {

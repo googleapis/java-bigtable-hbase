@@ -297,7 +297,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         throw new CompletionException(e);
       }
     }).thenCompose(
-        d -> bigtableTableAdminClient.deleteSnapshotAsync(d).thenApply(r -> null));
+        d -> bigtableTableAdminClient.deleteSnapshotAsync(d));
   }
 
   @Override
