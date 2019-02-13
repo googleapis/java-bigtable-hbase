@@ -20,8 +20,6 @@ import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.GetSnapshotRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.ListTablesRequest;
-import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
@@ -29,7 +27,6 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.longrunning.Operation;
-import com.google.protobuf.Empty;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -45,13 +42,9 @@ import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture
  */
 public class BigtableTableAdminClient {
 
-  private final com.google.cloud.bigtable.grpc.BigtableTableAdminClient adminClient;
   private final IBigtableTableAdminClient adminClientWrapper;
 
-  public BigtableTableAdminClient(
-      com.google.cloud.bigtable.grpc.BigtableTableAdminClient adminClient,
-      IBigtableTableAdminClient adminClientWrapper) {
-    this.adminClient = adminClient;
+  public BigtableTableAdminClient(IBigtableTableAdminClient adminClientWrapper) {
     this.adminClientWrapper = adminClientWrapper;
   }
 
