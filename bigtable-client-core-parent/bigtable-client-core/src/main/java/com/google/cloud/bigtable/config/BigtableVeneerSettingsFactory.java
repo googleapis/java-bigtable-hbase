@@ -46,7 +46,6 @@ import java.security.GeneralSecurityException;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
-import org.threeten.bp.temporal.ChronoUnit;
 
 /**
  * Static methods to convert an instance of {@link BigtableOptions} to a
@@ -241,7 +240,7 @@ public class BigtableVeneerSettingsFactory {
     retryBuilder
         .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
         .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
-        .setMaxRetryDelay(Duration.of(1, ChronoUnit.MINUTES))
+        .setMaxRetryDelay(ofMillis(MAX_RETRY_TIMEOUT_MS))
         .setMaxAttempts(retryOptions.getMaxScanTimeoutRetries())
         .setInitialRpcTimeout(rpcTimeout)
         .setMaxRpcTimeout(rpcTimeout)
@@ -274,6 +273,7 @@ public class BigtableVeneerSettingsFactory {
         .setMaxRetryDelay(ofMillis(MAX_RETRY_TIMEOUT_MS))
         .setInitialRpcTimeout(rpcTimeout)
         .setMaxRpcTimeout(rpcTimeout)
+        .setMaxAttempts(0)
         .setTotalTimeout(ofMillis(retryOptions.getMaxElapsedBackoffMillis()));
 
     return retryBuilder.build();
