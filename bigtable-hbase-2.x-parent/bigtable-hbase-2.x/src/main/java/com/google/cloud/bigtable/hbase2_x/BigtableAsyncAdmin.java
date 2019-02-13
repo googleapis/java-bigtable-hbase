@@ -222,25 +222,16 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   private CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern) {
-    CompletableFuture<List<CompletableFuture<Table>>> futureTables =
-        bigtableTableAdminClient.listTablesAsync().thenApply(r ->
-            r.stream()
-                .filter(t -> !tableNamePattern.isPresent() ||
-                    tableNamePattern.get().matcher(t).matches())
-            .map(q -> bigtableTableAdminClient.getTableAsync(q)
-                .exceptionally(ex -> {
-                  LOG.error("Error while fetching Table", ex);
-                  return null;
-                }))
-            .collect(Collectors.toList()));
-
-    return futureTables
-        .thenCompose(s -> CompletableFuture.allOf(s.toArray(new CompletableFuture[0]))
-            .thenApply(v -> s.stream()
-                .map(CompletableFuture::join)
-                .filter(Objects::nonNull)
-                .map(tableAdapter2x::adapt)
-                .collect(Collectors.toList())));
+    //TODO: returns table name as descriptor, Refactor it to return full descriptors.
+    return bigtableTableAdminClient.listTablesAsync()
+        .thenApply(r -> r.stream()
+        .filter(t -> !tableNamePattern.isPresent() || tableNamePattern.get().matcher(t).matches())
+        .map(m -> com.google.bigtable.admin.v2.Table.newBuilder()
+            .setName(bigtableInstanceName.toTableNameStr(m))
+            .build())
+        .map(Table::fromProto)
+        .map(tableAdapter2x::adapt)
+        .collect(Collectors.toList()));
   }
 
   /** {@inheritDoc} */
