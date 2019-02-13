@@ -20,12 +20,11 @@ import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
-import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
@@ -202,8 +201,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   private CompletableFuture<List<TableName>> listTableNames(Optional<Pattern> tableNamePattern) {
-    return requestTableList().thenApply(r ->
-      r.stream().map(e -> bigtableInstanceName.toTableId(e.getName()))
+    return bigtableTableAdminClient.listTablesAsync().thenApply(r ->
+      r.stream()
           .filter(e -> !tableNamePattern.isPresent() || tableNamePattern.get().matcher(e).matches())
           .map(TableName::valueOf)
           .collect(Collectors.toList())
@@ -223,14 +222,16 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   private CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern) {
-    return requestTableList().thenApply(r ->
-         r.stream()
-            .filter(t -> !tableNamePattern.isPresent() ||
-                tableNamePattern.get().matcher(bigtableInstanceName.toTableId(t.getName())).matches())
-            .map(tableProto -> com.google.cloud.bigtable.admin.v2.models.Table.fromProto(tableProto))
-            .map(tableAdapter2x::adapt)
-            .collect(Collectors.toList())
-      );
+    //TODO: returns table name as descriptor, Refactor it to return full descriptors.
+    return bigtableTableAdminClient.listTablesAsync()
+        .thenApply(r -> r.stream()
+        .filter(t -> !tableNamePattern.isPresent() || tableNamePattern.get().matcher(t).matches())
+        .map(m -> com.google.bigtable.admin.v2.Table.newBuilder()
+            .setName(bigtableInstanceName.toTableNameStr(m))
+            .build())
+        .map(Table::fromProto)
+        .map(tableAdapter2x::adapt)
+        .collect(Collectors.toList()));
   }
 
   /** {@inheritDoc} */
@@ -243,12 +244,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<List<TableDescriptor>> listTableDescriptors(Pattern pattern, boolean includeSysTables) {
     return listTables(Optional.of(pattern));
-  }
-
-  private CompletableFuture<List<Table>> requestTableList() {
-    ListTablesRequest  request = ListTablesRequest.newBuilder().setParent(bigtableInstanceName.toString()).build();
-    return bigtableTableAdminClient.listTablesAsync(request)
-        .thenApply(r -> r.getTablesList());
   }
 
   /** {@inheritDoc} */
