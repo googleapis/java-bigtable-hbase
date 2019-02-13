@@ -15,10 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -31,7 +32,7 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 
 /**
  * Bigtable implementation of {@link AsyncBufferedMutator}
- * 
+ *
  * @author spollapally
  */
 public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
@@ -44,9 +45,7 @@ public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
    *
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
-   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} to get {@link com.google.cloud.bigtable.config.BigtableOptions}, {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor}
-   * and {@link com.google.cloud.bigtable.grpc.async.BulkMutation} objects from
-   * starting the async operations on the BigtableDataClient.
+   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession}
    */
   public BigtableAsyncBufferedMutator(
       HBaseRequestAdapter adapter,
@@ -88,9 +87,13 @@ public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
   /** {@inheritDoc} */
   @Override
   public List<CompletableFuture<Void>> mutate(List<? extends Mutation> mutations) {
-    Stream<CompletableFuture<Void>> stream = helper.mutate(mutations).stream()
-        .map(lfuture -> FutureUtils.toCompletableFuture(lfuture).thenApply(r-> null));
-    return stream.collect(Collectors.toList());
+    return helper
+        .mutate(mutations)
+        .stream()
+        .map(listenableFuture ->
+            toCompletableFuture(listenableFuture)
+                .thenApply(r-> (Void) null))
+        .collect(Collectors.toList());
   }
 
   /**
@@ -102,15 +105,7 @@ public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
    */
   @Override
   public CompletableFuture<Void> mutate(final Mutation mutation) {
-    return FutureUtils.toCompletableFuture(helper.mutate(mutation)).thenApply(r -> null);
-  }
-
-  /**
-   * <p>hasInflightRequests.</p>
-   *
-   * @return a boolean.
-   */
-  public boolean hasInflightRequests() {
-    return helper.hasInflightRequests();
+    return toCompletableFuture(helper.mutate(mutation))
+        .thenApply(r -> null);
   }
 }
