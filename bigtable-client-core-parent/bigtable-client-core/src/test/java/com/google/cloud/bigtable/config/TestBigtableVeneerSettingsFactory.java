@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -49,12 +48,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.threeten.bp.Duration;
 
-import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_BACKOFF_MULTIPLIER;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_INITIAL_BACKOFF_MILLIS;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
-import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -70,7 +67,6 @@ public class TestBigtableVeneerSettingsFactory {
   private static final String TEST_PROJECT_ID = "fakeProjectID";
   private static final String TEST_INSTANCE_ID = "fakeInstanceID";
   private static final String TEST_USER_AGENT = "sampleUserAgent";
-  private static final int SHORT_TIMEOUT_MS = 30_000;
 
   /**
    * RetryCodes for idempotent Rpcs.
@@ -220,24 +216,6 @@ public class TestBigtableVeneerSettingsFactory {
   }
 
   @Test
-  public void testProjectIdIsRequired() throws IOException {
-    BigtableOptions options = BigtableOptions.builder().build();
-
-    expectException.expect(IllegalStateException.class);
-    expectException.expectMessage("Project ID is required");
-    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
-  }
-
-  @Test
-  public void testInstanceIdIsRequired() throws IOException {
-    BigtableOptions options = BigtableOptions.builder().setProjectId(TEST_PROJECT_ID).build();
-
-    expectException.expect(IllegalStateException.class);
-    expectException.expectMessage("Instance ID is required");
-    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
-  }
-
-  @Test
   public void testWhenRetriesAreDisabled() throws IOException {
     RetryOptions retryOptions = RetryOptions.builder().setEnableRetries(false).build();
     BigtableOptions options =
@@ -263,18 +241,13 @@ public class TestBigtableVeneerSettingsFactory {
   }
 
   @Test
-  public void testRetriableRpcs() throws IOException {
+  public void testConfigValues() throws IOException {
     dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(bigtableOptions);
 
-    //Verifying RetrySettings & RetryCodes of retryable methods.
-
+    //Streaming operation's RetrySettings & RetryCodes of retryable methods.
     //sampleRowKeys
     verifyRetry(dataSettings.sampleRowKeysSettings().getRetrySettings());
     assertEquals(DEFAULT_RETRY_CODES, dataSettings.sampleRowKeysSettings().getRetryableCodes());
-
-    //readRowsSettings
-    verifyRetry(dataSettings.readRowsSettings().getRetrySettings());
-    assertEquals(DEFAULT_RETRY_CODES, dataSettings.readRowsSettings().getRetryableCodes());
 
     //mutateRowSettings
     verifyRetry(dataSettings.mutateRowSettings().getRetrySettings());
@@ -283,42 +256,8 @@ public class TestBigtableVeneerSettingsFactory {
     //bulkMutationsSettings
     verifyRetry(dataSettings.bulkMutationsSettings().getRetrySettings());
     assertEquals(DEFAULT_RETRY_CODES, dataSettings.bulkMutationsSettings().getRetryableCodes());
-  }
 
-  private void verifyRetry(RetrySettings retrySettings) {
-    assertEquals(DEFAULT_INITIAL_BACKOFF_MILLIS, retrySettings.getInitialRetryDelay().toMillis());
-    assertEquals(DEFAULT_BACKOFF_MULTIPLIER,retrySettings.getRetryDelayMultiplier(), 0);
-    assertEquals(DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, retrySettings.getMaxRetryDelay().toMillis());
-    assertEquals(DEFAULT_MAX_SCAN_TIMEOUT_RETRIES, retrySettings.getMaxAttempts());
-    assertEquals(SHORT_TIMEOUT_MS_DEFAULT, retrySettings.getInitialRpcTimeout().toMillis());
-    assertEquals(SHORT_TIMEOUT_MS_DEFAULT, retrySettings.getMaxRpcTimeout().toMillis());
-    assertEquals(LONG_TIMEOUT_MS_DEFAULT, retrySettings.getTotalTimeout().toMillis());
-  }
-
-  @Test
-  public void testNonRetriableRpcs() throws Exception {
-    ServerSocket serverSocket = new ServerSocket(0);
-    final int availablePort = serverSocket.getLocalPort();
-    serverSocket.close();
-
-    CallOptionsConfig callOptions = CallOptionsConfig.builder()
-        .setShortRpcTimeoutMs(SHORT_TIMEOUT_MS)
-        .setLongRpcTimeoutMs(LONG_TIMEOUT_MS_DEFAULT)
-        .build();
-    BigtableOptions options = BigtableOptions.builder()
-        .setProjectId(TEST_PROJECT_ID)
-        .setInstanceId(TEST_INSTANCE_ID)
-        .setUserAgent(TEST_USER_AGENT)
-        .setAdminHost("localhost")
-        .setDataHost("localhost")
-        .setPort(availablePort)
-        .setCredentialOptions(CredentialOptions.nullCredential())
-        .setCallOptionsConfig(callOptions)
-        .build();
-    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
-
-    //Verifying RetrySettings & RetryCodes of non-retryable methods.
-
+    //Non-streaming operation's verifying RetrySettings & RetryCodes of non-retryable methods.
     //readModifyWriteRowSettings
     verifyDisabledRetry(dataSettings.readModifyWriteRowSettings().getRetrySettings());
     assertTrue(dataSettings.readModifyWriteRowSettings().getRetryableCodes().isEmpty());
@@ -328,14 +267,25 @@ public class TestBigtableVeneerSettingsFactory {
     assertTrue(dataSettings.checkAndMutateRowSettings().getRetryableCodes().isEmpty());
   }
 
+  private void verifyRetry(RetrySettings retrySettings) {
+    assertEquals(DEFAULT_INITIAL_BACKOFF_MILLIS, retrySettings.getInitialRetryDelay().toMillis());
+    assertEquals(DEFAULT_BACKOFF_MULTIPLIER,retrySettings.getRetryDelayMultiplier(), 0);
+    assertEquals(DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, retrySettings.getMaxRetryDelay().toMillis());
+    assertEquals(0, retrySettings.getMaxAttempts());
+    assertEquals(360_000, retrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(360_000, retrySettings.getMaxRpcTimeout().toMillis());
+    assertEquals(60_000, retrySettings.getTotalTimeout().toMillis());
+  }
+
   private void verifyDisabledRetry(RetrySettings retrySettings) {
     assertEquals(Duration.ZERO , retrySettings.getInitialRetryDelay());
     assertEquals(1 , retrySettings.getRetryDelayMultiplier(), 0);
     assertEquals(Duration.ZERO, retrySettings.getMaxRetryDelay());
     assertEquals(1, retrySettings.getMaxAttempts());
-    assertEquals(SHORT_TIMEOUT_MS, retrySettings.getInitialRpcTimeout().toMillis());
-    assertEquals(SHORT_TIMEOUT_MS, retrySettings.getMaxRpcTimeout().toMillis());
-    assertEquals(SHORT_TIMEOUT_MS, retrySettings.getTotalTimeout().toMillis());
+    assertEquals(SHORT_TIMEOUT_MS_DEFAULT, retrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(SHORT_TIMEOUT_MS_DEFAULT, retrySettings.getMaxRpcTimeout().toMillis());
+    assertEquals(SHORT_TIMEOUT_MS_DEFAULT, retrySettings.getTotalTimeout().toMillis());
+    assertEquals(1, retrySettings.getMaxAttempts());
   }
 
   @Test
@@ -358,6 +308,7 @@ public class TestBigtableVeneerSettingsFactory {
             .setProjectId(TEST_PROJECT_ID)
             .setInstanceId(TEST_INSTANCE_ID)
             .setCredentialOptions(CredentialOptions.nullCredential())
+            .setUserAgent("Test-user-agent")
             .build();
     dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
 
@@ -365,6 +316,7 @@ public class TestBigtableVeneerSettingsFactory {
     BatchingSettings batchingSettings = dataSettings.bulkMutationsSettings().getBatchingSettings();
     long outstandingElementCount =
         bulkOptions.getMaxInflightRpcs() * bulkOptions.getBulkMaxRowKeyCount();
+
     assertTrue(batchingSettings.getIsEnabled());
     assertEquals(bulkOptions.getBulkMaxRequestSize(),
         batchingSettings.getRequestByteThreshold().longValue());
@@ -374,45 +326,6 @@ public class TestBigtableVeneerSettingsFactory {
         batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes().longValue());
     assertEquals(outstandingElementCount,
         batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount().longValue());
-  }
-
-  @Test
-  public void testReadModifyWrite() throws IOException {
-    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(bigtableOptions);
-
-    RetrySettings actualRetry = dataSettings.readModifyWriteRowSettings().getRetrySettings();
-    long rpcTimeoutMillis = bigtableOptions.getCallOptionsConfig().getShortRpcTimeoutMs();
-    assertEquals(TimeUnit.MILLISECONDS.toSeconds(rpcTimeoutMillis),
-        actualRetry.getMaxRetryDelay().getSeconds());
-    assertEquals(0, actualRetry.getMaxAttempts());
-  }
-
-  @Test
-  public void testCheckAndMutateRow() throws IOException {
-    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(bigtableOptions);
-    RetrySettings actualRetry = dataSettings.checkAndMutateRowSettings().getRetrySettings();
-    long rpcTimeoutMillis = bigtableOptions.getCallOptionsConfig().getShortRpcTimeoutMs();
-    assertEquals(TimeUnit.MILLISECONDS.toSeconds(rpcTimeoutMillis),
-        actualRetry.getMaxRetryDelay().getSeconds());
-    assertEquals(0, actualRetry.getMaxAttempts());
-  }
-
-  @Test
-  public void testTableAdminProjectIdIsRequired() throws IOException {
-    BigtableOptions options = BigtableOptions.builder().build();
-
-    expectException.expect(IllegalStateException.class);
-    expectException.expectMessage("Project ID is required");
-    adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
-  }
-
-  @Test
-  public void testTableAdminInstanceIdIsRequired() throws IOException {
-    BigtableOptions options = BigtableOptions.builder().setProjectId(TEST_PROJECT_ID).build();
-
-    expectException.expect(IllegalStateException.class);
-    expectException.expectMessage("Instance ID is required");
-    adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
   }
 
   @Test

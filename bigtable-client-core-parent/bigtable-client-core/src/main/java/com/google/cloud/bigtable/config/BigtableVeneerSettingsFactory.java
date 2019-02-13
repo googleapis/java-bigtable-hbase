@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.config;
 
 import static com.google.api.client.util.Preconditions.checkState;
-import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_EMULATOR_HOST_ENV_VAR;
 import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
 import static org.threeten.bp.Duration.ofMillis;
 
@@ -35,6 +35,7 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
+import com.google.cloud.bigtable.admin.v2.stub.BigtableTableAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.common.collect.ImmutableSet;
@@ -45,6 +46,7 @@ import java.security.GeneralSecurityException;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
+import org.threeten.bp.temporal.ChronoUnit;
 
 /**
  * Static methods to convert an instance of {@link BigtableOptions} to a
@@ -57,10 +59,12 @@ public class BigtableVeneerSettingsFactory {
 
   //Identifier to distinguish between CBT or GCJ adapter.
   private static final String VENEER_ADAPTER =  BigtableVersionInfo.CORE_USER_AGENT+","
-      + "VENEER_ADAPTER";
+      + "VENEER_ADAPTER,";
 
   // 256 MB, server has 256 MB limit.
   private final static int MAX_MESSAGE_SIZE = 1 << 28;
+  private static final int RPC_DEADLINE_MS = 360_000;
+  private static final int MAX_RETRY_TIMEOUT_MS = 60_000;
 
   /**
    * To create an instance of {@link BigtableDataSettings} from {@link BigtableOptions}.
@@ -69,36 +73,43 @@ public class BigtableVeneerSettingsFactory {
    * @return a {@link BigtableDataSettings} object.
    * @throws IOException if any.
    */
-  public static BigtableDataSettings createBigtableDataSettings(@Nonnull final BigtableOptions options) throws IOException {
-    checkState(options.getProjectId() != null, "Project ID is required");
-    checkState(options.getInstanceId() != null, "Instance ID is required");
+  public static BigtableDataSettings createBigtableDataSettings(
+      @Nonnull final BigtableOptions options) throws IOException {
     checkState(options.getRetryOptions().enableRetries(), "Disabling retries is not currently supported.");
+    checkState(!options.useCachedChannel(), "cachedDataPool is not currently supported.");
+
+    //TODO:add configuration for emulator hosting.
+    String emulatorHost = System.getenv(BIGTABLE_EMULATOR_HOST_ENV_VAR);
+    checkState(emulatorHost == null, "Emulator Hosting is not supported yet.");
 
     final BigtableDataSettings.Builder builder = BigtableDataSettings.newBuilder();
+    Duration shortRpcTimeoutMs = ofMillis(options.getCallOptionsConfig().getShortRpcTimeoutMs());
 
-    builder.setProjectId(options.getProjectId());
-    builder.setInstanceId(options.getInstanceId());
-    builder.setAppProfileId(options.getAppProfileId());
+    builder
+        .setProjectId(options.getProjectId())
+        .setInstanceId(options.getInstanceId())
+        .setAppProfileId(options.getAppProfileId())
+        .setEndpoint(options.getDataHost() + ":" + options.getPort())
+        .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()))
+        .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
+        .setTransportChannelProvider(buildChannelProvider(builder.getEndpoint(), options));
 
-    builder.setEndpoint(options.getDataHost() + ":" + options.getPort());
+    // Configuration for rpcTimeout & totalTimeout for non-streaming operations.
+    builder.checkAndMutateRowSettings()
+        .setSimpleTimeoutNoRetries(shortRpcTimeoutMs);
 
-    builder.setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
+    builder.readModifyWriteRowSettings()
+        .setSimpleTimeoutNoRetries(shortRpcTimeoutMs);
 
     buildBulkMutationsSettings(builder, options);
 
-    buildCheckAndMutateRowSettings(builder, options.getCallOptionsConfig().getShortRpcTimeoutMs());
-
-    buildReadModifyWriteSettings(builder, options.getCallOptionsConfig().getShortRpcTimeoutMs());
+    buildReadRowsSettings(builder, options);
 
     buildReadRowSettings(builder, options);
-
-    buildReadRowsSettings(builder, options);
 
     buildMutateRowSettings(builder, options);
 
     buildSampleRowKeysSettings(builder, options);
-
-    builder.setTransportChannelProvider(createChannelProvider(options.getDataHost(), options));
 
     return builder.build();
   }
@@ -110,23 +121,20 @@ public class BigtableVeneerSettingsFactory {
    * @return a {@link BigtableTableAdminSettings} object.
    * @throws IOException if any.
    */
-  public static BigtableTableAdminSettings createTableAdminSettings(@Nonnull final BigtableOptions options)
-      throws IOException {
-    checkState(options.getProjectId() != null, "Project ID is required");
-    checkState(options.getInstanceId() != null, "Instance ID is required");
-
+  public static BigtableTableAdminSettings createTableAdminSettings(
+      @Nonnull final BigtableOptions options) throws IOException {
     final BigtableTableAdminSettings.Builder adminBuilder = BigtableTableAdminSettings.newBuilder();
+    BigtableTableAdminStubSettings.Builder adminStub = adminBuilder.stubSettings();
 
-    adminBuilder.setProjectId(options.getProjectId());
-    adminBuilder.setInstanceId(options.getInstanceId());
+    adminBuilder
+        .setProjectId(options.getProjectId())
+        .setInstanceId(options.getInstanceId());
 
-    adminBuilder.stubSettings().setEndpoint(options.getAdminHost() + ":" + options.getPort());
-
-    adminBuilder.stubSettings()
-        .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
-
-    adminBuilder.stubSettings()
-        .setTransportChannelProvider(createChannelProvider(options.getAdminHost(), options));
+    adminStub
+        .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
+        .setEndpoint(options.getAdminHost() + ":" + options.getPort())
+        .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()))
+        .setTransportChannelProvider(buildChannelProvider(adminStub.getEndpoint(), options));
 
     return adminBuilder.build();
   }
@@ -145,6 +153,11 @@ public class BigtableVeneerSettingsFactory {
     } catch (GeneralSecurityException exception) {
       throw new IOException("Could not initialize credentials.", exception);
     }
+  }
+
+  /** Creates {@link HeaderProvider} with VENEER_ADAPTER as prefix for user agent */
+  private static HeaderProvider buildHeaderProvider(String userAgent){
+    return FixedHeaderProvider.create(USER_AGENT_KEY.name(), VENEER_ADAPTER + userAgent);
   }
 
   /** Builds {@link BatchingSettings} based on {@link BulkOptions} configuration. */
@@ -183,28 +196,6 @@ public class BigtableVeneerSettingsFactory {
         .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
   }
 
-  /**
-   * Builds BigtableDataSettings#checkAndMutateRowSettings when short timeout is other
-   * than 60_000 ms.
-   */
-  private static void buildCheckAndMutateRowSettings(Builder builder, long rpcTimeoutMs) {
-    if(rpcTimeoutMs != SHORT_TIMEOUT_MS_DEFAULT) {
-      builder.checkAndMutateRowSettings()
-          .setSimpleTimeoutNoRetries(ofMillis(rpcTimeoutMs));
-    }
-  }
-
-  /**
-   * Builds BigtableDataSettings#readModifyWriteRowSettings when short timeout is other
-   * than 60_000 ms.
-   */
-  private static void buildReadModifyWriteSettings(Builder builder, long rpcTimeoutMs) {
-    if(rpcTimeoutMs != SHORT_TIMEOUT_MS_DEFAULT) {
-      builder.readModifyWriteRowSettings()
-          .setSimpleTimeoutNoRetries(ofMillis(rpcTimeoutMs));
-    }
-  }
-
   /** To build BigtableDataSettings#sampleRowKeysSettings with default Retry settings. */
   private static void buildSampleRowKeysSettings(Builder builder, BigtableOptions options) {
     RetrySettings retrySettings =
@@ -238,19 +229,23 @@ public class BigtableVeneerSettingsFactory {
   /** To build BigtableDataSettings#readRowsSettings with default Retry settings. */
   private static void buildReadRowsSettings(Builder builder, BigtableOptions options) {
     RetryOptions retryOptions = options.getRetryOptions();
+    CallOptionsConfig callOptions = options.getCallOptionsConfig();
+    RetrySettings.Builder retryBuilder = builder.readRowsSettings().getRetrySettings().toBuilder();
 
-    RetrySettings.Builder retryBuilder = builder.readRowsSettings().getRetrySettings().toBuilder()
+    //Timeout for ReadRows
+    Duration rpcTimeout = ofMillis(retryOptions.getReadPartialRowTimeoutMillis());
+    Duration totalTimeout = ofMillis(callOptions.isUseTimeout()
+        ? callOptions.getLongRpcTimeoutMs()
+        : retryOptions.getMaxElapsedBackoffMillis());
+
+    retryBuilder
         .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
         .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
-        .setMaxRetryDelay(ofMillis(retryOptions.getMaxElapsedBackoffMillis()))
-        .setMaxAttempts(retryOptions.getMaxScanTimeoutRetries());
-
-    // configurations for RPC timeouts
-    Duration readPartialRowTimeout = ofMillis(retryOptions.getReadPartialRowTimeoutMillis());
-    retryBuilder
-        .setInitialRpcTimeout(readPartialRowTimeout)
-        .setMaxRpcTimeout(readPartialRowTimeout)
-        .setTotalTimeout(ofMillis(options.getCallOptionsConfig().getLongRpcTimeoutMs()));
+        .setMaxRetryDelay(Duration.of(1, ChronoUnit.MINUTES))
+        .setMaxAttempts(retryOptions.getMaxScanTimeoutRetries())
+        .setInitialRpcTimeout(rpcTimeout)
+        .setMaxRpcTimeout(rpcTimeout)
+        .setTotalTimeout(totalTimeout);
 
     builder.readRowsSettings()
         .setRetrySettings(retryBuilder.build())
@@ -261,24 +256,25 @@ public class BigtableVeneerSettingsFactory {
   private static RetrySettings buildIdempotentRetrySettings(RetrySettings retrySettings,
       BigtableOptions options) {
     RetryOptions retryOptions = options.getRetryOptions();
+    CallOptionsConfig callOptions = options.getCallOptionsConfig();
     RetrySettings.Builder retryBuilder = retrySettings.toBuilder();
-
-    retryBuilder
-        .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
-        .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
-        .setMaxRetryDelay(ofMillis(retryOptions.getMaxElapsedBackoffMillis()))
-        .setMaxAttempts(retryOptions.getMaxScanTimeoutRetries());
-
-    // configurations for RPC timeouts
-    Duration shortRpcTimeout = ofMillis(options.getCallOptionsConfig().getShortRpcTimeoutMs());
-    retryBuilder
-        .setInitialRpcTimeout(shortRpcTimeout)
-        .setMaxRpcTimeout(shortRpcTimeout)
-        .setTotalTimeout(ofMillis(options.getCallOptionsConfig().getLongRpcTimeoutMs()));
 
     if (retryOptions.allowRetriesWithoutTimestamp()) {
       LOG.warn("Retries without Timestamp does not support yet.");
     }
+
+    // if useTimeout is false, then RPC's are defaults to 6 minutes.
+    Duration rpcTimeout = ofMillis(callOptions.isUseTimeout()
+        ? callOptions.getShortRpcTimeoutMs()
+        : RPC_DEADLINE_MS);
+
+    retryBuilder
+        .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
+        .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
+        .setMaxRetryDelay(ofMillis(MAX_RETRY_TIMEOUT_MS))
+        .setInitialRpcTimeout(rpcTimeout)
+        .setMaxRpcTimeout(rpcTimeout)
+        .setTotalTimeout(ofMillis(retryOptions.getMaxElapsedBackoffMillis()));
 
     return retryBuilder.build();
   }
@@ -294,34 +290,25 @@ public class BigtableVeneerSettingsFactory {
   }
 
   /** Creates {@link TransportChannelProvider} based on Channel Negotiation type. */
-  private static TransportChannelProvider createChannelProvider(String hostname,
+  private static TransportChannelProvider buildChannelProvider(String endpoint,
       BigtableOptions options) {
-    final String endpoint = hostname + ":" + options.getPort();
-    String userAgent = VENEER_ADAPTER + options.getUserAgent();
-
-    //InstantiatingGrpcChannelProvider has special handling for User-Agent header. It set the
-    //ChannelBuilder with provided value.
-    HeaderProvider headers = FixedHeaderProvider.create(USER_AGENT_KEY.name(), userAgent);
-
-    InstantiatingGrpcChannelProvider.Builder builder =
+    //TODO: refactor Google-cloud-java to expose a static defaultTransportChannelProvider.
+    InstantiatingGrpcChannelProvider.Builder transportBuilder =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setChannelsPerCpu(2)
-            .setHeaderProvider(headers)
             .setEndpoint(endpoint)
             .setPoolSize(options.getChannelCount())
+            .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
             .setMaxInboundMessageSize(MAX_MESSAGE_SIZE);
 
     //overriding channel configuration for plaintext negotiation.
     if (options.usePlaintextNegotiation()) {
-      builder.setChannelConfigurator(
-          new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+      transportBuilder.setChannelConfigurator(new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
             @Override
             public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
               return channelBuilder.usePlaintext();
             }
           });
     }
-
-    return builder.build();
+    return transportBuilder.build();
   }
 }
