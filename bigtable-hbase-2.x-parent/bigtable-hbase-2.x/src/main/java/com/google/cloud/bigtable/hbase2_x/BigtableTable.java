@@ -16,7 +16,9 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
+import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
@@ -29,8 +31,6 @@ import org.apache.hadoop.hbase.io.TimeRange;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class BigtableTable extends AbstractBigtableTable {
@@ -148,17 +148,16 @@ public class BigtableTable extends AbstractBigtableTable {
 
   @Override
   public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
-    BigtableDataClient asyncClient = new BigtableDataClient(this.clientWrapper);
-    final BigtableAsyncTable.CheckAndMutateBuilderImpl delegate =
-        new BigtableAsyncTable.CheckAndMutateBuilderImpl(asyncClient, hbaseAdapter, row, family);
-    return new CheckAndMutateBuilder() {
+    final CheckAndMutateUtil.RequestBuilder builder =
+        new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
 
+    return new CheckAndMutateBuilder() {
       /**
        * {@inheritDoc}
        */
       @Override
       public CheckAndMutateBuilder qualifier(byte[] qualifier) {
-        delegate.qualifier(qualifier);
+        builder.qualifier(qualifier);
         return this;
       }
 
@@ -167,7 +166,7 @@ public class BigtableTable extends AbstractBigtableTable {
        */
       @Override
       public CheckAndMutateBuilder ifNotExists() {
-        delegate.ifNotExists();
+        builder.ifNotExists();
         return this;
       }
 
@@ -175,8 +174,12 @@ public class BigtableTable extends AbstractBigtableTable {
        * {@inheritDoc}
        */
       @Override
-      public CheckAndMutateBuilder ifMatches(CompareOperator compareOperator, byte[] value) {
-        delegate.ifMatches(compareOperator, value);
+      public CheckAndMutateBuilder ifMatches(CompareOperator compareOp, byte[] value) {
+        Preconditions.checkNotNull(compareOp, "compareOp is null");
+        if (compareOp != CompareOperator.NOT_EQUAL) {
+          Preconditions.checkNotNull(value, "value is null for compareOperator: " + compareOp);
+        }
+        builder.ifMatches(BigtableTable.toCompareOp(compareOp), value);
         return this;
       }
 
@@ -184,7 +187,7 @@ public class BigtableTable extends AbstractBigtableTable {
        * {@inheritDoc}
        */
       public CheckAndMutateBuilder timeRange(TimeRange timeRange) {
-        delegate.timeRange(timeRange);
+        builder.timeRange(timeRange.getMin(), timeRange.getMax());
         return this;
       }
 
@@ -193,7 +196,12 @@ public class BigtableTable extends AbstractBigtableTable {
        */
       @Override
       public boolean thenPut(Put put) throws IOException {
-        return get(delegate.thenPut(put), "Put");
+        try {
+          builder.withPut(put);
+          return call();
+        } catch (Exception e) {
+          throw new IOException("Could not CheckAndMutate.thenPut: " + e.getMessage(), e);
+        }
       }
 
       /**
@@ -201,7 +209,12 @@ public class BigtableTable extends AbstractBigtableTable {
        */
       @Override
       public boolean thenDelete(Delete delete) throws IOException {
-        return get(delegate.thenDelete(delete), "Delete");
+        try {
+          builder.withDelete(delete);
+          return call();
+        } catch (Exception e) {
+          throw new IOException("Could not CheckAndMutate.thenDelete: " + e.getMessage(), e);
+        }
       }
 
       /**
@@ -209,25 +222,18 @@ public class BigtableTable extends AbstractBigtableTable {
        */
       @Override
       public boolean thenMutate(RowMutations rowMutations) throws IOException {
-        return get(delegate.thenMutate(rowMutations), "RowMutations");
-      }
-
-      private boolean get(CompletableFuture<Boolean> future, String type) throws IOException {
         try {
-          return future.get();
-        } catch (InterruptedException e) {
-          Thread.interrupted();
-          throw new IOException(type + " was interrputed", e);
-        } catch (ExecutionException e) {
-          Throwable cause = e.getCause();
-          if (cause instanceof IOException) {
-            throw (IOException) cause;
-          }
-          throw new IOException("Exception occurred in " + type, cause);
+          builder.withMutations(rowMutations);
+          return call();
+        } catch (Exception e) {
+          throw new IOException("Could not CheckAndMutate.thenMutate: " + e.getMessage(), e);
         }
       }
 
+      private boolean call() {
+        Boolean response = clientWrapper.checkAndMutateRow(builder.build());
+        return CheckAndMutateUtil.wasMutationApplied(builder.build(), response);
+      }
     };
   }
-
 }
