@@ -44,9 +44,7 @@ public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
    *
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
-   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} to get {@link com.google.cloud.bigtable.config.BigtableOptions}, {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor}
-   * and {@link com.google.cloud.bigtable.grpc.async.BulkMutation} objects from
-   * starting the async operations on the BigtableDataClient.
+   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession}
    */
   public BigtableAsyncBufferedMutator(
       HBaseRequestAdapter adapter,
