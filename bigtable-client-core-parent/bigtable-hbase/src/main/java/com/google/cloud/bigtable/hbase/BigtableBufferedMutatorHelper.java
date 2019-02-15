@@ -76,10 +76,7 @@ public class BigtableBufferedMutatorHelper {
    * </p>
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
-   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} to get
-   *          {@link com.google.cloud.bigtable.config.BigtableOptions},
-   *          {@link com.google.cloud.bigtable.grpc.async.BulkMutation} objects from starting the
-   *          async operations on the BigtableDataClient.
+   * @param session a {@link BigtableSession} object.
    */
   public BigtableBufferedMutatorHelper(
       HBaseRequestAdapter adapter,
@@ -154,7 +151,7 @@ public class BigtableBufferedMutatorHelper {
    * 1) There are more than {@code maxInflightRpcs} RPCs in flight
    * 2) There are more than {@link #getWriteBufferSize()} bytes pending
    * @param mutation a {@link Mutation} object.
-   * @return result of mutate(Mutation).
+   * @return a {@link ListenableFuture} object.
    */
   public ListenableFuture<?> mutate(final Mutation mutation) {
     closedReadLock.lock();
@@ -170,7 +167,7 @@ public class BigtableBufferedMutatorHelper {
 
   /**
    * @param mutation a {@link RowMutations} object.
-   * @return result of mutate operation.
+   * @return a {@link ListenableFuture} object.
    */
   public ListenableFuture<?> mutate(final RowMutations mutation) {
     closedReadLock.lock();

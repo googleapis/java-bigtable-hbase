@@ -321,7 +321,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   /**
-   * To create Table.
+   * Creates a Table.
    *
    * @param tableName a {@link TableName} object.
    * @param request a {@link CreateTableRequest} object to send.
