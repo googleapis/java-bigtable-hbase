@@ -19,7 +19,6 @@ package org.apache.hadoop.hbase.client;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
@@ -332,17 +331,6 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
   /** {@inheritDoc} */
   @Override
   public abstract Admin getAdmin() throws IOException;
-
-  /* Methods needed to construct a Bigtable Admin implementation: */
-  /**
-   * <p>getBigtableTableAdminClient.</p>
-   *
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
-   * @throws java.io.IOException if any.
-   */
-  protected BigtableTableAdminClient getBigtableTableAdminClient() throws IOException {
-    return session.getTableAdminClient();
-  }
 
   /**
    * <p>Getter for the field <code>options</code>.</p>

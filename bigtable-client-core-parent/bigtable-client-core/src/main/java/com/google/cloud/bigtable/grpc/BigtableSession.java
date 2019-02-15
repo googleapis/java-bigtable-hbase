@@ -356,9 +356,12 @@ public class BigtableSession implements Closeable {
   /**
    * <p>Getter for the field <code>tableAdminClient</code>.</p>
    *
+   * @deprecated Please use {@link #getTableAdminClientWrapper()}.
+   *
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
    * @throws java.io.IOException if any.
    */
+  @Deprecated
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
       ManagedChannel channel = createManagedPool(options.getAdminHost(), 1);
