@@ -54,6 +54,8 @@ public interface TypedFilterAdapter<S extends Filter> {
    * Get hints how to optimize the scan. For example if the filter will narrow the scan using
    * the prefix "ab" then we can restrict the scan to ["ab" - "ac"). If the filter doesn't narrow
    * the scan then it should return Range.all()
+   * @param filter a {@link S} object.
+   * @return a {@link RangeSet} object.
    */
   RangeSet<RowKeyWrapper> getIndexScanHint(S filter);
 }

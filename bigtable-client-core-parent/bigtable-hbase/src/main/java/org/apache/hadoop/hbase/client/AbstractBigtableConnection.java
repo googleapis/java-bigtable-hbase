@@ -252,6 +252,10 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
   /**
    * There are some hbase 1.x and 2.x incompatibilities which require this abstract method. See
    * {@link SampledRowKeysAdapter} for more details.
+   *
+   * @param tableName a {@link TableName} object.
+   * @param serverName a {@link ServerName} object.
+   * @return a {@link SampledRowKeysAdapter} object.
    */
   protected abstract SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
     ServerName serverName);

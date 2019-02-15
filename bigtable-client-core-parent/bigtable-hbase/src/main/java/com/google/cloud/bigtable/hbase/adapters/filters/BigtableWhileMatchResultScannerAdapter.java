@@ -110,6 +110,8 @@ public class BigtableWhileMatchResultScannerAdapter {
   /**
    * Returns {@code true} iff there are matching {@link WhileMatchFilter} labels or no {@link
    * WhileMatchFilter} labels.
+   * @param row a {@link FlatRow} object.
+   * @return a boolean value.
    */
   public static boolean hasMatchingLabels(FlatRow row) {
     int inLabelCount = 0;

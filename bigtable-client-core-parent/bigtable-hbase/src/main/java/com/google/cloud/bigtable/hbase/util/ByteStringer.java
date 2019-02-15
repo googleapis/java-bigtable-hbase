@@ -49,6 +49,8 @@ public class ByteStringer {
 
   /**
    * Wraps a byte array in a {@link ByteString} without copying it.
+   * @param array an array object.
+   * @return this
    */
   public static ByteString wrap(final byte[] array) {
     return USE_ZEROCOPYBYTESTRING? ZeroCopyByteStringUtil.wrap(array): ByteString.copyFrom(array);
@@ -56,6 +58,10 @@ public class ByteStringer {
 
   /**
    * Wraps a byte array in a {@link ByteString} without copying it.
+   * @param array  an array value.
+   * @param offset an integer value.
+   * @param length an integer value.
+   * @return this
    */
   public static ByteString wrap(final byte[] array, int offset, int length) {
     if (USE_ZEROCOPYBYTESTRING && offset == 0 && length == array.length) {

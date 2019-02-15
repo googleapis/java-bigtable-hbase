@@ -138,9 +138,10 @@ public class SingleColumnValueFilterAdapter
    *   ]
    * </pre>
    *
+   * <p>
    * NOTE: This logic can also be expressed as nested predicates, but that approach creates really poor
    * performance on the server side.
-   * <p>
+   * </p>
    */
   @Override
   public Filter adapt(FilterAdapterContext context, SingleColumnValueFilter filter)
