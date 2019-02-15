@@ -53,7 +53,7 @@ public class TimestampFilterUtil {
    * filter.
    *
    * @param bigtableStartTimestamp a long value.
-   * @param bigtableEndTimestamp
+   * @param bigtableEndTimestamp a long value.
    * @return a {@link Filter} object.
    */
   public static Filter toTimestampRangeFilter(long bigtableStartTimestamp,
