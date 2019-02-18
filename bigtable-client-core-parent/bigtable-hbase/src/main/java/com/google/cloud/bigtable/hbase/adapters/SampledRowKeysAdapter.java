@@ -92,6 +92,10 @@ public abstract class SampledRowKeysAdapter {
    * {@link HRegionLocation} uses RegionInfo instead of {@link HRegionInfo}, causing confusion and
    * delay. {@link AbstractBigtableConnection#getRegionLocator(TableName)} calls an abstract method
    * which subclasses will construct appropriate {@link SampledRowKeysAdapter} implementations.
+   *
+   * @param startKey a byte array.
+   * @param endKey a byte array.
+   * @return a {@link HRegionLocation} object.
    */
   protected abstract HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey);
 }

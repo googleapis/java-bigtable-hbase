@@ -69,8 +69,8 @@ public class CallOptionsConfig implements Serializable {
 
     /**
      * If true, turn on timeouts for unary RPCS like mutations, and single row readRows.
-     * @param useTimeout
-     * @return this for chaining
+     * @param useTimeout flag to enable use of timeout.
+     * @return a {@link Builder} object, for chaining
      */
     public Builder setUseTimeout(boolean useTimeout) {
       this.useTimeout = useTimeout;
@@ -79,8 +79,8 @@ public class CallOptionsConfig implements Serializable {
 
     /**
      * The amount of milliseconds to wait before issuing a client side timeout for short RPCs.
-     * @param timeoutMs
-     * @return this for chaining
+     * @param timeoutMs timeout value in milliseconds.
+     * @return a {@link Builder} object, for chaining
      */
     @Deprecated
     public Builder setTimeoutMs(int timeoutMs) {
@@ -89,8 +89,8 @@ public class CallOptionsConfig implements Serializable {
 
    /**
      * The amount of milliseconds to wait before issuing a client side timeout for short RPCs.
-     * @param shortRpcTimeoutMs
-    * @return this for chaining
+     * @param shortRpcTimeoutMs timeout value in milliseconds.
+    * @return a {@link Builder} object, for chaining
     */
     public Builder setShortRpcTimeoutMs(int shortRpcTimeoutMs) {
       Preconditions.checkArgument(shortRpcTimeoutMs > 0, "Short Timeout ms has to be greater than 0.");
@@ -100,8 +100,8 @@ public class CallOptionsConfig implements Serializable {
 
     /**
      * The amount of milliseconds to wait before issuing a client side timeout for long RPCs.
-     * @param longRpcTimeoutMs
-     * @return this for chaining
+     * @param longRpcTimeoutMs timeout value in milliseconds.
+     * @return a {@link Builder} object, for chaining
      */
     public Builder setLongRpcTimeoutMs(int longRpcTimeoutMs) {
       Preconditions.checkArgument(longRpcTimeoutMs > 0, "Long Timeout ms has to be greater than 0");

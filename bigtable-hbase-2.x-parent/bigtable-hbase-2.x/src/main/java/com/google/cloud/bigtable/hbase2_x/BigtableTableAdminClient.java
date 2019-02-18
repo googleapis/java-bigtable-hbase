@@ -53,6 +53,7 @@ public class BigtableTableAdminClient {
    * families, specified in the request.
    *
    * @param request a {@link CreateTableRequest} object.
+   * @return a {@link CompletableFuture} that returns a {@link Table} object.
    */
   public CompletableFuture<Table> createTableAsync(CreateTableRequest request) {
     return toCompletableFuture(adminClientWrapper.createTableAsync(request));
@@ -141,6 +142,7 @@ public class BigtableTableAdminClient {
   /**
    * Permanently deletes the specified snapshot.
    * @param request a {@link DeleteSnapshotRequest} object.
+   * @return a {@link CompletableFuture} object.
    */
   public CompletableFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request) {
     return toCompletableFuture(adminClientWrapper.deleteSnapshotAsync(request));

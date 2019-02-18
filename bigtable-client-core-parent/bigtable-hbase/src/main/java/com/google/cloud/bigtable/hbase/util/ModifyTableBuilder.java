@@ -54,6 +54,9 @@ public class ModifyTableBuilder {
    * This method will build {@link ModifyColumnFamiliesRequest} objects based on a diff of the
    * new and existing set of column descriptors.  This is for use in
    * {@link org.apache.hadoop.hbase.client.Admin#modifyTable(TableName, HTableDescriptor)}.
+   * @param newTableDesc a {@link HTableDescriptor} object.
+   * @param currentTableDesc a {@link HTableDescriptor} object.
+   * @return a {@link ModifyTableBuilder} object to request modification along with GCRule.
    */
   public static ModifyTableBuilder buildModifications(
           HTableDescriptor newTableDesc,

@@ -179,8 +179,8 @@ public class BigtableOptions implements Serializable, Cloneable {
      * This enables an experimental {@link BigtableSession} feature that caches datapools for cases
      * where there are many HBase Connections / BigtableSessions opened. This happens frequently in
      * Dataflow
-     * @param useCachedDataPool
-     * @return this
+     * @param useCachedDataPool a flag to decide connection pool usages.
+     * @return a {@link Builder} object with cached DataPool flag.
      */
     public Builder setUseCachedDataPool(boolean useCachedDataPool) {
       options.useCachedDataPool = useCachedDataPool;

@@ -32,6 +32,7 @@ public interface CommonConnection extends Closeable {
   /**
    * Returns the {@link Configuration} object used by this instance. The
    * reference returned is not a copy, so any change made to it will affect this instance.
+   * @return a {@link Configuration} object.
    */
   Configuration getConfiguration();
 
@@ -55,6 +56,7 @@ public interface CommonConnection extends Closeable {
    * Retrieve a region information on a table.
    * @param tableName Name of the table for which to return region info.
    * @return A {@link java.util.List} HRegionInfo object
+   * @throws  java.io.IOException if any.
    */
   List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException;
 }

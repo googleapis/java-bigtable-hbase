@@ -106,7 +106,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * Constructor for AbstractBigtableAdmin.
    * </p>
    * @param connection a {@link CommonConnection} object.
-   * @throws IOException
+   * @throws IOException if any.
    */
   public AbstractBigtableAdmin(CommonConnection connection) throws IOException {
     LOG.debug("Creating BigtableAdmin");
@@ -321,6 +321,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   /**
+   * Creates a Table.
+   *
+   * @param tableName a {@link TableName} object.
    * @param request a {@link CreateTableRequest} object to send.
    * @throws java.io.IOException if any.
    */
@@ -343,6 +346,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * @param tableName a {@link TableName} object for exception identification.
    * @param request a {@link CreateTableRequest} object to send.
+   * @return a {@link ListenableFuture} object.
    * @throws java.io.IOException if any.
    */
   protected ListenableFuture<Table> createTableAsync(final TableName tableName,
@@ -617,6 +621,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * Modify an existing column family on a table.  NOTE: this is needed for backwards compatibility
    * for the hbase shell.
+   *
+   * @param tableName a {@link TableName} object.
+   * @param descriptor a {@link HColumnDescriptor} object.
+   * @throws java.io.IOException if any.
    */
   public void modifyColumns(final String tableName, HColumnDescriptor descriptor)
       throws IOException {
@@ -809,7 +817,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // ------------ SNAPSHOT methods begin
 
-  /** {@inheritDoc} */
+  /**
+   * Creates a snapshot from an existing table.  NOTE: Cloud Bigtable has a cleanup policy
+   *
+   * @param snapshotName a {@link String} object.
+   * @param tableName a {@link TableName} object.
+   * @throws IOException if any.
+   */
   @Override
   public void snapshot(String snapshotName, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
@@ -825,10 +839,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * Creates a snapshot from an existing table.  NOTE: Cloud Bigtable has a cleanup policy
    *
-   * @param snapshotName
-   * @param tableName
-   * @return
-   * @throws IOException
+   * @param snapshotName a {@link String} object.
+   * @param tableName a {@link TableName} object.
+   * @return a {@link Operation} object.
+   * @throws IOException if any.
    */
   protected Operation snapshotTable(String snapshotName, TableName tableName)
       throws IOException {
@@ -851,33 +865,53 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return Futures.getChecked(future, IOException.class);
   }
 
-  /** This is needed for the hbase shell */
+  /**
+   * This is needed for the hbase shell.
+   *
+   * @param snapshotName a byte array object.
+   * @param tableName a byte array object.
+   * @throws IOException if any.
+   */
   public void snapshot(byte[] snapshotName, byte[] tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
+      throws IOException, IllegalArgumentException {
     snapshot(snapshotName, TableName.valueOf(tableName));
   }
 
   /** {@inheritDoc} */
   @Override
   public void snapshot(byte[] snapshotName, TableName tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
+      throws IOException, IllegalArgumentException {
     snapshot(Bytes.toString(snapshotName), tableName);
   }
 
-  /** This is needed for the hbase shell */
+  /**
+   * This is needed for the hbase shell.
+   *
+   * @param snapshotName a byte array object.
+   * @param tableName a byte array object.
+   * @throws IOException if any.
+   */
   public void cloneSnapshot(byte[] snapshotName, byte[] tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException {
+      throws IOException {
     cloneSnapshot(snapshotName, TableName.valueOf(tableName));
   }
 
-  /** {@inheritDoc} */
+  /**
+   * @param snapshotName a {@link String} object.
+   * @param tableName a {@link TableName} object.
+   * @throws IOException if any.
+   */
   @Override
   public void cloneSnapshot(byte[] snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     cloneSnapshot(Bytes.toString(snapshotName), tableName);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * @param snapshotName a {@link String} object.
+   * @param tableName a {@link TableName} object.
+   * @throws IOException if any.
+   */
   @Override
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {

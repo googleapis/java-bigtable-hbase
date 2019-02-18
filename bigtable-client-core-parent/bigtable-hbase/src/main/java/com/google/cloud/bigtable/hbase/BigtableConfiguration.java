@@ -127,7 +127,7 @@ public class BigtableConfiguration {
    *
    * @param conf a {@link org.apache.hadoop.conf.Configuration} object to configure.
    * @param credentials a {@link Credentials} object;
-   * @return
+   * @return a {@link Configuration} object.
    */
   public static Configuration withCredentials(Configuration conf, Credentials credentials) {
     return new BigtableExtendedConfiguration(conf, credentials);

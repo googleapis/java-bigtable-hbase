@@ -72,6 +72,8 @@ public abstract class AbstractBigtableRegionLocator {
  
   /**
    * The list of regions will be sorted and cover all the possible rows.
+   * @param reload a boolean field.
+   * @return a {@link List} object.
    */
   protected synchronized ListenableFuture<List<HRegionLocation>> getRegionsAsync(boolean reload) {
     // If we don't need to refresh and we have a recent enough version, just use that.

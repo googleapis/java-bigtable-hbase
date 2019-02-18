@@ -150,8 +150,8 @@ public class CheckAndMutateUtil {
      * though HBase will still treat it as non-existence.
      *
      * @param compareOp a {@link CompareOp}
-     * @param value
-     * @return this
+     * @param value a byte array.
+     * @return a {@link RequestBuilder} object with compareOp and byte array value.
      */
     public RequestBuilder ifMatches(CompareOp compareOp, @Nullable byte[] value) {
       Preconditions.checkState(checkNonExistence == false,

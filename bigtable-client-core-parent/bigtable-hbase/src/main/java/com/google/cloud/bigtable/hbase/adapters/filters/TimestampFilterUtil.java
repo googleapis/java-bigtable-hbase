@@ -27,6 +27,8 @@ public class TimestampFilterUtil {
 
   /**
    * Converts an HBase timestamp in milliseconds to a Cloud Bigtable timestamp in Microseconds.
+   * @param timestamp a long value.
+   * @return a long value.
    */
   public static long hbaseToBigtableTimeUnit(long timestamp) {
     return BigtableConstants.BIGTABLE_TIMEUNIT.convert(
@@ -35,6 +37,10 @@ public class TimestampFilterUtil {
 
   /**
    * Converts a [startMs, endMs) timestamps to a Cloud Bigtable [startMicros, endMicros) filter.
+   *
+   * @param hbaseStartTimestamp a long value.
+   * @param hbaseEndTimestamp a long value.
+   * @return a {@link Filter} object.
    */
   public static Filter hbaseToTimestampRangeFilter(long hbaseStartTimestamp,
       long hbaseEndTimestamp) {
@@ -45,6 +51,10 @@ public class TimestampFilterUtil {
   /**
    * Converts a [startMicros, endNons) timestamps to a Cloud Bigtable [startMicros, endMicros)
    * filter.
+   *
+   * @param bigtableStartTimestamp a long value.
+   * @param bigtableEndTimestamp a long value.
+   * @return a {@link Filter} object.
    */
   public static Filter toTimestampRangeFilter(long bigtableStartTimestamp,
       long bigtableEndTimestamp) {

@@ -84,6 +84,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
    * <p>Constructor for ScanAdapter.</p>
    *
    * @param filterAdapter a {@link FilterAdapter} object.
+   * @param rowRangeAdapter a {@link RowRangeAdapter} object.
    */
   public ScanAdapter(FilterAdapter filterAdapter, RowRangeAdapter rowRangeAdapter) {
     this.filterAdapter = filterAdapter;
