@@ -56,7 +56,7 @@ public class ModifyTableBuilder {
    * {@link org.apache.hadoop.hbase.client.Admin#modifyTable(TableName, HTableDescriptor)}.
    * @param newTableDesc a {@link HTableDescriptor} object.
    * @param currentTableDesc a {@link HTableDescriptor} object.
-   * @return this
+   * @return a {@link ModifyTableBuilder} object to request modification along with GCRule.
    */
   public static ModifyTableBuilder buildModifications(
           HTableDescriptor newTableDesc,

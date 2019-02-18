@@ -154,7 +154,7 @@ public class BulkOptions implements Serializable, Cloneable {
      * request latency surpasses a latency threshold. The default is
      * {@link BulkOptions#BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT}.
      *
-     * @return this, for convenience.
+     * @return a {@link Builder} object, for convenience.
      */
     public Builder enableBulkMutationThrottling() {
       options.enableBulkMutationThrottling = true;

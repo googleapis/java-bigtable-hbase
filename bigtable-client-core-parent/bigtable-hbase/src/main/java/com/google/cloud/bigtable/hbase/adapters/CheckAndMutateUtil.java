@@ -151,7 +151,7 @@ public class CheckAndMutateUtil {
      *
      * @param compareOp a {@link CompareOp}
      * @param value a byte array.
-     * @return this
+     * @return a {@link RequestBuilder} object with compareOp and byte array value.
      */
     public RequestBuilder ifMatches(CompareOp compareOp, @Nullable byte[] value) {
       Preconditions.checkState(checkNonExistence == false,
