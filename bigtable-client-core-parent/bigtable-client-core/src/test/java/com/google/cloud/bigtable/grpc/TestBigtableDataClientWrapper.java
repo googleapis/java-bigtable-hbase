@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.core.ApiFuture;
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
@@ -208,7 +209,7 @@ public class TestBigtableDataClientWrapper {
         com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Collections.singletonList(rowCell));
 
     when(client.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
-    ListenableFuture<com.google.cloud.bigtable.data.v2.models.Row> output =
+    ApiFuture<com.google.cloud.bigtable.data.v2.models.Row> output =
         clientWrapper.readModifyWriteRowAsync(readModify);
     assertEquals(modelRow, output.get());
     verify(client).readModifyWriteRowAsync(request);

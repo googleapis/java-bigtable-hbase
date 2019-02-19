@@ -32,6 +32,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
+import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
@@ -469,7 +470,7 @@ public class BulkMutation {
     // unique id used to track this request.
     ListenableFuture<Row> future;
     try {
-      future = clientWrapper.readModifyWriteRowAsync(request);
+      future = ApiFutureUtil.adapt(clientWrapper.readModifyWriteRowAsync(request));
     } catch (Throwable e) {
       future = Futures.immediateFailedFuture(e);
     }

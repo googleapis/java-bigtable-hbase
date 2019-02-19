@@ -35,6 +35,7 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
+import com.google.cloud.bigtable.util.ApiFutureUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -379,7 +380,8 @@ public class TestBulkMutation {
   @Test
   public void testReadWriteModify()  {
     SettableFuture<Row> future = SettableFuture.create();
-    when(clientWrapper.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(future);
+    when(clientWrapper.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(
+        ApiFutureUtil.adapt(future));
     underTest.readModifyWrite(ReadModifyWriteRow.create("table", "key"));
     Assert.assertTrue(operationAccountant.hasInflightOperations());
     future.set(null);
