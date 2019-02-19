@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.core;
 
+import com.google.api.core.ApiFuture;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -67,8 +68,7 @@ public interface IBigtableDataClient {
    * @return a {@link ListenableFuture} of type {@link Row} will be set when request is
    *     successful otherwise exception will be thrown.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow);
+  ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow);
 
   /**
    * Creates {@link IBulkMutation} batcher.

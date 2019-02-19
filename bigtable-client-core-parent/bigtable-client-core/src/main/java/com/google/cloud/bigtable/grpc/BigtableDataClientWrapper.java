@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.ApiFuture;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -36,6 +37,7 @@ import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -95,15 +97,15 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) {
+  public ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) {
     ListenableFuture<ReadModifyWriteRowResponse> response =
         delegate.readModifyWriteRowAsync(readModifyWriteRow.toProto(requestContext));
-    return Futures.transform(response, new Function<ReadModifyWriteRowResponse, Row>() {
+    return ApiFutureUtil.adapt(Futures.transform(response, new Function<ReadModifyWriteRowResponse, Row>() {
       @Override
       public Row apply(ReadModifyWriteRowResponse response) {
         return new DefaultRowAdapter().createRowFromProto(response.getRow());
       }
-    }, MoreExecutors.directExecutor());
+    }, MoreExecutors.directExecutor()));
   }
 
   /** {@inheritDoc} */
