@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.ApiFuture;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
@@ -32,6 +33,7 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
+import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -74,17 +76,17 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<Table> createTableAsync(CreateTableRequest request) {
+  public ApiFuture<Table> createTableAsync(CreateTableRequest request) {
     com.google.bigtable.admin.v2.CreateTableRequest requestProto =
         request.toProto(instanceName.getProjectId(), instanceName.getInstanceId());
 
-    return Futures.transform(delegate.createTableAsync(requestProto),
+    return ApiFutureUtil.adapt(Futures.transform(delegate.createTableAsync(requestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
           @Override
           public Table apply(com.google.bigtable.admin.v2.Table tableProto) {
             return Table.fromProto(tableProto);
           }
-        }, MoreExecutors.directExecutor());
+        }, MoreExecutors.directExecutor()));
   }
 
   /** {@inheritDoc} */
@@ -99,18 +101,18 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<Table> getTableAsync(String tableId) {
+  public ApiFuture<Table> getTableAsync(String tableId) {
     GetTableRequest requestProto = GetTableRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
         .build();
 
-    return Futures.transform(delegate.getTableAsync(requestProto),
+    return ApiFutureUtil.adapt(Futures.transform(delegate.getTableAsync(requestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
           @Override
           public Table apply(com.google.bigtable.admin.v2.Table tableProto) {
             return Table.fromProto(tableProto);
           }
-        }, MoreExecutors.directExecutor());
+        }, MoreExecutors.directExecutor()));
   }
 
   /** {@inheritDoc} */
@@ -132,13 +134,14 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<List<String>> listTablesAsync() {
+  public ApiFuture<List<String>> listTablesAsync() {
     ListTablesRequest request = ListTablesRequest.newBuilder()
         .setParent(instanceName.toString())
         .build();
     ListenableFuture<ListTablesResponse> response = delegate.listTablesAsync(request);
 
-    return Futures.transform(response, new Function<ListTablesResponse, List<String>>() {
+    return ApiFutureUtil.adapt(Futures.transform(response,
+        new Function<ListTablesResponse, List<String>>() {
       @Override
       public List<String> apply(ListTablesResponse input) {
         ImmutableList.Builder<String> tableIdsBuilder = ImmutableList.builder();
@@ -148,7 +151,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
         return tableIdsBuilder.build();
       }
-    }, MoreExecutors.directExecutor());
+    }, MoreExecutors.directExecutor()));
   }
 
   /** {@inheritDoc} */
@@ -163,17 +166,18 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<Void> deleteTableAsync(String tableId) {
+  public ApiFuture<Void> deleteTableAsync(String tableId) {
     DeleteTableRequest request = DeleteTableRequest.newBuilder()
         .setName(instanceName.toTableNameStr(tableId))
         .build();
 
-    return Futures.transform(delegate.deleteTableAsync(request), new Function<Empty, Void>() {
+    return ApiFutureUtil.adapt(Futures.transform(delegate.deleteTableAsync(request),
+        new Function<Empty, Void>() {
       @Override
       public Void apply(Empty empty) {
         return null;
       }
-    }, MoreExecutors.directExecutor());
+    }, MoreExecutors.directExecutor()));
   }
 
   /** {@inheritDoc} */
@@ -187,17 +191,17 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<Table> modifyFamiliesAsync(ModifyColumnFamiliesRequest request) {
+  public ApiFuture<Table> modifyFamiliesAsync(ModifyColumnFamiliesRequest request) {
     com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest modifyColumnRequestProto =
         request.toProto(instanceName.getProjectId(), instanceName.getInstanceId());
 
-    return Futures.transform(delegate.modifyColumnFamilyAsync(modifyColumnRequestProto),
+    return ApiFutureUtil.adapt(Futures.transform(delegate.modifyColumnFamilyAsync(modifyColumnRequestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
       @Override
       public Table apply(com.google.bigtable.admin.v2.Table tableProto) {
         return Table.fromProto(tableProto);
       }
-    }, MoreExecutors.directExecutor());
+    }, MoreExecutors.directExecutor()));
   }
 
   /** {@inheritDoc} */
@@ -209,47 +213,47 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
+  public ApiFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
 
-    return Futures.transform(
+    return ApiFutureUtil.adapt(Futures.transform(
         delegate.dropRowRangeAsync(buildDropRowRangeRequest(tableId, rowKeyPrefix)),
         new Function<Empty, Void>() {
           @Override
           public Void apply(Empty empty) {
             return null;
           }
-        }, MoreExecutors.directExecutor());
+        }, MoreExecutors.directExecutor()));
   }
 
   @Override
-  public ListenableFuture<Operation> snapshotTableAsync(SnapshotTableRequest request) {
-    return delegate.snapshotTableAsync(request);
+  public ApiFuture<Operation> snapshotTableAsync(SnapshotTableRequest request) {
+    return ApiFutureUtil.adapt(delegate.snapshotTableAsync(request));
   }
 
   @Override
-  public ListenableFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request) {
-    return delegate.getSnapshotAsync(request);
+  public ApiFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request) {
+    return ApiFutureUtil.adapt(delegate.getSnapshotAsync(request));
   }
 
   @Override
-  public ListenableFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request) {
-    return delegate.listSnapshotsAsync(request);
+  public ApiFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request) {
+    return ApiFutureUtil.adapt(delegate.listSnapshotsAsync(request));
   }
 
   @Override
-  public ListenableFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request) {
-    return Futures.transform(delegate.deleteSnapshotAsync(request), new Function<Empty, Void>() {
+  public ApiFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request) {
+    return ApiFutureUtil.adapt(Futures.transform(delegate.deleteSnapshotAsync(request), new Function<Empty, Void>() {
       @Override
       public Void apply(Empty input) {
         return null;
       }
-    }, MoreExecutors.directExecutor());
+    }, MoreExecutors.directExecutor()));
   }
 
   @Override
-  public ListenableFuture<Operation> createTableFromSnapshotAsync(
+  public ApiFuture<Operation> createTableFromSnapshotAsync(
       CreateTableFromSnapshotRequest request) {
-    return delegate.createTableFromSnapshotAsync(request);
+    return ApiFutureUtil.adapt(delegate.createTableFromSnapshotAsync(request));
   }
 
   private DropRowRangeRequest buildDropRowRangeRequest(String tableId, String rowKeyPrefix) {
