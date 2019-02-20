@@ -239,8 +239,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   protected CompletableFuture<Void> deleteTableAsyncInternal(TableName tableName) {
     return FutureUtils.toCompletableFuture(
-        tableAdminClientWrapper.deleteTableAsync(tableName.getNameAsString()))
-        .thenApply(r -> null);
+        tableAdminClientWrapper.deleteTableAsync(tableName.getNameAsString()));
   }
 
   @Override
@@ -347,8 +346,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    // rowKeyPrefix set to Empty String which truncates data from specified table.
    return FutureUtils.toCompletableFuture(
         tableAdminClientWrapper
-          .dropRowRangeAsync(tableName.getNameAsString(), ""))
-        .thenApply(r -> null);
+          .dropRowRangeAsync(tableName.getNameAsString(), ""));
   }
   /* ******* Unsupported methods *********** */
 

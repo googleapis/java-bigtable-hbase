@@ -155,7 +155,7 @@ public class TestBigtableDataClientWrapper {
     ListenableFuture<CheckAndMutateRowResponse> future = Futures.immediateFuture(response);
 
     when(client.checkAndMutateRowAsync(request)).thenReturn(future);
-    ListenableFuture<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
+    ApiFuture<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
     verify(client).checkAndMutateRowAsync(request);
     assertTrue(actual.get());
   }
@@ -172,7 +172,7 @@ public class TestBigtableDataClientWrapper {
     ListenableFuture<CheckAndMutateRowResponse> future = Futures.immediateFuture(response);
 
     when(client.checkAndMutateRowAsync(request)).thenReturn(future);
-    ListenableFuture<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
+    ApiFuture<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
     verify(client).checkAndMutateRowAsync(request);
     assertFalse(actual.get());
   }

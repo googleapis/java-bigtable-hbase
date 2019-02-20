@@ -231,8 +231,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Void> delete(Delete delete) {
     // figure out how to time this with Opencensus
-    return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(delete)))
-        .thenApply(r -> null);
+    return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(delete)));
   }
 
   /**
@@ -353,8 +352,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
    */
   @Override
   public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
-    return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)))
-        .thenApply(r -> null);
+    return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
   }
 
   /**
@@ -363,8 +361,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Void> put(Put put) {
     // figure out how to time this with Opencensus
-    return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(put)))
-        .thenApply(r -> null);
+    return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(put)));
   }
 
   /**
