@@ -16,73 +16,25 @@
 package com.google.cloud.bigtable.util;
 
 import com.google.api.core.ApiFuture;
-import com.google.cloud.bigtable.data.v2.models.Row;
+import com.google.api.core.ApiFutureToListenableFuture;
+import com.google.api.core.ListenableFutureToApiFuture;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import com.google.common.util.concurrent.MoreExecutors;
 
 public final class ApiFutureUtil {
 
   public static <T> ListenableFuture<T> adapt(final ApiFuture<T> apiFuture) {
-    return new ListenableFuture<T>(){
-
-      @Override public boolean cancel(boolean b) {
-        return apiFuture.cancel(b);
-      }
-
-      @Override public boolean isCancelled() {
-        return apiFuture.isCancelled();
-      }
-
-      @Override public boolean isDone() {
-        return apiFuture.isDone();
-      }
-
-      @Override public T get() throws InterruptedException, ExecutionException {
-        return apiFuture.get();
-      }
-
-      @Override public T get(long l, TimeUnit timeUnit)
-          throws InterruptedException, ExecutionException, TimeoutException {
-        return apiFuture.get(l, timeUnit);
-      }
-
-      @Override public void addListener(Runnable listener, Executor executor) {
-        apiFuture.addListener(listener, executor);
-      }
-    };
+    return new ApiFutureToListenableFuture<T>(apiFuture);
   }
 
   public static <T> ApiFuture<T> adapt(final ListenableFuture<T> listenableFuture) {
-    return new ApiFuture<T>(){
+    return new ListenableFutureToApiFuture<T>(listenableFuture);
+  }
 
-      @Override public boolean cancel(boolean b) {
-        return listenableFuture.cancel(b);
-      }
-
-      @Override public boolean isCancelled() {
-        return listenableFuture.isCancelled();
-      }
-
-      @Override public boolean isDone() {
-        return listenableFuture.isDone();
-      }
-
-      @Override public T get() throws InterruptedException, ExecutionException {
-        return listenableFuture.get();
-      }
-
-      @Override public T get(long l, TimeUnit timeUnit)
-          throws InterruptedException, ExecutionException, TimeoutException {
-        return listenableFuture.get(l, timeUnit);
-      }
-
-      @Override public void addListener(Runnable listener, Executor executor) {
-        listenableFuture.addListener(listener, executor);
-      }
-    };
+  public static <F, T> ApiFuture<T> transformAndAdapt(ListenableFuture<F> listenableFuture,
+      Function<F, T> transform) {
+    return adapt(Futures.transform(listenableFuture, transform, MoreExecutors.directExecutor()));
   }
 }
