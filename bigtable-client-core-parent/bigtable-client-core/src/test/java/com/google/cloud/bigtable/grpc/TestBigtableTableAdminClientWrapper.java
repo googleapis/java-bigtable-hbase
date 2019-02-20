@@ -42,11 +42,11 @@ import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import java.util.List;
+import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -106,7 +106,7 @@ public class TestBigtableTableAdminClientWrapper {
 
     when(mockAdminClient.createTableAsync(request.toProto(PROJECT_ID, INSTANCE_ID)))
         .thenReturn(immediateFuture(createTableData()));
-    ListenableFuture<Table> response = clientWrapper.createTableAsync(request);
+    Future<Table> response = clientWrapper.createTableAsync(request);
 
     assertEquals(Table.fromProto(createTableData()), response.get());
     verify(mockAdminClient).createTableAsync(request.toProto(PROJECT_ID, INSTANCE_ID));
@@ -129,7 +129,7 @@ public class TestBigtableTableAdminClientWrapper {
 
     when(mockAdminClient.getTableAsync(request))
         .thenReturn(immediateFuture(createTableData()));
-    ListenableFuture<Table> response = clientWrapper.getTableAsync(TABLE_ID);
+    Future<Table> response = clientWrapper.getTableAsync(TABLE_ID);
 
     assertEquals(Table.fromProto(createTableData()), response.get());
     verify(mockAdminClient).getTableAsync(request);
@@ -165,7 +165,7 @@ public class TestBigtableTableAdminClientWrapper {
     builder.addTablesBuilder().setName(INSTANCE_NAME.toTableNameStr(TEST_TABLE_ID_3)).build();
 
     when(mockAdminClient.listTablesAsync(request)).thenReturn(immediateFuture(builder.build()));
-    ListenableFuture<List<String>> actualResponse = clientWrapper.listTablesAsync();
+    Future<List<String>> actualResponse = clientWrapper.listTablesAsync();
 
     assertEquals(tableIdList, actualResponse.get());
     verify(mockAdminClient).listTablesAsync(request);
@@ -218,7 +218,7 @@ public class TestBigtableTableAdminClientWrapper {
 
     when(mockAdminClient.modifyColumnFamilyAsync(request.toProto(PROJECT_ID, INSTANCE_ID)))
         .thenReturn(immediateFuture(createTableData()));
-    ListenableFuture<Table> response = clientWrapper.modifyFamiliesAsync(request);
+    Future<Table> response = clientWrapper.modifyFamiliesAsync(request);
 
     assertEquals(Table.fromProto(createTableData()), response.get());
     verify(mockAdminClient).modifyColumnFamilyAsync(request.toProto(PROJECT_ID, INSTANCE_ID));
@@ -288,7 +288,7 @@ public class TestBigtableTableAdminClientWrapper {
         .build();
     Operation response = Operation.getDefaultInstance();
     when(mockAdminClient.snapshotTableAsync(request)).thenReturn(Futures.immediateFuture(response));
-    ListenableFuture<Operation> actualResponse = clientWrapper.snapshotTableAsync(request);
+    Future<Operation> actualResponse = clientWrapper.snapshotTableAsync(request);
     assertEquals(response, actualResponse.get());
     verify(mockAdminClient).snapshotTableAsync(request);
   }
@@ -300,7 +300,7 @@ public class TestBigtableTableAdminClientWrapper {
         .build();
     Snapshot response = Snapshot.getDefaultInstance();
     when(mockAdminClient.getSnapshotAsync(request)).thenReturn(Futures.immediateFuture(response));
-    ListenableFuture<Snapshot> actualResponse = clientWrapper.getSnapshotAsync(request);
+    Future<Snapshot> actualResponse = clientWrapper.getSnapshotAsync(request);
     assertEquals(response, actualResponse.get());
     verify(mockAdminClient).getSnapshotAsync(request);
   }
@@ -312,7 +312,7 @@ public class TestBigtableTableAdminClientWrapper {
         .build();
     ListSnapshotsResponse response = ListSnapshotsResponse.getDefaultInstance();
     when(mockAdminClient.listSnapshotsAsync(request)).thenReturn(Futures.immediateFuture(response));
-    ListenableFuture<ListSnapshotsResponse> actualResponse = clientWrapper.listSnapshotsAsync(request);
+    Future<ListSnapshotsResponse> actualResponse = clientWrapper.listSnapshotsAsync(request);
     assertEquals(response, actualResponse.get());
     verify(mockAdminClient).listSnapshotsAsync(request);
   }
@@ -338,7 +338,7 @@ public class TestBigtableTableAdminClientWrapper {
     Operation response = Operation.getDefaultInstance();
     when(mockAdminClient.createTableFromSnapshotAsync(request))
         .thenReturn(Futures.immediateFuture(response));
-    ListenableFuture<Operation> actualResponse = clientWrapper.createTableFromSnapshotAsync(request);
+    Future<Operation> actualResponse = clientWrapper.createTableFromSnapshotAsync(request);
     assertEquals(response, actualResponse.get());
     verify(mockAdminClient).createTableFromSnapshotAsync(request);
   }

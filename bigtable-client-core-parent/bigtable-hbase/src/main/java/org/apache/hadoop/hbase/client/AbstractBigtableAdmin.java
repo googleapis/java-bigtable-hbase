@@ -17,6 +17,9 @@ package org.apache.hadoop.hbase.client;
 
 import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModifications;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
@@ -32,7 +35,6 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -351,10 +353,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   protected ListenableFuture<Table> createTableAsync(final TableName tableName,
             CreateTableRequest request) throws IOException {
-    ListenableFuture<Table> future =
+    ApiFuture<Table> future =
         tableAdminClientWrapper.createTableAsync(request);
     final SettableFuture<Table> settableFuture = SettableFuture.create();
-    Futures.addCallback(future, new FutureCallback<Table>() {
+    ApiFutures.addCallback(future, new ApiFutureCallback<Table>() {
       @Override public void onSuccess(@Nullable Table result) {
         settableFuture.set(result);
       }
@@ -859,7 +861,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       );
     }
 
-    ListenableFuture<Operation> future = tableAdminClientWrapper
+    ApiFuture<Operation> future = tableAdminClientWrapper
         .snapshotTableAsync(requestBuilder.build());
 
     return Futures.getChecked(future, IOException.class);

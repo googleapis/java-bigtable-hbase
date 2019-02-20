@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.core;
 
+import com.google.api.core.ApiFuture;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.GetSnapshotRequest;
@@ -25,7 +26,6 @@ import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
 import java.util.List;
 
@@ -48,8 +48,7 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link CreateTableRequest} object.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Table> createTableAsync(CreateTableRequest request);
+  ApiFuture<Table> createTableAsync(CreateTableRequest request);
 
   /**
    * Gets the details of a table.
@@ -62,10 +61,9 @@ public interface IBigtableTableAdminClient {
   /**
    * Gets the details of a table asynchronously.
    *
-   * @return a {@link ListenableFuture} that returns a {@link Table} object.
+   * @return a {@link ApiFuture} that returns a {@link Table} object.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Table> getTableAsync(String tableId);
+  ApiFuture<Table> getTableAsync(String tableId);
 
   /**
    * Lists the names of all tables in an instance.
@@ -77,11 +75,10 @@ public interface IBigtableTableAdminClient {
   /**
    * Lists the names of all tables in an instance asynchronously.
    *
-   * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
    *   successful otherwise exception will be thrown.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<List<String>> listTablesAsync();
+  ApiFuture<List<String>> listTablesAsync();
 
   /**
    * Permanently deletes a specified table and all of its data.
@@ -92,11 +89,10 @@ public interface IBigtableTableAdminClient {
   /**
    * Permanently deletes a specified table and all of its data.
    *
-   * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
    *  successful otherwise exception will be thrown.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Void> deleteTableAsync(String tableId);
+  ApiFuture<Void> deleteTableAsync(String tableId);
 
   /**
    * Creates, modifies or deletes a new column family within a specified table.
@@ -110,11 +106,10 @@ public interface IBigtableTableAdminClient {
    * Creates, modifies or deletes a new column family within a specified table.
    *
    * @param request a {@link ModifyColumnFamiliesRequest} object.
-   * @return a {@link ListenableFuture} that returns {@link Table} object that contains
+   * @return a {@link ApiFuture} that returns {@link Table} object that contains
    *  the updated table structure.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Table> modifyFamiliesAsync(ModifyColumnFamiliesRequest request);
+  ApiFuture<Table> modifyFamiliesAsync(ModifyColumnFamiliesRequest request);
 
   /**
    * Permanently deletes all rows in a range.
@@ -129,10 +124,9 @@ public interface IBigtableTableAdminClient {
    *
    * @param tableId
    * @param rowKeyPrefix
-   * @return a {@link ListenableFuture} that returns {@link Void} object.
+   * @return a {@link ApiFuture} that returns {@link Void} object.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix);
+  ApiFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix);
 
   // ////////////// SNAPSHOT methods /////////////
   /**
@@ -140,32 +134,32 @@ public interface IBigtableTableAdminClient {
    * @param request a {@link SnapshotTableRequest} object.
    * @return The long running {@link Operation} for the request.
    */
-  ListenableFuture<Operation> snapshotTableAsync(SnapshotTableRequest request);
+  ApiFuture<Operation> snapshotTableAsync(SnapshotTableRequest request);
 
   /**
    * Gets metadata information about the specified snapshot.
    * @param request a {@link GetSnapshotRequest} object.
    * @return The {@link Snapshot} definied by the request.
    */
-  ListenableFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request);
+  ApiFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request);
 
   /**
    * Lists all snapshots associated with the specified cluster.
    * @param request a {@link ListSnapshotsRequest} object.
    * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
    */
-  ListenableFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request);
+  ApiFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request);
 
   /**
    * Permanently deletes the specified snapshot.
    * @param request a {@link DeleteSnapshotRequest} object.
    */
-  ListenableFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request);
+  ApiFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request);
 
   /**
    * Creates a new table from a snapshot.
    * @param request a {@link CreateTableFromSnapshotRequest} object.
    * @return The long running {@link Operation} for the request.
    */
-  ListenableFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request);
+  ApiFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request);
 }
