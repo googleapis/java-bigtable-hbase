@@ -24,11 +24,9 @@ import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.stub.StreamObserver;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Interface to wrap {@link com.google.cloud.bigtable.grpc.BigtableDataClient} with
@@ -47,11 +45,10 @@ public interface IBigtableDataClient {
    * Mutate a row atomically.
    *
    * @param rowMutation a {@link RowMutation} model object.
-   * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
    *     successful otherwise exception will be thrown.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Void> mutateRowAsync(RowMutation rowMutation);
+  ApiFuture<Void> mutateRowAsync(RowMutation rowMutation);
 
   /**
    * Perform an atomic read-modify-write operation on a row.
@@ -65,7 +62,7 @@ public interface IBigtableDataClient {
    * Perform an atomic read-modify-write operation on a row.
    *
    * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
-   * @return a {@link ListenableFuture} of type {@link Row} will be set when request is
+   * @return a {@link ApiFuture} of type {@link Row} will be set when request is
    *     successful otherwise exception will be thrown.
    */
   ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow);
@@ -79,11 +76,10 @@ public interface IBigtableDataClient {
    * Mutate a row atomically dependent on a precondition.
    *
    * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
-   * @return a {@link ListenableFuture} of type {@link Boolean} will be set when request is
+   * @return a {@link ApiFuture} of type {@link Boolean} will be set when request is
    *     successful otherwise exception will be thrown.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
+  ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
 
   /**
    * Mutate a row atomically dependent on a precondition.
@@ -106,10 +102,9 @@ public interface IBigtableDataClient {
    * completed.
    *
    * @param tableId a String object.
-   * @return a {@link ListenableFuture} object.
+   * @return a {@link ApiFuture} object.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture< List<KeyOffset>> sampleRowKeysAsync(String tableId);
+  ApiFuture< List<KeyOffset>> sampleRowKeysAsync(String tableId);
 
   /**
    * Perform a scan over {@link Row}s, in key order.
@@ -122,11 +117,11 @@ public interface IBigtableDataClient {
   /**
    * Read multiple {@link Row}s into an in-memory list, in key order.
    *
-   * @return a {@link ListenableFuture} that will finish when
+   * @return a {@link ApiFuture} that will finish when
    * all reads have completed.
    * @param request a {@link Query} object.
    */
-  ListenableFuture<List<Row>> readRowsAsync(Query request);
+  ApiFuture<List<Row>> readRowsAsync(Query request);
 
   /**
    * Returns a list of {@link FlatRow}s, in key order.
@@ -147,12 +142,11 @@ public interface IBigtableDataClient {
   /**
    * Read multiple {@link FlatRow}s into an in-memory list, in key order.
    *
-   * @return a {@link ListenableFuture} that will finish when
+   * @return a {@link ApiFuture} that will finish when
    * all reads have completed.
    * @param request a {@link Query} object.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<List<FlatRow>> readFlatRowsAsync(Query request);
+  ApiFuture<List<FlatRow>> readFlatRowsAsync(Query request);
 
   /**
    * Read {@link FlatRow} asynchronously, and pass them to a stream observer to be processed.
