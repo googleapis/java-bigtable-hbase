@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -81,12 +82,32 @@ class BigtableEnv extends SharedTestEnv {
       }
     }
 
+    // Garbage collect tables that previous runs failed to clean up
     ListeningExecutorService executor = MoreExecutors.listeningDecorator(getExecutor());
     try (Connection connection = ConnectionFactory.createConnection(configuration);
         Admin admin = connection.getAdmin()) {
       List<ListenableFuture<?>> futures = new ArrayList<>();
+
+      // Limit clean up to specific prefixes. In 12/2018, the table name pattern was modified to
+      // always start with test_table2 and to include a timestamp. In the transition, the old
+      // patterns are retained.
       for (final TableName tableName : admin
           .listTableNames(Pattern.compile("(test_table|list_table[12]|TestTable).*"))) {
+
+        // If this is a new style table name, only clean it up if it been lingering for more than 30
+        // minutes. This avoids concurrent tests deleting each other's tables.
+        // The name is created in SharedTestEnvRule.newTestTableName()
+        Pattern timestampPattern = Pattern.compile("test_table2-([0-9a-f]{16})-.*");
+        Matcher matcher = timestampPattern.matcher(tableName.getNameAsString());
+        if (matcher.matches()) {
+          String timestampStr = matcher.group(1);
+          long timestamp = Long.parseLong(timestampStr, 16);
+          if (System.currentTimeMillis() - timestamp < TimeUnit.MINUTES.toMillis(15)) {
+            LOG.info("Found fresh table, ignoring: " + tableName);
+            continue;
+          }
+        }
+
         futures.add(executor.submit(new Runnable() {
           @Override
           public void run() {
@@ -98,8 +119,9 @@ class BigtableEnv extends SharedTestEnv {
             }
           }
         }));
-        Futures.allAsList(futures).get(2, TimeUnit.MINUTES);
       }
+
+      Futures.allAsList(futures).get(2, TimeUnit.MINUTES);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Interrupted while deleting tables", e);

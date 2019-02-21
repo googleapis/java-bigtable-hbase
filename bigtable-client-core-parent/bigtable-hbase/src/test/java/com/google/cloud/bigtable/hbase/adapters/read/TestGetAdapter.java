@@ -17,19 +17,16 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Chain;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
-import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
-import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
 import com.google.common.base.Function;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,17 +42,24 @@ import java.nio.charset.StandardCharsets;
 @RunWith(JUnit4.class)
 public class TestGetAdapter {
 
+  public static final String PREFIX_DATA = "rk1";
+  public static final String FAMILY_ID = "f1";
+  public static final String QUALIFIER_ID = "q1";
+
+  private final RequestContext requestContext =
+      RequestContext.create("ProjectId", "InstanceId", "AppProfile");
+  private final Query query = Query.create("tableId");
   private GetAdapter getAdapter =
       new GetAdapter(new ScanAdapter(FilterAdapter.buildAdapter(), new RowRangeAdapter()));
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
   private ReadHooks throwingReadHooks = new ReadHooks() {
     @Override
-    public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
+    public void composePreSendHook(Function<Query, Query> newHook) {
       throw new IllegalStateException("Read hooks not supported in tests.");
     }
 
     @Override
-    public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
+    public void applyPreSendHook(Query query) {
       throw new IllegalStateException("Read hooks not supported in tests.");
     }
   };
@@ -68,9 +72,10 @@ public class TestGetAdapter {
 
   @Test
   public void rowKeyIsSetInRequest() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1"));
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
-    ByteString adaptedRowKey = rowRequestBuilder.getRows().getRowKeys(0);
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
+    getAdapter.adapt(get, throwingReadHooks, query);
+
+    ByteString adaptedRowKey = query.toProto(requestContext).getRows().getRowKeys(0);
     Assert.assertEquals(
         new String(get.getRow(), StandardCharsets.UTF_8),
         adaptedRowKey.toStringUtf8());
@@ -78,50 +83,93 @@ public class TestGetAdapter {
 
   @Test
   public void maxVersionsIsSet() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1"));
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
     get.setMaxVersions(10);
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
+    getAdapter.adapt(get, throwingReadHooks, query);
     Assert.assertEquals(
         FILTERS.limit().cellsPerColumn(10).toProto(),
-        rowRequestBuilder.getFilter());
+        query.toProto(requestContext).getFilter());
   }
 
   @Test
   public void columnFamilyIsSet() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1"));
-    get.addFamily(Bytes.toBytes("f1"));
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
+    get.addFamily(Bytes.toBytes(FAMILY_ID));
+    getAdapter.adapt(get, throwingReadHooks, query);
     Assert.assertEquals(
-        FILTERS.family().exactMatch("f1").toProto(),
-        rowRequestBuilder.getFilter());
+        FILTERS.family().exactMatch(FAMILY_ID).toProto(),
+        query.toProto(requestContext).getFilter());
   }
 
   @Test
   public void columnQualifierIsSet() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1"));
-    get.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("q1"));
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
+    get.addColumn(Bytes.toBytes(FAMILY_ID), Bytes.toBytes(QUALIFIER_ID));
+    getAdapter.adapt(get, throwingReadHooks, query);
     Assert.assertEquals(
         FILTERS.chain()
-            .filter(FILTERS.family().regex("f1"))
-            .filter(FILTERS.qualifier().regex("q1"))
+            .filter(FILTERS.family().regex(FAMILY_ID))
+            .filter(FILTERS.qualifier().regex(QUALIFIER_ID))
             .toProto(),
-        rowRequestBuilder.getFilter());
+            query.toProto(requestContext).getFilter());
   }
 
   @Test
   public void multipleQualifiersAreSet() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1"));
-    get.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("q1"));
-    get.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("q2"));
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
+    get.addColumn(Bytes.toBytes(FAMILY_ID), Bytes.toBytes(QUALIFIER_ID));
+    get.addColumn(Bytes.toBytes(FAMILY_ID), Bytes.toBytes("q2"));
+    getAdapter.adapt(get, throwingReadHooks, query);
     Assert.assertEquals(
         FILTERS.chain()
-            .filter(FILTERS.family().regex("f1"))
+            .filter(FILTERS.family().regex(FAMILY_ID))
             .filter(FILTERS.interleave()
-                .filter(FILTERS.qualifier().regex("q1"))
+                .filter(FILTERS.qualifier().regex(QUALIFIER_ID))
                 .filter(FILTERS.qualifier().regex("q2")))
             .toProto(),
-        rowRequestBuilder.getFilter());
+        query.toProto(requestContext).getFilter());
+  }
+
+  @Test
+  public void testCheckExistenceOnlyWhenFalse() throws IOException {
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
+    Assert.assertTrue(getAdapter.setCheckExistenceOnly(get).isCheckExistenceOnly());
+  }
+
+  @Test
+  public void testCheckExistenceOnlyWhenTrue() throws IOException {
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
+    get.setCheckExistenceOnly(true);
+    Assert.assertEquals(get, getAdapter.setCheckExistenceOnly(get));
+  }
+
+  @Test
+  public void testAddKeyOnlyFilterWithoutFilter() throws IOException {
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
+    get.setCheckExistenceOnly(true);
+    getAdapter.adapt(get, throwingReadHooks, query);
+    Assert.assertEquals(
+        FILTERS.chain().filter(FILTERS.limit().cellsPerColumn(1))
+            .filter(FILTERS.value().strip())
+            .toProto(),
+        query.toProto(requestContext).getFilter()
+    );
+  }
+
+  @Test
+  public void testAdKeyOnlyFilterWithFilter() throws IOException {
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
+    get.setCheckExistenceOnly(true);
+    get.setFilter(new KeyOnlyFilter());
+    getAdapter.adapt(get, throwingReadHooks, query);
+    Filters.Filter filterOne = FILTERS.chain()
+        .filter(FILTERS.limit().cellsPerColumn(1))
+        .filter(FILTERS.value().strip());
+    Filters.Filter filterTwo = FILTERS.chain()
+        .filter(FILTERS.limit().cellsPerColumn(1))
+        .filter(FILTERS.value().strip());
+    Assert.assertEquals(
+        FILTERS.chain().filter(filterOne).filter(filterTwo).toProto(),
+        query.toProto(requestContext).getFilter());
   }
 }

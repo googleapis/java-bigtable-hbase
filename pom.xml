@@ -19,7 +19,7 @@ limitations under the License.
 
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-parent</artifactId>
-    <version>1.6.1-SNAPSHOT</version>
+    <version>1.9.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <url>https://cloud.google.com/bigtable/</url>
@@ -59,9 +59,10 @@ limitations under the License.
         <hamcrest.version>1.3</hamcrest.version>
 
         <!-- google-cloud-java related dependency versions -->
-        <google-cloud.version>0.60.0-alpha</google-cloud.version>
-        <opencensus.version>0.15.0</opencensus.version>
-        <guava.version>20.0</guava.version>
+        <google-cloud.version>0.80.0-alpha</google-cloud.version>
+        <opencensus.version>0.17.0</opencensus.version>
+        <guava.version>26.0-android</guava.version>
+        <checkerframework.version>2.5.2</checkerframework.version>
 
         <!-- hbase dependency versions -->
         <hbase.version.1>1.4.5</hbase.version.1>
@@ -73,7 +74,7 @@ limitations under the License.
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
 
-        <beam.version>2.5.0</beam.version>
+        <beam.version>2.10.0</beam.version>
     </properties>
 
     <distributionManagement>
@@ -180,7 +181,7 @@ limitations under the License.
 
                         <offlineLinks>
                             <offlineLink>
-                                <url>http://google.github.io/guava/releases/19.0/api/docs/</url>
+                                <url>https://google.github.io/guava/releases/27.0-jre/api/docs/</url>
                                 <location>${basedir}/javadoc/guava-docs</location>
                             </offlineLink>
                             <offlineLink>
@@ -188,7 +189,7 @@ limitations under the License.
                                 <location>${basedir}/javadoc/hbase-docs</location>
                             </offlineLink>
                             <offlineLink>
-                                <url>http://atetric.com/atetric/javadoc/com.google.protobuf/protobuf-java/3.0.2/</url>
+                                <url>https://static.javadoc.io/com.google.protobuf/protobuf-java/3.6.1/</url>
                                 <location>${basedir}/javadoc/protobuf-docs</location>
                             </offlineLink>
                         </offlineLinks>
@@ -213,10 +214,11 @@ limitations under the License.
                             <configuration>
                                 <!--
                                 javadoc excluded packages:
+                                    com.google.cloud.bigtable.beam{.sequencefiles}  (Breaks with javadoc:aggregate, handled separately)
                                     com.google.cloud.bigtable.dataflow{import,}     (Breaks with javadoc:aggregate, handled separately)
                                     com.google.clooud.*                             (Ignore, a hack/workaround for separate maven issue)
                                 -->
-                                <excludePackageNames>com.google.cloud.bigtable.dataflow:com.google.cloud.bigtable.dataflowimport:com.google.clooud</excludePackageNames>
+                                <excludePackageNames>com.google.cloud.bigtable.beam:com.google.cloud.bigtable.beam.sequencefiles:com.google.cloud.bigtable.dataflow:com.google.cloud.bigtable.dataflowimport:com.google.clooud</excludePackageNames>
                             </configuration>
                         </execution>
                     </executions>

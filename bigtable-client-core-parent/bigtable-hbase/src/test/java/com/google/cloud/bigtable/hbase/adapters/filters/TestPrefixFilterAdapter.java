@@ -16,12 +16,14 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 
-import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.protobuf.ByteString;
+
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import java.io.IOException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
@@ -47,11 +49,9 @@ public class TestPrefixFilterAdapter {
 
     byte[] prefixRegex = Bytes.toBytes(prefix + "\\C*");
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setRowKeyRegexFilter(
-                ByteString.copyFrom(prefixRegex))
-            .build(),
-        adapter.adapt(context, filter));
+      FILTERS.key()
+        .regex(ByteString.copyFrom(prefixRegex)).toProto(),
+        adapter.adapt(context, filter).toProto());
   }
 
   @Test

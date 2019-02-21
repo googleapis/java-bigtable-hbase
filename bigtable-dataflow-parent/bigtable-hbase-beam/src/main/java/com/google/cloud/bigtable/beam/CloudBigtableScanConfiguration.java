@@ -19,6 +19,9 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
@@ -43,6 +46,10 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
 
   private static final long serialVersionUID = 2435897354284600685L;
+  protected static final String PLACEHOLDER_TABLE_ID = "PLACEHOLDER_TABLE_ID";
+  protected static final String PLACEHOLDER_PROJECT_ID = "PLACEHOLDER_PROJECT_ID";
+  protected static final String PLACEHOLDER_INSTANCE_ID = "PLACEHOLDER_INSTANCE_ID";
+  protected static final String PLACEHOLDER_APP_PROFILE_ID = "PLACEHOLDER_APP_PROFILE_ID";
 
   /**
    * Converts a {@link CloudBigtableTableConfiguration} object to a
@@ -63,7 +70,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Builds a {@link CloudBigtableScanConfiguration}.
    */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
-    private Scan scan;
     private ValueProvider<ReadRowsRequest> request;
 
     public Builder() {
@@ -76,9 +82,20 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withScan(Scan scan) {
-      this.scan = scan;
-      this.request = null;
+      Preconditions.checkArgument(scan != null, "Scan cannot be null");
+      Query query = Query.create(PLACEHOLDER_TABLE_ID);
+      ReadHooks readHooks = new DefaultReadHooks();
+      Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
+      readHooks.applyPreSendHook(query);
+      withQuery(query);
       return this;
+    }
+
+    Builder withQuery(Query query) {
+      RequestContext dummyContext = RequestContext
+          .create(PLACEHOLDER_PROJECT_ID, PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
+      return this.withRequest(
+          query.toProto(dummyContext).toBuilder().setTableName("").setAppProfileId("").build());
     }
 
     /**
@@ -97,56 +114,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     Builder withRequest(ValueProvider<ReadRowsRequest> request) {
       this.request = request;
-      this.scan = null;
       return this;
-    }
-
-    /**
-     * Provides an updated request by replacing the row set and adding a row range with start and
-     * end keys in the existing request.
-     */
-    private static class RequestWithKeysValueProvider
-        implements ValueProvider<ReadRowsRequest>, Serializable {
-      private final ByteString start;
-      private final ByteString stop;
-      private final ValueProvider<ReadRowsRequest> request;
-      private ReadRowsRequest cachedRequest;
-
-      RequestWithKeysValueProvider(
-          ByteString start, ByteString stop, ValueProvider<ReadRowsRequest> request) {
-        this.start = start;
-        this.stop = stop;
-        this.request = request;
-      }
-
-      @Override
-      public ReadRowsRequest get() {
-        if (cachedRequest == null) {
-          cachedRequest =
-              request
-                  .get()
-                  .toBuilder()
-                  .setRows(
-                      RowSet.newBuilder()
-                          .addRowRanges(
-                              RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(stop)))
-                  .build();
-        }
-        return cachedRequest;
-      }
-
-      @Override
-      public boolean isAccessible() {
-        return request.isAccessible();
-      }
-
-      @Override
-      public String toString() {
-        if (isAccessible()) {
-          return String.valueOf(get());
-        }
-        return VALUE_UNAVAILABLE;
-      }
     }
 
     /**
@@ -156,13 +124,18 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     Builder withKeys(byte[] startKey, byte[] stopKey) {
+      Preconditions.checkNotNull(request, "Request cannot be empty.");
+      Preconditions.checkState(request.isAccessible(), "Request must be accessible.");
       final ByteString start = ByteStringer.wrap(startKey);
       final ByteString stop = ByteStringer.wrap(stopKey);
-      ValueProvider<ReadRowsRequest> request =
-          this.request == null
-              ? StaticValueProvider.of(ReadRowsRequest.getDefaultInstance())
-              : this.request;
-      return withRequest(new RequestWithKeysValueProvider(start, stop, request));
+      return withRequest(request
+          .get()
+          .toBuilder()
+          .setRows(
+              RowSet.newBuilder()
+                  .addRowRanges(
+                      RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(stop)))
+          .build());
     }
 
     /**
@@ -272,12 +245,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     @Override
     public CloudBigtableScanConfiguration build() {
       if (request == null) {
-        ReadHooks readHooks = new DefaultReadHooks();
-        if (scan == null) {
-          scan = new Scan();
-        }
-        ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-        request =  StaticValueProvider.of(readHooks.applyPreSendHook(builder.build()));
+        withScan(new Scan());
       }
       return new CloudBigtableScanConfiguration(projectId, instanceId, tableId,
           request, additionalConfiguration);

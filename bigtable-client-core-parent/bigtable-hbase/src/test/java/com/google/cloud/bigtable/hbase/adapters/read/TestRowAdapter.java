@@ -19,13 +19,13 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import com.google.bigtable.v2.Cell;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
-import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.data.v2.models.Row;
+import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
+import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
-
+import java.util.Collections;
+import java.util.List;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
@@ -37,7 +37,7 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public class TestRowAdapter {
-  
+
   private RowAdapter instance = new RowAdapter();
 
   @Test
@@ -47,9 +47,7 @@ public class TestRowAdapter {
 
   @Test
   public void adaptResponse_emptyRow() {
-    Row row = Row.newBuilder()
-        .setKey(ByteString.copyFromUtf8("key"))
-        .build();
+    Row row = Row.create(ByteString.copyFromUtf8("key"), Collections.<RowCell>emptyList());
     Result result = instance.adaptResponse(row);
     assertEquals(0, result.rawCells().length);
   }
@@ -67,46 +65,36 @@ public class TestRowAdapter {
     byte[] value3 = "value3".getBytes();
     byte[] value4 = "value4".getBytes();
     byte[] value5 = "value5".getBytes();
- 
+
     ByteString key = ByteString.copyFromUtf8("key");
     final long ts1Micros = 54321L;
     final long ts2Micros = 12345L;
     final long ts1Millis = ts1Micros / 1000;
     final long ts2Millis = ts2Micros / 1000;
-    Row row = Row.newBuilder()
-        .setKey(key)
-        .addFamilies(Family.newBuilder()
-            .setName(family1)
-            .addColumns(Column.newBuilder()
-                .setQualifier(ByteString.copyFrom(qualifier1))
-                .addCells(Cell.newBuilder() // First cell.
-                    .setTimestampMicros(ts1Micros)
-                    .setValue(ByteString.copyFrom(value1)))
-                .addCells(Cell.newBuilder() // Same family, same column, but different timestamps.
-                  .setTimestampMicros(ts2Micros)
-                  .setValue(ByteString.copyFrom(value2)))
-                .addCells(Cell.newBuilder() // With label
-                    .setValue(ByteString.copyFromUtf8("withLabel"))
-                    .addLabels("label")))
-            .addColumns(Column.newBuilder()
-                .setQualifier(ByteString.copyFrom(qualifier2))
-                .addCells(Cell.newBuilder() // Same family, same timestamp, but different column.
-                    .setTimestampMicros(ts1Micros)
-                    .setValue(ByteString.copyFrom(value3)))))
-        .addFamilies(Family.newBuilder()
-            .setName(family2)
-            .addColumns(Column.newBuilder()
-                .setQualifier(ByteString.copyFrom(qualifier1))
-                .addCells(Cell.newBuilder() // Same column, same timestamp, but different family.
-                    .setTimestampMicros(ts1Micros)
-                    .setValue(ByteString.copyFrom(value4))))
-            .addColumns(Column.newBuilder()
-                .setQualifier(ByteString.copyFrom(qualifier2))
-                .addCells(Cell.newBuilder() // Same timestamp, but different family and column.
-                    .setTimestampMicros(ts1Micros)
-                    .setValue(ByteString.copyFrom(value5)))))
-        .build();
+    List<String> emptyLabelList = Collections.emptyList();
 
+    ImmutableList<RowCell> rowCells =  ImmutableList.of(
+        // First cell.
+        RowCell.create(family1, ByteString.copyFrom(qualifier1), ts1Micros, emptyLabelList,
+            ByteString.copyFrom(value1)),
+        // Same family, same column, but different timestamps.
+        RowCell.create(family1, ByteString.copyFrom(qualifier1), ts2Micros, emptyLabelList,
+          ByteString.copyFrom(value2)),
+        // Same family, same timestamp, but different column.
+        RowCell.create(family1, ByteString.copyFrom(qualifier2), ts1Micros, emptyLabelList,
+          ByteString.copyFrom(value3)),
+        // Same column, same timestamp, but different family.
+        RowCell.create(family2, ByteString.copyFrom(qualifier1), ts1Micros, emptyLabelList,
+            ByteString.copyFrom(value4)),
+        // Same timestamp, but different family and column.
+        RowCell.create(family2, ByteString.copyFrom(qualifier2), ts1Micros, emptyLabelList,
+            ByteString.copyFrom(value5)),
+        //Contains label, should be ignored.
+        RowCell.create(family1, ByteString.copyFrom(qualifier1), ts2Micros,
+            Collections.singletonList("label"), ByteString.copyFrom(value1))
+    );
+
+    Row row = Row.create(key, rowCells);
     Result result = instance.adaptResponse(row);
     assertEquals(5, result.rawCells().length);
 
@@ -114,11 +102,16 @@ public class TestRowAdapter {
     // millisecond accuracy.
     byte[] keyArray = ByteStringer.extract(key);
     org.apache.hadoop.hbase.Cell[] expectedCells = new org.apache.hadoop.hbase.Cell[] {
-        new RowCell(keyArray, family1Bytes, qualifier1, ts1Millis, value1),
-        new RowCell(keyArray, family1Bytes, qualifier1, ts2Millis, value2),
-        new RowCell(keyArray, family1Bytes, qualifier2, ts1Millis, value3),
-        new RowCell(keyArray, family2Bytes, qualifier1, ts1Millis, value4),
-        new RowCell(keyArray, family2Bytes, qualifier2, ts1Millis, value5)
+        new com.google.cloud.bigtable.hbase.adapters.read.RowCell
+            (keyArray, family1Bytes, qualifier1, ts1Millis, value1),
+        new com.google.cloud.bigtable.hbase.adapters.read.RowCell
+            (keyArray, family1Bytes, qualifier1, ts2Millis, value2),
+        new com.google.cloud.bigtable.hbase.adapters.read.RowCell
+            (keyArray, family1Bytes, qualifier2, ts1Millis, value3),
+        new com.google.cloud.bigtable.hbase.adapters.read.RowCell
+            (keyArray, family2Bytes, qualifier1, ts1Millis, value4),
+        new com.google.cloud.bigtable.hbase.adapters.read.RowCell
+            (keyArray, family2Bytes, qualifier2, ts1Millis, value5)
     };
     assertArrayEquals(expectedCells, result.rawCells());
   }

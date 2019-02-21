@@ -26,8 +26,12 @@ import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
+import com.google.cloud.bigtable.core.IBulkMutation;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.BulkMutationWrapper;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
@@ -97,7 +101,10 @@ public class BigtableSession implements Closeable {
   static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
 
   static {
-    performWarmup();
+    if (!System.getProperty("BIGTABLE_SESSION_SKIP_WARMUP", "")
+        .equalsIgnoreCase("true")) {
+      performWarmup();
+    }
   }
 
   private static void performWarmup() {
@@ -151,12 +158,14 @@ public class BigtableSession implements Closeable {
 
   private Watchdog watchdog;
   private final BigtableDataClient dataClient;
+  private final RequestContext dataRequestContext;
 
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
   // synchronous operations.
   private final BigtableDataClient throttlingDataClient;
 
   private BigtableTableAdminClient tableAdminClient;
+  private IBigtableTableAdminClient adminClientWrapper;
   private BigtableInstanceGrpcClient instanceAdminClient;
 
   private final BigtableOptions options;
@@ -191,6 +200,8 @@ public class BigtableSession implements Closeable {
         options.getAdminHost());
     LOG.info("Bigtable options: %s.", options);
 
+    this.dataRequestContext = RequestContext
+        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
     clientInterceptorsList
         .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
@@ -240,7 +251,7 @@ public class BigtableSession implements Closeable {
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
 
     // Defer the creation of both the tableAdminClient until we need them.
-    }
+  }
 
   private ManagedChannel getDataChannelPool() throws IOException {
     String host = options.getDataHost();
@@ -300,25 +311,20 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * <p>createAsyncExecutor.</p>
-   *
-   * @return a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
+   * @return a {@link RequestContext} object for use with {@link #getDataClient()} during the
+   * transition to {@link #getClientWrapper()}.
    */
-  public AsyncExecutor createAsyncExecutor() {
-    return new AsyncExecutor(throttlingDataClient);
+  public RequestContext getDataRequestContext() {
+    return dataRequestContext;
   }
 
   /**
-   * <p>createBulkMutation.</p>
+   * <p>Getter for the field <code>clientWrapper</code>.</p>
    *
-   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
-   * @param asyncExecutor a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
-   * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
-   * @deprecated use {@link #createBulkMutation(BigtableTableName)} instead.
+   * @return a {@link IBigtableDataClient} object.
    */
-  @Deprecated
-  public BulkMutation createBulkMutation(BigtableTableName tableName, AsyncExecutor asyncExecutor) {
-    return createBulkMutation(tableName);
+  public IBigtableDataClient getClientWrapper() {
+    return new BigtableDataClientWrapper(dataClient, getDataRequestContext());
   }
 
   /**
@@ -331,8 +337,19 @@ public class BigtableSession implements Closeable {
     return new BulkMutation(
         tableName,
         throttlingDataClient,
+        new BigtableDataClientWrapper(throttlingDataClient, getDataRequestContext()),
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
         options.getBulkOptions());
+  }
+
+  /**
+   * <p>createBulkMutationWrapper.</p>
+   *
+   * @param tableName a {@link BigtableTableName} object.
+   * @return a {@link IBigtableDataClient} object.
+   */
+  public IBulkMutation createBulkMutationWrapper(BigtableTableName tableName) {
+    return new BulkMutationWrapper(createBulkMutation(tableName), getDataRequestContext());
   }
 
   /**
@@ -342,7 +359,8 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkRead} object.
    */
   public BulkRead createBulkRead(BigtableTableName tableName) {
-    return new BulkRead(dataClient, tableName, options.getBulkOptions().getBulkMaxRowKeyCount(),
+    return new BulkRead(getClientWrapper(), tableName,
+        options.getBulkOptions().getBulkMaxRowKeyCount(),
         BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool()
     );
   }
@@ -350,9 +368,12 @@ public class BigtableSession implements Closeable {
   /**
    * <p>Getter for the field <code>tableAdminClient</code>.</p>
    *
+   * @deprecated Please use {@link #getTableAdminClientWrapper()}.
+   *
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
    * @throws java.io.IOException if any.
    */
+  @Deprecated
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
       ManagedChannel channel = createManagedPool(options.getAdminHost(), 1);
@@ -360,6 +381,19 @@ public class BigtableSession implements Closeable {
           BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
     }
     return tableAdminClient;
+  }
+
+  /**
+   * <p>Getter for the field <code>adminClientWrapper</code>.</p>
+   *
+   * @return a {@link BigtableTableAdminClientWrapper} object.
+   * @throws java.io.IOException if any.
+   */
+  public synchronized IBigtableTableAdminClient getTableAdminClientWrapper() throws IOException {
+    if (adminClientWrapper == null) {
+      adminClientWrapper = new BigtableTableAdminClientWrapper(getTableAdminClient(), options);
+    }
+    return adminClientWrapper;
   }
 
   /**
@@ -512,7 +546,7 @@ public class BigtableSession implements Closeable {
     return builder
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
-        .userAgent(BigtableVersionInfo.CORE_UESR_AGENT + "," + options.getUserAgent())
+        .userAgent(BigtableVersionInfo.CORE_USER_AGENT + "," + options.getUserAgent())
         .intercept(interceptors)
         .build();
   }

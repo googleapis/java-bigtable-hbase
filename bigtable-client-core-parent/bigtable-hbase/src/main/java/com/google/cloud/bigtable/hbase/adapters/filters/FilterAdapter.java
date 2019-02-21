@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
@@ -165,7 +165,7 @@ public class FilterAdapter {
    * @return a {@link com.google.common.base.Optional} object.
    * @throws java.io.IOException if any.
    */
-  public Optional<RowFilter> adaptFilter(FilterAdapterContext context, Filter filter)
+  public Optional<Filters.Filter> adaptFilter(FilterAdapterContext context, Filter filter)
       throws IOException {
     SingleFilterAdapter<?> adapter = getAdapterForFilterOrThrow(filter);
     return Optional.fromNullable(adapter.adapt(context, filter));

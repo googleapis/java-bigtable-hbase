@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.Logger;
 
+import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -60,15 +60,15 @@ public abstract class SampledRowKeysAdapter {
    * @param responses a {@link java.util.List} object.
    * @return a {@link java.util.List} object.
    */
-  public List<HRegionLocation> adaptResponse(List<SampleRowKeysResponse> responses) {
+  public List<HRegionLocation> adaptResponse(List<KeyOffset> responses) {
 
     List<HRegionLocation> regions = new ArrayList<>();
 
     // Starting by the first possible row, iterate over the sorted sampled row keys and create regions.
     byte[] startKey = HConstants.EMPTY_START_ROW;
 
-    for (SampleRowKeysResponse response : responses) {
-      byte[] endKey = response.getRowKey().toByteArray();
+    for (KeyOffset response : responses) {
+      byte[] endKey = response.getKey().toByteArray();
 
       // Avoid empty regions.
       if (Bytes.equals(startKey, endKey)) {
@@ -92,6 +92,10 @@ public abstract class SampledRowKeysAdapter {
    * {@link HRegionLocation} uses RegionInfo instead of {@link HRegionInfo}, causing confusion and
    * delay. {@link AbstractBigtableConnection#getRegionLocator(TableName)} calls an abstract method
    * which subclasses will construct appropriate {@link SampledRowKeysAdapter} implementations.
+   *
+   * @param startKey a byte array.
+   * @param endKey a byte array.
+   * @return a {@link HRegionLocation} object.
    */
   protected abstract HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey);
 }

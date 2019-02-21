@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import com.google.bigtable.v2.ColumnRange;
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
@@ -47,10 +47,10 @@ public class TestColumnRangeFilterAdapter {
     ColumnRangeFilter filter = new ColumnRangeFilter(
         Bytes.toBytes("a"), true, Bytes.toBytes("b"), false);
     Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
-    RowFilter rowFilter = filterAdapter.adapt(
+    Filters.Filter expected = filterAdapter.adapt(
         new FilterAdapterContext(familyScan, null), filter);
 
-    ColumnRange columnRange = rowFilter.getColumnRangeFilter();
+    ColumnRange columnRange = expected.toProto().getColumnRangeFilter();
     Assert.assertEquals(0, columnRange.getStartQualifierOpen().size());
     Assert.assertEquals("a", toString(columnRange.getStartQualifierClosed()));
     Assert.assertEquals("b", toString(columnRange.getEndQualifierOpen()));
@@ -62,10 +62,10 @@ public class TestColumnRangeFilterAdapter {
     ColumnRangeFilter filter = new ColumnRangeFilter(
         null, true, Bytes.toBytes("b"), false);
     Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
-    RowFilter rowFilter = filterAdapter.adapt(
+    Filters.Filter expectedFilter = filterAdapter.adapt(
         new FilterAdapterContext(familyScan, null), filter);
 
-    ColumnRange columnRange = rowFilter.getColumnRangeFilter();
+    ColumnRange columnRange = expectedFilter.toProto().getColumnRangeFilter();
     Assert.assertEquals(0, columnRange.getStartQualifierClosed().size());
     Assert.assertEquals(0, columnRange.getStartQualifierOpen().size());
     Assert.assertEquals("b", toString(columnRange.getEndQualifierOpen()));
@@ -77,10 +77,10 @@ public class TestColumnRangeFilterAdapter {
     ColumnRangeFilter filter = new ColumnRangeFilter(
         Bytes.toBytes("a"), true, null, false);
     Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
-    RowFilter rowFilter = filterAdapter.adapt(
+    Filters.Filter expectedFilter = filterAdapter.adapt(
         new FilterAdapterContext(familyScan, null), filter);
 
-    ColumnRange columnRange = rowFilter.getColumnRangeFilter();
+    ColumnRange columnRange = expectedFilter.toProto().getColumnRangeFilter();
     Assert.assertEquals("a", toString(columnRange.getStartQualifierClosed()));
     Assert.assertEquals(0, columnRange.getStartQualifierOpen().size());
     Assert.assertEquals(0, columnRange.getEndQualifierOpen().size());

@@ -15,32 +15,31 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModifications;
+
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
-import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
-import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.GetTableRequest;
-import com.google.bigtable.admin.v2.ListTablesRequest;
-import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
-import com.google.bigtable.admin.v2.Table;
+import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import io.grpc.Status;
 import org.apache.hadoop.conf.Configuration;
@@ -48,7 +47,6 @@ import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -99,9 +97,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   private final Configuration configuration;
   private final BigtableOptions options;
-  protected final AbstractBigtableConnection connection;
-  protected final BigtableTableAdminClient bigtableTableAdminClient;
-
+  protected final CommonConnection connection;
+  protected final IBigtableTableAdminClient tableAdminClientWrapper;
   protected final BigtableInstanceName bigtableInstanceName;
   private BigtableClusterName bigtableSnapshotClusterName;
   protected final TableAdapter tableAdapter;
@@ -110,18 +107,18 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * <p>
    * Constructor for AbstractBigtableAdmin.
    * </p>
-   * @param connection a {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection} object.
-   * @throws IOException
+   * @param connection a {@link CommonConnection} object.
+   * @throws IOException if any.
    */
-  public AbstractBigtableAdmin(AbstractBigtableConnection connection) throws IOException {
+  public AbstractBigtableAdmin(CommonConnection connection) throws IOException {
     LOG.debug("Creating BigtableAdmin");
     configuration = connection.getConfiguration();
     options = connection.getOptions();
     this.connection = connection;
-    bigtableTableAdminClient = connection.getSession().getTableAdminClient();
     disabledTables = connection.getDisabledTables();
     bigtableInstanceName = options.getInstanceName();
     tableAdapter = new TableAdapter(bigtableInstanceName);
+    tableAdminClientWrapper = connection.getSession().getTableAdminClientWrapper();
 
     String clusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
@@ -132,7 +129,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public Connection getConnection() {
-    return connection;
+    return (Connection) connection;
   }
 
   /** {@inheritDoc} */
@@ -242,36 +239,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * Lists all table names for the cluster provided in the configuration.
    */
   public TableName[] listTableNames() throws IOException {
-    return asTableNames(requestTableList().getTablesList());
-  }
+    //tablesList contains list of tableId.
+    List<String> tablesList = tableAdminClientWrapper.listTables();
 
-  /**
-   * Request a list of Tables for the cluster.  The {@link Table}s in the response will only
-   * contain fully qualified Bigtable table names, and not column family information.
-   */
-  private ListTablesResponse requestTableList() throws IOException {
-    try {
-      ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-      builder.setParent(bigtableInstanceName.toString());
-      return bigtableTableAdminClient.listTables(builder.build());
-    } catch (Throwable throwable) {
-      throw new IOException("Failed to listTables", throwable);
-    }
-  }
-
-  /**
-   * Convert a list of Bigtable {@link Table}s to hbase {@link TableName}.
-   */
-  private TableName[] asTableNames(List<Table> tablesList) {
     TableName[] result = new TableName[tablesList.size()];
     for (int i = 0; i < tablesList.size(); i++) {
-      // This will contain things like project, zone and cluster.
-      String bigtableFullTableName = tablesList.get(i).getName();
-
-      // Strip out the Bigtable info.
-      String name = bigtableInstanceName.toTableId(bigtableFullTableName);
-
-      result[i] = TableName.valueOf(name);
+      result[i] = TableName.valueOf(tablesList.get(i));
     }
     return result;
   }
@@ -283,11 +256,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
       return null;
     }
 
-    String bigtableTableName = toBigtableName(tableName);
-    GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
-
     try {
-      return tableAdapter.adapt(bigtableTableAdminClient.getTable(request));
+      return tableAdapter.adapt(tableAdminClientWrapper.getTable(tableName.getNameAsString()));
     } catch (Throwable throwable) {
       if (Status.fromThrowable(throwable).getCode() == Status.Code.NOT_FOUND) {
         throw new TableNotFoundException(tableName);
@@ -301,18 +271,18 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * <p>getTableNames.</p>
    *
-   * @param regex a {@link java.lang.String} object.
-   * @return an array of {@link java.lang.String} objects.
-   * @throws java.io.IOException if any.
+   * @param regex a {@link String} object.
+   * @return an array of {@link String} objects.
+   * @throws IOException if any.
    */
   @Deprecated
   public String[] getTableNames(String regex) throws IOException {
-    HTableDescriptor[] tableDescriptors = listTables(regex);
-    String[] tableNames = new String[tableDescriptors.length];
-    for (int i = 0; i < tableDescriptors.length; i++) {
-      tableNames[i] = tableDescriptors[i].getNameAsString();
+    TableName[] tableNames = listTableNames(regex);
+    String[] tableIds = new String[tableNames.length];
+    for (int i = 0; i < tableNames.length; i++) {
+      tableIds[i] = tableNames[i].getNameAsString();
     }
-    return tableNames;
+    return tableIds;
   }
 
   /** {@inheritDoc} */
@@ -349,13 +319,20 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    createTable(desc.getTableName(), tableAdapter.adapt(desc, splitKeys));
+    createTable(desc.getTableName(), TableAdapter.adapt(desc, splitKeys));
   }
 
-  protected void createTable(TableName tableName, CreateTableRequest.Builder builder) throws IOException {
-    builder.setParent(bigtableInstanceName.toString());
+  /**
+   * Creates a Table.
+   *
+   * @param tableName a {@link TableName} object.
+   * @param request a {@link CreateTableRequest} object to send.
+   * @throws java.io.IOException if any.
+   */
+  protected void createTable(TableName tableName, CreateTableRequest request)
+          throws IOException {
     try {
-      bigtableTableAdminClient.createTable(builder.build());
+      tableAdminClientWrapper.createTable(request);
     } catch (Throwable throwable) {
       throw convertToTableExistsException(tableName, throwable);
     }
@@ -365,16 +342,21 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTableAsync(final HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     LOG.warn("Creating the table synchronously");
-    CreateTableRequest.Builder builder = tableAdapter.adapt(desc, splitKeys);
-    createTableAsync(builder, desc.getTableName());
+    createTableAsync(desc.getTableName(), TableAdapter.adapt(desc, splitKeys));
   }
 
-  protected ListenableFuture<Table> createTableAsync(CreateTableRequest.Builder builder,
-      final TableName tableName) throws IOException {
-    builder.setParent(bigtableInstanceName.toString());
-    ListenableFuture<Table> future = bigtableTableAdminClient.createTableAsync(builder.build());
+  /**
+   * @param tableName a {@link TableName} object for exception identification.
+   * @param request a {@link CreateTableRequest} object to send.
+   * @return a {@link ListenableFuture} object.
+   * @throws java.io.IOException if any.
+   */
+  protected ListenableFuture<Table> createTableAsync(final TableName tableName,
+            CreateTableRequest request) throws IOException {
+    ApiFuture<Table> future =
+        tableAdminClientWrapper.createTableAsync(request);
     final SettableFuture<Table> settableFuture = SettableFuture.create();
-    Futures.addCallback(future, new FutureCallback<Table>() {
+    ApiFutures.addCallback(future, new ApiFutureCallback<Table>() {
       @Override public void onSuccess(@Nullable Table result) {
         settableFuture.set(result);
       }
@@ -382,7 +364,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       @Override public void onFailure(Throwable t) {
         settableFuture.setException(convertToTableExistsException(tableName, t));
       }
-    });
+    }, MoreExecutors.directExecutor());
     return settableFuture;
   }
 
@@ -397,10 +379,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void deleteTable(TableName tableName) throws IOException {
-    Builder deleteBuilder = DeleteTableRequest.newBuilder();
-    deleteBuilder.setName(toBigtableName(tableName));
     try {
-      bigtableTableAdminClient.deleteTable(deleteBuilder.build());
+      tableAdminClientWrapper.deleteTable(tableName.getNameAsString());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
@@ -573,14 +553,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     modifyColumns(tableName, column.getNameAsString(), "add",
-        ModifyTableBuilder.create().add(column));
+        ModifyTableBuilder.newBuilder(tableName).add(column));
   }
 
   /** {@inheritDoc} */
   @Override
   public void modifyColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     modifyColumns(tableName, column.getNameAsString(), "modify",
-        ModifyTableBuilder.create().modify(column));
+        ModifyTableBuilder.newBuilder(tableName).modify(column));
   }
 
   /** {@inheritDoc} */
@@ -588,7 +568,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
     String name = Bytes.toString(columnName);
     modifyColumns(tableName, name, "delete",
-        ModifyTableBuilder.create().delete(name));
+        ModifyTableBuilder.newBuilder(tableName).delete(name));
   }
 
   /** {@inheritDoc} */
@@ -596,9 +576,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void modifyTable(TableName tableName, HTableDescriptor newDecriptor) throws IOException {
     if (isTableAvailable(tableName)) {
       try {
-        ModifyTableBuilder builder =
-            ModifyTableBuilder.buildModifications(newDecriptor, getTableDescriptor(tableName));
-        bigtableTableAdminClient.modifyColumnFamily(builder.toProto(toBigtableName(tableName)));
+        ModifyColumnFamiliesRequest request =
+            buildModifications(newDecriptor, getTableDescriptor(tableName)).build();
+        tableAdminClientWrapper.modifyFamilies(request);
       } catch (Throwable throwable) {
         throw new IOException(
             String.format("Failed to modify table '%s'", tableName.getNameAsString()), throwable);
@@ -619,9 +599,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   protected Void modifyColumns(TableName tableName, String columnName,
       String modificationType, ModifyTableBuilder builder) throws IOException {
-
     try {
-      bigtableTableAdminClient.modifyColumnFamily(builder.toProto(toBigtableName(tableName)));
+      tableAdminClientWrapper.modifyFamilies(builder.build());
       return null;
     } catch (Throwable throwable) {
       throw new IOException(
@@ -644,6 +623,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * Modify an existing column family on a table.  NOTE: this is needed for backwards compatibility
    * for the hbase shell.
+   *
+   * @param tableName a {@link TableName} object.
+   * @param descriptor a {@link HColumnDescriptor} object.
+   * @throws java.io.IOException if any.
    */
   public void modifyColumns(final String tableName, HColumnDescriptor descriptor)
       throws IOException {
@@ -700,11 +683,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
-    List<HRegionInfo> regionInfos = new ArrayList<>();
-    for (HRegionLocation location : connection.getRegionLocator(tableName).getAllRegionLocations()) {
-      regionInfos.add(location.getRegionInfo());
-    }
-    return regionInfos;
+    return connection.getAllRegionInfos(tableName);
   }
 
   /** {@inheritDoc} */
@@ -767,7 +746,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
-    issueBulkDelete(tableName, DropRowRangeRequest.newBuilder().setDeleteAllDataFromTable(true));
+    issueBulkDelete(tableName, "");
     disabledTables.remove(tableName);
   }
 
@@ -779,18 +758,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @throws java.io.IOException if any.
    */
   public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
-    issueBulkDelete(
-        tableName,
-        DropRowRangeRequest.newBuilder()
-            .setDeleteAllDataFromTable(false)
-            .setRowKeyPrefix(ByteString.copyFrom(prefix)));
+    issueBulkDelete(tableName, Bytes.toString(prefix));
   }
 
-  private void issueBulkDelete(TableName tableName, DropRowRangeRequest.Builder deleteRequest)
+  private void issueBulkDelete(TableName tableName, String rowKeyPrefix)
       throws IOException {
     try {
-      bigtableTableAdminClient
-          .dropRowRange(deleteRequest.setName(toBigtableName(tableName)).build());
+      tableAdminClientWrapper
+          .dropRowRange(tableName.getNameAsString(), rowKeyPrefix);
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);
@@ -844,7 +819,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // ------------ SNAPSHOT methods begin
 
-  /** {@inheritDoc} */
+  /**
+   * Creates a snapshot from an existing table.  NOTE: Cloud Bigtable has a cleanup policy
+   *
+   * @param snapshotName a {@link String} object.
+   * @param tableName a {@link TableName} object.
+   * @throws IOException if any.
+   */
   @Override
   public void snapshot(String snapshotName, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
@@ -860,10 +841,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * Creates a snapshot from an existing table.  NOTE: Cloud Bigtable has a cleanup policy
    *
-   * @param snapshotName
-   * @param tableName
-   * @return
-   * @throws IOException
+   * @param snapshotName a {@link String} object.
+   * @param tableName a {@link TableName} object.
+   * @return a {@link Operation} object.
+   * @throws IOException if any.
    */
   protected Operation snapshotTable(String snapshotName, TableName tableName)
       throws IOException {
@@ -880,39 +861,59 @@ public abstract class AbstractBigtableAdmin implements Admin {
       );
     }
 
-    ListenableFuture<Operation> future = bigtableTableAdminClient
+    ApiFuture<Operation> future = tableAdminClientWrapper
         .snapshotTableAsync(requestBuilder.build());
 
     return Futures.getChecked(future, IOException.class);
   }
 
-  /** This is needed for the hbase shell */
+  /**
+   * This is needed for the hbase shell.
+   *
+   * @param snapshotName a byte array object.
+   * @param tableName a byte array object.
+   * @throws IOException if any.
+   */
   public void snapshot(byte[] snapshotName, byte[] tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
+      throws IOException, IllegalArgumentException {
     snapshot(snapshotName, TableName.valueOf(tableName));
   }
 
   /** {@inheritDoc} */
   @Override
   public void snapshot(byte[] snapshotName, TableName tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
+      throws IOException, IllegalArgumentException {
     snapshot(Bytes.toString(snapshotName), tableName);
   }
 
-  /** This is needed for the hbase shell */
+  /**
+   * This is needed for the hbase shell.
+   *
+   * @param snapshotName a byte array object.
+   * @param tableName a byte array object.
+   * @throws IOException if any.
+   */
   public void cloneSnapshot(byte[] snapshotName, byte[] tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException {
+      throws IOException {
     cloneSnapshot(snapshotName, TableName.valueOf(tableName));
   }
 
-  /** {@inheritDoc} */
+  /**
+   * @param snapshotName a {@link String} object.
+   * @param tableName a {@link TableName} object.
+   * @throws IOException if any.
+   */
   @Override
   public void cloneSnapshot(byte[] snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     cloneSnapshot(Bytes.toString(snapshotName), tableName);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * @param snapshotName a {@link String} object.
+   * @param tableName a {@link TableName} object.
+   * @throws IOException if any.
+   */
   @Override
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
@@ -922,7 +923,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
         .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
         .build();
     Operation operation = Futures
-        .getChecked(bigtableTableAdminClient.createTableFromSnapshotAsync(request),
+        .getChecked(tableAdminClientWrapper.createTableFromSnapshotAsync(request),
             IOException.class);
 
     try {
@@ -964,7 +965,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
         .setName(btSnapshotName)
         .build();
 
-    Futures.getUnchecked(bigtableTableAdminClient.deleteSnapshotAsync(request));
+    Futures.getUnchecked(tableAdminClientWrapper.deleteSnapshotAsync(request));
   }
 
   /**
@@ -1385,5 +1386,4 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void rollWALWriter(ServerName serverName) throws IOException, FailedLogCloseException {
     throw new UnsupportedOperationException("rollWALWriter");  // TODO
   }
-
 }

@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.ImmutableRangeSet;
@@ -41,16 +41,14 @@ public class TestMultiRowRangeAdapter {
   private MultiRowRangeFilterAdapter adapter;
   private Scan scan;
   private FilterAdapterContext context;
-  private RowFilter unaffectedRowFilter;
+  private Filters.Filter unaffectedRowFilter;
 
   @Before
   public void setup() {
     scan = new Scan();
     context = new FilterAdapterContext(scan, null);
     adapter = new MultiRowRangeFilterAdapter();
-    unaffectedRowFilter = RowFilter.newBuilder()
-        .setPassAllFilter(true)
-        .build();
+    unaffectedRowFilter = Filters.FILTERS.pass();
   }
 
   @Test
@@ -59,7 +57,7 @@ public class TestMultiRowRangeAdapter {
         new RowRange("cc", true, "ee", true)
     ));
 
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
@@ -78,7 +76,7 @@ public class TestMultiRowRangeAdapter {
         new RowRange("cc", false, "ee", false)
     ));
 
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
@@ -97,7 +95,7 @@ public class TestMultiRowRangeAdapter {
         new RowRange("cc", false, "ee", true)
     ));
 
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
@@ -116,7 +114,7 @@ public class TestMultiRowRangeAdapter {
         new RowRange("cc", true, "ee", false)
     ));
 
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
@@ -135,7 +133,7 @@ public class TestMultiRowRangeAdapter {
         new RowRange(HConstants.EMPTY_START_ROW, true, "ee".getBytes(), true)
     ));
 
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
@@ -153,7 +151,7 @@ public class TestMultiRowRangeAdapter {
         new RowRange("cc".getBytes(), true, HConstants.EMPTY_END_ROW, true)
     ));
 
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
@@ -171,7 +169,7 @@ public class TestMultiRowRangeAdapter {
         new RowRange(HConstants.EMPTY_START_ROW, true, HConstants.EMPTY_END_ROW, true)
     ));
 
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
@@ -186,7 +184,7 @@ public class TestMultiRowRangeAdapter {
         new RowRange("ss", true, "yy", true)
     ));
 
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
@@ -211,7 +209,7 @@ public class TestMultiRowRangeAdapter {
         new RowRange("ca", true, "yy", true)
     ));
 
-    RowFilter adaptedFilter = adapter.adapt(context, filter);
+    Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);

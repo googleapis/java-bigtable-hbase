@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.batch.common;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 
@@ -27,6 +27,5 @@ import java.util.List;
  * Cloud Bigtable
  */
 public interface CloudBigtableService {
-  List<SampleRowKeysResponse> getSampleRowKeys(CloudBigtableTableConfiguration config)
-      throws IOException;
+  List<KeyOffset> getSampleRowKeys(CloudBigtableTableConfiguration config) throws IOException;
 }

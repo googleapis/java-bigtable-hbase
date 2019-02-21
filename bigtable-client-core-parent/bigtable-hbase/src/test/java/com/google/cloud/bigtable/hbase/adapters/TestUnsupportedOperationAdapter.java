@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 
+import com.google.cloud.bigtable.data.v2.models.Mutation;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Rule;
@@ -38,6 +39,6 @@ public class TestUnsupportedOperationAdapter {
     expectedException.expectMessage("operation is unsupported");
     expectedException.expectMessage("append");
 
-    unsupportedOperationAdapter.adapt(new Append(Bytes.toBytes("rk1")));
+    unsupportedOperationAdapter.adapt(new Append(Bytes.toBytes("rk1")), Mutation.create());
   }
 }

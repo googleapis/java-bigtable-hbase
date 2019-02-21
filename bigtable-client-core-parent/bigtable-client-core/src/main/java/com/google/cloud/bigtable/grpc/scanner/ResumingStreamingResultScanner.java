@@ -72,7 +72,9 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
   /** {@inheritDoc} */
   @Override
   public FlatRow next() throws IOException {
-    Preconditions.checkState(!isConsumed, "Scanner is already closed");
+    if (isConsumed) {
+      return null;
+    }
 
     try(Timer.Context ignored = resultsTimer.time()) {
       FlatRow result = responseQueueReader.getNextMergedRow();

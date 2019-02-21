@@ -16,10 +16,11 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
-import com.google.bigtable.v2.CheckAndMutateRowResponse;
-import com.google.bigtable.v2.Mutation;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.Mutation;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.common.base.Function;
@@ -37,9 +38,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class CheckAndMutateUtil {
 
@@ -47,13 +46,13 @@ public class CheckAndMutateUtil {
   // them (which they shouldn't since we built the filter), throw an exception.
   private static final ReadHooks UNSUPPORTED_READ_HOOKS = new ReadHooks() {
     @Override
-    public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
+    public void composePreSendHook(Function<Query, Query> newHook) {
       throw new IllegalStateException(
           "We built a bad Filter for conditional mutation.");
     }
 
     @Override
-    public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
+    public void applyPreSendHook(Query query) {
       throw new UnsupportedOperationException(
           "We built a bad Filter for conditional mutation.");
     }
@@ -62,31 +61,32 @@ public class CheckAndMutateUtil {
   /**
    * <p>wasMutationApplied.</p>
    *
-   * @param request a {@link com.google.bigtable.v2.CheckAndMutateRowRequest} object.
-   * @param response a {@link com.google.bigtable.v2.CheckAndMutateRowResponse} object.
+   * @param request a {@link ConditionalRowMutation} object.
+   * @param predicateMatched a {@link Boolean} object.
    * @return a boolean.
    */
   public static boolean wasMutationApplied(
-      CheckAndMutateRowRequest request,
-      CheckAndMutateRowResponse response) {
+      ConditionalRowMutation request,
+      Boolean predicateMatched) {
 
+
+    // TODO: ConditionalRowMutation should have methods to check if it has true/false mutations
+    CheckAndMutateRowRequest proto =
+        request.toProto(RequestContext.create("SomeProject", "Some Instance", ""));
     // If we have true mods, we want the predicate to have matched.
     // If we have false mods, we did not want the predicate to have matched.
-    return (request.getTrueMutationsCount() > 0
-        && response.getPredicateMatched())
-        || (request.getFalseMutationsCount() > 0
-        && !response.getPredicateMatched());
+    return (proto.getTrueMutationsCount() > 0  && predicateMatched)
+        || (proto.getFalseMutationsCount() > 0 && !predicateMatched);
   }
 
   /**
    * This class can be used to convert HBase checkAnd* operations to Bigtable
-   * {@link CheckAndMutateRowRequest}s.
+   * {@link ConditionalRowMutation}s.
    */
   public static class RequestBuilder {
     private final HBaseRequestAdapter hbaseAdapter;
-    private final CheckAndMutateRowRequest.Builder requestBuilder;
 
-    private final List<Mutation> mutations = new ArrayList<>();
+    private final Mutation mutations = Mutation.createUnsafe();
 
     private final byte[] row;
     private final byte[] family;
@@ -101,17 +101,14 @@ public class CheckAndMutateUtil {
      * RequestBuilder.
      * </p>
      * @param hbaseAdapter a {@link HBaseRequestAdapter} used to convert HBase
-     *          {@link org.apache.hadoop.hbase.client.Mutation} to Cloud Bigtable {@link Mutation}
+     *          {@link org.apache.hadoop.hbase.client.Mutation} to Cloud Bigtable
+     *          {@link com.google.cloud.bigtable.data.v2.models.Mutation}
      * @param row the RowKey in which to to check value matching
      * @param family the family in which to check value matching.
      */
     public RequestBuilder(HBaseRequestAdapter hbaseAdapter, byte[] row, byte[] family) {
       this.row = Preconditions.checkNotNull(row, "row is null");
       this.family = Preconditions.checkNotNull(family, "family is null");
-
-      requestBuilder = CheckAndMutateRowRequest.newBuilder()
-          .setRowKey(ByteString.copyFrom(row))
-          .setTableName(hbaseAdapter.getBigtableTableName().toString());
 
       // The hbaseAdapter used here should not set client-side timestamps, since that may cause strange contention
       // issues.  See issue #1709.
@@ -153,8 +150,8 @@ public class CheckAndMutateUtil {
      * though HBase will still treat it as non-existence.
      *
      * @param compareOp a {@link CompareOp}
-     * @param value
-     * @return this
+     * @param value a byte array.
+     * @return a {@link RequestBuilder} object with compareOp and byte array value.
      */
     public RequestBuilder ifMatches(CompareOp compareOp, @Nullable byte[] value) {
       Preconditions.checkState(checkNonExistence == false,
@@ -177,31 +174,36 @@ public class CheckAndMutateUtil {
     }
 
     public RequestBuilder withPut(Put put) throws DoNotRetryIOException {
-      return addMutations(put.getRow(), hbaseAdapter.adapt(put).getMutationsList());
+      validateRow(put.getRow());
+      hbaseAdapter.adapt(put, mutations);
+      return this;
     }
 
     public RequestBuilder withDelete(Delete delete) throws DoNotRetryIOException {
-      return addMutations(delete.getRow(), hbaseAdapter.adapt(delete).getMutationsList());
+      validateRow(delete.getRow());
+      hbaseAdapter.adapt(delete, mutations);
+      return this;
     }
 
     public RequestBuilder withMutations(RowMutations rm) throws DoNotRetryIOException {
-      return addMutations(rm.getRow(), hbaseAdapter.adapt(rm).getMutationsList());
+      validateRow(rm.getRow());
+      hbaseAdapter.adapt(rm, mutations);
+      return this;
     }
 
-    private RequestBuilder addMutations(byte[] actionRow, List<Mutation> mutations) throws DoNotRetryIOException {
+    private void validateRow(byte[] actionRow) throws DoNotRetryIOException {
       if (!Arrays.equals(actionRow, row)) {
         // The following odd exception message is for compatibility with HBase.
         throw new DoNotRetryIOException("Action's getRow must match the passed row");
       }
-      this.mutations.addAll(mutations);
-      return this;
     }
 
-    public CheckAndMutateRowRequest build() {
+    public ConditionalRowMutation build() {
       Preconditions.checkState(checkNonExistence || compareOp != null,
           "condition is null. You need to specify the condition by" +
           " calling ifNotExists/ifEquals/ifMatches before executing the request");
-
+      ConditionalRowMutation conditionalRowMutation = ConditionalRowMutation
+          .create(hbaseAdapter.getBigtableTableName().getTableId(), ByteString.copyFrom(row));
       Scan scan = new Scan();
       scan.setMaxVersions(1);
       scan.addColumn(family, qualifier);
@@ -210,10 +212,10 @@ public class CheckAndMutateUtil {
         // See ifMatches javadoc for more information on this
         if (CompareOp.NOT_EQUAL.equals(compareOp)) {
           // check for existence
-          requestBuilder.addAllTrueMutations(mutations);
+          conditionalRowMutation.then(mutations);
         } else {
           // check for non-existence
-          requestBuilder.addAllFalseMutations(mutations);
+          conditionalRowMutation.otherwise(mutations);
         }
         if (timeFilter != null) {
           scan.setFilter(timeFilter);
@@ -226,12 +228,13 @@ public class CheckAndMutateUtil {
         } else {
           scan.setFilter(valueFilter);
         }
-        requestBuilder.addAllTrueMutations(mutations);
+        conditionalRowMutation.then(mutations);
       }
-      requestBuilder.setPredicateFilter(
-          Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS));
+      conditionalRowMutation.condition(
+         Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS)
+      );
 
-      return requestBuilder.build();
+      return conditionalRowMutation;
     }
   }
 

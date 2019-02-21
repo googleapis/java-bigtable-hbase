@@ -18,6 +18,9 @@ package com.google.cloud.bigtable.hbase2_x;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -35,6 +38,30 @@ public class FutureUtils {
 
   public static final ExecutorService DIRECT_EXECUTOR = MoreExecutors.newDirectExecutorService();
   static Logger logger = new Logger(FutureUtils.class);
+
+  public static <T> CompletableFuture<T> toCompletableFuture(ApiFuture<T> apiFuture) {
+    CompletableFuture<T> completableFuture = new CompletableFuture<T>() {
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+        boolean result = apiFuture.cancel(mayInterruptIfRunning);
+        super.cancel(mayInterruptIfRunning);
+        return result;
+      }
+    };
+
+    ApiFutureCallback<T> callback = new ApiFutureCallback<T>() {
+      public void onFailure(Throwable throwable) {
+        completableFuture.completeExceptionally(throwable);
+      }
+
+      public void onSuccess(T t) {
+        completableFuture.complete(t);
+      }
+    };
+    ApiFutures.addCallback(apiFuture, callback, MoreExecutors.directExecutor());
+
+    return completableFuture;
+  }
 
   public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
     CompletableFuture<T> completableFuture = new CompletableFuture<T>() {
@@ -55,7 +82,7 @@ public class FutureUtils {
         completableFuture.complete(t);
       }
     };
-    Futures.addCallback(listenableFuture, callback);
+    Futures.addCallback(listenableFuture, callback, MoreExecutors.directExecutor());
 
     return completableFuture;
   }

@@ -84,8 +84,8 @@ public class RetryingMutateRowsOperation extends
     }
 
     // Perform a partial retry, if the backoff policy allows it.
-    long nextBackOff = getNextBackoff();
-    if (nextBackOff == BackOff.STOP) {
+    Long nextBackOff = getNextBackoff();
+    if (nextBackOff == null) {
       // Return the response as is, and don't retry;
       rpc.getRpcMetrics().markRetriesExhasted();
       completionFuture.set(Arrays.asList(requestManager.buildResponse()));

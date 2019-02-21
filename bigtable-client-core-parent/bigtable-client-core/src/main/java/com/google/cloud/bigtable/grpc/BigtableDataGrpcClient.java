@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterce
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.NanoClock;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
@@ -350,7 +351,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
     return Futures.transform(
         createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
-        ROW_LIST_TRANSFORMER);
+        ROW_LIST_TRANSFORMER, MoreExecutors.directExecutor());
   }
 
   /** {@inheritDoc} */
@@ -362,7 +363,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
     return Futures.transform(
         createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
-        FLAT_ROW_LIST_TRANSFORMER);
+        FLAT_ROW_LIST_TRANSFORMER, MoreExecutors.directExecutor());
   }
 
   /** {@inheritDoc} */

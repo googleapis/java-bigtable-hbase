@@ -64,7 +64,7 @@ public class RetryingStreamOperation<RequestT, ResponseT>
   /** {@inheritDoc} */
   @Override
   public void onMessage(ResponseT message) {
-    getCall().request(1);
+    callWrapper.request(1);
     buffer.add(message);
   }
 

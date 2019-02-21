@@ -24,12 +24,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.common.base.Preconditions;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -65,24 +67,27 @@ public class BulkRead {
         }
       };
 
-  private final BigtableDataClient client;
+  private final IBigtableDataClient client;
   private final int batchSizes;
   private final ExecutorService threadPool;
-  private final String tableName;
+  private final String tableId;
+  private final RequestContext requestContext;
 
   private final Map<RowFilter, Batch> batches;
 
   /**
    * Constructor for BulkRead.
-   * @param client a {@link BigtableDataClient} object.
+   * @param client a {@link IBigtableDataClient} object.
    * @param tableName a {@link BigtableTableName} object.
    * @param batchSizes The number of keys to lookup per RPC.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
    */
-  public BulkRead(BigtableDataClient client, BigtableTableName tableName, int batchSizes,
-      ExecutorService threadPool) {
+  public BulkRead(IBigtableDataClient client,
+      BigtableTableName tableName, int batchSizes, ExecutorService threadPool) {
     this.client = client;
-    this.tableName = tableName.toString();
+    this.tableId = tableName.getTableId();
+    this.requestContext =
+        RequestContext.create(tableName.getProjectId(), tableName.getInstanceId(), "");
     this.batchSizes = batchSizes;
     this.threadPool = threadPool;
     this.batches = new HashMap<>();
@@ -92,12 +97,14 @@ public class BulkRead {
    * Adds the key in the request to a batch read. The future will be resolved when the batch response
    * is received.
    *
-   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} with a single row key.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated
-   *     with the {@link FlatRow} that corresponds to the request
+   * @param query a {@link Query} with a single row key.
+   * @return a {@link ListenableFuture} that will be populated with the {@link FlatRow} that
+   * corresponds to the request
    */
-  public ListenableFuture<FlatRow> add(ReadRowsRequest request) {
-    Preconditions.checkNotNull(request);
+  public synchronized ListenableFuture<FlatRow> add(Query query) {
+    Preconditions.checkNotNull(query);
+    ReadRowsRequest request = query.toProto(requestContext);
+
     Preconditions.checkArgument(request.getRows().getRowKeysCount() == 1);
     ByteString rowKey = request.getRows().getRowKeysList().get(0);
     Preconditions.checkArgument(!rowKey.equals(ByteString.EMPTY));
@@ -129,23 +136,23 @@ public class BulkRead {
    * ReadRowRequests have to be batched based on the {@link RowFilter} since {@link ReadRowsRequest}
    * only support a single RowFilter. A batch represents this grouping.
    */
-  class Batch implements Runnable {
+  private class Batch implements Runnable {
     private final RowFilter filter;
     /**
      * Maps row keys to a collection of {@link SettableFuture}s that will be populated once the batch
      * operation is complete. The value of the {@link Multimap} is a {@link SettableFuture} of
      * a {@link List} of {@link FlatRow}s.  The {@link Multimap} is used because a user could request
      * the same key multiple times in the same batch. The {@link List} of {@link FlatRow}s mimics the
-     * interface of {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)}.
+     * interface of {@link IBigtableDataClient#readRowsAsync(Query)}.
      */
     private final Multimap<ByteString, SettableFuture<FlatRow>> futures;
 
-    public Batch(RowFilter filter) {
+    Batch(RowFilter filter) {
       this.filter = filter;
       this.futures = HashMultimap.create();
     }
 
-    public Collection<Batch> split() {
+    Collection<Batch> split() {
       if (futures.values().size() <= batchSizes) {
         return ImmutableList.of(this);
       }
@@ -164,7 +171,7 @@ public class BulkRead {
       return batches;
     }
 
-    public SettableFuture<FlatRow> addKey(ByteString rowKey) {
+    SettableFuture<FlatRow> addKey(ByteString rowKey) {
       SettableFuture<FlatRow> future = SettableFuture.create();
       futures.put(rowKey, future);
       return future;
@@ -176,12 +183,14 @@ public class BulkRead {
     @Override
     public void run() {
       try {
-        ResultScanner<FlatRow> scanner = client.readFlatRows(ReadRowsRequest.newBuilder()
-            .setTableName(tableName)
-            .setFilter(filter)
-            .setRows(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
-            .build()
-        );
+        Query query = Query.create(tableId)
+            .filter(Filters.FILTERS.fromProto(filter));
+
+        for(ByteString key : futures.keys()) {
+          query.rowKey(key);
+        }
+
+        ResultScanner<FlatRow> scanner = client.readFlatRows(query);
         while (true) {
           FlatRow row = scanner.next();
           if (row == null) {

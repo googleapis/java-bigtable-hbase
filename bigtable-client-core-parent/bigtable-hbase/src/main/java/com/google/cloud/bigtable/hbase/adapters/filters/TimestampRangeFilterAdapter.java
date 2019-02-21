@@ -15,20 +15,20 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
+
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 
 /**
- * Converts a {@link TimestampRangeFilter} into a Cloud Bigtable {@link RowFilter}.
+ * Converts a {@link TimestampRangeFilter} into a Cloud Bigtable {@link Filter}.
  */
 public class TimestampRangeFilterAdapter extends TypedFilterAdapterBase<TimestampRangeFilter> {
 
   @Override
-  public RowFilter adapt(FilterAdapterContext context, TimestampRangeFilter filter) {
+  public Filter adapt(FilterAdapterContext context, TimestampRangeFilter filter) {
     return TimestampFilterUtil.hbaseToTimestampRangeFilter(
         filter.getStartTimestampInclusive(),
-        filter.getEndTimestampExclusive())
-        .toProto();
+        filter.getEndTimestampExclusive());
   }
 
   @Override

@@ -15,10 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Preconditions;
-import com.google.bigtable.v2.RowFilter;
-
 import com.google.common.collect.RangeSet;
 import org.apache.hadoop.hbase.filter.Filter;
 
@@ -73,7 +72,7 @@ public class SingleFilterAdapter<T extends Filter> {
    * @return a {@link com.google.bigtable.v2.RowFilter} object.
    * @throws java.io.IOException if any.
    */
-  public RowFilter adapt(FilterAdapterContext context, Filter hbaseFilter)
+  public Filters.Filter adapt(FilterAdapterContext context, Filter hbaseFilter)
       throws IOException {
     T typedFilter = getTypedFilter(hbaseFilter);
     return adapter.adapt(context, typedFilter);

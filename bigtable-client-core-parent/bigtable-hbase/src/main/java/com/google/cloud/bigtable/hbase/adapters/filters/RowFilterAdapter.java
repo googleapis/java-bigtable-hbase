@@ -25,7 +25,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
 
@@ -46,7 +46,7 @@ public class RowFilterAdapter
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context,
+  public Filter adapt(FilterAdapterContext context,
       org.apache.hadoop.hbase.filter.RowFilter filter) throws IOException {
     CompareOp compareOp = filter.getOperator();
     if (compareOp != CompareFilter.CompareOp.EQUAL) {
@@ -66,7 +66,7 @@ public class RowFilterAdapter
       throw new IllegalStateException(String.format("Cannot adapt comparator %s", comparator
           .getClass().getCanonicalName()));
     }
-    return FILTERS.key().regex(regexValue).toProto();
+    return FILTERS.key().regex(regexValue);
   }
   
   /** {@inheritDoc} */

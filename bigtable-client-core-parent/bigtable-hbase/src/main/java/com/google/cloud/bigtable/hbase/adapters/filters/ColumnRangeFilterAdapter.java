@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Filters.QualifierRangeFilter;
 import com.google.protobuf.ByteString;
 
@@ -43,7 +43,7 @@ public class ColumnRangeFilterAdapter extends TypedFilterAdapterBase<ColumnRange
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, ColumnRangeFilter filter)
+  public Filter adapt(FilterAdapterContext context, ColumnRangeFilter filter)
       throws IOException {
     byte[] familyName = getSingleFamily(context.getScan());
     QualifierRangeFilter rangeBuilder = FILTERS.qualifier().rangeWithinFamily(Bytes.toString(familyName));
@@ -65,7 +65,7 @@ public class ColumnRangeFilterAdapter extends TypedFilterAdapterBase<ColumnRange
         rangeBuilder.endOpen(endQualifier);
       }
     }
-    return rangeBuilder.toProto();
+    return rangeBuilder;
   }
 
   /** {@inheritDoc} */

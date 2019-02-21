@@ -57,7 +57,7 @@ public class BigtableExtendedScan extends Scan {
 
   /**
    * Creates a {@link RowRange} based on a prefix.  This is similar to {@link Scan#setRowPrefixFilter(byte[])}.
-   * @param prefix
+   * @param prefix a byte array.
    */
   public void addRangeWithPrefix(byte[] prefix) {
     addRange(prefix, RowKeyUtil.calculateTheClosestNextRowKeyForPrefix(prefix));
@@ -67,8 +67,8 @@ public class BigtableExtendedScan extends Scan {
    * Adds a range to scan. This is similar to calling a combination of
    * {@link Scan#setStartRow(byte[])} and {@link Scan#setStopRow(byte[])}. Other ranges can be
    * constructed by creating a {@link RowRange} and calling {@link #addRange(RowRange)}
-   * @param startRow
-   * @param stopRow
+   * @param startRow a byte array.
+   * @param stopRow a byte array.
    */
   public void addRange(byte[] startRow, byte[] stopRow) {
     addRange(RowRange.newBuilder()
@@ -81,7 +81,7 @@ public class BigtableExtendedScan extends Scan {
    * Adds an arbitrary {@link RowRange} to the request. Ranges can have empty start keys or end
    * keys. Ranges can also be inclusive/closed or exclusive/open. The default range is inclusive
    * start and exclusive end.
-   * @param range
+   * @param range a {@link RowRange} object.
    */
   public void addRange(RowRange range) {
     rowSet.addRowRanges(range);
@@ -92,7 +92,7 @@ public class BigtableExtendedScan extends Scan {
    * Duplicate rowKeys will result in a single response in the scan results. Results of scans also
    * return rows in lexicographically sorted order, and not based on the order in which row keys
    * were added.
-   * @param rowKey
+   * @param rowKey a byte array.
    */
   public void addRowKey(byte[] rowKey) {
     rowSet.addRowKeys(ByteStringer.wrap(rowKey));

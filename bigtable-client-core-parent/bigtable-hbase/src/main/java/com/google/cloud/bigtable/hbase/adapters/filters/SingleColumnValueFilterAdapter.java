@@ -24,7 +24,6 @@ import java.io.IOException;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 
-import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
 import com.google.common.annotations.VisibleForTesting;
@@ -139,14 +138,15 @@ public class SingleColumnValueFilterAdapter
    *   ]
    * </pre>
    *
+   * <p>
    * NOTE: This logic can also be expressed as nested predicates, but that approach creates really poor
    * performance on the server side.
-   * <p>
+   * </p>
    */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, SingleColumnValueFilter filter)
+  public Filter adapt(FilterAdapterContext context, SingleColumnValueFilter filter)
       throws IOException {
-    return toFilter(context, filter).toProto();
+    return toFilter(context, filter);
   }
 
   Filter toFilter(FilterAdapterContext context, SingleColumnValueFilter filter)

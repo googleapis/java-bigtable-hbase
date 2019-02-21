@@ -162,6 +162,27 @@ public class TestRetryingMutateRowsOperation {
   }
 
   @Test
+  public void testRetryExhausted() throws Exception {
+    MutateRowsRequest request = createRequest(2);
+    RetryingMutateRowsOperation underTest = createOperation(request);
+    ListenableFuture<?> future = underTest.getAsyncResult();
+    MutateRowsRequest retryRequest = createRequest(request.getEntries(1));
+
+    send(underTest, OK, DEADLINE_EXCEEDED);
+    checkExecutor(1);
+    Assert.assertEquals(retryRequest, underTest.getRetryRequest());
+
+    // Fast forward until retry limit has been reached
+    clock.setTime(clock.millisTime() + RETRY_OPTIONS.getMaxElapsedBackoffMillis() + 1, TimeUnit.MILLISECONDS);
+
+    send(underTest, DEADLINE_EXCEEDED);
+    checkExecutor(1);
+    Assert.assertEquals(retryRequest, underTest.getRetryRequest());
+
+    checkResponse(future, createResponse(OK, DEADLINE_EXCEEDED));
+  }
+
+  @Test
   public void testCompleteFailure() throws InterruptedException, TimeoutException {
     MutateRowsRequest request = createRequest(2);
     final RetryingMutateRowsOperation underTest = createOperation(request);

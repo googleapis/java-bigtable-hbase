@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.hadoop.hbase.client.Scan;
@@ -66,6 +68,19 @@ public class CloudBigtableScanConfigurationTest {
 
     // Test that CloudBigtableScanConfigurations with different scans should not be equal.
     Assert.assertNotEquals(underTest1, underTest3);
+  }
+
+  @Test
+  public void testQuery() {
+    Filters.Filter filter = Filters.FILTERS.family().exactMatch("someFamily");
+    ReadRowsRequest request = config.toBuilder().withQuery(
+        Query
+            .create("SomeTable")
+            .filter(filter))
+        .build()
+        .getRequest();
+    Assert.assertEquals(request.getTableName(), config.getRequest().getTableName());
+    Assert.assertEquals(request.getFilter(), filter.toProto());
   }
 
   @Test

@@ -24,7 +24,6 @@ import org.junit.runners.JUnit4;
 
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 
 @RunWith(JUnit4.class)
 public class TestBigtableInstanceName {

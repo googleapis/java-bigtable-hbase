@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
@@ -42,8 +42,8 @@ public class TestMultipleColumnPrefxiFilterAdapter {
         new MultipleColumnPrefixFilter(
             new byte[][]{Bytes.toBytes("prefix"), Bytes.toBytes("prefix2")});
 
-    RowFilter rowFilter = filterAdapter.adapt(emptyScanContext, filter);
-    Interleave interleave = rowFilter.getInterleave();
+    Filters.Filter expectedFilter = filterAdapter.adapt(emptyScanContext, filter);
+    Interleave interleave = expectedFilter.toProto().getInterleave();
     Assert.assertEquals(2, interleave.getFiltersCount());
     Assert.assertEquals(
         "prefix\\C*",

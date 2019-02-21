@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Filters.QualifierRangeFilter;
 import com.google.protobuf.ByteString;
 
@@ -54,7 +54,7 @@ public class SingleColumnValueExcludeFilterAdapter
 
   /** {@inheritDoc} */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, SingleColumnValueExcludeFilter filter)
+  public Filter adapt(FilterAdapterContext context, SingleColumnValueExcludeFilter filter)
       throws IOException {
     String family = Bytes.toString(context.getScan().getFamilies()[0]);
     ByteString qualifier = ByteString.copyFrom(filter.getQualifier());
@@ -62,8 +62,8 @@ public class SingleColumnValueExcludeFilterAdapter
         .filter(delegateAdapter.toFilter(context, filter))
         .filter(FILTERS.interleave()
             .filter(range(family).endOpen(qualifier))
-            .filter(range(family).startOpen(qualifier)))
-        .toProto();
+            .filter(range(family).startOpen(qualifier)));
+        
   }
 
   private static QualifierRangeFilter range(String family) {

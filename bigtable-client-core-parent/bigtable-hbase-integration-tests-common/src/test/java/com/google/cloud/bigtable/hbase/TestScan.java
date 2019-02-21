@@ -68,6 +68,32 @@ public class TestScan extends AbstractTest {
   }
 
   @Test
+  public void testNextAfterClose() throws IOException {
+    Table table = getDefaultTable();
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+
+    table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value));
+
+    Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
+    ResultScanner resultScanner = table.getScanner(scan);
+
+    Assert.assertNotNull(resultScanner.next());
+
+    // The scanner should close here.
+    Assert.assertNull(resultScanner.next());
+
+    // This shouldn't throw an exception
+    Assert.assertNull(resultScanner.next());
+
+    resultScanner.close();
+
+    // This shouldn't throw an exception
+    Assert.assertNull(resultScanner.next());
+  }
+
+    @Test
   public void testGetScannerBeforeTimestamp() throws IOException {
     Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
@@ -77,8 +103,9 @@ public class TestScan extends AbstractTest {
     long ts1 = 100000l;
     long ts2 = 200000l;
 
-    table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, ts1, values[0]));
-    table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qual, ts2, values[1]));
+    table.put(new Put(rowKey)
+        .addColumn(COLUMN_FAMILY, qual, ts1, values[0])
+        .addColumn(COLUMN_FAMILY, qual, ts2, values[1]));
 
     Scan scan1 = new Scan()
             .withStartRow(rowKey)

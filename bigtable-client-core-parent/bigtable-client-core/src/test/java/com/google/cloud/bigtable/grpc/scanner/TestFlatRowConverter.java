@@ -15,6 +15,10 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.cloud.bigtable.data.v2.models.RowCell;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,7 +58,7 @@ public class TestFlatRowConverter {
             .build())
           .build())
         .build();
-    testBothWays(simpleRow, expectedRow);
+    Assert.assertEquals(expectedRow, FlatRowConverter.convert(simpleRow));
   }
 
   @Test
@@ -92,12 +96,41 @@ public class TestFlatRowConverter {
             .addCells(asProtoCell(simpleCell3))
             .build()))
         .build();
-    testBothWays(simpleRow, expectedRow);
+    Assert.assertEquals(expectedRow, FlatRowConverter.convert(simpleRow));
   }
 
-  private void testBothWays(FlatRow simpleRow, Row row) {
-    Assert.assertEquals(row, FlatRowConverter.convert(simpleRow));
-    Assert.assertEquals(simpleRow, FlatRowConverter.convert(row));
+  @Test
+  public void testModelRowWithOneCell(){
+    FlatRow.Cell cell =
+        new FlatRow.Cell("family", toByteString("column"), 500, toByteString("value"), null);
+    FlatRow flatRow = FlatRow.newBuilder().withRowKey(toByteString("key")).addCell(cell).build();
+
+    com.google.cloud.bigtable.data.v2.models.Row expectedRow =
+        com.google.cloud.bigtable.data.v2.models.Row.create(flatRow.getRowKey(), Arrays.asList(
+            RowCell.create(cell.getFamily(), cell.getQualifier(), cell.getTimestamp(),
+                cell.getLabels(), cell.getValue())));
+
+    Assert.assertEquals(expectedRow, FlatRowConverter.convertToModelRow(flatRow));
+  }
+
+  @Test
+  public void testModelRowWithMultipleCell(){
+    FlatRow simpleRow = FlatRow.newBuilder()
+        .withRowKey(toByteString("key"))
+        .addCell("family1", toByteString("column"), 500, toByteString("value"), null)
+        .addCell("family1", toByteString("column2"), 500, toByteString("value"), null)
+        .addCell("family1", toByteString("column2"), 400, toByteString("value"), null)
+        .addCell("family2", toByteString("column"), 500, toByteString("value"), null)
+        .build();
+    List<RowCell> rowCells = new ArrayList<>();
+    for(FlatRow.Cell cell : simpleRow.getCells()){
+      rowCells.add(RowCell.create(cell.getFamily(), cell.getQualifier(), cell.getTimestamp(),
+          cell.getLabels(), cell.getValue()));
+    }
+    com.google.cloud.bigtable.data.v2.models.Row row =
+        com.google.cloud.bigtable.data.v2.models.Row.create(ByteString.copyFromUtf8("key"),
+            rowCells);
+    Assert.assertEquals(row, FlatRowConverter.convertToModelRow(simpleRow));
   }
 
   private ByteString toByteString(final String string) {

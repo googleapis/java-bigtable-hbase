@@ -115,12 +115,23 @@ public class TestBigtableOptions {
   }
 
   @Test
-  public void testUseBatch() {
+  public void testUseBatch_default() {
     BigtableOptions options = BigtableOptions.builder().setUseBatch(true).build();
     Assert.assertTrue(options.useCachedChannel());
     Assert.assertEquals(BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT, options.getDataHost());
     Assert.assertEquals(5000, options.getRetryOptions().getInitialBackoffMillis());
-    Assert.assertEquals(5000, options.getRetryOptions().getMaxElapsedBackoffMillis());
+    Assert.assertEquals(300_000, options.getRetryOptions().getMaxElapsedBackoffMillis());
+  }
+
+  @Test
+  public void testUseBatch_withOverrides() {
+    String host = "myHost";
+    BigtableOptions options =
+        BigtableOptions.builder().setDataHost(host).setUseBatch(true).build();
+    Assert.assertTrue(options.useCachedChannel());
+    Assert.assertEquals(host, options.getDataHost());
+    Assert.assertEquals(5000, options.getRetryOptions().getInitialBackoffMillis());
+    Assert.assertEquals(300_000, options.getRetryOptions().getMaxElapsedBackoffMillis());
   }
 
   /**

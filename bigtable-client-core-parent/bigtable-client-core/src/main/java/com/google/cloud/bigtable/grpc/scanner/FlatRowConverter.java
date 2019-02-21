@@ -19,6 +19,8 @@ import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.data.v2.models.RowCell;
+import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 
 /**
@@ -81,18 +83,22 @@ public class FlatRowConverter {
         .build();
   }
 
-  public static FlatRow convert(Row row) {
-    FlatRow.Builder builder = FlatRow.newBuilder().withRowKey(row.getKey());
-    for (Family family : row.getFamiliesList()) {
-      String familyName = family.getName();
-      for (Column column : family.getColumnsList()) {
-        ByteString qualifier = column.getQualifier();
-        for (Cell cell : column.getCellsList()) {
-          builder.addCell(familyName, qualifier, cell.getTimestampMicros(), cell.getValue(),
-            cell.getLabelsList());
-        }
-      }
+  public static com.google.cloud.bigtable.data.v2.models.Row convertToModelRow(FlatRow row) {
+    if (row == null || row.getCells() == null) {
+      return null;
     }
-    return builder.build();
+    ImmutableList.Builder<RowCell> rowCellList =
+        ImmutableList.builderWithExpectedSize(row.getCells().size());
+    for (FlatRow.Cell cell : row.getCells()) {
+      rowCellList.add(toRowCell(cell));
+    }
+
+    return com.google.cloud.bigtable.data.v2.models.Row.create(row.getRowKey(),
+        rowCellList.build());
+  }
+
+  private static RowCell toRowCell(FlatRow.Cell cell) {
+    return RowCell.create(cell.getFamily(), cell.getQualifier(), cell.getTimestamp(),
+        cell.getLabels(), cell.getValue());
   }
 }

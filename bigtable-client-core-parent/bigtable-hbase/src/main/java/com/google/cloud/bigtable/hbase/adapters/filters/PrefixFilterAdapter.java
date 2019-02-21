@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.RowKeyUtil;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
@@ -40,13 +40,13 @@ public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
    * {@inheritDoc}
    */
   @Override
-  public RowFilter adapt(FilterAdapterContext context, PrefixFilter filter)
+  public Filter adapt(FilterAdapterContext context, PrefixFilter filter)
       throws IOException {
     ByteString.Output output = ByteString.newOutput(filter.getPrefix().length * 2);
     ReaderExpressionHelper.writeQuotedRegularExpression(output, filter.getPrefix());
     // Unquoted all bytes:
     output.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
-    return FILTERS.key().regex(output.toByteString()).toProto();
+    return FILTERS.key().regex(output.toByteString());
   }
 
   /**

@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import java.io.IOException;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -30,9 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v2.ColumnRange;
-import com.google.bigtable.v2.RowFilter;
-import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.protobuf.ByteString;
 
 /**
@@ -53,24 +53,22 @@ public class TestQualifierFilterAdapter {
       new FilterAdapterContext(scanWithOnFamily, null);
 
   private void assertAdaptedForm(
-      ByteArrayComparable comparable, CompareFilter.CompareOp op, RowFilter expectedFilter)
+      ByteArrayComparable comparable, CompareFilter.CompareOp op, Filters.Filter expectedFilter)
       throws IOException {
     QualifierFilter filter = new QualifierFilter(op, comparable);
-    RowFilter actualFilter = adapter.adapt(scanWithOnFamilyScanContext, filter);
-    Assert.assertEquals(expectedFilter, actualFilter);
+    Filters.Filter actualFilter = adapter.adapt(scanWithOnFamilyScanContext, filter);
+    Assert.assertEquals(expectedFilter.toProto(), actualFilter.toProto());
   }
 
   @Test
   public void testLessThanQualifierFilter() throws IOException {
+    FILTERS.qualifier().rangeWithinFamily(FAMILY_NAME).endOpen(FOO_BYTESTRING);
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.LESS,
-        RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FAMILY_NAME)
-                    .setEndQualifierOpen(FOO_BYTESTRING))
-            .build());
+        FILTERS.qualifier()
+          .rangeWithinFamily(FAMILY_NAME)
+          .endOpen(FOO_BYTESTRING));
   }
 
   @Test
@@ -78,12 +76,9 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.LESS_OR_EQUAL,
-        RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FAMILY_NAME)
-                    .setEndQualifierClosed(FOO_BYTESTRING))
-            .build());
+        FILTERS.qualifier()
+          .rangeWithinFamily(FAMILY_NAME)
+          .endClosed(FOO_BYTESTRING));
   }
 
   @Test
@@ -91,9 +86,8 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.EQUAL,
-        RowFilter.newBuilder()
-            .setColumnQualifierRegexFilter(
-                ByteString.copyFrom(FOO_BYTES)).build());
+        FILTERS.qualifier()
+          .regex(ByteString.copyFrom(FOO_BYTES)));
   }
 
   @Test
@@ -101,12 +95,9 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.GREATER,
-        RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FAMILY_NAME)
-                    .setStartQualifierOpen(FOO_BYTESTRING))
-            .build());
+        FILTERS.qualifier()
+          .rangeWithinFamily(FAMILY_NAME)
+          .startOpen(FOO_BYTESTRING));
   }
 
   @Test
@@ -114,12 +105,9 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.GREATER_OR_EQUAL,
-        RowFilter.newBuilder()
-            .setColumnRangeFilter(
-                ColumnRange.newBuilder()
-                    .setFamilyName(FAMILY_NAME)
-                    .setStartQualifierClosed(FOO_BYTESTRING))
-            .build());
+        FILTERS.qualifier()
+          .rangeWithinFamily(FAMILY_NAME)
+          .startClosed(FOO_BYTESTRING));
   }
 
   @Test
@@ -127,22 +115,13 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.NOT_EQUAL,
-        RowFilter.newBuilder()
-            .setInterleave(
-                Interleave.newBuilder()
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setColumnRangeFilter(
-                                ColumnRange.newBuilder()
-                                    .setFamilyName(FAMILY_NAME)
-                                    .setEndQualifierOpen(FOO_BYTESTRING)))
-                    .addFilters(
-                        RowFilter.newBuilder()
-                            .setColumnRangeFilter(
-                                ColumnRange.newBuilder()
-                                    .setFamilyName(FAMILY_NAME)
-                                    .setStartQualifierOpen(FOO_BYTESTRING))))
-            .build());
+      FILTERS.interleave()
+          .filter(FILTERS.qualifier()
+            .rangeWithinFamily(FAMILY_NAME)
+            .endOpen(FOO_BYTESTRING))
+          .filter(FILTERS.qualifier()
+            .rangeWithinFamily(FAMILY_NAME)
+            .startOpen(FOO_BYTESTRING)));
   }
 
   @Test
@@ -151,8 +130,6 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         new RegexStringComparator(pattern),
         CompareOp.EQUAL,
-        RowFilter.newBuilder()
-            .setColumnQualifierRegexFilter(ByteString.copyFromUtf8(pattern))
-            .build());
+        FILTERS.qualifier().regex(ByteString.copyFromUtf8(pattern)));
   }
 }

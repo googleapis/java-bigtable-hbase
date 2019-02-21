@@ -19,7 +19,6 @@ package org.apache.hadoop.hbase.client;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
@@ -53,7 +52,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author sduskis
  * @version $Id: $Id
  */
-public abstract class AbstractBigtableConnection implements Connection, Closeable {
+public abstract class AbstractBigtableConnection implements Connection, CommonConnection, Closeable {
   private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
   private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
       Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
@@ -226,7 +225,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     RegionLocator locator = getCachedLocator(tableName);
 
     if (locator == null) {
-      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClient()) {
+      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getClientWrapper()) {
 
         @Override
         public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
@@ -253,6 +252,10 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   /**
    * There are some hbase 1.x and 2.x incompatibilities which require this abstract method. See
    * {@link SampledRowKeysAdapter} for more details.
+   *
+   * @param tableName a {@link TableName} object.
+   * @param serverName a {@link ServerName} object.
+   * @return a {@link SampledRowKeysAdapter} object.
    */
   protected abstract SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
     ServerName serverName);
@@ -333,23 +336,12 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   @Override
   public abstract Admin getAdmin() throws IOException;
 
-  /* Methods needed to construct a Bigtable Admin implementation: */
-  /**
-   * <p>getBigtableTableAdminClient.</p>
-   *
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
-   * @throws java.io.IOException if any.
-   */
-  protected BigtableTableAdminClient getBigtableTableAdminClient() throws IOException {
-    return session.getTableAdminClient();
-  }
-
   /**
    * <p>Getter for the field <code>options</code>.</p>
    *
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
-  protected BigtableOptions getOptions() {
+  public BigtableOptions getOptions() {
     return options;
   }
 
@@ -358,7 +350,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
    *
    * @return a {@link java.util.Set} object.
    */
-  protected Set<TableName> getDisabledTables() {
+  public Set<TableName> getDisabledTables() {
     return disabledTables;
   }
 

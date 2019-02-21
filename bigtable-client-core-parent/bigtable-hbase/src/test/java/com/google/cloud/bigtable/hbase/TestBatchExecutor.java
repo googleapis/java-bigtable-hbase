@@ -24,15 +24,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.core.IBulkMutation;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow.Cell;
@@ -70,7 +69,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -120,32 +118,34 @@ public class TestBatchExecutor {
   private BigtableSession mockBigtableSession;
 
   @Mock
-  private AsyncExecutor mockAsyncExecutor;
-
-  @Mock
   private BulkRead mockBulkRead;
 
   @Mock
-  private BulkMutation mockBulkMutation;
+  private IBulkMutation mockBulkMutation;
 
   @Mock
   private ListenableFuture mockFuture;
 
   private HBaseRequestAdapter requestAdapter;
+
+  private BigtableOptions options;
+
   @Before
-  public void setup() throws InterruptedException {
-    final BigtableOptions options = BigtableOptions.builder()
+  public void setup() {
+    options = BigtableOptions.builder()
         .setProjectId("projectId")
         .setInstanceId("instanceId")
         .build();
     requestAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
+    RequestContext requetsContext = RequestContext
+        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
 
     MockitoAnnotations.initMocks(this);
-    when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(mockFuture);
-    when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
-    when(mockBigtableSession.createAsyncExecutor()).thenReturn(mockAsyncExecutor);
-    when(mockBigtableSession.createBulkMutation(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
+    when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(mockFuture);
+    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRow.class))).thenReturn(mockFuture);
+    when(mockBigtableSession.getDataRequestContext()).thenReturn(requetsContext);
+    when(mockBigtableSession.createBulkMutationWrapper(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);
     doAnswer(new Answer<Void>() {
       @Override
@@ -159,7 +159,7 @@ public class TestBatchExecutor {
 
   @Test
   public void testGet() throws Exception {
-    when(mockBulkRead.add(any(ReadRowsRequest.class))).thenReturn(mockFuture);
+    when(mockBulkRead.add(any(Query.class))).thenReturn(mockFuture);
     final byte[] key = randomBytes(8);
     FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
     setFuture(ImmutableList.of(response));
@@ -194,28 +194,25 @@ public class TestBatchExecutor {
 
   @Test
   public void testShutdownService() throws Exception {
-    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class)))
-        .thenThrow(new IllegalStateException("closed"));
+    when(mockFuture.get()).thenThrow(new IllegalStateException("closed"));
     try {
       batch(Arrays.asList(randomPut()));
     } catch (RetriesExhaustedWithDetailsException e) {
       Assert.assertEquals(1, e.getCauses().size());
-      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
+      Assert.assertEquals(IllegalStateException.class, e.getCause(0).getClass());
     }
   }
 
   @Test
   public void testAsyncException() throws Exception {
     String message = "Something bad happened";
-    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class)))
-        .thenThrow(new RuntimeException(message));
+    when(mockFuture.get()).thenThrow(new RuntimeException(message));
     try {
       batch(Arrays.asList(randomPut()));
     } catch (RetriesExhaustedWithDetailsException e) {
       Assert.assertEquals(1, e.getCauses().size());
-      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
-      Assert.assertEquals(RuntimeException.class, e.getCause(0).getCause().getClass());
-      Assert.assertEquals(message, e.getCause(0).getCause().getMessage());
+      Assert.assertEquals(RuntimeException.class, e.getCause(0).getClass());
+      Assert.assertEquals(message, e.getCause(0).getMessage());
     }
   }
 
@@ -230,7 +227,7 @@ public class TestBatchExecutor {
             .build();
 
     RuntimeException exception = new RuntimeException("Something bad happened");
-    when(mockBulkRead.add(any(ReadRowsRequest.class)))
+    when(mockBulkRead.add(any(Query.class)))
         .thenReturn(Futures.immediateFuture(response1))
         .thenReturn(Futures.<FlatRow> immediateFailedFuture(exception));
 
@@ -238,7 +235,7 @@ public class TestBatchExecutor {
     Object[] results = new Object[2];
 
     try {
-      createExecutor(BigtableOptions.getDefaultOptions()).batch(gets, results);
+      createExecutor(options).batch(gets, results);
     } catch(RetriesExhaustedWithDetailsException ignored) {
     }
     Assert.assertTrue("first result is a result", results[0] instanceof Result);
@@ -248,13 +245,13 @@ public class TestBatchExecutor {
 
   @Test
   public void testGetCallback() throws Exception {
-    when(mockBulkRead.add(any(ReadRowsRequest.class))).thenReturn(mockFuture);
+    when(mockBulkRead.add(any(Query.class))).thenReturn(mockFuture);
     byte[] key = randomBytes(8);
     FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
     setFuture(ImmutableList.of(response));
     final Callback<Result> callback = Mockito.mock(Callback.class);
     List<Get> gets = Arrays.asList(new Get(key));
-    createExecutor(BigtableOptions.getDefaultOptions()).batchCallback(gets, new Object[1], callback);
+    createExecutor(options).batchCallback(gets, new Object[1], callback);
 
     verify(callback, times(1)).update(same(BatchExecutor.NO_REGION), same(key),
       argThat(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response))));
@@ -277,7 +274,7 @@ public class TestBatchExecutor {
     }
 
     // Test 10 gets, but return only 9 to test the row not found case.
-    when(mockBulkRead.add(any(ReadRowsRequest.class)))
+    when(mockBulkRead.add(any(Query.class)))
         .then(new Answer<ListenableFuture<FlatRow>>() {
           final AtomicInteger counter = new AtomicInteger();
 
@@ -292,9 +289,9 @@ public class TestBatchExecutor {
         .addCell("family", ByteString.EMPTY, System.nanoTime() / 1000, cellValue).build();
     when(mockFuture.get()).thenReturn(row);
 
-    BatchExecutor underTest = createExecutor(BigtableOptions.getDefaultOptions());
+    BatchExecutor underTest = createExecutor(options);
     Result[] results = underTest.batch(gets);
-    verify(mockBulkRead, times(10)).add(any(ReadRowsRequest.class));
+    verify(mockBulkRead, times(10)).add(any(Query.class));
     verify(mockBulkRead, times(1)).flush();
     Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
     for (int i = 1; i < results.length; i++) {
@@ -325,6 +322,6 @@ public class TestBatchExecutor {
 
   private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)
       throws Exception {
-    return createExecutor(BigtableOptions.getDefaultOptions()).batch(actions);
+    return createExecutor(options).batch(actions);
   }
 }

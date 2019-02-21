@@ -16,7 +16,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-dataflow-parent</artifactId>
-        <version>1.6.1-SNAPSHOT</version>
+        <version>1.9.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-hbase-beam</artifactId>
@@ -140,7 +140,7 @@ limitations under the License.
 
                             <offlineLinks>
                                 <offlineLink>
-                                    <url>https://beam.apache.org/documentation/sdks/javadoc/2.1.0/</url>
+                                    <url>https://beam.apache.org/releases/javadoc/2.9.0/</url>
                                     <location>${basedir}/javadoc/beam-docs</location>
                                 </offlineLink>
                                 <offlineLink>

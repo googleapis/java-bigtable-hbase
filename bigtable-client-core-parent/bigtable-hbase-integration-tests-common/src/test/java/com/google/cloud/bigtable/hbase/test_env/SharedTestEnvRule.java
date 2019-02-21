@@ -19,6 +19,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -141,7 +142,10 @@ public class SharedTestEnvRule extends ExternalResource {
   }
 
   public TableName newTestTableName() {
-    return TableName.valueOf("test_table-" + UUID.randomUUID().toString());
+    String suffix = String.format(
+        "%016x-%016x", System.currentTimeMillis(), new Random().nextLong()
+    );
+    return TableName.valueOf("test_table2-" + suffix);
   }
 
   public ExecutorService getExecutor() {
