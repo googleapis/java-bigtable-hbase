@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import java.io.IOException;
@@ -37,8 +39,6 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.hadoop.hbase.client.RowMutations;
 
 /**
@@ -128,13 +128,13 @@ public class BigtableBufferedMutatorHelper {
     return this.options.getBulkOptions().getMaxMemory();
   }
 
-  public List<ListenableFuture<?>> mutate(List<? extends Mutation> mutations) {
+  public List<ApiFuture<?>> mutate(List<? extends Mutation> mutations) {
     closedReadLock.lock();
     try {
       if (closed) {
         throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
       }
-      List<ListenableFuture<?>> futures = new ArrayList<>(mutations.size());
+      List<ApiFuture<?>> futures = new ArrayList<>(mutations.size());
       for (Mutation mutation : mutations) {
         futures.add(offer(mutation));
       }
@@ -149,9 +149,9 @@ public class BigtableBufferedMutatorHelper {
    * 1) There are more than {@code maxInflightRpcs} RPCs in flight
    * 2) There are more than {@link #getWriteBufferSize()} bytes pending
    * @param mutation a {@link Mutation} object.
-   * @return a {@link ListenableFuture} object.
+   * @return a {@link ApiFuture} object.
    */
-  public ListenableFuture<?> mutate(final Mutation mutation) {
+  public ApiFuture<?> mutate(final Mutation mutation) {
     closedReadLock.lock();
     try {
       if (closed) {
@@ -165,16 +165,16 @@ public class BigtableBufferedMutatorHelper {
 
   /**
    * @param mutation a {@link RowMutations} object.
-   * @return a {@link ListenableFuture} object.
+   * @return a {@link ApiFuture} object.
    */
-  public ListenableFuture<?> mutate(final RowMutations mutation) {
+  public ApiFuture<?> mutate(final RowMutations mutation) {
     closedReadLock.lock();
     try {
       if (closed) {
         throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
       }
       if (mutation == null) {
-        return Futures.immediateFailedFuture(
+        return ApiFutures.immediateFailedFuture(
             new IllegalArgumentException("Cannot perform a mutation on a null object."));
       } else {
         return bulkMutation.add(adapter.adaptEntry(mutation));
@@ -189,11 +189,11 @@ public class BigtableBufferedMutatorHelper {
    * object to cloud bigtable proto and the async call both take time (microseconds worth) that
    * could be parallelized, or at least removed from the user's thread.
    */
-  private ListenableFuture<?> offer(Mutation mutation) {
-    ListenableFuture<?> future = null;
+  private ApiFuture<?> offer(Mutation mutation) {
+    ApiFuture<?> future = null;
     try {
       if (mutation == null) {
-        future = Futures.immediateFailedFuture(
+        future = ApiFutures.immediateFailedFuture(
           new IllegalArgumentException("Cannot perform a mutation on a null object."));
       } else if (mutation instanceof Put) {
         future = bulkMutation.add(adapter.adaptEntry((Put) mutation));
@@ -204,13 +204,13 @@ public class BigtableBufferedMutatorHelper {
       } else if (mutation instanceof Append) {
         future = bulkMutation.readModifyWrite(adapter.adapt((Append) mutation));
       } else {
-        future = Futures.immediateFailedFuture(new IllegalArgumentException(
+        future = ApiFutures.immediateFailedFuture(new IllegalArgumentException(
             "Encountered unknown mutation type: " + mutation.getClass()));
       }
     } catch (Exception e) {
       // issueRequest(mutation) could throw an Exception for validation issues. Remove the heapsize
       // and inflight rpc count.
-      future = Futures.immediateFailedFuture(e);
+      future = ApiFutures.immediateFailedFuture(e);
     }
     return future;
   }

@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.SettableApiFuture;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,7 +42,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import java.util.concurrent.ExecutorService;
@@ -58,11 +59,11 @@ public class BulkRead {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BulkRead.class);
 
-  private static final Comparator<Entry<ByteString, SettableFuture<FlatRow>>> ENTRY_SORTER =
-      new Comparator<Entry<ByteString, SettableFuture<FlatRow>>>() {
+  private static final Comparator<Entry<ByteString, SettableApiFuture<FlatRow>>> ENTRY_SORTER =
+      new Comparator<Entry<ByteString, SettableApiFuture<FlatRow>>>() {
         @Override
-        public int compare(Entry<ByteString, SettableFuture<FlatRow>> o1,
-            Entry<ByteString, SettableFuture<FlatRow>> o2) {
+        public int compare(Entry<ByteString, SettableApiFuture<FlatRow>> o1,
+            Entry<ByteString, SettableApiFuture<FlatRow>> o2) {
           return ByteStringComparator.INSTANCE.compare(o1.getKey(), o2.getKey());
         }
       };
@@ -98,10 +99,10 @@ public class BulkRead {
    * is received.
    *
    * @param query a {@link Query} with a single row key.
-   * @return a {@link ListenableFuture} that will be populated with the {@link FlatRow} that
+   * @return a {@link ApiFuture} that will be populated with the {@link FlatRow} that
    * corresponds to the request
    */
-  public synchronized ListenableFuture<FlatRow> add(Query query) {
+  public synchronized ApiFuture<FlatRow> add(Query query) {
     Preconditions.checkNotNull(query);
     ReadRowsRequest request = query.toProto(requestContext);
 
@@ -145,7 +146,7 @@ public class BulkRead {
      * the same key multiple times in the same batch. The {@link List} of {@link FlatRow}s mimics the
      * interface of {@link IBigtableDataClient#readRowsAsync(Query)}.
      */
-    private final Multimap<ByteString, SettableFuture<FlatRow>> futures;
+    private final Multimap<ByteString, SettableApiFuture<FlatRow>> futures;
 
     Batch(RowFilter filter) {
       this.filter = filter;
@@ -156,14 +157,14 @@ public class BulkRead {
       if (futures.values().size() <= batchSizes) {
         return ImmutableList.of(this);
       }
-      List<Entry<ByteString, SettableFuture<FlatRow>>> toSplit =
+      List<Entry<ByteString, SettableApiFuture<FlatRow>>> toSplit =
           new ArrayList<>(futures.entries());
       Collections.sort(toSplit, ENTRY_SORTER);
       
       List<Batch> batches = new ArrayList<>();
-      for (List<Entry<ByteString, SettableFuture<FlatRow>>> entries : Iterables.partition(toSplit, batchSizes)) {
+      for (List<Entry<ByteString, SettableApiFuture<FlatRow>>> entries : Iterables.partition(toSplit, batchSizes)) {
         Batch batch = new Batch(filter);
-        for (Entry<ByteString, SettableFuture<FlatRow>> entry : entries) {
+        for (Entry<ByteString, SettableApiFuture<FlatRow>> entry : entries) {
           batch.futures.put(entry.getKey(), entry.getValue());
         }
         batches.add(batch);
@@ -171,8 +172,8 @@ public class BulkRead {
       return batches;
     }
 
-    SettableFuture<FlatRow> addKey(ByteString rowKey) {
-      SettableFuture<FlatRow> future = SettableFuture.create();
+    SettableApiFuture<FlatRow> addKey(ByteString rowKey) {
+      SettableApiFuture<FlatRow> future = SettableApiFuture.create();
       futures.put(rowKey, future);
       return future;
     }
@@ -196,9 +197,9 @@ public class BulkRead {
           if (row == null) {
             break;
           }
-          Collection<SettableFuture<FlatRow>> rowFutures = futures.get(row.getRowKey());
+          Collection<SettableApiFuture<FlatRow>> rowFutures = futures.get(row.getRowKey());
           if (rowFutures != null) {
-            for (SettableFuture<FlatRow> rowFuture : rowFutures) {
+            for (SettableApiFuture<FlatRow> rowFuture : rowFutures) {
               rowFuture.set(row);
             }
             futures.removeAll(row.getRowKey());
@@ -207,11 +208,11 @@ public class BulkRead {
           }
         }
         // Deal with remaining/missing keys
-        for (Entry<ByteString, SettableFuture<FlatRow>> entry : futures.entries()) {
+        for (Entry<ByteString, SettableApiFuture<FlatRow>> entry : futures.entries()) {
           entry.getValue().set(null);
         }
       } catch (Throwable e) {
-        for (Entry<ByteString, SettableFuture<FlatRow>> entry : futures.entries()) {
+        for (Entry<ByteString, SettableApiFuture<FlatRow>> entry : futures.entries()) {
           entry.getValue().setException(e);
         }
       }

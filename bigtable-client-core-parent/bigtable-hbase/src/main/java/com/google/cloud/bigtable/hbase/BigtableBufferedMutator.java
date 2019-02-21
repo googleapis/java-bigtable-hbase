@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +33,6 @@ import org.apache.hadoop.hbase.client.Row;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 
 /**
@@ -115,7 +115,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   @Override
   public void mutate(List<? extends Mutation> mutations) throws IOException {
     handleExceptions();
-    List<ListenableFuture<?>> futures = helper.mutate(mutations);
+    List<ApiFuture<?>> futures = helper.mutate(mutations);
     for (int i = 0; i < mutations.size(); i++) {
       addCallback(futures.get(i), mutations.get(i));
     }
@@ -146,8 +146,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   @SuppressWarnings("unchecked")
-  private void addCallback(ListenableFuture<?> future, Mutation mutation) {
-    Futures.addCallback(future, new ExceptionCallback(mutation), MoreExecutors.directExecutor());
+  private void addCallback(ApiFuture<?> future, Mutation mutation) {
+    ApiFutures.addCallback(future, new ExceptionCallback(mutation), MoreExecutors.directExecutor());
   }
 
   /**
@@ -198,7 +198,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   @SuppressWarnings("rawtypes")
-  private class ExceptionCallback implements FutureCallback {
+  private class ExceptionCallback implements ApiFutureCallback {
     private final Row mutation;
 
     public ExceptionCallback(Row mutation) {

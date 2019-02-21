@@ -24,6 +24,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
@@ -39,8 +41,6 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 
@@ -124,7 +124,7 @@ public class TestBatchExecutor {
   private IBulkMutation mockBulkMutation;
 
   @Mock
-  private ListenableFuture mockFuture;
+  private ApiFuture mockFuture;
 
   private HBaseRequestAdapter requestAdapter;
 
@@ -228,8 +228,8 @@ public class TestBatchExecutor {
 
     RuntimeException exception = new RuntimeException("Something bad happened");
     when(mockBulkRead.add(any(Query.class)))
-        .thenReturn(Futures.immediateFuture(response1))
-        .thenReturn(Futures.<FlatRow> immediateFailedFuture(exception));
+        .thenReturn(ApiFutures.immediateFuture(response1))
+        .thenReturn(ApiFutures.<FlatRow> immediateFailedFuture(exception));
 
     List<Get> gets = Arrays.asList(new Get(key1), new Get(key2));
     Object[] results = new Object[2];
@@ -260,26 +260,26 @@ public class TestBatchExecutor {
   @Test
   public void testBatchBulkGets() throws Exception {
     final List<Get> gets = new ArrayList<>(10);
-    final List<ListenableFuture<FlatRow>> expected = new ArrayList<>(10);
+    final List<ApiFuture<FlatRow>> expected = new ArrayList<>(10);
 
     gets.add(new Get(Bytes.toBytes("key0")));
-    expected.add(Futures.<FlatRow> immediateFuture(null));
+    expected.add(ApiFutures.<FlatRow> immediateFuture(null));
     for (int i = 1; i < 10; i++) {
       byte[] row_key = randomBytes(8);
       gets.add(new Get(row_key));
       ByteString key = ByteStringer.wrap(row_key);
       ByteString cellValue = ByteString.copyFrom(randomBytes(8));
-      expected.add(Futures.immediateFuture(FlatRow.newBuilder().withRowKey(key)
+      expected.add(ApiFutures.immediateFuture(FlatRow.newBuilder().withRowKey(key)
           .addCell("family", ByteString.EMPTY, System.nanoTime() / 1000, cellValue).build()));
     }
 
     // Test 10 gets, but return only 9 to test the row not found case.
     when(mockBulkRead.add(any(Query.class)))
-        .then(new Answer<ListenableFuture<FlatRow>>() {
+        .then(new Answer<ApiFuture<FlatRow>>() {
           final AtomicInteger counter = new AtomicInteger();
 
           @Override
-          public ListenableFuture<FlatRow> answer(InvocationOnMock invocation) throws Throwable {
+          public ApiFuture<FlatRow> answer(InvocationOnMock invocation) throws Throwable {
             return expected.get(counter.getAndIncrement());
           }
         });

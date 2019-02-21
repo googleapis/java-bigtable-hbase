@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.core;
 
+import com.google.api.core.ApiFuture;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
@@ -43,11 +44,10 @@ public interface IBulkMutation {
    * Adds a {@link RowMutation} to the underlying IBulkMutation mechanism.
    *
    * @param rowMutation The {@link RowMutation} to add.
-   * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
-   *     successful otherwise exception will be thrown.
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
+   * successful otherwise exception will be thrown.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Void> add(RowMutation rowMutation);
+  ApiFuture<Void> add(RowMutation rowMutation);
 
   /**
    * Performs a {@link IBigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRow)} on the
@@ -55,8 +55,7 @@ public interface IBulkMutation {
    * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
    *
    * @param request The {@link ReadModifyWriteRow} to send.
-   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   * @return a {@link ApiFuture} which can be listened to for completion events.
    */
-  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
-  ListenableFuture<Row> readModifyWrite(ReadModifyWriteRow request);
+  ApiFuture<Row> readModifyWrite(ReadModifyWriteRow request);
 }

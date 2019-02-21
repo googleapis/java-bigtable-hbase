@@ -15,6 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
+import com.google.api.core.SettableApiFuture;
+import com.google.cloud.bigtable.util.ApiFutureUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,11 +46,7 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -69,24 +70,24 @@ public class BatchExecutor {
   public static final byte[] NO_REGION = new byte[0];
 
   /**
-   * A callback for ListenableFutures issued as a result of an RPC
+   * A callback for ApiFuture issued as a result of an RPC
    * @param <T> The type of message the hbase callback requires.
    */
-  static class RpcResultFutureCallback<T> implements FutureCallback<Object> {
+  static class RpcResultFutureCallback<T> implements ApiFutureCallback<Object> {
     private final Row row;
     private final Batch.Callback<T> callback;
 
     // TODO(sduskis): investigate if we really need both the results array and result future.
     private final int index;
     private final Object[] resultsArray;
-    private final SettableFuture<Result> resultFuture;
+    private final SettableApiFuture<Result> resultFuture;
 
     public RpcResultFutureCallback(
         Row row,
         Batch.Callback<T> callback,
         int index,
         Object[] resultsArray,
-        SettableFuture<Result> resultFuture) {
+        SettableApiFuture<Result> resultFuture) {
       this.row = row;
       this.callback = callback;
       this.index = index;
@@ -162,22 +163,22 @@ public class BatchExecutor {
    * @param index The into into the array of results where we should store our result
    * @param <R> The action type
    * @param <T> The type of the callback.
-   * @return A ListenableFuture that will have the result when the RPC completes.
+   * @return A {@link ApiFuture} that will have the result when the RPC completes.
    */
-  private <R extends Row, T> ListenableFuture<Result> issueAsyncRowRequest(
+  private <R extends Row, T> ApiFuture<Result> issueAsyncRowRequest(
       Row row, Batch.Callback<T> callback, Object[] results,
       int index) {
     LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
-    SettableFuture<Result> resultFuture = SettableFuture.create();
+    SettableApiFuture<Result> resultFuture = SettableApiFuture.create();
     RpcResultFutureCallback<T> futureCallback =
         new RpcResultFutureCallback<T>(row, callback, index, results, resultFuture);
     results[index] = null;
-    Futures.addCallback(issueAsyncRequest(row),
+    ApiFutures.addCallback(issueAsyncRequest(row),
         futureCallback, MoreExecutors.directExecutor());
     return resultFuture;
   }
 
-  private ListenableFuture<?> issueAsyncRequest(Row row) {
+  private ApiFuture<?> issueAsyncRequest(Row row) {
     try {
       if (row instanceof Get) {
         return bulkRead.add(requestAdapter.adapt((Get) row));
@@ -187,10 +188,10 @@ public class BatchExecutor {
         return bufferedMutatorHelper.mutate((RowMutations) row);
       }
     } catch (Throwable e) {
-      return Futures.immediateFailedFuture(new IOException("Could not process the batch", e));
+      return ApiFutures.immediateFailedFuture(new IOException("Could not process the batch", e));
     }
     LOG.error("Encountered unknown action type %s", row.getClass());
-    return Futures.immediateFailedFuture(
+    return ApiFutures.immediateFailedFuture(
       new IllegalArgumentException("Encountered unknown action type: " + row.getClass()));
   }
 
@@ -210,10 +211,10 @@ public class BatchExecutor {
     batchCallback(actions, results, null);
   }
 
-  public <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
+  public <R> List<ApiFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) {
     try {
-      List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
+      List<ApiFuture<?>> resultFutures = new ArrayList<>(actions.size());
       for (int i = 0; i < actions.size(); i++) {
         resultFutures.add(issueAsyncRowRequest(actions.get(i), callback, results, i));
       }
@@ -264,11 +265,11 @@ public class BatchExecutor {
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must have same dimensions as actions list.");
     Timer.Context timerContext = batchTimer.time();
-    List<ListenableFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, callback);
+    List<ApiFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, callback);
     try {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
-      Futures.successfulAsList(resultFutures).get();
+      ApiFutureUtil.successfulAsList(resultFutures).get();
       List<Throwable> problems = new ArrayList<>();
       List<Row> problemActions = new ArrayList<>();
       List<String> hosts = new ArrayList<>();
