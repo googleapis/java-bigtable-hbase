@@ -24,14 +24,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
+import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow.Cell;
@@ -121,7 +121,7 @@ public class TestBatchExecutor {
   private BulkRead mockBulkRead;
 
   @Mock
-  private BulkMutation mockBulkMutation;
+  private IBulkMutation mockBulkMutation;
 
   @Mock
   private ListenableFuture mockFuture;
@@ -142,10 +142,10 @@ public class TestBatchExecutor {
         .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
 
     MockitoAnnotations.initMocks(this);
-    when(mockBulkMutation.add(any(MutateRowsRequest.Entry.class))).thenReturn(mockFuture);
+    when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(mockFuture);
     when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRow.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getDataRequestContext()).thenReturn(requetsContext);
-    when(mockBigtableSession.createBulkMutation(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
+    when(mockBigtableSession.createBulkMutationWrapper(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);
     doAnswer(new Answer<Void>() {
       @Override

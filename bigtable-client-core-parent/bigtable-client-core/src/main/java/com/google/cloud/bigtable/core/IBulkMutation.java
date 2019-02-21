@@ -15,38 +15,48 @@
  */
 package com.google.cloud.bigtable.core;
 
-import com.google.api.core.ApiFuture;
-import com.google.bigtable.v2.MutateRowRequest;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
+import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import com.google.cloud.bigtable.grpc.async.OperationAccountant;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Interface to support batching multiple RowMutation request into a single grpc request.
  */
 public interface IBulkMutation {
-  long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
 
   /**
-   * Send any outstanding {@link MutateRowRequest}s and wait until all requests are complete.
+   * Send any outstanding {@link RowMutation} and wait until all requests are complete.
    */
-  void flush() throws InterruptedException, TimeoutException;
+  void flush() throws InterruptedException;
 
   void sendUnsent();
 
   /**
-   * @return false if there is any outstanding {@link MutateRowRequest} that still needs to be sent.
+   * @return false if there is any outstanding {@link RowMutation} that still needs to be sent.
    */
   boolean isFlushed();
 
   /**
-   * Adds a {@link com.google.cloud.bigtable.data.v2.models.RowMutation} to the underlying IBulkMutation
-   * mechanism.
+   * Adds a {@link RowMutation} to the underlying IBulkMutation mechanism.
    *
-   * @param rowMutation The {@link com.google.cloud.bigtable.data.v2.models.RowMutation} to add
-   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
+   * @param rowMutation The {@link RowMutation} to add.
+   * @return a {@link ListenableFuture} of type {@link Void} will be set when request is
    *     successful otherwise exception will be thrown.
    */
-  ApiFuture<Void> add(RowMutation rowMutation);
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
+  ListenableFuture<Void> add(RowMutation rowMutation);
+
+  /**
+   * Performs a {@link IBigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRow)} on the
+   * {@link ReadModifyWriteRow}. This method may block if
+   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
+   *
+   * @param request The {@link ReadModifyWriteRow} to send.
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
+  //TODO(rahulkql): Once it is adapted to v2.models, change the return type to ApiFuture.
+  ListenableFuture<Row> readModifyWrite(ReadModifyWriteRow request);
 }

@@ -15,9 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.v2.MutateRowsRequest;
+import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,6 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -66,7 +64,7 @@ public class BigtableBufferedMutatorHelper {
   private boolean closed = false;
 
   private final HBaseRequestAdapter adapter;
-  private final BulkMutation bulkMutation;
+  private final IBulkMutation bulkMutation;
   private final BigtableOptions options;
   private final RequestContext requestContext;
 
@@ -86,7 +84,7 @@ public class BigtableBufferedMutatorHelper {
     this.configuration = configuration;
     this.options = session.getOptions();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
-    this.bulkMutation = session.createBulkMutation(tableName);
+    this.bulkMutation = session.createBulkMutationWrapper(tableName);
     this.requestContext = session.getDataRequestContext();
   }
 
@@ -179,7 +177,7 @@ public class BigtableBufferedMutatorHelper {
         return Futures.immediateFailedFuture(
             new IllegalArgumentException("Cannot perform a mutation on a null object."));
       } else {
-        return bulkMutation.add(toEntry(adapter.adaptEntry(mutation)));
+        return bulkMutation.add(adapter.adaptEntry(mutation));
       }
     } finally {
       closedReadLock.unlock();
@@ -198,9 +196,9 @@ public class BigtableBufferedMutatorHelper {
         future = Futures.immediateFailedFuture(
           new IllegalArgumentException("Cannot perform a mutation on a null object."));
       } else if (mutation instanceof Put) {
-        future = bulkMutation.add(toEntry(adapter.adaptEntry((Put) mutation)));
+        future = bulkMutation.add(adapter.adaptEntry((Put) mutation));
       } else if (mutation instanceof Delete) {
-        future = bulkMutation.add(toEntry(adapter.adaptEntry((Delete) mutation)));
+        future = bulkMutation.add(adapter.adaptEntry((Delete) mutation));
       } else if (mutation instanceof Increment) {
         future = bulkMutation.readModifyWrite(adapter.adapt((Increment) mutation));
       } else if (mutation instanceof Append) {
@@ -215,10 +213,6 @@ public class BigtableBufferedMutatorHelper {
       future = Futures.immediateFailedFuture(e);
     }
     return future;
-  }
-
-  private MutateRowsRequest.Entry toEntry(RowMutation rowMutation) {
-    return rowMutation.toBulkProto(requestContext).getEntries(0);
   }
 
   /**
