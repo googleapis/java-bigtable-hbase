@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.api.core.ApiFuture;
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
@@ -53,6 +52,8 @@ import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -155,7 +156,7 @@ public class TestBigtableDataClientWrapper {
     ListenableFuture<CheckAndMutateRowResponse> future = Futures.immediateFuture(response);
 
     when(client.checkAndMutateRowAsync(request)).thenReturn(future);
-    ApiFuture<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
+    Future<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
     verify(client).checkAndMutateRowAsync(request);
     assertTrue(actual.get());
   }
@@ -172,7 +173,7 @@ public class TestBigtableDataClientWrapper {
     ListenableFuture<CheckAndMutateRowResponse> future = Futures.immediateFuture(response);
 
     when(client.checkAndMutateRowAsync(request)).thenReturn(future);
-    ApiFuture<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
+    Future<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
     verify(client).checkAndMutateRowAsync(request);
     assertFalse(actual.get());
   }
@@ -209,7 +210,7 @@ public class TestBigtableDataClientWrapper {
         com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Collections.singletonList(rowCell));
 
     when(client.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
-    ApiFuture<com.google.cloud.bigtable.data.v2.models.Row> output =
+    Future<com.google.cloud.bigtable.data.v2.models.Row> output =
         clientWrapper.readModifyWriteRowAsync(readModify);
     assertEquals(modelRow, output.get());
     verify(client).readModifyWriteRowAsync(request);

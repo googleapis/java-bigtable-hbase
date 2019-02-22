@@ -29,13 +29,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.bigtable.v2.ReadModifyWriteRowRequest;
-import com.google.bigtable.v2.ReadModifyWriteRowResponse;
-import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.api.core.SettableApiFuture;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
-import com.google.cloud.bigtable.util.ApiFutureUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -379,9 +376,8 @@ public class TestBulkMutation {
 
   @Test
   public void testReadWriteModify()  {
-    SettableFuture<Row> future = SettableFuture.create();
-    when(clientWrapper.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(
-        ApiFutureUtil.adapt(future));
+    SettableApiFuture<Row> future = SettableApiFuture.create();
+    when(clientWrapper.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(future);
     underTest.readModifyWrite(ReadModifyWriteRow.create("table", "key"));
     Assert.assertTrue(operationAccountant.hasInflightOperations());
     future.set(null);
