@@ -19,7 +19,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
-import com.google.cloud.bigtable.util.ApiFutureUtil;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -266,31 +266,24 @@ public class BatchExecutor {
         "Result array must have same dimensions as actions list.");
     Timer.Context timerContext = batchTimer.time();
     List<ApiFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, callback);
-    try {
-      // Don't want to throw an exception for failed futures, instead the place in results is
-      // set to null.
-      ApiFutureUtil.successfulAsList(resultFutures).get();
-      List<Throwable> problems = new ArrayList<>();
-      List<Row> problemActions = new ArrayList<>();
-      List<String> hosts = new ArrayList<>();
-      for (int i = 0; i < resultFutures.size(); i++){
-        try {
-          resultFutures.get(i).get();
-        } catch (ExecutionException e) {
-          problemActions.add(actions.get(i));
-          problems.add(e.getCause());
-          hosts.add(options.getDataHost());
-        }
+    // Don't want to throw an exception for failed futures, instead the place in results is
+    // set to null.
+    List<Throwable> problems = new ArrayList<>();
+    List<Row> problemActions = new ArrayList<>();
+    List<String> hosts = new ArrayList<>();
+    for (int i = 0; i < resultFutures.size(); i++){
+      try {
+        resultFutures.get(i).get();
+      } catch (ExecutionException e) {
+        problemActions.add(actions.get(i));
+        problems.add(e.getCause());
+        hosts.add(options.getDataHost());
       }
-      if (problems.size() > 0) {
-        throw new RetriesExhaustedWithDetailsException(problems, problemActions, hosts);
-      }
-    } catch (ExecutionException e) {
-      LOG.error("Encountered exception in batchCallback(List<>, Object[], callback).", e);
-      throw new IOException("Batch error", e);
-    } finally {
-      timerContext.close();
     }
+    if (problems.size() > 0) {
+      throw new RetriesExhaustedWithDetailsException(problems, problemActions, hosts);
+    }
+    timerContext.close();
   }
 
   /**
