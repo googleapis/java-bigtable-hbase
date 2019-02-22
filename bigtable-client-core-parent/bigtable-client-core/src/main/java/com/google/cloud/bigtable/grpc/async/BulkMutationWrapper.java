@@ -15,16 +15,15 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.api.core.ApiFuture;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * This class wraps existing {@link com.google.cloud.bigtable.grpc.async.BulkMutation} with
@@ -60,19 +59,19 @@ public class BulkMutationWrapper implements IBulkMutation {
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<Void> add(RowMutation rowMutation) {
-    return Futures.transform(delegate.add(rowMutation.toBulkProto(requestContext).getEntries(0)),
+  public ApiFuture<Void> add(RowMutation rowMutation) {
+    return ApiFutureUtil.transformAndAdapt(delegate.add(rowMutation.toBulkProto(requestContext).getEntries(0)),
         new Function<MutateRowResponse, Void>() {
           @Override
           public Void apply(MutateRowResponse response) {
             return null;
           }
-        }, MoreExecutors.directExecutor());
+        });
   }
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<Row> readModifyWrite(ReadModifyWriteRow request) {
-    return delegate.readModifyWrite(request);
+  public ApiFuture<Row> readModifyWrite(ReadModifyWriteRow request) {
+    return ApiFutureUtil.adapt(delegate.readModifyWrite(request));
   }
 }

@@ -19,9 +19,11 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureToListenableFuture;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.util.List;
 
 public final class ApiFutureUtil {
 
@@ -36,5 +38,27 @@ public final class ApiFutureUtil {
   public static <F, T> ApiFuture<T> transformAndAdapt(ListenableFuture<F> listenableFuture,
       Function<F, T> transform) {
     return adapt(Futures.transform(listenableFuture, transform, MoreExecutors.directExecutor()));
+  }
+
+  /**
+   * Creates a new {@code ApiFuture} whose value is a list containing the values of all its
+   * successful input futures.
+   *
+   * <p>Similar to {@link Futures#successfulAsList(Iterable)}.</p>
+   *
+   * @param futures a {@link List} containing {@link ApiFuture} tasks.
+   * @return a future that provides a list of the results of the component futures
+   */
+  public static <V> ApiFuture<List<V>> successfulAsList(
+      Iterable<? extends ApiFuture<? extends V>> futures) {
+    return new ListenableFutureToApiFuture<>(
+        Futures.successfulAsList(
+            Iterables.transform(
+                futures,
+                new Function<ApiFuture<? extends V>, ListenableFuture<? extends V>>() {
+                  public ListenableFuture<? extends V> apply(ApiFuture<? extends V> apiFuture) {
+                    return new ApiFutureToListenableFuture<>(apiFuture);
+                  }
+                })));
   }
 }

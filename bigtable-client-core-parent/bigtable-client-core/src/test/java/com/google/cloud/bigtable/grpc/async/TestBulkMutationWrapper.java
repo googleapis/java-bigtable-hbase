@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,13 +91,13 @@ import static org.mockito.Mockito.when;
   }
 
   @Test
-  public void testReadModifyRow() {
+  public void testReadModifyRow() throws InterruptedException, ExecutionException {
     ReadModifyWriteRow readModifyRow = ReadModifyWriteRow.create("tableId", "test-key");
     ListenableFuture<Row> expectedResponse = Futures.immediateFuture(
         Row.create(ByteString.copyFromUtf8("test-key"), Collections.<RowCell>emptyList()));
     when(mockDelegate.readModifyWrite(readModifyRow)).thenReturn(expectedResponse);
     Future<Row> actualResponse = bulkWrapper.readModifyWrite(readModifyRow);
-    assertEquals(expectedResponse, actualResponse);
+    assertEquals(expectedResponse.get(), actualResponse.get());
     verify(mockDelegate).readModifyWrite(readModifyRow);
   }
 }

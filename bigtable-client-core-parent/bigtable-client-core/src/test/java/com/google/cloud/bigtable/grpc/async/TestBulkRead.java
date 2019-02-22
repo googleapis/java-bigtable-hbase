@@ -20,6 +20,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.core.ApiFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,8 +46,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -99,7 +98,7 @@ public class TestBulkRead {
     when(mockClient.readFlatRows(any(Query.class))).thenReturn(mockScanner);
     FlatRow row = createRow(ByteString.copyFromUtf8("Key"));
     when(mockScanner.next()).thenReturn(row).thenReturn(null);
-    ListenableFuture<FlatRow> future = underTest.add(createRequest(row.getRowKey()));
+    ApiFuture<FlatRow> future = underTest.add(createRequest(row.getRowKey()));
     underTest.flush();
     verify(mockClient, times(1)).readFlatRows(any(Query.class));
     Assert.assertEquals(row, future.get(10, TimeUnit.MILLISECONDS));
@@ -114,8 +113,8 @@ public class TestBulkRead {
     FlatRow row = createRow(ByteString.copyFromUtf8("Key"));
     when(mockScanner.next()).thenReturn(row).thenReturn(null);
     Query request = createRequest(row.getRowKey());
-    ListenableFuture<FlatRow> future1 = underTest.add(request);
-    ListenableFuture<FlatRow> future2 = underTest.add(request);
+    ApiFuture<FlatRow> future1 = underTest.add(request);
+    ApiFuture<FlatRow> future2 = underTest.add(request);
     underTest.flush();
     verify(mockClient, times(1)).readFlatRows(any(Query.class));
     Assert.assertEquals(row, future1.get(10, TimeUnit.MILLISECONDS));
@@ -128,7 +127,7 @@ public class TestBulkRead {
   @Test
   public void testBatchOfOneHundred() throws Exception {
     List<ByteString> rowKeys = createRandomKeys(100);
-    List<ListenableFuture<FlatRow>> futures =
+    List<ApiFuture<FlatRow>> futures =
         addRows(rowKeys, new Answer<ResultScanner<FlatRow>>() {
           @Override
           public ResultScanner<FlatRow> answer(InvocationOnMock invocation) throws Throwable {
@@ -153,7 +152,7 @@ public class TestBulkRead {
   public void testMissingResponses() throws Exception {
     List<ByteString> rowKeys = createRandomKeys(100);
     final Set<ByteString> missing = new HashSet<>();
-    List<ListenableFuture<FlatRow>> futures = addRows(rowKeys, new Answer<ResultScanner<FlatRow>>() {
+    List<ApiFuture<FlatRow>> futures = addRows(rowKeys, new Answer<ResultScanner<FlatRow>>() {
       @Override
       public ResultScanner<FlatRow> answer(InvocationOnMock invocation) throws Throwable {
         Query request = invocation.getArgumentAt(0, Query.class);
@@ -184,12 +183,12 @@ public class TestBulkRead {
    * @param scannerGenerator Generates {@link ResultScanner}s that will generate FlatRows to be
    *     processed by {@link BulkRead}.
    */
-  private List<ListenableFuture<FlatRow>> addRows(
+  private List<ApiFuture<FlatRow>> addRows(
       List<ByteString> rowKeys, Answer<ResultScanner<FlatRow>> scannerGenerator) {
     when(mockClient.readFlatRows(any(Query.class)))
         .thenAnswer(scannerGenerator);
 
-    List<ListenableFuture<FlatRow>> futures = new ArrayList<>();
+    List<ApiFuture<FlatRow>> futures = new ArrayList<>();
     for (ByteString key : rowKeys) {
       futures.add(underTest.add(createRequest(key)));
     }

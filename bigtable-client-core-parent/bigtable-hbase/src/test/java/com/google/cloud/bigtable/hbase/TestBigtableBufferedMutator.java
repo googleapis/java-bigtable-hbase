@@ -22,6 +22,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.core.ApiFutures;
+import com.google.api.core.SettableApiFuture;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import java.io.IOException;
@@ -50,8 +52,6 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
 
 /**
  * Tests for {@link BigtableBufferedMutator}
@@ -71,7 +71,7 @@ public class TestBigtableBufferedMutator {
   private IBulkMutation mockBulkMutation;
 
   @SuppressWarnings("rawtypes")
-  private SettableFuture future = SettableFuture.create();
+  private SettableApiFuture future = SettableApiFuture.create();
 
   @Mock
   private BufferedMutator.ExceptionListener listener;
@@ -145,7 +145,7 @@ public class TestBigtableBufferedMutator {
   @Test
   public void testInvalidPut() throws Exception {
     when(mockBulkMutation.add(any(RowMutation.class)))
-        .thenReturn(Futures.<Void> immediateFailedFuture(new RuntimeException()));
+        .thenReturn(ApiFutures.<Void> immediateFailedFuture(new RuntimeException()));
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(SIMPLE_PUT);
     // Leave some time for the async worker to handle the request.
