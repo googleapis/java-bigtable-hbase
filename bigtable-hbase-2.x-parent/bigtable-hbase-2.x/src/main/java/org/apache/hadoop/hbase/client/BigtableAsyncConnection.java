@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -343,6 +344,15 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
         .stream()
         .map(HRegionLocation::getRegionInfo)
         .collect(Collectors.toCollection(CopyOnWriteArrayList::new));
+  }
+
+  @Override
+  public Hbck getHbck(ServerName serverName) {
+    throw new UnsupportedOperationException("getHbck is not supported.");
+  }
+
+  @Override public CompletableFuture<Hbck> getHbck() {
+    throw new UnsupportedOperationException("getHbck is not supported.");
   }
 
   private SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableNameAdapter,
