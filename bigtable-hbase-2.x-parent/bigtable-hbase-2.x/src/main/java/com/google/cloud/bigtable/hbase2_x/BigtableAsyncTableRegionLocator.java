@@ -62,6 +62,11 @@ public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocat
   }
 
   @Override
+  public CompletableFuture<HRegionLocation> getRegionLocation(byte[] row, int replicaId, boolean reload) {
+    return getRegionLocation(row, reload);
+  }
+
+  @Override
   public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
       ServerName serverName) {
     return new SampledRowKeysAdapter(tableName, serverName) {
