@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.config;
 
 import static com.google.api.client.util.Preconditions.checkState;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_EMULATOR_HOST_ENV_VAR;
+import static com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings.defaultGrpcTransportProviderBuilder;
 import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
 import static org.threeten.bp.Duration.ofMillis;
 
@@ -27,7 +27,6 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.GrpcStatusCode;
-import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
@@ -37,7 +36,7 @@ import com.google.auth.Credentials;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableTableAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
-import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
+import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings.Builder;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
@@ -58,10 +57,8 @@ public class BigtableVeneerSettingsFactory {
 
   //Identifier to distinguish between CBT or GCJ adapter.
   private static final String VENEER_ADAPTER =  BigtableVersionInfo.CORE_USER_AGENT+","
-      + "VENEER_ADAPTER,";
+      + "veneer-adapter,";
 
-  // 256 MB, server has 256 MB limit.
-  private final static int MAX_MESSAGE_SIZE = 1 << 28;
   private static final int RPC_DEADLINE_MS = 360_000;
   private static final int MAX_RETRY_TIMEOUT_MS = 60_000;
 
@@ -77,38 +74,41 @@ public class BigtableVeneerSettingsFactory {
     checkState(options.getRetryOptions().enableRetries(), "Disabling retries is not currently supported.");
     checkState(!options.useCachedChannel(), "cachedDataPool is not currently supported.");
 
-    //TODO:add configuration for emulator hosting.
-    String emulatorHost = System.getenv(BIGTABLE_EMULATOR_HOST_ENV_VAR);
-    checkState(emulatorHost == null, "Emulator Hosting is not supported yet.");
-
     final BigtableDataSettings.Builder builder = BigtableDataSettings.newBuilder();
+    final Builder dataSettingStub =  builder.stubSettings();
     Duration shortRpcTimeoutMs = ofMillis(options.getCallOptionsConfig().getShortRpcTimeoutMs());
 
     builder
         .setProjectId(options.getProjectId())
         .setInstanceId(options.getInstanceId())
-        .setAppProfileId(options.getAppProfileId())
+        .setAppProfileId(options.getAppProfileId());
+
+    dataSettingStub
         .setEndpoint(options.getDataHost() + ":" + options.getPort())
-        .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()))
         .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
-        .setTransportChannelProvider(buildChannelProvider(builder.getEndpoint(), options));
+        .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
+
+    if(options.usePlaintextNegotiation()){
+      dataSettingStub
+          .setTransportChannelProvider(buildChannelProvider(dataSettingStub.getEndpoint(), options));
+    }
 
     // Configuration for rpcTimeout & totalTimeout for non-streaming operations.
-    builder.checkAndMutateRowSettings()
+    dataSettingStub.checkAndMutateRowSettings()
         .setSimpleTimeoutNoRetries(shortRpcTimeoutMs);
 
-    builder.readModifyWriteRowSettings()
+    dataSettingStub.readModifyWriteRowSettings()
         .setSimpleTimeoutNoRetries(shortRpcTimeoutMs);
 
-    buildBulkMutationsSettings(builder, options);
+    buildBulkMutationsSettings(dataSettingStub, options);
 
-    buildReadRowsSettings(builder, options);
+    buildReadRowsSettings(dataSettingStub, options);
 
-    buildReadRowSettings(builder, options);
+    buildReadRowSettings(dataSettingStub, options);
 
-    buildMutateRowSettings(builder, options);
+    buildMutateRowSettings(dataSettingStub, options);
 
-    buildSampleRowKeysSettings(builder, options);
+    buildSampleRowKeysSettings(dataSettingStub, options);
 
     return builder.build();
   }
@@ -132,8 +132,12 @@ public class BigtableVeneerSettingsFactory {
     adminStub
         .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
         .setEndpoint(options.getAdminHost() + ":" + options.getPort())
-        .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()))
+        .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
+
+    if(options.usePlaintextNegotiation()){
+      adminStub
         .setTransportChannelProvider(buildChannelProvider(adminStub.getEndpoint(), options));
+    }
 
     return adminBuilder.build();
   }
@@ -160,10 +164,11 @@ public class BigtableVeneerSettingsFactory {
   }
 
   /** Builds {@link BatchingSettings} based on {@link BulkOptions} configuration. */
-  private static void buildBulkMutationsSettings(Builder builder, BigtableOptions options) {
+  private static void buildBulkMutationsSettings(Builder builder,
+      BigtableOptions options) {
     BulkOptions bulkOptions = options.getBulkOptions();
     BatchingSettings.Builder batchBuilder =
-        builder.bulkMutationsSettings().getBatchingSettings().toBuilder();
+        builder.bulkMutateRowsSettings().getBatchingSettings().toBuilder();
 
     long autoFlushMs = bulkOptions.getAutoflushMs();
     long bulkMaxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();
@@ -186,10 +191,10 @@ public class BigtableVeneerSettingsFactory {
         .setFlowControlSettings(flowControlBuilder.build());
 
     RetrySettings retrySettings =
-        buildIdempotentRetrySettings(builder.bulkMutationsSettings().getRetrySettings(), options);
+        buildIdempotentRetrySettings(builder.bulkMutateRowsSettings().getRetrySettings(), options);
 
     // TODO(rahulkql): implement bulkMutationThrottling & bulkMutationRpcTargetMs, once available
-    builder.bulkMutationsSettings()
+    builder.bulkMutateRowsSettings()
         .setBatchingSettings(batchBuilder.build())
         .setRetrySettings(retrySettings)
         .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
@@ -259,7 +264,7 @@ public class BigtableVeneerSettingsFactory {
     RetrySettings.Builder retryBuilder = retrySettings.toBuilder();
 
     if (retryOptions.allowRetriesWithoutTimestamp()) {
-      LOG.warn("Retries without Timestamp does not support yet.");
+      throw new UnsupportedOperationException("Retries without Timestamp does not support yet.");
     }
 
     // if useTimeout is false, then RPC's are defaults to 6 minutes.
@@ -292,23 +297,16 @@ public class BigtableVeneerSettingsFactory {
   /** Creates {@link TransportChannelProvider} based on Channel Negotiation type. */
   private static TransportChannelProvider buildChannelProvider(String endpoint,
       BigtableOptions options) {
-    //TODO: refactor Google-cloud-java to expose a static defaultTransportChannelProvider.
-    InstantiatingGrpcChannelProvider.Builder transportBuilder =
-        InstantiatingGrpcChannelProvider.newBuilder()
-            .setEndpoint(endpoint)
-            .setPoolSize(options.getChannelCount())
-            .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
-            .setMaxInboundMessageSize(MAX_MESSAGE_SIZE);
 
-    //overriding channel configuration for plaintext negotiation.
-    if (options.usePlaintextNegotiation()) {
-      transportBuilder.setChannelConfigurator(new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-            @Override
-            public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-              return channelBuilder.usePlaintext();
-            }
-          });
-    }
-    return transportBuilder.build();
+    return defaultGrpcTransportProviderBuilder()
+        .setEndpoint(endpoint)
+        .setPoolSize(options.getChannelCount())
+        .setChannelConfigurator(new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          @Override
+          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+            return channelBuilder.usePlaintext();
+          }
+        })
+        .build();
   }
 }

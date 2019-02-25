@@ -144,13 +144,10 @@ public class TestBigtableVeneerSettingsFactory {
    *     <li>Deletes table created with TABLE_ID.</li>
    *   </ul>
    * </pre>
-   * @throws Exception
    */
   @Test
   public void testWithActualTables() throws Exception{
-    /**
-     * Checking if both arguments are available or not.
-     */
+    // Checking if both arguments are available or not.
     Assume.assumeFalse(endToEndArgMissing);
 
     if (adminClient == null || dataClient == null) {
@@ -237,7 +234,7 @@ public class TestBigtableVeneerSettingsFactory {
             .setCredentialOptions(CredentialOptions.nullCredential())
             .setUserAgent(TEST_USER_AGENT).build();
     dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
-    assertTrue(dataSettings.getCredentialsProvider() instanceof NoCredentialsProvider);
+    assertTrue(dataSettings.getStubSettings().getCredentialsProvider() instanceof NoCredentialsProvider);
   }
 
   @Test
@@ -246,25 +243,26 @@ public class TestBigtableVeneerSettingsFactory {
 
     //Streaming operation's RetrySettings & RetryCodes of retryable methods.
     //sampleRowKeys
-    verifyRetry(dataSettings.sampleRowKeysSettings().getRetrySettings());
-    assertEquals(DEFAULT_RETRY_CODES, dataSettings.sampleRowKeysSettings().getRetryableCodes());
+    verifyRetry(dataSettings.getStubSettings().sampleRowKeysSettings().getRetrySettings());
+    assertEquals(DEFAULT_RETRY_CODES, dataSettings.getStubSettings().sampleRowKeysSettings().getRetryableCodes());
 
     //mutateRowSettings
-    verifyRetry(dataSettings.mutateRowSettings().getRetrySettings());
-    assertEquals(DEFAULT_RETRY_CODES, dataSettings.mutateRowSettings().getRetryableCodes());
+    verifyRetry(dataSettings.getStubSettings().mutateRowSettings().getRetrySettings());
+    assertEquals(DEFAULT_RETRY_CODES, dataSettings.getStubSettings().mutateRowSettings().getRetryableCodes());
 
     //bulkMutationsSettings
-    verifyRetry(dataSettings.bulkMutationsSettings().getRetrySettings());
-    assertEquals(DEFAULT_RETRY_CODES, dataSettings.bulkMutationsSettings().getRetryableCodes());
+    verifyRetry(dataSettings.getStubSettings().bulkMutateRowsSettings().getRetrySettings());
+    assertEquals(DEFAULT_RETRY_CODES,
+        dataSettings.getStubSettings().bulkMutateRowsSettings().getRetryableCodes());
 
     //Non-streaming operation's verifying RetrySettings & RetryCodes of non-retryable methods.
     //readModifyWriteRowSettings
-    verifyDisabledRetry(dataSettings.readModifyWriteRowSettings().getRetrySettings());
-    assertTrue(dataSettings.readModifyWriteRowSettings().getRetryableCodes().isEmpty());
+    verifyDisabledRetry(dataSettings.getStubSettings().readModifyWriteRowSettings().getRetrySettings());
+    assertTrue(dataSettings.getStubSettings().readModifyWriteRowSettings().getRetryableCodes().isEmpty());
 
     //checkAndMutateRowSettings
-    verifyDisabledRetry(dataSettings.checkAndMutateRowSettings().getRetrySettings());
-    assertTrue(dataSettings.checkAndMutateRowSettings().getRetryableCodes().isEmpty());
+    verifyDisabledRetry(dataSettings.getStubSettings().checkAndMutateRowSettings().getRetrySettings());
+    assertTrue(dataSettings.getStubSettings().checkAndMutateRowSettings().getRetryableCodes().isEmpty());
   }
 
   private void verifyRetry(RetrySettings retrySettings) {
@@ -298,7 +296,7 @@ public class TestBigtableVeneerSettingsFactory {
         .setBulkOptions(bulkOptions)
         .build();
     dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
-    assertFalse(dataSettings.bulkMutationsSettings().getBatchingSettings().getIsEnabled());
+    assertFalse(dataSettings.getStubSettings().bulkMutateRowsSettings().getBatchingSettings().getIsEnabled());
   }
 
   @Test
@@ -313,7 +311,7 @@ public class TestBigtableVeneerSettingsFactory {
     dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
 
     BulkOptions bulkOptions = options.getBulkOptions();
-    BatchingSettings batchingSettings = dataSettings.bulkMutationsSettings().getBatchingSettings();
+    BatchingSettings batchingSettings = dataSettings.getStubSettings().bulkMutateRowsSettings().getBatchingSettings();
     long outstandingElementCount =
         bulkOptions.getMaxInflightRpcs() * bulkOptions.getBulkMaxRowKeyCount();
 
