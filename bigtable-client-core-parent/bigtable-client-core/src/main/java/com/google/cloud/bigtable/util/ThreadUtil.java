@@ -36,7 +36,7 @@ public class ThreadUtil {
    * @return a {@link ThreadFactory}.
    */
   public static ThreadFactory getThreadFactory(String nameFormat, boolean daemon) {
-    if (PlatformInformation.isOnGAEStandard7() || PlatformInformation.isOnGAEStandard8()) {
+    if (PlatformInformation.isOnGAEStandard7()) {
       return MoreExecutors.platformThreadFactory();
     } else {
       return new ThreadFactoryBuilder()
