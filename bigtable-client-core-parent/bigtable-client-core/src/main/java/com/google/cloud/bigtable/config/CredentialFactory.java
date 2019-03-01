@@ -98,12 +98,11 @@ public class CredentialFactory {
     @Override
     public HttpTransport create() {
       // Consider App Engine Standard
-      if (PlatformInformation.isOnGAEStandard7()) {
+      if (PlatformInformation.isOnGAEStandard7() || PlatformInformation.isOnGAEStandard8()) {
         try {
           return new UrlFetchTransport();
         } catch (Exception e) {
-          LOG.warn("An exception occurred trying to set up the HTTPTransport for credentials, "
-              + " while expecting GAE standard 7.", e);
+          // ignore. May not be on AppEngine.
         }
       }
       return new NetHttpTransport();
