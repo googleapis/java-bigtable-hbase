@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
+import com.google.api.gax.grpc.GaxGrpcProperties;
+import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -39,6 +41,7 @@ import com.google.cloud.bigtable.grpc.async.ThrottlingClientInterceptor;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
+import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.grpc.io.Watchdog;
 import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
@@ -50,8 +53,10 @@ import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
+import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import java.io.Closeable;
 import java.io.IOException;
@@ -205,6 +210,7 @@ public class BigtableSession implements Closeable {
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
     clientInterceptorsList
         .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
+    clientInterceptorsList.add(createGaxHeaderInterceptor());
 
     CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
     RetryOptions retryOptions = options.getRetryOptions();
@@ -251,6 +257,15 @@ public class BigtableSession implements Closeable {
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
 
     // Defer the creation of both the tableAdminClient until we need them.
+  }
+
+  private ClientInterceptor createGaxHeaderInterceptor() {
+    return new HeaderInterceptor(Metadata.Key
+        .of(ApiClientHeaderProvider.getDefaultApiClientHeaderKey(),
+            Metadata.ASCII_STRING_MARSHALLER), String.format("gl-java/%s %s/%s cbt/%s",
+        BigtableVersionInfo.JDK_VERSION,
+        GaxGrpcProperties.getGrpcTokenName(), GaxGrpcProperties.getGrpcVersion(),
+        BigtableVersionInfo.CLIENT_VERSION));
   }
 
   private ManagedChannel getDataChannelPool() throws IOException {
