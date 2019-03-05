@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.config;
+package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
+import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.bigtable.v2.BigtableGrpc.BigtableImplBase;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableVeneerSettingsFactory;
+import com.google.cloud.bigtable.config.CredentialOptions;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.common.io.Resources;
@@ -43,9 +48,11 @@ import io.grpc.stub.StreamObserver;
 import java.io.File;
 import java.net.ServerSocket;
 import java.net.URL;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import javax.net.ssl.SSLException;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -56,9 +63,9 @@ import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
  * This class tests value present in User-Agent's on netty server.
  */
 @RunWith(JUnit4.class)
-public class TestUserAgent {
+public class TestHeaders {
 
-  private static final Logger logger = new Logger(TestUserAgent.class);
+  private static final Logger logger = new Logger(TestHeaders.class);
 
   private static final String TEST_PROJECT_ID = "ProjectId";
   private static final String TEST_INSTANCE_ID = "InstanceId";
@@ -71,16 +78,53 @@ public class TestUserAgent {
   private BigtableDataSettings dataSettings;
   private BigtableDataClient dataClient;
   private Server server;
+  private AtomicBoolean serverPasses = new AtomicBoolean(false);
+  private Pattern xGoogApiPattern;
 
   @After
   public void tearDown() throws Exception {
     if(dataClient != null){
       dataClient.close();
+      dataClient = null;
     }
     if (server != null) {
       server.shutdown();
       server.awaitTermination();
+      server = null;
     }
+    serverPasses.set(false);
+    xGoogApiPattern = null;
+  }
+
+  /**
+   * To Test Headers & PlainText Negotiation type
+   * when cloud-bigtable-client {@link com.google.cloud.bigtable.grpc.BigtableDataClient}.
+   */
+  @Test
+  public void testCBC_UserAgentUsingPlainTextNegotiation() throws Exception{
+    ServerSocket serverSocket = new ServerSocket(0);
+    final int availablePort = serverSocket.getLocalPort();
+    serverSocket.close();
+
+    //Creates non-ssl server.
+    createServer(availablePort);
+
+    BigtableOptions bigtableOptions =
+        BigtableOptions.builder()
+            .setDataHost("localhost")
+            .setAdminHost("localhost")
+            .setProjectId(TEST_PROJECT_ID)
+            .setInstanceId(TEST_INSTANCE_ID)
+            .setUserAgent(TEST_USER_AGENT)
+            .setUsePlaintextNegotiation(true)
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .setPort(availablePort)
+            .build();
+
+    xGoogApiPattern = Pattern.compile(".* cbt/.*");
+    new BigtableSession(bigtableOptions).getDataClient()
+        .readFlatRows(ReadRowsRequest.getDefaultInstance()).next();
+    Assert.assertTrue(serverPasses.get());
   }
 
   /**
@@ -88,7 +132,7 @@ public class TestUserAgent {
    * when {@link BigtableDataSettings} is created using {@link BigtableOptions}.
    */
   @Test
-  public void testUserAgentUsingPlainTextNegotiation() throws Exception{
+  public void testGCJ_UserAgentUsingPlainTextNegotiation() throws Exception {
     ServerSocket serverSocket = new ServerSocket(0);
     final int availablePort = serverSocket.getLocalPort();
     serverSocket.close();
@@ -110,8 +154,10 @@ public class TestUserAgent {
 
     dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(bigtableOptions);
 
+    xGoogApiPattern = Pattern.compile(".* gapic/.*");
     dataClient = BigtableDataClient.create(dataSettings);
     dataClient.readRow(TABLE_ID, ROWKEY);
+    Assert.assertTrue(serverPasses.get());
   }
 
   /**
@@ -119,7 +165,7 @@ public class TestUserAgent {
    * enabled server.
    */
   @Test
-  public void testUserAgentUsingTLSNegotiation() throws Exception {
+  public void testGCJ_UserAgentUsingTLSNegotiation() throws Exception {
     ServerSocket serverSocket = new ServerSocket(0);
     final int availablePort = serverSocket.getLocalPort();
     serverSocket.close();
@@ -150,8 +196,11 @@ public class TestUserAgent {
         })
         .build());
 
+    // Setting this to null, because as of 3/4/2019 the header doesn't get passed through.
+    xGoogApiPattern = null;
     dataClient = BigtableDataClient.create(builder.build());
     dataClient.readRow(TABLE_ID, ROWKEY);
+    Assert.assertTrue(serverPasses.get());
   }
 
   /** Creates simple server to intercept plainText Negotiation RPCs. */
@@ -221,16 +270,30 @@ public class TestUserAgent {
       //Logging all available headers.
       logger.info("headers received from BigtableDataClient:" + requestHeaders);
 
-      Metadata.Key<String> USER_AGENT_KEY =
-          Metadata.Key.of("user-agent", Metadata.ASCII_STRING_MARSHALLER);
-      String headerValue = requestHeaders.get(USER_AGENT_KEY);
-
-      //In case of user-agent not matching, throwing AssertionError.
-      if (!EXPECTED_HEADER_PATTERN.matcher(headerValue).matches()) {
-        throw new AssertionError("User-Agent's format did not match");
+      testHeader(requestHeaders, "user-agent", EXPECTED_HEADER_PATTERN);
+      if (xGoogApiPattern != null) {
+        testHeader(requestHeaders, ApiClientHeaderProvider.getDefaultApiClientHeaderKey(),
+            xGoogApiPattern);
       }
+
+      // Add a test for the prefix header.  As of 3/4/2019, cloud-bigtable-client uses a different
+      // header than google-cloud-java
+
+      serverPasses.set(true);
+
       return next.startCall(new ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(call) {
       }, requestHeaders);
+    }
+
+    protected void testHeader(Metadata requestHeaders, String keyName, Pattern pattern) {
+      Metadata.Key<String> key =
+          Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER);
+      String headerValue = requestHeaders.get(key);
+
+      //In case of user-agent not matching, throwing AssertionError.
+      if (headerValue == null || !pattern.matcher(headerValue).matches()) {
+        throw new AssertionError(keyName + "'s format did not match.  header: " + headerValue);
+      }
     }
   }
 }
