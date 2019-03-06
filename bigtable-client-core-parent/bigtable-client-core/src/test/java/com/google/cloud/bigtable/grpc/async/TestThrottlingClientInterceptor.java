@@ -8,12 +8,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.grpc.Status.Code;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -108,5 +110,60 @@ public class TestThrottlingClientInterceptor {
     listenerArgumentCaptor.getValue().onClose(status, trailers);
     verify(mockResourceLimiter, times(1)).markCanBeCompleted(eq(id));
     verify(mockListener, times(1)).onClose(same(status), same(trailers));
+  }
+
+  @Test
+  public void testInterrupted() throws Exception {
+    when(mockResourceLimiter.registerOperationWithHeapSize(anyLong()))
+        .thenThrow(new InterruptedException("Fake interrupted error"));
+
+    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
+
+    ClientCall call = underTest
+        .interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
+
+    call.start(mockListener, new Metadata());
+    call.sendMessage(request);
+    call.halfClose();
+    call.request(1);
+
+    ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
+
+    verify(mockListener, times(1))
+        .onClose(statusCaptor.capture(), any(Metadata.class));
+    Assert.assertEquals(statusCaptor.getValue().getCode(), Code.INTERNAL);
+  }
+
+  @Test
+  public void testCancel() throws Exception {
+    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
+
+    ClientCall call = underTest
+        .interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
+
+    call.start(mockListener, new Metadata());
+    call.sendMessage(request);
+    call.cancel("fake cancel", null);
+
+
+    verify(mockClientCall).cancel(eq("fake cancel"), any(Throwable.class));
+  }
+
+  @Test
+  public void testEarlyCancel() throws Exception {
+    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
+
+    ClientCall call = underTest
+        .interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
+
+    call.start(mockListener, new Metadata());
+    call.cancel("fake cancel", null);
+
+
+    ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
+
+    verify(mockListener, times(1))
+        .onClose(statusCaptor.capture(), any(Metadata.class));
+    Assert.assertEquals(statusCaptor.getValue().getCode(), Code.CANCELLED);
   }
 }
