@@ -184,4 +184,10 @@ public class Logger {
       log.fatal(String.format(message, args), t);
     }
   }
+
+
+  /** Get the underlying {@link org.apache.commons.logging.Log} */
+  public Log getLog() {
+    return log;
+  }
 }

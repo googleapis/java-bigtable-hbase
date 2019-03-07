@@ -548,7 +548,9 @@ public class BigtableSession implements Closeable {
       BigtableOptions options, ClientInterceptor ... interceptors) throws SSLException {
 
     LOG.info("Creating new channel for %s", host);
-    LOG.debug(Throwables.getStackTraceAsString(new Throwable()));
+    if (LOG.getLog().isDebugEnabled()) {
+      LOG.debug(Throwables.getStackTraceAsString(new Throwable()));
+    }
 
     // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
     // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
