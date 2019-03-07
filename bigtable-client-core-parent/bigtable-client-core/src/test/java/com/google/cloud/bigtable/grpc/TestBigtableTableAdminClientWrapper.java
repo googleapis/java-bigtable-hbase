@@ -246,7 +246,7 @@ public class TestBigtableTableAdminClientWrapper {
         .build();
 
     doNothing().when(mockAdminClient).dropRowRange(request);
-    clientWrapper.dropRowRange(TABLE_ID, null);
+    clientWrapper.dropAllRows(TABLE_ID);
 
     verify(mockAdminClient).dropRowRange(request);
   }
@@ -275,7 +275,7 @@ public class TestBigtableTableAdminClientWrapper {
 
     when(mockAdminClient.dropRowRangeAsync(request))
         .thenReturn(immediateFuture(Empty.newBuilder().build()));
-    clientWrapper.dropRowRangeAsync(TABLE_ID, null);
+    clientWrapper.dropAllRowsAsync(TABLE_ID);
 
     verify(mockAdminClient).dropRowRangeAsync(request);
   }

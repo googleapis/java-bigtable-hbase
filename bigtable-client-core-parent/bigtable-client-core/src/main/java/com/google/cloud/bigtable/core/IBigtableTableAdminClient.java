@@ -128,6 +128,20 @@ public interface IBigtableTableAdminClient {
    */
   ApiFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix);
 
+  /**
+   * Drops all data in the table.
+   *
+   * @param tableId a {@link String} object.
+   */
+  void dropAllRows(String tableId);
+
+  /**
+   * Asynchronously drops all data in the table
+   *
+   * @param tableId a {@link String} object.
+   */
+  ApiFuture<Void> dropAllRowsAsync(String tableId);
+
   // ////////////// SNAPSHOT methods /////////////
   /**
    * Creates a new snapshot from a table in a specific cluster.

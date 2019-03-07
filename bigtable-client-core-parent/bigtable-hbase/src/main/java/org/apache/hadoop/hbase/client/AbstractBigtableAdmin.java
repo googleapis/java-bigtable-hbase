@@ -746,7 +746,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
     if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
-    issueBulkDelete(tableName, "");
+    try {
+      tableAdminClientWrapper.dropAllRows(tableName.getNameAsString());
+    } catch (Throwable throwable) {
+      throw new IOException(
+          String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);
+    }
     disabledTables.remove(tableName);
   }
 
@@ -758,28 +763,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @throws java.io.IOException if any.
    */
   public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
-    issueBulkDelete(tableName, Bytes.toString(prefix));
-  }
-
-  private void issueBulkDelete(TableName tableName, String rowKeyPrefix)
-      throws IOException {
     try {
-      tableAdminClientWrapper
-          .dropRowRange(tableName.getNameAsString(), rowKeyPrefix);
+      tableAdminClientWrapper.dropRowRange(tableName.getNameAsString(), Bytes.toString(prefix));
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);
     }
-  }
-
-  /**
-   * <p>toBigtableName.</p>
-   *
-   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @return a {@link java.lang.String} object.
-   */
-  protected String toBigtableName(TableName tableName) {
-    return bigtableInstanceName.toTableNameStr(tableName.getNameAsString());
   }
 
   /** {@inheritDoc} */
