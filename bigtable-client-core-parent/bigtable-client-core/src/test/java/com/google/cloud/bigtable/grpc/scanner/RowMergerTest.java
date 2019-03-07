@@ -67,7 +67,9 @@ public class RowMergerTest {
     RowMerger underTest = new RowMerger(observer);
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
-    verify(observer, times(1)).onError(any(IllegalArgumentException.class));
+
+    // This should log, but not fail
+    verify(observer, times(0)).onError(any(Exception.class));
   }
 
   @Test
@@ -127,7 +129,6 @@ public class RowMergerTest {
     verify(observer, times(1)).onNext(eq(row));
   }
 
-
   @Test
   public void testSimpleReset() {
     CellChunk cellChunk1 = createCell("row_key1", "family", "qualifier", "value", 1, false);
@@ -138,6 +139,17 @@ public class RowMergerTest {
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
     verify(observer, times(0)).onNext(eq(toRow(cellChunk1)));
     verify(observer, times(1)).onNext(eq(toRow(cellChunk2)));
+  }
+
+  @Test
+  public void testMissingKeyAfterReset() {
+    CellChunk cellChunk1 = createCell("row_key1", "family", "qualifier", "value", 1, false);
+    CellChunk cellChunk2 = createCell(null, null, null, "value", 1, true);
+    RowMerger underTest = new RowMerger(observer);
+    underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
+    underTest.onNext(ReadRowsResponse.newBuilder().addChunks(CellChunk.newBuilder().setResetRow(true)).build());
+    underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
+    verify(observer, times(1)).onError(any(Exception.class));
   }
 
 

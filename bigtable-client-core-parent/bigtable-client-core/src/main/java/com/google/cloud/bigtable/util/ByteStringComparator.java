@@ -17,23 +17,22 @@ package com.google.cloud.bigtable.util;
 
 import java.util.Comparator;
 
+import com.google.common.primitives.UnsignedBytes;
 import com.google.protobuf.ByteString;
 
 /**
  * Compares {@link ByteString}s.
  */
-public final class ByteStringComparator implements Comparator<ByteString>{
+public final class ByteStringComparator implements Comparator<ByteString> {
 
-  public static final ByteStringComparator INSTANCE = new ByteStringComparator();
+  // TODO: Newer versions of ByteStrings have a comparator.  We should use that comparator
+  // once the protobuf dependencies are upgraded.
+  public static final Comparator<ByteString> INSTANCE = new ByteStringComparator();
 
   @Override
   public int compare(ByteString key1, ByteString key2) {
     if (key1 == null) {
-      if (key2 == null) {
-        return 0;
-      } else {
-        return 1;
-      }
+      return key2 == null ? 0 : 1;
     } else if (key2 == null) {
       return -1;
     }
@@ -45,11 +44,7 @@ public final class ByteStringComparator implements Comparator<ByteString>{
     int size = Math.min(key1.size(), key2.size());
 
     for (int i = 0; i < size; i++) {
-      // compare bytes as unsigned
-      int byte1 = key1.byteAt(i) & 0xff;
-      int byte2 = key2.byteAt(i) & 0xff;
-
-      int comparison = Integer.compare(byte1, byte2);
+      int comparison = UnsignedBytes.compare(key1.byteAt(i), key2.byteAt(i));
       if (comparison != 0) {
         return comparison;
       }

@@ -122,11 +122,15 @@ protected static final Logger LOG = new Logger(RowMerger.class);
         final ByteString rowKey = newChunk.getRowKey();
         Preconditions.checkArgument(!rowKey.isEmpty(), "A row key must be set: %s",
           newChunk);
-        if (previousKey != null &&
-            ByteStringComparator.INSTANCE.compare(previousKey, rowKey) >= 0) {
-          throw new IllegalArgumentException(String
-              .format("Found key '%s' after key '%s'", rowKey.toStringUtf8(),
-                  previousKey.toStringUtf8()));
+        if (previousKey != null) {
+          int comparison = ByteStringComparator.INSTANCE.compare(previousKey, rowKey);
+          if (comparison == 0) {
+            throw new IllegalStateException(String
+                .format("Found key '%s' after key '%s'", rowKey.toStringUtf8(), previousKey.toStringUtf8()));
+          } else if (comparison > 0) {
+            LOG.warn("Found key '%s' after key '%s'", rowKey.toStringUtf8(),
+                previousKey.toStringUtf8());
+          }
         }
         Preconditions.checkArgument(newChunk.hasQualifier(), "A column qualifier must be set: %s",
           newChunk);
