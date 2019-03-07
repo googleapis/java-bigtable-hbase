@@ -1,29 +1,30 @@
 package com.google.cloud.bigtable.hbase.util;
 
 
-import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.hbase.HConstants;
 
 public class TimestampConverter {
-  private static final long STEP = BigtableConstants.BIGTABLE_TIMEUNIT
-      .convert(1, BigtableConstants.HBASE_TIMEUNIT);
+  // The difference between milliseconds and microseconds is a factor of 1000
+  private static final long FACTOR = 1000l;
 
   /**
    * Maximum timestamp (in usecs) that bigtable can handle while preserving lossless conversion to hbase timestamps in
    * ms)
    */
-  private static final long BIGTABLE_MAX_TIMESTAMP = Long.MAX_VALUE - (Long.MAX_VALUE % STEP);
+  @VisibleForTesting
+  static final long BIGTABLE_MAX_TIMESTAMP = Long.MAX_VALUE - (Long.MAX_VALUE % FACTOR);
 
   /**
    * Maximum timestamp that hbase can send to bigtable in ms. This limitation exists because bigtable operates on usecs,
    * while hbase operates on ms.
    */
-  private static final long HBASE_EFFECTIVE_MAX_TIMESTAMP = BigtableConstants.HBASE_TIMEUNIT
-      .convert(BIGTABLE_MAX_TIMESTAMP, BigtableConstants.BIGTABLE_TIMEUNIT);
+  @VisibleForTesting
+  static final long HBASE_EFFECTIVE_MAX_TIMESTAMP = BIGTABLE_MAX_TIMESTAMP / FACTOR;
 
   public static long hbase2bigtable(long timestamp) {
     if (timestamp < HBASE_EFFECTIVE_MAX_TIMESTAMP) {
-      return BigtableConstants.BIGTABLE_TIMEUNIT.convert(timestamp, BigtableConstants.HBASE_TIMEUNIT);
+      return timestamp * FACTOR;
     } else {
       return BIGTABLE_MAX_TIMESTAMP;
     }
@@ -33,7 +34,7 @@ public class TimestampConverter {
     if (timestamp >= BIGTABLE_MAX_TIMESTAMP) {
       return HConstants.LATEST_TIMESTAMP;
     } else {
-      return BigtableConstants.HBASE_TIMEUNIT.convert(timestamp, BigtableConstants.BIGTABLE_TIMEUNIT);
+      return timestamp / FACTOR;
     }
   }
 }

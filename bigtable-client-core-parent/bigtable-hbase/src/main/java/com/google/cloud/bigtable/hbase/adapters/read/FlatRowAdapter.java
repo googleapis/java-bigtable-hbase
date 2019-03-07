@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
@@ -36,11 +35,6 @@ import org.apache.hadoop.hbase.util.Bytes;
  * @version $Id: $Id
  */
 public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
-  // This only works because BIGTABLE_TIMEUNIT is smaller than HBASE_TIMEUNIT, otherwise we will get
-  // 0.
-  static final long TIME_CONVERSION_UNIT = BigtableConstants.BIGTABLE_TIMEUNIT.convert(1,
-    BigtableConstants.HBASE_TIMEUNIT);
-
   /**
    * {@inheritDoc} Convert a {@link FlatRow} to a {@link Result}.
    */

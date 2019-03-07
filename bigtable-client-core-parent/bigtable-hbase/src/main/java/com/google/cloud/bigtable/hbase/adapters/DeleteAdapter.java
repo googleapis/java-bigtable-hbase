@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import static com.google.cloud.bigtable.data.v2.models.Range.TimestampRange;
 
-import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -97,15 +97,11 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
         cell.getQualifierOffset(),
         cell.getQualifierLength());
 
-    long endTimestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
-        cell.getTimestamp() + 1,
-        BigtableConstants.HBASE_TIMEUNIT);
+    long endTimestamp = TimestampConverter.hbase2bigtable(cell.getTimestamp() + 1);
 
     if (isPointDelete(cell)) {
       // Delete a single cell
-      long startTimestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
-        cell.getTimestamp(),
-        BigtableConstants.HBASE_TIMEUNIT);
+      long startTimestamp = TimestampConverter.hbase2bigtable(cell.getTimestamp());
       mutation.deleteCells(familyByteString.toStringUtf8(), cellQualifierByteString, TimestampRange.create(startTimestamp, endTimestamp));
     } else {
       // Delete all cells before a timestamp

@@ -18,22 +18,12 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 
 /**
  * Common utilities for Timestamp filters.
  */
 public class TimestampFilterUtil {
-
-  /**
-   * Converts an HBase timestamp in milliseconds to a Cloud Bigtable timestamp in Microseconds.
-   * @param timestamp a long value.
-   * @return a long value.
-   */
-  public static long hbaseToBigtableTimeUnit(long timestamp) {
-    return BigtableConstants.BIGTABLE_TIMEUNIT.convert(
-        timestamp, BigtableConstants.HBASE_TIMEUNIT);
-  }
 
   /**
    * Converts a [startMs, endMs) timestamps to a Cloud Bigtable [startMicros, endMicros) filter.
@@ -44,8 +34,9 @@ public class TimestampFilterUtil {
    */
   public static Filter hbaseToTimestampRangeFilter(long hbaseStartTimestamp,
       long hbaseEndTimestamp) {
-    return toTimestampRangeFilter(hbaseToBigtableTimeUnit(hbaseStartTimestamp),
-      hbaseToBigtableTimeUnit(hbaseEndTimestamp));
+    return toTimestampRangeFilter(
+        TimestampConverter.hbase2bigtable(hbaseStartTimestamp),
+        TimestampConverter.hbase2bigtable(hbaseEndTimestamp));
   }
 
   /**
