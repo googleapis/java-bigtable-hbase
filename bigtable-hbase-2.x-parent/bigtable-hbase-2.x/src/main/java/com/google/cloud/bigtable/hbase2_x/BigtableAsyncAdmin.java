@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
+import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
 
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
@@ -26,6 +27,7 @@ import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
@@ -89,7 +91,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final Logger LOG = new Logger(getClass());
 
   private final Set<TableName> disabledTables;
-  private final BigtableTableAdminClient bigtableTableAdminClient;
+  private final IBigtableTableAdminClient bigtableTableAdminClient;
   private final BigtableInstanceName bigtableInstanceName;
   private final TableAdapter2x tableAdapter2x;
   private final CommonConnection asyncConnection;
@@ -98,8 +100,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
     BigtableOptions options = asyncConnection.getOptions();
-    this.bigtableTableAdminClient = new BigtableTableAdminClient(
-        asyncConnection.getSession().getTableAdminClientWrapper());
+    this.bigtableTableAdminClient = asyncConnection.getSession().getTableAdminClientWrapper();
     this.disabledTables = asyncConnection.getDisabledTables();
     this.bigtableInstanceName = options.getInstanceName();
     this.tableAdapter2x = new TableAdapter2x(options);
@@ -121,7 +122,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     }
 
     CreateTableRequest request = TableAdapter2x.adapt(desc, splitKeys);
-    return bigtableTableAdminClient.createTableAsync(request)
+    return toCompletableFuture(bigtableTableAdminClient.createTableAsync(request))
         .handle((resp, ex) -> {
           if (ex != null) {
             throw new CompletionException(
@@ -183,7 +184,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Void> deleteTable(TableName tableName) {
-    return bigtableTableAdminClient.deleteTableAsync(tableName.getNameAsString())
+    return toCompletableFuture(bigtableTableAdminClient.deleteTableAsync(tableName.getNameAsString()))
         .thenAccept(r -> disabledTables.remove(tableName));
   }
 
@@ -195,7 +196,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   private CompletableFuture<List<TableName>> listTableNames(Optional<Pattern> tableNamePattern) {
-    return bigtableTableAdminClient.listTablesAsync().thenApply(r ->
+    return toCompletableFuture(bigtableTableAdminClient.listTablesAsync()).thenApply(r ->
       r.stream()
           .filter(e -> !tableNamePattern.isPresent() || tableNamePattern.get().matcher(e).matches())
           .map(TableName::valueOf)
@@ -217,7 +218,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   private CompletableFuture<List<TableDescriptor>> listTables(Optional<Pattern> tableNamePattern) {
     //TODO: returns table name as descriptor, Refactor it to return full descriptors.
-    return bigtableTableAdminClient.listTablesAsync()
+    return toCompletableFuture(bigtableTableAdminClient.listTablesAsync())
         .thenApply(r -> r.stream()
         .filter(t -> !tableNamePattern.isPresent() || tableNamePattern.get().matcher(t).matches())
         .map(m -> com.google.bigtable.admin.v2.Table.newBuilder()
@@ -261,7 +262,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       return CompletableFuture.completedFuture(null);
     }
 
-    return bigtableTableAdminClient.getTableAsync(tableName.getNameAsString())
+    return toCompletableFuture(bigtableTableAdminClient.getTableAsync(tableName.getNameAsString()))
         .handle((resp, ex) -> {
           if (ex != null) {
             if (Status.fromThrowable(ex).getCode() == Status.Code.NOT_FOUND) {
@@ -285,7 +286,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       } catch (IOException e) {
         throw new CompletionException(e);
       }
-    }).thenCompose(bigtableTableAdminClient::deleteSnapshotAsync);
+    }).thenAccept(bigtableTableAdminClient::deleteSnapshotAsync);
   }
 
   @Override
@@ -337,8 +338,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
    * @param modifications a {@link ModifyTableBuilder} object.
    */
   private CompletableFuture<Void> modifyColumns(ModifyTableBuilder modifications) {
-    return bigtableTableAdminClient
-        .modifyColumnFamilyAsync(modifications.build())
+    return toCompletableFuture(bigtableTableAdminClient
+        .modifyFamiliesAsync(modifications.build()))
         .thenApply(r -> null);
   }
 
@@ -436,7 +437,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
 
-    return bigtableTableAdminClient.dropRowRangeAsync(tableName.getNameAsString(), "");
+    return toCompletableFuture(bigtableTableAdminClient.dropAllRowsAsync(tableName.getNameAsString()));
   }
 
 
@@ -474,8 +475,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         } catch (IOException e) {
           throw new CompletionException(e);
         }
-      }).thenCompose(
-          c -> bigtableTableAdminClient.snapshotTableAsync(c).thenApply(r -> null));
+      }).thenAccept(
+          c -> toCompletableFuture(bigtableTableAdminClient.snapshotTableAsync(c)));
   }
 
   @Override
@@ -489,8 +490,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         } catch (IOException e) {
           throw new CompletionException(e);
         }
-      }).thenCompose(
-          c -> bigtableTableAdminClient.createTableFromSnapshotAsync(c).thenApply(r -> null));
+      }).thenAccept(
+          c -> toCompletableFuture(bigtableTableAdminClient.createTableFromSnapshotAsync(c)));
   }
 
   @Override
@@ -504,7 +505,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         throw new CompletionException(e);
       }
     }).thenCompose(request ->
-        bigtableTableAdminClient.listSnapshotsAsync(request)
+        toCompletableFuture(bigtableTableAdminClient.listSnapshotsAsync(request))
             .thenApply(r -> r.getSnapshotsList()
                 .stream()
                 .map(BigtableAsyncAdmin::toSnapshotDescription)

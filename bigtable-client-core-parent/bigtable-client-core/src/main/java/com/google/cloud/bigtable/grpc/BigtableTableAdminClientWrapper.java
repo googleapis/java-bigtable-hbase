@@ -204,14 +204,55 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   /** {@inheritDoc} */
   @Override
   public void dropRowRange(String tableId, String rowKeyPrefix) {
-    delegate.dropRowRange(buildDropRowRangeRequest(tableId, rowKeyPrefix));
+    Preconditions.checkNotNull(rowKeyPrefix);
+    DropRowRangeRequest protoRequest =
+        DropRowRangeRequest.newBuilder()
+            .setName(instanceName.toTableNameStr(tableId))
+            .setDeleteAllDataFromTable(false)
+            .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix))
+            .build();
+    delegate.dropRowRange(protoRequest);
   }
 
   /** {@inheritDoc} */
   @Override
   public ApiFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
+    Preconditions.checkNotNull(rowKeyPrefix);
+    DropRowRangeRequest protoRequest =
+        DropRowRangeRequest.newBuilder()
+            .setName(instanceName.toTableNameStr(tableId))
+            .setDeleteAllDataFromTable(false)
+            .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix))
+            .build();
     return ApiFutureUtil.transformAndAdapt(
-        delegate.dropRowRangeAsync(buildDropRowRangeRequest(tableId, rowKeyPrefix)),
+        delegate.dropRowRangeAsync(protoRequest),
+        new Function<Empty, Void>() {
+          @Override
+          public Void apply(Empty empty) {
+            return null;
+          }
+        });
+  }
+
+  @Override
+  public void dropAllRows(String tableId) {
+    DropRowRangeRequest protoRequest =
+        DropRowRangeRequest.newBuilder()
+            .setName(instanceName.toTableNameStr(tableId))
+            .setDeleteAllDataFromTable(true)
+            .build();
+   delegate.dropRowRange(protoRequest);
+  }
+
+  @Override
+  public ApiFuture<Void> dropAllRowsAsync(String tableId) {
+    DropRowRangeRequest protoRequest =
+        DropRowRangeRequest.newBuilder()
+            .setName(instanceName.toTableNameStr(tableId))
+            .setDeleteAllDataFromTable(true)
+            .build();
+    return ApiFutureUtil.transformAndAdapt(
+        delegate.dropRowRangeAsync(protoRequest),
         new Function<Empty, Void>() {
           @Override
           public Void apply(Empty empty) {
@@ -250,21 +291,5 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   public ApiFuture<Operation> createTableFromSnapshotAsync(
       CreateTableFromSnapshotRequest request) {
     return ApiFutureUtil.adapt(delegate.createTableFromSnapshotAsync(request));
-  }
-
-  private DropRowRangeRequest buildDropRowRangeRequest(String tableId, String rowKeyPrefix) {
-    DropRowRangeRequest.Builder dropRequestProtoBuiler =
-        DropRowRangeRequest.newBuilder()
-            .setName(instanceName.toTableNameStr(tableId));
-
-    if (!Strings.isNullOrEmpty(rowKeyPrefix)) {
-      dropRequestProtoBuiler
-          .setDeleteAllDataFromTable(false)
-          .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix));
-    } else {
-      dropRequestProtoBuiler.setDeleteAllDataFromTable(true);
-    }
-
-    return dropRequestProtoBuiler.build();
   }
 }
