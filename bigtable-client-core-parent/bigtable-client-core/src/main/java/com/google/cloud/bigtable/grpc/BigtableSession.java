@@ -16,6 +16,7 @@
 
 package com.google.cloud.bigtable.grpc;
 
+import com.google.common.base.Throwables;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -112,7 +113,7 @@ public class BigtableSession implements Closeable {
       }
     });
     for (final String host : Arrays.asList(BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT,
-      BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT)) {
+        BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT)) {
       connectionStartupExecutor.execute(new Runnable() {
         @Override
         public void run() {
@@ -182,8 +183,8 @@ public class BigtableSession implements Closeable {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(options.getUserAgent()), USER_AGENT_EMPTY_OR_NULL);
     LOG.info(
-        "Opening connection for projectId %s, instanceId %s, "
-        + "on data host %s, admin host %s.",
+        "Opening session for projectId %s, instanceId %s, "
+            + "on data host %s, admin host %s.",
         options.getProjectId(), options.getInstanceId(), options.getDataHost(),
         options.getAdminHost());
     LOG.info("Bigtable options: %s.", options);
@@ -236,7 +237,7 @@ public class BigtableSession implements Closeable {
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
 
     // Defer the creation of both the tableAdminClient until we need them.
-    }
+  }
 
   private ManagedChannel getDataChannelPool() throws IOException {
     String host = options.getDataHost();
@@ -263,9 +264,9 @@ public class BigtableSession implements Closeable {
       try (BigtableClusterUtilities util = new BigtableClusterUtilities(options)) {
         ListClustersResponse clusters = util.getClusters();
         Preconditions.checkState(clusters.getClustersCount() == 1,
-          String.format(
-            "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
-            options.getProjectId(), options.getInstanceId(), clusters.getClustersCount()));
+            String.format(
+                "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
+                options.getProjectId(), options.getInstanceId(), clusters.getClustersCount()));
         clusterName = new BigtableClusterName(clusters.getClusters(0).getName());
       } catch (GeneralSecurityException e) {
         throw new IOException("Could not get cluster Id.", e);
@@ -449,7 +450,7 @@ public class BigtableSession implements Closeable {
     final List<ClientInterceptor> interceptorList = new ArrayList<>();
 
     ClientInterceptor credentialsInterceptor = CredentialInterceptorCache.getInstance()
-            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+        .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
     if (credentialsInterceptor != null) {
       interceptorList.add(credentialsInterceptor);
     }
@@ -480,6 +481,11 @@ public class BigtableSession implements Closeable {
    */
   public static ManagedChannel createNettyChannel(String host,
       BigtableOptions options, ClientInterceptor ... interceptors) throws SSLException {
+
+    LOG.info("Creating new channel for %s", host);
+    if (LOG.getLog().isDebugEnabled()) {
+      LOG.debug(Throwables.getStackTraceAsString(new Throwable()));
+    }
 
     // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
     // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
@@ -530,7 +536,7 @@ public class BigtableSession implements Closeable {
         // but users should not currently be using them directly.
         //
         // NOTE: We haven't seen this problem since removing the RefreshingChannel
-        LOG.info("Could not close the channel after 10 seconds.");
+        LOG.info("Could not close %s after 10 seconds.", channel.getClass().getName());
         break;
       }
     }
