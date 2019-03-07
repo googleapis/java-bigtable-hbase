@@ -129,16 +129,16 @@ public interface IBigtableTableAdminClient {
   ApiFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix);
 
   /**
-   * Permanently deletes all rows of specified table.
+   * Drops all data in the table.
    *
-   * @param tableId a tableId
+   * @param tableId a {@link String} object.
    */
   void dropAllRows(String tableId);
 
   /**
-   * Permanently deletes all rows of specified table.
+   * Asynchronously drops all data in the table
    *
-   * @param tableId a tableId
+   * @param tableId a {@link String} object.
    */
   ApiFuture<Void> dropAllRowsAsync(String tableId);
 
