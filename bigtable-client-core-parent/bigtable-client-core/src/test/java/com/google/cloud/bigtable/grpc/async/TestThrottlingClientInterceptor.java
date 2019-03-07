@@ -134,6 +134,25 @@ public class TestThrottlingClientInterceptor {
     Assert.assertEquals(statusCaptor.getValue().getCode(), Code.INTERNAL);
   }
 
+
+  @Test
+  public void testCallProxy() {
+    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
+
+    ClientCall call = underTest
+        .interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
+
+    call.start(mockListener, new Metadata());
+    call.sendMessage(request);
+    call.halfClose();
+    call.request(1);
+
+    verify(mockClientCall).start(any(ClientCall.Listener.class), any(Metadata.class));
+    verify(mockClientCall).sendMessage(request);
+    verify(mockClientCall).halfClose();
+    verify(mockClientCall).request(1);
+  }
+
   @Test
   public void testCancel() throws Exception {
     final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
@@ -166,4 +185,5 @@ public class TestThrottlingClientInterceptor {
         .onClose(statusCaptor.capture(), any(Metadata.class));
     Assert.assertEquals(statusCaptor.getValue().getCode(), Code.CANCELLED);
   }
+
 }

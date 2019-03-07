@@ -132,6 +132,7 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
         delegateCall.start(markCompletionListener, headers);
         delegateCall.request(numMessagesRequested);
         delegateCall.sendMessage(message);
+        delegateCall.halfClose();
       }
 
       @Override
