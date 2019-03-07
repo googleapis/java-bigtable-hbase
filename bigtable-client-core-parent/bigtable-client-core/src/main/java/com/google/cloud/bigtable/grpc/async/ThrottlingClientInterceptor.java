@@ -22,18 +22,18 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall;
 import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import java.util.concurrent.CancellationException;
+import javax.annotation.Nullable;
 
 /**
  * Throttles requests based on {@link ResourceLimiter}
  *
  */
 public class ThrottlingClientInterceptor implements ClientInterceptor {
-
   private final ResourceLimiter resourceLimiter;
 
   public ThrottlingClientInterceptor(ResourceLimiter resourceLimiter) {
@@ -48,7 +48,9 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
       return delegateChannel.newCall(method, callOptions);
     }
 
-    return new ForwardingClientCall<ReqT, RespT>() {
+    return new ClientCall<ReqT, RespT>() {
+      private boolean cancelledEarly;
+
       private ClientCall.Listener<RespT> delegateListener = null;
       private ClientCall<ReqT, RespT> delegateCall;
       private Metadata headers;
@@ -57,18 +59,48 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
 
       @Override
       public void start(ClientCall.Listener<RespT> listener, Metadata headers) {
-        this.delegateListener = listener;
-        this.headers = headers;
+        Preconditions.checkState(!cancelledEarly, "Call already cancelled");
+        Preconditions.checkState(
+            this.delegateListener == null && this.headers == null, "Call already started");
+
+        this.delegateListener = Preconditions.checkNotNull(listener);
+        this.headers = Preconditions.checkNotNull(headers);
       }
 
       @Override
       public void request(int numMessages) {
-        if (id == null) {
-          // request() might be called multiple times before sendMessage(), so add up all of the
-          // requested sendMessages.
-          numMessagesRequested += numMessages;
-        } else {
-          delegate().request(numMessages);
+        if (delegateCall != null) {
+          delegateCall.request(numMessages);
+          return;
+        }
+
+        Preconditions.checkState(!cancelledEarly, "Call already cancelled");
+
+        // request() might be called multiple times before sendMessage(), so add up all of the
+        // requested sendMessages.
+        numMessagesRequested += numMessages;
+      }
+
+      @Override
+      public void cancel(@Nullable String message, @Nullable Throwable cause) {
+        if (delegateCall != null) {
+          delegateCall.cancel(message, cause);
+          return;
+        }
+
+        cancelledEarly = true;
+
+        if (message == null && cause == null) {
+          cause = new CancellationException("Cancelled without a message or cause");
+        }
+
+        if (delegateListener != null) {
+          delegateListener.onClose(
+              Status.CANCELLED
+                .withDescription(message)
+                .withCause(cause),
+              new Metadata()
+          );
         }
       }
 
@@ -76,11 +108,10 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
       public void sendMessage(ReqT message) {
         Preconditions.checkState(delegateCall == null,
           "ThrottlingClientInterceptor only supports unary operations");
-        Preconditions.checkState(id == null,
-          "ThrottlingClientInterceptor only supports unary operations");
-        Preconditions.checkState(delegateListener != null,
+        Preconditions.checkState(delegateListener != null && headers != null,
           "start() has to be called before sendMessage().");
-        Preconditions.checkState(headers != null, "start() has to be called before sendMessage().");
+        Preconditions.checkState(!cancelledEarly, "Call already cancelled");
+
         try {
           id = resourceLimiter
               .registerOperationWithHeapSize(((MessageLite) message).getSerializedSize());
@@ -98,14 +129,15 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
                 delegate().onClose(status, trailers);
               }
             };
-        delegate().start(markCompletionListener, headers);
-        delegate().request(numMessagesRequested);
-        delegate().sendMessage(message);
+        delegateCall.start(markCompletionListener, headers);
+        delegateCall.request(numMessagesRequested);
+        delegateCall.sendMessage(message);
+        delegateCall.halfClose();
       }
 
       @Override
-      protected ClientCall<ReqT, RespT> delegate() {
-        return delegateCall;
+      public void halfClose() {
+        // Noop
       }
     };
   }
