@@ -49,6 +49,7 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.util.ThreadUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
@@ -199,7 +200,7 @@ public class BigtableSession implements Closeable {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(options.getUserAgent()), USER_AGENT_EMPTY_OR_NULL);
     LOG.info(
-        "Opening connection for projectId %s, instanceId %s, "
+        "Opening session for projectId %s, instanceId %s, "
         + "on data host %s, admin host %s.",
         options.getProjectId(), options.getInstanceId(), options.getDataHost(),
         options.getAdminHost());
@@ -546,6 +547,9 @@ public class BigtableSession implements Closeable {
   public static ManagedChannel createNettyChannel(String host,
       BigtableOptions options, ClientInterceptor ... interceptors) throws SSLException {
 
+    LOG.info("Creating new channel for %s", host);
+    LOG.debug(Throwables.getStackTraceAsString(new Throwable()));
+
     // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
     // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
     ManagedChannelBuilder<?> builder = ManagedChannelBuilder
@@ -600,7 +604,7 @@ public class BigtableSession implements Closeable {
         // but users should not currently be using them directly.
         //
         // NOTE: We haven't seen this problem since removing the RefreshingChannel
-        LOG.info("Could not close the channel after 10 seconds.");
+        LOG.info("Could not close %s after 10 seconds.", channel.getClass().getName());
         break;
       }
     }
