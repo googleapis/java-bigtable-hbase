@@ -125,7 +125,7 @@ maven repository. When you disable that profile, attach workspace sources to the
 | Name | Language | Repository | latest version | status |
 | --- | --- | --- | --- | --- |
 | Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bigtable-examples][maven-examples-repo] | | |
-| HBase client | Java | [GoogleCloudPlatform/cloud-bigtable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
+| HBase client | Java | [googleapis/cloud-bigtable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
 | Cloud Bigtable GoLang | Go | [googleapis/google-cloud-go](https://github.com/googleapis/google-cloud-go) | N/A | GA |
 | Cloud Bigtable Java | java | [googleapis/google-cloud-java](http://github.com/googleapis/google-cloud-java) | [![Maven][maven-google-cloud-java-shield]][maven-google-cloud-java-maven-search] | Beta |
 | Cloud Bigtable Python | Python | [googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | [![PyPI version](https://badge.fury.io/py/google-cloud-bigtable.svg)](https://badge.fury.io/py/google-cloud-bigtable) | Beta |
@@ -146,8 +146,8 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 
 <!-- references -->
 
-[travis-shield]: https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client.svg
-[travis-link]: https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client/builds
+[travis-shield]: https://travis-ci.org/googleapis/cloud-bigtable-client.svg
+[travis-link]: https://travis-ci.org/googleapis/cloud-bigtable-client/builds
 [maven-hbase-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg
 [maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
 [maven-google-cloud-java-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud/google-cloud-bigtable/badge.svg
@@ -157,7 +157,7 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 [stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
 [stackoverflow-link]: http://stackoverflow.com/search?q=[google-cloud-bigtable]
 [integrations]: https://cloud.google.com/bigtable/docs/integrations
-[maven-hbase-client-repo]: https://github.com/GoogleCloudPlatform/cloud-bigtable-client
+[maven-hbase-client-repo]: https://github.com/googleapis/cloud-bigtable-client
 [maven-bigtable-nodejs-repo]: https://github.com/googleapis/nodejs-bigtable
 [maven-examples-repo]: https://github.com/GoogleCloudPlatform/cloud-bigtable-examples
 [google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss

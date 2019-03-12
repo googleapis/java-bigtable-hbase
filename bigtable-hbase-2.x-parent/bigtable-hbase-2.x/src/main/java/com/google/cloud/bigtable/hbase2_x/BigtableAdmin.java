@@ -343,10 +343,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
    }
-   // rowKeyPrefix set to Empty String which truncates data from specified table.
    return FutureUtils.toCompletableFuture(
         tableAdminClientWrapper
-          .dropRowRangeAsync(tableName.getNameAsString(), ""));
+          .dropAllRowsAsync(tableName.getNameAsString()));
   }
   /* ******* Unsupported methods *********** */
 
