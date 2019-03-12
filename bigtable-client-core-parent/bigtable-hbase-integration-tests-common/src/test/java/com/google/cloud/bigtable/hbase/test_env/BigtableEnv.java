@@ -54,7 +54,8 @@ class BigtableEnv extends SharedTestEnv {
       "google.bigtable.instance.id",
       "google.bigtable.use.bulk.api",
       "google.bigtable.use.plaintext.negotiation",
-      "google.bigtable.snapshot.cluster.id"
+      "google.bigtable.snapshot.cluster.id",
+      "google.bigtable.use.gcj.client"
   );
 
   @Override

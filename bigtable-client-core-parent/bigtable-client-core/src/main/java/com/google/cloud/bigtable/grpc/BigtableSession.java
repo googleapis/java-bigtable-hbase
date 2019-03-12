@@ -22,7 +22,11 @@ import com.google.api.gax.grpc.GaxGrpcProperties;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.v2.BigtableGrpc;
+import com.google.cloud.bigtable.admin.v2.BaseBigtableTableAdminClient;
+import com.google.cloud.bigtable.admin.v2.BaseBigtableTableAdminSettings;
+import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableVeneerSettingsFactory;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
@@ -54,7 +58,6 @@ import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
-import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
@@ -83,7 +86,7 @@ import javax.net.ssl.SSLException;
  *   <li> Creates Executors
  *   <li> Creates Channels - netty ChannelImpls, ReconnectingChannel and ChannelPools
  *   <li> Creates ChannelInterceptors - auth headers, performance interceptors.
- *   <li> Close anything above that needs to be closed (ExecutorService, CahnnelImpls)
+ *   <li> Close anything above that needs to be closed (ExecutorService, ChannelImpls)
  * </ol>
  *
  * @author sduskis
@@ -169,6 +172,11 @@ public class BigtableSession implements Closeable {
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
   // synchronous operations.
   private final BigtableDataClient throttlingDataClient;
+
+  // GCJ's Settings to create respective clients.
+  private final BigtableTableAdminSettings adminSettings;
+  private final BaseBigtableTableAdminSettings baseAdminSettings;
+  private BigtableTableAdminGCJClient adminGCJClient;
 
   private BigtableTableAdminClient tableAdminClient;
   private IBigtableTableAdminClient adminClientWrapper;
@@ -258,6 +266,9 @@ public class BigtableSession implements Closeable {
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
 
     // Defer the creation of both the tableAdminClient until we need them.
+    //TODO(rahulkql): Need to identify which resources to initialized for GCJ's adapter case.
+    this.adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
+    this.baseAdminSettings = BaseBigtableTableAdminSettings.create(adminSettings.getStubSettings());
   }
 
   private ClientInterceptor createGaxHeaderInterceptor() {
@@ -400,12 +411,25 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * <p>Getter for the field <code>adminClientWrapper</code>.</p>
+   * Initializes bigtableTableAdminClient based on flag to use GCJ adapter, available in
+   * {@link BigtableOptions}.
    *
    * @return a {@link BigtableTableAdminClientWrapper} object.
    * @throws java.io.IOException if any.
    */
+  //TODO(rahulkql): rename the getter to getTableAdminClient.
   public synchronized IBigtableTableAdminClient getTableAdminClientWrapper() throws IOException {
+    if (options.useGCJClient()) {
+      if (adminGCJClient == null) {
+        //TODO(rahulkql): Decide If these clients need to be part of #close
+        com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient adminClientV2 =
+            com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient.create(adminSettings);
+        BaseBigtableTableAdminClient baseAdminClientV2 =
+            BaseBigtableTableAdminClient.create(baseAdminSettings);
+        adminGCJClient = new BigtableTableAdminGCJClient(adminClientV2, baseAdminClientV2);
+      }
+      return adminGCJClient;
+    }
     if (adminClientWrapper == null) {
       adminClientWrapper = new BigtableTableAdminClientWrapper(getTableAdminClient(), options);
     }
