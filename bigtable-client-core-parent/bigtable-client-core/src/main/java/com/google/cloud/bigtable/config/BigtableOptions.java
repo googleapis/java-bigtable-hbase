@@ -60,6 +60,8 @@ public class BigtableOptions implements Serializable, Cloneable {
   /** Constant <code>BIGTABLE_APP_PROFILE_DEFAULT=""</code>, defaults to the server default app profile */
   public static final String BIGTABLE_APP_PROFILE_DEFAULT = "";
 
+  public static final String BIGTABLE_CLIENT_ADAPTER = "BIGTABLE_CLIENT_ADAPTER";
+
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
   private static int getDefaultDataChannelCount() {
@@ -96,6 +98,7 @@ public class BigtableOptions implements Serializable, Cloneable {
       options.dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
       options.usePlaintextNegotiation = false;
       options.useCachedDataPool = false;
+      options.useGCJClient = false;
 
       options.retryOptions = new RetryOptions.Builder().build();
       options.callOptionsConfig = new CallOptionsConfig.Builder().build();
@@ -194,6 +197,11 @@ public class BigtableOptions implements Serializable, Cloneable {
 
     public Builder setUseBatch(boolean useBatch) {
       options.useBatch = useBatch;
+      return this;
+    }
+
+    public Builder setUseGCJClient(boolean useGCJClient){
+      options.useGCJClient = useGCJClient;
       return this;
     }
 
@@ -298,6 +306,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   private int dataChannelCount;
   private boolean usePlaintextNegotiation;
   private boolean useCachedDataPool;
+  private boolean useGCJClient;
 
   private BigtableInstanceName instanceName;
 
@@ -438,6 +447,15 @@ public class BigtableOptions implements Serializable, Cloneable {
     return callOptionsConfig;
   }
 
+  /**
+   * <p>useGCJClient</p>
+   *
+   * @return a boolean flag to decide which client to use for Data & Admin Operations.
+   */
+  public boolean useGCJClient() {
+    return useGCJClient;
+  }
+
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
@@ -462,7 +480,8 @@ public class BigtableOptions implements Serializable, Cloneable {
         && Objects.equals(retryOptions, other.retryOptions)
         && Objects.equals(bulkOptions, other.bulkOptions)
         && Objects.equals(callOptionsConfig, other.callOptionsConfig)
-        && Objects.equals(useBatch, other.useBatch);
+        && Objects.equals(useBatch, other.useBatch)
+        && Objects.equals(useGCJClient, other.useGCJClient);
   }
 
   /** {@inheritDoc} */
@@ -485,6 +504,7 @@ public class BigtableOptions implements Serializable, Cloneable {
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .add("useCachedDataPool", useCachedDataPool)
         .add("useBatch", useBatch)
+        .add("useGCJClient", useGCJClient)
         .toString();
   }
 
