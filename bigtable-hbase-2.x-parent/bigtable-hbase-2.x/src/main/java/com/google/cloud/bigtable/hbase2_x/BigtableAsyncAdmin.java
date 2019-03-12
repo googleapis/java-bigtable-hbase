@@ -387,7 +387,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
                     future.completeExceptionally(new TableNotDisabledException(tableName));
                   } else {
                     completeConditionalOnFuture(future,
-                      bigtableTableAdminClient.restoreSnapshot(snapshotName,takeFailSafeSnapshot));
+                      restoreSnapshot(snapshotName,takeFailSafeSnapshot));
                   }
                 });
             }
