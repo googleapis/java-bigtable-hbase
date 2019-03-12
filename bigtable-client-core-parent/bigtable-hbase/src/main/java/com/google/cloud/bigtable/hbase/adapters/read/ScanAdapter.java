@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
 import com.google.bigtable.v2.RowSet;
@@ -25,7 +26,6 @@ import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.TimestampRangeFilter;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
@@ -235,8 +235,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   }
 
   private long convertUnits(long hbaseUnits) {
-    return BigtableConstants.BIGTABLE_TIMEUNIT.convert(
-        hbaseUnits, BigtableConstants.HBASE_TIMEUNIT);
+    return TimestampConverter.hbase2bigtable(hbaseUnits);
   }
 
   private Optional<Filters.Filter> createColumnFamilyFilter(Scan scan) {

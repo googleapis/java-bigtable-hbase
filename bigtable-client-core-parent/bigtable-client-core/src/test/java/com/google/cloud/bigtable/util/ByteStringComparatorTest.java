@@ -17,21 +17,26 @@ public class ByteStringComparatorTest {
 
   @Test
   public void testSimple(){
-    compare(ByteString.copyFromUtf8("a"), ByteString.copyFromUtf8("b"));
-    compare(ByteString.copyFromUtf8("aa"), ByteString.copyFromUtf8("bb"));
-    compare(ByteString.copyFromUtf8("aa"), ByteString.copyFromUtf8("b"));
-    compare(ByteString.copyFromUtf8("a"), ByteString.copyFromUtf8("bb"));
-    compare(ByteString.copyFromUtf8("aa"), ByteString.copyFromUtf8("aab"));
+    compare("a", "c");
+    compare("aa", "cc");
+    compare("aa", "c");
+    compare("a", "cc");
+    compare("aa", "aac");
   }
 
+  @Test
   public void testUnsigned() {
     compare(ByteString.copyFrom(new byte[] { 0x7f }),
       ByteString.copyFrom(new byte[] { (byte) 0x80 }));
   }
 
-  protected void compare(ByteString a, ByteString b) {
-    Assert.assertEquals(-1, underTest.compare(a, b));
-    Assert.assertEquals(1, underTest.compare(b, a));
-    Assert.assertEquals(0, underTest.compare(b, b));
+  private void compare(String a, String b) {
+    compare(ByteString.copyFromUtf8(a), ByteString.copyFromUtf8(b));
+  }
+
+  private void compare(ByteString a, ByteString b) {
+    Assert.assertTrue(underTest.compare(a, b) < 0);
+    Assert.assertTrue(underTest.compare(b, a) > 0);
+    Assert.assertTrue(underTest.compare(b, b) == 0);
   }
 }

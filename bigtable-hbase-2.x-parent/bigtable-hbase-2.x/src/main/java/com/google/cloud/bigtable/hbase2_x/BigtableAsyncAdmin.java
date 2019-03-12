@@ -30,7 +30,6 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
@@ -351,8 +350,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
    * {@inheritDoc} */
   @Override
   public CompletableFuture<Void> restoreSnapshot(String snapshotName) {
-    boolean takeFailSafeSnapshot = BigtableConstants.DEFAULT_SNAPSHOT_RESTORE_TAKE_FAILSAFE_SNAPSHOT;
-    return restoreSnapshot(snapshotName, takeFailSafeSnapshot);
+    return restoreSnapshot(snapshotName, false);
   }
 
   /**
