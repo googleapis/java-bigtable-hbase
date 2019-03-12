@@ -36,7 +36,7 @@ public class ByteStringComparatorTest {
 
   private void compare(ByteString a, ByteString b) {
     Assert.assertTrue(underTest.compare(a, b) < 0);
-    Assert.assertTrue(underTest.compare(b, a));
+    Assert.assertTrue(underTest.compare(b, a) > 0);
     Assert.assertTrue(underTest.compare(b, b) == 0);
   }
 }
