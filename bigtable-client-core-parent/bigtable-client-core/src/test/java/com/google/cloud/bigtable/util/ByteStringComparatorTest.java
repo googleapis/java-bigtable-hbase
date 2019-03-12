@@ -30,13 +30,13 @@ public class ByteStringComparatorTest {
       ByteString.copyFrom(new byte[] { (byte) 0x80 }));
   }
 
-  protected void compare(String a, String b) {
+  private void compare(String a, String b) {
     compare(ByteString.copyFromUtf8(a), ByteString.copyFromUtf8(b));
   }
 
-  protected void compare(ByteString a, ByteString b) {
+  private void compare(ByteString a, ByteString b) {
     Assert.assertTrue(underTest.compare(a, b) < 0);
     Assert.assertTrue(underTest.compare(b, a) > 0);
-    Assert.assertEquals(0, underTest.compare(b, b));
+    Assert.assertEquals(underTest.compare(b, b) == 0);
   }
 }

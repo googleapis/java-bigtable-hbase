@@ -349,8 +349,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
    * {@inheritDoc} */
   @Override
   public CompletableFuture<Void> restoreSnapshot(String snapshotName) {
-    boolean takeFailSafeSnapshot = false;
-    return restoreSnapshot(snapshotName, takeFailSafeSnapshot);
+    return restoreSnapshot(snapshotName, false);
   }
 
   /**
@@ -387,7 +386,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
                     future.completeExceptionally(new TableNotDisabledException(tableName));
                   } else {
                     completeConditionalOnFuture(future,
-                      restoreSnapshot(snapshotName,takeFailSafeSnapshot));
+                      bigtableTableAdminClient.restoreSnapshot(snapshotName,takeFailSafeSnapshot));
                   }
                 });
             }
