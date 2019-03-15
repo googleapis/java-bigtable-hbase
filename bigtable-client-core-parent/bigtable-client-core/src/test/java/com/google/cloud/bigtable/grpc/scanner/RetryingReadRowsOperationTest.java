@@ -101,6 +101,9 @@ public class RetryingReadRowsOperationTest {
   private StreamObserver<FlatRow> mockFlatRowObserver;
 
   @Mock
+  private StreamObserver<ReadRowsResponse> mockResponseObserver;
+
+  @Mock
   private ScheduledExecutorService mockRetryExecutorService;
 
   private OperationClock clock;
@@ -147,8 +150,11 @@ public class RetryingReadRowsOperationTest {
 
   protected RetryingReadRowsOperation createOperation(CallOptions options,
       StreamObserver<FlatRow> observer) {
-    return new RetryingReadRowsOperation(observer, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
-        mockRetryableRpc, options, mockRetryExecutorService, metaData, clock);
+    RetryingReadRowsOperation operation =
+        new RetryingReadRowsOperation(observer, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
+            mockRetryableRpc, options, mockRetryExecutorService, metaData, clock);
+    operation.setResultObserver(mockResponseObserver);
+    return operation;
   }
 
   @Test
@@ -160,6 +166,7 @@ public class RetryingReadRowsOperationTest {
     underTest.onMessage(response);
     verify(mockFlatRowObserver, times(0)).onNext(any(FlatRow.class));
     verify(mockClientCall, times(2)).request(eq(1));
+    verify(mockResponseObserver, times(1)).onNext(same(response));
 
     finishOK(underTest, 0);
   }
@@ -174,6 +181,7 @@ public class RetryingReadRowsOperationTest {
     verify(mockFlatRowObserver, times(1)).onNext(any(FlatRow.class));
     checkRetryRequest(underTest, key, 9);
     verify(mockClientCall, times(2)).request(eq(1));
+    verify(mockResponseObserver, times(1)).onNext(same(response));
 
     finishOK(underTest, 0);
   }
@@ -342,6 +350,30 @@ public class RetryingReadRowsOperationTest {
     Assert.assertTrue(underTest.getRowMerger().isComplete());
   }
 
+
+  @Test
+  public void testScanIdleContinue() throws UnsupportedEncodingException {
+    RetryingReadRowsOperation underTest = createOperation();
+    start(underTest);
+
+    ByteString key = ByteString.copyFrom("SomeKey1", "UTF-8");
+    underTest.onMessage(buildResponse(key));
+
+    // one last scan timeout that fails.
+    performIdle(underTest);
+    verify(mockFlatRowObserver, times(0)).onError(any(BigtableRetriesExhaustedException.class));
+    verify(mockFlatRowObserver, times(0)).onCompleted();
+    Assert.assertFalse(underTest.getRowMerger().isComplete());
+    ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
+    underTest.onMessage(buildResponse(key2));
+
+    checkRetryRequest(underTest, key2, 8);
+
+    underTest.onOK(new Metadata());
+    verify(mockFlatRowObserver, times(1)).onCompleted();
+    Assert.assertTrue(underTest.getRowMerger().isComplete());
+  }
+
   @Test
   public void testMixScanTimeoutAndStatusExceptions() throws UnsupportedEncodingException {
     RetryingReadRowsOperation underTest = createOperation();
@@ -409,6 +441,16 @@ public class RetryingReadRowsOperationTest {
         Status.CANCELLED.withCause(new
             StreamWaitTimeoutException(
                 Watchdog.State.WAITING, RETRY_OPTIONS.getReadPartialRowTimeoutMillis())),
+        new Metadata()
+    );
+  }
+
+
+  protected void performIdle(RetryingReadRowsOperation underTest) {
+    underTest.onClose(
+        Status.CANCELLED.withCause(new
+            StreamWaitTimeoutException(
+            Watchdog.State.IDLE, RETRY_OPTIONS.getReadPartialRowTimeoutMillis())),
         new Metadata()
     );
   }

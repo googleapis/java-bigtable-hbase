@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -25,7 +26,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+import com.google.cloud.bigtable.grpc.io.Watchdog;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,6 +82,10 @@ public class TestBigtableDataGrpcClient {
   @Mock
   ClientCall mockClientCall;
 
+
+  @Mock
+  ScheduledExecutorService mochScheduler;
+
   BigtableDataGrpcClient defaultClient;
 
   @Before
@@ -99,7 +107,7 @@ public class TestBigtableDataGrpcClient {
         return null;
       }
     }).when(mockClientCall).start(any(ClientCall.Listener.class), any(Metadata.class));
-    return new BigtableDataGrpcClient(mockChannel, null, options);
+    return new BigtableDataGrpcClient(mockChannel, mochScheduler, options);
   }
 
   @Test
@@ -225,6 +233,40 @@ public class TestBigtableDataGrpcClient {
     listener.onClose(Status.OK, new Metadata());
     Assert.assertEquals(key2, scanner.next().getRowKey());
     Assert.assertNull(scanner.next());
+  }
+
+  @Test
+  public void testScannerIdle() throws IOException {
+    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
+    ResultScanner<FlatRow> scanner = defaultClient.readFlatRows(requestBuilder.build());
+    ArgumentCaptor<ClientCall.Listener> listenerCaptor =
+        ArgumentCaptor.forClass(ClientCall.Listener.class);
+    verify(mockClientCall, times(1)).start(listenerCaptor.capture(), any(Metadata.class));
+    Listener listener = listenerCaptor.getValue();
+    ByteString key1 = ByteString.copyFromUtf8("Key1");
+    ByteString key2 = ByteString.copyFromUtf8("Key2");
+    listener
+        .onMessage(RetryingReadRowsOperationTest.buildResponse(key1));
+    listener
+        .onMessage(RetryingReadRowsOperationTest.buildResponse(key2));
+    listener.onClose(
+        Status.CANCELLED.withCause(new Watchdog.StreamWaitTimeoutException(
+            Watchdog.State.IDLE, TimeUnit.MINUTES.toMillis(10))),
+        new Metadata()
+    );
+
+    Assert.assertEquals(2, scanner.available());
+    Assert.assertEquals(key1, scanner.next().getRowKey());
+    Assert.assertEquals(key2, scanner.next().getRowKey());
+
+    ByteString key3 = ByteString.copyFromUtf8("Key3");
+    listener
+        .onMessage(RetryingReadRowsOperationTest.buildResponse(key3));
+
+    Assert.assertEquals(key3, scanner.next().getRowKey());
+    // There was a retry based on the idle
+    verify(mochScheduler, times(1)).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
   }
 
   private void setResponse(final Object response) {
