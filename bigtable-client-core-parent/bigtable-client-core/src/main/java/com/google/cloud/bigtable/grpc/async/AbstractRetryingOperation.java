@@ -153,7 +153,11 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     this.operationSpan = TRACER.spanBuilder(spanName).setRecordEvents(true).startSpan();
     this.clock = clock;
     this.exponentialRetryAlgorithm = createRetryAlgorithm(clock);
-    this.callWrapper = new CallController<>();
+    this.callWrapper = createCallController();
+  }
+
+  protected CallController<RequestT, ResponseT> createCallController() {
+    return new CallController<>();
   }
 
   /** {@inheritDoc} */

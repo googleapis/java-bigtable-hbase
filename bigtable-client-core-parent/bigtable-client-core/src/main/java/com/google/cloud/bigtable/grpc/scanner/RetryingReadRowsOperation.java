@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.client.util.Preconditions;
 import com.google.api.core.ApiClock;
-import com.google.cloud.bigtable.grpc.io.Watchdog.State;
+import com.google.cloud.bigtable.grpc.async.CallController;
 import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -50,6 +50,25 @@ import io.opencensus.trace.AttributeValue;
 public class RetryingReadRowsOperation extends
     AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, String> implements ScanHandler {
 
+  class IdleResumingCallController extends CallController {
+    private boolean isIdle = false;
+
+    @Override
+    public synchronized void request(int count) {
+      if (isIdle) {
+        operationSpan.addAnnotation("Resuming after IDLE");
+        isIdle = false;
+        RetryingReadRowsOperation.this.performRetry(0);
+      } else {
+        super.request(count);
+      }
+    }
+
+    synchronized void setIsIdle() {
+      isIdle = true;
+    }
+  }
+
   private final ReadRowsRequestManager requestManager;
   private final StreamObserver<FlatRow> rowObserver;
   private final RowMerger rowMerger;
@@ -75,6 +94,11 @@ public class RetryingReadRowsOperation extends
     this.rowMerger = new RowMerger(rowObserver);
     this.requestManager = new ReadRowsRequestManager(request);
     this.nextRequest = request;
+  }
+
+  @Override
+  protected CallController<ReadRowsRequest, ReadRowsResponse> createCallController() {
+    return new IdleResumingCallController();
   }
 
   // This observer will be notified after ReadRowsResponse have been fully processed.
@@ -167,10 +191,21 @@ public class RetryingReadRowsOperation extends
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
-    if (status.getCause() instanceof StreamWaitTimeoutException
-        && ((StreamWaitTimeoutException)status.getCause()).getState() == State.WAITING) {
-      handleTimeoutError(status);
-      return;
+    if (status.getCause() instanceof StreamWaitTimeoutException) {
+      StreamWaitTimeoutException timeoutException = (StreamWaitTimeoutException) status.getCause();
+      switch(timeoutException.getState()) {
+      case WAITING:
+        operationSpan.addAnnotation("Received an WAITING timeout.");
+        handleTimeoutError(status);
+        return;
+      case IDLE:
+        operationSpan.addAnnotation("Received an IDLE timeout.");
+        ((IdleResumingCallController) callWrapper).setIsIdle();
+        return;
+      default:
+        // continue with onClose.
+        break;
+      }
     }
 
     super.onClose(status, trailers);
