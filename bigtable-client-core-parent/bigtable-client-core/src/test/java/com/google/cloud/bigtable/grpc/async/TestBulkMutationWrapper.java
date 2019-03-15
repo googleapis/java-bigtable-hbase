@@ -15,19 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.api.core.SettableApiFuture;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
-import com.google.cloud.bigtable.data.v2.models.Row;
-import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,8 +30,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -91,13 +86,11 @@ import static org.mockito.Mockito.when;
   }
 
   @Test
-  public void testReadModifyRow() throws InterruptedException, ExecutionException {
-    ReadModifyWriteRow readModifyRow = ReadModifyWriteRow.create("tableId", "test-key");
-    ListenableFuture<Row> expectedResponse = Futures.immediateFuture(
-        Row.create(ByteString.copyFromUtf8("test-key"), Collections.<RowCell>emptyList()));
-    when(mockDelegate.readModifyWrite(readModifyRow)).thenReturn(expectedResponse);
-    Future<Row> actualResponse = bulkWrapper.readModifyWrite(readModifyRow);
-    assertEquals(expectedResponse.get(), actualResponse.get());
-    verify(mockDelegate).readModifyWrite(readModifyRow);
+  public void testRegister(){
+    SettableApiFuture<Void> future = SettableApiFuture.create();
+    future.set(null);
+    doNothing().when(mockDelegate).register(any(ListenableFuture.class));
+    bulkWrapper.register(future);
+    verify(mockDelegate).register(any(ListenableFuture.class));
   }
 }

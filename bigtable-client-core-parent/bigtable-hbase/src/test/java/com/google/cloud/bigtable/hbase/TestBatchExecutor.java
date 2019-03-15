@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -124,6 +125,9 @@ public class TestBatchExecutor {
   private IBulkMutation mockBulkMutation;
 
   @Mock
+  private IBigtableDataClient mockDataClient;
+
+  @Mock
   private ApiFuture mockFuture;
 
   private HBaseRequestAdapter requestAdapter;
@@ -143,7 +147,8 @@ public class TestBatchExecutor {
 
     MockitoAnnotations.initMocks(this);
     when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(mockFuture);
-    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRow.class))).thenReturn(mockFuture);
+    when(mockBigtableSession.getClientWrapper()).thenReturn(mockDataClient);
+    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getDataRequestContext()).thenReturn(requetsContext);
     when(mockBigtableSession.createBulkMutationWrapper(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);

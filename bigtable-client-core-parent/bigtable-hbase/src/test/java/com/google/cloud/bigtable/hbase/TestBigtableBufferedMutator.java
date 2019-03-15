@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import java.io.IOException;
@@ -70,6 +71,9 @@ public class TestBigtableBufferedMutator {
   @Mock
   private IBulkMutation mockBulkMutation;
 
+  @Mock
+  private IBigtableDataClient mockDataClient;
+
   @SuppressWarnings("rawtypes")
   private SettableApiFuture future = SettableApiFuture.create();
 
@@ -83,6 +87,7 @@ public class TestBigtableBufferedMutator {
     MockitoAnnotations.initMocks(this);
     when(mockSession.createBulkMutationWrapper(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
     when(mockSession.getDataRequestContext()).thenReturn(RequestContext.create("p", "i", "a"));
+    when(mockSession.getClientWrapper()).thenReturn(mockDataClient);
   }
 
   @After
@@ -124,22 +129,22 @@ public class TestBigtableBufferedMutator {
 
   @Test
   public void testIncrement() throws IOException {
-    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRow.class)))
+    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))
         .thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(new Increment(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, 1));
-    verify(mockBulkMutation, times(1))
-        .readModifyWrite(any(ReadModifyWriteRow.class));
+    verify(mockDataClient, times(1))
+        .readModifyWriteRowAsync(any(ReadModifyWriteRow.class));
   }
 
   @Test
   public void testAppend() throws IOException {
-    when(mockBulkMutation.readModifyWrite(any(ReadModifyWriteRow.class)))
+    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))
         .thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(new Append(EMPTY_BYTES).add(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES));
-    verify(mockBulkMutation, times(1))
-        .readModifyWrite(any(ReadModifyWriteRow.class));
+    verify(mockDataClient, times(1))
+        .readModifyWriteRowAsync(any(ReadModifyWriteRow.class));
   }
 
   @Test

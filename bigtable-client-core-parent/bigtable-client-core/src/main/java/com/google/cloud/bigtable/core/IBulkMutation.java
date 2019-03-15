@@ -16,8 +16,6 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
-import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
-import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 
 import com.google.cloud.bigtable.grpc.async.OperationAccountant;
@@ -33,6 +31,9 @@ public interface IBulkMutation {
    */
   void flush() throws InterruptedException;
 
+  /**
+   * Runs unfinished task. This method blocks until accumulated tasks are finished.
+   */
   void sendUnsent();
 
   /**
@@ -50,12 +51,10 @@ public interface IBulkMutation {
   ApiFuture<Void> add(RowMutation rowMutation);
 
   /**
-   * Performs a {@link IBigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRow)} on the
-   * {@link ReadModifyWriteRow}. This method may block if
+   * Adds a future task as RPC operation. This method may block if
    * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
    *
-   * @param request The {@link ReadModifyWriteRow} to send.
-   * @return a {@link ApiFuture} which can be listened to for completion events.
+   * @param future a {@link ApiFuture} which would be listened for completion events.
    */
-  ApiFuture<Row> readModifyWrite(ReadModifyWriteRow request);
+  void register(final ApiFuture<?> future);
 }
