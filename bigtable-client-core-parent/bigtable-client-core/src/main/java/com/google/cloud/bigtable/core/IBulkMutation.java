@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
+import com.google.bigtable.v2.MutateRowRequest;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 
 import com.google.cloud.bigtable.grpc.async.OperationAccountant;
@@ -32,7 +33,7 @@ public interface IBulkMutation {
   void flush() throws InterruptedException;
 
   /**
-   * Runs unfinished task. This method blocks until accumulated tasks are finished.
+   * Send any outstanding {@link RowMutation}s, present in the current batch.
    */
   void sendUnsent();
 
