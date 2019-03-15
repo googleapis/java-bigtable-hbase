@@ -28,12 +28,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 public interface IBulkMutation {
 
   /**
-   * Send any outstanding {@link RowMutation} and wait until all requests are complete.
+   * Sends any outstanding {@link RowMutation} and wait until all requests are complete.
    */
   void flush() throws InterruptedException;
 
   /**
-   * Send any outstanding {@link RowMutation}s, present in the current batch.
+   * Sends any outstanding {@link RowMutation}s, present in the current batch.
    */
   void sendUnsent();
 
