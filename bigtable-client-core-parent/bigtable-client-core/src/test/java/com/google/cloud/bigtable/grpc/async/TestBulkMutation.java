@@ -371,14 +371,6 @@ public class TestBulkMutation {
     underTest.add(bigRequest.build());
   }
 
-  @Test
-  public void testReadWriteModify()  {
-    underTest.register(future);
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
-    future.set(null);
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
-  }
-
   private BulkMutation createBulkMutation() {
     return new BulkMutation(TABLE_NAME, client, operationAccountant,
         retryExecutorService, BULK_OPTIONS);

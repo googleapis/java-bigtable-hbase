@@ -15,14 +15,12 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import com.google.api.core.SettableApiFuture;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +29,6 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -83,14 +80,5 @@ import static org.mockito.Mockito.when;
       throw new AssertionError("Assertion failed for BulkMutationWrapper#add(RowMutation)");
     }
     verify(mockDelegate).add(requestProto);
-  }
-
-  @Test
-  public void testRegister(){
-    SettableApiFuture<Void> future = SettableApiFuture.create();
-    future.set(null);
-    doNothing().when(mockDelegate).register(any(ListenableFuture.class));
-    bulkWrapper.register(future);
-    verify(mockDelegate).register(any(ListenableFuture.class));
   }
 }

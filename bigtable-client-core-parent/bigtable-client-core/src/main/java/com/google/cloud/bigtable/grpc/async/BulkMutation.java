@@ -16,7 +16,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -445,17 +444,6 @@ public class BulkMutation {
     }
 
     return future;
-  }
-
-  /**
-   * Adds a future task as RPC operation. This method may block if
-   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
-   *
-   * @param future a {@link ListenableFuture} which would be listened for completion events.
-   */
-  @InternalApi("This is public only for technical reasons")
-  public void register(ListenableFuture<?> future) {
-    operationAccountant.registerOperation(future);
   }
 
   /**

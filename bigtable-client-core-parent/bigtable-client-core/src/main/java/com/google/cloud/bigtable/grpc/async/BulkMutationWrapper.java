@@ -66,10 +66,4 @@ public class BulkMutationWrapper implements IBulkMutation {
           }
         });
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public void register(ApiFuture<?> future) {
-    delegate.register(ApiFutureUtil.adapt(future));
-  }
 }

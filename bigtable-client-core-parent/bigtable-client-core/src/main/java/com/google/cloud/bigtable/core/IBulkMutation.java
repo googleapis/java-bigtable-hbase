@@ -16,11 +16,7 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-
-import com.google.cloud.bigtable.grpc.async.OperationAccountant;
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Interface to support batching multiple RowMutation request into a single grpc request.
@@ -50,12 +46,4 @@ public interface IBulkMutation {
    * successful otherwise exception will be thrown.
    */
   ApiFuture<Void> add(RowMutation rowMutation);
-
-  /**
-   * Adds a future task as RPC operation. This method may block if
-   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
-   *
-   * @param future a {@link ApiFuture} which would be listened for completion events.
-   */
-  void register(final ApiFuture<?> future);
 }
