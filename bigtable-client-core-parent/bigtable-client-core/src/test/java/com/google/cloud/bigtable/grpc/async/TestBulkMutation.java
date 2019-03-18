@@ -29,10 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.api.core.SettableApiFuture;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
-import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
-import com.google.cloud.bigtable.data.v2.models.Row;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -294,7 +291,7 @@ public class TestBulkMutation {
   public void testAutoflush() throws Exception {
     // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the
     // scheduled executor mock
-    underTest = new BulkMutation(TABLE_NAME, client, clientWrapper, operationAccountant,
+    underTest = new BulkMutation(TABLE_NAME, client, operationAccountant,
         retryExecutorService, BulkOptions.builder().setAutoflushMs(1000L).build());
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
     when(retryExecutorService.schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class)))
@@ -374,25 +371,8 @@ public class TestBulkMutation {
     underTest.add(bigRequest.build());
   }
 
-  @Test
-  public void testReadWriteModify()  {
-    SettableApiFuture<Row> future = SettableApiFuture.create();
-    when(clientWrapper.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(future);
-    underTest.readModifyWrite(ReadModifyWriteRow.create("table", "key"));
-    Assert.assertTrue(operationAccountant.hasInflightOperations());
-    future.set(null);
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
-  }
-
-  @Test
-  public void testInvalidMutation() {
-    when(clientWrapper.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenThrow(new RuntimeException());
-    underTest.readModifyWrite(ReadModifyWriteRow.create("table", "key"));
-    Assert.assertFalse(operationAccountant.hasInflightOperations());
-  }
-
   private BulkMutation createBulkMutation() {
-    return new BulkMutation(TABLE_NAME, client, clientWrapper, operationAccountant,
+    return new BulkMutation(TABLE_NAME, client, operationAccountant,
         retryExecutorService, BULK_OPTIONS);
   }
 

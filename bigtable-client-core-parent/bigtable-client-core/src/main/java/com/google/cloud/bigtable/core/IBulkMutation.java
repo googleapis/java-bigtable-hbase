@@ -16,12 +16,7 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
-import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
-import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-
-import com.google.cloud.bigtable.grpc.async.OperationAccountant;
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Interface to support batching multiple RowMutation request into a single grpc request.
@@ -29,10 +24,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 public interface IBulkMutation {
 
   /**
-   * Send any outstanding {@link RowMutation} and wait until all requests are complete.
+   * Sends any outstanding {@link RowMutation} and wait until all requests are complete.
    */
   void flush() throws InterruptedException;
 
+  /**
+   * Sends any outstanding {@link RowMutation}s, present in the current batch.
+   */
   void sendUnsent();
 
   /**
@@ -48,14 +46,4 @@ public interface IBulkMutation {
    * successful otherwise exception will be thrown.
    */
   ApiFuture<Void> add(RowMutation rowMutation);
-
-  /**
-   * Performs a {@link IBigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRow)} on the
-   * {@link ReadModifyWriteRow}. This method may block if
-   * {@link OperationAccountant#registerOperation(ListenableFuture)} blocks.
-   *
-   * @param request The {@link ReadModifyWriteRow} to send.
-   * @return a {@link ApiFuture} which can be listened to for completion events.
-   */
-  ApiFuture<Row> readModifyWrite(ReadModifyWriteRow request);
 }

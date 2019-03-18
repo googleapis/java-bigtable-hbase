@@ -19,8 +19,6 @@ import com.google.api.core.ApiFuture;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
-import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
@@ -67,11 +65,5 @@ public class BulkMutationWrapper implements IBulkMutation {
             return null;
           }
         });
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public ApiFuture<Row> readModifyWrite(ReadModifyWriteRow request) {
-    return ApiFutureUtil.adapt(delegate.readModifyWrite(request));
   }
 }

@@ -300,7 +300,6 @@ public class TestBulkMutationAwaitCompletion {
         new BulkMutation(
             TestBulkMutation.TABLE_NAME,
             mockClient,
-            mockClientWrapper,
             operationAccountant,
             mockScheduler,
             options);
@@ -327,7 +326,7 @@ public class TestBulkMutationAwaitCompletion {
 
   /**
    * Checks to make sure that for all accountants that
-   * !{@link AsyncExecutor#hasInflightRequests()} and that for all futures that
+   * !{@link OperationAccountant#hasInflightOperations()} and that for all futures that
    * {@link Future#isDone()}.
    */
   protected void confirmCompletion() {

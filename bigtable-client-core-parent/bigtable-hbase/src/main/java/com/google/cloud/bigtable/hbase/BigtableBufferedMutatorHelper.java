@@ -17,8 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.grpc.async.OperationAccountant;
+import com.google.cloud.bigtable.util.ApiFutureUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,8 +67,9 @@ public class BigtableBufferedMutatorHelper {
 
   private final HBaseRequestAdapter adapter;
   private final IBulkMutation bulkMutation;
+  private final IBigtableDataClient dataClient;
   private final BigtableOptions options;
-  private final RequestContext requestContext;
+  private final OperationAccountant operationAccountant;
 
   /**
    * <p>
@@ -85,7 +88,8 @@ public class BigtableBufferedMutatorHelper {
     this.options = session.getOptions();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.bulkMutation = session.createBulkMutationWrapper(tableName);
-    this.requestContext = session.getDataRequestContext();
+    this.dataClient = session.getClientWrapper();
+    this.operationAccountant = new OperationAccountant();
   }
 
   public void close() throws IOException {
@@ -103,6 +107,7 @@ public class BigtableBufferedMutatorHelper {
     if (bulkMutation != null) {
       try {
         bulkMutation.flush();
+        operationAccountant.awaitCompletion();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new IOException("flush() was interrupted", e);
@@ -200,9 +205,11 @@ public class BigtableBufferedMutatorHelper {
       } else if (mutation instanceof Delete) {
         future = bulkMutation.add(adapter.adaptEntry((Delete) mutation));
       } else if (mutation instanceof Increment) {
-        future = bulkMutation.readModifyWrite(adapter.adapt((Increment) mutation));
+        future = dataClient.readModifyWriteRowAsync(adapter.adapt((Increment) mutation));
+        operationAccountant.registerOperation(ApiFutureUtil.adapt(future));
       } else if (mutation instanceof Append) {
-        future = bulkMutation.readModifyWrite(adapter.adapt((Append) mutation));
+        future = dataClient.readModifyWriteRowAsync(adapter.adapt((Append) mutation));
+        operationAccountant.registerOperation(ApiFutureUtil.adapt(future));
       } else {
         future = ApiFutures.immediateFailedFuture(new IllegalArgumentException(
             "Encountered unknown mutation type: " + mutation.getClass()));
@@ -221,6 +228,6 @@ public class BigtableBufferedMutatorHelper {
    * @return a boolean.
    */
   public boolean hasInflightRequests() {
-    return bulkMutation != null && !bulkMutation.isFlushed();
+    return bulkMutation != null && !bulkMutation.isFlushed() && operationAccountant.hasInflightOperations();
   }
 }
