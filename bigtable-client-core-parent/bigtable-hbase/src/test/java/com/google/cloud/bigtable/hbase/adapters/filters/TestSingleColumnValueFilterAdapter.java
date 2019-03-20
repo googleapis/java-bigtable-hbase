@@ -39,7 +39,6 @@ import java.io.IOException;
 @RunWith(JUnit4.class)
 public class TestSingleColumnValueFilterAdapter  {
 
-
   static final SingleColumnValueFilterAdapter UNDER_TEST =
       new SingleColumnValueFilterAdapter(new ValueFilterAdapter());
 
