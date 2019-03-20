@@ -35,6 +35,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
+import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkMutationWrapper;
@@ -169,6 +170,8 @@ public class BigtableSession implements Closeable {
   private final BigtableDataClient dataClient;
   private final RequestContext dataRequestContext;
 
+  private final BigtableDataGCJClient dataGCJClient;
+
   // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
   // synchronous operations.
   private final BigtableDataClient throttlingDataClient;
@@ -250,6 +253,10 @@ public class BigtableSession implements Closeable {
     dataClient =
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
     dataClient.setCallOptionsFactory(callOptionsFactory);
+    BigtableDataSettings dataSettings =
+        BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
+    dataGCJClient =
+        new BigtableDataGCJClient(com.google.cloud.bigtable.data.v2.BigtableDataClient.create(dataSettings));
 
     // Async operations can run amok, so they need to have some throttling. The throttling is
     // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
@@ -351,6 +358,9 @@ public class BigtableSession implements Closeable {
    * @return a {@link IBigtableDataClient} object.
    */
   public IBigtableDataClient getClientWrapper() {
+    if(options.useGCJClient()){
+      return dataGCJClient;
+    }
     return new BigtableDataClientWrapper(dataClient, getDataRequestContext());
   }
 
@@ -599,6 +609,15 @@ public class BigtableSession implements Closeable {
   @Override
   public synchronized void close() throws IOException {
     watchdog.stop();
+
+    try {
+      dataGCJClient.close();
+      if (adminGCJClient != null) {
+        adminGCJClient.close();
+      }
+    } catch (Exception ex) {
+      throw new IOException(ex);
+    }
 
     if (managedChannels.isEmpty()) {
       return;

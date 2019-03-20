@@ -19,6 +19,7 @@ import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.protobuf.ByteString;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Status;
 import java.io.IOException;
@@ -288,6 +289,7 @@ public abstract class AbstractBigtableTable implements Table {
     try (Scope scope = TRACER.withSpan(span)) {
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow>
           scanner = clientWrapper.readFlatRows(hbaseAdapter.adapt(scan));
+
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
       }
@@ -322,6 +324,41 @@ public abstract class AbstractBigtableTable implements Table {
     }
 
     return false;
+  }
+
+  public void printScanner(com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> flatrows){
+    try{
+      FlatRow row = flatrows.next();
+      while(row != null){
+        ByteString rowkey = row.getRowKey();
+        System.out.println("rowkey ---> " + rowkey.toStringUtf8());
+        List<FlatRow.Cell> cells = row.getCells();
+        if(cells != null){
+          System.out.println("printing cells:--->");
+          for (FlatRow.Cell cell : cells) {
+            // We use the CellUtil class to clone values
+            // from the returned cells.
+            String family = cell.getFamily();
+            ByteString qualifier = cell.getQualifier();
+            if(qualifier == null){
+              qualifier = ByteString.copyFromUtf8("NULL");
+            }
+            String column = String.valueOf(qualifier.toStringUtf8());
+            ByteString valueByteS = cell.getValue();
+            if(valueByteS == null){
+              valueByteS = ByteString.copyFromUtf8("NULL");
+            }
+            String value = String.valueOf(valueByteS.toStringUtf8());
+            long timestamp = cell.getTimestamp();
+            System.out.println("rowKey: "+ rowkey + "  family=" + family + "  column:" + column + " "
+                + "timestamp:" + timestamp + " values:" + value );
+          }
+        }
+        row = flatrows.next();
+      }
+    } catch(Exception ex){
+      throw new RuntimeException(ex);
+    }
   }
 
   /** {@inheritDoc} */

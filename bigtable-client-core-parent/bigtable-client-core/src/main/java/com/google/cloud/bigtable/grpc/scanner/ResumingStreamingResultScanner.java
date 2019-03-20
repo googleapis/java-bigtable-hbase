@@ -39,7 +39,6 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
       BigtableClientMetrics.meter(MetricLevel.Info, "scanner.results");
   private static final Timer resultsTimer =
       BigtableClientMetrics.timer(MetricLevel.Debug, "scanner.results.latency");
-
   // Member variables from the constructor.
   private final ResponseQueueReader responseQueueReader;
 

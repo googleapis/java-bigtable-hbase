@@ -25,11 +25,14 @@ import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.grpc.scanner.FlatRowAdapter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.ByteString;
@@ -87,6 +90,7 @@ public class TestBigtableVeneerSettingsFactory {
   private BigtableTableAdminSettings adminSettings;
   private BigtableDataClient dataClient;
   private BigtableTableAdminClient adminClient;
+  private BigtableOptions originalOptions;
 
   @Before
   public void setUp() throws IOException {
@@ -118,17 +122,17 @@ public class TestBigtableVeneerSettingsFactory {
 
   private void initializeClients() throws IOException{
     String josnPath = CredentialOptions.getEnvJsonFile();
-    BigtableOptions options = BigtableOptions.builder()
+    originalOptions = BigtableOptions.builder()
         .setProjectId(ACTUAL_PROJECT_ID)
         .setInstanceId(ACTUAL_INSTANCE_ID)
         .setUserAgent("native-bigtable-test")
         .setCredentialOptions(CredentialOptions.jsonCredentials(new FileInputStream(josnPath)))
         .build();
 
-    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
-    dataClient = BigtableDataClient.create(dataSettings);
 
-    adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
+    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(originalOptions);
+    dataClient = BigtableDataClient.create(dataSettings);
+    adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(originalOptions);
     adminClient = BigtableTableAdminClient.create(adminSettings);
   }
 
@@ -183,7 +187,15 @@ public class TestBigtableVeneerSettingsFactory {
       dataClient.mutateRow(rowMutation);
       LOG.info("Successfully Mutated");
 
-      Query query = Query.create(TABLE_ID);
+      Query query = Query.create(TABLE_ID)
+          .filter(Filters.FILTERS.chain()
+              .filter(Filters.FILTERS.limit().cellsPerColumn(1) )
+              .filter(Filters.FILTERS.interleave()
+                  .filter(Filters.FILTERS.qualifier().regex("qualifi\\C*"))
+                  .filter(Filters.FILTERS.qualifier().regex("qualifie\\C*"))
+                  .filter(Filters.FILTERS.qualifier().regex("qualifier\\C*"))
+              ));
+
       ServerStream<Row> rowStream = dataClient.readRows(query);
       for (Row outputRow : rowStream) {
 
@@ -210,6 +222,73 @@ public class TestBigtableVeneerSettingsFactory {
       }
       assertFalse(adminClient.exists(TABLE_ID));
     }
+  }
+
+  @Test
+  public void testFilterCondition() throws Exception {
+    // Checking if both arguments are available or not.
+    Assume.assumeFalse(endToEndArgMissing);
+
+    if (adminClient == null || dataClient == null) {
+      initializeClients();
+    }
+
+    String TABLE_ID = "test_table2-000001699996a9b8-8bb984e3ea30572c";
+
+    ByteString stratFilter = ByteString.copyFromUtf8("interleave\\-no\\-dups\\C*");
+    ByteString endFilter = ByteString.copyFromUtf8("interleave\\-no\\-dups\\-qual\\C*");
+    Query query = Query.create(TABLE_ID)
+        .range("interleave-no-dups-O3D8Aex1", "")
+        .filter(Filters.FILTERS.chain()
+            .filter(Filters.FILTERS.limit().cellsPerColumn(1) )
+            .filter(Filters.FILTERS.interleave()
+                .filter(Filters.FILTERS.qualifier().regex("interleave\\-no\\-dups\\C*"))
+                .filter(Filters.FILTERS.qualifier().regex("interleave\\-no\\-dups\\-qual\\C*"))
+        ));
+
+    ServerStream<FlatRow> rowStream = dataClient.readRowsCallable(new FlatRowAdapter()).call(query);
+    //dataClient.readRows(query);
+
+    int count = 0;
+    for (FlatRow outputRow : rowStream) {
+      //Checking if the received output's KEY is same as above.
+      ByteString key = outputRow.getRowKey();
+
+      for (FlatRow.Cell cell : outputRow.getCells()) {
+        //Checking if the received output is KEY sent above.
+        String family = cell.getFamily();
+        ByteString qualifier = cell.getQualifier();
+        if(qualifier == null){
+          qualifier = ByteString.copyFromUtf8("NULL");
+        }
+        String column = String.valueOf(qualifier.toStringUtf8());
+        ByteString valueByteS = cell.getValue();
+        if(valueByteS == null){
+          valueByteS = ByteString.copyFromUtf8("NULL");
+        }
+        String value = String.valueOf(valueByteS.toStringUtf8());
+        long timestamp = cell.getTimestamp();
+        count++;
+        System.out.println("rowKey: "+ key.toStringUtf8() + "  family=" + family + "  column:" + column + " "
+            + "timestamp:" + timestamp + " values:" + value );
+        }
+      }
+    System.out.println("total rows:-->" + count);
+  }
+
+
+
+  @Test
+  public void testQuery(){
+    Query req = Query.create("tableId")
+        .range("interleave-no-dups-O3D8Aex1", "")
+        .filter(Filters.FILTERS.limit().cellsPerColumn(1))
+        .filter(Filters.FILTERS.chain()
+            .filter(Filters.FILTERS.interleave()
+                .filter(Filters.FILTERS.qualifier().regex("interleave\\-no\\-dups\\C*"))
+                .filter(Filters.FILTERS.qualifier().regex("interleave\\-no\\-dups\\-qual\\C*")))
+        );
+    System.out.println(req);
   }
 
   @Test

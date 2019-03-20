@@ -42,7 +42,7 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
  * This class implements existing {@link IBigtableTableAdminClient} operations with
  * Google-cloud-java's {@link BigtableTableAdminClient} & {@link BaseBigtableTableAdminClient}.
  */
-public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient {
+public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient, AutoCloseable {
 
   private final BigtableTableAdminClient delegate;
   private final BaseBigtableTableAdminClient baseAdminClient;
@@ -171,5 +171,11 @@ public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient {
   @Override
   public ApiFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request) {
     return baseAdminClient.createTableFromSnapshotCallable().futureCall(request);
+  }
+
+  @Override
+  public void close() throws Exception {
+    delegate.close();
+    baseAdminClient.close();
   }
 }
