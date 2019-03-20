@@ -140,7 +140,7 @@ limitations under the License.
 
                             <offlineLinks>
                                 <offlineLink>
-                                    <url>https://beam.apache.org/releases/javadoc/2.9.0/</url>
+                                    <url>https://beam.apache.org/releases/javadoc/${beam.version}/</url>
                                     <location>${basedir}/javadoc/beam-docs</location>
                                 </offlineLink>
                                 <offlineLink>
