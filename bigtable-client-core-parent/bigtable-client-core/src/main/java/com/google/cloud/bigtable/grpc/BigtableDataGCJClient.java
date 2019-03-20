@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.ServerStream;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
+import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
@@ -154,11 +156,35 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
   @Override
   public void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer) {
     //TODO: figure out to convert StreamObserver to ResponseObserver.
-    //delegate.readRowsCallable(new FlatRowAdapter()).call(request, observer);
+    delegate.readRowsCallable(new FlatRowAdapter()).call(request, new StreamObserverAdapter<>(observer));
   }
 
   @Override
   public void close() throws Exception {
     delegate.close();
+  }
+
+  // Inspired from ApiStreamObserverAdapter of GCJ
+  static class StreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
+    private final StreamObserver<T> delegate;
+
+    StreamObserverAdapter(StreamObserver<T> delegate) {
+      this.delegate = delegate;
+    }
+
+    protected void onStartImpl(StreamController controller) {
+    }
+
+    protected void onResponseImpl(T response) {
+      this.delegate.onNext(response);
+    }
+
+    protected void onErrorImpl(Throwable t) {
+      this.delegate.onError(t);
+    }
+
+    protected void onCompleteImpl() {
+      this.delegate.onCompleted();
+    }
   }
 }
