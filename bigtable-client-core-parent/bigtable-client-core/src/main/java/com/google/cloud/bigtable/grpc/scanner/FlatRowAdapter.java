@@ -162,9 +162,11 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
    *   <li>Family lexicographically ascending
    *   <li>Qualifier lexicographically ascending
    *   <li>Timestamp in reverse chronological order
+   *   <li>Labels are also included as label with "-in" & "-out" are needed for
+   *   WhileMatchFilter
    * </ul>
    *
-   * <p>Labels and values are not included in the comparison.
+   * <p>Values are not included in the comparison.
    */
   private static Comparator<FlatRow.Cell> compareCells() {
     return new Comparator<FlatRow.Cell>() {
