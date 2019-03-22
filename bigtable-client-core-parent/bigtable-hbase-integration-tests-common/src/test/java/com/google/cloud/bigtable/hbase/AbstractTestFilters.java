@@ -2008,7 +2008,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Assert.assertEquals(Bytes.toString(expectedKey),  Bytes.toString(current.getRow()));
   }
 
-  //@Test
+  @Test
   //TODO(rahulkql): failing due to duplicate Cells when used with interleave
   public void testInterleaveNoDuplicateCells() throws IOException {
     String rowKeyPrefix = dataHelper.randomString("interleave-no-dups-");

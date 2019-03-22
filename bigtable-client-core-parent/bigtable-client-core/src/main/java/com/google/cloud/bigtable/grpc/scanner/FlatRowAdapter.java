@@ -15,15 +15,19 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.cloud.bigtable.data.v2.internal.ByteStringComparator;
 import com.google.cloud.bigtable.data.v2.models.RowAdapter;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow.Cell;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Adapter for {@link RowAdapter} that uses {@link FlatRow}'s to represent logical rows.
@@ -47,12 +51,12 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
     /*
      * cells contains list of {@link Cell} for all the families.
      */
-    private Map<String, List<Cell>> cells = new TreeMap<>();
+    private Map<String, Set<Cell>> cells = new TreeMap<>();
 
     /*
      * currentFamilyCells is buffered with current family's {@link Cell}s.
      */
-    private List<Cell> currentFamilyCells = null;
+    private Set<Cell> currentFamilyCells = null;
     private String previousFamily;
     private int totalCellCount = 0;
 
@@ -102,10 +106,9 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
     public void finishCell() {
       if (!Objects.equals(this.family, this.previousFamily)) {
         previousFamily = this.family;
-        currentFamilyCells = new ArrayList<>();
+        currentFamilyCells = new TreeSet<>(compareCells());
         cells.put(this.family, this.currentFamilyCells);
       }
-
       FlatRow.Cell cell  = new FlatRow.Cell(this.family, this.qualifier, this.timestamp,
                     this.value, this.labels);
       this.currentFamilyCells.add(cell);
@@ -121,8 +124,9 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
      */
     @Override
     public FlatRow finishRow() {
-      ImmutableList.Builder<FlatRow.Cell> combined = ImmutableList.builderWithExpectedSize(totalCellCount);
-      for (List<FlatRow.Cell> familyCellList : cells.values()) {
+      ImmutableList.Builder<FlatRow.Cell> combined =
+          ImmutableList.builderWithExpectedSize(totalCellCount);
+      for (Set<FlatRow.Cell> familyCellList : cells.values()) {
         combined.addAll(familyCellList);
       }
 
@@ -149,6 +153,42 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
     public FlatRow createScanMarkerRow(ByteString rowKey) {
       return new FlatRow(rowKey, ImmutableList.<Cell>of());
     }
+  }
+
+  /**
+   * A comparator that compares the cells by Bigtable native ordering:
+   *
+   * <ul>
+   *   <li>Family lexicographically ascending
+   *   <li>Qualifier lexicographically ascending
+   *   <li>Timestamp in reverse chronological order
+   * </ul>
+   *
+   * <p>Labels and values are not included in the comparison.
+   */
+  private static Comparator<FlatRow.Cell> compareCells() {
+    return new Comparator<FlatRow.Cell>() {
+      @Override
+      public int compare(FlatRow.Cell c1, FlatRow.Cell c2) {
+        return ComparisonChain.start()
+            .compare(c1.getFamily(), c2.getFamily())
+            .compare(c1.getQualifier(), c2.getQualifier(), ByteStringComparator.INSTANCE)
+            .compare(c2.getTimestamp(), c1.getTimestamp())
+            .compare(c1.getLabels(), c2.getLabels(), compareLables())
+            .result();
+      }
+    };
+  }
+
+  private static Comparator<List<String>> compareLables(){
+    return new Comparator<List<String>>() {
+      @Override
+      public int compare(List<String> o1, List<String> o2) {
+        if(o1.size() == o2.size() && o1.containsAll(o2))
+          return 0;
+        return o1.size() < o2.size()?-1:1;
+      }
+    };
   }
 
   /** {@inheritDoc} */
