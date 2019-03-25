@@ -138,7 +138,7 @@ public class TestBigtableTableAdminGrpcClient {
     Answer<Void> answer = new Answer<Void>(){
       @Override
       public Void answer(final InvocationOnMock invocation) throws Throwable {
-        Listener listener = invocation.getArgumentAt(0, Listener.class);
+        Listener listener = invocation.getArgument(0, Listener.class);
         if (counter.incrementAndGet() == 1) {
           listener.onMessage(GenerateConsistencyTokenResponse.getDefaultInstance());
         } else {
@@ -209,7 +209,7 @@ public class TestBigtableTableAdminGrpcClient {
     Answer<Void> answer = new Answer<Void>(){
       @Override
       public Void answer(final InvocationOnMock invocation) throws Throwable {
-        Listener listener = invocation.getArgumentAt(0, Listener.class);
+        Listener listener = invocation.getArgument(0, Listener.class);
         listener.onMessage("");
         listener.onClose(Status.OK, null);
         return null;
@@ -224,7 +224,7 @@ public class TestBigtableTableAdminGrpcClient {
     Answer<Void> answer = new Answer<Void>(){
       @Override
       public Void answer(final InvocationOnMock invocation) throws Throwable {
-        Listener listener = invocation.getArgumentAt(0, Listener.class);
+        Listener listener = invocation.getArgument(0, Listener.class);
         listener.onMessage(response);
         listener.onClose(Status.OK, null);
         return null;

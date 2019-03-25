@@ -165,7 +165,7 @@ public class TestThrottlingClientInterceptor {
     call.cancel("fake cancel", null);
 
 
-    verify(mockClientCall).cancel(eq("fake cancel"), any(Throwable.class));
+    verify(mockClientCall).cancel(eq("fake cancel"), (Throwable)any());
   }
 
   @Test

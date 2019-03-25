@@ -122,9 +122,11 @@ public class TestHeaders {
             .build();
 
     xGoogApiPattern = Pattern.compile(".* cbt/.*");
-    new BigtableSession(bigtableOptions).getDataClient()
-        .readFlatRows(ReadRowsRequest.getDefaultInstance()).next();
-    Assert.assertTrue(serverPasses.get());
+    try (BigtableSession session = new BigtableSession(bigtableOptions)) {
+      session.getDataClient()
+          .readFlatRows(ReadRowsRequest.getDefaultInstance()).next();
+      Assert.assertTrue(serverPasses.get());
+    }
   }
 
   /**
@@ -155,9 +157,10 @@ public class TestHeaders {
     dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(bigtableOptions);
 
     xGoogApiPattern = Pattern.compile(".* gapic/.*");
-    dataClient = BigtableDataClient.create(dataSettings);
-    dataClient.readRow(TABLE_ID, ROWKEY);
-    Assert.assertTrue(serverPasses.get());
+    try(BigtableDataClient dataClient = BigtableDataClient.create(dataSettings)){
+      dataClient.readRow(TABLE_ID, ROWKEY);
+      Assert.assertTrue(serverPasses.get());
+    }
   }
 
   /**
@@ -198,9 +201,10 @@ public class TestHeaders {
 
     // Setting this to null, because as of 3/4/2019 the header doesn't get passed through.
     xGoogApiPattern = null;
-    dataClient = BigtableDataClient.create(builder.build());
-    dataClient.readRow(TABLE_ID, ROWKEY);
-    Assert.assertTrue(serverPasses.get());
+    try (BigtableDataClient dataClient = BigtableDataClient.create(builder.build())) {
+      dataClient.readRow(TABLE_ID, ROWKEY);
+      Assert.assertTrue(serverPasses.get());
+    }
   }
 
   /** Creates simple server to intercept plainText Negotiation RPCs. */

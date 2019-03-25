@@ -15,14 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -155,7 +155,7 @@ public class TestBatchExecutor {
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgumentAt(0, Runnable.class).run();
+        invocation.getArgument(0, Runnable.class).run();
         return null;
       }
     }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
@@ -259,7 +259,7 @@ public class TestBatchExecutor {
     createExecutor(options).batchCallback(gets, new Object[1], callback);
 
     verify(callback, times(1)).update(same(BatchExecutor.NO_REGION), same(key),
-      argThat(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response))));
+        argThat(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response))));
   }
 
   @Test
