@@ -103,7 +103,7 @@ public class TestBigtableDataGrpcClient {
     doAnswer(new Answer<Void>(){
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        checkHeader(invocation.getArgumentAt(1, Metadata.class));
+        checkHeader(invocation.getArgument(1, Metadata.class));
         return null;
       }
     }).when(mockClientCall).start(any(ClientCall.Listener.class), any(Metadata.class));
@@ -273,8 +273,8 @@ public class TestBigtableDataGrpcClient {
     Answer<Void> answer = new Answer<Void>(){
       @Override
       public Void answer(final InvocationOnMock invocation) throws Throwable {
-        checkHeader(invocation.getArgumentAt(1, Metadata.class));
-        ClientCall.Listener listener = invocation.getArgumentAt(0, ClientCall.Listener.class);
+        checkHeader(invocation.getArgument(1, Metadata.class));
+        ClientCall.Listener listener = invocation.getArgument(0, ClientCall.Listener.class);
         listener.onMessage(response);
         listener.onClose(Status.OK, null);
         return null;

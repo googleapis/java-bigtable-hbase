@@ -28,14 +28,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
 import io.grpc.ClientCall;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.MutateRowsRequest;
@@ -50,13 +51,18 @@ import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.grpc.Status.Code;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 /**
  * Tests for {@link RetryingMutateRowsOperation}.
  *
  */
+@RunWith(JUnit4.class)
 public class TestRetryingMutateRowsOperation {
+  @Rule
+  public MockitoRule rule = MockitoJUnit.rule();
 
   private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
@@ -123,7 +129,6 @@ public class TestRetryingMutateRowsOperation {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     when(mutateRows.getRpcMetrics()).thenReturn(metrics);
     when(mutateRows.isRetryable(any(MutateRowsRequest.class))).thenReturn(true);
     when(mutateRows.getMethodDescriptor()).thenReturn(BigtableGrpc.getMutateRowsMethod());
@@ -189,12 +194,12 @@ public class TestRetryingMutateRowsOperation {
 
     doAnswer(new Answer<Void>() {
       @Override public Void answer(InvocationOnMock invocation) {
-        invocation.getArgumentAt(1, ClientCall.Listener.class)
-            .onClose(io.grpc.Status.DEADLINE_EXCEEDED, new Metadata());
+        ClientCall.Listener listener = invocation.getArgument(1);
+        listener.onClose(io.grpc.Status.DEADLINE_EXCEEDED, new Metadata());
         return null;
       }
-    }).when(mutateRows).start(any(MutateRowsRequest.class), any(ClientCall.Listener.class),
-        any(Metadata.class), any(ClientCall.class));
+    }).when(mutateRows).start(any(MutateRowsRequest.class), (ClientCall.Listener)any(),
+        (Metadata)any(), (ClientCall)any());
 
     try {
       underTest.getAsyncResult().get(1, TimeUnit.MINUTES);

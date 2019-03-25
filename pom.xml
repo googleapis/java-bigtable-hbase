@@ -72,7 +72,7 @@ limitations under the License.
 
         <!-- testing dependency versions -->
         <junit.version>4.12</junit.version>
-        <mockito.version>1.10.19</mockito.version>
+        <mockito.version>2.25.1</mockito.version>
 
         <beam.version>2.11.0</beam.version>
     </properties>

@@ -67,12 +67,12 @@ public class OperationClock implements ApiClock {
 
     Answer<ScheduledFuture> runAutomatically = new Answer<ScheduledFuture>() {
       @Override public ScheduledFuture answer(InvocationOnMock invocation)  {
-        long duration = invocation.getArgumentAt(1, Long.class);
-        TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
+        long duration = invocation.getArgument(1, Long.class);
+        TimeUnit timeUnit = invocation.getArgument(2, TimeUnit.class);
         synchronized (OperationClock.this) {
           totalSleepTimeNs += timeUnit.toNanos(duration);
         }
-        invocation.getArgumentAt(0, Runnable.class).run();
+        invocation.getArgument(0, Runnable.class).run();
         return future;
       }
     };

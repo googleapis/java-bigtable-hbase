@@ -232,7 +232,7 @@ public class RetryingReadRowsOperationTest {
       throws InterruptedException, java.util.concurrent.TimeoutException {
     doAnswer(new Answer<Void>() {
       @Override public Void answer(InvocationOnMock invocation) {
-        invocation.getArgumentAt(1, ClientCall.Listener.class)
+        invocation.getArgument(1, ClientCall.Listener.class)
             .onClose(Status.DEADLINE_EXCEEDED, new Metadata());
         return null;
       }
@@ -421,7 +421,7 @@ public class RetryingReadRowsOperationTest {
     Mockito.doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgumentAt(1, ClientCall.Listener.class).onClose(Status.OK, new Metadata());
+        invocation.getArgument(1, ClientCall.Listener.class).onClose(Status.OK, new Metadata());
         return null;
       }
     }).when(mockRetryableRpc).start(any(ReadRowsRequest.class), any(ClientCall.Listener.class),

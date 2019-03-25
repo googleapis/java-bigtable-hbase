@@ -82,7 +82,7 @@ public class TestBulkRead {
 
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgumentAt(0, Runnable.class).run();
+        invocation.getArgument(0, Runnable.class).run();
         return null;
       }
     });
@@ -131,7 +131,7 @@ public class TestBulkRead {
         addRows(rowKeys, new Answer<ResultScanner<FlatRow>>() {
           @Override
           public ResultScanner<FlatRow> answer(InvocationOnMock invocation) throws Throwable {
-            Query request = invocation.getArgumentAt(0, Query.class);
+            Query request = invocation.getArgument(0, Query.class);
             List<ByteString> list = new ArrayList<>(request.toProto(CONTEXT).getRows().getRowKeysList());
             Collections.shuffle(list);
             return createMockScanner(list.iterator());
@@ -155,7 +155,7 @@ public class TestBulkRead {
     List<Future<FlatRow>> futures = addRows(rowKeys, new Answer<ResultScanner<FlatRow>>() {
       @Override
       public ResultScanner<FlatRow> answer(InvocationOnMock invocation) throws Throwable {
-        Query request = invocation.getArgumentAt(0, Query.class);
+        Query request = invocation.getArgument(0, Query.class);
         List<ByteString> rowKeysList = new ArrayList<>(request.toProto(CONTEXT).getRows().getRowKeysList());
         missing.add(rowKeysList.remove((int) Math.random() * rowKeysList.size()));
         return createMockScanner(rowKeysList.iterator());

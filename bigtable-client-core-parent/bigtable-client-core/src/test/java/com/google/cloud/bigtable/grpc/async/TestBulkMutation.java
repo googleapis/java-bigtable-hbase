@@ -381,10 +381,10 @@ public class TestBulkMutation {
         .then(new Answer<ScheduledFuture>() {
           @Override
           public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
-            TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
-            long nanos = timeUnit.toNanos(invocation.getArgumentAt(1, Long.class));
+            TimeUnit timeUnit = invocation.getArgument(2, TimeUnit.class);
+            long nanos = timeUnit.toNanos(invocation.getArgument(1, Long.class));
             time.addAndGet(nanos);
-            Runnable runnable = invocation.getArgumentAt(0, Runnable.class);
+            Runnable runnable = invocation.getArgument(0, Runnable.class);
             if (inNewThread) {
               new Thread(runnable).start();
             } else {

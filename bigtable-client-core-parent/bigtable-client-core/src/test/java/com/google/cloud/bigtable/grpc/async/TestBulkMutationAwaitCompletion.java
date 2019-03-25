@@ -119,7 +119,7 @@ public class TestBulkMutationAwaitCompletion {
           public ListenableFuture<List<MutateRowsResponse>> answer(final InvocationOnMock invocation)
               throws Throwable {
             final int responseCount =
-                invocation.getArgumentAt(0, MutateRowsRequest.class).getEntriesCount();
+                invocation.getArgument(0, MutateRowsRequest.class).getEntriesCount();
             final SettableFuture<List<MutateRowsResponse>> future =
                 SettableFuture.<List<MutateRowsResponse>> create();
             opCompletionRunnables.add(new Runnable() {
@@ -143,10 +143,10 @@ public class TestBulkMutationAwaitCompletion {
             timeoutRunnables.add(new Runnable() {
               @Override
               public void run() {
-                long duration = invocation.getArgumentAt(1, Long.class);
-                TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
+                long duration = invocation.getArgument(1, Long.class);
+                TimeUnit timeUnit = invocation.getArgument(2, TimeUnit.class);
                 currentTime.addAndGet(timeUnit.toNanos(duration));
-                invocation.getArgumentAt(0, Runnable.class).run();
+                invocation.getArgument(0, Runnable.class).run();
               }
             });
             return mockScheduledFuture;
