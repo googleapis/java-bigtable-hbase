@@ -2183,4 +2183,4 @@ public abstract class AbstractTestFilters extends AbstractTest {
   protected abstract void getGetAddVersion(Get get, int version) throws IOException;
   protected abstract void scanAddVersion(Scan scan, int version);
 }
-
+  
