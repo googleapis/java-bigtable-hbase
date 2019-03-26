@@ -37,7 +37,7 @@ import java.util.Arrays;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 public class TestFilters extends AbstractTestFilters {
-
+  
   @Test
   public void testTimestampRangeFilter() throws IOException {
     // Initialize

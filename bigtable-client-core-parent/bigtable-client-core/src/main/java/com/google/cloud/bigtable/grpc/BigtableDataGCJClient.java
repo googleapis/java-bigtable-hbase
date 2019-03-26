@@ -32,10 +32,7 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowAdapter;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RowResultScanner;
-import com.google.common.collect.ImmutableList;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -118,36 +115,6 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
     return new RowResultScanner<>(stream, new FlatRow[0]);
   }
 
-  private ResultScanner<FlatRow> readFlatRowsV2(Query request){
-    List<FlatRow> flatRows = delegate.readRowsCallable(new FlatRowAdapter()).all().call(request);
-    final Iterator<FlatRow> flatRowIterator = flatRows.iterator();
-    return new ResultScanner<FlatRow>(){
-
-      @Override
-      public void close() throws IOException {
-      }
-
-      @Override
-      public FlatRow next() throws IOException {
-        return flatRowIterator.next();
-      }
-
-      @Override
-      public FlatRow[] next(int count) throws IOException {
-        ImmutableList.Builder<FlatRow> builder = ImmutableList.builder();
-        for (int i = 0; flatRowIterator.hasNext() && i < count; i++) {
-          builder.add(flatRowIterator.next());
-        }
-        return builder.build().toArray(new FlatRow[0]);
-      }
-
-      @Override
-      public int available() {
-        throw new UnsupportedOperationException("can not support available");
-      }
-    };
-  }
-
   @Override
   public ApiFuture<List<FlatRow>> readFlatRowsAsync(Query request) {
     return delegate.readRowsCallable(new FlatRowAdapter()).all().futureCall(request);
@@ -155,8 +122,8 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
 
   @Override
   public void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer) {
-    //TODO: figure out to convert StreamObserver to ResponseObserver.
-    delegate.readRowsCallable(new FlatRowAdapter()).call(request, new StreamObserverAdapter<>(observer));
+    delegate.readRowsCallable(new FlatRowAdapter()).call(request,
+        new StreamObserverAdapter<FlatRow>(observer));
   }
 
   @Override
@@ -164,8 +131,13 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
     delegate.close();
   }
 
-  // Inspired from ApiStreamObserverAdapter of GCJ
-  static class StreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
+  /**
+   * To wrap stream of native CBT client's {@link StreamObserver} onto GCJ
+   * {@link com.google.api.gax.rpc.ResponseObserver}.
+   *
+   * <p>Note:Inspired from {@link com.google.api.gax.rpc.ApiStreamObserverAdapter} of GCJ.
+   * */
+  private static class StreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
     private final StreamObserver<T> delegate;
 
     StreamObserverAdapter(StreamObserver<T> delegate) {

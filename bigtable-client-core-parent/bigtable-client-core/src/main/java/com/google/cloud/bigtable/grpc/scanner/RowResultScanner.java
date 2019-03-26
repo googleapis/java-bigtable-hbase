@@ -19,10 +19,12 @@ import com.google.api.gax.rpc.ServerStream;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+/**
+ * A {@link ResultScanner} that wraps GCJ {@link ServerStream}.
+ */
 public class RowResultScanner<T> implements ResultScanner<T> {
 
   private static final Meter resultsMeter =
@@ -34,6 +36,10 @@ public class RowResultScanner<T> implements ResultScanner<T> {
   private final Iterator<T> iterator;
   private final T[] arr;
 
+  /**
+   * @param stream a Stream of type Row/FlatRow.
+   * @param arr An array of type T length zero.
+   */
   public RowResultScanner(ServerStream<T> stream, T[] arr) {
     this.stream = stream;
     this.iterator = stream.iterator();
@@ -41,7 +47,7 @@ public class RowResultScanner<T> implements ResultScanner<T> {
   }
 
   @Override
-  public T next() throws IOException {
+  public T next() {
     if (!iterator.hasNext()) {
       return null;
     }
@@ -56,7 +62,7 @@ public class RowResultScanner<T> implements ResultScanner<T> {
   }
 
   @Override
-  public T[] next(int count) throws IOException {
+  public T[] next(int count) {
     ArrayList<T> resultList = new ArrayList<>(count);
     for (int i = 0; iterator.hasNext() && i < count; i++) {
       T row = next();
@@ -70,11 +76,11 @@ public class RowResultScanner<T> implements ResultScanner<T> {
 
   @Override
   public int available() {
-    throw new UnsupportedOperationException("this is not supported");
+    throw new UnsupportedOperationException("this operation is not supported");
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     if (iterator.hasNext()) {
       stream.cancel();
     }

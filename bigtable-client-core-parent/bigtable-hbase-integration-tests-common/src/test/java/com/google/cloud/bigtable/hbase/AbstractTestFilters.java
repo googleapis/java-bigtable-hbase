@@ -2009,7 +2009,6 @@ public abstract class AbstractTestFilters extends AbstractTest {
   }
 
   @Test
-  //TODO(rahulkql): failing due to duplicate Cells when used with interleave
   public void testInterleaveNoDuplicateCells() throws IOException {
     String rowKeyPrefix = dataHelper.randomString("interleave-no-dups-");
     byte[] qualA = dataHelper.randomData("interleave-no-dups-qual");
@@ -2184,4 +2183,4 @@ public abstract class AbstractTestFilters extends AbstractTest {
   protected abstract void getGetAddVersion(Get get, int version) throws IOException;
   protected abstract void scanAddVersion(Scan scan, int version);
 }
-  
+

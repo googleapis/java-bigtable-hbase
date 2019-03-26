@@ -25,7 +25,6 @@ import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
-import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Row;
@@ -134,15 +133,8 @@ public class TestBigtableVeneerSettingsFactory {
   }
 
   /**
-   * This test runs only if it founds below env variables,
-   * Then it calls to an actual Bigtable Table & performs the checks below:
-   *  <pre>
-   *    <code>
-   *      -Dtest.client.project.id=PROJECT_ID
-   *      -Dtest.client.instance.id=INSTANCE_ID
-   *    </code>
-   *  </pre>
-   *
+   * This test runs only if it finds "test.client.project.id" & "test.client.project.id"
+   * VM arguments. Then it calls to an actual Bigtable Table & performs the checks below:
    * <pre>
    *   <ul>
    *     <li>Checks if table with TABLE_ID exists.</li>
@@ -191,35 +183,20 @@ public class TestBigtableVeneerSettingsFactory {
       dataClient.mutateRow(rowMutation);
       LOG.info("Successfully Mutated");
 
-      Query query = Query.create(TABLE_ID)
-          .filter(Filters.FILTERS.chain()
-              .filter(Filters.FILTERS.limit().cellsPerColumn(1) )
-              .filter(Filters.FILTERS.interleave()
-                  .filter(Filters.FILTERS.qualifier().regex("qualifi\\C*"))
-                  .filter(Filters.FILTERS.qualifier().regex("qualifie\\C*"))
-                  .filter(Filters.FILTERS.qualifier().regex("qualifier\\C*"))
-              ));
-
+      Query query = Query.create(TABLE_ID);
       ServerStream<Row> rowStream = dataClient.readRows(query);
       for (Row outputRow : rowStream) {
 
         //Checking if the received output's KEY is same as above.
-        String rowKey = outputRow.getKey().toStringUtf8();
-        LOG.info("found key: " + rowKey);
+        ByteString key = outputRow.getKey();
+        LOG.info("found key: " + key.toStringUtf8());
         assertEquals(TEST_KEY, outputRow.getKey());
 
         for (RowCell cell : outputRow.getCells()) {
           //Checking if the received output is KEY sent above.
-          String value = cell.getValue().toStringUtf8();
-
-          String family = cell.getFamily();
-
-          String qualifier = cell.getQualifier().toStringUtf8();
-          long timestamp = cell.getTimestamp();
-
-          LOG.info("rowKey: "+ rowKey + "  family=" + family + "  qualifier:" + qualifier + " "
-              + "timestamp:" + timestamp + " values:" + value );
-          assertEquals(TEST_VALUE.toStringUtf8(), value);
+          ByteString value = cell.getValue();
+          LOG.info("Value found: " + value.toStringUtf8());
+          assertEquals(TEST_VALUE, value);
         }
       }
 
