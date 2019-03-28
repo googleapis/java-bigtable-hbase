@@ -185,7 +185,7 @@ limitations under the License.
                                 <location>${basedir}/javadoc/guava-docs</location>
                             </offlineLink>
                             <offlineLink>
-                                <url>https://hbase.apache.org/devapidocs/</url>
+                                <url>https://hbase.apache.org/2.0/devapidocs/</url>
                                 <location>${basedir}/javadoc/hbase-docs</location>
                             </offlineLink>
                             <offlineLink>
