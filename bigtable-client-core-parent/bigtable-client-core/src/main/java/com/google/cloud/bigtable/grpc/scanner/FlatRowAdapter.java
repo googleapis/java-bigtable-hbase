@@ -135,8 +135,11 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
       return new FlatRow(this.currentKey, combined.build());
     }
 
-    private boolean keysMatch(Cell c, Cell previous) {
-      return c.equals(previous);
+    private boolean keysMatch(Cell current, Cell previous) {
+      return current.getTimestamp() == previous.getTimestamp()
+          && Objects.equals(current.getQualifier(), previous.getQualifier())
+          && Objects.equals(current.getValue(), previous.getValue())
+          && Objects.equals(current.getLabels(), previous.getLabels());
     }
 
     /** {@inheritDoc} */
@@ -160,44 +163,6 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
       return new FlatRow(rowKey, ImmutableList.<Cell>of());
     }
   }
-
-  /**
-   * A comparator that compares the cells by Bigtable native ordering:
-   *
-   * <ul>
-   *   <li>Family lexicographically ascending
-   *   <li>Qualifier lexicographically ascending
-   *   <li>Timestamp in reverse chronological order
-   *   <li>Labels are also included as label with "-in" & "-out" are needed for
-   *   WhileMatchFilter
-   * </ul>
-   *
-   * <p>Values are not included in the comparison.
-   */
-//  private static Comparator<FlatRow.Cell> compareCells() {
-//    return new Comparator<FlatRow.Cell>() {
-//      @Override
-//      public int compare(FlatRow.Cell c1, FlatRow.Cell c2) {
-//        return ComparisonChain.start()
-//            .compare(c1.getFamily(), c2.getFamily())
-//            .compare(c1.getQualifier(), c2.getQualifier(), ByteStringComparator.INSTANCE)
-//            .compare(c2.getTimestamp(), c1.getTimestamp())
-//            .compare(c1.getLabels(), c2.getLabels(), compareLables())
-//            .result();
-//      }
-//    };
-//  }
-//
-//  private static Comparator<List<String>> compareLables(){
-//    return new Comparator<List<String>>() {
-//      @Override
-//      public int compare(List<String> o1, List<String> o2) {
-//        if(o1.size() == o2.size() && o1.containsAll(o2))
-//          return 0;
-//        return o1.size() < o2.size()?-1:1;
-//      }
-//    };
-//  }
 
   /** {@inheritDoc} */
   @Override
