@@ -28,9 +28,6 @@ import org.slf4j.Logger;
  */
 public class DropwizardMetricRegistry implements MetricRegistry {
 
-  private final com.codahale.metrics.MetricRegistry registry =
-      new com.codahale.metrics.MetricRegistry();
-
   /**
    * Creates a {@link DropwizardMetricRegistry} with an {@link Slf4jReporter}.  Only non-zero metrics
    * will be logged to the {@link Slf4jReporter}.
@@ -60,6 +57,16 @@ public class DropwizardMetricRegistry implements MetricRegistry {
         .filter(nonZeroMatcher)
         .build()
         .start(period, unit);
+  }
+
+  private final com.codahale.metrics.MetricRegistry registry;
+
+  public DropwizardMetricRegistry() {
+    this(new com.codahale.metrics.MetricRegistry());
+  }
+
+  public DropwizardMetricRegistry(com.codahale.metrics.MetricRegistry registry) {
+    this.registry = registry;
   }
 
   /**
