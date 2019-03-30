@@ -121,11 +121,12 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
      */
     @Override
     public FlatRow finishRow() {
-      ImmutableList.Builder<FlatRow.Cell> combined = ImmutableList.builderWithExpectedSize(totalCellCount);
-      FlatRow.Cell previous = null;
+      ImmutableList.Builder<FlatRow.Cell> combined =
+          ImmutableList.builderWithExpectedSize(totalCellCount);
       for (List<FlatRow.Cell> familyCellList : cells.values()) {
-        for(FlatRow.Cell c : familyCellList) {
-          if(previous == null || !c.getLabels().isEmpty() || !keysMatch(c, previous)){
+        FlatRow.Cell previous = null;
+        for (FlatRow.Cell c : familyCellList) {
+          if (previous == null || !c.getLabels().isEmpty() || !keysMatch(c, previous)) {
             combined.add(c);
           }
           previous = c;
@@ -138,7 +139,6 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
     private boolean keysMatch(Cell current, Cell previous) {
       return current.getTimestamp() == previous.getTimestamp()
           && Objects.equals(current.getQualifier(), previous.getQualifier())
-          && Objects.equals(current.getValue(), previous.getValue())
           && Objects.equals(current.getLabels(), previous.getLabels());
     }
 
