@@ -27,6 +27,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -70,12 +71,14 @@ import static org.mockito.Mockito.when;
     verify(stream).iterator();
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+  @Test
   public void testAvailableOperation() {
-    List<String> listOfOneElement = ImmutableList.of(TEST_VALUE);
-    when(stream.iterator()).thenReturn(listOfOneElement.iterator());
+    when(stream.isReceiveReady()).thenReturn(true);
     scanner = new RowResultScanner<>(stream, TEST_ARRAY);
-    scanner.available();
+    assertEquals(1, scanner.available());
+    when(stream.isReceiveReady()).thenReturn(false);
+    assertEquals(0, scanner.available());
+    verify(stream, times(2)).isReceiveReady();
   }
 
   @Test

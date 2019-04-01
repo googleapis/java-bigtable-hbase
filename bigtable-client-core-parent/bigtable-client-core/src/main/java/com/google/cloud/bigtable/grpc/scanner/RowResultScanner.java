@@ -76,7 +76,7 @@ public class RowResultScanner<T> implements ResultScanner<T> {
 
   @Override
   public int available() {
-    throw new UnsupportedOperationException("this operation is not supported");
+    return stream.isReceiveReady() ? 1 : 0;
   }
 
   @Override
