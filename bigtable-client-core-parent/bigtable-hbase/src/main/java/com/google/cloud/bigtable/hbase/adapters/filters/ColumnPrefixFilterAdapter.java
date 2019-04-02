@@ -32,7 +32,6 @@ import java.io.IOException;
  * @version $Id: $Id
  */
 public class ColumnPrefixFilterAdapter extends TypedFilterAdapterBase<ColumnPrefixFilter> {
-  ReaderExpressionHelper readerExpressionHelper = new ReaderExpressionHelper();
 
   /** {@inheritDoc} */
   @Override
@@ -45,9 +44,8 @@ public class ColumnPrefixFilterAdapter extends TypedFilterAdapterBase<ColumnPref
     ByteString.Output outputStream = ByteString.newOutput(prefix.length * 2);
     ReaderExpressionHelper.writeQuotedExpression(outputStream, prefix);
     outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
-    Filter qualifierFilter = FILTERS.qualifier().regex(outputStream.toByteString());
 
-    return FILTERS.chain().filter(qualifierFilter);
+    return FILTERS.qualifier().regex(outputStream.toByteString());
   }
 
   /** {@inheritDoc} */
