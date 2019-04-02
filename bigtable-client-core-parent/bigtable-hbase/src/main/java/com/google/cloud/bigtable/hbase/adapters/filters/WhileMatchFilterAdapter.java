@@ -96,12 +96,12 @@ public class WhileMatchFilterAdapter extends TypedFilterAdapterBase<WhileMatchFi
     checkArgument(
         wrappedFilter.isPresent(), "Unable to adapted the wrapped filter: " + filter.getFilter());
 
-    String whileMatchFileterId = context.getNextUniqueId();
+    String whileMatchFilterId = context.getNextUniqueId();
 
-    Filters.Filter inLabel = FILTERS.label(whileMatchFileterId + IN_LABEL_SUFFIX);
+    Filters.Filter inLabel = FILTERS.label(whileMatchFilterId + IN_LABEL_SUFFIX);
     Filters.Filter inLabelAndSink = FILTERS.chain().filter(inLabel).filter(FILTERS.sink());
 
-    Filters.Filter outLabel = FILTERS.label(whileMatchFileterId + OUT_LABEL_SUFFIX);
+    Filters.Filter outLabel = FILTERS.label(whileMatchFilterId + OUT_LABEL_SUFFIX);
     Filters.Filter outLabelAndSink = FILTERS.chain().filter(outLabel).filter(FILTERS.sink());
 
     Filters.Filter outInterleave = FILTERS.interleave().filter(outLabelAndSink).filter(FILTERS.pass());
