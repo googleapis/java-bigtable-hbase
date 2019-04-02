@@ -669,7 +669,7 @@ public class BigtableSession implements Closeable {
       if (dataGCJClient != null) {
         dataGCJClient.close();
       }
-    } catch (Exception e) {
+    } catch (Exception ex) {
       throw new IOException("Could not close the data client", ex);
     }
     try {
