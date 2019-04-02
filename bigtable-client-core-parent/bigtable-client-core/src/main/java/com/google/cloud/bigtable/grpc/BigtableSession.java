@@ -633,20 +633,6 @@ public class BigtableSession implements Closeable {
   public synchronized void close() throws IOException {
     watchdog.stop();
 
-    if (managedChannels.isEmpty()) {
-      return;
-    }
-
-    try {
-      if (dataGCJClient != null) {
-        dataGCJClient.close();
-      }
-      if (adminGCJClient != null) {
-        adminGCJClient.close();
-      }
-    } catch (Exception ex) {
-      throw new IOException(ex);
-    }
     long timeoutNanos = TimeUnit.SECONDS.toNanos(10);
     long endTimeNanos = System.nanoTime() + timeoutNanos;
     for (ManagedChannel channel : managedChannels) {
@@ -678,6 +664,22 @@ public class BigtableSession implements Closeable {
       }
     }
     managedChannels.clear();
+
+    try {
+      if (dataGCJClient != null) {
+        dataGCJClient.close();
+      }
+    } catch (Exception e) {
+      throw new IOException("Could not close the data client", ex);
+    }
+    try {
+      if (adminGCJClient != null) {
+        adminGCJClient.close();
+      }
+    } catch (Exception ex) {
+      throw new IOException("Could not close the admin client", ex);
+    }
+
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").dec();
   }
 
