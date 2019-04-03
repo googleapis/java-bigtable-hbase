@@ -297,7 +297,6 @@ public class BigtableSession implements Closeable {
     // END set up Data Clients
 
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
-
   }
 
   private ClientInterceptor createGaxHeaderInterceptor() {
@@ -394,6 +393,9 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
    */
   public BulkMutation createBulkMutation(BigtableTableName tableName) {
+    if (options.useGCJClient()) {
+      LOG.warn("Using cloud-bigtable-client's implementation of BulkMutation.");
+    }
     return new BulkMutation(
         tableName,
         throttlingDataClient,
