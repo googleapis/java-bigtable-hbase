@@ -369,7 +369,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link RequestContext} object for use with {@link #getDataClient()} during the
    * transition to {@link #getClientWrapper()}.
    */
-  public RequestContext getDataRequestContext() {
+  private RequestContext getDataRequestContext() {
     return dataRequestContext;
   }
 

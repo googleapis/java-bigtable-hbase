@@ -86,7 +86,6 @@ public class TestBigtableBufferedMutator {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     when(mockSession.createBulkMutationWrapper(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
-    when(mockSession.getDataRequestContext()).thenReturn(RequestContext.create("p", "i", "a"));
     when(mockSession.getClientWrapper()).thenReturn(mockDataClient);
   }
 

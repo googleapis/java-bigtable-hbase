@@ -149,7 +149,6 @@ public class TestBatchExecutor {
     when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getClientWrapper()).thenReturn(mockDataClient);
     when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(mockFuture);
-    when(mockBigtableSession.getDataRequestContext()).thenReturn(requetsContext);
     when(mockBigtableSession.createBulkMutationWrapper(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);
     doAnswer(new Answer<Void>() {
