@@ -334,8 +334,11 @@ public class BigtableSession implements Closeable {
   /**
    * <p>Getter for the field <code>dataClient</code>.</p>
    *
+   * @deprecated Please use {@link #getClientWrapper()}.
+   *
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
    */
+  @Deprecated
   public BigtableDataClient getDataClient() {
     return dataClient;
   }
@@ -378,9 +381,12 @@ public class BigtableSession implements Closeable {
   /**
    * <p>createBulkMutation.</p>
    *
+   * @deprecated Please use {@link #createBulkMutationWrapper(BigtableTableName)}.
+   *
    * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
    */
+  @Deprecated
   public BulkMutation createBulkMutation(BigtableTableName tableName) {
     return new BulkMutation(
         tableName,
