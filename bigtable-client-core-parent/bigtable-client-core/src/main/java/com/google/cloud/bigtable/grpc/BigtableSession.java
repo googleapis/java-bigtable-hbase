@@ -167,28 +167,35 @@ public class BigtableSession implements Closeable {
   }
 
   private Watchdog watchdog;
-  private final BigtableDataClient dataClient;
-  private final RequestContext dataRequestContext;
 
-  private BigtableDataGCJClient dataGCJClient;
-
-  // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
-  // synchronous operations.
-  private final BigtableDataClient throttlingDataClient;
-
-  // GCJ's Settings to create respective clients.
-  private final BigtableTableAdminSettings adminSettings;
-  private final BaseBigtableTableAdminSettings baseAdminSettings;
-  private BigtableTableAdminGCJClient adminGCJClient;
-
-  private BigtableTableAdminClient tableAdminClient;
-  private IBigtableTableAdminClient adminClientWrapper;
-  private BigtableInstanceGrpcClient instanceAdminClient;
+  /* *****************   traditional cloud-bigtable-client related variables ***************** */
 
   private final BigtableOptions options;
   private final List<ManagedChannel> managedChannels = Collections
       .synchronizedList(new ArrayList<ManagedChannel>());
   private final ClientInterceptor[] clientInterceptors;
+
+  private final BigtableDataClient dataClient;
+  private final RequestContext dataRequestContext;
+
+  // This BigtableDataClient has an additional throttling interceptor, which is not recommended for
+  // synchronous operations.
+  private final BigtableDataClient throttlingDataClient;
+
+  private BigtableTableAdminClient tableAdminClient;
+  private BigtableInstanceGrpcClient instanceAdminClient;
+
+  /* *****************   end cloud-bigtable-cliente related variables ***************** */
+
+  /* *****************   new google-cloud-bigtable related variables ***************** */
+
+  private final BigtableDataGCJClient dataGCJClient;
+  private final BigtableTableAdminSettings adminSettings;
+  private final BaseBigtableTableAdminSettings baseAdminSettings;
+  private BigtableTableAdminGCJClient adminGCJClient;
+  private IBigtableTableAdminClient adminClientWrapper;
+
+  /* *****************   end google-cloud-bigtable related variables ***************** */
 
   /**
    * This cluster name is either configured via BigtableOptions' clusterId, or via a lookup of the
@@ -217,6 +224,7 @@ public class BigtableSession implements Closeable {
         options.getAdminHost());
     LOG.info("Bigtable options: %s.", options);
 
+    // BEGIN set up interceptors
     this.dataRequestContext = RequestContext
         .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
@@ -242,17 +250,37 @@ public class BigtableSession implements Closeable {
 
     clientInterceptors =
         clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
+    // END set up interceptors
 
+    // BEGIN set up Data Clients
+    // This is needed for the throttling client / Bulk Mutation which is only cloud-bigtable-client.
     Channel dataChannel = getDataChannelPool();
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
-    // More often than not, users want the dataClient. Create a new one in the constructor.
     CallOptionsFactory.ConfiguredCallOptionsFactory callOptionsFactory =
         new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig());
-    dataClient =
-        new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
-    dataClient.setCallOptionsFactory(callOptionsFactory);
+
+    if (options.useGCJClient()) {
+      BigtableDataSettings dataSettings =
+          BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
+      this.dataGCJClient = new BigtableDataGCJClient(
+          com.google.cloud.bigtable.data.v2.BigtableDataClient.create(dataSettings));
+
+      // Defer the creation of both the tableAdminClient until we need them.
+      //TODO(rahulkql): Need to identify which resources to initialized for GCJ's adapter case.
+      this.adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
+      this.baseAdminSettings = BaseBigtableTableAdminSettings.create(adminSettings.getStubSettings());
+
+      this.dataClient = null;
+    } else {
+      // More often than not, users want the dataClient. Create a new one in the constructor.
+      this.dataClient = new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
+      this.dataClient.setCallOptionsFactory(callOptionsFactory);
+      this.dataGCJClient = null;
+      this.adminSettings = null;
+      this.baseAdminSettings = null;
+    }
 
     // Async operations can run amok, so they need to have some throttling. The throttling is
     // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
@@ -265,13 +293,10 @@ public class BigtableSession implements Closeable {
         ClientInterceptors.intercept(dataChannel, new ThrottlingClientInterceptor(resourceLimiter));
     throttlingDataClient =
         new BigtableDataGrpcClient(asyncDataChannel, sharedPools.getRetryExecutor(), options);
+    throttlingDataClient.setCallOptionsFactory(callOptionsFactory);
+    // END set up Data Clients
 
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
-
-    // Defer the creation of both the tableAdminClient until we need them.
-    //TODO(rahulkql): Need to identify which resources to initialized for GCJ's adapter case.
-    this.adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
-    this.baseAdminSettings = BaseBigtableTableAdminSettings.create(adminSettings.getStubSettings());
   }
 
   private ClientInterceptor createGaxHeaderInterceptor() {
@@ -355,20 +380,6 @@ public class BigtableSession implements Closeable {
    */
   public IBigtableDataClient getClientWrapper() {
     if (options.useGCJClient()) {
-      if (this.dataGCJClient == null) {
-        synchronized (BigtableSession.this) {
-          try {
-            if (dataGCJClient == null) {
-              BigtableDataSettings dataSettings =
-                  BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
-              this.dataGCJClient = new BigtableDataGCJClient(
-                  com.google.cloud.bigtable.data.v2.BigtableDataClient.create(dataSettings));
-            }
-          } catch (IOException ioException) {
-            throw new RuntimeException(ioException);
-          }
-        }
-      }
       return dataGCJClient;
     } else {
       return new BigtableDataClientWrapper(dataClient, getDataRequestContext());
@@ -382,6 +393,9 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
    */
   public BulkMutation createBulkMutation(BigtableTableName tableName) {
+    if (options.useGCJClient()) {
+      LOG.warn("Using cloud-bigtable-client's implementation of BulkMutation.");
+    }
     return new BulkMutation(
         tableName,
         throttlingDataClient,
@@ -621,20 +635,6 @@ public class BigtableSession implements Closeable {
   public synchronized void close() throws IOException {
     watchdog.stop();
 
-    if (managedChannels.isEmpty()) {
-      return;
-    }
-
-    try {
-      if (dataGCJClient != null) {
-        dataGCJClient.close();
-      }
-      if (adminGCJClient != null) {
-        adminGCJClient.close();
-      }
-    } catch (Exception ex) {
-      throw new IOException(ex);
-    }
     long timeoutNanos = TimeUnit.SECONDS.toNanos(10);
     long endTimeNanos = System.nanoTime() + timeoutNanos;
     for (ManagedChannel channel : managedChannels) {
@@ -666,6 +666,22 @@ public class BigtableSession implements Closeable {
       }
     }
     managedChannels.clear();
+
+    try {
+      if (dataGCJClient != null) {
+        dataGCJClient.close();
+      }
+    } catch (Exception ex) {
+      throw new IOException("Could not close the data client", ex);
+    }
+    try {
+      if (adminGCJClient != null) {
+        adminGCJClient.close();
+      }
+    } catch (Exception ex) {
+      throw new IOException("Could not close the admin client", ex);
+    }
+
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").dec();
   }
 
