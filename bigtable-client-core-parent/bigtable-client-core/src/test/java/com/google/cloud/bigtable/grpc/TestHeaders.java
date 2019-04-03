@@ -30,6 +30,7 @@ import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.common.io.Resources;
 import io.grpc.ForwardingServerCall;
 import io.grpc.ManagedChannelBuilder;
@@ -123,8 +124,8 @@ public class TestHeaders {
 
     xGoogApiPattern = Pattern.compile(".* cbt/.*");
     try (BigtableSession session = new BigtableSession(bigtableOptions)) {
-      session.getDataClient()
-          .readFlatRows(ReadRowsRequest.getDefaultInstance()).next();
+      session.getClientWrapper()
+          .readFlatRows(Query.create("fake-table")).next();
       Assert.assertTrue(serverPasses.get());
     }
   }
@@ -301,4 +302,3 @@ public class TestHeaders {
     }
   }
 }
-
