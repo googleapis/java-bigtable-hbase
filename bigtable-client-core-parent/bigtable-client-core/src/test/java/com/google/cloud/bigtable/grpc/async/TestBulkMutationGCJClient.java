@@ -175,7 +175,7 @@ public class TestBulkMutationGCJClient {
       }
     }, 50, TimeUnit.MILLISECONDS);
 
-    bulkMutationClient.sendUnsent();
+    bulkMutationClient.flush();
     Assert.assertTrue(result1.isDone());
     Assert.assertTrue(result2.isDone());
 

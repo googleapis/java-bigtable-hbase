@@ -16,17 +16,13 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutureCallback;
-import com.google.api.core.ApiFutures;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
+import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher.BulkMutationFailure;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.MoreExecutors;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class is meant to replicate existing {@link BulkMutation} while translating calls to
@@ -34,72 +30,44 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class BulkMutationGCJClient implements IBulkMutation {
 
-  // Maximum wait time for all outstanding response futures in either flush() or close() to resolve.
-  private static final long MAX_RPC_WAIT_TIME = 12;
+  private static Logger LOG = new Logger(BulkMutation.class);
 
   private final BulkMutationBatcher bulkMutateBatcher;
-  private List<ApiFuture<Void>> responseFutures = new ArrayList<>();
-  private ReentrantLock lock = new ReentrantLock();
+  private final OperationAccountant operationAccountant;
 
   public BulkMutationGCJClient(BulkMutationBatcher bulkMutateBatcher) {
     this.bulkMutateBatcher = bulkMutateBatcher;
+    this.operationAccountant = new OperationAccountant();
   }
 
   /** {@inheritDoc} */
   @Override
   public void flush() {
-    lock.lock();
     try {
-      List<ApiFuture<Void>> accumulatedResFuture = responseFutures;
-      responseFutures = new ArrayList<>();
-      ApiFutures.allAsList(accumulatedResFuture).get(MAX_RPC_WAIT_TIME, TimeUnit.MINUTES);
-    } catch (Exception e) {
-      throw new RuntimeException("Something happened with RPC results", e);
-    } finally {
-      lock.unlock();
+      operationAccountant.awaitCompletion();
+    } catch (BulkMutationFailure | InterruptedException ex) {
+      throw new RuntimeException("Could not complete RPC for current Batch", ex);
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public void sendUnsent() {
-    if (!isFlushed()) {
-      flush();
-    }
+    LOG.info("This operation will be implemented once the underlying API has this feature.");
   }
 
   /** {@inheritDoc} */
   @Override
   public boolean isFlushed() {
-    lock.lock();
-    try {
-      return responseFutures.isEmpty();
-    } finally {
-      lock.unlock();
-    }
+    return !operationAccountant.hasInflightOperations();
   }
 
   /** {@inheritDoc} */
   @Override
-  public ApiFuture<Void> add(RowMutation rowMutation) {
-    lock.lock();
-    try {
-      final ApiFuture<Void> res = bulkMutateBatcher.add(rowMutation);
-      responseFutures.add(res);
-      ApiFutures.addCallback(res, new ApiFutureCallback<Void>() {
-        @Override
-        public void onFailure(Throwable t) {
-          responseFutures.remove(res);
-        }
-
-        @Override
-        public void onSuccess(Void result) {
-          responseFutures.remove(res);
-        }
-      }, MoreExecutors.directExecutor());
-      return res;
-    } finally {
-      lock.unlock();
-    }
+  public synchronized ApiFuture<Void> add(RowMutation rowMutation) {
+    Preconditions.checkNotNull(rowMutation, "mutation details cannot be null");
+    final ApiFuture<Void> response = bulkMutateBatcher.add(rowMutation);
+    operationAccountant.registerOperation(ApiFutureUtil.adapt(response));
+    return response;
   }
 }
