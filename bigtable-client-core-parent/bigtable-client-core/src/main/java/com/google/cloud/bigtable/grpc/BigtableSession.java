@@ -409,7 +409,11 @@ public class BigtableSession implements Closeable {
    * @return a {@link IBigtableDataClient} object.
    */
   public IBulkMutation createBulkMutationWrapper(BigtableTableName tableName) {
-    return new BulkMutationWrapper(createBulkMutation(tableName), getDataRequestContext());
+    if (options.useGCJClient()) {
+      return getClientWrapper().createBulkMutationBatcher();
+    } else {
+      return new BulkMutationWrapper(createBulkMutation(tableName), getDataRequestContext());
+    }
   }
 
   /**
