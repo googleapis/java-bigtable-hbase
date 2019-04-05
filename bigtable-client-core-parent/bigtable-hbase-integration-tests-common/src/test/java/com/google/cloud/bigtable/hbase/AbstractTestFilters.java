@@ -2118,6 +2118,43 @@ public abstract class AbstractTestFilters extends AbstractTest {
     assertEquals(expectedKeys, actualKeys);
   }
 
+  @Test
+  public void testRowKeysWithRegEx() throws Exception{
+    Table table = getDefaultTable();
+    String[] rowKeys = {
+            "/firstKey=1/secKey=AB/thirdKey=111",
+            "/firstKey=1/secKey=ABC/thirdKey=222",
+            "/firstKey=2/secKey=CD/thirdKey=333",
+            "/firstKey=3/secKey=BT/thirdKey=444",
+            "/firstKey=4/secKey=BTL/thirdKey=555",
+            "/firstKey=4/secKey=AD/thirdKey=666",
+            "/firstKey=5/secKey=SET/thirdKey=777",
+            "/firstKey=11/secKey=AA/thirdKey=888"
+        };
+
+    List<Put> puts = new ArrayList<>();
+    byte[] qualA = dataHelper.randomData("test-regex");
+    for (int i = 0; i < rowKeys.length; i++) {
+      String indexStr = String.valueOf(i);
+      puts.add(
+          new Put(rowKeys[i].getBytes()).addColumn(COLUMN_FAMILY, qualA, Bytes.toBytes(indexStr)));
+    }
+    table.put(puts);
+
+    // Sequence of expected rows would be sorted.
+    int[] expected = { 5, 4 };
+    String[] conditions = { "/firstKey=4.*" };
+    assertRowKeysWithRegex(table, conditions, rowKeys, expected);
+
+    expected = new int[] { 0, 1 };
+    conditions = new String[] { ".*secKey=AB.*" };
+    assertRowKeysWithRegex(table, conditions, rowKeys, expected);
+
+    expected = new int[] { 0, 6 };
+    conditions = new String[] { ".*/thirdKey=111.*", ".*/thirdKey=777.*" };
+    assertRowKeysWithRegex(table, conditions, rowKeys, expected);
+  }
+
   protected final void assertMatchingRow(Result result, byte[] key) {
     assertNotNull(String.format("Got null result for key %s", toFuzzyKeyString(key)), result);
     byte[] actualKey = CellUtil.cloneRow(result.rawCells()[0]);
@@ -2178,6 +2215,22 @@ public abstract class AbstractTestFilters extends AbstractTest {
     table.put(puts);
 
     return table;
+  }
+
+  private void assertRowKeysWithRegex(Table table, String[] rowRegEx, String[] rowKeys,
+      int[] expected) throws IOException {
+    FilterList filtersList = new FilterList(FilterList.Operator.MUST_PASS_ONE);
+    for (String con : rowRegEx) {
+      filtersList.addFilter(new RowFilter(CompareOp.EQUAL, new RegexStringComparator(con)));
+    }
+    Scan scan = new Scan();
+    scan.setFilter(filtersList);
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      Result[] results = scanner.next(10);
+      for (int i = 0; i < results.length; i++) {
+        Assert.assertArrayEquals(results[i].getRow(), rowKeys[expected[i]].getBytes());
+      }
+    }
   }
 
   protected abstract void getGetAddVersion(Get get, int version) throws IOException;
