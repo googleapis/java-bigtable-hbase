@@ -2141,7 +2141,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     }
     table.put(puts);
 
-    // Sequence of expected rows would be sorted.
+    // Expected rows should be sorted.
     int[] expected = { 5, 4 };
     String[] conditions = { "/firstKey=4.*" };
     assertRowKeysWithRegex(table, conditions, rowKeys, expected);
