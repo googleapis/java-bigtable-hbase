@@ -42,12 +42,11 @@ public class BulkMutationGCJClient implements IBulkMutation {
 
   /** {@inheritDoc} */
   @Override
-  public void flush() {
-    try {
-      operationAccountant.awaitCompletion();
-    } catch (BulkMutationFailure | InterruptedException ex) {
-      throw new RuntimeException("Could not complete RPC for current Batch", ex);
-    }
+  public synchronized ApiFuture<Void> add(RowMutation rowMutation) {
+    Preconditions.checkNotNull(rowMutation, "mutation details cannot be null");
+    final ApiFuture<Void> response = bulkMutateBatcher.add(rowMutation);
+    operationAccountant.registerOperation(ApiFutureUtil.adapt(response));
+    return response;
   }
 
   /** {@inheritDoc} */
@@ -58,16 +57,17 @@ public class BulkMutationGCJClient implements IBulkMutation {
 
   /** {@inheritDoc} */
   @Override
-  public boolean isFlushed() {
-    return !operationAccountant.hasInflightOperations();
+  public void flush() {
+    try {
+      operationAccountant.awaitCompletion();
+    } catch (BulkMutationFailure | InterruptedException ex) {
+      throw new RuntimeException("Could not complete RPC for current Batch", ex);
+    }
   }
 
   /** {@inheritDoc} */
   @Override
-  public synchronized ApiFuture<Void> add(RowMutation rowMutation) {
-    Preconditions.checkNotNull(rowMutation, "mutation details cannot be null");
-    final ApiFuture<Void> response = bulkMutateBatcher.add(rowMutation);
-    operationAccountant.registerOperation(ApiFutureUtil.adapt(response));
-    return response;
+  public boolean isFlushed() {
+    return !operationAccountant.hasInflightOperations();
   }
 }
