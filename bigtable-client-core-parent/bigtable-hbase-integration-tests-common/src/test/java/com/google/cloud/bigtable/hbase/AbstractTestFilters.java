@@ -2126,33 +2126,34 @@ public abstract class AbstractTestFilters extends AbstractTest {
             "/firstKey=1/secKey=ABC/thirdKey=222",
             "/firstKey=2/secKey=CD/thirdKey=333",
             "/firstKey=3/secKey=BT/thirdKey=444",
-            "/firstKey=4/secKey=BTL/thirdKey=555",
-            "/firstKey=4/secKey=AD/thirdKey=666",
+            "/firstKey=4/secKey=AD/thirdKey=555",
+            "/firstKey=4/secKey=BTL/thirdKey=666",
             "/firstKey=5/secKey=SET/thirdKey=777",
             "/firstKey=11/secKey=AA/thirdKey=888"
         };
 
     List<Put> puts = new ArrayList<>();
+    String rowPrefix = dataHelper.randomString("testrow-");
     byte[] qualA = dataHelper.randomData("test-regex");
     for (int i = 0; i < rowKeys.length; i++) {
       String indexStr = String.valueOf(i);
       puts.add(
-          new Put(rowKeys[i].getBytes()).addColumn(COLUMN_FAMILY, qualA, Bytes.toBytes(indexStr)));
+          new Put(Bytes.toBytes(rowPrefix + rowKeys[i])).addColumn(COLUMN_FAMILY, qualA,
+              Bytes.toBytes(indexStr)));
     }
     table.put(puts);
 
-    // Expected rows should be sorted.
-    int[] expected = { 5, 4 };
+    int[] expected = { 4, 5 };
     String[] conditions = { "/firstKey=4.*" };
-    assertRowKeysWithRegex(table, conditions, rowKeys, expected);
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
 
     expected = new int[] { 0, 1 };
     conditions = new String[] { ".*secKey=AB.*" };
-    assertRowKeysWithRegex(table, conditions, rowKeys, expected);
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
 
     expected = new int[] { 0, 6 };
     conditions = new String[] { ".*/thirdKey=111.*", ".*/thirdKey=777.*" };
-    assertRowKeysWithRegex(table, conditions, rowKeys, expected);
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
   }
 
   protected final void assertMatchingRow(Result result, byte[] key) {
@@ -2217,8 +2218,8 @@ public abstract class AbstractTestFilters extends AbstractTest {
     return table;
   }
 
-  private void assertRowKeysWithRegex(Table table, String[] rowRegEx, String[] rowKeys,
-      int[] expected) throws IOException {
+  private void assertRowKeysWithRegex(Table table, String[] rowRegEx,
+      String rowPrefix, String[] rowKeys, int[] expected) throws IOException {
     FilterList filtersList = new FilterList(FilterList.Operator.MUST_PASS_ONE);
     for (String con : rowRegEx) {
       filtersList.addFilter(new RowFilter(CompareOp.EQUAL, new RegexStringComparator(con)));
@@ -2228,7 +2229,8 @@ public abstract class AbstractTestFilters extends AbstractTest {
     try (ResultScanner scanner = table.getScanner(scan)) {
       Result[] results = scanner.next(10);
       for (int i = 0; i < results.length; i++) {
-        Assert.assertArrayEquals(results[i].getRow(), rowKeys[expected[i]].getBytes());
+        Assert.assertArrayEquals(results[i].getRow(),
+            Bytes.toBytes(rowPrefix + rowKeys[expected[i]]));
       }
     }
   }
