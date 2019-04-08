@@ -325,7 +325,6 @@ public class BigtableOptionsFactory {
     }
     bigtableOptionsBuilder.setUseBatch(configuration.getBoolean(BIGTABLE_USE_BATCH, false));
 
-    //TODO(rahulkql): verify presence of this env varible.
     bigtableOptionsBuilder.setUseGCJClient(configuration.getBoolean(BIGTABLE_USE_GCJ_CLIENT,
         false));
     return bigtableOptionsBuilder.build();

@@ -147,7 +147,7 @@ public class TestBatchExecutor {
 
     MockitoAnnotations.initMocks(this);
     when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(mockFuture);
-    when(mockBigtableSession.getClientWrapper()).thenReturn(mockDataClient);
+    when(mockBigtableSession.getDataClientWrapper()).thenReturn(mockDataClient);
     when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(mockFuture);
     when(mockBigtableSession.createBulkMutationWrapper(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);

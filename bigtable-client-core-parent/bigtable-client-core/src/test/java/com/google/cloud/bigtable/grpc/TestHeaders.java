@@ -124,7 +124,7 @@ public class TestHeaders {
 
     xGoogApiPattern = Pattern.compile(".* cbt/.*");
     try (BigtableSession session = new BigtableSession(bigtableOptions)) {
-      session.getClientWrapper()
+      session.getDataClientWrapper()
           .readFlatRows(Query.create("fake-table")).next();
       Assert.assertTrue(serverPasses.get());
     }

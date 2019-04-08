@@ -118,22 +118,22 @@ public class TestAppProfile {
 
   @Test
   public void testReadRows() throws Exception {
-    defaultSession.getClientWrapper().readRows(Query.create(TABLE_ID)).next();
+    defaultSession.getDataClientWrapper().readRows(Query.create(TABLE_ID)).next();
     ReadRowsRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getClientWrapper().readRows(Query.create(TABLE_ID));
+    profileSession.getDataClientWrapper().readRows(Query.create(TABLE_ID));
     ReadRowsRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
   }
 
   @Test
   public void testSampleRowKeys() throws Exception {
-    defaultSession.getClientWrapper().sampleRowKeys(TABLE_ID);
+    defaultSession.getDataClientWrapper().sampleRowKeys(TABLE_ID);
     SampleRowKeysRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getClientWrapper().sampleRowKeys(TABLE_ID);
+    profileSession.getDataClientWrapper().sampleRowKeys(TABLE_ID);
     SampleRowKeysRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
   }
@@ -141,11 +141,11 @@ public class TestAppProfile {
   @Test
   public void testMutateRow() throws Exception {
     RowMutation rowMutation = RowMutation.create(TABLE_ID, "fake-key");
-    defaultSession.getClientWrapper().mutateRow(rowMutation);
+    defaultSession.getDataClientWrapper().mutateRow(rowMutation);
     MutateRowRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getClientWrapper().mutateRow(rowMutation);
+    profileSession.getDataClientWrapper().mutateRow(rowMutation);
     MutateRowRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
 
@@ -168,11 +168,11 @@ public class TestAppProfile {
         ConditionalRowMutation.create(TABLE_ID, "fake-key")
             .then(Mutation.create()
                 .setCell("fakeFamily", "qualifer", "value"));
-    defaultSession.getClientWrapper().checkAndMutateRow(checkAndMuate);
+    defaultSession.getDataClientWrapper().checkAndMutateRow(checkAndMuate);
     CheckAndMutateRowRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getClientWrapper().checkAndMutateRow(checkAndMuate);
+    profileSession.getDataClientWrapper().checkAndMutateRow(checkAndMuate);
     CheckAndMutateRowRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
   }
@@ -180,11 +180,11 @@ public class TestAppProfile {
   @Test
   public void testReadModifyWrite() throws Exception {
     ReadModifyWriteRow readModifyRow = ReadModifyWriteRow.create(TABLE_ID, "fake-key");
-    defaultSession.getClientWrapper().readModifyWriteRow(readModifyRow);
+    defaultSession.getDataClientWrapper().readModifyWriteRow(readModifyRow);
     ReadModifyWriteRowRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getClientWrapper().readModifyWriteRow(readModifyRow);
+    profileSession.getDataClientWrapper().readModifyWriteRow(readModifyRow);
     ReadModifyWriteRowRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
   }

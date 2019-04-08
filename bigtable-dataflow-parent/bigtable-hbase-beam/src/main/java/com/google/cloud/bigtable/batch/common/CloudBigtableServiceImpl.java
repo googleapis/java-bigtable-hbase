@@ -28,7 +28,7 @@ public class CloudBigtableServiceImpl implements CloudBigtableService {
   public List<KeyOffset> getSampleRowKeys(CloudBigtableTableConfiguration config)
       throws IOException {
     try (BigtableSession session = new BigtableSession(config.toBigtableOptions())) {
-      return session.getClientWrapper().sampleRowKeys(config.getTableId());
+      return session.getDataClientWrapper().sampleRowKeys(config.getTableId());
     }
   }
 }

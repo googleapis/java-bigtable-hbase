@@ -268,7 +268,6 @@ public class BigtableSession implements Closeable {
           com.google.cloud.bigtable.data.v2.BigtableDataClient.create(dataSettings));
 
       // Defer the creation of both the tableAdminClient until we need them.
-      //TODO(rahulkql): Need to identify which resources to initialized for GCJ's adapter case.
       this.adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
       this.baseAdminSettings = BaseBigtableTableAdminSettings.create(adminSettings.getStubSettings());
 
@@ -367,7 +366,7 @@ public class BigtableSession implements Closeable {
 
   /**
    * @return a {@link RequestContext} object for use with {@link #getDataClient()} during the
-   * transition to {@link #getClientWrapper()}.
+   * transition to {@link #getDataClientWrapper()}.
    */
   private RequestContext getDataRequestContext() {
     return dataRequestContext;
@@ -378,7 +377,7 @@ public class BigtableSession implements Closeable {
    *
    * @return a {@link IBigtableDataClient} object.
    */
-  public IBigtableDataClient getClientWrapper() {
+  public IBigtableDataClient getDataClientWrapper() {
     if (options.useGCJClient()) {
       return dataGCJClient;
     } else {
@@ -420,7 +419,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.async.BulkRead} object.
    */
   public BulkRead createBulkRead(BigtableTableName tableName) {
-    return new BulkRead(getClientWrapper(), tableName,
+    return new BulkRead(getDataClientWrapper(), tableName,
         options.getBulkOptions().getBulkMaxRowKeyCount(),
         BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool()
     );
@@ -451,11 +450,9 @@ public class BigtableSession implements Closeable {
    * @return a {@link BigtableTableAdminClientWrapper} object.
    * @throws java.io.IOException if any.
    */
-  //TODO(rahulkql): rename the getter to getTableAdminClient.
   public synchronized IBigtableTableAdminClient getTableAdminClientWrapper() throws IOException {
     if (options.useGCJClient()) {
       if (adminGCJClient == null) {
-        //TODO(rahulkql): Decide If these clients need to be part of #close
         com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient adminClientV2 =
             com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient.create(adminSettings);
         BaseBigtableTableAdminClient baseAdminClientV2 =

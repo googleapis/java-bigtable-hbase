@@ -621,7 +621,8 @@ public class CloudBigtableIO {
 
       // This will use cached data channels under the covers.
       session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(config));
-      scanner = session.getClientWrapper().readFlatRows(Query.fromProto(source.getConfiguration().getRequest()));
+      scanner = session.getDataClientWrapper()
+              .readFlatRows(Query.fromProto(source.getConfiguration().getRequest()));
     }
 
     /**
