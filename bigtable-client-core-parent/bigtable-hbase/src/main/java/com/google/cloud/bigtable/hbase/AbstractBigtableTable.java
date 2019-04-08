@@ -126,7 +126,7 @@ public abstract class AbstractBigtableTable implements Table {
     this.bigtableConnection = bigtableConnection;
     BigtableSession session = bigtableConnection.getSession();
     this.options = session.getOptions();
-    this.clientWrapper = session.getClientWrapper();
+    this.clientWrapper = session.getDataClientWrapper();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
   }

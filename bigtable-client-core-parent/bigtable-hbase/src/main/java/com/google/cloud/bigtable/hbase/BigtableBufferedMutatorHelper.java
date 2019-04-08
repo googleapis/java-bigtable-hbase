@@ -88,7 +88,7 @@ public class BigtableBufferedMutatorHelper {
     this.options = session.getOptions();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.bulkMutation = session.createBulkMutationWrapper(tableName);
-    this.dataClient = session.getClientWrapper();
+    this.dataClient = session.getDataClientWrapper();
     this.operationAccountant = new OperationAccountant();
   }
 

@@ -37,7 +37,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
 
 import com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -279,7 +278,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
-    return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getClientWrapper());
+    return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getDataClientWrapper());
   }
 
   @Override
@@ -338,7 +337,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
     request.setTableName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
-    List<KeyOffset> sampleRowKeyResponse = this.session.getClientWrapper().sampleRowKeys(tableName.getNameAsString());
+    List<KeyOffset> sampleRowKeyResponse = this.session.getDataClientWrapper().sampleRowKeys(tableName.getNameAsString());
 
     return getSampledRowKeysAdapter(tableName, serverName).adaptResponse(sampleRowKeyResponse)
         .stream()

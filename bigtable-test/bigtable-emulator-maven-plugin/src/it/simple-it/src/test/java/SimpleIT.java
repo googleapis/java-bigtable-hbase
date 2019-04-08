@@ -50,7 +50,7 @@ public class SimpleIT {
       IBigtableTableAdminClient tableAdminClient = session.getTableAdminClientWrapper();
       tableAdminClient.createTable(CreateTableRequest.of(tableId).addFamily(family));
 
-      IBigtableDataClient dataClient = session.getClientWrapper();
+      IBigtableDataClient dataClient = session.getDataClientWrapper();
       dataClient.mutateRow(RowMutation.create(tableId, key).setCell(family, "", value));
       List<Row> results = dataClient.readRowsAsync(Query.create(tableId).rowKey(key)).get();
 

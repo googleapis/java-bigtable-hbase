@@ -113,7 +113,7 @@ public class TestBigtableTable {
     when(mockConnection.getConfiguration()).thenReturn(config);
     when(mockConnection.getSession()).thenReturn(mockSession);
     when(mockSession.getOptions()).thenReturn(options);
-    when(mockSession.getClientWrapper()).thenReturn(mockBigtableDataClient);
+    when(mockSession.getDataClientWrapper()).thenReturn(mockBigtableDataClient);
     when(mockBigtableDataClient.readFlatRows(isA(Query.class))).thenReturn(mockResultScanner);
     table = new AbstractBigtableTable(mockConnection, hbaseAdapter){};
   }
