@@ -24,8 +24,7 @@ import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
 
 /**
- * This class wraps existing {@link com.google.cloud.bigtable.grpc.async.BulkMutation} with
- * Google-cloud-java's model.
+ * This class wraps existing {@link BulkMutation} with Google-cloud-java's model.
  */
 public class BulkMutationWrapper implements IBulkMutation {
 
@@ -39,8 +38,14 @@ public class BulkMutationWrapper implements IBulkMutation {
 
   /** {@inheritDoc} */
   @Override
-  public void flush() throws InterruptedException {
-    delegate.flush();
+  public ApiFuture<Void> add(RowMutation rowMutation) {
+    return ApiFutureUtil.transformAndAdapt(delegate.add(rowMutation.toBulkProto(requestContext).getEntries(0)),
+        new Function<MutateRowResponse, Void>() {
+          @Override
+          public Void apply(MutateRowResponse response) {
+            return null;
+          }
+        });
   }
 
   /** {@inheritDoc} */
@@ -51,19 +56,13 @@ public class BulkMutationWrapper implements IBulkMutation {
 
   /** {@inheritDoc} */
   @Override
-  public boolean isFlushed() {
-    return delegate.isFlushed();
+  public void flush() throws InterruptedException {
+    delegate.flush();
   }
 
   /** {@inheritDoc} */
   @Override
-  public ApiFuture<Void> add(RowMutation rowMutation) {
-    return ApiFutureUtil.transformAndAdapt(delegate.add(rowMutation.toBulkProto(requestContext).getEntries(0)),
-        new Function<MutateRowResponse, Void>() {
-          @Override
-          public Void apply(MutateRowResponse response) {
-            return null;
-          }
-        });
+  public boolean isFlushed() {
+    return delegate.isFlushed();
   }
 }

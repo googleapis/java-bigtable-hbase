@@ -19,24 +19,9 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 
 /**
- * Interface to support batching multiple RowMutation request into a single grpc request.
+ * Interface to support batching multiple {@link RowMutation} request into a single grpc request.
  */
 public interface IBulkMutation {
-
-  /**
-   * Sends any outstanding {@link RowMutation} and wait until all requests are complete.
-   */
-  void flush() throws InterruptedException;
-
-  /**
-   * Sends any outstanding {@link RowMutation}s, present in the current batch.
-   */
-  void sendUnsent();
-
-  /**
-   * @return false if there is any outstanding {@link RowMutation} that still needs to be sent.
-   */
-  boolean isFlushed();
 
   /**
    * Adds a {@link RowMutation} to the underlying IBulkMutation mechanism.
@@ -46,4 +31,19 @@ public interface IBulkMutation {
    * successful otherwise exception will be thrown.
    */
   ApiFuture<Void> add(RowMutation rowMutation);
+
+  /**
+   * Sends any outstanding {@link RowMutation}s, present in the current batch.
+   */
+  void sendUnsent();
+
+  /**
+   * Sends any outstanding {@link RowMutation} and wait until all requests are complete.
+   */
+  void flush() throws InterruptedException;
+
+  /**
+   * @return false if there is any outstanding {@link RowMutation} that still needs to be sent.
+   */
+  boolean isFlushed();
 }
