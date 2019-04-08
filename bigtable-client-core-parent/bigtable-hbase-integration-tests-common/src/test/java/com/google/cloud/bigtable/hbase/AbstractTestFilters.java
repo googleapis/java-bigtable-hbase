@@ -2143,8 +2143,13 @@ public abstract class AbstractTestFilters extends AbstractTest {
     }
     table.put(puts);
 
-    int[] expected = { 4, 5 };
-    String[] conditions = { "/firstKey=4.*" };
+    // If pass an empty string we should receive all the rows prefixed with rowPrefix value.
+    int[] expected = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    String[] conditions = { "" };
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
+
+    expected = new int[]{ 4, 5 };
+    conditions =  new String[]{ ".*/firstKey=4.*" };
     assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
 
     expected = new int[] { 0, 1 };
@@ -2221,8 +2226,9 @@ public abstract class AbstractTestFilters extends AbstractTest {
   private void assertRowKeysWithRegex(Table table, String[] rowRegEx,
       String rowPrefix, String[] rowKeys, int[] expected) throws IOException {
     FilterList filtersList = new FilterList(FilterList.Operator.MUST_PASS_ONE);
-    for (String con : rowRegEx) {
-      filtersList.addFilter(new RowFilter(CompareOp.EQUAL, new RegexStringComparator(con)));
+    for (String condition : rowRegEx) {
+      filtersList.addFilter(new RowFilter(CompareOp.EQUAL,
+          new RegexStringComparator(rowPrefix + condition)));
     }
     Scan scan = new Scan();
     scan.setFilter(filtersList);
