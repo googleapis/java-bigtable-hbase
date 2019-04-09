@@ -81,8 +81,6 @@ public class RowResultScanner<T> implements ResultScanner<T> {
 
   @Override
   public void close() {
-    if (iterator.hasNext()) {
-      stream.cancel();
-    }
+    stream.cancel();
   }
 }

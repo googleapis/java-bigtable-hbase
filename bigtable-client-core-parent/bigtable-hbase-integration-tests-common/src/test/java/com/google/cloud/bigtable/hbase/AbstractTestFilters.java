@@ -2124,12 +2124,12 @@ public abstract class AbstractTestFilters extends AbstractTest {
     String[] rowKeys = {
             "/firstKey=1/secKey=AB/thirdKey=111",
             "/firstKey=1/secKey=ABC/thirdKey=222",
+            "/firstKey=11/secKey=AA/thirdKey=888",
             "/firstKey=2/secKey=CD/thirdKey=333",
             "/firstKey=3/secKey=BT/thirdKey=444",
             "/firstKey=4/secKey=AD/thirdKey=555",
             "/firstKey=4/secKey=BTL/thirdKey=666",
             "/firstKey=5/secKey=SET/thirdKey=777",
-            "/firstKey=11/secKey=AA/thirdKey=888"
         };
 
     List<Put> puts = new ArrayList<>();
@@ -2143,12 +2143,11 @@ public abstract class AbstractTestFilters extends AbstractTest {
     }
     table.put(puts);
 
-    // If pass an empty string we should receive all the rows prefixed with rowPrefix value.
     int[] expected = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    String[] conditions = { "" };
+    String[] conditions =  { ".*" };
     assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
 
-    expected = new int[]{ 4, 5 };
+    expected = new int[]{ 5, 6 };
     conditions =  new String[]{ ".*/firstKey=4.*" };
     assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
 
@@ -2156,8 +2155,19 @@ public abstract class AbstractTestFilters extends AbstractTest {
     conditions = new String[] { ".*secKey=AB.*" };
     assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
 
-    expected = new int[] { 0, 6 };
+    // If more then two regEx provided
+    expected = new int[] { 0, 7 };
     conditions = new String[] { ".*/thirdKey=111.*", ".*/thirdKey=777.*" };
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
+
+    // If pass an empty string, we should not receive any rows.
+    expected = new int[]{};
+    conditions = new String[]{ "" };
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
+
+    // If unmatched string is passed
+    expected = new int[]{};
+    conditions = new String[]{ "/unMatchedKey=NA" };
     assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
   }
 
@@ -2233,11 +2243,13 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Scan scan = new Scan();
     scan.setFilter(filtersList);
     try (ResultScanner scanner = table.getScanner(scan)) {
-      Result[] results = scanner.next(10);
+      Result[] results = scanner.next(rowKeys.length);
+      assertEquals(expected.length, results.length);
       for (int i = 0; i < results.length; i++) {
-        Assert.assertArrayEquals(results[i].getRow(),
-            Bytes.toBytes(rowPrefix + rowKeys[expected[i]]));
+        Assert.assertArrayEquals(Bytes.toBytes(rowPrefix + rowKeys[expected[i]]),
+            results[i].getRow());
       }
+      Assert.assertNull(scanner.next());
     }
   }
 
