@@ -410,7 +410,7 @@ public class BigtableSession implements Closeable {
    */
   public IBulkMutation createBulkMutationWrapper(BigtableTableName tableName) {
     if (options.useGCJClient()) {
-      return getClientWrapper().createBulkMutationBatcher();
+      return getDataClientWrapper().createBulkMutationBatcher();
     } else {
       return new BulkMutationWrapper(createBulkMutation(tableName), getDataRequestContext());
     }
