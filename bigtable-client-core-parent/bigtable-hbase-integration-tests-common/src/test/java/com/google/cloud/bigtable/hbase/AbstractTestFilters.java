@@ -2118,6 +2118,59 @@ public abstract class AbstractTestFilters extends AbstractTest {
     assertEquals(expectedKeys, actualKeys);
   }
 
+  @Test
+  public void testRowKeysWithRegEx() throws Exception{
+    Table table = getDefaultTable();
+    String[] rowKeys = {
+            "/firstKey=1/secKey=AB/thirdKey=111",
+            "/firstKey=1/secKey=ABC/thirdKey=222",
+            "/firstKey=11/secKey=AA/thirdKey=888",
+            "/firstKey=2/secKey=CD/thirdKey=333",
+            "/firstKey=3/secKey=BT/thirdKey=444",
+            "/firstKey=4/secKey=AD/thirdKey=555",
+            "/firstKey=4/secKey=BTL/thirdKey=666",
+            "/firstKey=5/secKey=SET/thirdKey=777",
+        };
+
+    List<Put> puts = new ArrayList<>();
+    String rowPrefix = dataHelper.randomString("testrow-");
+    byte[] qualA = dataHelper.randomData("test-regex");
+    for (int i = 0; i < rowKeys.length; i++) {
+      String indexStr = String.valueOf(i);
+      puts.add(
+          new Put(Bytes.toBytes(rowPrefix + rowKeys[i])).addColumn(COLUMN_FAMILY, qualA,
+              Bytes.toBytes(indexStr)));
+    }
+    table.put(puts);
+
+    int[] expected = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    String[] conditions =  { ".*" };
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
+
+    expected = new int[]{ 5, 6 };
+    conditions =  new String[]{ ".*/firstKey=4.*" };
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
+
+    expected = new int[] { 0, 1 };
+    conditions = new String[] { ".*secKey=AB.*" };
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
+
+    // If more then two regEx provided
+    expected = new int[] { 0, 7 };
+    conditions = new String[] { ".*/thirdKey=111.*", ".*/thirdKey=777.*" };
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
+
+    // If pass an empty string, we should not receive any rows.
+    expected = new int[]{};
+    conditions = new String[]{ "" };
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
+
+    // If unmatched string is passed
+    expected = new int[]{};
+    conditions = new String[]{ "/unMatchedKey=NA" };
+    assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
+  }
+
   protected final void assertMatchingRow(Result result, byte[] key) {
     assertNotNull(String.format("Got null result for key %s", toFuzzyKeyString(key)), result);
     byte[] actualKey = CellUtil.cloneRow(result.rawCells()[0]);
@@ -2178,6 +2231,26 @@ public abstract class AbstractTestFilters extends AbstractTest {
     table.put(puts);
 
     return table;
+  }
+
+  private void assertRowKeysWithRegex(Table table, String[] rowRegEx,
+      String rowPrefix, String[] rowKeys, int[] expected) throws IOException {
+    FilterList filtersList = new FilterList(FilterList.Operator.MUST_PASS_ONE);
+    for (String condition : rowRegEx) {
+      filtersList.addFilter(new RowFilter(CompareOp.EQUAL,
+          new RegexStringComparator(rowPrefix + condition)));
+    }
+    Scan scan = new Scan();
+    scan.setFilter(filtersList);
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      Result[] results = scanner.next(rowKeys.length);
+      assertEquals(expected.length, results.length);
+      for (int i = 0; i < results.length; i++) {
+        Assert.assertArrayEquals(Bytes.toBytes(rowPrefix + rowKeys[expected[i]]),
+            results[i].getRow());
+      }
+      Assert.assertNull(scanner.next());
+    }
   }
 
   protected abstract void getGetAddVersion(Get get, int version) throws IOException;
