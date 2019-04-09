@@ -70,14 +70,12 @@ public class TestBulkMutationGCJClient {
 
   @Test(expected = ExecutionException.class)
   public void testAddFailure() throws Exception {
-    String message = "can not perform mutation";
     when(callable.futureCall(rowMutation)).thenReturn(future);
-    future.setException(new RuntimeException(message));
+    future.setException(new RuntimeException("can not perform mutation"));
     ApiFuture<Void> result = bulkMutationClient.add(rowMutation);
     assertTrue(result.isDone());
-    result.get();
-    expect.expectMessage(message);
     verify(callable).futureCall(rowMutation);
+    result.get();
   }
 
   @Test
