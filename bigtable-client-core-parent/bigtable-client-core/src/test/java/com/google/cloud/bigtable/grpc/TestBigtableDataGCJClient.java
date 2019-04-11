@@ -22,6 +22,7 @@ import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
+import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
@@ -41,11 +42,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
 import static com.google.api.core.ApiFutures.immediateFuture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -273,5 +273,14 @@ public class TestBigtableDataGCJClient {
     }
     // BigtableDataGCJClient#close should be invoked
     verify(dataClientV2).close();
+  }
+
+  @Test
+  public void testCreateBulkMutationBatcher(){
+    UnaryCallable<RowMutation, Void> unaryCallable = mock(UnaryCallable.class);
+    BulkMutationBatcher batcher = new BulkMutationBatcher(unaryCallable);
+    when(dataClientV2.newBulkMutationBatcher()).thenReturn(batcher);
+    dataGCJClient.createBulkMutationBatcher();
+    verify(dataClientV2).newBulkMutationBatcher();
   }
 }

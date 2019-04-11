@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.grpc.async.BulkMutationGCJClient;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowAdapter;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -69,7 +70,7 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
 
   @Override
   public IBulkMutation createBulkMutationBatcher() {
-    throw new UnsupportedOperationException("Not implemented yet");
+    return new BulkMutationGCJClient(delegate.newBulkMutationBatcher());
   }
 
   @Override
