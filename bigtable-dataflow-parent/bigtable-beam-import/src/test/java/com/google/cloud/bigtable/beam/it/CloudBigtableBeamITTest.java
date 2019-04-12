@@ -16,11 +16,9 @@
 package com.google.cloud.bigtable.beam.it;
 
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
-import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
@@ -76,7 +74,33 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
 
 /**
- * Integration test for Beam Dataflow
+ *
+ *
+ */
+/**
+ * This class contains integration test for Beam Dataflow.It creates dataflow pipelines that
+ * perform the following task using pipeline chain process:</p>
+ *
+ * <pre>
+ *   <ol>
+ *     <li> Creates records and performs a Bigtable Put on each record.
+ *     <li> Creates Scan and perform count for each Row of Bigtable.
+ *   </ol>
+ * </pre>
+ *
+ * Arguments to configure in this integration test.
+ *   The first four argument are required when running the test case on Google Cloud Platform.
+ *        -Dgoogle.bigtable.project.id=[bigtable project] \\
+ *        -Dgoogle.bigtable.instance.id=[bigtable instance id] \\
+ *        -DstagingLocation=gs://[your google storage bucket] \\
+ *        -DdataflowZoneId=[dataflow zone Id] \\
+ *
+ *   This options are optional, If not provided it will fallback to defaults.
+ *        -Dgoogle.bigtable.endpoint.host=[ bigtable batch host] \\
+ *        -Dgoogle.bigtable.admin.endpoint.host=[bigtable admin host] \\
+ *        -DtableName=[tableName to be used] \\
+ *        -Dtotal_row_count=[number of rows to write and read] \\
+ *        -Dprefix_count=[cell prefix  count] \\
  */
 @RunWith(JUnit4.class)
 public class CloudBigtableBeamITTest {
@@ -92,6 +116,9 @@ public class CloudBigtableBeamITTest {
   private static final String zoneId = System.getProperty(ZONE_ID_KEY);
   private static final String workerMachineType =
       System.getProperty("workerMachineType", "n1" + "-standard-8");
+
+  //TODO(rahulkql): Confirm and integrate GCJ adapter.
+  //private static final Boolean useGCJAdapter = Boolean.getBoolean(BIGTABLE_USE_GCJ_CLIENT);
   private static final String dataEndpoint = System.getProperty(BIGTABLE_HOST_KEY, BIGTABLE_BATCH_DATA_HOST_DEFAULT);
   private static final String adminEndpoint = System.getProperty(
       BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT);
@@ -104,9 +131,10 @@ public class CloudBigtableBeamITTest {
   private static byte[] FAMILY = Bytes.toBytes("test-family");
   private static byte[] QUALIFIER = Bytes.toBytes("test-qualifier");
 
-  private static final int CELL_SIZE = Integer.getInteger("cell_size", 1_000);
-  private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 1_000_000);
-  private static final int PREFIX_COUNT = Integer.getInteger("prefix_count", 1_000);
+
+  private static final int CELL_SIZE = Integer.getInteger("cell_size", 1_00);
+  private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 10_000);
+  private static final int PREFIX_COUNT = Integer.getInteger("prefix_count", 1_00);
 
   @BeforeClass
   public static void setUpConfiguration() {
@@ -121,7 +149,6 @@ public class CloudBigtableBeamITTest {
     Configuration config = BigtableConfiguration.configure(projectId, instanceId);
     config.set(BIGTABLE_HOST_KEY, dataEndpoint);
     config.set(BIGTABLE_ADMIN_HOST_KEY, adminEndpoint);
-
     try(Connection conn = BigtableConfiguration.connect(config); Admin admin = conn.getAdmin()){
       if (admin.tableExists(TABLE_NAME)) {
         admin.deleteTable(TABLE_NAME );
@@ -136,10 +163,12 @@ public class CloudBigtableBeamITTest {
       new DoFn<String, Mutation>() {
 
         private static final long serialVersionUID = 1L;
-        private Counter rowCounter = Metrics.counter(CloudBigtableBeamITTest.class, "sent_puts");
+
+        private Counter rowCounter =
+            Metrics.counter(CloudBigtableBeamITTest.class, "sent_puts");
 
         @ProcessElement
-        public void processElement(ProcessContext context) {
+        public void processElement(ProcessContext context) throws Exception {
           String prefix = context.element() + "_";
           int max = (int) (TOTAL_ROW_COUNT / PREFIX_COUNT);
           for (int i = 0; i < max; i++) {
@@ -152,7 +181,7 @@ public class CloudBigtableBeamITTest {
 
   private Pipeline writeToBigtable(){
     DataflowPipelineOptions options = createOptions();
-    options.setAppName("test-write-to-bigtable-" + System.currentTimeMillis());
+    options.setAppName("testWriteToBigtable-" + System.currentTimeMillis());
     LOG.info("Started writeToBigtable test with jobName as: %s", options.getAppName());
 
     CloudBigtableTableConfiguration config =
@@ -170,7 +199,6 @@ public class CloudBigtableBeamITTest {
     for (int i = 0; i < PREFIX_COUNT; i++) {
       keys.add(RandomStringUtils.randomAlphanumeric(10));
     }
-
     p.apply("Keys", Create.of(keys))
         .apply("Create Puts", ParDo.of(WRITE_ONE_TENTH_PERCENT))
         .apply("Write to BT", CloudBigtableIO.writeToTable(config));
@@ -179,7 +207,7 @@ public class CloudBigtableBeamITTest {
 
   private Pipeline readFromBigtable(){
     PipelineOptions options = createOptions();
-    options.setJobName("test-read-from-bigtable-" + System.currentTimeMillis());
+    options.setJobName("testReadFromBigtable-" + System.currentTimeMillis());
     LOG.info("Started readFromBigtable test with jobName as: %s", options.getJobName());
 
     Scan scan = new Scan();
@@ -192,7 +220,8 @@ public class CloudBigtableBeamITTest {
             .withTableId(TABLE_NAME.getNameAsString())
             .withScan(scan)
             .withConfiguration(BIGTABLE_ADMIN_HOST_KEY, adminEndpoint)
-            .withConfiguration(BIGTABLE_HOST_KEY, dataEndpoint).build();
+            .withConfiguration(BIGTABLE_HOST_KEY, dataEndpoint)
+            .build();
 
     Pipeline p = Pipeline.create(options);
     PCollection<Long> count = p
@@ -203,44 +232,21 @@ public class CloudBigtableBeamITTest {
     return p;
   }
 
-  private Pipeline readFromBigtableIO(){
-    PipelineOptions pipelineOptions = createOptions();
-    pipelineOptions.setJobName("test-read-using-bigtableIO-" + System.currentTimeMillis());
-    LOG.info("Started readFromBigtableIO test with jobName as: %s", pipelineOptions.getJobName());
-
-    BigtableOptions options = new BigtableOptions.Builder()
-        .setProjectId(projectId)
-        .setInstanceId(instanceId)
-        .setDataHost(dataEndpoint)
-        .setAdminHost(adminEndpoint)
-        .build();
-    BigtableIO.Read read = BigtableIO.read().withBigtableOptions(options)
-        .withTableId(TABLE_NAME.getNameAsString());
-
-    Pipeline p = Pipeline.create(pipelineOptions);
-
-    PCollection<Long> count = p
-        .apply("Read from BT", read)
-        .apply("Count", Count.<Row> globally());
-
-    PAssert.thatSingleton(count).isEqualTo(TOTAL_ROW_COUNT);
-    return p;
-  }
-
   @Test
   public void testBeamReadAndWrite() throws Exception {
-    // created Executors for read jobs to run in parallel.
-    ExecutorService service = Executors.newCachedThreadPool();
+    // Created Executors for read jobs to run in parallel.
+    ExecutorService executor = Executors.newCachedThreadPool();
     try {
-      Assert.assertTrue(verifyPipeline(writeToBigtable()));
+      // Submitted write pipeline to threadPool
+      Future<Boolean> writeStatus = executor.submit(() -> verifyPipeline(writeToBigtable()));
+      Assert.assertTrue(writeStatus.get());
 
       // Submitted read job to thread pool.
-      Future<Boolean> bigtableScanStatus = service.submit(() -> verifyPipeline(readFromBigtable()));
-
-      Assert.assertTrue(bigtableScanStatus.get());
+      Future<Boolean> readStatus = executor.submit(()->verifyPipeline(readFromBigtable()));
+      Assert.assertTrue(readStatus.get());
     } finally {
-      service.shutdown();
-      service.awaitTermination(8, TimeUnit.MINUTES);
+      executor.shutdown();
+      executor.awaitTermination(8, TimeUnit.MINUTES);
     }
   }
 
