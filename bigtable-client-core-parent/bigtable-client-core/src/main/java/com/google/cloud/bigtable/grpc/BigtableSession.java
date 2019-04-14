@@ -224,9 +224,69 @@ public class BigtableSession implements Closeable {
         options.getAdminHost());
     LOG.info("Bigtable options: %s.", options);
 
-    // BEGIN set up interceptors
-    this.dataRequestContext = RequestContext
-        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+    // BEGIN set up Data Clients
+    // TODO: We should use a client wrapper factory, instead of having this large if statement.
+
+    if (options.useGCJClient()) {
+      BigtableDataSettings dataSettings =
+          BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
+      this.dataGCJClient = new BigtableDataGCJClient(
+          com.google.cloud.bigtable.data.v2.BigtableDataClient.create(dataSettings));
+
+      // Defer the creation of both the tableAdminClient until we need them.
+      this.adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
+      this.baseAdminSettings = BaseBigtableTableAdminSettings.create(adminSettings.getStubSettings());
+
+      this.dataClient = null;
+      this.throttlingDataClient = null;
+      this.dataRequestContext = null;
+      this.clientInterceptors = null;
+    } else {
+      this.dataRequestContext = RequestContext
+          .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+
+      // BEGIN set up interceptors
+      List<ClientInterceptor> clientInterceptorsList = setupInterceptors();
+
+      clientInterceptors =
+          clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
+      // END set up interceptors
+
+      Channel dataChannel = getDataChannelPool();
+
+      BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
+
+      CallOptionsFactory.ConfiguredCallOptionsFactory callOptionsFactory =
+          new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig());
+
+      // More often than not, users want the dataClient. Create a new one in the constructor.
+      this.dataClient = new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
+      this.dataClient.setCallOptionsFactory(callOptionsFactory);
+
+      // Async operations can run amok, so they need to have some throttling. The throttling is
+      // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
+      // and since a new Channel is needed, a new BigtableDataGrpcClient instance is needed as well.
+      //
+      // Throttling should not be used in blocking operations, or streaming reads. We have not tested
+      // the impact of throttling on blocking operations.
+      ResourceLimiter resourceLimiter = initializeResourceLimiter(options);
+      Channel asyncDataChannel =
+          ClientInterceptors.intercept(dataChannel, new ThrottlingClientInterceptor(resourceLimiter));
+      throttlingDataClient =
+          new BigtableDataGrpcClient(asyncDataChannel, sharedPools.getRetryExecutor(), options);
+      throttlingDataClient.setCallOptionsFactory(callOptionsFactory);
+
+      this.dataGCJClient = null;
+      this.adminSettings = null;
+      this.baseAdminSettings = null;
+
+    }
+    // END set up Data Clients
+
+    BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
+  }
+
+  protected List<ClientInterceptor> setupInterceptors() throws IOException {
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
     clientInterceptorsList
         .add(new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
@@ -247,55 +307,7 @@ public class BigtableSession implements Closeable {
     }
 
     clientInterceptorsList.add(setupWatchdog());
-
-    clientInterceptors =
-        clientInterceptorsList.toArray(new ClientInterceptor[clientInterceptorsList.size()]);
-    // END set up interceptors
-
-    // BEGIN set up Data Clients
-    // This is needed for the throttling client / Bulk Mutation which is only cloud-bigtable-client.
-    Channel dataChannel = getDataChannelPool();
-
-    BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
-
-    CallOptionsFactory.ConfiguredCallOptionsFactory callOptionsFactory =
-        new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig());
-
-    if (options.useGCJClient()) {
-      BigtableDataSettings dataSettings =
-          BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
-      this.dataGCJClient = new BigtableDataGCJClient(
-          com.google.cloud.bigtable.data.v2.BigtableDataClient.create(dataSettings));
-
-      // Defer the creation of both the tableAdminClient until we need them.
-      this.adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
-      this.baseAdminSettings = BaseBigtableTableAdminSettings.create(adminSettings.getStubSettings());
-
-      this.dataClient = null;
-    } else {
-      // More often than not, users want the dataClient. Create a new one in the constructor.
-      this.dataClient = new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
-      this.dataClient.setCallOptionsFactory(callOptionsFactory);
-      this.dataGCJClient = null;
-      this.adminSettings = null;
-      this.baseAdminSettings = null;
-    }
-
-    // Async operations can run amok, so they need to have some throttling. The throttling is
-    // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
-    // and since a new Channel is needed, a new BigtableDataGrpcClient instance is needed as well.
-    //
-    // Throttling should not be used in blocking operations, or streaming reads. We have not tested
-    // the impact of throttling on blocking operations.
-    ResourceLimiter resourceLimiter = initializeResourceLimiter(options);
-    Channel asyncDataChannel =
-        ClientInterceptors.intercept(dataChannel, new ThrottlingClientInterceptor(resourceLimiter));
-    throttlingDataClient =
-        new BigtableDataGrpcClient(asyncDataChannel, sharedPools.getRetryExecutor(), options);
-    throttlingDataClient.setCallOptionsFactory(callOptionsFactory);
-    // END set up Data Clients
-
-    BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
+    return clientInterceptorsList;
   }
 
   private ClientInterceptor createGaxHeaderInterceptor() {
@@ -365,14 +377,6 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * @return a {@link RequestContext} object for use with {@link #getDataClient()} during the
-   * transition to {@link #getDataClientWrapper()}.
-   */
-  private RequestContext getDataRequestContext() {
-    return dataRequestContext;
-  }
-
-  /**
    * <p>Getter for the field <code>clientWrapper</code>.</p>
    *
    * @return a {@link IBigtableDataClient} object.
@@ -381,7 +385,7 @@ public class BigtableSession implements Closeable {
     if (options.useGCJClient()) {
       return dataGCJClient;
     } else {
-      return new BigtableDataClientWrapper(dataClient, getDataRequestContext());
+      return new BigtableDataClientWrapper(dataClient, dataRequestContext);
     }
   }
 
@@ -412,7 +416,7 @@ public class BigtableSession implements Closeable {
     if (options.useGCJClient()) {
       return getDataClientWrapper().createBulkMutationBatcher();
     } else {
-      return new BulkMutationWrapper(createBulkMutation(tableName), getDataRequestContext());
+      return new BulkMutationWrapper(createBulkMutation(tableName), dataRequestContext);
     }
   }
 
@@ -493,6 +497,8 @@ public class BigtableSession implements Closeable {
    * @throws java.io.IOException if any.
    */
   protected ManagedChannel createChannelPool(final String hostString, int count) throws IOException {
+    Preconditions.checkState(!options.useGCJClient(),
+        "Channel pools cannot be created when using google-cloud-java");
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
