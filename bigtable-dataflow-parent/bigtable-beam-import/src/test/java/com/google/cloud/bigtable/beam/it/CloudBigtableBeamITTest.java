@@ -26,16 +26,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.Read;
-import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -74,10 +69,6 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
 
 /**
- *
- *
- */
-/**
  * This class contains integration test for Beam Dataflow.It creates dataflow pipelines that
  * perform the following task using pipeline chain process:</p>
  *
@@ -114,24 +105,18 @@ public class CloudBigtableBeamITTest {
   private static final String instanceId = System.getProperty(INSTANCE_ID_KEY);
   private static final String stagingLocation = System.getProperty(STAGING_LOCATION_KEY);
   private static final String zoneId = System.getProperty(ZONE_ID_KEY);
+
   private static final String workerMachineType =
       System.getProperty("workerMachineType", "n1" + "-standard-8");
-
-  //TODO(rahulkql): Confirm and integrate GCJ adapter.
-  //private static final Boolean useGCJAdapter = Boolean.getBoolean(BIGTABLE_USE_GCJ_CLIENT);
   private static final String dataEndpoint = System.getProperty(BIGTABLE_HOST_KEY, BIGTABLE_BATCH_DATA_HOST_DEFAULT);
   private static final String adminEndpoint = System.getProperty(
       BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT);
-
   private static final String TABLE_NAME_STR =
       System.getProperty("tableName", "BeamCloudBigtableIOIntegrationTest");
+
   private static final TableName TABLE_NAME = TableName.valueOf(TABLE_NAME_STR);
-
-
-  private static byte[] FAMILY = Bytes.toBytes("test-family");
-  private static byte[] QUALIFIER = Bytes.toBytes("test-qualifier");
-
-
+  private static final byte[] FAMILY = Bytes.toBytes("test-family");
+  private static final byte[] QUALIFIER = Bytes.toBytes("test-qualifier");
   private static final int CELL_SIZE = Integer.getInteger("cell_size", 1_00);
   private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 10_000);
   private static final int PREFIX_COUNT = Integer.getInteger("prefix_count", 1_00);
@@ -179,7 +164,7 @@ public class CloudBigtableBeamITTest {
         }
       };
 
-  private Pipeline writeToBigtable(){
+  private void testWriteToBigtable() {
     DataflowPipelineOptions options = createOptions();
     options.setAppName("testWriteToBigtable-" + System.currentTimeMillis());
     LOG.info("Started writeToBigtable test with jobName as: %s", options.getAppName());
@@ -193,19 +178,23 @@ public class CloudBigtableBeamITTest {
             .withConfiguration(BIGTABLE_HOST_KEY, dataEndpoint)
             .build();
 
-    Pipeline p = Pipeline.create(options);
-
     List<String> keys = new ArrayList<>();
     for (int i = 0; i < PREFIX_COUNT; i++) {
       keys.add(RandomStringUtils.randomAlphanumeric(10));
     }
-    p.apply("Keys", Create.of(keys))
+
+    PipelineResult.State result = Pipeline.create(options)
+        .apply("Keys", Create.of(keys))
         .apply("Create Puts", ParDo.of(WRITE_ONE_TENTH_PERCENT))
-        .apply("Write to BT", CloudBigtableIO.writeToTable(config));
-    return p;
+        .apply("Write to BT", CloudBigtableIO.writeToTable(config))
+        .getPipeline()
+        .run()
+        .waitUntilFinish();
+
+    Assert.assertEquals(PipelineResult.State.DONE, result);
   }
 
-  private Pipeline readFromBigtable(){
+  private Pipeline testReadFromBigtable() {
     PipelineOptions options = createOptions();
     options.setJobName("testReadFromBigtable-" + System.currentTimeMillis());
     LOG.info("Started readFromBigtable test with jobName as: %s", options.getJobName());
@@ -223,41 +212,25 @@ public class CloudBigtableBeamITTest {
             .withConfiguration(BIGTABLE_HOST_KEY, dataEndpoint)
             .build();
 
-    Pipeline p = Pipeline.create(options);
-    PCollection<Long> count = p
+    Pipeline pipeLine = Pipeline.create(options);
+    PCollection<Long> count = pipeLine
         .apply("Read from BT", Read.from(CloudBigtableIO.read(config)))
         .apply("Count", Count.<Result>globally());
 
     PAssert.thatSingleton(count).isEqualTo(TOTAL_ROW_COUNT);
-    return p;
+    return pipeLine;
   }
 
   @Test
-  public void testBeamReadAndWrite() throws Exception {
-    // Created Executors for read jobs to run in parallel.
-    ExecutorService executor = Executors.newCachedThreadPool();
+  public void testRunner() {
     try {
-      // Submitted write pipeline to threadPool
-      Future<Boolean> writeStatus = executor.submit(() -> verifyPipeline(writeToBigtable()));
-      Assert.assertTrue(writeStatus.get());
+      // Submitted write pipeline to mutate the Bigtable.
+      testWriteToBigtable();
 
-      // Submitted read job to thread pool.
-      Future<Boolean> readStatus = executor.submit(()->verifyPipeline(readFromBigtable()));
-      Assert.assertTrue(readStatus.get());
-    } finally {
-      executor.shutdown();
-      executor.awaitTermination(8, TimeUnit.MINUTES);
-    }
-  }
+      Pipeline result = testReadFromBigtable();
+      PipelineResult.State readJobStatue = result.run().waitUntilFinish();
 
-// ---- Helper class to perform test.
-
-  /** Verify the pipeline job is completed successfully with DONE status. */
-  private Boolean verifyPipeline(Pipeline p) {
-    try {
-      PipelineResult.State state = p.run().waitUntilFinish();
-      Assert.assertEquals(PipelineResult.State.DONE, state);
-      return true;
+      Assert.assertEquals(PipelineResult.State.DONE, readJobStatue);
     } catch (Exception ex) {
       ex.printStackTrace();
       throw new AssertionError("Exception occurred while pipeline execution");
