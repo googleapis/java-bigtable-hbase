@@ -16,9 +16,11 @@
 package com.google.cloud.bigtable.beam.it;
 
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
+import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
@@ -31,6 +33,7 @@ import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.Read;
+import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -117,9 +120,9 @@ public class CloudBigtableBeamITTest {
   private static final TableName TABLE_NAME = TableName.valueOf(TABLE_NAME_STR);
   private static final byte[] FAMILY = Bytes.toBytes("test-family");
   private static final byte[] QUALIFIER = Bytes.toBytes("test-qualifier");
-  private static final int CELL_SIZE = Integer.getInteger("cell_size", 1_00);
-  private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 10_000);
-  private static final int PREFIX_COUNT = Integer.getInteger("prefix_count", 1_00);
+  private static final int CELL_SIZE = Integer.getInteger("cell_size", 1_000);
+  private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 100_000);
+  private static final int PREFIX_COUNT = Integer.getInteger("prefix_count", 1_000);
 
   @BeforeClass
   public static void setUpConfiguration() {
@@ -221,16 +224,43 @@ public class CloudBigtableBeamITTest {
     return pipeLine;
   }
 
+  private Pipeline testReadFromBigtableIO(){
+    PipelineOptions pipelineOptions = createOptions();
+    pipelineOptions.setJobName("testRead-BigtableIO-" + System.currentTimeMillis());
+    LOG.info("Started readFromBigtableIO test with jobName as: %s", pipelineOptions.getJobName());
+
+    BigtableOptions options = BigtableOptions.builder()
+        .setProjectId(projectId)
+        .setInstanceId(instanceId)
+        .setDataHost(dataEndpoint)
+        .setAdminHost(adminEndpoint)
+        .build();
+    BigtableIO.Read read = BigtableIO.read().withBigtableOptions(options)
+        .withTableId(TABLE_NAME.getNameAsString());
+
+    Pipeline pipeline = Pipeline.create(pipelineOptions);
+    PCollection<Long> count = pipeline
+        .apply("Read from BT", read)
+        .apply("Count", Count.<Row> globally());
+
+    PAssert.thatSingleton(count).isEqualTo(TOTAL_ROW_COUNT);
+    return pipeline;
+  }
+
   @Test
   public void testRunner() {
     try {
       // Submitted write pipeline to mutate the Bigtable.
       testWriteToBigtable();
 
-      Pipeline result = testReadFromBigtable();
-      PipelineResult.State readJobStatue = result.run().waitUntilFinish();
+      Pipeline scanBigtable = testReadFromBigtable();
+      Pipeline scanBigtableIO = testReadFromBigtableIO();
 
-      Assert.assertEquals(PipelineResult.State.DONE, readJobStatue);
+      PipelineResult scanBigtableJob = scanBigtable.run();
+      PipelineResult scanBigtableIOJob = scanBigtableIO.run();
+
+      Assert.assertEquals(PipelineResult.State.DONE, scanBigtableJob.waitUntilFinish());
+      Assert.assertEquals(PipelineResult.State.DONE, scanBigtableIOJob.waitUntilFinish());
     } catch (Exception ex) {
       ex.printStackTrace();
       throw new AssertionError("Exception occurred while pipeline execution");
