@@ -640,7 +640,9 @@ public class BigtableSession implements Closeable {
   /** {@inheritDoc} */
   @Override
   public synchronized void close() throws IOException {
-    watchdog.stop();
+    if (watchdog != null) {
+      watchdog.stop();
+    }
 
     long timeoutNanos = TimeUnit.SECONDS.toNanos(10);
     long endTimeNanos = System.nanoTime() + timeoutNanos;
