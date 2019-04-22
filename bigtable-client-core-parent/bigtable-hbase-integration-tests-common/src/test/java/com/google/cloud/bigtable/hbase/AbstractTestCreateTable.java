@@ -131,14 +131,12 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   private void assertBadTableName(String tableName){
-    boolean failed = false;
     try {
       createTable(TableName.valueOf(tableName));
+      Assert.fail("Should fail as table name: '" + tableName + "'");
     } catch (Exception ex) {
       //TODO verify - added RuntimeException check as RandomStringUtils seems to be generating a string server side doesn't like
-      failed = true;
     }
-    Assert.assertTrue("Should fail as table name: '" + tableName + "'", failed);
   }
 
   private static boolean isBadTableName(String tableName) {
