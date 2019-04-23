@@ -34,8 +34,6 @@ import com.google.common.base.Strings;
  */
 //TODO: Perhaps break this down into smaller options objects?
 //TODO: This should be @Autovalue + Builder
-
-
 public class BigtableOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
