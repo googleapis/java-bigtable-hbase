@@ -33,7 +33,9 @@ import com.google.common.base.Strings;
  * @version $Id: $Id
  */
 //TODO: Perhaps break this down into smaller options objects?
-//TODO: This should be @Autovalue + Builder
+//TODO: This should be @Autovalue + 
+
+
 public class BigtableOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
@@ -75,6 +77,7 @@ public class BigtableOptions implements Serializable, Cloneable {
     return builder().build();
   }
 
+  /** Create a new instance of the {@link Builder}. */
   public static Builder builder() {
     return new Builder();
   }
@@ -85,6 +88,9 @@ public class BigtableOptions implements Serializable, Cloneable {
 
     private BigtableOptions options = new BigtableOptions();
 
+    /**
+     * @deprecated Please use the {@link BigtableOptions#builder()} instead.
+     */
     @Deprecated
     public Builder() {
       options = new BigtableOptions();
