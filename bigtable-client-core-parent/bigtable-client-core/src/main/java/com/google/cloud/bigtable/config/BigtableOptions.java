@@ -33,7 +33,7 @@ import com.google.common.base.Strings;
  * @version $Id: $Id
  */
 //TODO: Perhaps break this down into smaller options objects?
-//TODO: This should be @Autovalue + 
+//TODO: This should be @Autovalue + Builder
 
 
 public class BigtableOptions implements Serializable, Cloneable {
