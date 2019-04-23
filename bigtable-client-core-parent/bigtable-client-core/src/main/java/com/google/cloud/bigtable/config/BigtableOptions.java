@@ -75,6 +75,7 @@ public class BigtableOptions implements Serializable, Cloneable {
     return builder().build();
   }
 
+  /** Create a new instance of the {@link Builder}. */
   public static Builder builder() {
     return new Builder();
   }
@@ -85,6 +86,9 @@ public class BigtableOptions implements Serializable, Cloneable {
 
     private BigtableOptions options = new BigtableOptions();
 
+    /**
+     * @deprecated Please use the {@link BigtableOptions#builder()} instead.
+     */
     @Deprecated
     public Builder() {
       options = new BigtableOptions();
