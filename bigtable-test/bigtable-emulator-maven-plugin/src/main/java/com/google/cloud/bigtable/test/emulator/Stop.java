@@ -29,7 +29,11 @@ public class Stop extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
     EmulatorController controller = (EmulatorController) getPluginContext().get(EmulatorController.class);
 
-    if(controller.isStarted())
+    if(controllerIsRunning(controller))
       controller.stop();
+  }
+
+  private boolean controllerIsRunning(EmulatorController controller) {
+    return controller != null && controller.isStarted();
   }
 }

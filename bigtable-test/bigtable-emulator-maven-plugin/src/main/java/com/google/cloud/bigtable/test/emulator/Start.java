@@ -40,8 +40,15 @@ public class Start extends AbstractMojo {
   @Parameter(readonly = true, defaultValue = "bigtable.emulator.endpoint")
   private String propertyName;
 
+  @Parameter(defaultValue = "${maven.test.skip}", property = "bigtable.emulator.skip")
+  private boolean skip;
+
 
   public void execute() throws MojoExecutionException {
+    if(skip) {
+      getLog().info("bigtable.emulator.skip resolved to true. Skipping excution.");
+      return;
+    }
     if (emulatorPath == null) {
       GcloudHelper helper = new GcloudHelper(Executors.newCachedThreadPool());
       emulatorPath = helper.getEmulatorPath();
