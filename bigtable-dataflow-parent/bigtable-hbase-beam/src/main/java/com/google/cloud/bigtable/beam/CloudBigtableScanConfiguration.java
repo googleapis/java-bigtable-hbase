@@ -112,7 +112,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @param request The {@link ReadRowsRequest} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
-    Builder withRequest(ValueProvider<ReadRowsRequest> request) {
+    public Builder withRequest(ValueProvider<ReadRowsRequest> request) {
       this.request = request;
       return this;
     }
@@ -157,7 +157,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    Builder withProjectId(ValueProvider<String> projectId) {
+    public Builder withProjectId(ValueProvider<String> projectId) {
       super.withProjectId(projectId);
       return this;
     }
@@ -175,7 +175,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * {@inheritDoc}
      */
     @Override
-    Builder withInstanceId(ValueProvider<String> instanceId) {
+    public Builder withInstanceId(ValueProvider<String> instanceId) {
       super.withInstanceId(instanceId);
       return this;
     }
@@ -193,7 +193,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * {@inheritDoc}
      */
     @Override
-    Builder withAppProfileId(ValueProvider<String> appProfileId) {
+    public Builder withAppProfileId(ValueProvider<String> appProfileId) {
       super.withAppProfileId(appProfileId);
       return this;
     }
@@ -211,7 +211,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * {@inheritDoc}
      */
     @Override
-    Builder withConfiguration(String key, ValueProvider<String> value) {
+    public Builder withConfiguration(String key, ValueProvider<String> value) {
       super.withConfiguration(key, value);
       return this;
     }
@@ -233,7 +233,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * so that it returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    Builder withTableId(ValueProvider<String> tableId) {
+    public Builder withTableId(ValueProvider<String> tableId) {
       super.withTableId(tableId);
       return this;
     }
