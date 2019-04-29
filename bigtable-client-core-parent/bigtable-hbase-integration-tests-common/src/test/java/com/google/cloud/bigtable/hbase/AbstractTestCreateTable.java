@@ -21,6 +21,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
@@ -66,33 +67,27 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
     if (!"true".equals(shouldTest) || testTableNames_Counter.incrementAndGet() > 1) {
       return;
     }
+    String[] badNames =
+        { "-x", ".x", "a!", "a@", "a#", "a$", "a%", "a^", "a&", "a*", "a(", "a+", "a=", "a~", "a`",
+            "a{", "a[", "a|", "a\\", "a/", "a<", "a,", "a?" };
+    for (String badName : badNames) {
+      assertBadTableName(badName);
+    }
+
+    for (int i = 0; i < 20; i++) {
+      String randomString = RandomStringUtils.random(10, false, false);
+      if (isBadTableName(randomString)) {
+        assertBadTableName("a" + randomString);
+      }
+    }
+
     // more than one subclass can run at the same time.  Ensure that this method is serial.
     String[] goodNames = { "a", "1", "_", // Really?  Yuck.
         "_x", "a-._5x", "_a-._5x",
         // TODO(sduskis): Join the last 2 strings once the Bigtable backend supports table names
         // longer than 50 characters.
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi", "jklmnopqrstuvwxyz1234567890_-." };
-    String[] badNames =
-        { "-x", ".x", "a!", "a@", "a#", "a$", "a%", "a^", "a&", "a*", "a(", "a+", "a=", "a~", "a`",
-            "a{", "a[", "a|", "a\\", "a/", "a<", "a,", "a?",
-            // TODO(issue #1785): this always fails in Cloud Bigtable, but fails intermittently in
-            // HBase.  We need to find the difference, document it, and create a better test.
-            //            "a" + RandomStringUtils.random(10, false, false)
-        };
-
-    for (String badName : badNames) {
-      boolean failed = false;
-      try {
-        createTable(TableName.valueOf(badName));
-      } catch (Exception ex) {
-        //TODO verify - added RuntimeException check as RandomStringUtils seems to be generating a string server side doesn't like
-        failed = true;
-      }
-      Assert.assertTrue("Should fail as table name: '" + badName + "'", failed);
-    }
-
     final TableName[] tableNames = getConnection().getAdmin().listTableNames();
-
     List<ListenableFuture<Void>> futures = new ArrayList<>();
     ListeningExecutorService es = MoreExecutors.listeningDecorator(sharedTestEnv.getExecutor());
     for (final String goodName : goodNames) {
@@ -129,6 +124,25 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   private boolean contains(TableName[] tableNames, TableName tableNameTocheck) {
     for (TableName tableName : tableNames) {
       if (tableName.equals(tableNameTocheck)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void assertBadTableName(String tableName){
+    try {
+      createTable(TableName.valueOf(tableName));
+      Assert.fail("Should fail as table name: '" + tableName + "'");
+    } catch (Exception ex) {
+      //TODO verify - added RuntimeException check as RandomStringUtils seems to be generating a string server side doesn't like
+    }
+  }
+
+  private static boolean isBadTableName(String tableName) {
+    byte[] tableChars = tableName.getBytes();
+    for(byte codePoint : tableChars){
+      if (!Character.isAlphabetic(codePoint)) {
         return true;
       }
     }
