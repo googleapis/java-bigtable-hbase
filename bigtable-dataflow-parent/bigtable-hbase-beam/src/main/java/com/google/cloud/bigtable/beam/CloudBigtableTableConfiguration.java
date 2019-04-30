@@ -52,7 +52,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * @param tableId The table to connect to.
      * @return The {@link CloudBigtableTableConfiguration.Builder} for chaining convenience.
      */
-    Builder withTableId(ValueProvider<String> tableId) {
+    public Builder withTableId(ValueProvider<String> tableId) {
       this.tableId = tableId;
       return this;
     }
@@ -76,7 +76,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
-    Builder withProjectId(ValueProvider<String> projectId) {
+    public Builder withProjectId(ValueProvider<String> projectId) {
       super.withProjectId(projectId);
       return this;
     }
@@ -100,7 +100,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
-    Builder withInstanceId(ValueProvider<String> instanceId) {
+    public Builder withInstanceId(ValueProvider<String> instanceId) {
       super.withInstanceId(instanceId);
       return this;
     }
@@ -124,7 +124,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
-    Builder withAppProfileId(ValueProvider<String> appProfileId) {
+    public Builder withAppProfileId(ValueProvider<String> appProfileId) {
       super.withAppProfileId(appProfileId);
       return this;
     }
@@ -148,7 +148,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * that it returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
-    Builder withConfiguration(String key, ValueProvider<String> value) {
+    public Builder withConfiguration(String key, ValueProvider<String> value) {
       super.withConfiguration(key, value);
       return this;
     }
