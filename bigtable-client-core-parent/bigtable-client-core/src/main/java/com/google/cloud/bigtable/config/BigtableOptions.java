@@ -102,7 +102,7 @@ public class BigtableOptions implements Serializable, Cloneable {
       options.useGCJClient = false;
 
       options.retryOptions = new RetryOptions.Builder().build();
-      options.callOptionsConfig = new CallOptionsConfig.Builder().build();
+      options.callOptionsConfig = CallOptionsConfig.builder().build();
       // CredentialOptions.defaultCredentials() gets credentials from well known locations, such as
       // the Google Compute Engine metadata service or gcloud configuration in other environments. A
       // user can also override the default behavior with P12 or JSON configuration.

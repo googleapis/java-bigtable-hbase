@@ -93,8 +93,7 @@ public interface CallOptionsFactory {
       if (contextDeadline != null) {
         return CallOptions.DEFAULT.withDeadline(contextDeadline);
       } else if (config.isUseTimeout() && request != null) {
-        int timeout =
-            isLongRequest(request) ? config.getLongRpcTimeoutMs() : config.getShortRpcTimeoutMs();
+        int timeout = getRequestTimeout(request);
         return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
       } else {
         return CallOptions.DEFAULT;
@@ -102,15 +101,16 @@ public interface CallOptionsFactory {
     }
 
     /**
-     * @param request
-     * @return true if this is a {@link MutateRowsRequest} or a {@link ReadRowsRequest} that's a
-     *     scan.
+     * @param request an RPC request.
+     * @return timeout in milliseconds as per the Request type.
      */
-    public static boolean isLongRequest(Object request) {
-      if (request instanceof ReadRowsRequest) {
-        return !isGet((ReadRowsRequest) request);
+    private int getRequestTimeout(Object request) {
+      if (request instanceof ReadRowsRequest && !isGet((ReadRowsRequest) request)) {
+        return config.getReadStreamRpcTimeoutMs();
+      } else if (request instanceof MutateRowsRequest) {
+        return config.getMutateRpcTimeoutMs();
       } else {
-        return request instanceof MutateRowsRequest;
+        return config.getShortRpcTimeoutMs();
       }
     }
 

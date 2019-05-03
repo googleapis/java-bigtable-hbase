@@ -240,7 +240,7 @@ public class BigtableVeneerSettingsFactory {
     Duration totalTimeout =
         ofMillis(
             callOptions.isUseTimeout()
-                ? callOptions.getLongRpcTimeoutMs()
+                ? callOptions.getReadStreamRpcTimeoutMs()
                 : retryOptions.getMaxElapsedBackoffMillis());
 
     retryBuilder

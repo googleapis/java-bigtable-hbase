@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowsRequest;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
 import com.google.cloud.bigtable.grpc.async.OperationClock;
 import io.grpc.CallOptions;
@@ -77,14 +78,21 @@ public class TestCallOptionsFactory {
 
   @Test
   public void testConfiguredConfigEnabled() {
-    CallOptionsConfig config = CallOptionsConfig.builder().setUseTimeout(true).build();
+    int readRowsTimeout = 500_000;
+    CallOptionsConfig config =
+        CallOptionsConfig.builder()
+            .setUseTimeout(true)
+            .setReadRowsRpcTimeoutMs(readRowsTimeout)
+            .build();
     CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
     assertEqualsDeadlines(
         config.getShortRpcTimeoutMs(),
         getDeadlineMs(factory, MutateRowRequest.getDefaultInstance()));
     assertEqualsDeadlines(
-        config.getLongRpcTimeoutMs(),
+        config.getMutateRpcTimeoutMs(),
         getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance()));
+    assertEqualsDeadlines(
+        readRowsTimeout, getDeadlineMs(factory, ReadRowsRequest.getDefaultInstance()));
   }
 
   @Test
@@ -100,7 +108,8 @@ public class TestCallOptionsFactory {
                 CallOptionsConfig.builder()
                     .setUseTimeout(true)
                     .setShortRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(100))
-                    .setLongRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
+                    .setMutateRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
+                    .setReadRowsRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
                     .build();
             CallOptionsFactory factory =
                 new CallOptionsFactory.ConfiguredCallOptionsFactory(config);

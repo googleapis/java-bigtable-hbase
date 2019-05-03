@@ -31,6 +31,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
 import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
@@ -86,7 +88,7 @@ public class TestBigtableOptionsFactory {
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals(TEST_HOST, options.getDataHost());
+    assertEquals(TEST_HOST, options.getDataHost());
   }
 
   @Test
@@ -95,9 +97,9 @@ public class TestBigtableOptionsFactory {
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals(TEST_HOST, options.getDataHost());
-    Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
-    Assert.assertEquals(TEST_INSTANCE_ID, options.getInstanceId());
+    assertEquals(TEST_HOST, options.getDataHost());
+    assertEquals(TEST_PROJECT_ID, options.getProjectId());
+    assertEquals(TEST_INSTANCE_ID, options.getInstanceId());
   }
 
   @Test
@@ -141,5 +143,32 @@ public class TestBigtableOptionsFactory {
 
     Credentials actualCreds = CredentialFactory.getCredentials(options.getCredentialOptions());
     Assert.assertSame(credentials, actualCreds);
+  }
+
+  @Test
+  public void testLongOperationsTimeouts() throws IOException {
+    String longTimeout = "10000";
+    configuration.set(BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY, longTimeout);
+    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+
+    assertEquals(
+        Integer.parseInt(longTimeout), options.getCallOptionsConfig().getMutateRpcTimeoutMs());
+    assertEquals(
+        Integer.parseInt(longTimeout), options.getCallOptionsConfig().getReadStreamRpcTimeoutMs());
+
+    String readTimeout = "20000";
+    configuration = new Configuration(false);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY, longTimeout);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, readTimeout);
+    options = BigtableOptionsFactory.fromConfiguration(configuration);
+
+    assertEquals(LONG_TIMEOUT_MS_DEFAULT, options.getCallOptionsConfig().getLongRpcTimeoutMs());
+    assertEquals(
+        Integer.parseInt(longTimeout), options.getCallOptionsConfig().getMutateRpcTimeoutMs());
+    assertEquals(
+        Integer.parseInt(readTimeout), options.getCallOptionsConfig().getReadStreamRpcTimeoutMs());
   }
 }
