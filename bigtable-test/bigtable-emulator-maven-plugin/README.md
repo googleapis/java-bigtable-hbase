@@ -65,3 +65,5 @@ Usage:
   ```java
       Connection connection = BigtableConfiguration.connect("fakeproject", "fakeinstace");
    ```
+- If `maven.test.skip` is set to true the emulator will not start. The emulator can also be controlled directly 
+  by setting the boolean property `bigtable.emulator.skip`.
