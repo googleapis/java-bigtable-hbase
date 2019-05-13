@@ -295,7 +295,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         return null;
       }
     } else {
-      return currentBackoff.getRetryDelay().toMillis();
+      return Math.min(currentBackoff.getRetryDelay().toMillis(),
+          currentBackoff.getRandomizedRetryDelay().toMillis());
     }
   }
 
