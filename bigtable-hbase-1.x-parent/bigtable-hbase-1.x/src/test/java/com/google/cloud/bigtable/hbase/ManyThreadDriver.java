@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ManyThreadDriver {
-
+  
   static GraphiteReporter reporter = null;
   static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
 
@@ -132,7 +132,7 @@ public class ManyThreadDriver {
       } catch (IOException ignore) {
         // Soldier on, maybe the table already exists.
       }
-
+  
       try {
         System.out.println("Truncating the table");
         admin.truncateTable(tableName, false);
