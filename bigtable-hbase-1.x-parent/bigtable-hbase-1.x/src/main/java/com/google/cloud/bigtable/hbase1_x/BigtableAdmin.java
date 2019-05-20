@@ -59,15 +59,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException {
+  public MasterProtos.SnapshotResponse takeSnapshotAsync(
+      HBaseProtos.SnapshotDescription snapshot) throws IOException, SnapshotCreationException {
     snapshotTable(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
-    LOG.warn(
-        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-            + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
+    LOG.warn("isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
+        + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
     return MasterProtos.SnapshotResponse.newBuilder()
-        .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5))
-        .build();
+        .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5)).build();
   }
 
   /** {@inheritDoc} */
@@ -99,13 +97,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /**
    * {@inheritDoc}
    *
-   * <p>The snapshot will be created with the ttl configured by {@link
-   * com.google.cloud.bigtable.hbase.BigtableOptionsFactory#BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY}
+   * The snapshot will be created with the ttl configured by
+   * {@link com.google.cloud.bigtable.hbase.BigtableOptionsFactory#BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY}
    * key in the configuration. If not configured, the ttl will be set to serverside default.
-   */
+   * */
   @Override
-  public void snapshot(
-      String snapshotName, TableName tableName, HBaseProtos.SnapshotDescription.Type type)
+  public void snapshot(String snapshotName, TableName tableName,
+      HBaseProtos.SnapshotDescription.Type type)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
     snapshot(snapshotName, tableName);
   }
@@ -121,37 +119,41 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, HBaseSnapshotException, UnknownSnapshotException {
-    throw new UnsupportedOperationException("isSnapshotFinished"); // TODO
+    throw new UnsupportedOperationException("isSnapshotFinished");  // TODO
   }
 
   @Override
-  public void restoreSnapshot(String s, boolean b, boolean b1)
-      throws IOException, RestoreSnapshotException {}
+  public void restoreSnapshot(String s, boolean b, boolean b1) throws IOException, RestoreSnapshotException {
+
+  }
 
   @Override
-  public void cloneSnapshot(String s, TableName tableName, boolean b)
-      throws IOException, TableExistsException, RestoreSnapshotException {}
+  public void cloneSnapshot(String s, TableName tableName, boolean b) throws IOException, TableExistsException, RestoreSnapshotException {
+
+  }
 
   /** {@inheritDoc} */
   @Override
   public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
-    ListSnapshotsRequest request =
-        ListSnapshotsRequest.newBuilder().setParent(getSnapshotClusterName().toString()).build();
+    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder()
+        .setParent(getSnapshotClusterName().toString())
+        .build();
 
-    ListSnapshotsResponse snapshotList =
-        Futures.getChecked(tableAdminClientWrapper.listSnapshotsAsync(request), IOException.class);
+    ListSnapshotsResponse snapshotList = Futures.getChecked(
+        tableAdminClientWrapper.listSnapshotsAsync(request),
+        IOException.class
+    );
 
     List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
 
     for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
       BigtableSnapshotName snapshotName = new BigtableSnapshotName(snapshot.getName());
       BigtableTableName tableName = new BigtableTableName(snapshot.getSourceTable().getName());
-      response.add(
-          HBaseProtos.SnapshotDescription.newBuilder()
-              .setName(snapshotName.getSnapshotId())
-              .setTable(tableName.getTableId())
-              .setCreationTime(TimeUnit.SECONDS.toMillis(snapshot.getCreateTime().getSeconds()))
-              .build());
+      response.add(HBaseProtos.SnapshotDescription.newBuilder()
+          .setName(snapshotName.getSnapshotId())
+          .setTable(tableName.getTableId())
+          .setCreationTime(TimeUnit.SECONDS.toMillis(snapshot.getCreateTime().getSeconds()))
+          .build());
     }
     return response;
   }
@@ -175,14 +177,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public List<SnapshotDescription> listTableSnapshots(
-      String tableNameRegex, String snapshotNameRegex) throws IOException {
+  public List<SnapshotDescription> listTableSnapshots(String tableNameRegex,
+      String snapshotNameRegex) throws IOException {
     return listTableSnapshots(Pattern.compile(tableNameRegex), Pattern.compile(snapshotNameRegex));
   }
 
   @Override
-  public List<SnapshotDescription> listTableSnapshots(
-      Pattern tableNamePattern, Pattern snapshotNamePattern) throws IOException {
+  public List<SnapshotDescription> listTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern)
+      throws IOException {
     List<SnapshotDescription> response = new ArrayList<>();
     for (SnapshotDescription snapshotDescription : listSnapshots(snapshotNamePattern)) {
       if (tableNamePattern.matcher(snapshotDescription.getTable()).matches()) {
@@ -234,22 +236,22 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public boolean setCleanerChoreRunning(boolean b) throws IOException {
-    throw new UnsupportedOperationException("setCleanerChoreRunning"); // TODO
+      throw new UnsupportedOperationException("setCleanerChoreRunning"); // TODO
   }
 
   @Override
   public boolean runCleanerChore() throws IOException {
-    throw new UnsupportedOperationException("runCleanerChore"); // TODO
+      throw new UnsupportedOperationException("runCleanerChore"); // TODO
   }
 
   @Override
   public boolean isCleanerChoreEnabled() throws IOException {
-    throw new UnsupportedOperationException("isCleanerChoreEnabled"); // TODO
+      throw new UnsupportedOperationException("isCleanerChoreEnabled"); // TODO
   }
 
   @Override
   public boolean isMasterInMaintenanceMode() throws IOException {
-    throw new UnsupportedOperationException("isMasterInMaintenanceMode"); // TODO
+      throw new UnsupportedOperationException("isMasterInMaintenanceMode"); // TODO
   }
 
   @Override
@@ -285,12 +287,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public List<ServerName> listDeadServers() throws IOException {
-    throw new UnsupportedOperationException("listDeadServers"); // TODO
+      throw new UnsupportedOperationException("listDeadServers"); // TODO
   }
 
   @Override
   public List<ServerName> clearDeadServers(List<ServerName> list) throws IOException {
-    throw new UnsupportedOperationException("clearDeadServers"); // TODO
+      throw new UnsupportedOperationException("clearDeadServers"); // TODO
   }
 
   @Override

@@ -15,12 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase1_x;
 
-import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -31,17 +30,20 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.security.User;
 
+import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+
 /**
  * HBase 1.x specific implementation of {@link AbstractBigtableConnection}.
- *
  * @author sduskis
  * @version $Id: $Id
  */
 public class BigtableConnection extends AbstractBigtableConnection {
 
   /**
+   * <p>
    * Constructor for BigtableConnection.
-   *
+   * </p>
    * @param conf a {@link Configuration} object.
    * @throws IOException if any.
    */
@@ -54,14 +56,15 @@ public class BigtableConnection extends AbstractBigtableConnection {
     super(conf, managed, pool, user);
   }
 
+
   /** {@inheritDoc} */
   @Override
   public Admin getAdmin() throws IOException {
     return new BigtableAdmin(this);
   }
 
-  protected SampledRowKeysAdapter createSampledRowKeysAdapter(
-      TableName tableName, ServerName serverName) {
+  protected SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
+      ServerName serverName) {
     return new SampledRowKeysAdapter(tableName, serverName) {
       @Override
       protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
@@ -73,7 +76,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
   @Override
   public Table getTable(TableName tableName, ExecutorService ignored) throws IOException {
-    return new AbstractBigtableTable(this, createAdapter(tableName)) {};
+    return new AbstractBigtableTable(this, createAdapter(tableName)){};
   }
 
   @Override

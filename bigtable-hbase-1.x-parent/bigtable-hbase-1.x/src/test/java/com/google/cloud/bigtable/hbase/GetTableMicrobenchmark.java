@@ -15,17 +15,18 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
-
 import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
+
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
 
 public class GetTableMicrobenchmark {
 
@@ -51,21 +52,20 @@ public class GetTableMicrobenchmark {
       {
         System.out.println("======= Concurrent =====");
         ExecutorService es = Executors.newFixedThreadPool(rounds);
-        Runnable r =
-            new Runnable() {
-              @Override
-              public void run() {
-                long start = System.nanoTime();
-                for (int i = 0; i < COUNT; i++) {
-                  try {
-                    conn.getTable(tableName);
-                  } catch (IOException e) {
-                    e.printStackTrace();
-                  }
-                }
-                print(start, COUNT);
+        Runnable r = new Runnable() {
+          @Override
+          public void run() {
+            long start = System.nanoTime();
+            for (int i = 0; i < COUNT; i++) {
+              try {
+                conn.getTable(tableName);
+              } catch (IOException e) {
+                e.printStackTrace();
               }
-            };
+            }
+            print(start, COUNT);
+          }
+        };
         long start = System.nanoTime();
         for (int j = 0; j < rounds; j++) {
           es.submit(r);
@@ -86,4 +86,5 @@ public class GetTableMicrobenchmark {
         count, totalTime / 1000000, totalTime / count, count * 1000000000.0 / totalTime);
     System.out.println();
   }
+
 }
