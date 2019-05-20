@@ -115,7 +115,7 @@ infrequent product and client library announcements.
    -pl bigtable-hbase-2.x-parent/bigtable-hbase-2.x-integration-tests \
    -am clean install
    ```
-3. Please run `mvn -X com.coveo:fmt-maven-plugin:format` to check and enforce consistent java formatting to all of your code changes.
+3. Run `mvn -X com.coveo:fmt-maven-plugin:format` to check and enforce consistent java formatting to all of your code changes.
 
 NOTE: This project uses extensive shading which IDEs have trouble with. To overcome these issues,
 disable the `with-shaded` profile in your IDE to force it to resolve the dependencies from your local
