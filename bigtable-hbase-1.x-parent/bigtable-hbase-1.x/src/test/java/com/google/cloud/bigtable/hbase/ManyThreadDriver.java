@@ -15,24 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.cloud.bigtable.util.ThreadUtil;
-import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.util.Bytes;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.PickledGraphite;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.DropwizardMetricRegistry;
 import com.google.cloud.bigtable.metrics.MetricRegistry;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.util.ThreadUtil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
@@ -41,9 +31,19 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
+import org.apache.hadoop.hbase.util.Bytes;
 
 public class ManyThreadDriver {
-  
+
   static GraphiteReporter reporter = null;
   static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
 
@@ -94,14 +94,14 @@ public class ManyThreadDriver {
   private static int numThreads;
   private static int numQualifiers;
 
-  private static void runTest(
-      String projectId, String instanceId, final String tableNameStr)
+  private static void runTest(String projectId, String instanceId, final String tableNameStr)
       throws Exception {
     byte[][] qualifiers = generateQualifiers(numQualifiers);
     final TableName tableName = TableName.valueOf(tableNameStr);
     final AtomicBoolean finished = new AtomicBoolean(false);
-    ExecutorService executor = Executors.newFixedThreadPool(numThreads,
-      ThreadUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
+    ExecutorService executor =
+        Executors.newFixedThreadPool(
+            numThreads, ThreadUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
     ScheduledExecutorService finishExecutor = setupShutdown(finished);
     try (Connection connection = BigtableConfiguration.connect(projectId, instanceId)) {
       setupTable(tableName, connection);
@@ -123,7 +123,7 @@ public class ManyThreadDriver {
   }
 
   static void setupTable(final TableName tableName, Connection connection) throws IOException {
-    try(Admin admin = connection.getAdmin()) {
+    try (Admin admin = connection.getAdmin()) {
       HTableDescriptor descriptor = new HTableDescriptor(tableName);
       descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
       try {
@@ -132,7 +132,7 @@ public class ManyThreadDriver {
       } catch (IOException ignore) {
         // Soldier on, maybe the table already exists.
       }
-  
+
       try {
         System.out.println("Truncating the table");
         admin.truncateTable(tableName, false);
@@ -144,13 +144,17 @@ public class ManyThreadDriver {
 
   static ScheduledExecutorService setupShutdown(final AtomicBoolean finished) {
     ScheduledExecutorService finishExecutor =
-        Executors.newScheduledThreadPool(1, ThreadUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
-    finishExecutor.schedule(new Runnable() {
-      @Override
-      public void run() {
-        finished.set(true);
-      }
-    }, runtimeHours, TimeUnit.HOURS);
+        Executors.newScheduledThreadPool(
+            1, ThreadUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
+    finishExecutor.schedule(
+        new Runnable() {
+          @Override
+          public void run() {
+            finished.set(true);
+          }
+        },
+        runtimeHours,
+        TimeUnit.HOURS);
     return finishExecutor;
   }
 
@@ -179,7 +183,7 @@ public class ManyThreadDriver {
               p.addColumn(COLUMN_FAMILY, qualifiers[i], values[i]);
             }
             table.put(p);
-          } catch(Throwable t) {
+          } catch (Throwable t) {
             t.printStackTrace();
           }
         }
@@ -215,10 +219,10 @@ public class ManyThreadDriver {
   }
 
   private static String requiredProperty(String prop) {
-      String value = System.getProperty(prop);
-      if (value == null) {
-        throw new IllegalArgumentException("Missing required system property: " + prop);
-      }
-      return value;
+    String value = System.getProperty(prop);
+    if (value == null) {
+      throw new IllegalArgumentException("Missing required system property: " + prop);
+    }
+    return value;
   }
 }
