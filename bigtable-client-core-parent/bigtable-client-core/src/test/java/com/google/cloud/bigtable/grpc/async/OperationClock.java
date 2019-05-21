@@ -89,6 +89,6 @@ public class OperationClock implements ApiClock {
     Assert.assertTrue(String.format("Slept only %d ms", sleptMillis),
         totalSleepTimeNs >= expectedSleepNs * .9);
     Assert.assertTrue(String.format("Slept more than expected (%d ms)", sleptMillis),
-        totalSleepTimeNs < expectedSleepNs * 1.5);
+        totalSleepTimeNs < expectedSleepNs * 1.1);
   }
 }
