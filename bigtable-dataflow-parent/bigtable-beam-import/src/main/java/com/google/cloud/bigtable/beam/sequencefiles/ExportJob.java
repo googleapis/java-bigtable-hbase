@@ -42,13 +42,12 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
 /**
- * <p>
- * Beam job to export a Bigtable table to a set of SequenceFiles.
- * Afterwards, the files can be either imported into another Bigtable or HBase table.
- * You can limit the rows and columns exported using the options in {@link ExportOptions}.
- * Please note that the rows in SequenceFiles will not be sorted.
+ * Beam job to export a Bigtable table to a set of SequenceFiles. Afterwards, the files can be
+ * either imported into another Bigtable or HBase table. You can limit the rows and columns exported
+ * using the options in {@link ExportOptions}. Please note that the rows in SequenceFiles will not
+ * be sorted.
  *
- * Furthermore, you can export a subset of the data using a combination of --bigtableStartRow,
+ * <p>Furthermore, you can export a subset of the data using a combination of --bigtableStartRow,
  * --bigtableStopRow and --bigtableFilter.
  *
  * <p>Execute the following command to run the job directly:
@@ -99,64 +98,74 @@ public class ExportJob {
   public interface ExportOptions extends GcpOptions {
     @Description("This Bigtable App Profile id.")
     ValueProvider<String> getBigtableAppProfileId();
+
     @SuppressWarnings("unused")
     void setBigtableAppProfileId(ValueProvider<String> appProfileId);
 
     @Description("The project that contains the table to export. Defaults to --project.")
     @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
     ValueProvider<String> getBigtableProject();
+
     @SuppressWarnings("unused")
     void setBigtableProject(ValueProvider<String> projectId);
 
     @Description("The Bigtable instance id that contains the table to export.")
     ValueProvider<String> getBigtableInstanceId();
+
     @SuppressWarnings("unused")
     void setBigtableInstanceId(ValueProvider<String> instanceId);
 
     @Description("The Bigtable table id to export.")
     ValueProvider<String> getBigtableTableId();
+
     @SuppressWarnings("unused")
     void setBigtableTableId(ValueProvider<String> tableId);
 
     @Description("The row where to start the export from, defaults to the first row.")
     @Default.String("")
     ValueProvider<String> getBigtableStartRow();
+
     @SuppressWarnings("unused")
     void setBigtableStartRow(ValueProvider<String> startRow);
 
     @Description("The row where to stop the export, defaults to last row.")
     @Default.String("")
     ValueProvider<String> getBigtableStopRow();
+
     @SuppressWarnings("unused")
     void setBigtableStopRow(ValueProvider<String> stopRow);
 
     @Description("Maximum number of cell versions.")
     @Default.Integer(Integer.MAX_VALUE)
     ValueProvider<Integer> getBigtableMaxVersions();
+
     @SuppressWarnings("unused")
     void setBigtableMaxVersions(ValueProvider<Integer> maxVersions);
 
     @Description("Filter string. See: http://hbase.apache.org/book.html#thrift.")
     @Default.String("")
     ValueProvider<String> getBigtableFilter();
+
     @SuppressWarnings("unused")
     void setBigtableFilter(ValueProvider<String> filter);
 
-
     @Description("The destination directory")
     ValueProvider<String> getDestinationPath();
+
     @SuppressWarnings("unused")
     void setDestinationPath(ValueProvider<String> destinationPath);
 
     @Description("The prefix for each shard in destinationPath")
     @Default.String("part")
     ValueProvider<String> getFilenamePrefix();
+
     @SuppressWarnings("unused")
     void setFilenamePrefix(ValueProvider<String> filenamePrefix);
 
     @Description("Wait for pipeline to finish.")
     @Default.Boolean(true)
     boolean getWait();
+
     @SuppressWarnings("unused")
     void setWait(boolean wait);
   }
@@ -164,9 +173,8 @@ public class ExportJob {
   public static void main(String[] args) {
     PipelineOptionsFactory.register(ExportOptions.class);
 
-    ExportOptions opts = PipelineOptionsFactory
-        .fromArgs(args).withValidation()
-        .as(ExportOptions.class);
+    ExportOptions opts =
+        PipelineOptionsFactory.fromArgs(args).withValidation().as(ExportOptions.class);
 
     Pipeline pipeline = buildPipeline(opts);
 
@@ -179,23 +187,20 @@ public class ExportJob {
 
   static Pipeline buildPipeline(ExportOptions opts) {
     // Use the base target directory to stage bundles
-    ValueProvider<ResourceId> destinationPath = NestedValueProvider
-        .of(opts.getDestinationPath(), new StringToDirResourceId());
+    ValueProvider<ResourceId> destinationPath =
+        NestedValueProvider.of(opts.getDestinationPath(), new StringToDirResourceId());
 
     // Concat the destination path & prefix for the final path
     FilePathPrefix filePathPrefix = new FilePathPrefix(destinationPath, opts.getFilenamePrefix());
 
-    SequenceFileSink<ImmutableBytesWritable, Result> sink = new SequenceFileSink<>(
-        destinationPath,
-        DefaultFilenamePolicy.fromStandardParameters(
-            filePathPrefix,
-            null,
-            "",
-            false
-        ),
-        ImmutableBytesWritable.class, WritableSerialization.class,
-        Result.class, ResultSerialization.class
-    );
+    SequenceFileSink<ImmutableBytesWritable, Result> sink =
+        new SequenceFileSink<>(
+            destinationPath,
+            DefaultFilenamePolicy.fromStandardParameters(filePathPrefix, null, "", false),
+            ImmutableBytesWritable.class,
+            WritableSerialization.class,
+            Result.class,
+            ResultSerialization.class);
 
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
@@ -215,7 +220,8 @@ public class ExportJob {
     }
   }
 
-  static class StringToDirResourceId implements SerializableFunction<String, ResourceId>, Serializable {
+  static class StringToDirResourceId
+      implements SerializableFunction<String, ResourceId>, Serializable {
     @Override
     public ResourceId apply(String input) {
       return FileSystems.matchNewResource(input, true);
@@ -226,15 +232,17 @@ public class ExportJob {
     private final ValueProvider<ResourceId> destinationPath;
     private final ValueProvider<String> filenamePrefix;
 
-    FilePathPrefix(ValueProvider<ResourceId> destinationPath,
-        ValueProvider<String> filenamePrefix) {
+    FilePathPrefix(
+        ValueProvider<ResourceId> destinationPath, ValueProvider<String> filenamePrefix) {
       this.destinationPath = destinationPath;
       this.filenamePrefix = filenamePrefix;
     }
 
     @Override
     public ResourceId get() {
-      return destinationPath.get().resolve(filenamePrefix.get(), StandardResolveOptions.RESOLVE_FILE);
+      return destinationPath
+          .get()
+          .resolve(filenamePrefix.get(), StandardResolveOptions.RESOLVE_FILE);
     }
 
     @Override

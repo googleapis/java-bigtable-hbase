@@ -19,23 +19,6 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import javax.annotation.Nullable;
-
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Mutation;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
-import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.coprocessor.Batch;
-
-import com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -44,17 +27,30 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
-import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.metrics.Timer;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * Class to help BigtableTable with batch operations on an BigtableClient, such as
- * {@link org.apache.hadoop.hbase.client.Table#batch(List, Object[])}.
- * {@link org.apache.hadoop.hbase.client.Table#put(List)} and
- * {@link org.apache.hadoop.hbase.client.Table#get(List)}.  This class relies on implementations found
- * in {@link BulkRead} and in {@link BigtableBufferedMutatorHelper}.
+ * Class to help BigtableTable with batch operations on an BigtableClient, such as {@link
+ * org.apache.hadoop.hbase.client.Table#batch(List, Object[])}. {@link
+ * org.apache.hadoop.hbase.client.Table#put(List)} and {@link
+ * org.apache.hadoop.hbase.client.Table#get(List)}. This class relies on implementations found in
+ * {@link BulkRead} and in {@link BigtableBufferedMutatorHelper}.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -64,13 +60,12 @@ public class BatchExecutor {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BatchExecutor.class);
 
-  /**
-   * For callbacks that take a region, this is the region we will use.
-   */
+  /** For callbacks that take a region, this is the region we will use. */
   public static final byte[] NO_REGION = new byte[0];
 
   /**
    * A callback for ApiFuture issued as a result of an RPC
+   *
    * @param <T> The type of message the hbase callback requires.
    */
   static class RpcResultFutureCallback<T> implements ApiFutureCallback<Object> {
@@ -104,9 +99,11 @@ public class BatchExecutor {
         if (message instanceof FlatRow) {
           result = Adapters.FLAT_ROW_ADAPTER.adaptResponse((FlatRow) message);
         } else if (message instanceof com.google.cloud.bigtable.data.v2.models.Row) {
-          result = Adapters.ROW_ADAPTER.adaptResponse((com.google.cloud.bigtable.data.v2.models.Row) message);
+          result =
+              Adapters.ROW_ADAPTER.adaptResponse(
+                  (com.google.cloud.bigtable.data.v2.models.Row) message);
         }
-      } catch(Throwable throwable) {
+      } catch (Throwable throwable) {
         onFailure(throwable);
         return;
       }
@@ -148,15 +145,18 @@ public class BatchExecutor {
     this.requestAdapter = requestAdapter;
     this.options = session.getOptions();
     this.bulkRead = session.createBulkRead(requestAdapter.getBigtableTableName());
-    this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(
-        requestAdapter,
-        null, // configuration isn't passed in, but also isn't used in BigtableBufferedMutatorHelper
-        session);
+    this.bufferedMutatorHelper =
+        new BigtableBufferedMutatorHelper(
+            requestAdapter,
+            null, // configuration isn't passed in, but also isn't used in
+                  // BigtableBufferedMutatorHelper
+            session);
   }
 
   /**
    * Issue a single RPC recording the result into {@code results[index]} and if not-null, invoking
    * the supplied callback.
+   *
    * @param row The action to perform
    * @param callback The callback to invoke when the RPC completes and we have results
    * @param results An array of results, into which we should store the result of the operation
@@ -166,15 +166,13 @@ public class BatchExecutor {
    * @return A {@link ApiFuture} that will have the result when the RPC completes.
    */
   private <R extends Row, T> ApiFuture<Result> issueAsyncRowRequest(
-      Row row, Batch.Callback<T> callback, Object[] results,
-      int index) {
+      Row row, Batch.Callback<T> callback, Object[] results, int index) {
     LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
     SettableApiFuture<Result> resultFuture = SettableApiFuture.create();
     RpcResultFutureCallback<T> futureCallback =
         new RpcResultFutureCallback<T>(row, callback, index, results, resultFuture);
     results[index] = null;
-    ApiFutures.addCallback(issueAsyncRequest(row),
-        futureCallback, MoreExecutors.directExecutor());
+    ApiFutures.addCallback(issueAsyncRequest(row), futureCallback, MoreExecutors.directExecutor());
     return resultFuture;
   }
 
@@ -192,11 +190,11 @@ public class BatchExecutor {
     }
     LOG.error("Encountered unknown action type %s", row.getClass());
     return ApiFutures.immediateFailedFuture(
-      new IllegalArgumentException("Encountered unknown action type: " + row.getClass()));
+        new IllegalArgumentException("Encountered unknown action type: " + row.getClass()));
   }
 
   /**
-   * <p>batch.</p>
+   * batch.
    *
    * @param actions a {@link java.util.List} object.
    * @param results an array of {@link java.lang.Object} objects.
@@ -211,8 +209,8 @@ public class BatchExecutor {
     batchCallback(actions, results, null);
   }
 
-  public <R> List<ApiFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
-      Object[] results, Batch.Callback<R> callback) {
+  public <R> List<ApiFuture<?>> issueAsyncRowRequests(
+      List<? extends Row> actions, Object[] results, Batch.Callback<R> callback) {
     try {
       List<ApiFuture<?>> resultFutures = new ArrayList<>(actions.size());
       for (int i = 0; i < actions.size(); i++) {
@@ -227,7 +225,7 @@ public class BatchExecutor {
   }
 
   /**
-   * <p>batch.</p>
+   * batch.
    *
    * @param actions a {@link java.util.List} object.
    * @return an array of {@link org.apache.hadoop.hbase.client.Result} objects.
@@ -250,8 +248,8 @@ public class BatchExecutor {
   }
 
   /**
-   * Implementation of
-   * {@link org.apache.hadoop.hbase.client.HTable#batchCallback(List, Object[], Batch.Callback)}
+   * Implementation of {@link org.apache.hadoop.hbase.client.HTable#batchCallback(List, Object[],
+   * Batch.Callback)}
    *
    * @param actions a {@link java.util.List} object.
    * @param results an array of {@link java.lang.Object} objects.
@@ -260,9 +258,11 @@ public class BatchExecutor {
    * @throws java.lang.InterruptedException if any.
    * @param <R> a R object.
    */
-  public <R> void batchCallback(List<? extends Row> actions,
-      Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
-    Preconditions.checkArgument(results.length == actions.size(),
+  public <R> void batchCallback(
+      List<? extends Row> actions, Object[] results, Batch.Callback<R> callback)
+      throws IOException, InterruptedException {
+    Preconditions.checkArgument(
+        results.length == actions.size(),
         "Result array must have same dimensions as actions list.");
     Timer.Context timerContext = batchTimer.time();
     List<ApiFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, callback);
@@ -271,7 +271,7 @@ public class BatchExecutor {
     List<Throwable> problems = new ArrayList<>();
     List<Row> problemActions = new ArrayList<>();
     List<String> hosts = new ArrayList<>();
-    for (int i = 0; i < resultFutures.size(); i++){
+    for (int i = 0; i < resultFutures.size(); i++) {
       try {
         resultFutures.get(i).get();
       } catch (ExecutionException e) {

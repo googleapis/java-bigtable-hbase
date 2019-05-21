@@ -15,9 +15,7 @@
  */
 package com.google.cloud.bigtable.metrics;
 
-/**
- * An incrementing counter metric.
- */
+/** An incrementing counter metric. */
 public interface Counter {
   void inc();
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,8 @@ public class TestFilterListAdapter {
     Filters.Filter expectedFilter = adapt(filterList);
     Assert.assertEquals(filters.size(), expectedFilter.toProto().getInterleave().getFiltersCount());
     for (int i = 0; i < filters.size(); i++) {
-      Assert.assertEquals(adapt(filters.get(i)).toProto(), expectedFilter.toProto().getInterleave().getFilters(i));
+      Assert.assertEquals(
+          adapt(filters.get(i)).toProto(), expectedFilter.toProto().getInterleave().getFilters(i));
     }
   }
 
@@ -81,23 +82,26 @@ public class TestFilterListAdapter {
     Filters.Filter expectedFilter = adapt(filterList);
     Assert.assertEquals(filters.size(), expectedFilter.toProto().getChain().getFiltersCount());
     for (int i = 0; i < filters.size(); i++) {
-      Assert.assertEquals(adapt(filters.get(i)).toProto(), expectedFilter.toProto().getChain().getFilters(i));
+      Assert.assertEquals(
+          adapt(filters.get(i)).toProto(), expectedFilter.toProto().getChain().getFilters(i));
     }
   }
 
   @Test
   public void compositeFilterSupportStatusIsReturnedForUnsupportedChildFilters() {
-    FilterListAdapter filterListAdapter = new FilterListAdapter(new FilterAdapter() {
-      @Override
-      public void collectUnsupportedStatuses(FilterAdapterContext context, Filter filter,
-          List<FilterSupportStatus> statuses) {
-        Assert.assertEquals(
-            "FilterListDepth should be incremented in isFilterSupported.",
-            1,
-            context.getFilterListDepth());
-        statuses.add(FilterSupportStatus.newNotSupported("Test"));
-      }
-    });
+    FilterListAdapter filterListAdapter =
+        new FilterListAdapter(
+            new FilterAdapter() {
+              @Override
+              public void collectUnsupportedStatuses(
+                  FilterAdapterContext context, Filter filter, List<FilterSupportStatus> statuses) {
+                Assert.assertEquals(
+                    "FilterListDepth should be incremented in isFilterSupported.",
+                    1,
+                    context.getFilterListDepth());
+                statuses.add(FilterSupportStatus.newNotSupported("Test"));
+              }
+            });
 
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ALL);
     FilterSupportStatus status = filterListAdapter.isFilterSupported(emptyScanContext, filterList);
@@ -108,17 +112,19 @@ public class TestFilterListAdapter {
 
   @Test
   public void collectUnsupportedStatusesStartsANewContext() {
-    FilterListAdapter filterListAdapter = new FilterListAdapter(new FilterAdapter() {
-      @Override
-      public void collectUnsupportedStatuses(FilterAdapterContext context, Filter filter,
-          List<FilterSupportStatus> statuses) {
-        Assert.assertEquals(
-            "FilterListDepth should be incremented in isFilterSupported.",
-            1,
-            context.getFilterListDepth());
-        statuses.add(FilterSupportStatus.newNotSupported("Test"));
-      }
-    });
+    FilterListAdapter filterListAdapter =
+        new FilterListAdapter(
+            new FilterAdapter() {
+              @Override
+              public void collectUnsupportedStatuses(
+                  FilterAdapterContext context, Filter filter, List<FilterSupportStatus> statuses) {
+                Assert.assertEquals(
+                    "FilterListDepth should be incremented in isFilterSupported.",
+                    1,
+                    context.getFilterListDepth());
+                statuses.add(FilterSupportStatus.newNotSupported("Test"));
+              }
+            });
 
     Assert.assertEquals("Initial depth should be 0.", 0, emptyScanContext.getFilterListDepth());
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ALL);
@@ -129,23 +135,23 @@ public class TestFilterListAdapter {
   }
 
   @Test
-  /**
-   * FilterListAdapter should handle the fact that PageFilterAdapter returns null.
-   */
+  /** FilterListAdapter should handle the fact that PageFilterAdapter returns null. */
   public void testPageFilter() throws IOException {
     byte[] qualA = Bytes.toBytes("qualA");
     PageFilter pageFilter = new PageFilter(20);
-    FilterList filterList = new FilterList(
-        Operator.MUST_PASS_ALL,
-        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
-        pageFilter);
+    FilterList filterList =
+        new FilterList(
+            Operator.MUST_PASS_ALL,
+            new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
+            pageFilter);
     FilterAdapter adapter = FilterAdapter.buildAdapter();
     Optional<Filters.Filter> adapted =
-        adapter.adaptFilter(new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
-            filterList);
+        adapter.adaptFilter(
+            new FilterAdapterContext(new Scan(), new DefaultReadHooks()), filterList);
     Assert.assertTrue(adapted.isPresent());
     Optional<Filters.Filter> qualifierAdapted =
-        adapter.adaptFilter(new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
+        adapter.adaptFilter(
+            new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
             filterList.getFilters().get(0));
     Assert.assertEquals(qualifierAdapted.get().toProto(), adapted.get().toProto());
   }
@@ -160,12 +166,11 @@ public class TestFilterListAdapter {
 
     RangeSet<RowKeyWrapper> actual = adapter.getIndexScanHint(filterList);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
-        Range.closedOpen(
-            new RowKeyWrapper(ByteString.copyFromUtf8("abc")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("abd"))
-        )
-    );
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.of(
+            Range.closedOpen(
+                new RowKeyWrapper(ByteString.copyFromUtf8("abc")),
+                new RowKeyWrapper(ByteString.copyFromUtf8("abd"))));
     Assert.assertEquals(expected, actual);
   }
 
@@ -193,12 +198,11 @@ public class TestFilterListAdapter {
 
     RangeSet<RowKeyWrapper> actual = adapter.getIndexScanHint(filterList);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
-        Range.closedOpen(
-            new RowKeyWrapper(ByteString.copyFromUtf8("a")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("b"))
-        )
-    );
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.of(
+            Range.closedOpen(
+                new RowKeyWrapper(ByteString.copyFromUtf8("a")),
+                new RowKeyWrapper(ByteString.copyFromUtf8("b"))));
 
     Assert.assertEquals(expected, actual);
   }
@@ -213,16 +217,17 @@ public class TestFilterListAdapter {
 
     RangeSet<RowKeyWrapper> actual = adapter.getIndexScanHint(filterList);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.closedOpen(
-            new RowKeyWrapper(ByteString.copyFromUtf8("a")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("b"))
-        ))
-        .add(Range.closedOpen(
-            new RowKeyWrapper(ByteString.copyFromUtf8("c")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("d"))
-            )
-        ).build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(
+                Range.closedOpen(
+                    new RowKeyWrapper(ByteString.copyFromUtf8("a")),
+                    new RowKeyWrapper(ByteString.copyFromUtf8("b"))))
+            .add(
+                Range.closedOpen(
+                    new RowKeyWrapper(ByteString.copyFromUtf8("c")),
+                    new RowKeyWrapper(ByteString.copyFromUtf8("d"))))
+            .build();
 
     Assert.assertEquals(expected, actual);
   }
@@ -230,5 +235,4 @@ public class TestFilterListAdapter {
   protected Filters.Filter adapt(Filter filter) throws IOException {
     return filterAdapter.adaptFilter(emptyScanContext, filter).get();
   }
-
 }

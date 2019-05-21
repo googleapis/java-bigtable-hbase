@@ -17,11 +17,11 @@ package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -40,10 +40,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-
 /**
  * Test to make sure that basic {@link AsyncTable} operations work
+ *
  * @author sduskis
  */
 @RunWith(JUnit4.class)
@@ -104,9 +103,10 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
     AsyncTable table = getDefaultAsyncTable();
 
     RowMutations rowMutations1 = new RowMutations(rowKey);
-    rowMutations1.add(new Put(rowKey)
-      .addColumn(COLUMN_FAMILY, testQualifier1, testValue1)
-      .addColumn(COLUMN_FAMILY, testQualifier2, testValue2));
+    rowMutations1.add(
+        new Put(rowKey)
+            .addColumn(COLUMN_FAMILY, testQualifier1, testValue1)
+            .addColumn(COLUMN_FAMILY, testQualifier2, testValue2));
     table.mutateRow(rowMutations1).get();
 
     RowMutations rowMutations2 = new RowMutations(rowKey);
@@ -137,28 +137,28 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
         new Append(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier, value2);
     Result result = getDefaultAsyncTable().append(append).get();
     Cell cell = result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
-    Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
-      CellUtil.cloneValue(cell));
+    Assert.assertArrayEquals(
+        "Expect concatenated byte array", value1And2, CellUtil.cloneValue(cell));
 
     // Test result
     Get get = new Get(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
     get.readVersions(5);
     result = table.get(get);
     List<Cell> cells = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
-    Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
-      CellUtil.cloneValue(cells.get(0)));
+    Assert.assertArrayEquals(
+        "Expect concatenated byte array", value1And2, CellUtil.cloneValue(cells.get(0)));
     if (result.size() == 2) {
       // TODO: This isn't always true with CBT.  Why is that?
       Assert.assertEquals("There should be two versions now", 2, result.size());
-      Assert.assertArrayEquals("Expect original value still there", value1,
-        CellUtil.cloneValue(cells.get(1)));
+      Assert.assertArrayEquals(
+          "Expect original value still there", value1, CellUtil.cloneValue(cells.get(1)));
     }
   }
 
   @Test
   public void testIncrement() throws Exception {
     // Initialize data
-    try (Table table = getDefaultTable()){
+    try (Table table = getDefaultTable()) {
       byte[] rowKey = dataHelper.randomData("testrow-");
       byte[] qual1 = dataHelper.randomData("qual-");
       long value1 = new Random().nextInt();
@@ -176,20 +176,28 @@ public class TestBasicAsyncOps extends AbstractAsyncTest {
       increment.addColumn(COLUMN_FAMILY, qual1, incr1);
       increment.addColumn(COLUMN_FAMILY, qual2, incr2);
       Result result = getDefaultAsyncTable().increment(increment).get();
-      Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
-        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
-      Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
-        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual2))));
+      Assert.assertEquals(
+          "Value1=" + value1 + " & Incr1=" + incr1,
+          value1 + incr1,
+          Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
+      Assert.assertEquals(
+          "Value2=" + value2 + " & Incr2=" + incr2,
+          value2 + incr2,
+          Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual2))));
       Assert.assertEquals(2, result.size());
 
       // Double-check values with a Get
       Get get = new Get(rowKey);
       get.readVersions(5);
       result = table.get(get);
-      Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
-        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
-      Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
-        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual2))));
+      Assert.assertEquals(
+          "Value1=" + value1 + " & Incr1=" + incr1,
+          value1 + incr1,
+          Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
+      Assert.assertEquals(
+          "Value2=" + value2 + " & Incr2=" + incr2,
+          value2 + incr2,
+          Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual2))));
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.cloud.bigtable.util.ThreadUtil;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,8 +23,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.google.cloud.bigtable.util.ThreadUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
@@ -37,7 +36,7 @@ import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class RecreateConnectionDriver {
-  
+
   static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
 
   private static long recordCount;
@@ -46,31 +45,33 @@ public class RecreateConnectionDriver {
   private static int numThreads;
   private static int numQualifiers;
 
-  private static void runTest(
-      String projectId, String instanceId, final String tableNameStr)
+  private static void runTest(String projectId, String instanceId, final String tableNameStr)
       throws Exception {
     byte[][] qualifiers = generateQualifiers(numQualifiers);
     final TableName tableName = TableName.valueOf(tableNameStr);
     final AtomicBoolean finished = new AtomicBoolean(false);
-    ExecutorService executor = Executors.newFixedThreadPool(numThreads,
-      ThreadUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
+    ExecutorService executor =
+        Executors.newFixedThreadPool(
+            numThreads, ThreadUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
     ScheduledExecutorService finishExecutor = setupShutdown(finished);
     try (Connection connection = connect(projectId, instanceId)) {
       setupTable(tableName, connection);
     }
 
-    Runnable setFinish = new Runnable(){
-      @Override
-      public void run() {
-        finished.set(true);
-      }
-    };
+    Runnable setFinish =
+        new Runnable() {
+          @Override
+          public void run() {
+            finished.set(true);
+          }
+        };
 
-    for(int i=0;i<10;i++) {
+    for (int i = 0; i < 10; i++) {
       try (Connection connection = connect(projectId, instanceId)) {
         finished.set(false);
         finishExecutor.schedule(setFinish, 10, TimeUnit.SECONDS);
-        createWorker(connection, tableName, finished, qualifiers).run();;
+        createWorker(connection, tableName, finished, qualifiers).run();
+        ;
       }
       executor.shutdown();
       executor.awaitTermination(runtimeHours, TimeUnit.HOURS);
@@ -90,7 +91,7 @@ public class RecreateConnectionDriver {
   }
 
   static void setupTable(final TableName tableName, Connection connection) throws IOException {
-    try(Admin admin = connection.getAdmin()) {
+    try (Admin admin = connection.getAdmin()) {
       TableDescriptorBuilder descriptor = TableDescriptorBuilder.newBuilder(tableName);
       descriptor.addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY));
       try {
@@ -99,7 +100,7 @@ public class RecreateConnectionDriver {
       } catch (IOException ignore) {
         // Soldier on, maybe the table already exists.
       }
-  
+
       try {
         System.out.println("Truncating the table");
         admin.truncateTable(tableName, false);
@@ -111,13 +112,17 @@ public class RecreateConnectionDriver {
 
   static ScheduledExecutorService setupShutdown(final AtomicBoolean finished) {
     ScheduledExecutorService finishExecutor =
-        Executors.newScheduledThreadPool(1, ThreadUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
-    finishExecutor.schedule(new Runnable() {
-      @Override
-      public void run() {
-        finished.set(true);
-      }
-    }, runtimeHours, TimeUnit.HOURS);
+        Executors.newScheduledThreadPool(
+            1, ThreadUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
+    finishExecutor.schedule(
+        new Runnable() {
+          @Override
+          public void run() {
+            finished.set(true);
+          }
+        },
+        runtimeHours,
+        TimeUnit.HOURS);
     return finishExecutor;
   }
 
@@ -146,7 +151,7 @@ public class RecreateConnectionDriver {
               p.addColumn(COLUMN_FAMILY, qualifiers[i], values[i]);
             }
             table.put(p);
-          } catch(Throwable t) {
+          } catch (Throwable t) {
             t.printStackTrace();
           }
         }
@@ -182,10 +187,10 @@ public class RecreateConnectionDriver {
   }
 
   private static String requiredProperty(String prop) {
-      String value = System.getProperty(prop);
-      if (value == null) {
-        throw new IllegalArgumentException("Missing required system property: " + prop);
-      }
-      return value;
+    String value = System.getProperty(prop);
+    if (value == null) {
+      throw new IllegalArgumentException("Missing required system property: " + prop);
+    }
+    return value;
   }
 }

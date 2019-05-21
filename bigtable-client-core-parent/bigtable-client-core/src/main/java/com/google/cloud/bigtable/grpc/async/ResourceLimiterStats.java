@@ -15,15 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class tracks timing and counts of mutations performed by {@link BulkMutation} and throttling
@@ -44,7 +43,7 @@ public class ResourceLimiterStats {
   }
 
   @VisibleForTesting
-  static void reset(){
+  static void reset() {
     stats.clear();
   }
 
@@ -56,6 +55,7 @@ public class ResourceLimiterStats {
 
   /**
    * This method updates rpc time statistics statistics.
+   *
    * @param rpcDurationInNanos
    */
   void markRpcComplete(long rpcDurationInNanos) {
@@ -64,6 +64,7 @@ public class ResourceLimiterStats {
 
   /**
    * This method updates throttling statistics.
+   *
    * @param throttlingDurationInNanos
    */
   void markThrottling(long throttlingDurationInNanos) {

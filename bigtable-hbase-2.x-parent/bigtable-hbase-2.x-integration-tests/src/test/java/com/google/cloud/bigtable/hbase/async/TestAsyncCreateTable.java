@@ -17,10 +17,11 @@ package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import com.google.cloud.bigtable.hbase.AbstractTestCreateTable;
+import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
@@ -28,28 +29,25 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 
-import com.google.cloud.bigtable.hbase.AbstractTestCreateTable;
-import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-
 public class TestAsyncCreateTable extends AbstractTestCreateTable {
 
   protected static DataGenerationHelper dataHelper = new DataGenerationHelper();
+
   @Override
   protected void createTable(TableName tableName) throws Exception {
     try {
       getAsyncAdmin().createTable(createDescriptor(tableName)).get();
-    } catch(ExecutionException e) {
+    } catch (ExecutionException e) {
       throw (Exception) e.getCause();
     }
   }
 
   @Override
-  protected void createTable(TableName tableName, byte[] start, byte[] end,
-      int splitCount)
+  protected void createTable(TableName tableName, byte[] start, byte[] end, int splitCount)
       throws Exception {
     try {
       getAsyncAdmin().createTable(createDescriptor(tableName), start, end, splitCount).get();
-    } catch(ExecutionException e) {
+    } catch (ExecutionException e) {
       throw (Exception) e.getCause();
     }
   }
@@ -58,7 +56,7 @@ public class TestAsyncCreateTable extends AbstractTestCreateTable {
   protected void createTable(TableName tableName, byte[][] ranges) throws Exception {
     try {
       getAsyncAdmin().createTable(createDescriptor(tableName), ranges).get();
-    } catch(ExecutionException e) {
+    } catch (ExecutionException e) {
       throw (Exception) e.getCause();
     }
   }
@@ -77,11 +75,15 @@ public class TestAsyncCreateTable extends AbstractTestCreateTable {
   protected List<HRegionLocation> getRegions(TableName tableName) throws Exception {
     byte[] rowKey = dataHelper.randomData("TestAsyncCreateTable-");
     List<HRegionLocation> regionLocationList = new ArrayList<>();
-    HRegionLocation hRegionLocation = AbstractAsyncTest.getAsyncConnection().getRegionLocator(tableName).getRegionLocation(rowKey, true).get();
+    HRegionLocation hRegionLocation =
+        AbstractAsyncTest.getAsyncConnection()
+            .getRegionLocator(tableName)
+            .getRegionLocation(rowKey, true)
+            .get();
     regionLocationList.add(hRegionLocation);
     return regionLocationList;
   }
-  
+
   @Override
   protected boolean asyncGetRegions(TableName tableName) throws Exception {
     return getAsyncAdmin().getRegions(tableName).get().size() == 1 ? true : false;
@@ -95,7 +97,6 @@ public class TestAsyncCreateTable extends AbstractTestCreateTable {
   @Override
   protected void disableTable(TableName tableName) throws Exception {
     getAsyncAdmin().disableTable(tableName).get();
-    
   }
 
   @Override

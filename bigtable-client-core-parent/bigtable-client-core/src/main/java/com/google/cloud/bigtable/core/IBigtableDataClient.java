@@ -25,7 +25,6 @@ import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import io.grpc.stub.StreamObserver;
-
 import java.util.List;
 
 /**
@@ -45,8 +44,8 @@ public interface IBigtableDataClient {
    * Mutate a row atomically.
    *
    * @param rowMutation a {@link RowMutation} model object.
-   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
-   *     successful otherwise exception will be thrown.
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is successful
+   *     otherwise exception will be thrown.
    */
   ApiFuture<Void> mutateRowAsync(RowMutation rowMutation);
 
@@ -62,22 +61,20 @@ public interface IBigtableDataClient {
    * Perform an atomic read-modify-write operation on a row.
    *
    * @param readModifyWriteRow a {@link ReadModifyWriteRow} model object.
-   * @return a {@link ApiFuture} of type {@link Row} will be set when request is
-   *     successful otherwise exception will be thrown.
+   * @return a {@link ApiFuture} of type {@link Row} will be set when request is successful
+   *     otherwise exception will be thrown.
    */
   ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow);
 
-  /**
-   * Creates {@link IBulkMutation} batcher.
-   */
+  /** Creates {@link IBulkMutation} batcher. */
   IBulkMutation createBulkMutationBatcher();
 
   /**
    * Mutate a row atomically dependent on a precondition.
    *
    * @param conditionalRowMutation a {@link ConditionalRowMutation} model object.
-   * @return a {@link ApiFuture} of type {@link Boolean} will be set when request is
-   *     successful otherwise exception will be thrown.
+   * @return a {@link ApiFuture} of type {@link Boolean} will be set when request is successful
+   *     otherwise exception will be thrown.
    */
   ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
 
@@ -104,7 +101,7 @@ public interface IBigtableDataClient {
    * @param tableId a String object.
    * @return a {@link ApiFuture} object.
    */
-  ApiFuture< List<KeyOffset>> sampleRowKeysAsync(String tableId);
+  ApiFuture<List<KeyOffset>> sampleRowKeysAsync(String tableId);
 
   /**
    * Perform a scan over {@link Row}s, in key order.
@@ -117,8 +114,7 @@ public interface IBigtableDataClient {
   /**
    * Read multiple {@link Row}s into an in-memory list, in key order.
    *
-   * @return a {@link ApiFuture} that will finish when
-   * all reads have completed.
+   * @return a {@link ApiFuture} that will finish when all reads have completed.
    * @param request a {@link Query} object.
    */
   ApiFuture<List<Row>> readRowsAsync(Query request);
@@ -142,8 +138,7 @@ public interface IBigtableDataClient {
   /**
    * Read multiple {@link FlatRow}s into an in-memory list, in key order.
    *
-   * @return a {@link ApiFuture} that will finish when
-   * all reads have completed.
+   * @return a {@link ApiFuture} that will finish when all reads have completed.
    * @param request a {@link Query} object.
    */
   ApiFuture<List<FlatRow>> readFlatRowsAsync(Query request);
@@ -151,7 +146,7 @@ public interface IBigtableDataClient {
   /**
    * Read {@link FlatRow} asynchronously, and pass them to a stream observer to be processed.
    *
-   * @param request  a {@link Query} object.
+   * @param request a {@link Query} object.
    * @param observer a {@link StreamObserver} object.
    */
   void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer);

@@ -17,9 +17,7 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.cloud.bigtable.data.v2.models.RowAdapter;
 import com.google.common.collect.ImmutableList;
-
 import com.google.protobuf.ByteString;
-
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,21 +49,23 @@ public class TestFlatRowAdapter {
     rowBuilder.cellValue(value);
     rowBuilder.finishCell();
 
-    FlatRow expected = FlatRow.newBuilder()
-        .withRowKey(ByteString.copyFromUtf8("my-key"))
-        .addCell("my-family",
-            ByteString.copyFromUtf8("my-qualifier"),
-            100,
-            value,
-            ImmutableList.of("my-label")).build();
+    FlatRow expected =
+        FlatRow.newBuilder()
+            .withRowKey(ByteString.copyFromUtf8("my-key"))
+            .addCell(
+                "my-family",
+                ByteString.copyFromUtf8("my-qualifier"),
+                100,
+                value,
+                ImmutableList.of("my-label"))
+            .build();
 
     Assert.assertEquals(expected, rowBuilder.finishRow());
   }
 
   @Test
   public void testWithMultiCell() {
-    FlatRow.Builder builder = FlatRow.newBuilder()
-        .withRowKey(ByteString.copyFromUtf8("my-key"));
+    FlatRow.Builder builder = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("my-key"));
 
     rowBuilder.startRow(ByteString.copyFromUtf8("my-key"));
 
@@ -99,13 +99,16 @@ public class TestFlatRowAdapter {
     rowBuilder.cellValue(part2);
     rowBuilder.finishCell();
 
-    FlatRow expected = FlatRow.newBuilder()
-        .withRowKey(ByteString.copyFromUtf8("my-key"))
-        .addCell("family",
-            ByteString.copyFromUtf8("qualifier"),
-            1000,
-            ByteString.copyFromUtf8("part1part2"),
-            ImmutableList.of("my-label")).build();
+    FlatRow expected =
+        FlatRow.newBuilder()
+            .withRowKey(ByteString.copyFromUtf8("my-key"))
+            .addCell(
+                "family",
+                ByteString.copyFromUtf8("qualifier"),
+                1000,
+                ByteString.copyFromUtf8("part1part2"),
+                ImmutableList.of("my-label"))
+            .build();
 
     Assert.assertEquals(expected, rowBuilder.finishRow());
   }
@@ -126,37 +129,32 @@ public class TestFlatRowAdapter {
   }
 
   @Test
-  public void testFamilyOrdering(){
+  public void testFamilyOrdering() {
     ByteString value = ByteString.copyFromUtf8("my-value");
     ByteString qualifier = ByteString.copyFromUtf8("qualifier");
     List<String> labels = ImmutableList.of("my-label");
     String[] familyNames = {"aa", "bb", "ew", "fd", "zz"};
     rowBuilder.startRow(ByteString.copyFromUtf8("firstKey"));
-    rowBuilder.startCell("zz", qualifier, 72, labels,
-        value.size());
+    rowBuilder.startCell("zz", qualifier, 72, labels, value.size());
     rowBuilder.cellValue(value);
     rowBuilder.finishCell();
-    rowBuilder.startCell("bb", qualifier, 2309223, labels,
-        value.size());
+    rowBuilder.startCell("bb", qualifier, 2309223, labels, value.size());
     rowBuilder.cellValue(value);
     rowBuilder.finishCell();
-    rowBuilder.startCell("aa", qualifier, 873, labels,
-        value.size());
+    rowBuilder.startCell("aa", qualifier, 873, labels, value.size());
     rowBuilder.cellValue(value);
     rowBuilder.finishCell();
-    rowBuilder.startCell("fd", qualifier, 726, labels,
-        value.size());
+    rowBuilder.startCell("fd", qualifier, 726, labels, value.size());
     rowBuilder.cellValue(value);
     rowBuilder.finishCell();
-    rowBuilder.startCell("ew", qualifier, System.currentTimeMillis(), labels,
-        value.size());
+    rowBuilder.startCell("ew", qualifier, System.currentTimeMillis(), labels, value.size());
     rowBuilder.cellValue(value);
     rowBuilder.finishCell();
 
     FlatRow row = rowBuilder.finishRow();
     Assert.assertEquals("firstKey", row.getRowKey().toStringUtf8());
-    List<FlatRow.Cell> cells  = row.getCells();
-    for(int i =0; i<cells.size(); i++){
+    List<FlatRow.Cell> cells = row.getCells();
+    for (int i = 0; i < cells.size(); i++) {
       Assert.assertEquals(familyNames[i], cells.get(i).getFamily());
     }
   }

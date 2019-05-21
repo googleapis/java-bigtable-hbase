@@ -26,12 +26,12 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
 
 /**
- * Function that creates a {@link Predicate}s from a Delete Marker {@code Cell}. The
- * {@code Predicate} returns {@code true} for all cells that should be deleted because of this
- * Delete Marker.
+ * Function that creates a {@link Predicate}s from a Delete Marker {@code Cell}. The {@code
+ * Predicate} returns {@code true} for all cells that should be deleted because of this Delete
+ * Marker.
  *
- * <p>A predicate assumes that all cells to be filtered belong to the same row and column family
- * as the seed Delete Marker, and does NOT validate this assumption on cells encountered.
+ * <p>A predicate assumes that all cells to be filtered belong to the same row and column family as
+ * the seed Delete Marker, and does NOT validate this assumption on cells encountered.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -57,8 +57,8 @@ class DataCellPredicateFactory implements Function<Cell, Predicate<Cell>> {
       case DeleteFamily:
         // Delete all columns in a family up to a timestamp
         return new MatchTimestampRangeByUpperBound(deleteMarker);
-      default: throw new IllegalStateException(
-          "Unexpected type byte: " + deleteMarker.getTypeByte());
+      default:
+        throw new IllegalStateException("Unexpected type byte: " + deleteMarker.getTypeByte());
     }
   }
 

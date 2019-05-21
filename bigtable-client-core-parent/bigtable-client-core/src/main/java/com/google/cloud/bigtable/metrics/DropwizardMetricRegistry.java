@@ -29,16 +29,16 @@ import org.slf4j.Logger;
 public class DropwizardMetricRegistry implements MetricRegistry {
 
   /**
-   * Creates a {@link DropwizardMetricRegistry} with an {@link Slf4jReporter}.  Only non-zero metrics
+   * Creates a {@link DropwizardMetricRegistry} with an {@link Slf4jReporter}. Only non-zero metrics
    * will be logged to the {@link Slf4jReporter}.
-   * 
+   *
    * @param registry The registry on which to add the reporter.
    * @param logger The {@link Logger} to report to
    * @param period the amount of time between polls
-   * @param unit   the unit for {@code period}
+   * @param unit the unit for {@code period}
    */
-  public static void createSlf4jReporter(DropwizardMetricRegistry registry, Logger logger,
-      long period, TimeUnit unit) {
+  public static void createSlf4jReporter(
+      DropwizardMetricRegistry registry, Logger logger, long period, TimeUnit unit) {
     MetricFilter nonZeroMatcher =
         new MetricFilter() {
           @Override
@@ -144,7 +144,7 @@ public class DropwizardMetricRegistry implements MetricRegistry {
       }
     };
   }
-  
+
   /** @return the Dropwizard {@link com.codahale.metrics.MetricRegistry} */
   public com.codahale.metrics.MetricRegistry getRegistry() {
     return registry;

@@ -21,4 +21,4 @@ import org.junit.runner.RunWith;
 
 @RunWith(Categories.class)
 @ExcludeCategory({KnownGap.class, KnownEmulatorGap.class})
-public class EmulatorTests extends IntegrationTests { }
+public class EmulatorTests extends IntegrationTests {}

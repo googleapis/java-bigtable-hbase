@@ -42,9 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-/**
- * Receives request generated from {@link TestBigtableTableAdminGCJClient}.
- */
+/** Receives request generated from {@link TestBigtableTableAdminGCJClient}. */
 public class FakeBigtableAdminServiceImpl extends BigtableTableAdminImplBase {
 
   private static final BigtableInstanceName INSTANCE_NAME =
@@ -57,18 +55,18 @@ public class FakeBigtableAdminServiceImpl extends BigtableTableAdminImplBase {
 
   @Override
   public void createTable(CreateTableRequest request, StreamObserver<Table> responseObserver) {
-    responseObserver.onNext(Table.newBuilder()
-        .setName(INSTANCE_NAME.toTableNameStr(request.getTableId()))
-        .build());
+    responseObserver.onNext(
+        Table.newBuilder().setName(INSTANCE_NAME.toTableNameStr(request.getTableId())).build());
     responseObserver.onCompleted();
   }
 
   @Override
   public void getTable(GetTableRequest request, StreamObserver<Table> responseObserver) {
     String tableId = NameUtil.extractTableIdFromTableName(request.getName());
-    Table.Builder builder = Table.newBuilder()
-        .setName(INSTANCE_NAME.toTableNameStr(tableId))
-        .putColumnFamilies("first", ColumnFamily.getDefaultInstance());
+    Table.Builder builder =
+        Table.newBuilder()
+            .setName(INSTANCE_NAME.toTableNameStr(tableId))
+            .putColumnFamilies("first", ColumnFamily.getDefaultInstance());
 
     if ("test-async-table".equals(tableId)) {
       builder.putColumnFamilies("second", ColumnFamily.getDefaultInstance());
@@ -78,8 +76,8 @@ public class FakeBigtableAdminServiceImpl extends BigtableTableAdminImplBase {
   }
 
   @Override
-  public void listTables(ListTablesRequest request,
-      StreamObserver<ListTablesResponse> responseObserver) {
+  public void listTables(
+      ListTablesRequest request, StreamObserver<ListTablesResponse> responseObserver) {
     ListTablesResponse.Builder builder = ListTablesResponse.newBuilder();
     builder.addTablesBuilder().setName(INSTANCE_NAME.toTableNameStr(TEST_TABLE_ID_1)).build();
     builder.addTablesBuilder().setName(INSTANCE_NAME.toTableNameStr(TEST_TABLE_ID_2)).build();
@@ -103,15 +101,15 @@ public class FakeBigtableAdminServiceImpl extends BigtableTableAdminImplBase {
   }
 
   @Override
-  public void createTableFromSnapshot(CreateTableFromSnapshotRequest request,
-      StreamObserver<Operation> responseObserver) {
+  public void createTableFromSnapshot(
+      CreateTableFromSnapshotRequest request, StreamObserver<Operation> responseObserver) {
     responseObserver.onNext(Operation.newBuilder().setDone(true).build());
     responseObserver.onCompleted();
   }
 
   @Override
-  public void modifyColumnFamilies(ModifyColumnFamiliesRequest request,
-      StreamObserver<Table> responseObserver) {
+  public void modifyColumnFamilies(
+      ModifyColumnFamiliesRequest request, StreamObserver<Table> responseObserver) {
     Table.Builder tableBuilder = Table.newBuilder().setName(request.getName());
     for (Modification mod : request.getModificationsList()) {
       tableBuilder.putColumnFamilies(mod.getId(), mod.getCreate());
@@ -121,8 +119,8 @@ public class FakeBigtableAdminServiceImpl extends BigtableTableAdminImplBase {
   }
 
   @Override
-  public void snapshotTable(SnapshotTableRequest request,
-      StreamObserver<Operation> responseObserver) {
+  public void snapshotTable(
+      SnapshotTableRequest request, StreamObserver<Operation> responseObserver) {
     responseObserver.onNext(Operation.newBuilder().setDone(true).build());
     responseObserver.onCompleted();
   }
@@ -134,19 +132,20 @@ public class FakeBigtableAdminServiceImpl extends BigtableTableAdminImplBase {
   }
 
   @Override
-  public void listSnapshots(ListSnapshotsRequest request,
-      StreamObserver<ListSnapshotsResponse> responseObserver) {
-    ListSnapshotsResponse listSnapshot = ListSnapshotsResponse.newBuilder()
-        .addSnapshots(Snapshot.newBuilder().setName("firstSnapshotName").build())
-        .addSnapshots(Snapshot.newBuilder().setName("secondSnapshotName").build())
-        .build();
+  public void listSnapshots(
+      ListSnapshotsRequest request, StreamObserver<ListSnapshotsResponse> responseObserver) {
+    ListSnapshotsResponse listSnapshot =
+        ListSnapshotsResponse.newBuilder()
+            .addSnapshots(Snapshot.newBuilder().setName("firstSnapshotName").build())
+            .addSnapshots(Snapshot.newBuilder().setName("secondSnapshotName").build())
+            .build();
     responseObserver.onNext(listSnapshot);
     responseObserver.onCompleted();
   }
 
   @Override
-  public void deleteSnapshot(DeleteSnapshotRequest request,
-      StreamObserver<Empty> responseObserver) {
+  public void deleteSnapshot(
+      DeleteSnapshotRequest request, StreamObserver<Empty> responseObserver) {
     requests.add(request);
     responseObserver.onNext(Empty.newBuilder().build());
     responseObserver.onCompleted();

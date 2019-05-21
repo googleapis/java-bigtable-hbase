@@ -16,18 +16,15 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
-
 import static com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.quoteRegularExpression;
 
-import java.io.IOException;
-
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
-import org.apache.hadoop.hbase.filter.ValueFilter;
-
-import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.ValueFilter;
 
 /**
  * Adapt SingleColumnValueFilter instances into bigtable RowFilters.
@@ -38,26 +35,26 @@ import com.google.protobuf.ByteString;
 public class SingleColumnValueFilterAdapter
     extends TypedFilterAdapterBase<SingleColumnValueFilter> {
 
-  @VisibleForTesting
-  static final Filter LATEST_ONLY_FILTER = FILTERS.limit().cellsPerColumn(1);
+  @VisibleForTesting static final Filter LATEST_ONLY_FILTER = FILTERS.limit().cellsPerColumn(1);
   private final ValueFilterAdapter delegateAdapter;
 
   /**
-   * <p>Constructor for SingleColumnValueFilterAdapter.</p>
+   * Constructor for SingleColumnValueFilterAdapter.
    *
-   * @param delegateAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.ValueFilterAdapter} object.
+   * @param delegateAdapter a {@link
+   *     com.google.cloud.bigtable.hbase.adapters.filters.ValueFilterAdapter} object.
    */
   public SingleColumnValueFilterAdapter(ValueFilterAdapter delegateAdapter) {
     this.delegateAdapter = delegateAdapter;
   }
 
   /**
-   * {@link SingleColumnValueFilter} is a filter that will return a row if a family/qualifier
-   * value matches some condition. Optionally,  if
-   * {@link SingleColumnValueFilter#getFilterIfMissing()} is set to false, then also return
-   * the row if the family/column is not present on the row.  There's a
+   * {@link SingleColumnValueFilter} is a filter that will return a row if a family/qualifier value
+   * matches some condition. Optionally, if {@link SingleColumnValueFilter#getFilterIfMissing()} is
+   * set to false, then also return the row if the family/column is not present on the row. There's
+   * a
    *
-   * <p> Here's a rough translation of {@link SingleColumnValueFilter#getFilterIfMissing()} == true.
+   * <p>Here's a rough translation of {@link SingleColumnValueFilter#getFilterIfMissing()} == true.
    *
    * <pre>
    * IF a single family/column exists AND
@@ -77,10 +74,10 @@ public class SingleColumnValueFilterAdapter
    *   return the ROW
    * END
    * </pre>
-   * 
-   * The Cloud Bigtable filter translation for the
-   * {@link SingleColumnValueFilter#getFilterIfMissing()} true case here's the resulting filter is
-   * as follows:
+   *
+   * The Cloud Bigtable filter translation for the {@link
+   * SingleColumnValueFilter#getFilterIfMissing()} true case here's the resulting filter is as
+   * follows:
    *
    * <pre>
    *   condition: {
@@ -99,9 +96,8 @@ public class SingleColumnValueFilterAdapter
    *   }
    * </pre>
    *
-   * In addition to the default filter, there's a bit more if
-   * {@link SingleColumnValueFilter#getFilterIfMissing()} is false.  Here's what the filter would
-   * look like:
+   * In addition to the default filter, there's a bit more if {@link
+   * SingleColumnValueFilter#getFilterIfMissing()} is false. Here's what the filter would look like:
    *
    * <pre>
    *   interleave: [ // either
@@ -138,10 +134,8 @@ public class SingleColumnValueFilterAdapter
    *   ]
    * </pre>
    *
-   * <p>
-   * NOTE: This logic can also be expressed as nested predicates, but that approach creates really poor
-   * performance on the server side.
-   * </p>
+   * <p>NOTE: This logic can also be expressed as nested predicates, but that approach creates
+   * really poor performance on the server side.
    */
   @Override
   public Filter adapt(FilterAdapterContext context, SingleColumnValueFilter filter)
@@ -149,29 +143,29 @@ public class SingleColumnValueFilterAdapter
     return toFilter(context, filter);
   }
 
-  Filter toFilter(FilterAdapterContext context, SingleColumnValueFilter filter)
-      throws IOException {
+  Filter toFilter(FilterAdapterContext context, SingleColumnValueFilter filter) throws IOException {
     // filter to check if the column exists
-    ChainFilter columnSpecFilter = getColumnSpecFilter(
-        filter.getFamily(),
-        filter.getQualifier(),
-        filter.getLatestVersionOnly());
+    ChainFilter columnSpecFilter =
+        getColumnSpecFilter(
+            filter.getFamily(), filter.getQualifier(), filter.getLatestVersionOnly());
 
     // filter to return the row if the condition is met
     if (filter.getFilterIfMissing()) {
-      return FILTERS.condition(addValue(context, filter, columnSpecFilter))
-               .then(FILTERS.pass());
+      return FILTERS.condition(addValue(context, filter, columnSpecFilter)).then(FILTERS.pass());
     } else {
-      return FILTERS.interleave()
-          .filter(FILTERS.condition(addValue(context, filter, columnSpecFilter.clone()))
-                   .then(FILTERS.pass()))
-          .filter(FILTERS.condition(columnSpecFilter)
-                   .otherwise(FILTERS.pass()));
+      return FILTERS
+          .interleave()
+          .filter(
+              FILTERS
+                  .condition(addValue(context, filter, columnSpecFilter.clone()))
+                  .then(FILTERS.pass()))
+          .filter(FILTERS.condition(columnSpecFilter).otherwise(FILTERS.pass()));
     }
   }
 
-  private Filter addValue(FilterAdapterContext context, SingleColumnValueFilter filter,
-      ChainFilter columnSpecFilter) throws IOException {
+  private Filter addValue(
+      FilterAdapterContext context, SingleColumnValueFilter filter, ChainFilter columnSpecFilter)
+      throws IOException {
     return columnSpecFilter.clone().filter(createValueMatchFilter(context, filter));
   }
 
@@ -180,9 +174,11 @@ public class SingleColumnValueFilterAdapter
       throws IOException {
     ByteString wrappedQual = quoteRegularExpression(qualifier);
     String wrappedFamily = quoteRegularExpression(family).toStringUtf8();
-    ChainFilter builder = FILTERS.chain()
-        .filter(FILTERS.family().regex(wrappedFamily))
-        .filter(FILTERS.qualifier().regex(wrappedQual));
+    ChainFilter builder =
+        FILTERS
+            .chain()
+            .filter(FILTERS.family().regex(wrappedFamily))
+            .filter(FILTERS.qualifier().regex(wrappedQual));
 
     if (latestVersionOnly) {
       builder.filter(LATEST_ONLY_FILTER);
@@ -191,9 +187,7 @@ public class SingleColumnValueFilterAdapter
     return builder;
   }
 
-  /**
-   * Emit a filter that will match against a single value.
-   */
+  /** Emit a filter that will match against a single value. */
   private Filter createValueMatchFilter(
       FilterAdapterContext context, SingleColumnValueFilter filter) throws IOException {
     ValueFilter valueFilter = new ValueFilter(filter.getOperator(), filter.getComparator());
@@ -204,7 +198,7 @@ public class SingleColumnValueFilterAdapter
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, SingleColumnValueFilter filter) {
-      return delegateAdapter.isFilterSupported(
-          context, new ValueFilter(filter.getOperator(), filter.getComparator()));
+    return delegateAdapter.isFilterSupported(
+        context, new ValueFilter(filter.getOperator(), filter.getComparator()));
   }
 }

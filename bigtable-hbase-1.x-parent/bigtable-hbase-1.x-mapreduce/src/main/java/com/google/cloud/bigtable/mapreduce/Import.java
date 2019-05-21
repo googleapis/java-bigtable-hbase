@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,13 @@ package com.google.cloud.bigtable.mapreduce;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -54,15 +61,6 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-
 /**
  * Import data written by {@link org.apache.hadoop.hbase.mapreduce.Export}.
  *
@@ -73,31 +71,29 @@ import java.util.TreeMap;
 @InterfaceStability.Stable
 public class Import extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(Import.class);
-  final static String NAME = "import";
+  static final String NAME = "import";
   /** Constant <code>CF_RENAME_PROP="HBASE_IMPORTER_RENAME_CFS"</code> */
-  public final static String CF_RENAME_PROP = "HBASE_IMPORTER_RENAME_CFS";
+  public static final String CF_RENAME_PROP = "HBASE_IMPORTER_RENAME_CFS";
   /** Constant <code>BULK_OUTPUT_CONF_KEY="import.bulk.output"</code> */
-  public final static String BULK_OUTPUT_CONF_KEY = "import.bulk.output";
+  public static final String BULK_OUTPUT_CONF_KEY = "import.bulk.output";
   /** Constant <code>FILTER_CLASS_CONF_KEY="import.filter.class"</code> */
-  public final static String FILTER_CLASS_CONF_KEY = "import.filter.class";
+  public static final String FILTER_CLASS_CONF_KEY = "import.filter.class";
   /** Constant <code>FILTER_ARGS_CONF_KEY="import.filter.args"</code> */
-  public final static String FILTER_ARGS_CONF_KEY = "import.filter.args";
+  public static final String FILTER_ARGS_CONF_KEY = "import.filter.args";
   /** Constant <code>TABLE_NAME="import.table.name"</code> */
-  public final static String TABLE_NAME = "import.table.name";
+  public static final String TABLE_NAME = "import.table.name";
 
-  private final static String JOB_NAME_CONF_KEY = "mapreduce.job.name";
+  private static final String JOB_NAME_CONF_KEY = "mapreduce.job.name";
 
-  /**
-   * A mapper that just writes out KeyValues.
-   */
+  /** A mapper that just writes out KeyValues. */
   public static class KeyValueImporter extends TableMapper<ImmutableBytesWritable, KeyValue> {
     private Map<byte[], byte[]> cfRenameMap;
     private Filter filter;
 
     /**
-     * @param row  The current table row key.
-     * @param value  The columns.
-     * @param context  The current context.
+     * @param row The current table row key.
+     * @param value The columns.
+     * @param context The current context.
      * @throws IOException When something is broken with the data.
      */
     @SuppressWarnings("deprecation")
@@ -105,8 +101,8 @@ public class Import extends Configured implements Tool {
     public void map(ImmutableBytesWritable row, Result value, Context context) throws IOException {
       try {
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Considering the row."
-              + Bytes.toString(row.get(), row.getOffset(), row.getLength()));
+          LOG.trace(
+              "Considering the row." + Bytes.toString(row.get(), row.getOffset(), row.getLength()));
         }
         if (filter == null || !filter.filterRowKey(row.get(), row.getOffset(), row.getLength())) {
           for (Cell kv : value.rawCells()) {
@@ -130,18 +126,16 @@ public class Import extends Configured implements Tool {
     }
   }
 
-  /**
-   * Write table content out to files.
-   */
+  /** Write table content out to files. */
   public static class Importer extends TableMapper<ImmutableBytesWritable, Mutation> {
     private Map<byte[], byte[]> cfRenameMap;
     private Filter filter;
     private Durability durability;
 
     /**
-     * @param row  The current table row key.
-     * @param value  The columns.
-     * @param context  The current context.
+     * @param row The current table row key.
+     * @param value The columns.
+     * @param context The current context.
      * @throws IOException When something is broken with the data.
      */
     @Override
@@ -155,20 +149,21 @@ public class Import extends Configured implements Tool {
     }
 
     private void writeResult(ImmutableBytesWritable key, Result result, Context context)
-    throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
       Put put = null;
       Delete delete = null;
       if (LOG.isTraceEnabled()) {
-        LOG.trace("Considering the row."
-            + Bytes.toString(key.get(), key.getOffset(), key.getLength()));
+        LOG.trace(
+            "Considering the row." + Bytes.toString(key.get(), key.getOffset(), key.getLength()));
       }
       if (filter == null || !filter.filterRowKey(key.get(), key.getOffset(), key.getLength())) {
         processKV(key, result, context, put, delete);
       }
     }
 
-    protected void processKV(ImmutableBytesWritable key, Result result, Context context, Put put,
-        Delete delete) throws IOException, InterruptedException {
+    protected void processKV(
+        ImmutableBytesWritable key, Result result, Context context, Put put, Delete delete)
+        throws IOException, InterruptedException {
       for (Cell kv : result.rawCells()) {
         kv = filterKv(filter, kv);
         // skip if we filter it out
@@ -229,15 +224,15 @@ public class Import extends Configured implements Tool {
   }
 
   /**
-   * Create a {@link org.apache.hadoop.hbase.filter.Filter} to apply to all incoming keys ({@link KeyValue KeyValues}) to
-   * optionally not include in the job output
+   * Create a {@link org.apache.hadoop.hbase.filter.Filter} to apply to all incoming keys ({@link
+   * KeyValue KeyValues}) to optionally not include in the job output
    *
    * @param conf {@link org.apache.hadoop.conf.Configuration} from which to load the filter
    * @return the filter to use for the task, or <tt>null</tt> if no filter to should be used
    * @throws java.lang.IllegalArgumentException if the filter is misconfigured
    */
   public static Filter instantiateFilter(Configuration conf) {
-    // get the filter, if it was configured    
+    // get the filter, if it was configured
     Class<? extends Filter> filterClass = conf.getClass(FILTER_CLASS_CONF_KEY, null, Filter.class);
     if (filterClass == null) {
       LOG.debug("No configured filter class, accepting all keyvalues.");
@@ -281,8 +276,8 @@ public class Import extends Configured implements Tool {
    * Attempt to filter out the keyvalue
    *
    * @param kv {@link org.apache.hadoop.hbase.KeyValue} on which to apply the filter
-   * @return <tt>null</tt> if the key should not be written, otherwise returns the original
-   *         {@link org.apache.hadoop.hbase.KeyValue}
+   * @return <tt>null</tt> if the key should not be written, otherwise returns the original {@link
+   *     org.apache.hadoop.hbase.KeyValue}
    * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
    * @throws java.io.IOException if any.
    */
@@ -294,8 +289,8 @@ public class Import extends Configured implements Tool {
         LOG.trace("Filter returned:" + code + " for the key value:" + kv);
       }
       // if its not an accept type, then skip this kv
-      if (!(code.equals(Filter.ReturnCode.INCLUDE) || code
-          .equals(Filter.ReturnCode.INCLUDE_AND_NEXT_COL))) {
+      if (!(code.equals(Filter.ReturnCode.INCLUDE)
+          || code.equals(Filter.ReturnCode.INCLUDE_AND_NEXT_COL))) {
         return null;
       }
     }
@@ -304,24 +299,26 @@ public class Import extends Configured implements Tool {
 
   // helper: create a new KeyValue based on CF rename map
   private static Cell convertKv(Cell kv, Map<byte[], byte[]> cfRenameMap) {
-    if(cfRenameMap != null) {
+    if (cfRenameMap != null) {
       // If there's a rename mapping for this CF, create a new KeyValue
       byte[] newCfName = cfRenameMap.get(CellUtil.cloneFamily(kv));
-      if(newCfName != null) {
-          kv = new KeyValue(kv.getRowArray(), // row buffer 
-                  kv.getRowOffset(),        // row offset
-                  kv.getRowLength(),        // row length
-                  newCfName,                // CF buffer
-                  0,                        // CF offset 
-                  newCfName.length,         // CF length 
-                  kv.getQualifierArray(),   // qualifier buffer
-                  kv.getQualifierOffset(),  // qualifier offset
-                  kv.getQualifierLength(),  // qualifier length
-                  kv.getTimestamp(),        // timestamp
-                  KeyValue.Type.codeToType(kv.getTypeByte()), // KV Type
-                  kv.getValueArray(),       // value buffer 
-                  kv.getValueOffset(),      // value offset
-                  kv.getValueLength());     // value length
+      if (newCfName != null) {
+        kv =
+            new KeyValue(
+                kv.getRowArray(), // row buffer
+                kv.getRowOffset(), // row offset
+                kv.getRowLength(), // row length
+                newCfName, // CF buffer
+                0, // CF offset
+                newCfName.length, // CF length
+                kv.getQualifierArray(), // qualifier buffer
+                kv.getQualifierOffset(), // qualifier offset
+                kv.getQualifierLength(), // qualifier length
+                kv.getTimestamp(), // timestamp
+                KeyValue.Type.codeToType(kv.getTypeByte()), // KV Type
+                kv.getValueArray(), // value buffer
+                kv.getValueOffset(), // value offset
+                kv.getValueLength()); // value length
       }
     }
     return kv;
@@ -331,16 +328,16 @@ public class Import extends Configured implements Tool {
   private static Map<byte[], byte[]> createCfRenameMap(Configuration conf) {
     Map<byte[], byte[]> cfRenameMap = null;
     String allMappingsPropVal = conf.get(CF_RENAME_PROP);
-    if(allMappingsPropVal != null) {
+    if (allMappingsPropVal != null) {
       // The conf value format should be sourceCf1:destCf1,sourceCf2:destCf2,...
       String[] allMappings = allMappingsPropVal.split(",");
-      for (String mapping: allMappings) {
-        if(cfRenameMap == null) {
-            cfRenameMap = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
+      for (String mapping : allMappings) {
+        if (cfRenameMap == null) {
+          cfRenameMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
         }
-        String [] srcAndDest = mapping.split(":");
-        if(srcAndDest.length != 2) {
-            continue;
+        String[] srcAndDest = mapping.split(":");
+        if (srcAndDest.length != 2) {
+          continue;
         }
         cfRenameMap.put(srcAndDest[0].getBytes(), srcAndDest[1].getBytes());
       }
@@ -349,32 +346,34 @@ public class Import extends Configured implements Tool {
   }
 
   /**
-   * <p>Sets a configuration property with key {@link #CF_RENAME_PROP} in conf that tells
-   * the mapper how to rename column families.
+   * Sets a configuration property with key {@link #CF_RENAME_PROP} in conf that tells the mapper
+   * how to rename column families.
    *
-   * <p>Alternately, instead of calling this function, you could set the configuration key
-   * {@link #CF_RENAME_PROP} yourself. The value should look like
-   * <pre>srcCf1:destCf1,srcCf2:destCf2,....</pre>. This would have the same effect on
-   * the mapper behavior.
+   * <p>Alternately, instead of calling this function, you could set the configuration key {@link
+   * #CF_RENAME_PROP} yourself. The value should look like
    *
-   * @param conf the Configuration in which the {@link #CF_RENAME_PROP} key will be
-   *  set
+   * <pre>srcCf1:destCf1,srcCf2:destCf2,....</pre>
+   *
+   * . This would have the same effect on the mapper behavior.
+   *
+   * @param conf the Configuration in which the {@link #CF_RENAME_PROP} key will be set
    * @param renameMap a mapping from source CF names to destination CF names
    */
-  static public void configureCfRenaming(Configuration conf, 
-          Map<String, String> renameMap) {
+  public static void configureCfRenaming(Configuration conf, Map<String, String> renameMap) {
     StringBuilder sb = new StringBuilder();
-    for(Map.Entry<String,String> entry: renameMap.entrySet()) {
+    for (Map.Entry<String, String> entry : renameMap.entrySet()) {
       String sourceCf = entry.getKey();
       String destCf = entry.getValue();
 
-      if(sourceCf.contains(":") || sourceCf.contains(",") || 
-              destCf.contains(":") || destCf.contains(",")) {
-        throw new IllegalArgumentException("Illegal character in CF names: " 
-              + sourceCf + ", " + destCf);
+      if (sourceCf.contains(":")
+          || sourceCf.contains(",")
+          || destCf.contains(":")
+          || destCf.contains(",")) {
+        throw new IllegalArgumentException(
+            "Illegal character in CF names: " + sourceCf + ", " + destCf);
       }
 
-      if(sb.length() != 0) {
+      if (sb.length() != 0) {
         sb.append(",");
       }
       sb.append(sourceCf + ":" + destCf);
@@ -386,11 +385,12 @@ public class Import extends Configured implements Tool {
    * Add a Filter to be instantiated on import
    *
    * @param conf Configuration to update (will be passed to the job)
-   * @param clazz {@link org.apache.hadoop.hbase.filter.Filter} subclass to instantiate on the server.
+   * @param clazz {@link org.apache.hadoop.hbase.filter.Filter} subclass to instantiate on the
+   *     server.
    * @param filterArgs List of arguments to pass to the filter on instantiation
    */
-  public static void addFilterAndArguments(Configuration conf, Class<? extends Filter> clazz,
-      List<String> filterArgs) {
+  public static void addFilterAndArguments(
+      Configuration conf, Class<? extends Filter> clazz, List<String> filterArgs) {
     conf.set(Import.FILTER_CLASS_CONF_KEY, clazz.getName());
     conf.setStrings(Import.FILTER_ARGS_CONF_KEY, filterArgs.toArray(new String[filterArgs.size()]));
   }
@@ -403,10 +403,9 @@ public class Import extends Configured implements Tool {
    * @return The newly created job.
    * @throws java.io.IOException When setting up the job fails.
    */
-  public static Job createSubmittableJob(Configuration conf, String[] args)
-  throws IOException {
-    conf.setIfUnset("hbase.client.connection.impl",
-      BigtableConfiguration.getConnectionClass().getName());
+  public static Job createSubmittableJob(Configuration conf, String[] args) throws IOException {
+    conf.setIfUnset(
+        "hbase.client.connection.impl", BigtableConfiguration.getConnectionClass().getName());
     conf.setIfUnset(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, "60000");
 
     TableName tableName = TableName.valueOf(args[0]);
@@ -418,7 +417,7 @@ public class Import extends Configured implements Tool {
     // Randomize the splits to avoid hot spotting a single tablet server
     job.setInputFormatClass(ShuffledSequenceFileInputFormat.class);
     // Give the mappers enough work to do otherwise each split will be dominated by spinup time
-    ShuffledSequenceFileInputFormat.setMinInputSplitSize(job, 1L*1024*1024*1024);
+    ShuffledSequenceFileInputFormat.setMinInputSplitSize(job, 1L * 1024 * 1024 * 1024);
     String hfileOutPath = conf.get(BULK_OUTPUT_CONF_KEY);
 
     // make sure we get the filter in the jars
@@ -433,24 +432,25 @@ public class Import extends Configured implements Tool {
 
     if (hfileOutPath != null) {
       job.setMapperClass(KeyValueImporter.class);
-      try (Connection conn = ConnectionFactory.createConnection(conf); 
+      try (Connection conn = ConnectionFactory.createConnection(conf);
           Table table = conn.getTable(tableName);
-          RegionLocator regionLocator = conn.getRegionLocator(tableName)){
+          RegionLocator regionLocator = conn.getRegionLocator(tableName)) {
         job.setReducerClass(KeyValueSortReducer.class);
         Path outputDir = new Path(hfileOutPath);
         FileOutputFormat.setOutputPath(job, outputDir);
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
         job.setMapOutputValueClass(KeyValue.class);
         HFileOutputFormat2.configureIncrementalLoad(job, table, regionLocator);
-        TableMapReduceUtil.addDependencyJars(job.getConfiguration(),
-            com.google.common.base.Preconditions.class);
+        TableMapReduceUtil.addDependencyJars(
+            job.getConfiguration(), com.google.common.base.Preconditions.class);
       }
     } else {
       // No reducers.  Just write straight to table.  Call initTableReducerJob
       // because it sets up the TableOutputFormat.
       job.setMapperClass(Importer.class);
-      //TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), null, job);
-      TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), null, job, null, null, null, null, false);
+      // TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), null, job);
+      TableMapReduceUtil.initTableReducerJob(
+          tableName.getNameAsString(), null, job, null, null, null, null, false);
       job.setNumReduceTasks(0);
     }
     return job;
@@ -466,23 +466,29 @@ public class Import extends Configured implements Tool {
     System.err.println("Usage: Import [options] <tablename> <inputdir>");
     System.err.println(" Mandatory properties:");
     System.err.println("  -D " + BigtableOptionsFactory.PROJECT_ID_KEY + "=<bigtable project id>");
-    System.err.println("  -D " + BigtableOptionsFactory.INSTANCE_ID_KEY + "=<bigtable instance id>");
-    System.err
-        .println(" To apply a generic org.apache.hadoop.hbase.filter.Filter to the input, use");
+    System.err.println(
+        "  -D " + BigtableOptionsFactory.INSTANCE_ID_KEY + "=<bigtable instance id>");
+    System.err.println(
+        " To apply a generic org.apache.hadoop.hbase.filter.Filter to the input, use");
     System.err.println("  -D" + FILTER_CLASS_CONF_KEY + "=<name of filter class>");
     System.err.println("  -D" + FILTER_ARGS_CONF_KEY + "=<comma separated list of args for filter");
-    System.err.println(" NOTE: The filter will be applied BEFORE doing key renames via the "
-        + CF_RENAME_PROP + " property. Futher, filters will only use the"
-        + " Filter#filterRowKey(byte[] buffer, int offset, int length) method to identify "
-        + " whether the current row needs to be ignored completely for processing and "
-        + " Filter#filterKeyValue(KeyValue) method to determine if the KeyValue should be added;"
-        + " Filter.ReturnCode#INCLUDE and #INCLUDE_AND_NEXT_COL will be considered as including"
-        + " the KeyValue.");
-    System.err.println("   -D " + JOB_NAME_CONF_KEY
-        + "=jobName - use the specified mapreduce job name for the import");
-    System.err.println("For performance consider the following options:\n"
-        + "  -Dmapreduce.map.speculative=false\n"
-        + "  -Dmapreduce.reduce.speculative=false\n");
+    System.err.println(
+        " NOTE: The filter will be applied BEFORE doing key renames via the "
+            + CF_RENAME_PROP
+            + " property. Futher, filters will only use the"
+            + " Filter#filterRowKey(byte[] buffer, int offset, int length) method to identify "
+            + " whether the current row needs to be ignored completely for processing and "
+            + " Filter#filterKeyValue(KeyValue) method to determine if the KeyValue should be added;"
+            + " Filter.ReturnCode#INCLUDE and #INCLUDE_AND_NEXT_COL will be considered as including"
+            + " the KeyValue.");
+    System.err.println(
+        "   -D "
+            + JOB_NAME_CONF_KEY
+            + "=jobName - use the specified mapreduce job name for the import");
+    System.err.println(
+        "For performance consider the following options:\n"
+            + "  -Dmapreduce.map.speculative=false\n"
+            + "  -Dmapreduce.reduce.speculative=false\n");
   }
 
   /** {@inheritDoc} */
@@ -518,5 +524,4 @@ public class Import extends Configured implements Tool {
   public static void main(String[] args) throws Exception {
     System.exit(ToolRunner.run(HBaseConfiguration.create(), new Import(), args));
   }
-
 }

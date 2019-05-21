@@ -44,58 +44,60 @@ public class TestTableAdapter2x {
   private static final String PROJECT_ID = "fakeProject";
   private static final String INSTANCE_ID = "fakeInstance";
   private static final String TABLE_ID = "myTable";
-  private static final String INSTANCE_NAME = "projects/" + PROJECT_ID + "/instances/" + INSTANCE_ID;
+  private static final String INSTANCE_NAME =
+      "projects/" + PROJECT_ID + "/instances/" + INSTANCE_ID;
   private static final String TABLE_NAME = INSTANCE_NAME + "/tables/" + TABLE_ID;
   private static final String COLUMN_FAMILY = "myColumnFamily";
 
   private TableAdapter2x tableAdapter2x;
 
   @Before
-  public void setUp(){
-    BigtableOptions bigtableOptions = BigtableOptions.builder().setProjectId(PROJECT_ID)
-            .setInstanceId(INSTANCE_ID).build();
+  public void setUp() {
+    BigtableOptions bigtableOptions =
+        BigtableOptions.builder().setProjectId(PROJECT_ID).setInstanceId(INSTANCE_ID).build();
     tableAdapter2x = new TableAdapter2x(bigtableOptions);
   }
 
   @Test
-  public void testAdaptWithSplitKeys(){
-    byte[][] splits = new byte[][] {
-            Bytes.toBytes("AAA"),
-            Bytes.toBytes("BBB"),
-            Bytes.toBytes("CCC"),
-    };
+  public void testAdaptWithSplitKeys() {
+    byte[][] splits =
+        new byte[][] {
+          Bytes.toBytes("AAA"), Bytes.toBytes("BBB"), Bytes.toBytes("CCC"),
+        };
     TableDescriptor desc = TableDescriptorBuilder.newBuilder(TableName.valueOf(TABLE_ID)).build();
     CreateTableRequest actualRequest = TableAdapter2x.adapt(desc, splits);
 
     CreateTableRequest expectedRequest = CreateTableRequest.of(TABLE_ID);
     TableAdapter.addSplitKeys(splits, expectedRequest);
     Assert.assertEquals(
-            expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
-            actualRequest.toProto(PROJECT_ID, INSTANCE_ID));
+        expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+        actualRequest.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
-  public void testAdaptWithTable(){
-    //If no GcRule passed to ColumnFamily, then ColumnDescriptorAdapter#buildGarbageCollectionRule
-    //updates maxVersion to Integer.MAX_VALUE
+  public void testAdaptWithTable() {
+    // If no GcRule passed to ColumnFamily, then ColumnDescriptorAdapter#buildGarbageCollectionRule
+    // updates maxVersion to Integer.MAX_VALUE
     int maxVersion = 1;
     GCRules.GCRule gcRule = GCRULES.maxVersions(maxVersion);
-    ColumnFamily columnFamily = ColumnFamily.newBuilder()
-            .setGcRule(gcRule.toProto()).build();
-    Table table = Table.newBuilder()
+    ColumnFamily columnFamily = ColumnFamily.newBuilder().setGcRule(gcRule.toProto()).build();
+    Table table =
+        Table.newBuilder()
             .setName(TABLE_NAME)
-            .putColumnFamilies(COLUMN_FAMILY, columnFamily).build();
-    TableDescriptor actualTableDesc = tableAdapter2x.adapt(
-        com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
+            .putColumnFamilies(COLUMN_FAMILY, columnFamily)
+            .build();
+    TableDescriptor actualTableDesc =
+        tableAdapter2x.adapt(com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
 
-    TableDescriptor expected = new HTableDescriptor(TableName.valueOf(TABLE_ID))
+    TableDescriptor expected =
+        new HTableDescriptor(TableName.valueOf(TABLE_ID))
             .addFamily(new HColumnDescriptor(COLUMN_FAMILY));
 
     Assert.assertEquals(expected, actualTableDesc);
   }
 
   @Test
-  public void testHColumnDescriptorAdapter(){
+  public void testHColumnDescriptorAdapter() {
     ColumnFamilyDescriptor columnFamilyDesc = ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY);
     HColumnDescriptor actualDesc = TableAdapter2x.toHColumnDescriptor(columnFamilyDesc);
     HColumnDescriptor columnDes = new HColumnDescriptor(COLUMN_FAMILY);

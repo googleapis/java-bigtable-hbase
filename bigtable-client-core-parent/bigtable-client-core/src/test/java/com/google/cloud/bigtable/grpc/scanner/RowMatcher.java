@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,30 +20,27 @@ import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
 import com.google.protobuf.ByteString;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
- * {@code RowMatcher} provides a convenient Matcher-based language for evaluating
- * {@link Row} test conditions.  Example usage:
+ * {@code RowMatcher} provides a convenient Matcher-based language for evaluating {@link Row} test
+ * conditions. Example usage:
  *
- *   import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
+ * <p>import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
  *
- *   assertThat(row,
- *       matchesRow("row key").withFamily("Family").withColumn("column").withAnyCell());
+ * <p>assertThat(row, matchesRow("row
+ * key").withFamily("Family").withColumn("column").withAnyCell());
  */
 public class RowMatcher extends TypeSafeMatcher<Row> {
   /**
-   * Creates a new row matcher using the provided matcher to evaluate the
-   * row key.
+   * Creates a new row matcher using the provided matcher to evaluate the row key.
    *
    * @param rowKey Matcher to use for the row key.
    * @return A new {@code RowMatcher} object.
@@ -53,8 +50,8 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
   }
 
   /**
-   * A convenience method for constructing a new row matcher with key equal
-   * to the UTF-8 bytes for the given string.
+   * A convenience method for constructing a new row matcher with key equal to the UTF-8 bytes for
+   * the given string.
    *
    * @see #matchesRow(Matcher)
    */
@@ -63,12 +60,10 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
   }
 
   /**
-   * Adds a new column family with the given name to the expected value for
-   * this row.  Subsequent {@link #withColumn(Matcher)} calls will be added
-   * to the most recently added family.
+   * Adds a new column family with the given name to the expected value for this row. Subsequent
+   * {@link #withColumn(Matcher)} calls will be added to the most recently added family.
    *
-   * Usage:
-   *   {@code matchesRow("key").withFamily("family")}
+   * <p>Usage: {@code matchesRow("key").withFamily("family")}
    */
   public RowMatcher withFamily(String familyName) {
     lastFamily = new FamilyMatcher(familyName);
@@ -77,13 +72,11 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
   }
 
   /**
-   * Adds a column with qualifier matching the given matcher to the current
-   * column family.  A column family <em>must</em> have already been added
-   * to the expected row with {@link #withFamily(String)} prior to calling
-   * {@code withColumn}.
+   * Adds a column with qualifier matching the given matcher to the current column family. A column
+   * family <em>must</em> have already been added to the expected row with {@link
+   * #withFamily(String)} prior to calling {@code withColumn}.
    *
-   * Example:
-   *   {@code withFamily("family").withColumn(any(ByteString.class))}
+   * <p>Example: {@code withFamily("family").withColumn(any(ByteString.class))}
    */
   public RowMatcher withColumn(Matcher<ByteString> columnName) {
     lastColumn = new ColumnMatcher(columnName);
@@ -92,8 +85,7 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
   }
 
   /**
-   * A convenience method for column names equal to the UTF-8 bytes for the
-   * given string.
+   * A convenience method for column names equal to the UTF-8 bytes for the given string.
    *
    * @see #withColumn(Matcher)
    */
@@ -102,17 +94,15 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
   }
 
   /**
-   * Adds an expectation that the most recently added column will contain an
-   * arbitrary cell.  This may be repeated multiple times if multiple cells
-   * are expected in the column.
+   * Adds an expectation that the most recently added column will contain an arbitrary cell. This
+   * may be repeated multiple times if multiple cells are expected in the column.
    *
-   * It is not legal to combine {@code withAnyCell} and
-   * {@link #atTimestamp(long)}.  To match a cell with arbitrary contents but
-   * a specific timestamp, use
-   * {@code withCellValue(any(ByteString.class)).atTimestamp(time)} instead.
+   * <p>It is not legal to combine {@code withAnyCell} and {@link #atTimestamp(long)}. To match a
+   * cell with arbitrary contents but a specific timestamp, use {@code
+   * withCellValue(any(ByteString.class)).atTimestamp(time)} instead.
    *
-   * A family and column must have already been added to the expected row
-   * prior to calling this method.
+   * <p>A family and column must have already been added to the expected row prior to calling this
+   * method.
    */
   public RowMatcher withAnyCell() {
     lastColumn.addCell(CoreMatchers.any(Cell.class));
@@ -123,13 +113,12 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
   }
 
   /**
-   * Adds an expectation that the most recently added column will contain a
-   * cell matching the provided matcher and have timestamp 0 (or no timestamp
-   * set).  The expected timestamp can be changed by chaining this method
-   * with {@link #atTimestamp(long)}.
+   * Adds an expectation that the most recently added column will contain a cell matching the
+   * provided matcher and have timestamp 0 (or no timestamp set). The expected timestamp can be
+   * changed by chaining this method with {@link #atTimestamp(long)}.
    *
-   * A family and column must have already been added to the expected row
-   * prior to calling this method.
+   * <p>A family and column must have already been added to the expected row prior to calling this
+   * method.
    */
   public RowMatcher withCellValue(Matcher<ByteString> value) {
     lastCell = new CellMatcher(value, CoreMatchers.equalTo(0L));
@@ -138,8 +127,7 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
   }
 
   /**
-   * A convenience method for cell values equal to the UTF-8 bytes of the
-   * given string.
+   * A convenience method for cell values equal to the UTF-8 bytes of the given string.
    *
    * @see #withCellValue(Matcher)
    */
@@ -148,18 +136,15 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
   }
 
   /**
-   * Sets the expected timestamp for the most recently added cell.  This
-   * should immediately follow {@code withCellValue()}.  It is not legal to
-   * combine this method with {@link #withAnyCell()}.
+   * Sets the expected timestamp for the most recently added cell. This should immediately follow
+   * {@code withCellValue()}. It is not legal to combine this method with {@link #withAnyCell()}.
    */
   public RowMatcher atTimestamp(long timestamp) {
     lastCell.setTimestamp(timestamp);
     return this;
   }
 
-  /**
-   * A matcher for the Bigtable {@code Cell} protocol buffer.
-   */
+  /** A matcher for the Bigtable {@code Cell} protocol buffer. */
   static class CellMatcher extends TypeSafeMatcher<Cell> {
     /** Creates a matcher for a cell with value and timestamp matching the given matchers. */
     public CellMatcher(Matcher<ByteString> value, Matcher<Long> timestamp) {
@@ -188,15 +173,12 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
     private Matcher<Long> timestamp;
   }
 
-  /**
-   * A matcher for the Bigtable {@code Column} protocol buffer.
-   */
+  /** A matcher for the Bigtable {@code Column} protocol buffer. */
   static class ColumnMatcher extends TypeSafeMatcher<Column> {
     /**
-     * Creates a matcher expecting a column name that will match {@code columnName}.
-     * Initially the matcher expects no cells in the column.  Cells should be added
-     * in the order they are expected to occur in the Column protocol message with
-     * {@link #addCell(Matcher)}.
+     * Creates a matcher expecting a column name that will match {@code columnName}. Initially the
+     * matcher expects no cells in the column. Cells should be added in the order they are expected
+     * to occur in the Column protocol message with {@link #addCell(Matcher)}.
      */
     public ColumnMatcher(Matcher<ByteString> columnName) {
       this.qualifier = columnName;
@@ -240,14 +222,12 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
     private final List<Matcher<Cell>> cells;
   }
 
-  /**
-   * A matcher for the Bigtable {@code Family} protocol buffer.
-   */
+  /** A matcher for the Bigtable {@code Family} protocol buffer. */
   static class FamilyMatcher extends TypeSafeMatcher<Family> {
     /**
-     * Creates a new matcher for a family with the given {@code name}.
-     * Initially the family expects no columns.  Columns should be added
-     * in the order they will occur with {@link #addColumn(Matcher)}.
+     * Creates a new matcher for a family with the given {@code name}. Initially the family expects
+     * no columns. Columns should be added in the order they will occur with {@link
+     * #addColumn(Matcher)}.
      *
      * @param name The expected family name.
      */
@@ -256,11 +236,13 @@ public class RowMatcher extends TypeSafeMatcher<Row> {
       this.columns = new ArrayList<>();
     }
 
-    public String getFamilyName() { return name; }
+    public String getFamilyName() {
+      return name;
+    }
 
     /**
-     * Add an expected column to this column family.  Columns should be
-     * added in the order they will occur.
+     * Add an expected column to this column family. Columns should be added in the order they will
+     * occur.
      */
     public void addColumn(Matcher<Column> c) {
       columns.add(c);

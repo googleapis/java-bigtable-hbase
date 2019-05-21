@@ -15,16 +15,15 @@
  */
 package com.google.cloud.bigtable.config;
 
-import java.io.Serializable;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.Serializable;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -32,8 +31,8 @@ import com.google.common.base.Strings;
  * @author sduskis
  * @version $Id: $Id
  */
-//TODO: Perhaps break this down into smaller options objects?
-//TODO: This should be @Autovalue + Builder
+// TODO: Perhaps break this down into smaller options objects?
+// TODO: This should be @Autovalue + Builder
 public class BigtableOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
@@ -45,8 +44,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   public static final String BIGTABLE_EMULATOR_HOST_ENV_VAR = "BIGTABLE_EMULATOR_HOST";
 
   /** Constant <code>BIGTABLE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
-  public static final String BIGTABLE_ADMIN_HOST_DEFAULT =
-      "bigtableadmin.googleapis.com";
+  public static final String BIGTABLE_ADMIN_HOST_DEFAULT = "bigtableadmin.googleapis.com";
   /** Constant <code>BIGTABLE_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
   /** Constant <code>BIGTABLE_BATCH_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
@@ -57,7 +55,10 @@ public class BigtableOptions implements Serializable, Cloneable {
   /** Constant <code>BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT=getDefaultDataChannelCount()</code> */
   public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = getDefaultDataChannelCount();
 
-  /** Constant <code>BIGTABLE_APP_PROFILE_DEFAULT=""</code>, defaults to the server default app profile */
+  /**
+   * Constant <code>BIGTABLE_APP_PROFILE_DEFAULT=""</code>, defaults to the server default app
+   * profile
+   */
   public static final String BIGTABLE_APP_PROFILE_DEFAULT = "";
 
   public static final String BIGTABLE_CLIENT_ADAPTER = "BIGTABLE_CLIENT_ADAPTER";
@@ -79,16 +80,12 @@ public class BigtableOptions implements Serializable, Cloneable {
   public static Builder builder() {
     return new Builder();
   }
-  /**
-   * A mutable builder for BigtableConnectionOptions.
-   */
+  /** A mutable builder for BigtableConnectionOptions. */
   public static class Builder {
 
     private BigtableOptions options = new BigtableOptions();
 
-    /**
-     * @deprecated Please use the {@link BigtableOptions#builder()} instead.
-     */
+    /** @deprecated Please use the {@link BigtableOptions#builder()} instead. */
     @Deprecated
     public Builder() {
       options = new BigtableOptions();
@@ -186,6 +183,7 @@ public class BigtableOptions implements Serializable, Cloneable {
      * This enables an experimental {@link BigtableSession} feature that caches datapools for cases
      * where there are many HBase Connections / BigtableSessions opened. This happens frequently in
      * Dataflow
+     *
      * @param useCachedDataPool a flag to decide connection pool usages.
      * @return a {@link Builder} object with cached DataPool flag.
      */
@@ -204,14 +202,12 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
-    public Builder setUseGCJClient(boolean useGCJClient){
+    public Builder setUseGCJClient(boolean useGCJClient) {
       options.useGCJClient = useGCJClient;
       return this;
     }
 
-    /**
-     * Apply emulator settings from the relevant environment variable, if set.
-     */
+    /** Apply emulator settings from the relevant environment variable, if set. */
     private void applyEmulatorEnvironment() {
       // Look for a host:port for the emulator.
       String emulatorHost = System.getenv(BIGTABLE_EMULATOR_HOST_ENV_VAR);
@@ -224,16 +220,23 @@ public class BigtableOptions implements Serializable, Cloneable {
 
     public Builder enableEmulator(String emulatorHostAndPort) {
       String[] hostPort = emulatorHostAndPort.split(":");
-      Preconditions.checkArgument(hostPort.length == 2,
-          "Malformed " + BIGTABLE_EMULATOR_HOST_ENV_VAR + " environment variable: " +
-          emulatorHostAndPort + ". Expecting host:port.");
+      Preconditions.checkArgument(
+          hostPort.length == 2,
+          "Malformed "
+              + BIGTABLE_EMULATOR_HOST_ENV_VAR
+              + " environment variable: "
+              + emulatorHostAndPort
+              + ". Expecting host:port.");
 
       int port;
       try {
         port = Integer.parseInt(hostPort[1]);
       } catch (NumberFormatException e) {
-        throw new RuntimeException("Invalid port in " + BIGTABLE_EMULATOR_HOST_ENV_VAR +
-            " environment variable: " + emulatorHostAndPort);
+        throw new RuntimeException(
+            "Invalid port in "
+                + BIGTABLE_EMULATOR_HOST_ENV_VAR
+                + " environment variable: "
+                + emulatorHostAndPort);
       }
       enableEmulator(hostPort[0], port);
       return this;
@@ -260,13 +263,13 @@ public class BigtableOptions implements Serializable, Cloneable {
       } else if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
         int maxInflightRpcs =
             BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
-        options.bulkOptions = options.bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
+        options.bulkOptions =
+            options.bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
       }
       applyEmulatorEnvironment();
       options.adminHost = Preconditions.checkNotNull(options.adminHost);
       options.dataHost = Preconditions.checkNotNull(options.dataHost);
-      if (!Strings.isNullOrEmpty(options.projectId)
-          && !Strings.isNullOrEmpty(options.instanceId)) {
+      if (!Strings.isNullOrEmpty(options.projectId) && !Strings.isNullOrEmpty(options.instanceId)) {
         options.instanceName = new BigtableInstanceName(options.projectId, options.instanceId);
       } else {
         options.instanceName = null;
@@ -289,12 +292,10 @@ public class BigtableOptions implements Serializable, Cloneable {
         }
         options.retryOptions = retryOptionsBuilder.build();
       }
-      LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
+      LOG.debug(
+          "Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
               + "admin host %s.",
-          options.projectId,
-          options.instanceId,
-          options.dataHost,
-          options.adminHost);
+          options.projectId, options.instanceId, options.dataHost, options.adminHost);
 
       return options;
     }
@@ -321,11 +322,10 @@ public class BigtableOptions implements Serializable, Cloneable {
   private boolean useBatch;
 
   @VisibleForTesting
-  BigtableOptions() {
-  }
+  BigtableOptions() {}
 
   /**
-   * <p>Getter for the field <code>projectId</code>.</p>
+   * Getter for the field <code>projectId</code>.
    *
    * @return a {@link java.lang.String} object.
    */
@@ -334,7 +334,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>dataHost</code>.</p>
+   * Getter for the field <code>dataHost</code>.
    *
    * @return a {@link java.lang.String} object.
    */
@@ -343,7 +343,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>tableAdminHost</code>.</p>
+   * Getter for the field <code>tableAdminHost</code>.
    *
    * @return a {@link java.lang.String} object.
    */
@@ -352,7 +352,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>instanceId</code>.</p>
+   * Getter for the field <code>instanceId</code>.
    *
    * @return a {@link java.lang.String} object.
    */
@@ -361,7 +361,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>appProfileId</code>.</p>
+   * Getter for the field <code>appProfileId</code>.
    *
    * @return a {@link java.lang.String} object.
    */
@@ -370,7 +370,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>port</code>.</p>
+   * Getter for the field <code>port</code>.
    *
    * @return a int.
    */
@@ -388,8 +388,8 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * Gets the user-agent to be appended to User-Agent header when creating new streams
-   * for the channel.
+   * Gets the user-agent to be appended to User-Agent header when creating new streams for the
+   * channel.
    *
    * @return a {@link java.lang.String} object.
    */
@@ -416,7 +416,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>instanceName</code>.</p>
+   * Getter for the field <code>instanceName</code>.
    *
    * @return a {@link BigtableInstanceName} object.
    */
@@ -425,7 +425,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>bulkOptions</code>.</p>
+   * Getter for the field <code>bulkOptions</code>.
    *
    * @return a {@link com.google.cloud.bigtable.config.BulkOptions} object.
    */
@@ -434,7 +434,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>usePlaintextNegotiation.</p>
+   * usePlaintextNegotiation.
    *
    * @return a boolean.
    */
@@ -443,7 +443,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>callOptionsConfig</code>.</p>
+   * Getter for the field <code>callOptionsConfig</code>.
    *
    * @return a {@link com.google.cloud.bigtable.config.CallOptionsConfig} object.
    */
@@ -452,7 +452,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>useGCJClient</p>
+   * useGCJClient
    *
    * @return a boolean flag to decide which client to use for Data & Admin Operations.
    */
@@ -513,7 +513,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>toBuilder.</p>
+   * toBuilder.
    *
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions.Builder} object.
    */
@@ -524,6 +524,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   /**
    * Experimental feature to allow situations with multiple connections to optimize their startup
    * time.
+   *
    * @return true if this feature should be turned on in {@link BigtableSession}.
    */
   public boolean useCachedChannel() {

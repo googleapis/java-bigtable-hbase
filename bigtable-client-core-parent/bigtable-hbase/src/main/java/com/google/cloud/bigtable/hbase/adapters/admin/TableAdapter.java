@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,17 +22,14 @@ import com.google.cloud.bigtable.admin.v2.models.ColumnFamily;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 
-import java.util.Map.Entry;
-
 /**
- * <p>TableAdapter class.</p>
+ * TableAdapter class.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -44,15 +41,13 @@ public class TableAdapter {
   protected final BigtableInstanceName bigtableInstanceName;
 
   /**
-   * <p>adapt.</p>
-   *
-   * This method adapts ColumnFamily to CreateTableRequest.
+   * adapt. This method adapts ColumnFamily to CreateTableRequest.
    *
    * @param desc a {@link HTableDescriptor} object.
-   * @param  request a {@link CreateTableRequest}
+   * @param request a {@link CreateTableRequest}
    */
   protected static void adapt(HTableDescriptor desc, CreateTableRequest request) {
-    if(request != null) {
+    if (request != null) {
       for (HColumnDescriptor column : desc.getColumnFamilies()) {
         String columnName = column.getNameAsString();
         request.addFamily(columnName, buildGarbageCollectionRule(column));
@@ -76,24 +71,24 @@ public class TableAdapter {
   }
 
   /**
-   * <p>Constructor for TableAdapter.</p>
+   * Constructor for TableAdapter.
    *
    * @param bigtableInstanceName a {@link BigtableInstanceName} object.
    */
   public TableAdapter(BigtableInstanceName bigtableInstanceName) {
-    this.bigtableInstanceName = Preconditions
-        .checkNotNull(bigtableInstanceName, "bigtableInstanceName cannot be null.");
+    this.bigtableInstanceName =
+        Preconditions.checkNotNull(bigtableInstanceName, "bigtableInstanceName cannot be null.");
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param table a {@link Table} object.
    * @return a {@link HTableDescriptor} object.
    */
   public HTableDescriptor adapt(Table table) {
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(table.getId()));
-    for(ColumnFamily columnFamily : table.getColumnFamilies()){
+    for (ColumnFamily columnFamily : table.getColumnFamilies()) {
       tableDescriptor.addFamily(columnDescriptorAdapter.adapt(columnFamily));
     }
     return tableDescriptor;

@@ -15,12 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
+import com.google.cloud.bigtable.util.TracingUtilities;
+import io.opencensus.trace.Tracing;
 import java.util.Arrays;
 import java.util.List;
-
-import com.google.cloud.bigtable.util.TracingUtilities;
-
-import io.opencensus.trace.Tracing;
 
 /**
  * These utilities are to be used in conjunction with the opencensus-contrib-zpages artifact. After
@@ -56,27 +54,26 @@ public final class HBaseTracingUtilities {
    */
   public static void setupTracingConfig() {
     TracingUtilities.setupTracingConfig();
-    List<String> descriptors = Arrays.asList(
-      "BigtableTable.getTableDescriptor",
-      "BigtableTable.exists",
-      "BigtableTable.existsAll",
-      "BigtableTable.batch",
-      "BigtableTable.batchCallback",
-      "BigtableTable.get",
-      "BigtableTable.put",
-      "BigtableTable.checkAndPut",
-      "BigtableTable.delete",
-      "BigtableTable.checkAndDelete",
-      "BigtableTable.checkAndMutate",
-      "BigtableTable.mutateRow",
-      "BigtableTable.append",
-      "BigtableTable.increment",
-      "BigtableTable.incrementColumnValue"
-    );
+    List<String> descriptors =
+        Arrays.asList(
+            "BigtableTable.getTableDescriptor",
+            "BigtableTable.exists",
+            "BigtableTable.existsAll",
+            "BigtableTable.batch",
+            "BigtableTable.batchCallback",
+            "BigtableTable.get",
+            "BigtableTable.put",
+            "BigtableTable.checkAndPut",
+            "BigtableTable.delete",
+            "BigtableTable.checkAndDelete",
+            "BigtableTable.checkAndMutate",
+            "BigtableTable.mutateRow",
+            "BigtableTable.append",
+            "BigtableTable.increment",
+            "BigtableTable.incrementColumnValue");
 
     Tracing.getExportComponent().getSampledSpanStore().registerSpanNamesForCollection(descriptors);
   }
 
-  private HBaseTracingUtilities() {
-  }
+  private HBaseTracingUtilities() {}
 }

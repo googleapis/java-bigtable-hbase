@@ -23,14 +23,11 @@ import io.grpc.ClientInterceptor;
 import io.grpc.MethodDescriptor;
 import java.util.Set;
 
-/**
- * Internal implementation detail to prevent RPC from hanging.
- */
+/** Internal implementation detail to prevent RPC from hanging. */
 @InternalApi
 public class WatchdogInterceptor implements ClientInterceptor {
-  private final Set<MethodDescriptor<?,?>> watchedMethods;
+  private final Set<MethodDescriptor<?, ?>> watchedMethods;
   private final Watchdog watchdog;
-
 
   public WatchdogInterceptor(Set<MethodDescriptor<?, ?>> watchedMethods, Watchdog watchdog) {
     this.watchedMethods = watchedMethods;

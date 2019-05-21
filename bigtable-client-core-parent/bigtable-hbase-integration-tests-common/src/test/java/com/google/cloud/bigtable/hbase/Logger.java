@@ -19,8 +19,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * Wrapper around {@link org.apache.commons.logging.Log} to conditionally format
- * messages if a specified log level is enabled.
+ * Wrapper around {@link org.apache.commons.logging.Log} to conditionally format messages if a
+ * specified log level is enabled.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -29,7 +29,7 @@ public class Logger {
   protected final Log log;
 
   /**
-   * <p>Constructor for Logger.</p>
+   * Constructor for Logger.
    *
    * @param logClass a {@link java.lang.Class} object.
    */
@@ -38,148 +38,148 @@ public class Logger {
   }
 
   /**
-   * <p>trace</p>
+   * trace
    *
    * @see Log#trace
    * @param message Format string.
    * @param args Arguments for format string.
    */
-  public void trace(String message, Object ... args) {
+  public void trace(String message, Object... args) {
     if (log.isTraceEnabled()) {
       log.trace(String.format(message, args));
     }
   }
 
   /**
-   * <p>debug</p>
+   * debug
    *
    * @see Log#debug
    * @param message Format string.
    * @param args Arguments for format string.
    */
-  public void debug(String message, Object ... args) {
+  public void debug(String message, Object... args) {
     if (log.isDebugEnabled()) {
       log.debug(String.format(message, args));
     }
   }
 
   /**
-   * <p>debug</p>
+   * debug
    *
    * @see Log#debug
    * @param message Format string.
    * @param t a {@link java.lang.Throwable} object.
    * @param args Arguments for format string.
    */
-  public void debug(String message, Throwable t, Object ... args) {
+  public void debug(String message, Throwable t, Object... args) {
     if (log.isDebugEnabled()) {
       log.debug(String.format(message, args), t);
     }
   }
 
   /**
-   * <p>info</p>
+   * info
    *
    * @see Log#info
    * @param message Format string.
    * @param args Arguments for format string.
    */
-  public void info(String message, Object ... args) {
+  public void info(String message, Object... args) {
     if (log.isInfoEnabled()) {
       log.info(String.format(message, args));
     }
   }
 
   /**
-   * <p>info</p>
+   * info
    *
    * @see Log#info
    * @param message Format string.
    * @param t a {@link java.lang.Throwable} object.
    * @param args Arguments for format string.
    */
-  public void info(String message, Throwable t, Object ... args) {
+  public void info(String message, Throwable t, Object... args) {
     if (log.isInfoEnabled()) {
       log.info(String.format(message, args), t);
     }
   }
 
   /**
-   * <p>warn</p>
+   * warn
    *
    * @see Log#warn
    * @param message Format string.
    * @param args Arguments for format string.
    */
-  public void warn(String message, Object ... args) {
+  public void warn(String message, Object... args) {
     if (log.isWarnEnabled()) {
       log.warn(String.format(message, args));
     }
   }
 
   /**
-   * <p>warn</p>
+   * warn
    *
    * @see Log#warn
    * @param message Format string.
    * @param t a {@link java.lang.Throwable} object.
    * @param args Arguments for format string.
    */
-  public void warn(String message, Throwable t, Object ... args) {
+  public void warn(String message, Throwable t, Object... args) {
     if (log.isWarnEnabled()) {
       log.warn(String.format(message, args), t);
     }
   }
 
   /**
-   * <p>error</p>
+   * error
    *
    * @see Log#error
    * @param message Format string.
    * @param args Arguments for format string.
    */
-  public void error(String message, Object ... args) {
+  public void error(String message, Object... args) {
     if (log.isErrorEnabled()) {
       log.error(String.format(message, args));
     }
   }
 
   /**
-   * <p>error</p>
+   * error
    *
    * @see Log#error
    * @param message Format string.
    * @param t a {@link java.lang.Throwable} object.
    * @param args Arguments for format string.
    */
-  public void error(String message, Throwable t, Object ... args) {
+  public void error(String message, Throwable t, Object... args) {
     if (log.isErrorEnabled()) {
       log.error(String.format(message, args), t);
     }
   }
 
   /**
-   * <p>fatal</p>
+   * fatal
    *
    * @see Log#fatal
    * @param message a {@link java.lang.String} object.
    * @param args a {@link java.lang.Object} object.
    */
-  public void fatal(String message, Object ... args) {
+  public void fatal(String message, Object... args) {
     if (log.isFatalEnabled()) {
       log.fatal(String.format(message, args));
     }
   }
 
   /**
-   * <p>fatal</p>
+   * fatal
    *
    * @see Log#fatal
    * @param message Format string.
    * @param t a {@link java.lang.Throwable} object.
    * @param args Arguments for format string.
    */
-  public void fatal(String message, Throwable t, Object ... args) {
+  public void fatal(String message, Throwable t, Object... args) {
     if (log.isFatalEnabled()) {
       log.fatal(String.format(message, args), t);
     }

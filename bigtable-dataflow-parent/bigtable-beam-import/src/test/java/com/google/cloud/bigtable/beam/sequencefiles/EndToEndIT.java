@@ -15,12 +15,21 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.testing.BigtableTableUtils;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult.State;
@@ -43,17 +52,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
-
 @RunWith(JUnit4.class)
 public class EndToEndIT {
   // Location of test data hosted on Google Cloud Storage, for on-cloud dataflow tests.
@@ -64,7 +62,6 @@ public class EndToEndIT {
 
   // Full path of the Cloud Storage folder where dataflow jars are uploaded to.
   private static final String GOOGLE_DATAFLOW_STAGING_LOCATION = "google.dataflow.stagingLocation";
-
 
   private Connection connection;
   private String projectId;
@@ -123,14 +120,14 @@ public class EndToEndIT {
   @Test
   public void testExportImport() throws Exception {
     // Create a table, populate it & export it
-    final List<Put> testData = Arrays.asList(
-        new Put(Bytes.toBytes("row_key_1"))
-            .addColumn(CF.getBytes(), "col1".getBytes(), 1L, "v1".getBytes())
-            .addColumn(CF.getBytes(), "col1".getBytes(), 2L, "v2".getBytes()),
-        new Put(Bytes.toBytes("row_key_2"))
-            .addColumn(CF.getBytes(), "col2".getBytes(), 1L, "v3".getBytes())
-            .addColumn(CF.getBytes(), "col2".getBytes(), 3L, "v4".getBytes())
-    );
+    final List<Put> testData =
+        Arrays.asList(
+            new Put(Bytes.toBytes("row_key_1"))
+                .addColumn(CF.getBytes(), "col1".getBytes(), 1L, "v1".getBytes())
+                .addColumn(CF.getBytes(), "col1".getBytes(), 2L, "v2".getBytes()),
+            new Put(Bytes.toBytes("row_key_2"))
+                .addColumn(CF.getBytes(), "col2".getBytes(), 1L, "v3".getBytes())
+                .addColumn(CF.getBytes(), "col2".getBytes(), 3L, "v4".getBytes()));
 
     final Set<Cell> flattenedTestData = Sets.newHashSet();
     for (Put put : testData) {
@@ -144,13 +141,14 @@ public class EndToEndIT {
       srcTable.createEmptyTable();
 
       // Populate the source table
-      try (BufferedMutator bufferedMutator = srcTable.getConnection()
-          .getBufferedMutator(TableName.valueOf(tableId))) {
+      try (BufferedMutator bufferedMutator =
+          srcTable.getConnection().getBufferedMutator(TableName.valueOf(tableId))) {
         bufferedMutator.mutate(testData);
       }
 
       // Export the data
-      DataflowPipelineOptions pipelineOpts = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
+      DataflowPipelineOptions pipelineOpts =
+          PipelineOptionsFactory.as(DataflowPipelineOptions.class);
       pipelineOpts.setRunner(DataflowRunner.class);
       pipelineOpts.setGcpTempLocation(dataflowStagingLocation);
       pipelineOpts.setNumWorkers(1);
@@ -171,11 +169,13 @@ public class EndToEndIT {
     try (BigtableTableUtils destTable = new BigtableTableUtils(connection, destTableId, CF)) {
       destTable.deleteTable();
 
-      DataflowPipelineOptions createTablePipelineOpts = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
+      DataflowPipelineOptions createTablePipelineOpts =
+          PipelineOptionsFactory.as(DataflowPipelineOptions.class);
       createTablePipelineOpts.setRunner(DataflowRunner.class);
       createTablePipelineOpts.setProject(projectId);
 
-      CreateTableHelper.CreateTableOpts createOpts = createTablePipelineOpts.as(CreateTableHelper.CreateTableOpts.class);
+      CreateTableHelper.CreateTableOpts createOpts =
+          createTablePipelineOpts.as(CreateTableHelper.CreateTableOpts.class);
       createOpts.setBigtableProject(projectId);
       createOpts.setBigtableInstanceId(instanceId);
       createOpts.setBigtableTableId(destTableId);
@@ -183,7 +183,8 @@ public class EndToEndIT {
       createOpts.setFamilies(ImmutableList.of(CF));
       CreateTableHelper.createTable(createOpts);
 
-      DataflowPipelineOptions importPipelineOpts = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
+      DataflowPipelineOptions importPipelineOpts =
+          PipelineOptionsFactory.as(DataflowPipelineOptions.class);
       importPipelineOpts.setRunner(DataflowRunner.class);
       importPipelineOpts.setGcpTempLocation(dataflowStagingLocation);
       importPipelineOpts.setNumWorkers(1);

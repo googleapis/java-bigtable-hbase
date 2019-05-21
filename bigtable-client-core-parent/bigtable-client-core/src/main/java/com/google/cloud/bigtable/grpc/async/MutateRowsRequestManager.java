@@ -15,27 +15,23 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.rpc.Status;
-
 import io.grpc.Status.Code;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations.
- */
-public class MutateRowsRequestManager  {
-  private final static Status STATUS_INTERNAL =
+/** Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations. */
+public class MutateRowsRequestManager {
+  private static final Status STATUS_INTERNAL =
       Status.newBuilder()
-        .setCode(io.grpc.Status.Code.INTERNAL.value())
-        .setMessage("Response was not returned for this index.")
-        .build();
+          .setCode(io.grpc.Status.Code.INTERNAL.value())
+          .setMessage("Response was not returned for this index.")
+          .build();
 
   private static Code getGrpcCode(Status status) {
     return status == null ? null : io.grpc.Status.fromCodeValue(status.getCode()).getCode();
@@ -64,15 +60,14 @@ public class MutateRowsRequestManager  {
 
   /**
    * When doing retries, the retry sends a partial set of the original mutations that failed with a
-   * retryable status. This array contains a mapping of indices from the {@link #currentRequest}
-   * to {@link #originalRequest}.
+   * retryable status. This array contains a mapping of indices from the {@link #currentRequest} to
+   * {@link #originalRequest}.
    */
   private int[] mapToOriginalIndex;
 
-  /**
-   * This array tracks the cumulative set of results across all RPC requests.
-   */
+  /** This array tracks the cumulative set of results across all RPC requests. */
   private final Status[] results;
+
   private final RetryOptions retryOptions;
   private final MutateRowsRequest originalRequest;
 
@@ -92,9 +87,7 @@ public class MutateRowsRequestManager  {
     }
   }
 
-  /**
-   * Adds the content of the message to the {@link #results}.
-   */
+  /** Adds the content of the message to the {@link #results}. */
   public void onMessage(MutateRowsResponse message) {
     for (Entry entry : message.getEntriesList()) {
       int index = (int) entry.getIndex();
@@ -114,7 +107,7 @@ public class MutateRowsRequestManager  {
    * This is called when all calls to {@link #onMessage(MutateRowsResponse)} are complete.
    *
    * @return {@link ProcessingStatus} of the accumulated responses - success, invalid, retrable,
-   *         non-retryable.
+   *     non-retryable.
    */
   public ProcessingStatus onOK() {
     // Sanity check to make sure that every mutation received a response.
@@ -173,8 +166,8 @@ public class MutateRowsRequestManager  {
    * @return the new {@link MutateRowsRequest}.
    */
   private MutateRowsRequest createRetryRequest(List<Integer> indiciesToRetry) {
-    MutateRowsRequest.Builder updatedRequest = MutateRowsRequest.newBuilder()
-        .setTableName(originalRequest.getTableName());
+    MutateRowsRequest.Builder updatedRequest =
+        MutateRowsRequest.newBuilder().setTableName(originalRequest.getTableName());
     mapToOriginalIndex = new int[indiciesToRetry.size()];
     for (int i = 0; i < indiciesToRetry.size(); i++) {
       mapToOriginalIndex[i] = indiciesToRetry.get(i);
@@ -185,7 +178,7 @@ public class MutateRowsRequestManager  {
 
   /**
    * @return a {@link MutateRowsResponse} built from the accumulation of all calls to
-   *         onMessage/onOK.
+   *     onMessage/onOK.
    */
   public MutateRowsResponse buildResponse() {
     List<MutateRowsResponse.Entry> entries = new ArrayList<>();

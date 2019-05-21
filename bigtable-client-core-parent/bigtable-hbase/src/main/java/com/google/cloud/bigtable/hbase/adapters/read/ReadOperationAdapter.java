@@ -26,11 +26,11 @@ import org.apache.hadoop.hbase.client.Operation;
  */
 public interface ReadOperationAdapter<T extends Operation> {
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param request a T object.
    * @param readHooks a {@link ReadHooks} object.
-   * @param query a  {@link Query} object.
+   * @param query a {@link Query} object.
    */
   void adapt(T request, ReadHooks readHooks, Query query);
 }

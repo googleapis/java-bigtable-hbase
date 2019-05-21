@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -39,9 +40,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-import com.google.common.collect.ImmutableSet;
 
 public class TestSingleColumnValueFilter extends AbstractTest {
 
@@ -64,9 +62,10 @@ public class TestSingleColumnValueFilter extends AbstractTest {
       byte[] row = dataHelper.randomData(PREFIX);
       keyBuilder.add(Bytes.toString(row));
       int randomValue = (int) Math.floor(count * Math.random());
-      puts.add(new Put(row)
-        .addColumn(COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i))
-        .addColumn(COLUMN_FAMILY, OTHER_QUALIFIER, Bytes.toBytes(randomValue)));
+      puts.add(
+          new Put(row)
+              .addColumn(COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i))
+              .addColumn(COLUMN_FAMILY, OTHER_QUALIFIER, Bytes.toBytes(randomValue)));
     }
 
     byte[] otheRow = dataHelper.randomData(NOT_STRICT_KEY);
@@ -87,8 +86,8 @@ public class TestSingleColumnValueFilter extends AbstractTest {
   @Test
   public void testInf() throws IOException {
     SingleColumnValueFilter filter =
-        new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.LESS_OR_EQUAL,
-            Bytes.toBytes(2L));
+        new SingleColumnValueFilter(
+            COLUMN_FAMILY, QUALIFIER, CompareOp.LESS_OR_EQUAL, Bytes.toBytes(2L));
     filter.setFilterIfMissing(true);
     Map<String, Long> rowKeys = getResult(filter);
     Assert.assertEquals(3, rowKeys.size());
@@ -193,8 +192,8 @@ public class TestSingleColumnValueFilter extends AbstractTest {
   @Test
   public void testSup() throws IOException {
     SingleColumnValueFilter filter =
-        new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.GREATER_OR_EQUAL,
-            Bytes.toBytes(5L));
+        new SingleColumnValueFilter(
+            COLUMN_FAMILY, QUALIFIER, CompareOp.GREATER_OR_EQUAL, Bytes.toBytes(5L));
     filter.setFilterIfMissing(true);
     Map<String, Long> rowKeys = getResult(filter);
     Assert.assertEquals(5, rowKeys.size());
@@ -208,8 +207,8 @@ public class TestSingleColumnValueFilter extends AbstractTest {
   @Test
   public void testNot() throws IOException {
     SingleColumnValueFilter filter =
-        new SingleColumnValueFilter(COLUMN_FAMILY, QUALIFIER, CompareOp.NOT_EQUAL,
-            Bytes.toBytes(5L));
+        new SingleColumnValueFilter(
+            COLUMN_FAMILY, QUALIFIER, CompareOp.NOT_EQUAL, Bytes.toBytes(5L));
     filter.setFilterIfMissing(true);
     Map<String, Long> rowKeys = getResult(filter);
     Assert.assertEquals(9, rowKeys.size());

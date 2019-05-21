@@ -19,13 +19,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.util.NanoClock;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,25 +37,16 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.api.client.util.NanoClock;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-
-/**
- * Tests for {@link OperationAccountant}
- *
- */
+/** Tests for {@link OperationAccountant} */
 @RunWith(JUnit4.class)
 public class TestOperationAccountant {
 
-  @Mock
-  ListenableFuture<?> future;
+  @Mock ListenableFuture<?> future;
 
-  @Mock
-  NanoClock clock;
+  @Mock NanoClock clock;
 
   @Before
-  public void setup(){
+  public void setup() {
     MockitoAnnotations.initMocks(this);
   }
 
@@ -73,35 +66,40 @@ public class TestOperationAccountant {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
       final OperationAccountant underTest = new OperationAccountant();
-      final LinkedBlockingQueue<SettableFuture<String>> registeredEvents = new LinkedBlockingQueue<>();
-      Future<Boolean> writeFuture = pool.submit(new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws InterruptedException {
-          for (long i = 0; i < registerCount; i++) {
-            SettableFuture<String> completionFuture = SettableFuture.create();
-            underTest.registerOperation(completionFuture);
-            registeredEvents.offer(completionFuture);
-          }
-          underTest.awaitCompletion();
-          return true;
-        }
-      });
-      Future<?> readFuture = pool.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception{
-          for (int i = 0; i < registerCount; i++) {
-            SettableFuture<String> future = registeredEvents.poll(1, TimeUnit.SECONDS);
-            if (future != null) {
-              future.set("");
-            }
-            if (i % 10 == 0) {
-              // Exercise the .offer and the awaitCompletion() in the writeFuture.
-              Thread.sleep(4);
-            }
-          }
-          return null;
-        }
-      });
+      final LinkedBlockingQueue<SettableFuture<String>> registeredEvents =
+          new LinkedBlockingQueue<>();
+      Future<Boolean> writeFuture =
+          pool.submit(
+              new Callable<Boolean>() {
+                @Override
+                public Boolean call() throws InterruptedException {
+                  for (long i = 0; i < registerCount; i++) {
+                    SettableFuture<String> completionFuture = SettableFuture.create();
+                    underTest.registerOperation(completionFuture);
+                    registeredEvents.offer(completionFuture);
+                  }
+                  underTest.awaitCompletion();
+                  return true;
+                }
+              });
+      Future<?> readFuture =
+          pool.submit(
+              new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                  for (int i = 0; i < registerCount; i++) {
+                    SettableFuture<String> future = registeredEvents.poll(1, TimeUnit.SECONDS);
+                    if (future != null) {
+                      future.set("");
+                    }
+                    if (i % 10 == 0) {
+                      // Exercise the .offer and the awaitCompletion() in the writeFuture.
+                      Thread.sleep(4);
+                    }
+                  }
+                  return null;
+                }
+              });
 
       readFuture.get(3, TimeUnit.SECONDS);
       assertTrue(writeFuture.get(3, TimeUnit.SECONDS));
@@ -114,14 +112,16 @@ public class TestOperationAccountant {
   public void testNoSuccessWarning() throws Exception {
 
     final long timeBetweenOperations = TimeUnit.NANOSECONDS.convert(5, TimeUnit.MINUTES);
-    when(clock.nanoTime()).thenAnswer(new Answer<Long>() {
-      private int count = 0;
+    when(clock.nanoTime())
+        .thenAnswer(
+            new Answer<Long>() {
+              private int count = 0;
 
-      @Override
-      public Long answer(InvocationOnMock invocation) throws Throwable {
-        return count++ * timeBetweenOperations;
-      }
-    });
+              @Override
+              public Long answer(InvocationOnMock invocation) throws Throwable {
+                return count++ * timeBetweenOperations;
+              }
+            });
 
     long finishWaitTime = 100;
     final OperationAccountant underTest = new OperationAccountant(clock, finishWaitTime);
@@ -132,13 +132,14 @@ public class TestOperationAccountant {
 
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      pool.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          underTest.awaitCompletion();
-          return null;
-        }
-      });
+      pool.submit(
+          new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              underTest.awaitCompletion();
+              return null;
+            }
+          });
       // Sleep a multiple of the finish wait time to force a few iterations
       Thread.sleep(finishWaitTime * (iterations + 1));
       // Trigger completion

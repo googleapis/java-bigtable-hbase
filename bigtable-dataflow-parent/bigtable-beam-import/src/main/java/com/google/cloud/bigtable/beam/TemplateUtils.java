@@ -25,6 +25,7 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
@@ -33,7 +34,6 @@ import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ParseFilter;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 /**
  * !!! DO NOT TOUCH THIS CLASS !!!
@@ -54,11 +54,15 @@ public class TemplateUtils {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
 
-    ValueProvider enableThrottling = ValueProvider.NestedValueProvider.of(
-        opts.getMutationThrottleLatencyMs(), (Integer throttleMs) -> String.valueOf(throttleMs > 0));
+    ValueProvider enableThrottling =
+        ValueProvider.NestedValueProvider.of(
+            opts.getMutationThrottleLatencyMs(),
+            (Integer throttleMs) -> String.valueOf(throttleMs > 0));
 
-    builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, enableThrottling);
-    builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+    builder.withConfiguration(
+        BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, enableThrottling);
+    builder.withConfiguration(
+        BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
         ValueProvider.NestedValueProvider.of(opts.getMutationThrottleLatencyMs(), String::valueOf));
 
     return builder.build();
@@ -105,8 +109,9 @@ public class TemplateUtils {
         Query query = Query.create(PLACEHOLDER_TABLE_ID);
         Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
         readHooks.applyPreSendHook(query);
-        RequestContext requestContext = RequestContext.create(PLACEHOLDER_PROJECT_ID,
-            PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
+        RequestContext requestContext =
+            RequestContext.create(
+                PLACEHOLDER_PROJECT_ID, PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
 
         cachedRequest =
             query.toProto(requestContext).toBuilder().setTableName("").setAppProfileId("").build();

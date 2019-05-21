@@ -1,19 +1,19 @@
 /*
 
- * Copyright 2015 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2015 Google Inc. All Rights Reserved.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package com.google.cloud.bigtable.hbase;
 
 import static org.mockito.Matchers.any;
@@ -24,14 +24,17 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -48,14 +51,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-
-/**
- * Tests for {@link BigtableBufferedMutator}
- */
+/** Tests for {@link BigtableBufferedMutator} */
 @SuppressWarnings("unchecked")
 @RunWith(JUnit4.class)
 public class TestBigtableBufferedMutator {
@@ -64,32 +60,29 @@ public class TestBigtableBufferedMutator {
   private static final Put SIMPLE_PUT =
       new Put(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES);
 
-  @Mock
-  private BigtableSession mockSession;
+  @Mock private BigtableSession mockSession;
 
-  @Mock
-  private IBulkMutation mockBulkMutation;
+  @Mock private IBulkMutation mockBulkMutation;
 
-  @Mock
-  private IBigtableDataClient mockDataClient;
+  @Mock private IBigtableDataClient mockDataClient;
 
   @SuppressWarnings("rawtypes")
   private SettableApiFuture future = SettableApiFuture.create();
 
-  @Mock
-  private BufferedMutator.ExceptionListener listener;
+  @Mock private BufferedMutator.ExceptionListener listener;
 
   private ExecutorService executorService;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    when(mockSession.createBulkMutationWrapper(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
+    when(mockSession.createBulkMutationWrapper(any(BigtableTableName.class)))
+        .thenReturn(mockBulkMutation);
     when(mockSession.getDataClientWrapper()).thenReturn(mockDataClient);
   }
 
   @After
-  public void tearDown(){
+  public void tearDown() {
     if (executorService != null) {
       executorService.shutdownNow();
       executorService = null;
@@ -110,7 +103,7 @@ public class TestBigtableBufferedMutator {
   }
 
   @Test
-  public void testPut() throws IOException{
+  public void testPut() throws IOException {
     when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(SIMPLE_PUT);
@@ -127,36 +120,32 @@ public class TestBigtableBufferedMutator {
 
   @Test
   public void testIncrement() throws IOException {
-    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))
-        .thenReturn(future);
+    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(new Increment(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, 1));
-    verify(mockDataClient, times(1))
-        .readModifyWriteRowAsync(any(ReadModifyWriteRow.class));
+    verify(mockDataClient, times(1)).readModifyWriteRowAsync(any(ReadModifyWriteRow.class));
   }
 
   @Test
   public void testAppend() throws IOException {
-    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))
-        .thenReturn(future);
+    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(new Append(EMPTY_BYTES).add(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES));
-    verify(mockDataClient, times(1))
-        .readModifyWriteRowAsync(any(ReadModifyWriteRow.class));
+    verify(mockDataClient, times(1)).readModifyWriteRowAsync(any(ReadModifyWriteRow.class));
   }
 
   @Test
   public void testInvalidPut() throws Exception {
     when(mockBulkMutation.add(any(RowMutation.class)))
-        .thenReturn(ApiFutures.<Void> immediateFailedFuture(new RuntimeException()));
+        .thenReturn(ApiFutures.<Void>immediateFailedFuture(new RuntimeException()));
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(SIMPLE_PUT);
     // Leave some time for the async worker to handle the request.
-    verify(listener, times(0)).onException(any(RetriesExhaustedWithDetailsException.class),
-        same(underTest));
+    verify(listener, times(0))
+        .onException(any(RetriesExhaustedWithDetailsException.class), same(underTest));
     underTest.mutate(SIMPLE_PUT);
-    verify(listener, times(1)).onException(any(RetriesExhaustedWithDetailsException.class),
-        same(underTest));
+    verify(listener, times(1))
+        .onException(any(RetriesExhaustedWithDetailsException.class), same(underTest));
   }
 
   @Test

@@ -24,7 +24,6 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,30 +31,34 @@ public class TestBigtableOptions {
 
   @Test
   public void testEquals() {
-    BigtableOptions options1 = BigtableOptions.builder()
-        .setProjectId("project")
-        .setInstanceId("instance")
-        .setUserAgent("foo")
-        .setCredentialOptions(CredentialOptions.nullCredential())
-        .build();
-    BigtableOptions options2 = BigtableOptions.builder()
-        .setProjectId("project")
-        .setInstanceId("instance")
-        .setUserAgent("foo")
-        .setCredentialOptions(CredentialOptions.nullCredential())
-        .build();
-    BigtableOptions options3 = BigtableOptions.builder()
-        .setProjectId("project")
-        .setInstanceId("instance")
-        .setUserAgent("foo1")
-        .setCredentialOptions(CredentialOptions.nullCredential())
-        .build();
-    BigtableOptions options4 = BigtableOptions.builder()
-        .setProjectId("project")
-        .setInstanceId("instance")
-        .setUserAgent("foo1")
-        .setCredentialOptions(CredentialOptions.defaultCredentials())
-        .build();
+    BigtableOptions options1 =
+        BigtableOptions.builder()
+            .setProjectId("project")
+            .setInstanceId("instance")
+            .setUserAgent("foo")
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .build();
+    BigtableOptions options2 =
+        BigtableOptions.builder()
+            .setProjectId("project")
+            .setInstanceId("instance")
+            .setUserAgent("foo")
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .build();
+    BigtableOptions options3 =
+        BigtableOptions.builder()
+            .setProjectId("project")
+            .setInstanceId("instance")
+            .setUserAgent("foo1")
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .build();
+    BigtableOptions options4 =
+        BigtableOptions.builder()
+            .setProjectId("project")
+            .setInstanceId("instance")
+            .setUserAgent("foo1")
+            .setCredentialOptions(CredentialOptions.defaultCredentials())
+            .build();
 
     Assert.assertEquals(options1, options2);
     Assert.assertNotEquals(options1, options3);
@@ -64,11 +67,12 @@ public class TestBigtableOptions {
 
   @Test
   public void testSerialization() throws IOException, ClassNotFoundException {
-    BigtableOptions options = BigtableOptions.builder()
-        .setProjectId("project")
-        .setInstanceId("instance")
-        .setUserAgent("foo")
-        .build();
+    BigtableOptions options =
+        BigtableOptions.builder()
+            .setProjectId("project")
+            .setInstanceId("instance")
+            .setUserAgent("foo")
+            .build();
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     ObjectOutputStream oos = new ObjectOutputStream(bos);
     oos.writeObject(options);
@@ -93,10 +97,7 @@ public class TestBigtableOptions {
     Map<String, String> testEnv = new HashMap<>();
     testEnv.put(BigtableOptions.BIGTABLE_EMULATOR_HOST_ENV_VAR, "localhost:1234");
     setTestEnv(testEnv);
-    BigtableOptions options = BigtableOptions.builder()
-        .setPort(443)
-        .setDataHost("xxx")
-        .build();
+    BigtableOptions options = BigtableOptions.builder().setPort(443).setDataHost("xxx").build();
     Assert.assertEquals(1234, options.getPort());
     Assert.assertEquals("localhost", options.getDataHost());
     Assert.assertEquals("localhost", options.getAdminHost());
@@ -104,9 +105,7 @@ public class TestBigtableOptions {
     Assert.assertEquals(CredentialOptions.nullCredential(), options.getCredentialOptions());
 
     setTestEnv(oldEnv);
-    options = BigtableOptions.builder()
-        .setDataHost("override")
-        .build();
+    options = BigtableOptions.builder().setDataHost("override").build();
     Assert.assertEquals(BigtableOptions.BIGTABLE_PORT_DEFAULT, options.getPort());
     Assert.assertEquals("override", options.getDataHost());
     Assert.assertEquals(BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT, options.getAdminHost());
@@ -126,8 +125,7 @@ public class TestBigtableOptions {
   @Test
   public void testUseBatch_withOverrides() {
     String host = "myHost";
-    BigtableOptions options =
-        BigtableOptions.builder().setDataHost(host).setUseBatch(true).build();
+    BigtableOptions options = BigtableOptions.builder().setDataHost(host).setUseBatch(true).build();
     Assert.assertTrue(options.useCachedChannel());
     Assert.assertEquals(host, options.getDataHost());
     Assert.assertEquals(5000, options.getRetryOptions().getInitialBackoffMillis());
@@ -135,22 +133,23 @@ public class TestBigtableOptions {
   }
 
   /**
-   * This is a dirty way to override the environment that is accessible to a test.
-   * It only modifies the JVM's view of the environment, not the environment itself.
-   * From: http://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java/496849
+   * This is a dirty way to override the environment that is accessible to a test. It only modifies
+   * the JVM's view of the environment, not the environment itself. From:
+   * http://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java/496849
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private static void setTestEnv(Map<String, String> newEnv)
-  {
+  private static void setTestEnv(Map<String, String> newEnv) {
     try {
       Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
       Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
       theEnvironmentField.setAccessible(true);
       Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
       env.putAll(newEnv);
-      Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
+      Field theCaseInsensitiveEnvironmentField =
+          processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
       theCaseInsensitiveEnvironmentField.setAccessible(true);
-      Map<String, String> cienv = (Map<String, String>)     theCaseInsensitiveEnvironmentField.get(null);
+      Map<String, String> cienv =
+          (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
       cienv.putAll(newEnv);
     } catch (NoSuchFieldException e) {
       try {

@@ -21,5 +21,6 @@ package com.google.cloud.bigtable.metrics;
  */
 public interface Meter {
   void mark();
+
   void mark(long size);
 }

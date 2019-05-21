@@ -27,9 +27,9 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.Serializer;
 
-
 /**
  * A Beam coder that wraps a Hadoop Serialization.
+ *
  * @param <T> The type that will be serialized
  */
 class HadoopSerializationCoder<T> extends CustomCoder<T> {
@@ -40,25 +40,24 @@ class HadoopSerializationCoder<T> extends CustomCoder<T> {
 
   /**
    * Constructs a new Coder
+   *
    * @param type The type that will be serialized.
    * @param serializationClass The Hadoop serialization class to delegate to.
    */
   @SuppressWarnings("unchecked")
-  HadoopSerializationCoder(final Class<T> type,
-      Class<? extends Serialization<? super T>> serializationClass) {
+  HadoopSerializationCoder(
+      final Class<T> type, Class<? extends Serialization<? super T>> serializationClass) {
     this.type = type;
     // Force an unchecked cast to workaround covariance issues
     this.serializationClass = (Class<? extends Serialization<T>>) serializationClass;
     try {
       this.serialization = (Serialization<T>) serializationClass.newInstance();
-    } catch (InstantiationException|IllegalAccessException e) {
+    } catch (InstantiationException | IllegalAccessException e) {
       throw new RuntimeException("Failed to instantiate the serialization class");
     }
   }
 
-  /**
-   * Populate a possibly unserializable serialization instance.
-   */
+  /** Populate a possibly unserializable serialization instance. */
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
 
@@ -73,10 +72,10 @@ class HadoopSerializationCoder<T> extends CustomCoder<T> {
   /**
    * !!! DO NOT DELETE !!!
    *
-   * See readObjectNoData method in:
+   * <p>See readObjectNoData method in:
    * https://docs.oracle.com/javase/7/docs/platform/serialization/spec/input.html#6053.
    *
-   * Disable backwards compatibility with previous versions that were serialized.
+   * <p>Disable backwards compatibility with previous versions that were serialized.
    *
    * @throws InvalidObjectException
    */
@@ -109,9 +108,7 @@ class HadoopSerializationCoder<T> extends CustomCoder<T> {
     }
   }
 
-  /**
-   * Simple wrapper to prevent the Hadoop serializers from closing a stream they don't own.
-   */
+  /** Simple wrapper to prevent the Hadoop serializers from closing a stream they don't own. */
   private static class UncloseableOutputStream extends FilterOutputStream {
     public UncloseableOutputStream(OutputStream delegate) {
       super(delegate);
@@ -128,10 +125,7 @@ class HadoopSerializationCoder<T> extends CustomCoder<T> {
     }
   }
 
-  /**
-   * Simple wrapper to prevent the Hadoop serializers from closing a stream they don't own.
-   */
-
+  /** Simple wrapper to prevent the Hadoop serializers from closing a stream they don't own. */
   private static class UncloseableInputStream extends FilterInputStream {
 
     public UncloseableInputStream(InputStream delegate) {

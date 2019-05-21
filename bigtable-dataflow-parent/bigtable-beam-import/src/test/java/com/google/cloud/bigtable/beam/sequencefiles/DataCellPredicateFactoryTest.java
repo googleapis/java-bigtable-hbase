@@ -32,9 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/**
- * Unit tests for {@link DataCellPredicateFactory}.
- */
+/** Unit tests for {@link DataCellPredicateFactory}. */
 @RunWith(JUnit4.class)
 public class DataCellPredicateFactoryTest {
   private static final byte[] ROW_KEY = Bytes.toBytes("row_key");
@@ -52,55 +50,65 @@ public class DataCellPredicateFactoryTest {
   @Test
   public void testDeleteMarkerForOneCellWithExactTimestamp() {
     long timestamp = 10000L;
-    List<Cell> cells = Lists.newArrayList(
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp - 1),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp + 1));
+    List<Cell> cells =
+        Lists.newArrayList(
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp - 1),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp + 1));
     // A predicate that matches the first cell in the list.
-    Predicate<Cell> predicate = predicateMaker.apply(
-        HBaseCellUtils.deleteMarkerForOneCellWithExactTimestamp(
-            ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp));
+    Predicate<Cell> predicate =
+        predicateMaker.apply(
+            HBaseCellUtils.deleteMarkerForOneCellWithExactTimestamp(
+                ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp));
     assertEquals(cells.get(0), Iterables.getOnlyElement(Iterables.filter(cells, predicate)));
     // Change qualifier and there should be no match.
-    predicate = predicateMaker.apply(
-        HBaseCellUtils.deleteMarkerForOneCellWithExactTimestamp(
-            ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp));
-    assertTrue(Iterables.isEmpty(Iterables.filter(cells,  predicate)));
+    predicate =
+        predicateMaker.apply(
+            HBaseCellUtils.deleteMarkerForOneCellWithExactTimestamp(
+                ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp));
+    assertTrue(Iterables.isEmpty(Iterables.filter(cells, predicate)));
   }
 
   @Test
   public void testDeleteMarkerForCellsWithLowerOrEqualTimestamp() {
     long timestamp = 10000L;
-    List<Cell> cells = Lists.newArrayList(
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp - 1),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp + 1));
+    List<Cell> cells =
+        Lists.newArrayList(
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp - 1),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp + 1));
     // A predicate that matches the first cell in the list.
-    Predicate<Cell> predicate = predicateMaker.apply(
-        HBaseCellUtils.deleteMarkerForCellsWithLowerOrEqualTimestamp(
-            ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp));
-    assertEquals(Sets.newHashSet(cells.get(0), cells.get(1)),
+    Predicate<Cell> predicate =
+        predicateMaker.apply(
+            HBaseCellUtils.deleteMarkerForCellsWithLowerOrEqualTimestamp(
+                ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp));
+    assertEquals(
+        Sets.newHashSet(cells.get(0), cells.get(1)),
         Sets.newHashSet(Iterables.filter(cells, predicate)));
     // Change qualifier and there should be no match.
-    predicate = predicateMaker.apply(
-        HBaseCellUtils.deleteMarkerForCellsWithLowerOrEqualTimestamp(
-            ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp));
-    assertTrue(Iterables.isEmpty(Iterables.filter(cells,  predicate)));
+    predicate =
+        predicateMaker.apply(
+            HBaseCellUtils.deleteMarkerForCellsWithLowerOrEqualTimestamp(
+                ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp));
+    assertTrue(Iterables.isEmpty(Iterables.filter(cells, predicate)));
   }
 
   @Test
   public void testDeleteMarkerForAllCellsInFamilyWithExactTimestamp() {
     long timestamp = 10000L;
-    Predicate<Cell> predicate = predicateMaker.apply(
-        HBaseCellUtils.deleteMarkerForAllCellsInFamilyWithExactTimestamp(
-            ROW_KEY, COLUMN_FAMILY, timestamp));
-    List<Cell> allCells = Lists.newArrayList(
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp - 1),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp - 1),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp + 1),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp + 1));
+    Predicate<Cell> predicate =
+        predicateMaker.apply(
+            HBaseCellUtils.deleteMarkerForAllCellsInFamilyWithExactTimestamp(
+                ROW_KEY, COLUMN_FAMILY, timestamp));
+    List<Cell> allCells =
+        Lists.newArrayList(
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp - 1),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp - 1),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp + 1),
+            HBaseCellUtils.createDataCell(
+                ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp + 1));
     Set<Cell> expected = Sets.newHashSet(allCells.get(0), allCells.get(1));
     assertEquals(expected, Sets.newHashSet(Iterables.filter(allCells, predicate)));
   }
@@ -108,16 +116,19 @@ public class DataCellPredicateFactoryTest {
   @Test
   public void testDeleteMarkerForAllCellsInFamilyWithLowerOrEqualTimestamp() {
     long timestamp = 10000L;
-    Predicate<Cell> predicate = predicateMaker.apply(
-        HBaseCellUtils.deleteMarkerForAllCellsInFamilyWithLowerOrEqualTimestamp(
-            ROW_KEY, COLUMN_FAMILY, timestamp));
-    List<Cell> allCells = Lists.newArrayList(
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp - 1),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp - 1),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp + 1),
-        HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp + 1));
+    Predicate<Cell> predicate =
+        predicateMaker.apply(
+            HBaseCellUtils.deleteMarkerForAllCellsInFamilyWithLowerOrEqualTimestamp(
+                ROW_KEY, COLUMN_FAMILY, timestamp));
+    List<Cell> allCells =
+        Lists.newArrayList(
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp - 1),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp - 1),
+            HBaseCellUtils.createDataCell(ROW_KEY, COLUMN_FAMILY, QUALIFIER, timestamp + 1),
+            HBaseCellUtils.createDataCell(
+                ROW_KEY, COLUMN_FAMILY, ANOTHER_QUALIFIER, timestamp + 1));
     Set<Cell> expected = Sets.newHashSet(allCells.subList(0, 4));
     assertEquals(expected, Sets.newHashSet(Iterables.filter(allCells, predicate)));
   }

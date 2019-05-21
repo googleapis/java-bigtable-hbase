@@ -15,10 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.bigtable.admin.v2.AppProfile;
@@ -51,12 +47,14 @@ import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc;
 import com.google.protobuf.Empty;
-
 import io.grpc.Channel;
 import io.grpc.protobuf.StatusProto;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
- * <p>BigtableInstanceGrpcClient class.</p>
+ * BigtableInstanceGrpcClient class.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -67,7 +65,7 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
   private final OperationsGrpc.OperationsBlockingStub operationsStub;
 
   /**
-   * <p>Constructor for BigtableInstanceGrpcClient.</p>
+   * Constructor for BigtableInstanceGrpcClient.
    *
    * @param channel a {@link io.grpc.Channel} object.
    */
@@ -98,16 +96,16 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
   @Override
   public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
       throws TimeoutException, IOException {
-    GetOperationRequest request = GetOperationRequest.newBuilder()
-        .setName(operation.getName())
-        .build();
+    GetOperationRequest request =
+        GetOperationRequest.newBuilder().setName(operation.getName()).build();
 
-    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
-        .setInitialIntervalMillis(100)
-        .setMultiplier(1.3)
-        .setMaxIntervalMillis(Ints.checkedCast(TimeUnit.SECONDS.toMillis(60)))
-        .setMaxElapsedTimeMillis(Ints.checkedCast(timeUnit.toMillis(timeout)))
-        .build();
+    ExponentialBackOff backOff =
+        new ExponentialBackOff.Builder()
+            .setInitialIntervalMillis(100)
+            .setMultiplier(1.3)
+            .setMaxIntervalMillis(Ints.checkedCast(TimeUnit.SECONDS.toMillis(60)))
+            .setMaxElapsedTimeMillis(Ints.checkedCast(timeUnit.toMillis(timeout)))
+            .build();
 
     Operation currentOperationState = operation;
 
@@ -181,70 +179,70 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
   public Operation updateCluster(Cluster cluster) {
     return instanceClient.updateCluster(cluster);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public Empty deleteCluster(DeleteClusterRequest request) {
     return instanceClient.deleteCluster(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public Operation partialUpdateInstance(PartialUpdateInstanceRequest request) {
-      return instanceClient.partialUpdateInstance(request);
+    return instanceClient.partialUpdateInstance(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public AppProfile createAppProfile(CreateAppProfileRequest request) {
-      return instanceClient.createAppProfile(request);
+    return instanceClient.createAppProfile(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public AppProfile getAppProfile(GetAppProfileRequest request) {
-      return instanceClient.getAppProfile(request);
+    return instanceClient.getAppProfile(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public ListAppProfilesResponse listAppProfiles(ListAppProfilesRequest request) {
-      return instanceClient.listAppProfiles(request);
+    return instanceClient.listAppProfiles(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public Operation updateAppProfile(UpdateAppProfileRequest request) {
-      return instanceClient.updateAppProfile(request);
+    return instanceClient.updateAppProfile(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public Empty deleteAppProfile(DeleteAppProfileRequest request) {
-      return instanceClient.deleteAppProfile(request);
+    return instanceClient.deleteAppProfile(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public Policy getIamPolicy(GetIamPolicyRequest request) {
-      return instanceClient.getIamPolicy(request);
+    return instanceClient.getIamPolicy(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public com.google.iam.v1.Policy setIamPolicy(SetIamPolicyRequest request) {
-      return instanceClient.setIamPolicy(request);
+    return instanceClient.setIamPolicy(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public TestIamPermissionsResponse testIamPermissions(TestIamPermissionsRequest request) {
-      return instanceClient.testIamPermissions(request);
+    return instanceClient.testIamPermissions(request);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public Operation createCluster(CreateClusterRequest request) {
-      return instanceClient.createCluster(request);
+    return instanceClient.createCluster(request);
   }
 }

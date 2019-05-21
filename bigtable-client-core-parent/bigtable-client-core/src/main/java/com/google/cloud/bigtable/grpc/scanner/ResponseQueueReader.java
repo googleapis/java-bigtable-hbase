@@ -15,23 +15,21 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.Preconditions;
-
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
+import java.io.IOException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages a queue of {@link ResultQueueEntry}s of {@link FlatRow}.
@@ -46,24 +44,23 @@ public class ResponseQueueReader
 
   private static Timer firstResponseTimer;
 
-  private synchronized static Timer getFirstResponseTimer() {
+  private static synchronized Timer getFirstResponseTimer() {
     if (firstResponseTimer == null) {
-      firstResponseTimer = BigtableClientMetrics
-        .timer(MetricLevel.Info, "grpc.method.ReadRows.firstResponse.latency");
+      firstResponseTimer =
+          BigtableClientMetrics.timer(
+              MetricLevel.Info, "grpc.method.ReadRows.firstResponse.latency");
     }
     return firstResponseTimer;
   }
 
-  private final BlockingQueue<ResultQueueEntry<FlatRow>> resultQueue =  new LinkedBlockingQueue<>();
+  private final BlockingQueue<ResultQueueEntry<FlatRow>> resultQueue = new LinkedBlockingQueue<>();
   private final AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
   private boolean lastResponseProcessed = false;
   private Long startTime;
   private ClientCallStreamObserver<ReadRowsRequest> requestStream;
   private AtomicInteger markerCounter = new AtomicInteger();
 
-  /**
-   * <p>Constructor for ResponseQueueReader.</p>
-   */
+  /** Constructor for ResponseQueueReader. */
   public ResponseQueueReader() {
     if (BigtableClientMetrics.isEnabled(MetricLevel.Info)) {
       startTime = System.nanoTime();
@@ -90,36 +87,37 @@ public class ResponseQueueReader
     ResultQueueEntry<FlatRow> queueEntry = getNext();
 
     switch (queueEntry.getType()) {
-    case CompletionMarker:
-      lastResponseProcessed = true;
-      markerCounter.decrementAndGet();
-      break;
-    case Data:
-      if (startTime != null) {
-        getFirstResponseTimer().update(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
-        startTime = null;
-      }
-      return queueEntry.getResponseOrThrow();
-    case Exception:
-      markerCounter.decrementAndGet();
-      return queueEntry.getResponseOrThrow();
-    case RequestResultMarker:
-      markerCounter.decrementAndGet();
-      if (!completionMarkerFound.get()) {
-        requestStream.request(1);
-      }
-      return getNextMergedRow();
-    default:
-      throw new IllegalStateException("Cannot process type: " + queueEntry.getType());
+      case CompletionMarker:
+        lastResponseProcessed = true;
+        markerCounter.decrementAndGet();
+        break;
+      case Data:
+        if (startTime != null) {
+          getFirstResponseTimer().update(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+          startTime = null;
+        }
+        return queueEntry.getResponseOrThrow();
+      case Exception:
+        markerCounter.decrementAndGet();
+        return queueEntry.getResponseOrThrow();
+      case RequestResultMarker:
+        markerCounter.decrementAndGet();
+        if (!completionMarkerFound.get()) {
+          requestStream.request(1);
+        }
+        return getNextMergedRow();
+      default:
+        throw new IllegalStateException("Cannot process type: " + queueEntry.getType());
     }
 
-    Preconditions.checkState(lastResponseProcessed,
-      "Should only exit merge loop with by returning a complete FlatRow or hitting end of stream.");
+    Preconditions.checkState(
+        lastResponseProcessed,
+        "Should only exit merge loop with by returning a complete FlatRow or hitting end of stream.");
     return null;
   }
 
   /**
-   * <p>getNext.</p>
+   * getNext.
    *
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
    * @throws java.io.IOException if any.
@@ -141,7 +139,7 @@ public class ResponseQueueReader
   }
 
   /**
-   * <p>available.</p>
+   * available.
    *
    * @return a int.
    */
@@ -158,7 +156,7 @@ public class ResponseQueueReader
   /** {@inheritDoc} */
   @Override
   public void onError(Throwable t) {
-    addEntry("adding an error ResultQueueEntry", ResultQueueEntry.<FlatRow> fromThrowable(t));
+    addEntry("adding an error ResultQueueEntry", ResultQueueEntry.<FlatRow>fromThrowable(t));
     markerCounter.incrementAndGet();
   }
 
@@ -166,7 +164,7 @@ public class ResponseQueueReader
   @Override
   public void onCompleted() {
     completionMarkerFound.set(true);
-    addEntry("setting completion", ResultQueueEntry.<FlatRow> completionMarker());
+    addEntry("setting completion", ResultQueueEntry.<FlatRow>completionMarker());
     markerCounter.incrementAndGet();
   }
 
@@ -178,7 +176,7 @@ public class ResponseQueueReader
    * marker tells {@link #getNextMergedRow()} to read more rows.
    */
   public void addRequestResultMarker() {
-    addEntry("setting request result marker", ResultQueueEntry.<FlatRow> requestResultMarker());
+    addEntry("setting request result marker", ResultQueueEntry.<FlatRow>requestResultMarker());
     markerCounter.incrementAndGet();
   }
 

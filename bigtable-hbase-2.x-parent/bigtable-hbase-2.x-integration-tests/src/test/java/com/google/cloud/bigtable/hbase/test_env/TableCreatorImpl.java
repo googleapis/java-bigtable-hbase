@@ -15,23 +15,22 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
+import java.io.IOException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 
-import java.io.IOException;
-
-/**
- * Creates a table for HBase 2.*.
- */
+/** Creates a table for HBase 2.*. */
 public class TableCreatorImpl implements TableCreator {
   @Override
   public void createTable(Admin admin, TableName tableName) throws IOException {
-    HColumnDescriptor hcd = new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY)
-        .setMaxVersions(SharedTestEnvRule.MAX_VERSIONS);
-    HColumnDescriptor family2 = new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY2)
-        .setMaxVersions(SharedTestEnvRule.MAX_VERSIONS);
+    HColumnDescriptor hcd =
+        new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY)
+            .setMaxVersions(SharedTestEnvRule.MAX_VERSIONS);
+    HColumnDescriptor family2 =
+        new HColumnDescriptor(SharedTestEnvRule.COLUMN_FAMILY2)
+            .setMaxVersions(SharedTestEnvRule.MAX_VERSIONS);
     admin.createTable(new HTableDescriptor(tableName).addFamily(hcd).addFamily(family2));
   }
 }

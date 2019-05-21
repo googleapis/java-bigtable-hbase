@@ -17,8 +17,8 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.apache.hadoop.hbase.Cell;
@@ -36,7 +36,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
   /**
    * {@inheritDoc}
    *
-   * Convert a {@link Row} to a {@link Result}.
+   * <p>Convert a {@link Row} to a {@link Result}.
    */
   @Override
   public Result adaptResponse(Row response) {
@@ -56,12 +56,13 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
       // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
       // HBase will treat them as duplicates.
       long hbaseTimestamp = TimestampConverter.bigtable2hbase(rowCell.getTimestamp());
-      RowCell keyValue = new RowCell(
-          rowKey,
-          familyNameBytes,
-          columnQualifier,
-          hbaseTimestamp,
-          ByteStringer.extract(rowCell.getValue()));
+      RowCell keyValue =
+          new RowCell(
+              rowKey,
+              familyNameBytes,
+              columnQualifier,
+              hbaseTimestamp,
+              ByteStringer.extract(rowCell.getValue()));
 
       hbaseCells.add(keyValue);
     }

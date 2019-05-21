@@ -15,10 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.async;
 
+import com.google.cloud.bigtable.hbase.AbstractTestCheckAndMutate;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.AsyncTable.CheckAndMutateBuilder;
@@ -33,20 +34,20 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.hbase.AbstractTestCheckAndMutate;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 @RunWith(JUnit4.class)
 @SuppressWarnings("deprecation")
 public class TestAsyncCheckAndMutate extends AbstractTestCheckAndMutate {
   private static ExecutorService executor;
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @BeforeClass
   public static void setup() {
-    executor = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("TestAsyncCheckAndMutate").build());
+    executor =
+        Executors.newCachedThreadPool(
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat("TestAsyncCheckAndMutate")
+                .build());
   }
 
   @AfterClass
@@ -65,8 +66,9 @@ public class TestAsyncCheckAndMutate extends AbstractTestCheckAndMutate {
   }
 
   @Override
-  protected boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, CompareOp op,
-      byte[] value, Put put) throws Exception {
+  protected boolean checkAndPut(
+      byte[] row, byte[] family, byte[] qualifier, CompareOp op, byte[] value, Put put)
+      throws Exception {
     try {
       return getBuilder(row, family, qualifier, op, value).thenPut(put).get();
     } catch (ExecutionException e) {
@@ -75,8 +77,8 @@ public class TestAsyncCheckAndMutate extends AbstractTestCheckAndMutate {
   }
 
   @Override
-  protected boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value,
-      Delete delete) throws Exception {
+  protected boolean checkAndDelete(
+      byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws Exception {
     try {
       return getBuilder(row, family, qualifier, CompareOp.EQUAL, value).thenDelete(delete).get();
     } catch (ExecutionException e) {
@@ -85,8 +87,9 @@ public class TestAsyncCheckAndMutate extends AbstractTestCheckAndMutate {
   }
 
   @Override
-  protected boolean checkAndMutate(byte[] row, byte[] family, byte[] qualifier, CompareOp op,
-      byte[] value, RowMutations rm) throws Exception {
+  protected boolean checkAndMutate(
+      byte[] row, byte[] family, byte[] qualifier, CompareOp op, byte[] value, RowMutations rm)
+      throws Exception {
     try {
       return getBuilder(row, family, qualifier, op, value).thenMutate(rm).get();
     } catch (ExecutionException e) {
@@ -94,10 +97,11 @@ public class TestAsyncCheckAndMutate extends AbstractTestCheckAndMutate {
     }
   }
 
-  private CheckAndMutateBuilder getBuilder(byte[] row, byte[] family, byte[] qualifier,
-      CompareOp op, byte[] value) throws InterruptedException, ExecutionException {
-    CheckAndMutateBuilder builder = getDefaultAsyncTable().checkAndMutate(row,family)
-        .qualifier(qualifier);
+  private CheckAndMutateBuilder getBuilder(
+      byte[] row, byte[] family, byte[] qualifier, CompareOp op, byte[] value)
+      throws InterruptedException, ExecutionException {
+    CheckAndMutateBuilder builder =
+        getDefaultAsyncTable().checkAndMutate(row, family).qualifier(qualifier);
     if (value == null && op != CompareOp.NOT_EQUAL) {
       return builder.ifNotExists();
     } else {
@@ -106,8 +110,7 @@ public class TestAsyncCheckAndMutate extends AbstractTestCheckAndMutate {
   }
 
   protected AsyncTable getDefaultAsyncTable() throws InterruptedException, ExecutionException {
-    return AbstractAsyncTest.getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(),
-      executor);
+    return AbstractAsyncTest.getAsyncConnection()
+        .getTable(sharedTestEnv.getDefaultTableName(), executor);
   }
-
 }

@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
@@ -69,12 +68,10 @@ public abstract class AbstractTestTruncateTable extends AbstractTest {
 
   @Test
   public void testTruncateWithSplits() throws IOException {
-    byte[][] splits = new byte[][] {
-        Bytes.toBytes("AAA"),
-        Bytes.toBytes("BBB"),
-        Bytes.toBytes("CCC"),
-    };
-
+    byte[][] splits =
+        new byte[][] {
+          Bytes.toBytes("AAA"), Bytes.toBytes("BBB"), Bytes.toBytes("CCC"),
+        };
 
     TableName tableName = sharedTestEnv.newTestTableName();
     try {
@@ -90,7 +87,7 @@ public abstract class AbstractTestTruncateTable extends AbstractTest {
   protected abstract void createTable(TableName tableName, byte[][] splits) throws IOException;
 
   private void deleteTable(TableName tableName) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       if (admin.tableExists(tableName)) {
         if (admin.isTableEnabled(tableName)) {
           // The table may or may not be enabled, depending on the success of truncate table.
@@ -112,6 +109,6 @@ public abstract class AbstractTestTruncateTable extends AbstractTest {
     Assert.assertEquals(splits.length + 1, regions.size());
     AbstractTestCreateTable.assertSplitsAndRegionsMatch(splits, regions);
   }
-  
+
   protected abstract void doTruncate(TableName tableName) throws Exception;
 }

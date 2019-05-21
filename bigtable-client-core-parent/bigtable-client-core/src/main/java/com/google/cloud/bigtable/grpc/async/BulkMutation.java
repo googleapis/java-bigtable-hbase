@@ -1,22 +1,21 @@
 /*
 
- * Copyright 2015 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2015 Google Inc. All Rights Reserved.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package com.google.cloud.bigtable.grpc.async;
 
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
@@ -28,6 +27,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -38,9 +38,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Any;
 import com.google.rpc.Status;
-
 import io.grpc.StatusRuntimeException;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,21 +58,19 @@ import java.util.concurrent.TimeUnit;
  */
 public class BulkMutation {
 
-  private final static StatusRuntimeException MISSING_ENTRY_EXCEPTION =
+  private static final StatusRuntimeException MISSING_ENTRY_EXCEPTION =
       io.grpc.Status.INTERNAL
           .withDescription("Mutation does not have a status")
           .asRuntimeException();
   /** Constant <code>LOG</code> */
-  @VisibleForTesting
-  static Logger LOG = new Logger(BulkMutation.class);
+  @VisibleForTesting static Logger LOG = new Logger(BulkMutation.class);
 
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
   public static final long MAX_NUMBER_OF_MUTATIONS = 100_000;
 
   private static StatusRuntimeException toException(Status status) {
-    io.grpc.Status grpcStatus = io.grpc.Status
-        .fromCodeValue(status.getCode())
-        .withDescription(status.getMessage());
+    io.grpc.Status grpcStatus =
+        io.grpc.Status.fromCodeValue(status.getCode()).withDescription(status.getMessage());
     for (Any detail : status.getDetailsList()) {
       grpcStatus = grpcStatus.augmentDescription(detail.toString());
     }
@@ -85,8 +81,10 @@ public class BulkMutation {
     if (request == null) {
       return null;
     } else {
-      return MutateRowsRequest.Entry.newBuilder().setRowKey(request.getRowKey())
-          .addAllMutations(request.getMutationsList()).build();
+      return MutateRowsRequest.Entry.newBuilder()
+          .setRowKey(request.getRowKey())
+          .addAllMutations(request.getMutationsList())
+          .build();
     }
   }
 
@@ -121,8 +119,7 @@ public class BulkMutation {
     private long approximateByteSize = 0l;
     private long numberOfMutations = 0l;
 
-    @VisibleForTesting
-    Long lastRpcSentTimeNanos = null;
+    @VisibleForTesting Long lastRpcSentTimeNanos = null;
 
     /**
      * Adds a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to the {@link
@@ -131,8 +128,8 @@ public class BulkMutation {
      *
      * @param entry The {@link com.google.bigtable.v2.MutateRowsRequest.Entry} to add
      * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}
-     *     returns from the server. See {@link #addCallback(ListenableFuture)} for more 
-     *     information about how the SettableFuture is set.
+     *     returns from the server. See {@link #addCallback(ListenableFuture)} for more information
+     *     about how the SettableFuture is set.
      */
     private ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
       Preconditions.checkNotNull(entry);
@@ -146,12 +143,12 @@ public class BulkMutation {
     }
 
     private boolean wouldBeFull(MutateRowsRequest.Entry entry) {
-      boolean hitMutationMax = numberOfMutations + entry.getMutationsCount() > MAX_NUMBER_OF_MUTATIONS;
+      boolean hitMutationMax =
+          numberOfMutations + entry.getMutationsCount() > MAX_NUMBER_OF_MUTATIONS;
       if (hitMutationMax) {
         LOG.debug(
             "Would overflow maximum number of mutations, current = %d, adding = %d",
-            numberOfMutations,
-            entry.getMutationsCount());
+            numberOfMutations, entry.getMutationsCount());
       }
 
       return getRequestCount() + 1 > maxRowKeyCount
@@ -160,22 +157,25 @@ public class BulkMutation {
     }
 
     /**
-     * Adds a {@link FutureCallback} that will update all of the SettableFutures created by
-     * {@link BulkMutation#add(MutateRowRequest)} when the provided {@link ListenableFuture} for the
-     * {@link MutateRowsResponse} is complete.
+     * Adds a {@link FutureCallback} that will update all of the SettableFutures created by {@link
+     * BulkMutation#add(MutateRowRequest)} when the provided {@link ListenableFuture} for the {@link
+     * MutateRowsResponse} is complete.
      */
     private void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture) {
-      Futures.addCallback(bulkFuture, new FutureCallback<List<MutateRowsResponse>>() {
-        @Override
-        public void onSuccess(List<MutateRowsResponse> result) {
-          handleResult(result);
-        }
+      Futures.addCallback(
+          bulkFuture,
+          new FutureCallback<List<MutateRowsResponse>>() {
+            @Override
+            public void onSuccess(List<MutateRowsResponse> result) {
+              handleResult(result);
+            }
 
-        @Override
-        public void onFailure(Throwable t) {
-          setFailure(t);
-        }
-      }, MoreExecutors.directExecutor());
+            @Override
+            public void onFailure(Throwable t) {
+              setFailure(t);
+            }
+          },
+          MoreExecutors.directExecutor());
     }
 
     @VisibleForTesting
@@ -190,8 +190,10 @@ public class BulkMutation {
         entries.addAll(response.getEntriesList());
       }
       if (entries.isEmpty()) {
-        setFailure(io.grpc.Status.INTERNAL
-            .withDescription("No MutateRowsResponses entries were found.").asRuntimeException());
+        setFailure(
+            io.grpc.Status.INTERNAL
+                .withDescription("No MutateRowsResponses entries were found.")
+                .asRuntimeException());
         return;
       }
       try {
@@ -238,8 +240,9 @@ public class BulkMutation {
         }
       }
       if (missingEntriesCount > 0) {
-        LOG.error("Missing %d responses for bulkWrite. Setting exceptions on the futures.",
-          missingEntriesCount);
+        LOG.error(
+            "Missing %d responses for bulkWrite. Setting exceptions on the futures.",
+            missingEntriesCount);
       }
     }
 
@@ -254,7 +257,7 @@ public class BulkMutation {
         mutateRowsFuture = client.mutateRowsAsync(request);
         lastRpcSentTimeNanos = clock.nanoTime();
       } catch (Throwable e) {
-        mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
+        mutateRowsFuture = Futures.<List<MutateRowsResponse>>immediateFailedFuture(e);
       } finally {
         addCallback(mutateRowsFuture);
       }
@@ -262,21 +265,24 @@ public class BulkMutation {
     }
 
     private void setupStalenessChecker() {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          synchronized (Batch.this) {
-            if (futures.isEmpty()) {
-              setComplete();
-            } else if (isStale()) {
-              setFailure(
-                io.grpc.Status.INTERNAL.withDescription("Stale requests.").asRuntimeException());
-            } else {
-              setupStalenessChecker();
+      Runnable runnable =
+          new Runnable() {
+            @Override
+            public void run() {
+              synchronized (Batch.this) {
+                if (futures.isEmpty()) {
+                  setComplete();
+                } else if (isStale()) {
+                  setFailure(
+                      io.grpc.Status.INTERNAL
+                          .withDescription("Stale requests.")
+                          .asRuntimeException());
+                } else {
+                  setupStalenessChecker();
+                }
+              }
             }
-          }
-        }
-      };
+          };
       if (lastRpcSentTimeNanos != null) {
         long delay = calculateTimeUntilStaleNanos();
         stalenessFuture = retryExecutorService.schedule(runnable, delay, TimeUnit.NANOSECONDS);
@@ -310,7 +316,7 @@ public class BulkMutation {
         setComplete();
       }
     }
- 
+
     private synchronized void setComplete() {
       cancelIfNotDone(stalenessFuture);
       cancelIfNotDone(mutateRowsFuture);
@@ -332,8 +338,7 @@ public class BulkMutation {
     }
   }
 
-  @VisibleForTesting
-  Batch currentBatch = null;
+  @VisibleForTesting Batch currentBatch = null;
 
   private ScheduledFuture<?> scheduledFlush = null;
 
@@ -347,19 +352,19 @@ public class BulkMutation {
   private final Meter batchMeter =
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.batch.meter");
 
-  @VisibleForTesting
-  NanoClock clock = NanoClock.SYSTEM;
+  @VisibleForTesting NanoClock clock = NanoClock.SYSTEM;
 
   /**
    * Constructor for BulkMutation.
-   * @param tableName a {@link BigtableTableName} object for the table to which all
-   *          {@link MutateRowRequest}s will be sent.
-   * @param client a {@link BigtableDataClient} object on which to perform RPCs.
-   *          RPCs that this object performed.
+   *
+   * @param tableName a {@link BigtableTableName} object for the table to which all {@link
+   *     MutateRowRequest}s will be sent.
+   * @param client a {@link BigtableDataClient} object on which to perform RPCs. RPCs that this
+   *     object performed.
    * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
-   *          retries.
+   *     retries.
    * @param bulkOptions a {@link BulkOptions} with the user specified options for the behavior of
-   *          this instance.
+   *     this instance.
    */
   public BulkMutation(
       BigtableTableName tableName,
@@ -404,11 +409,14 @@ public class BulkMutation {
     if (entry.getMutationsCount() >= MAX_NUMBER_OF_MUTATIONS) {
       // entry.getRowKey().toStringUtf8() can be expensive, so don't add it in a standard
       // Precondition.checkArgument() which will always run it.
-      throw new IllegalArgumentException(String
-          .format("Key %s has %d mutations, which is over the %d maximum.",
-              entry.getRowKey().toStringUtf8(), entry.getMutationsCount(),
+      throw new IllegalArgumentException(
+          String.format(
+              "Key %s has %d mutations, which is over the %d maximum.",
+              entry.getRowKey().toStringUtf8(),
+              entry.getMutationsCount(),
               MAX_NUMBER_OF_MUTATIONS));
-    };
+    }
+    ;
 
     boolean didSend = false;
     if (currentBatch != null && currentBatch.wouldBeFull(entry)) {
@@ -428,27 +436,31 @@ public class BulkMutation {
     ListenableFuture<MutateRowResponse> future = currentBatch.add(entry);
     if (!didSend) {
       // TODO (sduskis): enable flush by default.
-      // If autoflushing is enabled and there is pending data then schedule a flush if one hasn't been scheduled
-      // NOTE: this is optimized for adding minimal overhead to per item adds, at the expense of periodic partial batches
+      // If autoflushing is enabled and there is pending data then schedule a flush if one hasn't
+      // been scheduled
+      // NOTE: this is optimized for adding minimal overhead to per item adds, at the expense of
+      // periodic partial batches
       if (this.autoflushMs > 0 && currentBatch != null && scheduledFlush == null) {
-        scheduledFlush = retryExecutorService.schedule(new Runnable() {
-          @Override
-          public void run() {
-            synchronized (BulkMutation.this) {
-              scheduledFlush = null;
-              sendUnsent();
-            }
-          }
-        }, autoflushMs, TimeUnit.MILLISECONDS);
+        scheduledFlush =
+            retryExecutorService.schedule(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    synchronized (BulkMutation.this) {
+                      scheduledFlush = null;
+                      sendUnsent();
+                    }
+                  }
+                },
+                autoflushMs,
+                TimeUnit.MILLISECONDS);
       }
     }
 
     return future;
   }
 
-  /**
-   * Send any outstanding {@link MutateRowRequest}s and wait until all requests are complete.
-   */
+  /** Send any outstanding {@link MutateRowRequest}s and wait until all requests are complete. */
   public void flush() throws InterruptedException {
     sendUnsent();
     operationAccountant.awaitCompletion();

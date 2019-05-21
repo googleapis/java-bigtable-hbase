@@ -15,21 +15,15 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Counter;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer.Context;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
@@ -38,6 +32,10 @@ import io.grpc.Metadata;
 import io.grpc.Metadata.Key;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
@@ -62,7 +60,6 @@ public class ChannelPool extends ManagedChannel {
    * A factory for creating ManagedChannels to be used in a {@link ChannelPool}.
    *
    * @author sduskis
-   *
    */
   public interface ChannelFactory {
     ManagedChannel create() throws IOException;
@@ -80,14 +77,10 @@ public class ChannelPool extends ManagedChannel {
     Counter ACTIVE_CHANNEL_COUNTER =
         BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active");
 
-    /**
-     * Best effort counter of active RPCs.
-     */
+    /** Best effort counter of active RPCs. */
     Counter ACTIVE_RPC_COUNTER = BigtableClientMetrics.counter(MetricLevel.Info, "grpc.rpc.active");
 
-    /**
-     * Best effort counter of RPCs.
-     */
+    /** Best effort counter of RPCs. */
     Meter RPC_METER = BigtableClientMetrics.meter(MetricLevel.Info, "grpc.rpc.performed");
   }
 
@@ -100,8 +93,8 @@ public class ChannelPool extends ManagedChannel {
 
   /**
    * Contains a {@link ManagedChannel} and metrics for the channel
-   * @author sduskis
    *
+   * @author sduskis
    */
   private class InstrumentedChannel extends ManagedChannel {
     private final ManagedChannel delegate;
@@ -114,12 +107,13 @@ public class ChannelPool extends ManagedChannel {
     public InstrumentedChannel(ManagedChannel channel) {
       this.delegate = channel;
       this.channelId = ChannelIdGenerator.incrementAndGet();
-      this.timer = BigtableClientMetrics.timer(MetricLevel.Trace,
-        "channels.channel" + channelId + ".rpc.latency");
+      this.timer =
+          BigtableClientMetrics.timer(
+              MetricLevel.Trace, "channels.channel" + channelId + ".rpc.latency");
       getStats().ACTIVE_CHANNEL_COUNTER.inc();
     }
 
-    private synchronized void markInactive(){
+    private synchronized void markInactive() {
       boolean previouslyActive = active.getAndSet(false);
       if (previouslyActive) {
         getStats().ACTIVE_CHANNEL_COUNTER.dec();
@@ -155,15 +149,17 @@ public class ChannelPool extends ManagedChannel {
     }
 
     @Override
-    public <ReqT, RespT> ClientCall<ReqT, RespT>
-        newCall(MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
+    public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
+        MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
       final Context timerContext = timer.time();
       final AtomicBoolean decremented = new AtomicBoolean(false);
-      return new CheckedForwardingClientCall<ReqT, RespT>(delegate.newCall(methodDescriptor, callOptions)) {
+      return new CheckedForwardingClientCall<ReqT, RespT>(
+          delegate.newCall(methodDescriptor, callOptions)) {
         @Override
         protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
             throws Exception {
-          ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext, decremented);
+          ClientCall.Listener<RespT> timingListener =
+              wrap(responseListener, timerContext, decremented);
           getStats().ACTIVE_RPC_COUNTER.inc();
           getStats().RPC_METER.mark();
           delegate().start(timingListener, headers);
@@ -179,8 +175,10 @@ public class ChannelPool extends ManagedChannel {
       };
     }
 
-    protected <RespT> ClientCall.Listener<RespT> wrap(final ClientCall.Listener<RespT> delegate,
-        final Context timeContext, final AtomicBoolean decremented) {
+    protected <RespT> ClientCall.Listener<RespT> wrap(
+        final ClientCall.Listener<RespT> delegate,
+        final Context timeContext,
+        final AtomicBoolean decremented) {
       return new ClientCall.Listener<RespT>() {
 
         @Override
@@ -204,7 +202,8 @@ public class ChannelPool extends ManagedChannel {
               getStats().ACTIVE_RPC_COUNTER.dec();
             }
             if (!status.isOk()) {
-              BigtableClientMetrics.meter(MetricLevel.Info, "grpc.errors." + status.getCode().name())
+              BigtableClientMetrics.meter(
+                      MetricLevel.Info, "grpc.errors." + status.getCode().name())
                   .mark();
             }
             delegate.onClose(status, trailers);
@@ -232,9 +231,8 @@ public class ChannelPool extends ManagedChannel {
 
   private boolean shutdown = false;
 
-
   /**
-   * <p>Constructor for ChannelPool.</p>
+   * Constructor for ChannelPool.
    *
    * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
    * @throws java.io.IOException if any.
@@ -269,11 +267,11 @@ public class ChannelPool extends ManagedChannel {
 
   /**
    * {@inheritDoc}
-   * <P>
-   * Create a {@link ClientCall} on a Channel from the pool chosen in a round-robin fashion to the
-   * remote operation specified by the given {@link MethodDescriptor}. The returned
-   * {@link ClientCall} does not trigger any remote behavior until
-   * {@link ClientCall#start(ClientCall.Listener, io.grpc.Metadata)} is invoked.
+   *
+   * <p>Create a {@link ClientCall} on a Channel from the pool chosen in a round-robin fashion to
+   * the remote operation specified by the given {@link MethodDescriptor}. The returned {@link
+   * ClientCall} does not trigger any remote behavior until {@link
+   * ClientCall#start(ClientCall.Listener, io.grpc.Metadata)} is invoked.
    */
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
@@ -283,7 +281,7 @@ public class ChannelPool extends ManagedChannel {
   }
 
   /**
-   * <p>size.</p>
+   * size.
    *
    * @return a int.
    */

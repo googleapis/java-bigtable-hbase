@@ -17,10 +17,11 @@ package com.google.cloud.bigtable.hbase.adapters.admin;
 
 import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
 
+import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.cloud.bigtable.admin.v2.models.GCRules;
+import com.google.cloud.bigtable.admin.v2.models.GCRules.GCRule;
 import java.util.Map;
 import java.util.Set;
-
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
@@ -32,14 +33,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import com.google.bigtable.admin.v2.ColumnFamily;
-import com.google.cloud.bigtable.admin.v2.models.GCRules.GCRule;
 import org.threeten.bp.Duration;
 
-/**
- * Tests for {@link ColumnDescriptorAdapter}.
- */
+/** Tests for {@link ColumnDescriptorAdapter}. */
 @RunWith(JUnit4.class)
 public class TestColumnDescriptorAdapter {
 
@@ -53,8 +49,7 @@ public class TestColumnDescriptorAdapter {
     descriptor = new HColumnDescriptor(FAMILY_NAME);
   }
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void exceptionIsThrownOnUnknownOptions() {
@@ -103,9 +98,7 @@ public class TestColumnDescriptorAdapter {
 
     ColumnFamily.Builder result = adapter.adapt(descriptor).toBuilder().clearGcRule();
 
-    Assert.assertArrayEquals(
-        new byte[0],
-        result.build().toByteArray());
+    Assert.assertArrayEquals(new byte[0], result.build().toByteArray());
   }
 
   @Test
@@ -114,15 +107,18 @@ public class TestColumnDescriptorAdapter {
     int ttl = 86400;
     descriptor.setTimeToLive(ttl);
     ColumnFamily result = adapter.adapt(descriptor);
-    GCRules.GCRule expected = GCRULES.union().rule(GCRULES.maxAge(Duration.ofSeconds(ttl)))
-            .rule(GCRULES.maxVersions(1));
+    GCRules.GCRule expected =
+        GCRULES.union().rule(GCRULES.maxAge(Duration.ofSeconds(ttl))).rule(GCRULES.maxVersions(1));
     Assert.assertEquals(expected.toProto(), result.getGcRule());
   }
 
   @Test
   public void ttlIsPreservedInColumnFamily() {
     // TTL of 1 day (in microseconds):
-    GCRules.GCRule expected = GCRULES.union().rule(GCRULES.maxAge(Duration.ofSeconds(86400)))
+    GCRules.GCRule expected =
+        GCRULES
+            .union()
+            .rule(GCRULES.maxAge(Duration.ofSeconds(86400)))
             .rule(GCRULES.maxVersions(1));
     HColumnDescriptor descriptor = adapter.adapt(columnFamily(expected));
     Assert.assertEquals(1, descriptor.getMaxVersions());
@@ -176,17 +172,17 @@ public class TestColumnDescriptorAdapter {
   }
 
   @Test
-  public void testBlankExpression(){
+  public void testBlankExpression() {
     com.google.cloud.bigtable.admin.v2.models.ColumnFamily columnFamily =
-        com.google.cloud.bigtable.admin.v2.models.ColumnFamily.fromProto("family",
-            ColumnFamily.getDefaultInstance());
+        com.google.cloud.bigtable.admin.v2.models.ColumnFamily.fromProto(
+            "family", ColumnFamily.getDefaultInstance());
     HColumnDescriptor descriptor = adapter.adapt(columnFamily);
     Assert.assertEquals(Integer.MAX_VALUE, descriptor.getMaxVersions());
     Assert.assertEquals(null, ColumnDescriptorAdapter.buildGarbageCollectionRule(descriptor));
   }
 
   @Test
-  public void testGCruleMaxVersion(){
+  public void testGCruleMaxVersion() {
     int ttl = 100;
     descriptor.setTimeToLive(ttl);
     descriptor.setMaxVersions(Integer.MAX_VALUE);
@@ -196,21 +192,24 @@ public class TestColumnDescriptorAdapter {
   }
 
   @Test
-  public void testAdaptWithColumnFamilyForMaxAge(){
+  public void testAdaptWithColumnFamilyForMaxAge() {
     int ttl = 86400;
     GCRule maxAgeGCRule = GCRULES.maxAge(Duration.ofSeconds(ttl));
     HColumnDescriptor actual = adapter.adapt(columnFamily(maxAgeGCRule));
     Assert.assertEquals(ttl, actual.getTimeToLive());
   }
 
-  //TODO: Remove this method and create ColumnFamily along with GCRule instead of using proto.
+  // TODO: Remove this method and create ColumnFamily along with GCRule instead of using proto.
   private static com.google.cloud.bigtable.admin.v2.models.ColumnFamily columnFamily(GCRule rule) {
-    return com.google.cloud.bigtable.admin.v2.models.ColumnFamily.fromProto("family",
-        ColumnFamily.newBuilder().setGcRule(rule.toProto()).build());
+    return com.google.cloud.bigtable.admin.v2.models.ColumnFamily.fromProto(
+        "family", ColumnFamily.newBuilder().setGcRule(rule.toProto()).build());
   }
 
   private GCRule minMaxRule(int minVersions, int ttl, int maxVersions) {
-    GCRule intersection = GCRULES.intersection().rule(GCRULES.maxAge(Duration.ofSeconds(ttl)))
+    GCRule intersection =
+        GCRULES
+            .intersection()
+            .rule(GCRULES.maxAge(Duration.ofSeconds(ttl)))
             .rule(GCRULES.maxVersions(minVersions));
     return GCRULES.union().rule(intersection).rule(GCRULES.maxVersions(maxVersions));
   }

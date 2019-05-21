@@ -22,13 +22,12 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
+import io.grpc.Status;
 import io.opencensus.common.Scope;
 import io.opencensus.contrib.grpc.util.StatusConverter;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
-import io.grpc.Status;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -38,8 +37,8 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
- * This class caches calls to {@link OAuth2Credentials#refreshAccessToken()}.  It asynchronously refreshes
- * the token when it becomes stale.
+ * This class caches calls to {@link OAuth2Credentials#refreshAccessToken()}. It asynchronously
+ * refreshes the token when it becomes stale.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -50,23 +49,23 @@ public class OAuthCredentialsCache {
   private static final Tracer TRACER = Tracing.getTracer();
   private static final HeaderCacheElement EMPTY_HEADER = new HeaderCacheElement(null, 0);
 
-  @VisibleForTesting
-  static Clock clock = Clock.SYSTEM;
+  @VisibleForTesting static Clock clock = Clock.SYSTEM;
 
   /**
-   * <p>
    * This enum describes the states of the OAuth header.
-   * </p>
+   *
    * <ol>
-   * <li>Good - fine to use, and does not need to be refreshed.
-   * <li>Stale - fine to use, but requires an async refresh
-   * <li>Expired - Cannot be used. Wait for a new token to be loaded
+   *   <li>Good - fine to use, and does not need to be refreshed.
+   *   <li>Stale - fine to use, but requires an async refresh
+   *   <li>Expired - Cannot be used. Wait for a new token to be loaded
    * </ol>
    */
   @VisibleForTesting
   enum CacheState {
-    Good(true), Stale(true),
-    Expired(false), Exception(false);
+    Good(true),
+    Stale(true),
+    Expired(false),
+    Exception(false);
 
     private boolean isValid;
 
@@ -170,7 +169,7 @@ public class OAuthCredentialsCache {
   private volatile HeaderCacheElement headerCache = EMPTY_HEADER;
 
   /**
-   * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
+   * Constructor for RefreshingOAuth2CredentialsInterceptor.
    *
    * @param scheduler a {@link ExecutorService} object.
    * @param credentials a {@link OAuth2Credentials} object.
@@ -190,16 +189,13 @@ public class OAuthCredentialsCache {
       return getHeaderUnsafe(timeout, timeUnit).getToken();
     } catch (Exception e) {
       LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
-      Status status = Status.UNAUTHENTICATED
-              .withDescription("Unexpected failure get auth token")
-              .withCause(e);
+      Status status =
+          Status.UNAUTHENTICATED.withDescription("Unexpected failure get auth token").withCause(e);
       return new HeaderToken(status, null);
     }
   }
 
-  /**
-   * Get the http credential header we need from a new oauth2 AccessToken.
-   */
+  /** Get the http credential header we need from a new oauth2 AccessToken. */
   @VisibleForTesting
   HeaderCacheElement getHeaderUnsafe(long timeout, TimeUnit timeUnit) {
     // Optimize for the common case: do a volatile read to peek for a Good cache value
@@ -214,21 +210,20 @@ public class OAuthCredentialsCache {
         return headerCacheUnsync;
       case Expired:
       case Exception:
-        // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire the lock)
+        // defer the future resolution (asyncRefresh will spin up a thread that will try to acquire
+        // the lock)
         return syncRefresh(timeout, timeUnit);
       default:
         String message = "Could not process state: " + headerCacheUnsync.getCacheState();
         LOG.warn(message);
         return new HeaderCacheElement(
-            Status.UNAUTHENTICATED
-                .withCause(new IllegalStateException(message)));
+            Status.UNAUTHENTICATED.withCause(new IllegalStateException(message)));
     }
   }
 
   /**
-   * Refresh the credentials and block. Will return an error if the credentials haven't
-   * been refreshed.
-   * This method should not be called while holding the refresh lock
+   * Refresh the credentials and block. Will return an error if the credentials haven't been
+   * refreshed. This method should not be called while holding the refresh lock
    */
   private HeaderCacheElement syncRefresh(long timeout, TimeUnit timeUnit) {
     Span span = TRACER.spanBuilder("Bigtable.CredentialsRefresh").startSpan();
@@ -236,31 +231,33 @@ public class OAuthCredentialsCache {
       return asyncRefresh().get(timeout, timeUnit);
     } catch (InterruptedException e) {
       LOG.warn("Interrupted while trying to refresh google credentials.", e);
-      Status status = Status.UNAUTHENTICATED
-          .withDescription("Authentication was interrupted.")
-          .withCause(e);
+      Status status =
+          Status.UNAUTHENTICATED.withDescription("Authentication was interrupted.").withCause(e);
       span.setStatus(StatusConverter.fromGrpcStatus(status));
       Thread.currentThread().interrupt();
       return new HeaderCacheElement(status);
     } catch (ExecutionException e) {
       LOG.warn("ExecutionException while trying to refresh google credentials.", e);
-      Status status = Status.UNAUTHENTICATED
-          .withDescription("ExecutionException during Authentication.")
-          .withCause(e);
+      Status status =
+          Status.UNAUTHENTICATED
+              .withDescription("ExecutionException during Authentication.")
+              .withCause(e);
       span.setStatus(StatusConverter.fromGrpcStatus(status));
       return new HeaderCacheElement(status);
     } catch (TimeoutException e) {
       LOG.warn("TimeoutException while trying to refresh google credentials.", e);
-      Status status = Status.UNAUTHENTICATED
-          .withDescription("TimeoutException during Authentication.")
-          .withCause(e);
+      Status status =
+          Status.UNAUTHENTICATED
+              .withDescription("TimeoutException during Authentication.")
+              .withCause(e);
       span.setStatus(StatusConverter.fromGrpcStatus(status));
       return new HeaderCacheElement(status);
     } catch (Exception e) {
       LOG.warn("Unexpected execption while trying to refresh google credentials.", e);
-      Status status = Status.UNAUTHENTICATED
-          .withDescription("Unexpected execption during Authentication.")
-          .withCause(e);
+      Status status =
+          Status.UNAUTHENTICATED
+              .withDescription("Unexpected execption during Authentication.")
+              .withCause(e);
       span.setStatus(StatusConverter.fromGrpcStatus(status));
       return new HeaderCacheElement(status);
     } finally {
@@ -284,12 +281,14 @@ public class OAuthCredentialsCache {
           return Futures.immediateFuture(headerCache);
         }
 
-        Future<HeaderCacheElement> future = executor.submit(new Callable<HeaderCacheElement>() {
-          @Override
-          public HeaderCacheElement call() {
-            return updateToken();
-          }
-        });
+        Future<HeaderCacheElement> future =
+            executor.submit(
+                new Callable<HeaderCacheElement>() {
+                  @Override
+                  public HeaderCacheElement call() {
+                    return updateToken();
+                  }
+                });
 
         if (!future.isDone()) {
           this.futureToken = future;
@@ -298,18 +297,21 @@ public class OAuthCredentialsCache {
       } catch (RuntimeException e) {
         futureToken = null;
         LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
-        return Futures.immediateFuture(new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-              .withDescription("Unexpected error trying to authenticate")
-              .withCause(e)));
+        return Futures.immediateFuture(
+            new HeaderCacheElement(
+                Status.UNAUTHENTICATED
+                    .withDescription("Unexpected error trying to authenticate")
+                    .withCause(e)));
       }
     }
   }
 
-    /**
-     * Create a new token via {@link OAuth2Credentials#refreshAccessToken()}, and then update the cache.
-     * @return the new token
-     */
+  /**
+   * Create a new token via {@link OAuth2Credentials#refreshAccessToken()}, and then update the
+   * cache.
+   *
+   * @return the new token
+   */
   private HeaderCacheElement updateToken() {
     HeaderCacheElement newToken;
     try {
@@ -317,19 +319,22 @@ public class OAuthCredentialsCache {
       newToken = new HeaderCacheElement(credentials.refreshAccessToken());
     } catch (Exception e) {
       LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
-      newToken = new HeaderCacheElement(
-          Status.UNAUTHENTICATED
-              .withDescription("Unexpected error trying to authenticate")
-              .withCause(e)
-      );
+      newToken =
+          new HeaderCacheElement(
+              Status.UNAUTHENTICATED
+                  .withDescription("Unexpected error trying to authenticate")
+                  .withCause(e));
     }
     synchronized (lock) {
       // Update the token only if the new token is good or the old token is bad
       if (newToken.isValid() || !headerCache.isValid()) {
         headerCache = newToken;
       } else {
-        LOG.warn("Failed to refresh the access token. Falling back to existing token. "
-            + "New token state: {}, status: {}", newToken.getCacheState(), newToken.getToken().status);
+        LOG.warn(
+            "Failed to refresh the access token. Falling back to existing token. "
+                + "New token state: {}, status: {}",
+            newToken.getCacheState(),
+            newToken.getToken().status);
       }
       futureToken = null;
 
@@ -337,11 +342,12 @@ public class OAuthCredentialsCache {
     }
   }
 
-    /**
-     * Clear the cache.
-     *
-     * @param oldToken for a comparison.  Only revoke the cache if the oldToken matches the current one.
-     */
+  /**
+   * Clear the cache.
+   *
+   * @param oldToken for a comparison. Only revoke the cache if the oldToken matches the current
+   *     one.
+   */
   void revokeUnauthToken(HeaderToken oldToken) {
     synchronized (lock) {
       if (headerCache.getToken() == oldToken) {
@@ -355,7 +361,7 @@ public class OAuthCredentialsCache {
 
   @VisibleForTesting
   boolean isRefreshing() {
-    synchronized(lock) {
+    synchronized (lock) {
       return futureToken != null;
     }
   }

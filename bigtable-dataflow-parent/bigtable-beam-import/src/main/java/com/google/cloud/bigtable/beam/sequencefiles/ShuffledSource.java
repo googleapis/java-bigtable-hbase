@@ -26,8 +26,8 @@ import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 /**
  * Wrapper that will randomize the ordering of initial splits.
  *
- * This useful when reading sorted files to import into Bigtable. It will allow Bigtable
- * to create initial split quicker.
+ * <p>This useful when reading sorted files to import into Bigtable. It will allow Bigtable to
+ * create initial split quicker.
  */
 class ShuffledSource<T> extends BoundedSource<T> {
   private final BoundedSource<T> delegate;
@@ -41,12 +41,10 @@ class ShuffledSource<T> extends BoundedSource<T> {
     this.delegate = delegate;
   }
 
-  /**
-   * Shuffles the delegate source's splits.
-   */
+  /** Shuffles the delegate source's splits. */
   @Override
-  public List<? extends BoundedSource<T>> split(long desiredBundleSizeBytes,
-      PipelineOptions options) throws Exception {
+  public List<? extends BoundedSource<T>> split(
+      long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
 
     List<? extends BoundedSource<T>> splits = delegate.split(desiredBundleSizeBytes, options);
     Collections.shuffle(splits);

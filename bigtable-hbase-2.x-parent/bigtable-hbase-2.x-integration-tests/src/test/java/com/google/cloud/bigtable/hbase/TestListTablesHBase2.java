@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptor;
@@ -38,7 +34,7 @@ import org.junit.Test;
 public class TestListTablesHBase2 extends AbstractTestListTables {
 
   private boolean enableAsyncDelete = false;
-  
+
   @Before
   public void setup() {
     enableAsyncDelete = false;
@@ -49,7 +45,7 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
     enableAsyncDelete = true;
     testDeleteTable();
   }
-  
+
   @Override
   protected void checkColumnFamilies(Admin admin, TableName tableName) throws IOException {
     TableDescriptor descriptor = admin.getDescriptor(tableName);
@@ -57,7 +53,7 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
     Assert.assertEquals(2, columnFamilies.length);
     Assert.assertEquals(Bytes.toString(COLUMN_FAMILY), columnFamilies[0].getNameAsString());
   }
-  
+
   @Override
   protected void deleteTable(Admin admin, TableName tableName) throws Exception {
     if (enableAsyncDelete) {
@@ -68,25 +64,23 @@ public class TestListTablesHBase2 extends AbstractTestListTables {
     }
   }
 
-
   @Override
-  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, Pattern pattern) 
+  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, Pattern pattern)
       throws IOException {
     return toTableNames(admin.listTableDescriptors(pattern));
   }
 
   @Override
-  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, List<TableName> tableNames) 
+  protected List<TableName> listTableNamesUsingDescriptors(Admin admin, List<TableName> tableNames)
       throws IOException {
     return toTableNames(admin.listTableDescriptors(tableNames));
   }
 
   @Override
-  protected void checkTableDescriptor(Admin admin, TableName tableName)
-      throws IOException {
+  protected void checkTableDescriptor(Admin admin, TableName tableName) throws IOException {
     admin.getDescriptor(tableName);
   }
-  
+
   private List<TableName> toTableNames(List<TableDescriptor> descriptors) {
     List<TableName> tableNames = new ArrayList<>();
     for (TableDescriptor descriptor : descriptors) {

@@ -37,8 +37,8 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.serializer.WritableSerialization;
 
 /**
- * A job that imports data from Cloud Storage bucket with HBase SequenceFile format into Cloud Bigtable.
- * This job can be run directly or as a Dataflow template.
+ * A job that imports data from Cloud Storage bucket with HBase SequenceFile format into Cloud
+ * Bigtable. This job can be run directly or as a Dataflow template.
  *
  * <p>Execute the following command to run the job directly:
  *
@@ -85,33 +85,41 @@ public class ImportJob {
   public interface ImportOptions extends GcpOptions {
     @Description("This Bigtable App Profile id.")
     ValueProvider<String> getBigtableAppProfileId();
+
     @SuppressWarnings("unused")
     void setBigtableAppProfileId(ValueProvider<String> appProfileId);
 
     @Description("The project that contains the table to export. Defaults to --project.")
     @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
     ValueProvider<String> getBigtableProject();
+
     @SuppressWarnings("unused")
     void setBigtableProject(ValueProvider<String> projectId);
 
     @Description("The Bigtable instance id that contains the table to export.")
     ValueProvider<String> getBigtableInstanceId();
+
     @SuppressWarnings("unused")
     void setBigtableInstanceId(ValueProvider<String> instanceId);
 
     @Description("The Bigtable table id to export.")
     ValueProvider<String> getBigtableTableId();
+
     @SuppressWarnings("unused")
     void setBigtableTableId(ValueProvider<String> tableId);
 
-    @Description("The fully qualified file pattern to import. Should of the form '[destinationPath]/part-*'")
+    @Description(
+        "The fully qualified file pattern to import. Should of the form '[destinationPath]/part-*'")
     ValueProvider<String> getSourcePattern();
+
     @SuppressWarnings("unused")
     void setSourcePattern(ValueProvider<String> sourcePath);
 
-    @Description("Optional Set mutation latency throttling (enables the feature). Value in milliseconds.")
+    @Description(
+        "Optional Set mutation latency throttling (enables the feature). Value in milliseconds.")
     @Default.Integer(0)
     ValueProvider<Integer> getMutationThrottleLatencyMs();
+
     @SuppressWarnings("unused")
     void setMutationThrottleLatencyMs(ValueProvider<Integer> throttleMs);
 
@@ -119,6 +127,7 @@ public class ImportJob {
     @Description("Wait for pipeline to finish.")
     @Default.Boolean(true)
     boolean getWait();
+
     @SuppressWarnings("unused")
     void setWait(boolean wait);
   }
@@ -126,9 +135,8 @@ public class ImportJob {
   public static void main(String[] args) {
     PipelineOptionsFactory.register(ImportOptions.class);
 
-    ImportOptions opts = PipelineOptionsFactory
-        .fromArgs(args).withValidation()
-        .as(ImportOptions.class);
+    ImportOptions opts =
+        PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
 
     Pipeline pipeline = buildPipeline(opts);
 

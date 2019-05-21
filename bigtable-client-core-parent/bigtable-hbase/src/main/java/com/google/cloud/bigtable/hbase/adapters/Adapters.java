@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.cloud.bigtable.hbase.adapters.read.RowRangeAdapter;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.Increment;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.filters.BigtableWhileMatchResultScannerAdapter;
@@ -27,7 +23,11 @@ import com.google.cloud.bigtable.hbase.adapters.read.BigtableResultScannerAdapte
 import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.RowRangeAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Increment;
 
 /**
  * Manages all Adapters
@@ -51,35 +51,33 @@ public final class Adapters {
   /** Constant <code>ROW_RANGE_ADAPTER</code> */
   public static final RowRangeAdapter ROW_RANGE_ADAPTER = new RowRangeAdapter();
   /** Constant <code>SCAN_ADAPTER</code> */
-  public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(
-      FILTER_ADAPTER, ROW_RANGE_ADAPTER
-  );
+  public static final ScanAdapter SCAN_ADAPTER = new ScanAdapter(FILTER_ADAPTER, ROW_RANGE_ADAPTER);
   /** Constant <code>BIGTABLE_RESULT_SCAN_ADAPTER</code> */
   public static final BigtableResultScannerAdapter<FlatRow> BIGTABLE_RESULT_SCAN_ADAPTER =
       new BigtableResultScannerAdapter<>(FLAT_ROW_ADAPTER);
   /** Constant <code>BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER</code> */
   public static final BigtableWhileMatchResultScannerAdapter
       BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER =
-      new BigtableWhileMatchResultScannerAdapter(FLAT_ROW_ADAPTER);
+          new BigtableWhileMatchResultScannerAdapter(FLAT_ROW_ADAPTER);
   /** Constant <code>GET_ADAPTER</code> */
   public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
 
   /**
-   * <p>createMutationsAdapter.</p>
+   * createMutationsAdapter.
    *
    * @param putAdapter a {@link com.google.cloud.bigtable.hbase.adapters.PutAdapter} object.
    * @return a {@link com.google.cloud.bigtable.hbase.adapters.HBaseMutationAdapter} object.
    */
   public static HBaseMutationAdapter createMutationsAdapter(PutAdapter putAdapter) {
     return new HBaseMutationAdapter(
-      DELETE_ADAPTER,
-      putAdapter,
-      new UnsupportedMutationAdapter<Increment>("increment"),
-      new UnsupportedMutationAdapter<Append>("append"));
+        DELETE_ADAPTER,
+        putAdapter,
+        new UnsupportedMutationAdapter<Increment>("increment"),
+        new UnsupportedMutationAdapter<Append>("append"));
   }
 
   /**
-   * <p>createPutAdapter.</p>
+   * createPutAdapter.
    *
    * @param config a {@link org.apache.hadoop.conf.Configuration} object.
    * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
@@ -90,6 +88,5 @@ public final class Adapters {
     return new PutAdapter(config.getInt("hbase.client.keyvalue.maxsize", -1), setClientTimestamp);
   }
 
-  private Adapters() {
-  }
+  private Adapters() {}
 }

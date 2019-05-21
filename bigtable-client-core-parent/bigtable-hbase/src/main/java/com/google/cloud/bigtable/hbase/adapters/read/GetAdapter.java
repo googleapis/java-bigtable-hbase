@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,15 +17,14 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.protobuf.ByteString;
-
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 
 /**
- * A {@link Get} adapter that transform the Get into a {@link Query} using the proto-based
- * filter language.
+ * A {@link Get} adapter that transform the Get into a {@link Query} using the proto-based filter
+ * language.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -33,7 +32,7 @@ import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 public class GetAdapter implements ReadOperationAdapter<Get> {
 
   public static Get setCheckExistenceOnly(Get get) {
-    if (get.isCheckExistenceOnly()){
+    if (get.isCheckExistenceOnly()) {
       return get;
     } else {
       Get existsGet = new Get(get);
@@ -44,7 +43,7 @@ public class GetAdapter implements ReadOperationAdapter<Get> {
 
   protected final ScanAdapter scanAdapter;
   /**
-   * <p>Constructor for GetAdapter.</p>
+   * Constructor for GetAdapter.
    *
    * @param scanAdapter a {@link ScanAdapter} object.
    */
@@ -58,7 +57,8 @@ public class GetAdapter implements ReadOperationAdapter<Get> {
     Scan operationAsScan = new Scan(addKeyOnlyFilter(operation));
     scanAdapter.throwIfUnsupportedScan(operationAsScan);
 
-    query.filter(scanAdapter.buildFilter(operationAsScan, readHooks))
+    query
+        .filter(scanAdapter.buildFilter(operationAsScan, readHooks))
         .rowKey(ByteString.copyFrom(operation.getRow()));
   }
 
@@ -75,5 +75,4 @@ public class GetAdapter implements ReadOperationAdapter<Get> {
       return get;
     }
   }
-
 }

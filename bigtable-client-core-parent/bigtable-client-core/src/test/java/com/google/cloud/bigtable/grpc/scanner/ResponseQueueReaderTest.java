@@ -22,9 +22,14 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
+import com.google.protobuf.ByteString;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.ClientCallStreamObserver;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,23 +39,13 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
-import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
-import com.google.protobuf.ByteString;
-
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.ClientCallStreamObserver;
-
 @RunWith(JUnit4.class)
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ResponseQueueReaderTest {
 
-  @Mock
-  private ClientCallStreamObserver mockClientCallStreamObserver;
+  @Mock private ClientCallStreamObserver mockClientCallStreamObserver;
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   private ResponseQueueReader underTest;
 
@@ -84,12 +79,17 @@ public class ResponseQueueReaderTest {
     underTest.addRequestResultMarker();
     assertSame(row, underTest.getNextMergedRow());
     // getNextMergedRow() will block until either a result is present or the operation is complete.
-    BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().schedule(new Runnable() {
-      @Override
-      public void run() {
-        underTest.onCompleted();
-      }
-    }, 50, TimeUnit.MILLISECONDS);
+    BigtableSessionSharedThreadPools.getInstance()
+        .getRetryExecutor()
+        .schedule(
+            new Runnable() {
+              @Override
+              public void run() {
+                underTest.onCompleted();
+              }
+            },
+            50,
+            TimeUnit.MILLISECONDS);
     assertNull(underTest.getNextMergedRow());
     verify(mockClientCallStreamObserver, times(1)).request(eq(1));
   }

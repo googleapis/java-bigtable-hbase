@@ -19,17 +19,6 @@ import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterce
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.NanoClock;
-import com.google.common.util.concurrent.MoreExecutors;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import io.grpc.stub.StreamObserver;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import javax.annotation.Nullable;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
@@ -48,19 +37,19 @@ import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryingMutateRowsOperation;
 import com.google.cloud.bigtable.grpc.async.RetryingStreamOperation;
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryOperation;
-import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.RetryingReadRowsOperation;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
-import com.google.cloud.bigtable.grpc.scanner.RetryingReadRowsOperation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -68,14 +57,24 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.stub.StreamObserver;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.Nullable;
 
 /**
  * A gRPC client to access the v2 Bigtable data service.
- * <p>
- * In addition to calling the underlying data service API via grpc, this class adds retry logic and
- * some useful headers.
- * <p>
- * Most of the methods are unary (single response). The only exception is ReadRows which is a
+ *
+ * <p>In addition to calling the underlying data service API via grpc, this class adds retry logic
+ * and some useful headers.
+ *
+ * <p>Most of the methods are unary (single response). The only exception is ReadRows which is a
  * streaming call.
  *
  * @author sduskis
@@ -83,7 +82,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
 
-  private final static ApiClock CLOCK = NanoClock.getDefaultClock();
+  private static final ApiClock CLOCK = NanoClock.getDefaultClock();
 
   // Retryable Predicates
   /** Constant <code>IS_RETRYABLE_MUTATION</code> */
@@ -124,12 +123,13 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   // Streaming API transformers
-  private static Function<FlatRow, Row> FLAT_ROW_TRANSFORMER = new Function<FlatRow, Row>(){
-    @Override
-    public Row apply(FlatRow input) {
-      return FlatRowConverter.convert(input);
-    }
-  };
+  private static Function<FlatRow, Row> FLAT_ROW_TRANSFORMER =
+      new Function<FlatRow, Row>() {
+        @Override
+        public Row apply(FlatRow input) {
+          return FlatRowConverter.convert(input);
+        }
+      };
 
   private static Function<List<ReadRowsResponse>, List<FlatRow>> FLAT_ROW_LIST_TRANSFORMER =
       new Function<List<ReadRowsResponse>, List<FlatRow>>() {
@@ -157,16 +157,17 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final BigtableAsyncRpc<SampleRowKeysRequest, SampleRowKeysResponse> sampleRowKeysAsync;
   private final BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readRowsAsync;
 
-  @VisibleForTesting
-  final BigtableAsyncRpc<MutateRowRequest, MutateRowResponse> mutateRowRpc;
-  @VisibleForTesting
-  final BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> mutateRowsRpc;
+  @VisibleForTesting final BigtableAsyncRpc<MutateRowRequest, MutateRowResponse> mutateRowRpc;
+  @VisibleForTesting final BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> mutateRowsRpc;
+
   @VisibleForTesting
   final BigtableAsyncRpc<CheckAndMutateRowRequest, CheckAndMutateRowResponse> checkAndMutateRpc;
-  private final BigtableAsyncRpc<ReadModifyWriteRowRequest, ReadModifyWriteRowResponse> readWriteModifyRpc;
+
+  private final BigtableAsyncRpc<ReadModifyWriteRowRequest, ReadModifyWriteRowResponse>
+      readWriteModifyRpc;
 
   /**
-   * <p>Constructor for BigtableDataGrpcClient.</p>
+   * Constructor for BigtableDataGrpcClient.
    *
    * @param channel a {@link Channel} object.
    * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
@@ -179,9 +180,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
     try {
       BigtableGrpc.getReadRowsMethod();
-    } catch(NoSuchMethodError e) {
-      throw new RuntimeException("Please make sure that you are using "
-          + "grpc-google-cloud-bigtable-v2 > 0.11.0 and bigtable-protos is not on your classpath");
+    } catch (NoSuchMethodError e) {
+      throw new RuntimeException(
+          "Please make sure that you are using "
+              + "grpc-google-cloud-bigtable-v2 > 0.11.0 and bigtable-protos is not on your classpath");
     }
 
     this.clientDefaultAppProfileId = bigtableOptions.getAppProfileId();
@@ -189,24 +191,27 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     this.retryOptions = bigtableOptions.getRetryOptions();
 
     BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
-    this.sampleRowKeysAsync = asyncUtilities.createAsyncRpc(
-        BigtableGrpc.getSampleRowKeysMethod(),
-        Predicates.<SampleRowKeysRequest> alwaysTrue());
-    this.readRowsAsync = asyncUtilities.createAsyncRpc(
-        BigtableGrpc.getReadRowsMethod(),
-        Predicates.<ReadRowsRequest> alwaysTrue());
-    this.mutateRowRpc = asyncUtilities.createAsyncRpc(
-        BigtableGrpc.getMutateRowMethod(),
-        getMutationRetryableFunction(IS_RETRYABLE_MUTATION));
-    this.mutateRowsRpc = asyncUtilities.createAsyncRpc(
-        BigtableGrpc.getMutateRowsMethod(),
-        getMutationRetryableFunction(ARE_RETRYABLE_MUTATIONS));
-    this.checkAndMutateRpc = asyncUtilities.createAsyncRpc(
-        BigtableGrpc.getCheckAndMutateRowMethod(),
-        getMutationRetryableFunction(Predicates.<CheckAndMutateRowRequest> alwaysFalse()));
-    this.readWriteModifyRpc = asyncUtilities.createAsyncRpc(
-        BigtableGrpc.getReadModifyWriteRowMethod(),
-        Predicates.<ReadModifyWriteRowRequest> alwaysFalse());
+    this.sampleRowKeysAsync =
+        asyncUtilities.createAsyncRpc(
+            BigtableGrpc.getSampleRowKeysMethod(), Predicates.<SampleRowKeysRequest>alwaysTrue());
+    this.readRowsAsync =
+        asyncUtilities.createAsyncRpc(
+            BigtableGrpc.getReadRowsMethod(), Predicates.<ReadRowsRequest>alwaysTrue());
+    this.mutateRowRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableGrpc.getMutateRowMethod(), getMutationRetryableFunction(IS_RETRYABLE_MUTATION));
+    this.mutateRowsRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableGrpc.getMutateRowsMethod(),
+            getMutationRetryableFunction(ARE_RETRYABLE_MUTATIONS));
+    this.checkAndMutateRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableGrpc.getCheckAndMutateRowMethod(),
+            getMutationRetryableFunction(Predicates.<CheckAndMutateRowRequest>alwaysFalse()));
+    this.readWriteModifyRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableGrpc.getReadModifyWriteRowMethod(),
+            Predicates.<ReadModifyWriteRowRequest>alwaysFalse());
   }
 
   /** {@inheritDoc} */
@@ -270,8 +275,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }
     CallOptions callOptions = getCallOptions(mutateRowsRpc.getMethodDescriptor(), request);
     Metadata metadata = createMetadata(request.getTableName());
-    return new RetryingMutateRowsOperation(retryOptions, request, mutateRowsRpc, callOptions,
-        retryExecutorService, metadata, CLOCK);
+    return new RetryingMutateRowsOperation(
+        retryOptions, request, mutateRowsRpc, callOptions, retryExecutorService, metadata, CLOCK);
   }
 
   /** {@inheritDoc} */
@@ -351,7 +356,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
     return Futures.transform(
         createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
-        ROW_LIST_TRANSFORMER, MoreExecutors.directExecutor());
+        ROW_LIST_TRANSFORMER,
+        MoreExecutors.directExecutor());
   }
 
   /** {@inheritDoc} */
@@ -363,7 +369,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
     return Futures.transform(
         createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
-        FLAT_ROW_LIST_TRANSFORMER, MoreExecutors.directExecutor());
+        FLAT_ROW_LIST_TRANSFORMER,
+        MoreExecutors.directExecutor());
   }
 
   /** {@inheritDoc} */
@@ -374,7 +381,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }
 
     return FLAT_ROW_LIST_TRANSFORMER.apply(
-        createStreamingListener(request, readRowsAsync, request.getTableName()).getBlockingResult());
+        createStreamingListener(request, readRowsAsync, request.getTableName())
+            .getBlockingResult());
   }
 
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
@@ -393,14 +401,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         retryOptions, request, rpc, callOptions, retryExecutorService, metadata, CLOCK);
   }
 
-  private <ReqT> CallOptions getCallOptions(final MethodDescriptor<ReqT, ?> methodDescriptor,
-      ReqT request) {
+  private <ReqT> CallOptions getCallOptions(
+      final MethodDescriptor<ReqT, ?> methodDescriptor, ReqT request) {
     return callOptionsFactory.create(methodDescriptor, request);
   }
 
-  /**
-   * Creates a {@link Metadata} that contains pertinent headers.
-   */
+  /** Creates a {@link Metadata} that contains pertinent headers. */
   private Metadata createMetadata(String tableName) {
     Metadata metadata = new Metadata();
     if (tableName != null) {
@@ -463,14 +469,19 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     // during operation.
     final ResponseQueueReader reader = new ResponseQueueReader();
     RetryingReadRowsOperation operation = createReadRowsRetryListener(request, reader);
-    operation.setResultObserver(new StreamObserver<ReadRowsResponse>(){
-      @Override
-      public void onNext(ReadRowsResponse value) {
-        reader.addRequestResultMarker();
-      }
-      @Override public void onError(Throwable t) {}
-      @Override public void onCompleted() {}
-    });
+    operation.setResultObserver(
+        new StreamObserver<ReadRowsResponse>() {
+          @Override
+          public void onNext(ReadRowsResponse value) {
+            reader.addRequestResultMarker();
+          }
+
+          @Override
+          public void onError(Throwable t) {}
+
+          @Override
+          public void onCompleted() {}
+        });
 
     // Start the operation.
     operation.getAsyncResult();
@@ -493,8 +504,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return operation;
   }
 
-  private RetryingReadRowsOperation createReadRowsRetryListener(ReadRowsRequest request,
-      StreamObserver<FlatRow> observer) {
+  private RetryingReadRowsOperation createReadRowsRetryListener(
+      ReadRowsRequest request, StreamObserver<FlatRow> observer) {
     return new RetryingReadRowsOperation(
         observer,
         retryOptions,

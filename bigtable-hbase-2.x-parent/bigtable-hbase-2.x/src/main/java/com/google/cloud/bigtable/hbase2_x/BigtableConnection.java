@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -33,19 +33,17 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableBuilder;
 import org.apache.hadoop.hbase.security.User;
 
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
-
 /**
  * HBase 2.x specific implementation of {@link AbstractBigtableConnection}.
+ *
  * @author sduskis
  * @version $Id: $Id
  */
 public class BigtableConnection extends AbstractBigtableConnection {
 
   /**
-   * <p>
    * Constructor for BigtableConnection.
-   * </p>
+   *
    * @param conf a {@link Configuration} object.
    * @throws IOException if any.
    */
@@ -59,14 +57,14 @@ public class BigtableConnection extends AbstractBigtableConnection {
   }
 
   /**
-   * Due to hbase 1.x to 2.x binary incompatibilities.
-   * {@link HRegionLocation#HRegionLocation(org.apache.hadoop.hbase.client.RegionInfo, ServerName)}
-   * will fail with NoSuchMethodException if not recompiled with hbase 2.0 dependencies. Hence the
+   * Due to hbase 1.x to 2.x binary incompatibilities. {@link
+   * HRegionLocation#HRegionLocation(org.apache.hadoop.hbase.client.RegionInfo, ServerName)} will
+   * fail with NoSuchMethodException if not recompiled with hbase 2.0 dependencies. Hence the
    * override. See {@link SampledRowKeysAdapter} for more details.
    */
   @Override
-  protected SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
-      ServerName serverName) {
+  protected SampledRowKeysAdapter createSampledRowKeysAdapter(
+      TableName tableName, ServerName serverName) {
     return new SampledRowKeysAdapter(tableName, serverName) {
       @Override
       protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
@@ -136,5 +134,4 @@ public class BigtableConnection extends AbstractBigtableConnection {
     }
     return regionInfos;
   }
-
 }

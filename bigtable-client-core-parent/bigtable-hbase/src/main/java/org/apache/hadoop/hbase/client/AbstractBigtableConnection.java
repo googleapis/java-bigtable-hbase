@@ -24,16 +24,9 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.common.base.MoreObjects;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
-import org.apache.hadoop.hbase.security.User;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
@@ -45,33 +38,42 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
+import org.apache.hadoop.hbase.security.User;
 
 /**
- * <p>Abstract AbstractBigtableConnection class.</p>
+ * Abstract AbstractBigtableConnection class.
  *
  * @author sduskis
  * @version $Id: $Id
  */
-public abstract class AbstractBigtableConnection implements Connection, CommonConnection, Closeable {
+public abstract class AbstractBigtableConnection
+    implements Connection, CommonConnection, Closeable {
   private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
   private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
       Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
 
   static {
-    Runnable shutDownRunnable = new Runnable() {
-      @Override
-      public void run() {
-        for (BigtableBufferedMutator bbm : ACTIVE_BUFFERED_MUTATORS.values()) {
-          if (bbm.hasInflightRequests()) {
-            int size = ACTIVE_BUFFERED_MUTATORS.size();
-            new Logger(AbstractBigtableConnection.class).warn(
-              "Shutdown is commencing and you have open %d buffered mutators."
-                  + "You need to close() or flush() them so that is not lost", size);
-            break;
+    Runnable shutDownRunnable =
+        new Runnable() {
+          @Override
+          public void run() {
+            for (BigtableBufferedMutator bbm : ACTIVE_BUFFERED_MUTATORS.values()) {
+              if (bbm.hasInflightRequests()) {
+                int size = ACTIVE_BUFFERED_MUTATORS.size();
+                new Logger(AbstractBigtableConnection.class)
+                    .warn(
+                        "Shutdown is commencing and you have open %d buffered mutators."
+                            + "You need to close() or flush() them so that is not lost",
+                        size);
+                break;
+              }
+            }
           }
-        }
-      }
-    };
+        };
     Runtime.getRuntime().addShutdownHook(new Thread(shutDownRunnable));
 
     // Force the loading of HConstants.class, which shares a bi-directional reference with KeyValue.
@@ -101,7 +103,7 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
   private MutationAdapters mutationAdapters;
 
   /**
-   * <p>Constructor for AbstractBigtableConnection.</p>
+   * Constructor for AbstractBigtableConnection.
    *
    * @param conf a {@link org.apache.hadoop.conf.Configuration} object.
    * @throws java.io.IOException if any.
@@ -111,20 +113,22 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
   }
 
   /**
-   * The constructor called from {@link org.apache.hadoop.hbase.client.ConnectionFactory#createConnection(Configuration)} and
-   * in its many forms via reflection with this specific signature.
+   * The constructor called from {@link
+   * org.apache.hadoop.hbase.client.ConnectionFactory#createConnection(Configuration)} and in its
+   * many forms via reflection with this specific signature.
    *
-   * @param conf The configuration for this channel. See {@link com.google.cloud.bigtable.hbase.BigtableOptionsFactory} for more details.
+   * @param conf The configuration for this channel. See {@link
+   *     com.google.cloud.bigtable.hbase.BigtableOptionsFactory} for more details.
    * @param managed This should always be false. It's an artifact of old HBase behavior.
-   * @param pool An {@link java.util.concurrent.ExecutorService} to run HBase/Bigtable object conversions on. The RPCs
-   *             themselves run via NIO, and not on a waiting thread
+   * @param pool An {@link java.util.concurrent.ExecutorService} to run HBase/Bigtable object
+   *     conversions on. The RPCs themselves run via NIO, and not on a waiting thread
    * @param user This is an artifact of HBase which Cloud Bigtable ignores. User information is
-   * captured in the Credentials configuration in conf.
-   * @throws java.io.IOException if the setup is not correct. The most likely issue is ALPN or OpenSSL
-   * misconfiguration.
+   *     captured in the Credentials configuration in conf.
+   * @throws java.io.IOException if the setup is not correct. The most likely issue is ALPN or
+   *     OpenSSL misconfiguration.
    */
-  protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
-      User user) throws IOException {
+  protected AbstractBigtableConnection(
+      Configuration conf, boolean managed, ExecutorService pool, User user) throws IOException {
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
@@ -188,7 +192,7 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
 
   public HBaseRequestAdapter createAdapter(TableName tableName) {
     if (mutationAdapters == null) {
-      synchronized(this) {
+      synchronized (this) {
         if (mutationAdapters == null) {
           mutationAdapters = new HBaseRequestAdapter.MutationAdapters(options, conf);
         }
@@ -207,8 +211,8 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
   }
 
   /**
-   * This should not be used.  The hbase shell needs this in hbase 0.99.2. Remove this once
-   * 1.0.0 comes out.
+   * This should not be used. The hbase shell needs this in hbase 0.99.2. Remove this once 1.0.0
+   * comes out.
    *
    * @param tableName a {@link java.lang.String} object.
    * @return a {@link org.apache.hadoop.hbase.client.Table} object.
@@ -225,14 +229,15 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
     RegionLocator locator = getCachedLocator(tableName);
 
     if (locator == null) {
-      locator = new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClientWrapper()) {
+      locator =
+          new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClientWrapper()) {
 
-        @Override
-        public SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableName,
-            ServerName serverName) {
-          return createSampledRowKeysAdapter(tableName, serverName);
-        }
-      };
+            @Override
+            public SampledRowKeysAdapter getSampledRowKeysAdapter(
+                TableName tableName, ServerName serverName) {
+              return createSampledRowKeysAdapter(tableName, serverName);
+            }
+          };
 
       locatorCache.add(locator);
     }
@@ -257,8 +262,8 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
    * @param serverName a {@link ServerName} object.
    * @return a {@link SampledRowKeysAdapter} object.
    */
-  protected abstract SampledRowKeysAdapter createSampledRowKeysAdapter(TableName tableName,
-    ServerName serverName);
+  protected abstract SampledRowKeysAdapter createSampledRowKeysAdapter(
+      TableName tableName, ServerName serverName);
 
   /** {@inheritDoc} */
   @Override
@@ -271,7 +276,7 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
     this.aborted = true;
     try {
       close();
-    } catch(IOException e) {
+    } catch (IOException e) {
       throw new RuntimeException("Could not close the connection", e);
     }
   }
@@ -290,7 +295,7 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
 
   /** {@inheritDoc} */
   @Override
-  public void close() throws IOException{
+  public void close() throws IOException {
     if (!this.closed) {
       this.session.close();
       // If the clients are shutdown, there shouldn't be any more activity on the
@@ -310,11 +315,11 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableConnection.class)
-      .add("project", options.getProjectId())
-      .add("instance", options.getInstanceId())
-      .add("dataHost", options.getDataHost())
-      .add("tableAdminHost", options.getAdminHost())
-      .toString();
+        .add("project", options.getProjectId())
+        .add("instance", options.getInstanceId())
+        .add("dataHost", options.getDataHost())
+        .add("tableAdminHost", options.getAdminHost())
+        .toString();
   }
 
   // Copied from org.apache.hadoop.hbase.client.HConnectionManager#shutdownBatchPool()
@@ -337,7 +342,7 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
   public abstract Admin getAdmin() throws IOException;
 
   /**
-   * <p>Getter for the field <code>options</code>.</p>
+   * Getter for the field <code>options</code>.
    *
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
@@ -346,7 +351,7 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
   }
 
   /**
-   * <p>Getter for the field <code>disabledTables</code>.</p>
+   * Getter for the field <code>disabledTables</code>.
    *
    * @return a {@link java.util.Set} object.
    */
@@ -355,7 +360,7 @@ public abstract class AbstractBigtableConnection implements Connection, CommonCo
   }
 
   /**
-   * <p>Getter for the field <code>session</code>.</p>
+   * Getter for the field <code>session</code>.
    *
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
    */

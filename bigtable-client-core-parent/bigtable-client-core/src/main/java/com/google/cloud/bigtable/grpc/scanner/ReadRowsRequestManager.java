@@ -43,9 +43,8 @@ class ReadRowsRequestManager {
   private volatile ByteString lastFoundKey;
 
   /**
-   * <p>
    * Constructor for ResumingStreamingResultScanner.
-   * </p>
+   *
    * @param originalRequest a {@link ReadRowsRequest} object.
    */
   ReadRowsRequestManager(ReadRowsRequest originalRequest) {
@@ -61,10 +60,11 @@ class ReadRowsRequestManager {
   }
 
   ReadRowsRequest buildUpdatedRequest() {
-    ReadRowsRequest.Builder newRequest = ReadRowsRequest.newBuilder()
-        .setRows(filterRows())
-        .setTableName(originalRequest.getTableName())
-        .setAppProfileId(originalRequest.getAppProfileId());
+    ReadRowsRequest.Builder newRequest =
+        ReadRowsRequest.newBuilder()
+            .setRows(filterRows())
+            .setTableName(originalRequest.getTableName())
+            .setAppProfileId(originalRequest.getAppProfileId());
 
     if (originalRequest.hasFilter()) {
       newRequest.setFilter(originalRequest.getFilter());
@@ -76,8 +76,7 @@ class ReadRowsRequestManager {
       // Updates the {@code numRowsLimit} by removing the number of rows already read.
       numRowsLimit -= rowCount;
 
-      checkArgument(numRowsLimit > 0,
-          "The remaining number of rows must be greater than 0.");
+      checkArgument(numRowsLimit > 0, "The remaining number of rows must be greater than 0.");
       newRequest.setRowsLimit(numRowsLimit);
     }
 
@@ -93,8 +92,7 @@ class ReadRowsRequestManager {
 
     if (originalRows.getRowKeysCount() == 0 && originalRows.getRowRangesCount() == 0) {
       rowSetBuilder.addRowRanges(
-          RowRange
-              .newBuilder()
+          RowRange.newBuilder()
               .setStartKeyOpen(lastFoundKey)
               .setEndKeyOpen(ByteString.EMPTY)
               .build());
@@ -110,18 +108,18 @@ class ReadRowsRequestManager {
       EndKeyCase endKeyCase = rowRange.getEndKeyCase();
 
       if ((endKeyCase == EndKeyCase.END_KEY_CLOSED
-          && endKeyIsAlreadyRead(rowRange.getEndKeyClosed()))
+              && endKeyIsAlreadyRead(rowRange.getEndKeyClosed()))
           || (endKeyCase == EndKeyCase.END_KEY_OPEN
-          && endKeyIsAlreadyRead(rowRange.getEndKeyOpen()))) {
+              && endKeyIsAlreadyRead(rowRange.getEndKeyOpen()))) {
         continue;
       }
 
       RowRange newRowRange = rowRange;
       StartKeyCase startKeyCase = rowRange.getStartKeyCase();
       if ((startKeyCase == StartKeyCase.START_KEY_CLOSED
-          && startKeyIsAlreadyRead(rowRange.getStartKeyClosed()))
+              && startKeyIsAlreadyRead(rowRange.getStartKeyClosed()))
           || (startKeyCase == StartKeyCase.START_KEY_OPEN
-          && startKeyIsAlreadyRead(rowRange.getStartKeyOpen()))
+              && startKeyIsAlreadyRead(rowRange.getStartKeyOpen()))
           || startKeyCase == StartKeyCase.STARTKEY_NOT_SET) {
         newRowRange = newRowRange.toBuilder().setStartKeyOpen(lastFoundKey).build();
       }
@@ -133,13 +131,15 @@ class ReadRowsRequestManager {
 
   private boolean startKeyIsAlreadyRead(ByteString startKey) {
     // empty startKey implies the smallest key
-    return lastFoundKey != null && (startKey.isEmpty()
-        || ByteStringComparator.INSTANCE.compare(startKey, lastFoundKey) <= 0);
+    return lastFoundKey != null
+        && (startKey.isEmpty()
+            || ByteStringComparator.INSTANCE.compare(startKey, lastFoundKey) <= 0);
   }
 
   private boolean endKeyIsAlreadyRead(ByteString endKey) {
     // empty endKey implies the largest key
-    return lastFoundKey != null && !endKey.isEmpty()
+    return lastFoundKey != null
+        && !endKey.isEmpty()
         && ByteStringComparator.INSTANCE.compare(endKey, lastFoundKey) <= 0;
   }
 }

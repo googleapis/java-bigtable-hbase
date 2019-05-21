@@ -17,24 +17,22 @@ package com.google.cloud.bigtable.hbase.filter;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import java.io.Serializable;
-
+import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.Serializable;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.protobuf.InvalidProtocolBufferException;
-
 /**
  * An HBase {@link Filter} that wraps a Cloud Bigtable {@link Filters.Filter}. Generally, users
- * should opt for a pure HBase {@link Filter}.  There are complex cases where a Cloud Bigtable 
- * {@link Filters.Filter} can express a more robust expression than the HBase semantics, or can
- * be used to express an expression that's more performant than a translation of a complex
- * HBase {@link FilterList}.
+ * should opt for a pure HBase {@link Filter}. There are complex cases where a Cloud Bigtable {@link
+ * Filters.Filter} can express a more robust expression than the HBase semantics, or can be used to
+ * express an expression that's more performant than a translation of a complex HBase {@link
+ * FilterList}.
  */
 public class BigtableFilter extends FilterBase implements Serializable {
 

@@ -15,22 +15,18 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowRange;
+import com.google.bigtable.v2.RowSet;
+import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Arrays;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.RowRange;
-import com.google.bigtable.v2.RowSet;
-import com.google.protobuf.ByteString;
-
-/**
- * Test for the {@link ResumingStreamingResultScanner}
- */
+/** Test for the {@link ResumingStreamingResultScanner} */
 @RunWith(JUnit4.class)
 public class ReadRowsRequestManagerTest {
 
@@ -57,8 +53,9 @@ public class ReadRowsRequestManagerTest {
   }
 
   /**
-   * Test a single, full table scan scenario for {@link ReadRowsRequestManager#buildUpdatedRequest()}
-   * .
+   * Test a single, full table scan scenario for {@link
+   * ReadRowsRequestManager#buildUpdatedRequest()} .
+   *
    * @throws IOException
    */
   @Test
@@ -71,34 +68,36 @@ public class ReadRowsRequestManagerTest {
     ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
 
     underTest.updateLastFoundKey(key1);
-    Assert.assertEquals(createRequest(createRowRangeOpenedStart(key1, ByteString.EMPTY)),
-      underTest.buildUpdatedRequest());
+    Assert.assertEquals(
+        createRequest(createRowRangeOpenedStart(key1, ByteString.EMPTY)),
+        underTest.buildUpdatedRequest());
   }
 
   /**
-   * Test a single, full table scan scenario for {@link ReadRowsRequestManager#buildUpdatedRequest()}}
-   * .
+   * Test a single, full table scan scenario for {@link
+   * ReadRowsRequestManager#buildUpdatedRequest()}} .
    */
-   @Test
+  @Test
   public void test_filterRows_empty() {
-     ByteString key1 = ByteString.copyFrom("row1".getBytes());
+    ByteString key1 = ByteString.copyFrom("row1".getBytes());
 
-     ReadRowsRequest originalRequest = createRequest(RowRange.getDefaultInstance());
+    ReadRowsRequest originalRequest = createRequest(RowRange.getDefaultInstance());
 
-     ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
+    ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
 
-     underTest.updateLastFoundKey(key1);
-     RowSet actual = underTest.buildUpdatedRequest().getRows();
-     Assert.assertEquals(0, actual.getRowKeysCount());
-     Assert.assertEquals(1, actual.getRowRangesCount());
-     RowRange actualRange = actual.getRowRanges(0);
-     Assert.assertEquals(key1, actualRange.getStartKeyOpen());
-     RowRange.EndKeyCase endKeyCase = actualRange.getEndKeyCase();
-     Assert.assertTrue(endKeyCase == RowRange.EndKeyCase.ENDKEY_NOT_SET);
-   }
+    underTest.updateLastFoundKey(key1);
+    RowSet actual = underTest.buildUpdatedRequest().getRows();
+    Assert.assertEquals(0, actual.getRowKeysCount());
+    Assert.assertEquals(1, actual.getRowRangesCount());
+    RowRange actualRange = actual.getRowRanges(0);
+    Assert.assertEquals(key1, actualRange.getStartKeyOpen());
+    RowRange.EndKeyCase endKeyCase = actualRange.getEndKeyCase();
+    Assert.assertTrue(endKeyCase == RowRange.EndKeyCase.ENDKEY_NOT_SET);
+  }
 
   /**
    * Test rowKeys scenario for {@link ReadRowsRequestManager#buildUpdatedRequest()}}.
+   *
    * @throws IOException
    */
   @Test
@@ -114,12 +113,14 @@ public class ReadRowsRequestManagerTest {
     Assert.assertEquals(originalRequest, underTest.buildUpdatedRequest());
     underTest.updateLastFoundKey(key1);
 
-    Assert.assertEquals(createKeysRequest(Arrays.asList(key2, key3)),
-      underTest.buildUpdatedRequest());
+    Assert.assertEquals(
+        createKeysRequest(Arrays.asList(key2, key3)), underTest.buildUpdatedRequest());
   }
 
   /**
-   * Test multiple rowset filter scenarios for {@link ReadRowsRequestManager#buildUpdatedRequest()}}.
+   * Test multiple rowset filter scenarios for {@link
+   * ReadRowsRequestManager#buildUpdatedRequest()}}.
+   *
    * @throws IOException
    */
   @Test
@@ -128,25 +129,51 @@ public class ReadRowsRequestManagerTest {
     ByteString key2 = ByteString.copyFrom("row2".getBytes());
     ByteString key3 = ByteString.copyFrom("row3".getBytes());
 
-    RowSet fullRowSet = RowSet.newBuilder()
-        .addAllRowKeys(Arrays.asList(key1, key2, key3)) // row1 should be filtered out
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(BLANK).setEndKeyClosed(key1)) // should be filtered out
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(BLANK).setEndKeyOpen(key1)) // should be filtered out
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyOpen(key2)) // should stay
-        .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key1).setEndKeyOpen(key2)) // should be converted (key1 -> key2)
-        .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key1).setEndKeyClosed(key2)) // should be converted (key1 -> key2]
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key2).setEndKeyOpen(key3)) // should stay
-        .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key2).setEndKeyOpen(key3)) // should stay
-        .build();
+    RowSet fullRowSet =
+        RowSet.newBuilder()
+            .addAllRowKeys(Arrays.asList(key1, key2, key3)) // row1 should be filtered out
+            .addRowRanges(
+                RowRange.newBuilder()
+                    .setStartKeyOpen(BLANK)
+                    .setEndKeyClosed(key1)) // should be filtered out
+            .addRowRanges(
+                RowRange.newBuilder()
+                    .setStartKeyOpen(BLANK)
+                    .setEndKeyOpen(key1)) // should be filtered out
+            .addRowRanges(
+                RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyOpen(key2)) // should stay
+            .addRowRanges(
+                RowRange.newBuilder()
+                    .setStartKeyClosed(key1)
+                    .setEndKeyOpen(key2)) // should be converted (key1 -> key2)
+            .addRowRanges(
+                RowRange.newBuilder()
+                    .setStartKeyClosed(key1)
+                    .setEndKeyClosed(key2)) // should be converted (key1 -> key2]
+            .addRowRanges(
+                RowRange.newBuilder().setStartKeyOpen(key2).setEndKeyOpen(key3)) // should stay
+            .addRowRanges(
+                RowRange.newBuilder().setStartKeyClosed(key2).setEndKeyOpen(key3)) // should stay
+            .build();
 
-    RowSet filteredRowSet = RowSet.newBuilder()
-        .addAllRowKeys(Arrays.asList(key2, key3)) // row1 should be filtered out
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyOpen(key2)) // should stay
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyOpen(key2)) // should be converted (key1 -> key2)
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyClosed(key2)) // should be converted (key1 -> key2]
-        .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key2).setEndKeyOpen(key3)) // should stay
-        .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key2).setEndKeyOpen(key3)) // should stay
-        .build();
+    RowSet filteredRowSet =
+        RowSet.newBuilder()
+            .addAllRowKeys(Arrays.asList(key2, key3)) // row1 should be filtered out
+            .addRowRanges(
+                RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyOpen(key2)) // should stay
+            .addRowRanges(
+                RowRange.newBuilder()
+                    .setStartKeyOpen(key1)
+                    .setEndKeyOpen(key2)) // should be converted (key1 -> key2)
+            .addRowRanges(
+                RowRange.newBuilder()
+                    .setStartKeyOpen(key1)
+                    .setEndKeyClosed(key2)) // should be converted (key1 -> key2]
+            .addRowRanges(
+                RowRange.newBuilder().setStartKeyOpen(key2).setEndKeyOpen(key3)) // should stay
+            .addRowRanges(
+                RowRange.newBuilder().setStartKeyClosed(key2).setEndKeyOpen(key3)) // should stay
+            .build();
 
     ReadRowsRequest originalRequest = ReadRowsRequest.newBuilder().setRows(fullRowSet).build();
     ReadRowsRequest filteredRequest = ReadRowsRequest.newBuilder().setRows(filteredRowSet).build();
@@ -159,12 +186,13 @@ public class ReadRowsRequestManagerTest {
 
   /**
    * Test that resume handles key requests as unsigned bytes
+   *
    * @throws IOException
    */
   @Test
   public void test_filterRows_unsignedRange() throws IOException {
     ByteString key1 = ByteString.copyFrom(new byte[] {0x7f});
-    ByteString key2 = ByteString.copyFrom(new byte[] { (byte)0x80});
+    ByteString key2 = ByteString.copyFrom(new byte[] {(byte) 0x80});
 
     ReadRowsRequest originalRequest =
         createRequest(createRowRangeClosedStart(key1, ByteString.EMPTY));
@@ -172,18 +200,20 @@ public class ReadRowsRequestManagerTest {
     ReadRowsRequestManager underTest = new ReadRowsRequestManager(originalRequest);
     underTest.updateLastFoundKey(key2);
 
-    Assert.assertEquals(createRequest(createRowRangeOpenedStart(key2, ByteString.EMPTY)),
-      underTest.buildUpdatedRequest());
+    Assert.assertEquals(
+        createRequest(createRowRangeOpenedStart(key2, ByteString.EMPTY)),
+        underTest.buildUpdatedRequest());
   }
 
   /**
    * Test that resume handles row ranges as unsigned bytes
+   *
    * @throws IOException
    */
   @Test
   public void test_filterRows_unsignedRows() throws IOException {
     ByteString key1 = ByteString.copyFrom(new byte[] {0x7f});
-    ByteString key2 = ByteString.copyFrom(new byte[] { (byte)0x80});
+    ByteString key2 = ByteString.copyFrom(new byte[] {(byte) 0x80});
 
     ReadRowsRequest originalRequest = createKeysRequest(Arrays.asList(key1, key2));
 

@@ -44,7 +44,9 @@ public final class BigtableClientMetrics {
   private static MetricLevel levelToLog = MetricLevel.Info;
 
   public enum MetricLevel {
-    Info(1), Debug(2), Trace(3);
+    Info(1),
+    Debug(2),
+    Trace(3);
 
     private final int level;
 
@@ -63,15 +65,17 @@ public final class BigtableClientMetrics {
     if (logger.isDebugEnabled()) {
       if (registry == MetricRegistry.NULL_METRICS_REGISTRY) {
         DropwizardMetricRegistry dropwizardRegistry = new DropwizardMetricRegistry();
-        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
+        DropwizardMetricRegistry.createSlf4jReporter(
+            dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
         setMetricRegistry(dropwizardRegistry);
       } else if (registry instanceof DropwizardMetricRegistry) {
         DropwizardMetricRegistry dropwizardRegistry = (DropwizardMetricRegistry) registry;
-        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
+        DropwizardMetricRegistry.createSlf4jReporter(
+            dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
       } else {
         logger.info(
-          "Could not set up logging since the metrics registry is not a DropwizardMetricRegistry; it is a %s w.",
-          registry.getClass().getName());
+            "Could not set up logging since the metrics registry is not a DropwizardMetricRegistry; it is a %s w.",
+            registry.getClass().getName());
       }
     }
   }
@@ -79,6 +83,7 @@ public final class BigtableClientMetrics {
   /**
    * Sets a {@link MetricRegistry} to be used in all Bigtable connection created after the call.
    * NOTE: this will not update any existing connections.
+   *
    * @param registry
    */
   public static void setMetricRegistry(MetricRegistry registry) {
@@ -86,13 +91,12 @@ public final class BigtableClientMetrics {
   }
 
   public static MetricRegistry getMetricRegistry(MetricLevel level) {
-    return isEnabled(level) ? registry :  MetricRegistry.NULL_METRICS_REGISTRY;
+    return isEnabled(level) ? registry : MetricRegistry.NULL_METRICS_REGISTRY;
   }
 
   /**
-   * Creates a named {@link Counter}. This is a shortcut for
-   * {@link BigtableClientMetrics#getMetricRegistry(MetricLevel)}.
-   * {@link MetricRegistry#counter(String)}.
+   * Creates a named {@link Counter}. This is a shortcut for {@link
+   * BigtableClientMetrics#getMetricRegistry(MetricLevel)}. {@link MetricRegistry#counter(String)}.
    *
    * @return a {@link Counter}
    */
@@ -100,9 +104,9 @@ public final class BigtableClientMetrics {
     return getMetricRegistry(level).counter(METRIC_PREFIX + name);
   }
 
-  /** Creates a named {@link Timer}. This is a shortcut for
-   * {@link BigtableClientMetrics#getMetricRegistry(MetricLevel)}.
-   * {@link MetricRegistry#timer(String)}.
+  /**
+   * Creates a named {@link Timer}. This is a shortcut for {@link
+   * BigtableClientMetrics#getMetricRegistry(MetricLevel)}. {@link MetricRegistry#timer(String)}.
    *
    * @return a {@link Timer}
    */
@@ -110,9 +114,9 @@ public final class BigtableClientMetrics {
     return getMetricRegistry(level).timer(METRIC_PREFIX + name);
   }
 
-  /** Creates a named {@link Meter}.  This is a shortcut for
-   * {@link BigtableClientMetrics#getMetricRegistry(MetricLevel)}.
-   * {@link MetricRegistry#meter(String)}.
+  /**
+   * Creates a named {@link Meter}. This is a shortcut for {@link
+   * BigtableClientMetrics#getMetricRegistry(MetricLevel)}. {@link MetricRegistry#meter(String)}.
    *
    * @return a {@link Meter}
    */
@@ -121,7 +125,7 @@ public final class BigtableClientMetrics {
   }
 
   /**
-   * Set a level at which to log.  By default, the value is {@link MetricLevel#Info}.
+   * Set a level at which to log. By default, the value is {@link MetricLevel#Info}.
    *
    * @param levelToLog
    */
@@ -144,6 +148,5 @@ public final class BigtableClientMetrics {
     return levelToLog.getLevel() >= level.getLevel();
   }
 
-  private BigtableClientMetrics(){
-  }
+  private BigtableClientMetrics() {}
 }

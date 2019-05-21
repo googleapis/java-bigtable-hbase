@@ -15,12 +15,10 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -37,7 +35,7 @@ import io.grpc.MethodDescriptor;
 public interface BigtableAsyncUtilities {
 
   /**
-   * <p>createAsyncUnaryRpc.</p>
+   * createAsyncUnaryRpc.
    *
    * @param method a {@link io.grpc.MethodDescriptor} object.
    * @param isRetryable a {@link com.google.common.base.Predicate} object.
@@ -82,7 +80,10 @@ public interface BigtableAsyncUtilities {
         }
 
         @Override
-        public void start(RequestT request, Listener<ResponseT> listener, Metadata metadata,
+        public void start(
+            RequestT request,
+            Listener<ResponseT> listener,
+            Metadata metadata,
             ClientCall<RequestT, ResponseT> call) {
           call.start(listener, metadata);
           call.request(1);

@@ -15,10 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.google.bigtable.admin.v2.AppProfile;
 import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.CreateAppProfileRequest;
@@ -46,6 +42,9 @@ import com.google.iam.v1.TestIamPermissionsResponse;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * BigtableInstanceClient manages instances and clusters.
@@ -67,19 +66,20 @@ public interface BigtableInstanceClient {
    * operation result at intervals as recommended by the API service.
    *
    * <p>{@link #createInstance(CreateInstanceRequest)} and {@link #updateCluster(Cluster)} will
-   * return a {@link com.google.longrunning.Operation}. Use this method and pass in the {@link com.google.longrunning.Operation}'s name in the
-   * request to see if the Operation is done via {@link com.google.longrunning.Operation#getDone()}. The instance will not
-   * be available until that happens.
+   * return a {@link com.google.longrunning.Operation}. Use this method and pass in the {@link
+   * com.google.longrunning.Operation}'s name in the request to see if the Operation is done via
+   * {@link com.google.longrunning.Operation#getDone()}. The instance will not be available until
+   * that happens.
    *
    * @param request a {@link com.google.longrunning.GetOperationRequest} object.
    * @return a {@link com.google.longrunning.Operation} object.
    */
   Operation getOperation(GetOperationRequest request);
 
-
   /**
-   * Waits for the long running operation to complete by polling with exponential backoff.
-   * A default timeout of 10 minutes is used.
+   * Waits for the long running operation to complete by polling with exponential backoff. A default
+   * timeout of 10 minutes is used.
+   *
    * @param operation
    * @throws IOException
    * @throws TimeoutException If the timeout is exceeded.
@@ -88,6 +88,7 @@ public interface BigtableInstanceClient {
 
   /**
    * Waits for the long running operation to complete by polling with exponential backoff.
+   *
    * @param operation
    * @param timeout
    * @param timeUnit
@@ -144,10 +145,10 @@ public interface BigtableInstanceClient {
    * @return a {@link com.google.longrunning.Operation} object.
    */
   Operation updateCluster(Cluster cluster);
-  
+
   /**
    * Deletes a cluster from an instance.
-   * 
+   *
    * @param request a {@link com.google.bigtable.admin.v2.DeleteClusterRequest} object.
    * @return a {@link com.google.protobuf.Empty} object.
    */
@@ -155,7 +156,7 @@ public interface BigtableInstanceClient {
 
   /**
    * Partially updates an instance within a project.
-   * 
+   *
    * @param request a {@link com.google.bigtable.admin.v2.PartialUpdateInstanceRequest} object.
    * @return a {@link com.google.longrunning.Operation} object.
    */
@@ -183,14 +184,13 @@ public interface BigtableInstanceClient {
    * List application profiles.
    *
    * @see <a href="https://cloud.google.com/bigtable/docs/app-profiles">App Profiles</a>
-   * @param request a {@link com.google.bigtable.admin.v2.ListAppProfilesRequest} object. 
+   * @param request a {@link com.google.bigtable.admin.v2.ListAppProfilesRequest} object.
    * @return a {@link com.google.bigtable.admin.v2.ListAppProfilesResponse} object.
    */
   ListAppProfilesResponse listAppProfiles(ListAppProfilesRequest request);
 
   /**
-   /**
-   * Update an application profile.
+   * /** Update an application profile.
    *
    * @see <a href="https://cloud.google.com/bigtable/docs/app-profiles">App Profiles</a>
    * @param request a {@link com.google.bigtable.admin.v2.UpdateAppProfileRequest} object.
@@ -202,7 +202,7 @@ public interface BigtableInstanceClient {
    * Delete an application profile.
    *
    * @see <a href="https://cloud.google.com/bigtable/docs/app-profiles">App Profiles</a>
-   * @param request a {@link com.google.bigtable.admin.v2.DeleteAppProfileRequest} object. 
+   * @param request a {@link com.google.bigtable.admin.v2.DeleteAppProfileRequest} object.
    * @return a {@link com.google.protobuf.Empty} object.
    */
   Empty deleteAppProfile(DeleteAppProfileRequest request);
@@ -210,7 +210,8 @@ public interface BigtableInstanceClient {
   /**
    * Get an IAM policy.
    *
-   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access control</a>
+   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access
+   *     control</a>
    * @param request a {@link com.google.iam.v1.GetIamPolicyRequest} object.
    * @return a {@link com.google.iam.v1.Policy} object.
    */
@@ -219,7 +220,8 @@ public interface BigtableInstanceClient {
   /**
    * Set an IAM policy.
    *
-   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access control</a>
+   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access
+   *     control</a>
    * @param request a {@link com.google.iam.v1.SetIamPolicyRequest} object.
    * @return a {@link com.google.iam.v1.Policy} object.
    */
@@ -228,15 +230,16 @@ public interface BigtableInstanceClient {
   /**
    * Tests an IAM policy.
    *
-   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access control</a>
+   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access
+   *     control</a>
    * @param request a {@link com.google.iam.v1.TestIamPermissionsRequest} object.
    * @return a {@link com.google.iam.v1.TestIamPermissionsResponse} object.
    */
   TestIamPermissionsResponse testIamPermissions(TestIamPermissionsRequest request);
-  
+
   /**
    * Create an instance within a project.
-   * 
+   *
    * @param request a {@link com.google.bigtable.admin.v2.CreateClusterRequest} object.
    * @return a {@link com.google.longrunning.Operation} object.
    */

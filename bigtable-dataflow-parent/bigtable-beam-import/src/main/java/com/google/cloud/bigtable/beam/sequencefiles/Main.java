@@ -49,12 +49,13 @@ public class Main {
     }
   }
 
-
   private static void usage() {
     String jarName;
 
     try {
-      jarName = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getName();
+      jarName =
+          new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath())
+              .getName();
     } catch (URISyntaxException e) {
       jarName = "<jar>";
     }
@@ -63,8 +64,6 @@ public class Main {
         "java -jar %s <action> <action_params>\n"
             + "Where <action> can be 'export', 'import' or 'create-table'. To get further help, run: \n"
             + "java -jar %s <action> --help\n",
-        jarName,
-        jarName
-    );
+        jarName, jarName);
   }
 }

@@ -1,19 +1,16 @@
 // Copied from hbase 1.3.1 to avoid depending on hbase-server
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
@@ -69,9 +66,7 @@ class ResultSerialization extends Configured implements Serialization<Result> {
     return new ResultSerializer();
   }
 
-  /**
-   * The following deserializer class is used to load exported file of 0.94
-   */
+  /** The following deserializer class is used to load exported file of 0.94 */
   private static class Result94Deserializer implements Deserializer<Result> {
     private DataInputStream in;
 
@@ -110,8 +105,7 @@ class ResultSerialization extends Configured implements Serialization<Result> {
     private void readChunked(final DataInput in, byte[] dest, int ofs, int len) throws IOException {
       int maxRead = 8192;
 
-      for (; ofs < len; ofs += maxRead)
-        in.readFully(dest, ofs, Math.min(len - ofs, maxRead));
+      for (; ofs < len; ofs += maxRead) in.readFully(dest, ofs, Math.min(len - ofs, maxRead));
     }
   }
 

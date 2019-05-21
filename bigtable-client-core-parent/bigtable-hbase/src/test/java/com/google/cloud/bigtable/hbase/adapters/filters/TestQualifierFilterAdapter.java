@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,9 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.protobuf.ByteString;
 import java.io.IOException;
-
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
@@ -32,19 +33,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.protobuf.ByteString;
-
-/**
- * Tests for the {@link QualifierFilterAdapter}
- */
+/** Tests for the {@link QualifierFilterAdapter} */
 @RunWith(JUnit4.class)
 public class TestQualifierFilterAdapter {
   private static final byte[] FOO_BYTES = Bytes.toBytes("Foo");
-  private static final ByteString FOO_BYTESTRING =
-      ByteString.copyFrom(FOO_BYTES);
-  private static final BinaryComparator FOO_BINARY_COMPARATOR =
-      new BinaryComparator(FOO_BYTES);
+  private static final ByteString FOO_BYTESTRING = ByteString.copyFrom(FOO_BYTES);
+  private static final BinaryComparator FOO_BINARY_COMPARATOR = new BinaryComparator(FOO_BYTES);
   private static final String FAMILY_NAME = "f1";
 
   QualifierFilterAdapter adapter = new QualifierFilterAdapter();
@@ -66,9 +60,7 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.LESS,
-        FILTERS.qualifier()
-          .rangeWithinFamily(FAMILY_NAME)
-          .endOpen(FOO_BYTESTRING));
+        FILTERS.qualifier().rangeWithinFamily(FAMILY_NAME).endOpen(FOO_BYTESTRING));
   }
 
   @Test
@@ -76,9 +68,7 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.LESS_OR_EQUAL,
-        FILTERS.qualifier()
-          .rangeWithinFamily(FAMILY_NAME)
-          .endClosed(FOO_BYTESTRING));
+        FILTERS.qualifier().rangeWithinFamily(FAMILY_NAME).endClosed(FOO_BYTESTRING));
   }
 
   @Test
@@ -86,8 +76,7 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.EQUAL,
-        FILTERS.qualifier()
-          .regex(ByteString.copyFrom(FOO_BYTES)));
+        FILTERS.qualifier().regex(ByteString.copyFrom(FOO_BYTES)));
   }
 
   @Test
@@ -95,9 +84,7 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.GREATER,
-        FILTERS.qualifier()
-          .rangeWithinFamily(FAMILY_NAME)
-          .startOpen(FOO_BYTESTRING));
+        FILTERS.qualifier().rangeWithinFamily(FAMILY_NAME).startOpen(FOO_BYTESTRING));
   }
 
   @Test
@@ -105,9 +92,7 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.GREATER_OR_EQUAL,
-        FILTERS.qualifier()
-          .rangeWithinFamily(FAMILY_NAME)
-          .startClosed(FOO_BYTESTRING));
+        FILTERS.qualifier().rangeWithinFamily(FAMILY_NAME).startClosed(FOO_BYTESTRING));
   }
 
   @Test
@@ -115,13 +100,10 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         FOO_BINARY_COMPARATOR,
         CompareOp.NOT_EQUAL,
-      FILTERS.interleave()
-          .filter(FILTERS.qualifier()
-            .rangeWithinFamily(FAMILY_NAME)
-            .endOpen(FOO_BYTESTRING))
-          .filter(FILTERS.qualifier()
-            .rangeWithinFamily(FAMILY_NAME)
-            .startOpen(FOO_BYTESTRING)));
+        FILTERS
+            .interleave()
+            .filter(FILTERS.qualifier().rangeWithinFamily(FAMILY_NAME).endOpen(FOO_BYTESTRING))
+            .filter(FILTERS.qualifier().rangeWithinFamily(FAMILY_NAME).startOpen(FOO_BYTESTRING)));
   }
 
   @Test

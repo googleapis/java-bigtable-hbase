@@ -15,20 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
+import com.google.protobuf.ByteString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.google.protobuf.ByteString;
-
-/**
- * Wrapper around {@link ZeroCopyByteStringUtil} for cases where it's not available.
- */
+/** Wrapper around {@link ZeroCopyByteStringUtil} for cases where it's not available. */
 public class ByteStringer {
   private static final Log LOG = LogFactory.getLog(ByteStringer.class);
 
-  /**
-   * Flag set at class loading time.
-   */
+  /** Flag set at class loading time. */
   private static boolean USE_ZEROCOPYBYTESTRING = true;
 
   // Can I classload BigtableZeroCopyByteStringUtil without IllegalAccessError?
@@ -36,7 +31,7 @@ public class ByteStringer {
   // because it makes a copy of the passed in array.
   static {
     try {
-      ZeroCopyByteStringUtil.wrap(new byte [0]);
+      ZeroCopyByteStringUtil.wrap(new byte[0]);
     } catch (IllegalAccessError iae) {
       USE_ZEROCOPYBYTESTRING = false;
       LOG.debug("Failed to classload BigtableZeroCopyByteString: " + iae.toString());
@@ -49,16 +44,18 @@ public class ByteStringer {
 
   /**
    * Wraps a byte array in a {@link ByteString} without copying it.
+   *
    * @param array an array object.
    * @return {@link ByteString} based on runtime copy flag.
    */
   public static ByteString wrap(final byte[] array) {
-    return USE_ZEROCOPYBYTESTRING? ZeroCopyByteStringUtil.wrap(array): ByteString.copyFrom(array);
+    return USE_ZEROCOPYBYTESTRING ? ZeroCopyByteStringUtil.wrap(array) : ByteString.copyFrom(array);
   }
 
   /**
    * Wraps a byte array in a {@link ByteString} without copying it.
-   * @param array  an array value.
+   *
+   * @param array an array value.
    * @param offset an integer value.
    * @param length an integer value.
    * @return a {@link ByteString} object with array based on offset and length value.
@@ -66,14 +63,12 @@ public class ByteStringer {
   public static ByteString wrap(final byte[] array, int offset, int length) {
     if (USE_ZEROCOPYBYTESTRING && offset == 0 && length == array.length) {
       return ZeroCopyByteStringUtil.wrap(array);
-    }
-    else {
+    } else {
       return ByteString.copyFrom(array, offset, length);
     }
   }
 
   public static byte[] extract(ByteString buf) {
-    return USE_ZEROCOPYBYTESTRING ? ZeroCopyByteStringUtil.get(buf) : buf
-        .toByteArray();
+    return USE_ZEROCOPYBYTESTRING ? ZeroCopyByteStringUtil.get(buf) : buf.toByteArray();
   }
 }

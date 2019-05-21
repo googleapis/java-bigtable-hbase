@@ -15,14 +15,13 @@
  */
 package com.google.cloud.bigtable.config;
 
-import java.io.Serializable;
-
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import java.io.Serializable;
 
 /**
- * Experimental options to turn on timeout options. {@link io.grpc.CallOptions} supports other settings as
- * well, which this configuration object could help set.
+ * Experimental options to turn on timeout options. {@link io.grpc.CallOptions} supports other
+ * settings as well, which this configuration object could help set.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -51,15 +50,14 @@ public class CallOptionsConfig implements Serializable {
   public static Builder builder() {
     return new Builder();
   }
-  
+
   public static class Builder {
     private boolean useTimeout = USE_TIMEOUT_DEFAULT;
     private int shortRpcTimeoutMs = SHORT_TIMEOUT_MS_DEFAULT;
     private int longRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
 
     @Deprecated
-    public Builder() {
-    }
+    public Builder() {}
 
     private Builder(CallOptionsConfig original) {
       this.useTimeout = original.useTimeout;
@@ -69,6 +67,7 @@ public class CallOptionsConfig implements Serializable {
 
     /**
      * If true, turn on timeouts for unary RPCS like mutations, and single row readRows.
+     *
      * @param useTimeout flag to enable use of timeout.
      * @return a {@link Builder} object, for chaining
      */
@@ -79,6 +78,7 @@ public class CallOptionsConfig implements Serializable {
 
     /**
      * The amount of milliseconds to wait before issuing a client side timeout for short RPCs.
+     *
      * @param timeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
      */
@@ -87,19 +87,22 @@ public class CallOptionsConfig implements Serializable {
       return setShortRpcTimeoutMs(timeoutMs);
     }
 
-   /**
+    /**
      * The amount of milliseconds to wait before issuing a client side timeout for short RPCs.
+     *
      * @param shortRpcTimeoutMs timeout value in milliseconds.
-    * @return a {@link Builder} object, for chaining
-    */
+     * @return a {@link Builder} object, for chaining
+     */
     public Builder setShortRpcTimeoutMs(int shortRpcTimeoutMs) {
-      Preconditions.checkArgument(shortRpcTimeoutMs > 0, "Short Timeout ms has to be greater than 0.");
+      Preconditions.checkArgument(
+          shortRpcTimeoutMs > 0, "Short Timeout ms has to be greater than 0.");
       this.shortRpcTimeoutMs = shortRpcTimeoutMs;
       return this;
     }
 
     /**
      * The amount of milliseconds to wait before issuing a client side timeout for long RPCs.
+     *
      * @param longRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
      */
@@ -119,7 +122,7 @@ public class CallOptionsConfig implements Serializable {
   private final int longRpcTimeoutMs;
 
   /**
-   * <p>Constructor for CallOptionsConfig.</p>
+   * Constructor for CallOptionsConfig.
    *
    * @param useTimeout a boolean.
    * @param unaryRpcTimeoutMs an int.
@@ -133,7 +136,7 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
-   * <p>isUseTimeout.</p>
+   * isUseTimeout.
    *
    * @return a boolean.
    */
@@ -142,10 +145,9 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>shortRpcTimeoutMs</code>. Use {@link #getShortRpcTimeoutMs()}
    * instead.
-   * </p>
+   *
    * @return an int.
    */
   @Deprecated
@@ -154,7 +156,7 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
-   * <p>Getter for the field <code>shortRpcTimeoutMs</code>.</p>
+   * Getter for the field <code>shortRpcTimeoutMs</code>.
    *
    * @return an int.
    */
@@ -163,7 +165,7 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
-   * <p>Getter for the field <code>longRpcTimeoutMs</code>.</p>
+   * Getter for the field <code>longRpcTimeoutMs</code>.
    *
    * @return an int.
    */
@@ -181,7 +183,7 @@ public class CallOptionsConfig implements Serializable {
       return false;
     }
     CallOptionsConfig other = (CallOptionsConfig) obj;
-    return useTimeout == other.useTimeout 
+    return useTimeout == other.useTimeout
         && shortRpcTimeoutMs == other.shortRpcTimeoutMs
         && longRpcTimeoutMs == other.longRpcTimeoutMs;
   }
@@ -197,12 +199,11 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
-   * <p>toBuilder.</p>
+   * toBuilder.
    *
    * @return a {@link com.google.cloud.bigtable.config.CallOptionsConfig.Builder} object.
    */
   public Builder toBuilder() {
     return new Builder(this);
   }
-  
 }

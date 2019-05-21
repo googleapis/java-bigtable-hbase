@@ -15,14 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.api.gax.rpc.ServerStream;
-import com.google.common.collect.ImmutableList;
-import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -31,7 +23,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class) public class TestRowResultScanner {
+import com.google.api.gax.rpc.ServerStream;
+import com.google.common.collect.ImmutableList;
+import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+@RunWith(MockitoJUnitRunner.class)
+public class TestRowResultScanner {
 
   private static final String TEST_VALUE = "test-value";
   private static final String[] TEST_ARRAY = new String[0];
@@ -45,9 +46,9 @@ import static org.mockito.Mockito.when;
     List<String> listOfOneElement = ImmutableList.of(TEST_VALUE);
     when(stream.iterator()).thenReturn(listOfOneElement.iterator());
     scanner = new RowResultScanner<>(stream, TEST_ARRAY);
-    //Should return value
+    // Should return value
     assertEquals(TEST_VALUE, scanner.next());
-    //Once all the values are iterated, Scanner should return null.
+    // Once all the values are iterated, Scanner should return null.
     assertNull(scanner.next());
     verify(stream).iterator();
   }

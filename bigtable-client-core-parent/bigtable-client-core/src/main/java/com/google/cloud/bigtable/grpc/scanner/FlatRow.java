@@ -15,22 +15,19 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
-
 import com.google.bigtable.v2.Row;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * <p>
- * This class stores represents a single row. It's a flattened version of the data of a
- * {@link Row}
- * </p>
+ * This class stores represents a single row. It's a flattened version of the data of a {@link Row}
+ *
  * @author tyagihas
  * @version $Id: $Id
  */
@@ -38,11 +35,11 @@ public class FlatRow implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  public final static class Cell implements Serializable {
+  public static final class Cell implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public final static class Builder {
+    public static final class Builder {
       private String family;
       private ByteString qualifier;
       private long timestamp;
@@ -70,7 +67,7 @@ public class FlatRow implements Serializable {
       }
 
       public Builder withLabels(List<String> labels) {
-        if (labels == null || labels.isEmpty() ) {
+        if (labels == null || labels.isEmpty()) {
           return this;
         }
         this.labels = labels;
@@ -92,13 +89,17 @@ public class FlatRow implements Serializable {
     private final ByteString value;
     private final List<String> labels;
 
-    public Cell(String family, ByteString qualifier, long timestamp, ByteString value,
+    public Cell(
+        String family,
+        ByteString qualifier,
+        long timestamp,
+        ByteString value,
         List<String> labels) {
       this.family = family;
       this.qualifier = qualifier;
       this.timestamp = timestamp;
       this.value = value;
-      this.labels = labels == null ? Collections.<String> emptyList() : labels;
+      this.labels = labels == null ? Collections.<String>emptyList() : labels;
     }
 
     public String getFamily() {
@@ -127,12 +128,11 @@ public class FlatRow implements Serializable {
         return false;
       }
       Cell other = (Cell) obj;
-      return
-          timestamp == other.timestamp &&
-          Objects.equal(family, other.family) &&
-          Objects.equal(qualifier, other.qualifier) &&
-          Objects.equal(value, other.value) &&
-          Objects.equal(labels, other.labels);
+      return timestamp == other.timestamp
+          && Objects.equal(family, other.family)
+          && Objects.equal(qualifier, other.qualifier)
+          && Objects.equal(value, other.value)
+          && Objects.equal(labels, other.labels);
     }
 
     @Override
@@ -161,7 +161,11 @@ public class FlatRow implements Serializable {
       return this;
     }
 
-    public Builder addCell(String family, ByteString qualifier, long timestamp, ByteString value,
+    public Builder addCell(
+        String family,
+        ByteString qualifier,
+        long timestamp,
+        ByteString value,
         List<String> labels) {
       return addCell(new Cell(family, qualifier, timestamp, value, labels));
     }
@@ -211,15 +215,11 @@ public class FlatRow implements Serializable {
       return false;
     }
     FlatRow other = (FlatRow) obj;
-    return Objects.equal(rowKey, other.rowKey) &&
-        Objects.equal(cells, other.getCells());
+    return Objects.equal(rowKey, other.rowKey) && Objects.equal(cells, other.getCells());
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("rowKey", rowKey)
-        .add("cells", cells)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("rowKey", rowKey).add("cells", cells).toString();
   }
 }

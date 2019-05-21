@@ -8,12 +8,20 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.bigtable.v2.BigtableGrpc;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.common.util.concurrent.SettableFuture;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 import io.grpc.Status.Code;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,19 +34,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.bigtable.v2.BigtableGrpc;
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.common.util.concurrent.SettableFuture;
-
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
-
-/** Tests for {@link ThrottlingClientInterceptor}
- */
+/** Tests for {@link ThrottlingClientInterceptor} */
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestThrottlingClientInterceptor {
@@ -52,12 +48,12 @@ public class TestThrottlingClientInterceptor {
   @Mock ClientCall mockClientCall;
   ExecutorService executorService;
 
-
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     executorService = Executors.newCachedThreadPool();
-    when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(mockClientCall);
+    when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
+        .thenReturn(mockClientCall);
   }
 
   @After
@@ -70,27 +66,32 @@ public class TestThrottlingClientInterceptor {
     final SettableFuture registerInvoked = SettableFuture.create();
     final SettableFuture registerWaiter = SettableFuture.create();
     final long id = 1l;
-    when(mockResourceLimiter.registerOperationWithHeapSize(anyLong())).then(new Answer<Long>() {
-      @Override
-      public Long answer(InvocationOnMock invocation) throws Throwable {
-        registerInvoked.set("");
-        registerWaiter.get(1, TimeUnit.SECONDS);
-        return id;
-      }
-    });
-    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
+    when(mockResourceLimiter.registerOperationWithHeapSize(anyLong()))
+        .then(
+            new Answer<Long>() {
+              @Override
+              public Long answer(InvocationOnMock invocation) throws Throwable {
+                registerInvoked.set("");
+                registerWaiter.get(1, TimeUnit.SECONDS);
+                return id;
+              }
+            });
+    final ThrottlingClientInterceptor underTest =
+        new ThrottlingClientInterceptor(mockResourceLimiter);
     final int numMessages = 5;
-    Future<?> future = executorService.submit(new Runnable() {
-      @Override
-      public void run() {
-        ClientCall call =
-            underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
-        call.start(mockListener, new Metadata());
-        call.request(numMessages);
-        // This should block
-        call.sendMessage(request);
-      }
-    });
+    Future<?> future =
+        executorService.submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                ClientCall call =
+                    underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
+                call.start(mockListener, new Metadata());
+                call.request(numMessages);
+                // This should block
+                call.sendMessage(request);
+              }
+            });
     registerInvoked.get(1, TimeUnit.SECONDS);
     verify(mockResourceLimiter, times(1))
         .registerOperationWithHeapSize(eq((long) request.getSerializedSize()));
@@ -117,10 +118,10 @@ public class TestThrottlingClientInterceptor {
     when(mockResourceLimiter.registerOperationWithHeapSize(anyLong()))
         .thenThrow(new InterruptedException("Fake interrupted error"));
 
-    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
+    final ThrottlingClientInterceptor underTest =
+        new ThrottlingClientInterceptor(mockResourceLimiter);
 
-    ClientCall call = underTest
-        .interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
+    ClientCall call = underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
 
     call.start(mockListener, new Metadata());
     call.sendMessage(request);
@@ -129,18 +130,16 @@ public class TestThrottlingClientInterceptor {
 
     ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
 
-    verify(mockListener, times(1))
-        .onClose(statusCaptor.capture(), any(Metadata.class));
+    verify(mockListener, times(1)).onClose(statusCaptor.capture(), any(Metadata.class));
     Assert.assertEquals(statusCaptor.getValue().getCode(), Code.INTERNAL);
   }
 
-
   @Test
   public void testCallProxy() {
-    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
+    final ThrottlingClientInterceptor underTest =
+        new ThrottlingClientInterceptor(mockResourceLimiter);
 
-    ClientCall call = underTest
-        .interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
+    ClientCall call = underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
 
     call.start(mockListener, new Metadata());
     call.sendMessage(request);
@@ -155,35 +154,31 @@ public class TestThrottlingClientInterceptor {
 
   @Test
   public void testCancel() throws Exception {
-    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
+    final ThrottlingClientInterceptor underTest =
+        new ThrottlingClientInterceptor(mockResourceLimiter);
 
-    ClientCall call = underTest
-        .interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
+    ClientCall call = underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
 
     call.start(mockListener, new Metadata());
     call.sendMessage(request);
     call.cancel("fake cancel", null);
 
-
-    verify(mockClientCall).cancel(eq("fake cancel"), (Throwable)any());
+    verify(mockClientCall).cancel(eq("fake cancel"), (Throwable) any());
   }
 
   @Test
   public void testEarlyCancel() throws Exception {
-    final ThrottlingClientInterceptor underTest = new ThrottlingClientInterceptor(mockResourceLimiter);
+    final ThrottlingClientInterceptor underTest =
+        new ThrottlingClientInterceptor(mockResourceLimiter);
 
-    ClientCall call = underTest
-        .interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
+    ClientCall call = underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
 
     call.start(mockListener, new Metadata());
     call.cancel("fake cancel", null);
 
-
     ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
 
-    verify(mockListener, times(1))
-        .onClose(statusCaptor.capture(), any(Metadata.class));
+    verify(mockListener, times(1)).onClose(statusCaptor.capture(), any(Metadata.class));
     Assert.assertEquals(statusCaptor.getValue().getCode(), Code.CANCELLED);
   }
-
 }

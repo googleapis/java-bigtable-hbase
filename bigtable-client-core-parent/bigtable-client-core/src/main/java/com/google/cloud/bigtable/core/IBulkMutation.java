@@ -27,23 +27,17 @@ public interface IBulkMutation {
    * Adds a {@link RowMutation} to the underlying IBulkMutation mechanism.
    *
    * @param rowMutation The {@link RowMutation} to add.
-   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
-   * successful otherwise exception will be thrown.
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is successful
+   *     otherwise exception will be thrown.
    */
   ApiFuture<Void> add(RowMutation rowMutation);
 
-  /**
-   * Sends any outstanding {@link RowMutation}s, present in the current batch.
-   */
+  /** Sends any outstanding {@link RowMutation}s, present in the current batch. */
   void sendUnsent();
 
-  /**
-   * Sends any outstanding {@link RowMutation} and wait until all requests are complete.
-   */
+  /** Sends any outstanding {@link RowMutation} and wait until all requests are complete. */
   void flush() throws InterruptedException;
 
-  /**
-   * @return false if there is any outstanding {@link RowMutation} that still needs to be sent.
-   */
+  /** @return false if there is any outstanding {@link RowMutation} that still needs to be sent. */
   boolean isFlushed();
 }

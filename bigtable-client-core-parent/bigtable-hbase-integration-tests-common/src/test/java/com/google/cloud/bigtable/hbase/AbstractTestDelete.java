@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -29,13 +29,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+public abstract class AbstractTestDelete extends AbstractTest {
 
-public abstract class AbstractTestDelete extends AbstractTest{
-  
-  /**
-   * Requirement 4.1 - Delete all data for a given rowkey.
-   */
+  /** Requirement 4.1 - Delete all data for a given rowkey. */
   @Test
   public void testDeleteRow() throws IOException {
     // Initialize data
@@ -62,7 +58,7 @@ public abstract class AbstractTestDelete extends AbstractTest{
 
     table.close();
   }
-  
+
   @Test
   public void testDeleteEmptyRow() throws IOException {
     // Initialize data
@@ -75,9 +71,7 @@ public abstract class AbstractTestDelete extends AbstractTest{
     table.close();
   }
 
-  /**
-   * Requirement 4.2 - Delete the latest version of a specific column (family:qualifier)
-   */
+  /** Requirement 4.2 - Delete the latest version of a specific column (family:qualifier) */
   @Test
   @Category(KnownGap.class)
   public void testDeleteLatestColumnVersion() throws IOException {
@@ -104,15 +98,15 @@ public abstract class AbstractTestDelete extends AbstractTest{
     // Confirm results.
     result = table.get(get);
     Assert.assertEquals(1, result.size());
-    Assert.assertEquals("Version 2 should be deleted, but not version 1.",
-      1L, result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual).getTimestamp());
+    Assert.assertEquals(
+        "Version 2 should be deleted, but not version 1.",
+        1L,
+        result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual).getTimestamp());
 
     table.close();
   }
 
-  /**
-   * Requirement 4.3 - Delete a specific version of a specific column (family:qualifer + ts)
-   */
+  /** Requirement 4.3 - Delete a specific version of a specific column (family:qualifer + ts) */
   @Test
   public void testDeleteSpecificColumnVersion() throws IOException {
     // Initialize data
@@ -146,9 +140,7 @@ public abstract class AbstractTestDelete extends AbstractTest{
     table.close();
   }
 
-  /**
-   * Requirement 4.4 - Delete all versions of a specific column
-   */
+  /** Requirement 4.4 - Delete all versions of a specific column */
   @Test
   public void testDeleteAllColumnVersions() throws IOException {
     // Initialize data
@@ -177,15 +169,20 @@ public abstract class AbstractTestDelete extends AbstractTest{
     // Check results
     result = table.get(get);
     Assert.assertEquals("Qual1 values should have been deleted", 1, result.size());
-    Assert.assertTrue("Qual2 should be intact", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2));
-    Assert.assertArrayEquals("Qual2 value should match", qual2,
-      CellUtil.cloneQualifier(result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual2)));
+    Assert.assertTrue(
+        "Qual2 should be intact", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2));
+    Assert.assertArrayEquals(
+        "Qual2 value should match",
+        qual2,
+        CellUtil.cloneQualifier(
+            result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual2)));
 
     table.close();
   }
 
   /**
-   * Requirement 4.5 - Delete all versions of a specific column less than or equal to a given timestamp.
+   * Requirement 4.5 - Delete all versions of a specific column less than or equal to a given
+   * timestamp.
    */
   @Test
   public void testDeleteOlderColumnVersions() throws IOException {
@@ -213,15 +210,15 @@ public abstract class AbstractTestDelete extends AbstractTest{
     // Confirm results
     result = table.get(get);
     Assert.assertEquals("Only one version should remain", 1, result.size());
-    Assert.assertEquals("Version 3 should be the only version", 3L,
-      result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual).getTimestamp());
+    Assert.assertEquals(
+        "Version 3 should be the only version",
+        3L,
+        result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual).getTimestamp());
 
     table.close();
   }
 
-  /**
-   * Requirement 4.6 - Delete all versions of all columns of a particular family.
-   */
+  /** Requirement 4.6 - Delete all versions of all columns of a particular family. */
   @Test
   public void testDeleteFamily() throws IOException {
     // Initialize data
@@ -287,16 +284,18 @@ public abstract class AbstractTestDelete extends AbstractTest{
     // Confirm results
     result = table.get(get);
     Assert.assertEquals("Only one version of qual1 should remain", 1, result.size());
-    Assert.assertTrue("Qual1 should be the remaining cell", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1));
-    Assert.assertEquals("Version 3 should be the only version", 3L,
-      result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual1).getTimestamp());
+    Assert.assertTrue(
+        "Qual1 should be the remaining cell",
+        result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1));
+    Assert.assertEquals(
+        "Version 3 should be the only version",
+        3L,
+        result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual1).getTimestamp());
 
     table.close();
   }
 
-  /**
-   * Requirement 4.8 - Delete all columns of a family with a specific ts.
-   */
+  /** Requirement 4.8 - Delete all columns of a family with a specific ts. */
   @Test
   @Category(KnownGap.class)
   public void testDeleteFamilyWithSpecificTimestamp() throws IOException {
@@ -328,8 +327,10 @@ public abstract class AbstractTestDelete extends AbstractTest{
     // Confirm results
     result = table.get(get);
     Assert.assertEquals("Three versions should remain", 3, result.size());
-    Assert.assertTrue("Qual1 should have cells", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1));
-    Assert.assertTrue("Qual2 should have a cell", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2));
+    Assert.assertTrue(
+        "Qual1 should have cells", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1));
+    Assert.assertTrue(
+        "Qual2 should have a cell", result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2));
     List<Cell> cells1 = result.getColumnCells(SharedTestEnvRule.COLUMN_FAMILY, qual1);
     Assert.assertEquals("Qual1 should have 2 cells", 2, cells1.size());
     Assert.assertEquals("Version 3 should be the latest version", 3L, cells1.get(0).getTimestamp());
@@ -340,6 +341,6 @@ public abstract class AbstractTestDelete extends AbstractTest{
 
     table.close();
   }
-  
+
   protected abstract Get readGetVersion(int version, byte[] rowKey) throws IOException;
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
+
+import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
@@ -25,9 +27,6 @@ import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
-
-import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,23 +40,22 @@ import org.apache.hadoop.hbase.filter.FilterList.Operator;
  * @author sduskis
  * @version $Id: $Id
  */
-public class FilterListAdapter
-    extends TypedFilterAdapterBase<FilterList> implements UnsupportedStatusCollector<FilterList> {
+public class FilterListAdapter extends TypedFilterAdapterBase<FilterList>
+    implements UnsupportedStatusCollector<FilterList> {
 
   private final FilterAdapter subFilterAdapter;
 
   /**
-   * <p>Constructor for FilterListAdapter.</p>
+   * Constructor for FilterListAdapter.
    *
-   * @param subFilterAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
+   * @param subFilterAdapter a {@link
+   *     com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
    */
   public FilterListAdapter(FilterAdapter subFilterAdapter) {
     this.subFilterAdapter = subFilterAdapter;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Filters.Filter adapt(FilterAdapterContext context, FilterList filter) throws IOException {
     try (ContextCloseable ignored = context.beginFilterList(filter)) {
@@ -86,8 +84,7 @@ public class FilterListAdapter
       throws IOException {
     List<Filters.Filter> result = new ArrayList<>();
     for (Filter subFilter : filter.getFilters()) {
-      Optional<Filters.Filter> potentialFilter =
-          subFilterAdapter.adaptFilter(context, subFilter);
+      Optional<Filters.Filter> potentialFilter = subFilterAdapter.adaptFilter(context, subFilter);
       if (potentialFilter.isPresent()) {
         result.add(potentialFilter.get());
       }
@@ -95,13 +92,9 @@ public class FilterListAdapter
     return result;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public FilterSupportStatus isFilterSupported(
-      FilterAdapterContext context,
-      FilterList filter) {
+  public FilterSupportStatus isFilterSupported(FilterAdapterContext context, FilterList filter) {
     List<FilterSupportStatus> unsupportedSubfilters = new ArrayList<>();
     try (ContextCloseable ignored = context.beginFilterList(filter)) {
       collectUnsupportedStatuses(context, filter, unsupportedSubfilters);
@@ -113,9 +106,7 @@ public class FilterListAdapter
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void collectUnsupportedStatuses(
       FilterAdapterContext context,

@@ -21,10 +21,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
-
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
@@ -44,18 +44,15 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-
 /**
  * Integration tests for BigtableAsyncAdmin
- * 
+ *
  * @author spollapally
  */
 @RunWith(JUnit4.class)
 public class TestAsyncAdmin extends AbstractAsyncTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testAsyncConnection() throws Exception {
@@ -81,50 +78,61 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
       assertEquals(false, asyncAdmin.tableExists(tableName).get());
 
       // test create new
-      
-      ColumnFamilyDescriptorBuilder cfBuilder = ColumnFamilyDescriptorBuilder.newBuilder(COLUMN_FAMILY);
+
+      ColumnFamilyDescriptorBuilder cfBuilder =
+          ColumnFamilyDescriptorBuilder.newBuilder(COLUMN_FAMILY);
       cfBuilder.setTimeToLive(10);
-      
-      asyncAdmin.createTable(TableDescriptorBuilder.newBuilder(tableName)
-          .addColumnFamily(cfBuilder.build()).build()).get();
+
+      asyncAdmin
+          .createTable(
+              TableDescriptorBuilder.newBuilder(tableName)
+                  .addColumnFamily(cfBuilder.build())
+                  .build())
+          .get();
       assertEquals(true, asyncAdmin.tableExists(tableName).get());
 
       // test listTableNames all
       List<TableName> allTableNames = asyncAdmin.listTableNames().get();
       assertTrue("listTableNames-all should list atleast one table", allTableNames.size() > 0);
-      assertTrue("listTableNames-all Should contain tableName" + tableName,
+      assertTrue(
+          "listTableNames-all Should contain tableName" + tableName,
           allTableNames.stream().anyMatch(e -> tableName.equals(e)));
 
       // test listTableNames by pattern
       String tNStr = tableName.getNameAsString();
-      List<TableName> patTableNames = asyncAdmin
-          .listTableNames(Pattern.compile(tNStr.substring(0, 15).concat(".*")), false)
-          .get();
+      List<TableName> patTableNames =
+          asyncAdmin
+              .listTableNames(Pattern.compile(tNStr.substring(0, 15).concat(".*")), false)
+              .get();
       assertTrue("listTableNames-pattern should list atleast one table", patTableNames.size() > 0);
-      assertTrue("listTableNames-pattern should contain tableName" + tableName,
+      assertTrue(
+          "listTableNames-pattern should contain tableName" + tableName,
           patTableNames.stream().anyMatch(e -> tableName.equals(e)));
 
       // test listTables all
       List<TableDescriptor> allTableDescriptors = asyncAdmin.listTableDescriptors().get();
       assertTrue("listTables-all should list atleast one table", allTableDescriptors.size() > 0);
-      assertTrue("listTables-all should contain tableName" + tableName,
+      assertTrue(
+          "listTables-all should contain tableName" + tableName,
           allTableDescriptors.stream().anyMatch(e -> tableName.equals(e.getTableName())));
 
       // test listTables by pattern
-      List<TableDescriptor> patTableDescriptors = asyncAdmin
-          .listTableDescriptors(Pattern.compile(tNStr.substring(0, 15).concat(".*")), false)
-          .get();
-      assertTrue("listTables-pattern should list atleast one table",
-          allTableDescriptors.size() > 0);
-      assertTrue("listTables-pattern should contain tableName" + tableName,
+      List<TableDescriptor> patTableDescriptors =
+          asyncAdmin
+              .listTableDescriptors(Pattern.compile(tNStr.substring(0, 15).concat(".*")), false)
+              .get();
+      assertTrue(
+          "listTables-pattern should list atleast one table", allTableDescriptors.size() > 0);
+      assertTrue(
+          "listTables-pattern should contain tableName" + tableName,
           patTableDescriptors.stream().anyMatch(e -> tableName.equals(e.getTableName())));
-      //TODO: Verify why this test fails. getColumnFamilies() array is empyty 
-      //assertEquals(10, patTableDescriptors.get(0).getColumnFamilies()[0].getTimeToLive()); 
+      // TODO: Verify why this test fails. getColumnFamilies() array is empyty
+      // assertEquals(10, patTableDescriptors.get(0).getColumnFamilies()[0].getTimeToLive());
 
       // test getTableDescriptor
       TableDescriptor tableDescriptor = asyncAdmin.getDescriptor(tableName).get();
       assertEquals(tableName, tableDescriptor.getTableName());
-      
+
       // test isTableEnabled
       assertEquals(true, asyncAdmin.isTableEnabled(tableName).get());
 
@@ -149,12 +157,13 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
     thrown.expect(ExecutionException.class);
     thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(TableNotFoundException.class));
     asyncAdmin.getDescriptor(tableName).get();
-  }  
+  }
 
   @Test
   public void testGetTableDescriptor_nullTable() throws Exception {
     // This breaks the minicluster, for some reason, so only run it for Cloud Bigtable.
-    Assume.assumeTrue("HBase asyncAdmin.getDescriptor(null) seems to break the mini-cluster",
+    Assume.assumeTrue(
+        "HBase asyncAdmin.getDescriptor(null) seems to break the mini-cluster",
         SharedTestEnvRule.getInstance().isBigtable());
     AsyncAdmin asyncAdmin = getAsyncConnection().getAdmin();
     assertEquals(null, asyncAdmin.getDescriptor(null).get());
@@ -166,8 +175,13 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
     TableName tableName = sharedTestEnv.newTestTableName();
     thrown.expect(ExecutionException.class);
     thrown.expectCause(IsInstanceOf.<Throwable>instanceOf(IllegalArgumentException.class));
-    asyncAdmin.createTable(TableDescriptorBuilder.newBuilder(tableName).build(),
-        Bytes.toBytes("AAA"), Bytes.toBytes("BBB"), 2).get();
+    asyncAdmin
+        .createTable(
+            TableDescriptorBuilder.newBuilder(tableName).build(),
+            Bytes.toBytes("AAA"),
+            Bytes.toBytes("BBB"),
+            2)
+        .get();
   }
 
   @Test
@@ -177,19 +191,29 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
     TableName tableName2 = sharedTestEnv.newTestTableName();
 
     try {
-      asyncAdmin.createTable(
-          TableDescriptorBuilder.newBuilder(tableName1)
-              .addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY)).build(),
-          Bytes.toBytes("AAA"), Bytes.toBytes("BBB"), 3).get();
+      asyncAdmin
+          .createTable(
+              TableDescriptorBuilder.newBuilder(tableName1)
+                  .addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY))
+                  .build(),
+              Bytes.toBytes("AAA"),
+              Bytes.toBytes("BBB"),
+              3)
+          .get();
       assertEquals(true, asyncAdmin.tableExists(tableName1).get());
 
       byte[][] splitKeys =
-          new byte[][] {Bytes.toBytes("AAA"), Bytes.toBytes("BBB"), Bytes.toBytes("CCC"),};
+          new byte[][] {
+            Bytes.toBytes("AAA"), Bytes.toBytes("BBB"), Bytes.toBytes("CCC"),
+          };
 
-      asyncAdmin.createTable(
-          TableDescriptorBuilder.newBuilder(tableName2)
-              .addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY)).build(),
-          splitKeys).get();
+      asyncAdmin
+          .createTable(
+              TableDescriptorBuilder.newBuilder(tableName2)
+                  .addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY))
+                  .build(),
+              splitKeys)
+          .get();
       assertEquals(true, asyncAdmin.tableExists(tableName2).get());
 
       // TODO - Add Region checks
@@ -208,8 +232,12 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
     checkThatNonExistingTableThrows(asyncAdmin, tableName);
 
     // test already disabled table
-    asyncAdmin.createTable(TableDescriptorBuilder.newBuilder(tableName)
-        .addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY)).build()).get();
+    asyncAdmin
+        .createTable(
+            TableDescriptorBuilder.newBuilder(tableName)
+                .addColumnFamily(ColumnFamilyDescriptorBuilder.of(COLUMN_FAMILY))
+                .build())
+        .get();
     assertTrue(asyncAdmin.isTableEnabled(tableName).get());
     assertFalse(asyncAdmin.isTableDisabled(tableName).get());
 
@@ -239,7 +267,8 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
     checkThatNonExistingTableThrows(asyncAdmin, tableName);
   }
 
-  private void checkThatNonExistingTableThrows(AsyncAdmin asyncAdmin, TableName tableName) throws InterruptedException {
+  private void checkThatNonExistingTableThrows(AsyncAdmin asyncAdmin, TableName tableName)
+      throws InterruptedException {
     try {
       asyncAdmin.disableTable(tableName).get();
     } catch (ExecutionException e) {

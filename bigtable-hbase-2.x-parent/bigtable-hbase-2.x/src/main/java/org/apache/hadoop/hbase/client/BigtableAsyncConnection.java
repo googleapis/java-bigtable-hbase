@@ -15,6 +15,20 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import com.google.bigtable.v2.SampleRowKeysRequest;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.data.v2.models.KeyOffset;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.cloud.bigtable.hbase2_x.BigtableAsyncAdmin;
+import com.google.cloud.bigtable.hbase2_x.BigtableAsyncBufferedMutator;
+import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTable;
+import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTableRegionLocator;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -27,28 +41,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
-
-import com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
-import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
-import com.google.cloud.bigtable.hbase2_x.BigtableAsyncAdmin;
-import com.google.cloud.bigtable.hbase2_x.BigtableAsyncBufferedMutator;
-import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTable;
-import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTableRegionLocator;
 
 /**
  * Bigtable implementation of {@link AsyncConnection}
@@ -76,8 +74,9 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     this(conf, null, null, null);
   }
 
-  public BigtableAsyncConnection(Configuration conf, AsyncRegistry ignoredRegistry,
-      String ignoredClusterId, User ignoredUser) throws IOException {
+  public BigtableAsyncConnection(
+      Configuration conf, AsyncRegistry ignoredRegistry, String ignoredClusterId, User ignoredUser)
+      throws IOException {
     LOG.debug("Creating BigtableAsyncConnection");
     this.conf = conf;
 
@@ -213,62 +212,66 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
       @Override
       public AsyncBufferedMutator build() {
-        return new BigtableAsyncBufferedMutator(createAdapter(tableName), getConfiguration(),
-            session);
+        return new BigtableAsyncBufferedMutator(
+            createAdapter(tableName), getConfiguration(), session);
       }
     };
   }
 
   @Override
-  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(TableName tableName,
-      ExecutorService es) {
+  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(
+      TableName tableName, ExecutorService es) {
     return getBufferedMutatorBuilder(tableName);
   }
-  
+
   @Override
   public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName tableName) {
     return new AsyncTableBuilder<AdvancedScanResultConsumer>() {
-      
+
       @Override
-      public AsyncTableBuilder<AdvancedScanResultConsumer> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setWriteRpcTimeout(
+          long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setStartLogErrorsCnt(int arg0) {
         return this;
       }
-      
+
       @Override
-      public AsyncTableBuilder<AdvancedScanResultConsumer> setScanTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setScanTimeout(
+          long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setRetryPause(long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
-      public AsyncTableBuilder<AdvancedScanResultConsumer> setReadRpcTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setReadRpcTimeout(
+          long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
-      public AsyncTableBuilder<AdvancedScanResultConsumer> setOperationTimeout(long arg0, TimeUnit arg1) {
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setOperationTimeout(
+          long arg0, TimeUnit arg1) {
         return this;
       }
-      
+
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setMaxAttempts(int arg0) {
         return this;
       }
-      
+
       @Override
       public AsyncTable build() {
         return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
@@ -278,12 +281,13 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
-    return new BigtableAsyncTableRegionLocator(tableName, options, this.session.getDataClientWrapper());
+    return new BigtableAsyncTableRegionLocator(
+        tableName, options, this.session.getDataClientWrapper());
   }
 
   @Override
-  public AsyncTableBuilder<ScanResultConsumer> getTableBuilder(TableName tableName,
-      final ExecutorService ignored) {
+  public AsyncTableBuilder<ScanResultConsumer> getTableBuilder(
+      TableName tableName, final ExecutorService ignored) {
     return new AsyncTableBuilder<ScanResultConsumer>() {
       @Override
       public AsyncTable build() {
@@ -337,7 +341,8 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
     request.setTableName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
-    List<KeyOffset> sampleRowKeyResponse = this.session.getDataClientWrapper().sampleRowKeys(tableName.getNameAsString());
+    List<KeyOffset> sampleRowKeyResponse =
+        this.session.getDataClientWrapper().sampleRowKeys(tableName.getNameAsString());
 
     return getSampledRowKeysAdapter(tableName, serverName).adaptResponse(sampleRowKeyResponse)
         .stream()
@@ -350,18 +355,21 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     throw new UnsupportedOperationException("getHbck is not supported.");
   }
 
-  @Override public CompletableFuture<Hbck> getHbck() {
+  @Override
+  public CompletableFuture<Hbck> getHbck() {
     throw new UnsupportedOperationException("getHbck is not supported.");
   }
 
-  private SampledRowKeysAdapter getSampledRowKeysAdapter(TableName tableNameAdapter,
-      ServerName serverNameAdapter) {
+  private SampledRowKeysAdapter getSampledRowKeysAdapter(
+      TableName tableNameAdapter, ServerName serverNameAdapter) {
     return new SampledRowKeysAdapter(tableNameAdapter, serverNameAdapter) {
       @Override
-      protected HRegionLocation createRegionLocation(byte[] startKey,
-          byte[] endKey) {
-        RegionInfo regionInfo = RegionInfoBuilder.newBuilder(tableNameAdapter)
-            .setStartKey(startKey).setEndKey(endKey).build();
+      protected HRegionLocation createRegionLocation(byte[] startKey, byte[] endKey) {
+        RegionInfo regionInfo =
+            RegionInfoBuilder.newBuilder(tableNameAdapter)
+                .setStartKey(startKey)
+                .setEndKey(endKey)
+                .build();
         return new HRegionLocation(regionInfo, serverNameAdapter);
       }
     };

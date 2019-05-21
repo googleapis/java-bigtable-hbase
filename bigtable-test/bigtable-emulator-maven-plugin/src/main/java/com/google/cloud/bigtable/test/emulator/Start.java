@@ -28,10 +28,13 @@ import org.apache.maven.project.MavenProject;
 
 @Mojo(name = "start", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = true)
 public class Start extends AbstractMojo {
-  @Parameter( defaultValue = "${project}", readonly = true, required = true )
+  @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
-  @Parameter( defaultValue = "${project.build.directory}/bigtable-emulator.log", readonly = true, required = true )
+  @Parameter(
+      defaultValue = "${project.build.directory}/bigtable-emulator.log",
+      readonly = true,
+      required = true)
   private File logFile;
 
   @Parameter(readonly = true)
@@ -43,9 +46,8 @@ public class Start extends AbstractMojo {
   @Parameter(defaultValue = "${maven.test.skip}", property = "bigtable.emulator.skip")
   private boolean skip;
 
-
   public void execute() throws MojoExecutionException {
-    if(skip) {
+    if (skip) {
       getLog().info("bigtable.emulator.skip resolved to true. Skipping excution.");
       return;
     }
@@ -54,10 +56,8 @@ public class Start extends AbstractMojo {
       emulatorPath = helper.getEmulatorPath();
     }
 
-    EmulatorController controller = new EmulatorController.Builder()
-        .setEmulatorPath(emulatorPath)
-        .setLogFile(logFile)
-        .build();
+    EmulatorController controller =
+        new EmulatorController.Builder().setEmulatorPath(emulatorPath).setLogFile(logFile).build();
 
     getLog().debug("Starting bigtable emulator");
     try {
@@ -66,7 +66,8 @@ public class Start extends AbstractMojo {
       throw new MojoExecutionException("Failed to start emulator", e);
     }
 
-    // In case the user kills maven using ctrl-c & stop doesn't get to run, make sure to kill the process
+    // In case the user kills maven using ctrl-c & stop doesn't get to run, make sure to kill the
+    // process
     Runtime.getRuntime().addShutdownHook(new EmulatorKiller(controller));
 
     project.getProperties().setProperty(propertyName, "localhost:" + controller.getPort());
@@ -79,7 +80,6 @@ public class Start extends AbstractMojo {
   private void setController(EmulatorController controller) {
     getPluginContext().put(EmulatorController.class, controller);
   }
-
 
   private static class EmulatorKiller extends Thread {
 

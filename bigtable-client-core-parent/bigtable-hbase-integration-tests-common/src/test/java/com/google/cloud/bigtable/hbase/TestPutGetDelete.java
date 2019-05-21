@@ -17,6 +17,9 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -27,13 +30,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-
-/**
- * A simple put-get-delete test.
- */
+/** A simple put-get-delete test. */
 public class TestPutGetDelete extends AbstractTest {
   @Test
   public void testPutGetDelete() throws IOException {

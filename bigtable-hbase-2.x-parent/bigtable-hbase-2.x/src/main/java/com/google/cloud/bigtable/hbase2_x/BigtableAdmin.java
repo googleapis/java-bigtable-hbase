@@ -15,7 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
+import com.google.bigtable.admin.v2.Snapshot;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
+import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
-
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
@@ -62,14 +66,9 @@ import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
-import com.google.common.util.concurrent.Futures;
-
 /**
  * HBase 2.x specific implementation of {@link AbstractBigtableAdmin}.
+ *
  * @author spollapally
  */
 @SuppressWarnings("deprecation")
@@ -116,8 +115,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  public List<SnapshotDescription> listSnapshots(Pattern pattern)
-      throws IOException {
+  public List<SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
     List<SnapshotDescription> response = new ArrayList<>();
     for (SnapshotDescription description : listSnapshots()) {
       if (pattern.matcher(description.getName()).matches()) {
@@ -125,23 +123,20 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
       }
     }
     return response;
-
   }
 
   @Override
-  public List<SnapshotDescription> listSnapshots()
-      throws IOException {
-    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder()
-        .setParent(getSnapshotClusterName().toString())
-        .build();
+  public List<SnapshotDescription> listSnapshots() throws IOException {
+    ListSnapshotsRequest request =
+        ListSnapshotsRequest.newBuilder().setParent(getSnapshotClusterName().toString()).build();
 
-    ListSnapshotsResponse snapshotList = Futures.getChecked(tableAdminClientWrapper
-        .listSnapshotsAsync(request), IOException.class);
+    ListSnapshotsResponse snapshotList =
+        Futures.getChecked(tableAdminClientWrapper.listSnapshotsAsync(request), IOException.class);
     List<SnapshotDescription> response = new ArrayList<>();
     for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
-      response.add(new SnapshotDescription(
-          snapshot.getName(),
-          TableName.valueOf(snapshot.getSourceTable().getName())));
+      response.add(
+          new SnapshotDescription(
+              snapshot.getName(), TableName.valueOf(snapshot.getSourceTable().getName())));
     }
     return response;
   }
@@ -149,27 +144,35 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /**
    * {@inheritDoc}
    *
-   * Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
+   * <p>Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
    * Copying the same code here. //TODO - need to find a better way
    */
   @Override
   public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "add",
-            ModifyTableBuilder.newBuilder(tableName).add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+    modifyColumns(
+        tableName,
+        columnFamilyDesc.getNameAsString(),
+        "add",
+        ModifyTableBuilder.newBuilder(tableName)
+            .add(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   /**
    * {@inheritDoc}
    *
-   * Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
+   * <p>Calling {@link #addColumn(TableName, ColumnFamilyDescriptor)} was causing stackoverflow.
    * Copying the same code here. //TODO - need to find a better way
    */
   @Override
   public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamilyDesc)
       throws IOException {
-    modifyColumns(tableName, columnFamilyDesc.getNameAsString(), "modify",
-        ModifyTableBuilder.newBuilder(tableName).modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
+    modifyColumns(
+        tableName,
+        columnFamilyDesc.getNameAsString(),
+        "modify",
+        ModifyTableBuilder.newBuilder(tableName)
+            .modify(TableAdapter2x.toHColumnDescriptor(columnFamilyDesc)));
   }
 
   /** {@inheritDoc} */
@@ -218,12 +221,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public void snapshotAsync(SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException {
     asyncAdmin.snapshot(snapshot);
-    LOG.warn("isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-        + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
+    LOG.warn(
+        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
+            + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
   }
 
   @Override
-  public Future<Void> addColumnFamilyAsync(TableName tableName, ColumnFamilyDescriptor columnFamily) {
+  public Future<Void> addColumnFamilyAsync(
+      TableName tableName, ColumnFamilyDescriptor columnFamily) {
     return asyncAdmin.addColumnFamily(tableName, columnFamily);
   }
 
@@ -260,7 +265,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public List<TableDescriptor> listTableDescriptors(List<TableName> tableNames) throws IOException {
     List<TableDescriptor> response = new ArrayList<TableDescriptor>();
-    for (TableName tableName: tableNames) {
+    for (TableName tableName : tableNames) {
       TableDescriptor desc = getTableDescriptor(tableName);
       if (desc != null) {
         response.add(desc);
@@ -272,7 +277,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public List<TableDescriptor> listTableDescriptors(Pattern pattern, boolean includeSysTables)
       throws IOException {
-    return Arrays.asList(listTables(pattern,includeSysTables));
+    return Arrays.asList(listTables(pattern, includeSysTables));
   }
 
   @Override
@@ -283,16 +288,16 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public List<SnapshotDescription> listTableSnapshots(String tableName,
-      String snapshotName) throws IOException {
+  public List<SnapshotDescription> listTableSnapshots(String tableName, String snapshotName)
+      throws IOException {
     return listTableSnapshots(Pattern.compile(tableName), Pattern.compile(snapshotName));
   }
 
   @Override
-  public List<SnapshotDescription> listTableSnapshots(Pattern tableName,
-      Pattern snapshotName) throws IOException {
+  public List<SnapshotDescription> listTableSnapshots(Pattern tableName, Pattern snapshotName)
+      throws IOException {
     List<SnapshotDescription> response = new ArrayList<>();
-    for (SnapshotDescription snapshot: listSnapshots(snapshotName)) {
+    for (SnapshotDescription snapshot : listSnapshots(snapshotName)) {
       if (tableName.matcher(snapshot.getTableNameAsString()).matches()) {
         response.add(snapshot);
       }
@@ -301,8 +306,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public Future<Void> modifyColumnFamilyAsync(TableName tableName,
-      ColumnFamilyDescriptor columnFamily) throws IOException {
+  public Future<Void> modifyColumnFamilyAsync(
+      TableName tableName, ColumnFamilyDescriptor columnFamily) throws IOException {
     return asyncAdmin.modifyColumnFamily(tableName, columnFamily);
   }
 
@@ -317,35 +322,39 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public Future<Void> modifyTableAsync(TableDescriptor tableDescriptor)
-      throws IOException {
+  public Future<Void> modifyTableAsync(TableDescriptor tableDescriptor) throws IOException {
     return modifyTableAsync(tableDescriptor.getTableName(), tableDescriptor);
   }
 
   @Override
   public Future<Void> modifyTableAsync(TableName tableName, TableDescriptor newDescriptor) {
-    return asyncAdmin.getDescriptor(tableName).thenApply(descriptor -> ModifyTableBuilder
-        .buildModifications(new HTableDescriptor(newDescriptor), new HTableDescriptor(descriptor)))
-        .thenApply(modifications -> {
-          try {
-            return modifyColumns(tableName, null, "modifyTableAsync", modifications);
-          } catch (IOException e) {
-            throw new CompletionException(e);
-          }
-        });
+    return asyncAdmin
+        .getDescriptor(tableName)
+        .thenApply(
+            descriptor ->
+                ModifyTableBuilder.buildModifications(
+                    new HTableDescriptor(newDescriptor), new HTableDescriptor(descriptor)))
+        .thenApply(
+            modifications -> {
+              try {
+                return modifyColumns(tableName, null, "modifyTableAsync", modifications);
+              } catch (IOException e) {
+                throw new CompletionException(e);
+              }
+            });
   }
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.hbase.client.Admin#truncateTableAsync(org.apache.hadoop.hbase.TableName, boolean)
    */
   @Override
-  public Future<Void> truncateTableAsync(TableName tableName, boolean preserveSplits) throws IOException {
-   if (!preserveSplits) {
+  public Future<Void> truncateTableAsync(TableName tableName, boolean preserveSplits)
+      throws IOException {
+    if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
-   }
-   return FutureUtils.toCompletableFuture(
-        tableAdminClientWrapper
-          .dropAllRowsAsync(tableName.getNameAsString()));
+    }
+    return FutureUtils.toCompletableFuture(
+        tableAdminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
   }
   /* ******* Unsupported methods *********** */
 
@@ -506,14 +515,15 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     throw new UnsupportedOperationException("getRegions");
   }
 
-  @Override public void flushRegionServer(ServerName serverName) throws IOException {
+  @Override
+  public void flushRegionServer(ServerName serverName) throws IOException {
     throw new UnsupportedOperationException("flushRegionServer");
   }
 
   @Override
   public List<RegionInfo> getRegions(TableName tableName) throws IOException {
     List<RegionInfo> regionInfo = new ArrayList<>();
-    for(HRegionInfo hRegionInfo : getTableRegions(tableName)) {
+    for (HRegionInfo hRegionInfo : getTableRegions(tableName)) {
       regionInfo.add(hRegionInfo);
     }
     return regionInfo;
@@ -591,6 +601,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public Future<Void> modifyNamespaceAsync(NamespaceDescriptor arg0) throws IOException {
     throw new UnsupportedOperationException("modifyNamespaceAsync"); // TODO
   }
+
   @Override
   public boolean normalize() throws IOException {
     throw new UnsupportedOperationException("normalize"); // TODO
@@ -639,7 +650,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public void addReplicationPeer(String arg0, ReplicationPeerConfig arg1, boolean arg2) throws IOException {
+  public void addReplicationPeer(String arg0, ReplicationPeerConfig arg1, boolean arg2)
+      throws IOException {
     throw new UnsupportedOperationException("addReplicationPeer"); // TODO
   }
 
@@ -649,8 +661,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public Future<Void> addReplicationPeerAsync(String s, ReplicationPeerConfig replicationPeerConfig,
-      boolean b) {
+  public Future<Void> addReplicationPeerAsync(
+      String s, ReplicationPeerConfig replicationPeerConfig, boolean b) {
     throw new UnsupportedOperationException("addReplicationPeerAsync"); // TODO
   }
 
@@ -752,13 +764,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public void updateReplicationPeerConfig(String arg0, ReplicationPeerConfig arg1) throws IOException {
+  public void updateReplicationPeerConfig(String arg0, ReplicationPeerConfig arg1)
+      throws IOException {
     throw new UnsupportedOperationException("updateReplicationPeerConfig"); // TODO
   }
 
   @Override
-  public Future<Void> updateReplicationPeerConfigAsync(String s,
-      ReplicationPeerConfig replicationPeerConfig) {
+  public Future<Void> updateReplicationPeerConfigAsync(
+      String s, ReplicationPeerConfig replicationPeerConfig) {
     throw new UnsupportedOperationException("updateReplicationPeerConfigAsync"); // TODO
   }
 }

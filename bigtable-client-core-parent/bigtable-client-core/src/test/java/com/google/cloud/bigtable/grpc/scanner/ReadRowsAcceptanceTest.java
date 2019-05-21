@@ -15,23 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.TextFormat;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-
 import io.grpc.stub.StreamObserver;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -39,10 +30,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-/**
- * Parses and runs the acceptance tests for read rows
- */
+/** Parses and runs the acceptance tests for read rows */
 @RunWith(Parameterized.class)
 public class ReadRowsAcceptanceTest {
   // The acceptance test data model, populated via jackson data binding
@@ -55,9 +49,7 @@ public class ReadRowsAcceptanceTest {
     public List<String> chunks;
     public List<TestResult> results;
 
-    /**
-     * The test name in the source file is an arbitrary string. Make it junit-friendly.
-     */
+    /** The test name in the source file is an arbitrary string. Make it junit-friendly. */
     public String getJunitTestName() {
       return CaseFormat.LOWER_HYPHEN.to(CaseFormat.LOWER_CAMEL, name.replace(" ", "-"));
     }
@@ -87,7 +79,7 @@ public class ReadRowsAcceptanceTest {
     }
   }
 
-  private final static class TestResult {
+  private static final class TestResult {
     public String rk;
     public String fm;
     public String qual;
@@ -96,12 +88,9 @@ public class ReadRowsAcceptanceTest {
     public String label;
     public boolean error;
 
-    /**
-     * Constructor for JSon deserialization.
-     */
+    /** Constructor for JSon deserialization. */
     @SuppressWarnings("unused")
-    public TestResult() {
-    }
+    public TestResult() {}
 
     public TestResult(
         String rk, String fm, String qual, long ts, String value, String label, boolean error) {
@@ -129,7 +118,7 @@ public class ReadRowsAcceptanceTest {
 
     @Override
     public boolean equals(Object obj) {
-      if (obj == null || !(obj instanceof TestResult)){
+      if (obj == null || !(obj instanceof TestResult)) {
         return false;
       }
       if (obj == this) {
@@ -155,15 +144,15 @@ public class ReadRowsAcceptanceTest {
 
   @Parameters(name = "{0}")
   public static Collection<Object[]> data() {
-    InputStream testInputStream = ReadRowsAcceptanceTest.class
-        .getResourceAsStream("read-rows-acceptance-test.json");
+    InputStream testInputStream =
+        ReadRowsAcceptanceTest.class.getResourceAsStream("read-rows-acceptance-test.json");
 
     ObjectMapper mapper = new ObjectMapper();
     try {
       AcceptanceTest acceptanceTest = mapper.readValue(testInputStream, AcceptanceTest.class);
       List<Object[]> data = new ArrayList<>();
       for (ChunkTestCase test : acceptanceTest.tests) {
-        data.add(new Object[]{ test });
+        data.add(new Object[] {test});
       }
       return data;
     } catch (IOException e) {
@@ -229,7 +218,8 @@ public class ReadRowsAcceptanceTest {
         Assert.fail("expected exception");
       }
     } else if (!exceptions.isEmpty()) {
-      Assert.fail("Got unexpected exception: " + exceptions.get(exceptions.size() - 1).getMessage());
+      Assert.fail(
+          "Got unexpected exception: " + exceptions.get(exceptions.size() - 1).getMessage());
     }
   }
 
@@ -237,14 +227,15 @@ public class ReadRowsAcceptanceTest {
     ArrayList<TestResult> response = new ArrayList<>();
     for (FlatRow row : responses) {
       for (FlatRow.Cell cell : row.getCells()) {
-        response.add(new TestResult(
-          toString(row.getRowKey()),
-          cell.getFamily(),
-          toString(cell.getQualifier()),
-          cell.getTimestamp(),
-          toString(cell.getValue()),
-          cell.getLabels().isEmpty() ? "" : cell.getLabels().get(0),
-          false));
+        response.add(
+            new TestResult(
+                toString(row.getRowKey()),
+                cell.getFamily(),
+                toString(cell.getQualifier()),
+                cell.getTimestamp(),
+                toString(cell.getValue()),
+                cell.getLabels().isEmpty() ? "" : cell.getLabels().get(0),
+                false));
       }
     }
     return response;

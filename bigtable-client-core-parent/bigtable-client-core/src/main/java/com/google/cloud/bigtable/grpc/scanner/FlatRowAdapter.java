@@ -25,9 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-/**
- * Adapter for {@link RowAdapter} that uses {@link FlatRow}'s to represent logical rows.
- */
+/** Adapter for {@link RowAdapter} that uses {@link FlatRow}'s to represent logical rows. */
 public class FlatRowAdapter implements RowAdapter<FlatRow> {
 
   /** {@inheritDoc} */
@@ -56,8 +54,7 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
     private String previousFamily;
     private int totalCellCount = 0;
 
-    public FlatRowBuilder() {
-    }
+    public FlatRowBuilder() {}
 
     /** {@inheritDoc} */
     @Override
@@ -67,8 +64,8 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
 
     /** {@inheritDoc} */
     @Override
-    public void startCell(String family, ByteString qualifier, long timestamp, List<String> labels,
-        long size) {
+    public void startCell(
+        String family, ByteString qualifier, long timestamp, List<String> labels, long size) {
       this.family = family;
       this.qualifier = qualifier;
       this.timestamp = timestamp;
@@ -83,19 +80,23 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
     }
 
     /**
-     * Adds a Cell to {@link Cell}'s map which is ordered by family. cells received from
-     * {@link RowBuilder} has ordering as:
-     *   <ul>
-     *     <li>family names clustered, but not sorted</li>
-     *     <li>qualifiers in each family cluster is sorted lexicographically</li>
-     *     <li>then descending by timestamp</li>
-     *   </ul>
+     * Adds a Cell to {@link Cell}'s map which is ordered by family. cells received from {@link
+     * RowBuilder} has ordering as:
+     *
+     * <ul>
+     *   <li>family names clustered, but not sorted
+     *   <li>qualifiers in each family cluster is sorted lexicographically
+     *   <li>then descending by timestamp
+     * </ul>
+     *
      * The end result will be that {@link Cell} are ordered as:
-     *    <ul>
-     *      <li>lexicographical by family</li>
-     *      <li>then lexicographical by qualifier</li>
-     *      <li>then descending by timestamp</li>
-     *    </ul>
+     *
+     * <ul>
+     *   <li>lexicographical by family
+     *   <li>then lexicographical by qualifier
+     *   <li>then descending by timestamp
+     * </ul>
+     *
      * A flattened version of the {@link Cell} map will be sorted correctly.
      */
     @Override
@@ -106,16 +107,16 @@ public class FlatRowAdapter implements RowAdapter<FlatRow> {
         cells.put(this.family, this.currentFamilyCells);
       }
 
-      FlatRow.Cell cell  = new FlatRow.Cell(this.family, this.qualifier, this.timestamp,
-                    this.value, this.labels);
+      FlatRow.Cell cell =
+          new FlatRow.Cell(this.family, this.qualifier, this.timestamp, this.value, this.labels);
       this.currentFamilyCells.add(cell);
       totalCellCount++;
-  }
+    }
 
     /**
-     * This method flattens the {@link #cells} which has a map of Lists keyed by family name.
-     * The {@link #cells} TreeMap is sorted lexicographically, and each List is sorted by
-     * qualifier in lexicographically ascending order, and timestamp in descending order.
+     * This method flattens the {@link #cells} which has a map of Lists keyed by family name. The
+     * {@link #cells} TreeMap is sorted lexicographically, and each List is sorted by qualifier in
+     * lexicographically ascending order, and timestamp in descending order.
      *
      * @return an object of HBase {@link FlatRow}.
      */

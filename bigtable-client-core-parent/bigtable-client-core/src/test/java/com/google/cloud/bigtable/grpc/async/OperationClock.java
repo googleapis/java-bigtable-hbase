@@ -15,19 +15,18 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import com.google.api.client.util.NanoClock;
 import com.google.api.core.ApiClock;
 import com.google.common.annotations.VisibleForTesting;
-import org.junit.Assert;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
+import org.junit.Assert;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  * An implementation of {@link NanoClock} that is geared towards {@link AbstractRetryingOperation}.
@@ -59,36 +58,37 @@ public class OperationClock implements ApiClock {
   }
 
   /**
-   * Sets up a mock {@link ScheduledExecutorService} to use update the clock based on the amount
-   * of time the scheduler was set to.
+   * Sets up a mock {@link ScheduledExecutorService} to use update the clock based on the amount of
+   * time the scheduler was set to.
    */
-  public void initializeMockSchedule(ScheduledExecutorService mockExecutor,
-     final ScheduledFuture future) {
+  public void initializeMockSchedule(
+      ScheduledExecutorService mockExecutor, final ScheduledFuture future) {
 
-    Answer<ScheduledFuture> runAutomatically = new Answer<ScheduledFuture>() {
-      @Override public ScheduledFuture answer(InvocationOnMock invocation)  {
-        long duration = invocation.getArgument(1, Long.class);
-        TimeUnit timeUnit = invocation.getArgument(2, TimeUnit.class);
-        synchronized (OperationClock.this) {
-          totalSleepTimeNs += timeUnit.toNanos(duration);
-        }
-        invocation.getArgument(0, Runnable.class).run();
-        return future;
-      }
-    };
+    Answer<ScheduledFuture> runAutomatically =
+        new Answer<ScheduledFuture>() {
+          @Override
+          public ScheduledFuture answer(InvocationOnMock invocation) {
+            long duration = invocation.getArgument(1, Long.class);
+            TimeUnit timeUnit = invocation.getArgument(2, TimeUnit.class);
+            synchronized (OperationClock.this) {
+              totalSleepTimeNs += timeUnit.toNanos(duration);
+            }
+            invocation.getArgument(0, Runnable.class).run();
+            return future;
+          }
+        };
 
     when(mockExecutor.schedule(any(Runnable.class), any(Long.class), any(TimeUnit.class)))
         .then(runAutomatically);
   }
 
-  /**
-   * Checks to make sure that the expected sleep time matches the actual time slept.
-   */
+  /** Checks to make sure that the expected sleep time matches the actual time slept. */
   public synchronized void assertTimeWithinExpectations(long expectedSleepNs) {
     long sleptMillis = TimeUnit.MILLISECONDS.toSeconds(totalSleepTimeNs);
-    Assert.assertTrue(String.format("Slept only %d ms", sleptMillis),
-        totalSleepTimeNs >= expectedSleepNs * .9);
-    Assert.assertTrue(String.format("Slept more than expected (%d ms)", sleptMillis),
+    Assert.assertTrue(
+        String.format("Slept only %d ms", sleptMillis), totalSleepTimeNs >= expectedSleepNs * .9);
+    Assert.assertTrue(
+        String.format("Slept more than expected (%d ms)", sleptMillis),
         totalSleepTimeNs < expectedSleepNs * 1.1);
   }
 }

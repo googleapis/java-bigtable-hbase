@@ -15,7 +15,21 @@
  */
 package com.google.cloud.bigtable.beam;
 
-
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
+import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,9 +39,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -66,51 +77,27 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
-import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
-import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
-import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
-import com.google.cloud.bigtable.hbase.util.ByteStringer;
-
 /**
- * <p>
- * Utilities to create {@link PTransform}s for reading and
- * writing <a href="https://cloud.google.com/bigtable/">Google Cloud Bigtable</a> entities in a
- * Beam pipeline.
- * </p>
+ * Utilities to create {@link PTransform}s for reading and writing <a
+ * href="https://cloud.google.com/bigtable/">Google Cloud Bigtable</a> entities in a Beam pipeline.
  *
- * <p>
- * Google Cloud Bigtable offers you a fast, fully managed, massively scalable NoSQL database service
- * that's ideal for web, mobile, and Internet of Things applications requiring terabytes to
+ * <p>Google Cloud Bigtable offers you a fast, fully managed, massively scalable NoSQL database
+ * service that's ideal for web, mobile, and Internet of Things applications requiring terabytes to
  * petabytes of data. Unlike comparable market offerings, Cloud Bigtable doesn't require you to
  * sacrifice speed, scale, or cost efficiency when your applications grow. Cloud Bigtable has been
  * battle-tested at Google for more than 10 years--it's the database driving major applications such
  * as Google Analytics and Gmail.
- * </p>
  *
- * <p>
- * To use {@link CloudBigtableIO}, users must use gcloud to get a credential for Cloud Bigtable:
+ * <p>To use {@link CloudBigtableIO}, users must use gcloud to get a credential for Cloud Bigtable:
  *
  * <pre>
  * $ gcloud auth login
  * </pre>
  *
- * <p>
- * To read a {@link PCollection} from a table, with an optional
- * {@link Scan}, use {@link CloudBigtableIO#read(CloudBigtableScanConfiguration)}:
- * </p>
+ * <p>To read a {@link PCollection} from a table, with an optional {@link Scan}, use {@link
+ * CloudBigtableIO#read(CloudBigtableScanConfiguration)}:
  *
- * <pre>
- * {@code
+ * <pre>{@code
  * PipelineOptions options = PipelineOptionsFactory.fromArgs(args).create();
  * Pipeline p = Pipeline.create(options);
  * PCollection<Result> = p.apply(
@@ -120,16 +107,12 @@ import com.google.cloud.bigtable.hbase.util.ByteStringer;
  *          .withInstanceId("instance-id")
  *          .withTableId("table-id")
  *          .build())));
- * }
- * </pre>
+ * }</pre>
  *
- * <p>
- * To write a {@link PCollection} to a table, use
- * {@link CloudBigtableIO#writeToTable(CloudBigtableTableConfiguration)}:
- * </p>
+ * <p>To write a {@link PCollection} to a table, use {@link
+ * CloudBigtableIO#writeToTable(CloudBigtableTableConfiguration)}:
  *
- * <pre>
- * {@code
+ * <pre>{@code
  * PipelineOptions options =
  *     PipelineOptionsFactory.fromArgs(args).create();
  * Pipeline p = Pipeline.create(options);
@@ -141,8 +124,7 @@ import com.google.cloud.bigtable.hbase.util.ByteStringer;
  *          .withInstanceId("instance-id")
  *          .withTableId("table-id")
  *          .build()));
- * }
- * </pre>
+ * }</pre>
  */
 @Experimental
 public class CloudBigtableIO {
@@ -154,14 +136,12 @@ public class CloudBigtableIO {
    * {@link Scan}.
    */
   @SuppressWarnings("serial")
-  static abstract class AbstractSource extends BoundedSource<Result> {
+  abstract static class AbstractSource extends BoundedSource<Result> {
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
     protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 4_000;
-    static final long COUNT_MAX_SPLIT_COUNT= 15_360;
+    static final long COUNT_MAX_SPLIT_COUNT = 15_360;
 
-    /**
-     * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
-     */
+    /** Configuration for a Cloud Bigtable connection, a table, and an optional scan. */
     private final CloudBigtableScanConfiguration configuration;
 
     private transient List<KeyOffset> sampleRowKeys;
@@ -178,8 +158,9 @@ public class CloudBigtableIO {
     // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between beam needs
     // and Cloud Bigtable logic.
     protected List<SourceWithKeys> getSplits(long desiredBundleSizeBytes) throws Exception {
-      desiredBundleSizeBytes = Math.max(getEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
-        desiredBundleSizeBytes);
+      desiredBundleSizeBytes =
+          Math.max(
+              getEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT, desiredBundleSizeBytes);
       CloudBigtableScanConfiguration conf = getConfiguration();
       byte[] scanStartKey = conf.getZeroCopyStartRow();
       byte[] scanEndKey = conf.getZeroCopyStopRow();
@@ -230,15 +211,15 @@ public class CloudBigtableIO {
       return result;
     }
 
-    private List<SourceWithKeys>
-        reduceSplits(List<SourceWithKeys> splits) {
+    private List<SourceWithKeys> reduceSplits(List<SourceWithKeys> splits) {
       if (splits.size() < COUNT_MAX_SPLIT_COUNT) {
         return splits;
       }
       List<SourceWithKeys> reducedSplits = new ArrayList<>();
       SourceWithKeys start = null;
       SourceWithKeys lastSeen = null;
-      int numberToCombine = (int) ((splits.size() + COUNT_MAX_SPLIT_COUNT - 1) / COUNT_MAX_SPLIT_COUNT);
+      int numberToCombine =
+          (int) ((splits.size() + COUNT_MAX_SPLIT_COUNT - 1) / COUNT_MAX_SPLIT_COUNT);
       int counter = 0;
       long size = 0;
       for (SourceWithKeys source : splits) {
@@ -249,35 +230,40 @@ public class CloudBigtableIO {
         counter++;
         lastSeen = source;
         if (counter == numberToCombine) {
-          reducedSplits.add(createSourceWithKeys(start.getConfiguration().getZeroCopyStartRow(),
-            source.getConfiguration().getZeroCopyStopRow(), size));
+          reducedSplits.add(
+              createSourceWithKeys(
+                  start.getConfiguration().getZeroCopyStartRow(),
+                  source.getConfiguration().getZeroCopyStopRow(),
+                  size));
           counter = 0;
           size = 0;
           start = null;
         }
       }
       if (start != null) {
-        reducedSplits.add(createSourceWithKeys(start.getConfiguration().getZeroCopyStartRow(),
-          lastSeen.getConfiguration().getZeroCopyStopRow(), size));
+        reducedSplits.add(
+            createSourceWithKeys(
+                start.getConfiguration().getZeroCopyStartRow(),
+                lastSeen.getConfiguration().getZeroCopyStopRow(),
+                size));
       }
       return reducedSplits;
     }
 
-    /**
-     * Checks if the range of the region is within the range of the scan.
-     */
-    protected static boolean isWithinRange(byte[] scanStartKey, byte[] scanEndKey,
-        byte[] startKey, byte[] endKey) {
-      return (scanStartKey.length == 0 || endKey.length == 0
+    /** Checks if the range of the region is within the range of the scan. */
+    protected static boolean isWithinRange(
+        byte[] scanStartKey, byte[] scanEndKey, byte[] startKey, byte[] endKey) {
+      return (scanStartKey.length == 0
+              || endKey.length == 0
               || Bytes.compareTo(scanStartKey, endKey) < 0)
           && (scanEndKey.length == 0 || Bytes.compareTo(scanEndKey, startKey) > 0);
     }
 
     /**
-     * Performs a call to get sample row keys from
-     * {@link CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)}
-     * if they are not yet cached. The sample row keys give information about tablet key boundaries
-     * and estimated sizes.
+     * Performs a call to get sample row keys from {@link
+     * CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)} if they are not
+     * yet cached. The sample row keys give information about tablet key boundaries and estimated
+     * sizes.
      */
     public synchronized List<KeyOffset> getSampleRowKeys() throws IOException {
       if (sampleRowKeys == null) {
@@ -291,9 +277,7 @@ public class CloudBigtableIO {
       this.sampleRowKeys = sampleRowKeys;
     }
 
-    /**
-     * Validates the existence of the table in the configuration.
-     */
+    /** Validates the existence of the table in the configuration. */
     @Override
     public void validate() {
       getConfiguration().validate();
@@ -337,22 +321,26 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Splits the region based on the start and stop key. Uses
-     * {@link Bytes#split(byte[], byte[], int)} under the covers.
+     * Splits the region based on the start and stop key. Uses {@link Bytes#split(byte[], byte[],
+     * int)} under the covers.
+     *
      * @throws IOException
      */
-    protected List<SourceWithKeys> split(long regionSize, long desiredBundleSizeBytes,
-        byte[] startKey, byte[] stopKey) throws IOException {
+    protected List<SourceWithKeys> split(
+        long regionSize, long desiredBundleSizeBytes, byte[] startKey, byte[] stopKey)
+        throws IOException {
       Preconditions.checkState(desiredBundleSizeBytes > 0);
       int splitCount = (int) Math.ceil((double) (regionSize) / (double) (desiredBundleSizeBytes));
 
-      if (splitCount < 2 || stopKey.length == 0 || Bytes.compareTo(startKey,stopKey) >= 0) {
+      if (splitCount < 2 || stopKey.length == 0 || Bytes.compareTo(startKey, stopKey) >= 0) {
         return Collections.singletonList(createSourceWithKeys(startKey, stopKey, regionSize));
       } else {
         if (stopKey.length > 0) {
-          Preconditions.checkState(Bytes.compareTo(startKey, stopKey) <= 0,
-            "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startKey),
-            Bytes.toStringBinary(stopKey));
+          Preconditions.checkState(
+              Bytes.compareTo(startKey, stopKey) <= 0,
+              "Source keys not in order: [%s, %s]",
+              Bytes.toStringBinary(startKey),
+              Bytes.toStringBinary(stopKey));
           Preconditions.checkState(regionSize > 0, "Source size must be positive", regionSize);
         }
         try {
@@ -364,16 +352,18 @@ public class CloudBigtableIO {
           }
           return result;
         } catch (Exception e) {
-          SOURCE_LOG.warn(String.format("Could not split '%s' and '%s', so using that as a range.",
-            Bytes.toString(startKey), Bytes.toString(stopKey)), e);
+          SOURCE_LOG.warn(
+              String.format(
+                  "Could not split '%s' and '%s', so using that as a range.",
+                  Bytes.toString(startKey), Bytes.toString(stopKey)),
+              e);
           return Collections.singletonList(createSourceWithKeys(startKey, stopKey, regionSize));
         }
       }
     }
 
     @VisibleForTesting
-    SourceWithKeys createSourceWithKeys(byte[] startKey, byte[] stopKey,
-        long size) {
+    SourceWithKeys createSourceWithKeys(byte[] startKey, byte[] stopKey, long size) {
       CloudBigtableScanConfiguration updatedConfig =
           getConfiguration().toBuilder().withKeys(startKey, stopKey).build();
       return new SourceWithKeys(updatedConfig, size);
@@ -382,6 +372,7 @@ public class CloudBigtableIO {
     /**
      * Creates a reader that will scan the entire table based on the {@link Scan} in the
      * configuration.
+     *
      * @return A reader for the table.
      */
     @Override
@@ -389,9 +380,7 @@ public class CloudBigtableIO {
       return new CloudBigtableIO.Reader(this);
     }
 
-    /**
-     * @return the configuration
-     */
+    /** @return the configuration */
     protected CloudBigtableScanConfiguration getConfiguration() {
       return configuration;
     }
@@ -418,25 +407,23 @@ public class CloudBigtableIO {
     // statistics
     /**
      * Splits the table based on keys that belong to tablets, known as "regions" in the HBase API.
-     * The current implementation uses the HBase {@link RegionLocator} interface, which calls
-     * {@link  CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)}
-     * under the covers. A {@link SourceWithKeys} may correspond to a single region or a portion of
-     * a region.
-     * <p>
-     * If a split is smaller than a single region, the split is calculated based on the assumption
-     * that the data is distributed evenly between the region's startKey and stopKey. That
-     * assumption may not be correct for any specific start/stop key combination.
-     * </p>
-     * <p>
-     * This method is called internally by Beam. Do not call it directly.
-     * </p>
+     * The current implementation uses the HBase {@link RegionLocator} interface, which calls {@link
+     * CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)} under the covers.
+     * A {@link SourceWithKeys} may correspond to a single region or a portion of a region.
+     *
+     * <p>If a split is smaller than a single region, the split is calculated based on the
+     * assumption that the data is distributed evenly between the region's startKey and stopKey.
+     * That assumption may not be correct for any specific start/stop key combination.
+     *
+     * <p>This method is called internally by Beam. Do not call it directly.
+     *
      * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.
      * @param options The pipeline options.
      * @return A list of sources split into groups.
      */
     @Override
-    public List<? extends BoundedSource<Result>> split(long desiredBundleSizeBytes,
-        PipelineOptions options) throws Exception {
+    public List<? extends BoundedSource<Result>> split(
+        long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
       // Update the desiredBundleSizeBytes in order to limit the number of splits to
       // MAX_SPLIT_COUNT.  This is an extremely rough estimate for large scale jobs.  There is
       // currently a hard limit on both the count of Sources as well as the sum of the sizes of
@@ -451,12 +438,12 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Gets an estimated size based on data returned from
-     * {@link CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)}.
-     * The estimate will be high if a {@link Scan} is set on the
-     * {@link CloudBigtableScanConfiguration}; in such cases, the estimate will not take the Scan
-     * into account, and will return a larger estimate than what the {@link CloudBigtableIO.Reader}
-     * will actually read.
+     * Gets an estimated size based on data returned from {@link
+     * CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)}. The estimate
+     * will be high if a {@link Scan} is set on the {@link CloudBigtableScanConfiguration}; in such
+     * cases, the estimate will not take the Scan into account, and will return a larger estimate
+     * than what the {@link CloudBigtableIO.Reader} will actually read.
+     *
      * @param options The pipeline options.
      * @return The estimated size of the data, in bytes.
      */
@@ -502,10 +489,9 @@ public class CloudBigtableIO {
     /**
      * An estimate of the size of the source, in bytes.
      *
-     * <p>NOTE: This value is a guesstimate. It could be significantly off, especially if there is
-     * a {@link Scan} selected in the configuration. It will also be off if the start and stop
-     * keys are calculated via
-     * {@link CloudBigtableIO.Source#split(long, PipelineOptions)}.
+     * <p>NOTE: This value is a guesstimate. It could be significantly off, especially if there is a
+     * {@link Scan} selected in the configuration. It will also be off if the start and stop keys
+     * are calculated via {@link CloudBigtableIO.Source#split(long, PipelineOptions)}.
      */
     private final long estimatedSize;
 
@@ -516,12 +502,12 @@ public class CloudBigtableIO {
       if (stopRow.length > 0) {
         byte[] startRow = configuration.getZeroCopyStartRow();
         if (Bytes.compareTo(startRow, stopRow) >= 0) {
-          throw new IllegalArgumentException(String.format(
-            "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startRow),
-            Bytes.toStringBinary(stopRow)));
+          throw new IllegalArgumentException(
+              String.format(
+                  "Source keys not in order: [%s, %s]",
+                  Bytes.toStringBinary(startRow), Bytes.toStringBinary(stopRow)));
         }
-        Preconditions.checkState(estimatedSize > 0, "Source size must be positive",
-            estimatedSize);
+        Preconditions.checkState(estimatedSize > 0, "Source size must be positive", estimatedSize);
       }
       this.estimatedSize = estimatedSize;
       SOURCE_LOG.debug("Source with split: {}.", this);
@@ -550,8 +536,8 @@ public class CloudBigtableIO {
     // side statistics
     /**
      * Splits the bundle based on the assumption that the data is distributed evenly between
-     * startKey and stopKey. That assumption may not be correct for any specific
-     * start/stop key combination.
+     * startKey and stopKey. That assumption may not be correct for any specific start/stop key
+     * combination.
      *
      * <p>This method is called internally by Beam. Do not call it directly.
      *
@@ -560,11 +546,15 @@ public class CloudBigtableIO {
      * @return A list of sources split into groups.
      */
     @Override
-    public List<? extends BoundedSource<Result>> split(long desiredBundleSizeBytes,
-        PipelineOptions options) throws Exception {
+    public List<? extends BoundedSource<Result>> split(
+        long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
       final CloudBigtableScanConfiguration conf = getConfiguration();
-      List<? extends BoundedSource<Result>> newSplits = split(estimatedSize,
-        desiredBundleSizeBytes, conf.getZeroCopyStartRow(), conf.getZeroCopyStopRow());
+      List<? extends BoundedSource<Result>> newSplits =
+          split(
+              estimatedSize,
+              desiredBundleSizeBytes,
+              conf.getZeroCopyStartRow(),
+              conf.getZeroCopyStopRow());
       SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
       return newSplits;
     }
@@ -576,15 +566,14 @@ public class CloudBigtableIO {
 
     @Override
     public String toString() {
-      return String.format("Split start: '%s', end: '%s', size: %d.",
-        Bytes.toStringBinary(getConfiguration().getZeroCopyStartRow()),
-        Bytes.toStringBinary(getConfiguration().getZeroCopyStopRow()),
-        estimatedSize);
+      return String.format(
+          "Split start: '%s', end: '%s', size: %d.",
+          Bytes.toStringBinary(getConfiguration().getZeroCopyStartRow()),
+          Bytes.toStringBinary(getConfiguration().getZeroCopyStopRow()),
+          estimatedSize);
     }
   }
-  /**
-   * Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}.
-   */
+  /** Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}. */
   @VisibleForTesting
   static class Reader extends BoundedReader<Result> {
     private static final Logger READER_LOG = LoggerFactory.getLogger(Reader.class);
@@ -607,7 +596,7 @@ public class CloudBigtableIO {
     /**
      * Creates a {@link Connection}, {@link Table} and {@link ResultScanner} and advances to the
      * next {@link Result}.
-      */
+     */
     @Override
     public boolean start() throws IOException {
       initializeScanner();
@@ -621,18 +610,19 @@ public class CloudBigtableIO {
 
       // This will use cached data channels under the covers.
       session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(config));
-      scanner = session.getDataClientWrapper()
+      scanner =
+          session
+              .getDataClientWrapper()
               .readFlatRows(Query.fromProto(source.getConfiguration().getRequest()));
     }
 
-    /**
-     * Calls {@link ResultScanner#next()}.
-     */
+    /** Calls {@link ResultScanner#next()}. */
     @Override
     public boolean advance() throws IOException {
       FlatRow row = scanner.next();
-      if (row != null && rangeTracker.tryReturnRecordAt(true,
-        ByteKey.copyFrom(ByteStringer.extract(row.getRowKey())))) {
+      if (row != null
+          && rangeTracker.tryReturnRecordAt(
+              true, ByteKey.copyFrom(ByteStringer.extract(row.getRowKey())))) {
         current = FLAT_ROW_ADAPTER.adaptResponse(row);
         rowsRead.addAndGet(1l);
         return true;
@@ -665,18 +655,22 @@ public class CloudBigtableIO {
       try {
         splitKey = rangeTracker.getRange().interpolateKey(fraction);
       } catch (IllegalArgumentException e) {
-        READER_LOG.info("{}: Failed to interpolate key for fraction {}.", rangeTracker.getRange(), fraction);
+        READER_LOG.info(
+            "{}: Failed to interpolate key for fraction {}.", rangeTracker.getRange(), fraction);
         return null;
       }
 
-      READER_LOG.info("Proposing to split {} at fraction {} (key {})", rangeTracker, fraction,
-        splitKey);
+      READER_LOG.info(
+          "Proposing to split {} at fraction {} (key {})", rangeTracker, fraction, splitKey);
 
       long estimatedSizeBytes = -1;
       try {
         estimatedSizeBytes = source.getEstimatedSizeBytes(null);
       } catch (IOException e) {
-        READER_LOG.info("{}: Failed to get estimated size for key for fraction {}.", rangeTracker.getRange(), fraction);
+        READER_LOG.info(
+            "{}: Failed to get estimated size for key for fraction {}.",
+            rangeTracker.getRange(),
+            fraction);
         return null;
       }
       SourceWithKeys residual = null;
@@ -700,8 +694,10 @@ public class CloudBigtableIO {
         return residual;
       } catch (Throwable t) {
         try {
-          String msg = String.format("%d Failed to get estimated size for key for fraction %f.",
-            rangeTracker.getRange(), fraction);
+          String msg =
+              String.format(
+                  "%d Failed to get estimated size for key for fraction %f.",
+                  rangeTracker.getRange(), fraction);
           READER_LOG.warn(msg, t);
         } catch (Throwable t1) {
           // ignore.
@@ -725,9 +721,7 @@ public class CloudBigtableIO {
       return rangeTracker;
     }
 
-    /**
-     * Closes the {@link ResultScanner}, {@link Table}, and {@link Connection}.
-     */
+    /** Closes the {@link ResultScanner}, {@link Table}, and {@link Connection}. */
     @Override
     public void close() throws IOException {
       if (scanner != null) {
@@ -762,14 +756,14 @@ public class CloudBigtableIO {
 
     @Override
     public String toString() {
-      return String.format("Reader for: ['%s' - '%s']",
-        Bytes.toStringBinary(rangeTracker.getStartPosition().getBytes()),
-        Bytes.toStringBinary(rangeTracker.getStopPosition().getBytes()));
+      return String.format(
+          "Reader for: ['%s' - '%s']",
+          Bytes.toStringBinary(rangeTracker.getStartPosition().getBytes()),
+          Bytes.toStringBinary(rangeTracker.getStopPosition().getBytes()));
     }
   }
 
   ///////////////////// Write Class /////////////////////////////////
-
 
   private static class MutationStatsExporter {
     protected static final Logger STATS_LOG = LoggerFactory.getLogger(AbstractSource.class);
@@ -786,35 +780,44 @@ public class CloudBigtableIO {
     }
 
     protected void startExport(final BigtableInstanceName instanceName) {
-      Runnable r = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            BufferedMutatorDoFn.cumulativeThrottlingSeconds.set(TimeUnit.NANOSECONDS.toSeconds(
-              ResourceLimiterStats.getInstance(instanceName).getCumulativeThrottlingTimeNanos()));
-          } catch (Exception e) {
-            STATS_LOG.warn("Something bad happened in export stats", e);
-          }
-        }
-      };
-      BigtableSessionSharedThreadPools.getInstance().getRetryExecutor().scheduleAtFixedRate(r, 5, 5,
-        TimeUnit.MILLISECONDS);
+      Runnable r =
+          new Runnable() {
+            @Override
+            public void run() {
+              try {
+                BufferedMutatorDoFn.cumulativeThrottlingSeconds.set(
+                    TimeUnit.NANOSECONDS.toSeconds(
+                        ResourceLimiterStats.getInstance(instanceName)
+                            .getCumulativeThrottlingTimeNanos()));
+              } catch (Exception e) {
+                STATS_LOG.warn("Something bad happened in export stats", e);
+              }
+            }
+          };
+      BigtableSessionSharedThreadPools.getInstance()
+          .getRetryExecutor()
+          .scheduleAtFixedRate(r, 5, 5, TimeUnit.MILLISECONDS);
     }
   }
 
   /**
    * This is a DoFn that relies on {@link BufferedMutator} as the implementation to write data to
    * Cloud Bigtable. The main function of this class is to manage Aggregators relating to mutations.
+   *
    * @param <InputType>
    */
-  private static abstract class BufferedMutatorDoFn<InputType> extends AbstractCloudBigtableTableDoFn<InputType, Void> {
+  private abstract static class BufferedMutatorDoFn<InputType>
+      extends AbstractCloudBigtableTableDoFn<InputType, Void> {
 
     private static final long serialVersionUID = 1L;
 
     // Stats
-    protected static final Counter mutationsCounter = Metrics.counter(CloudBigtableIO.class, "Mutations");
-    protected static final Counter exceptionsCounter = Metrics.counter(CloudBigtableIO.class, "Exceptions");
-    protected static final Gauge cumulativeThrottlingSeconds = Metrics.gauge(CloudBigtableIO.class, "ThrottlingSeconds");
+    protected static final Counter mutationsCounter =
+        Metrics.counter(CloudBigtableIO.class, "Mutations");
+    protected static final Counter exceptionsCounter =
+        Metrics.counter(CloudBigtableIO.class, "Exceptions");
+    protected static final Gauge cumulativeThrottlingSeconds =
+        Metrics.gauge(CloudBigtableIO.class, "ThrottlingSeconds");
 
     public BufferedMutatorDoFn(CloudBigtableConfiguration config) {
       super(config);
@@ -829,16 +832,18 @@ public class CloudBigtableIO {
     protected BufferedMutator createBufferedMutator(Object context, String tableName)
         throws IOException {
       return getConnection()
-          .getBufferedMutator(new BufferedMutatorParams(TableName.valueOf(tableName))
-              .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT)
-              .listener(createExceptionListener(context)));
+          .getBufferedMutator(
+              new BufferedMutatorParams(TableName.valueOf(tableName))
+                  .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT)
+                  .listener(createExceptionListener(context)));
     }
 
     protected ExceptionListener createExceptionListener(final Object context) {
       return new ExceptionListener() {
         @Override
-        public void onException(RetriesExhaustedWithDetailsException exception,
-            BufferedMutator mutator) throws RetriesExhaustedWithDetailsException {
+        public void onException(
+            RetriesExhaustedWithDetailsException exception, BufferedMutator mutator)
+            throws RetriesExhaustedWithDetailsException {
           logExceptions(context, exception);
           throw exception;
         }
@@ -847,8 +852,8 @@ public class CloudBigtableIO {
   }
 
   /**
-   * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of
-   * {@link Mutation}s to a table specified via a {@link CloudBigtableTableConfiguration} using the
+   * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of {@link
+   * Mutation}s to a table specified via a {@link CloudBigtableTableConfiguration} using the
    * BufferedMutator.
    */
   public static class CloudBigtableSingleTableBufferedWriteFn
@@ -867,9 +872,7 @@ public class CloudBigtableIO {
               context, ((CloudBigtableTableConfiguration) getConfig()).getTableId());
     }
 
-    /**
-     * Performs an asynchronous mutation via {@link BufferedMutator#mutate(Mutation)}.
-     */
+    /** Performs an asynchronous mutation via {@link BufferedMutator#mutate(Mutation)}. */
     @ProcessElement
     public void processElement(ProcessContext context) throws Exception {
       Mutation mutation = context.element();
@@ -905,9 +908,9 @@ public class CloudBigtableIO {
    * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
    * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
-   * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
+   * Re-running a Delete will not cause any differences. Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
-   * family is greater than one.  In a case where multiple versions could be a problem, it's best to
+   * family is greater than one. In a case where multiple versions could be a problem, it's best to
    * add a timestamp to the {@link Put}.
    */
   public static class CloudBigtableMultiTableWriteFn

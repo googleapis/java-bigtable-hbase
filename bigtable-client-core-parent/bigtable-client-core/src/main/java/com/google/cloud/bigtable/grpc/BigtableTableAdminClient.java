@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import java.util.concurrent.TimeoutException;
-
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
@@ -35,6 +33,7 @@ import com.google.bigtable.admin.v2.Table;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A client for the Cloud Bigtable Table Admin API.
@@ -47,6 +46,7 @@ public interface BigtableTableAdminClient {
   /**
    * Creates a new table. The table can be created with a full set of initial column families,
    * specified in the request.
+   *
    * @param request a {@link CreateTableRequest} object.
    */
   void createTable(CreateTableRequest request);
@@ -110,7 +110,7 @@ public interface BigtableTableAdminClient {
    * Creates, modifies or deletes a new column family within a specified table.
    *
    * @param request a {@link ModifyColumnFamiliesRequest} object.
-   * @return return {@link Table} object  that contains the updated table structure.
+   * @return return {@link Table} object that contains the updated table structure.
    */
   Table modifyColumnFamily(ModifyColumnFamiliesRequest request);
 
@@ -119,7 +119,7 @@ public interface BigtableTableAdminClient {
    *
    * @param request a {@link ModifyColumnFamiliesRequest} object.
    * @return a {@link ListenableFuture} that returns {@link Table} object that contains the updated
-   *         table structure.
+   *     table structure.
    */
   ListenableFuture<Table> modifyColumnFamilyAsync(ModifyColumnFamiliesRequest request);
 
@@ -145,15 +145,16 @@ public interface BigtableTableAdminClient {
    * @param tableName the name of the table to wait for replication.
    * @param timeout the maximum time to wait in seconds.
    * @throws InterruptedException if call is interrupted while waiting to recheck if replication has
-   * caught up.
+   *     caught up.
    * @throws TimeoutException if timeout is reached.
    */
-  void waitForReplication(BigtableTableName tableName, long timeout) throws InterruptedException, TimeoutException;
-
+  void waitForReplication(BigtableTableName tableName, long timeout)
+      throws InterruptedException, TimeoutException;
 
   // ////////////// SNAPSHOT methods /////////////
   /**
    * Creates a new snapshot from a table in a specific cluster.
+   *
    * @param request a {@link SnapshotTableRequest} object.
    * @return The long running {@link Operation} for the request.
    */
@@ -161,6 +162,7 @@ public interface BigtableTableAdminClient {
 
   /**
    * Gets metadata information about the specified snapshot.
+   *
    * @param request a {@link GetSnapshotRequest} object.
    * @return The {@link Snapshot} definied by the request.
    */
@@ -168,6 +170,7 @@ public interface BigtableTableAdminClient {
 
   /**
    * Lists all snapshots associated with the specified cluster.
+   *
    * @param request a {@link ListSnapshotsRequest} object.
    * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
    */
@@ -175,12 +178,14 @@ public interface BigtableTableAdminClient {
 
   /**
    * Permanently deletes the specified snapshot.
+   *
    * @param request a {@link DeleteSnapshotRequest} object.
    */
   ListenableFuture<Empty> deleteSnapshotAsync(DeleteSnapshotRequest request);
 
   /**
    * Creates a new table from a snapshot.
+   *
    * @param request a {@link CreateTableFromSnapshotRequest} object.
    * @return The long running {@link Operation} for the request.
    */

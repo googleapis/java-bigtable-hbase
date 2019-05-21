@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,15 +17,12 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.protobuf.ByteString;
-
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Adapter for HBase Increment operations to Bigtable ReadModifyWriteRowRequest.Builder.
@@ -33,8 +30,7 @@ import java.util.NavigableMap;
  * @author sduskis
  * @version $Id: $Id
  */
-public class IncrementAdapter
-    implements OperationAdapter<Increment, ReadModifyWriteRow>{
+public class IncrementAdapter implements OperationAdapter<Increment, ReadModifyWriteRow> {
 
   /** {@inheritDoc} */
   @Override
@@ -56,11 +52,8 @@ public class IncrementAdapter
         readModifyWriteRow.increment(
             familyName,
             ByteString.copyFrom(
-                cell.getQualifierArray(),
-                cell.getQualifierOffset(),
-                cell.getQualifierLength()),
-            Bytes.toLong(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
-        );
+                cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()),
+            Bytes.toLong(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength()));
       }
     }
   }

@@ -25,23 +25,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import com.google.cloud.bigtable.grpc.io.Watchdog;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -56,11 +39,11 @@ import com.google.bigtable.v2.RowRange;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
+import com.google.cloud.bigtable.grpc.io.Watchdog;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RetryingReadRowsOperationTest;
 import com.google.protobuf.ByteString;
-
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -68,6 +51,19 @@ import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -76,15 +72,11 @@ public class TestBigtableDataGrpcClient {
   private static final String TABLE_NAME =
       new BigtableInstanceName("projectId", "instanceId").toTableNameStr("tableId");
 
-  @Mock
-  Channel mockChannel;
+  @Mock Channel mockChannel;
 
-  @Mock
-  ClientCall mockClientCall;
+  @Mock ClientCall mockClientCall;
 
-
-  @Mock
-  ScheduledExecutorService mochScheduler;
+  @Mock ScheduledExecutorService mochScheduler;
 
   BigtableDataGrpcClient defaultClient;
 
@@ -97,16 +89,21 @@ public class TestBigtableDataGrpcClient {
   }
 
   protected BigtableDataGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
-    RetryOptions retryOptions = RetryOptions.builder()
-            .setAllowRetriesWithoutTimestamp(allowRetriesWithoutTimestamp).build();
+    RetryOptions retryOptions =
+        RetryOptions.builder()
+            .setAllowRetriesWithoutTimestamp(allowRetriesWithoutTimestamp)
+            .build();
     BigtableOptions options = BigtableOptions.builder().setRetryOptions(retryOptions).build();
-    doAnswer(new Answer<Void>(){
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        checkHeader(invocation.getArgument(1, Metadata.class));
-        return null;
-      }
-    }).when(mockClientCall).start(any(ClientCall.Listener.class), any(Metadata.class));
+    doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocation) throws Throwable {
+                checkHeader(invocation.getArgument(1, Metadata.class));
+                return null;
+              }
+            })
+        .when(mockClientCall)
+        .start(any(ClientCall.Listener.class), any(Metadata.class));
     return new BigtableDataGrpcClient(mockChannel, mochScheduler, options);
   }
 
@@ -165,8 +162,10 @@ public class TestBigtableDataGrpcClient {
     MutateRowsRequest.Builder request = MutateRowsRequest.newBuilder();
     assertTrue(defaultClient.mutateRowsRpc.isRetryable(request.build()));
 
-    request.addEntries(Entry.newBuilder().addMutations(
-        Mutation.newBuilder().setSetCell(SetCell.newBuilder().setTimestampMicros(-1))));
+    request.addEntries(
+        Entry.newBuilder()
+            .addMutations(
+                Mutation.newBuilder().setSetCell(SetCell.newBuilder().setTimestampMicros(-1))));
     assertFalse(defaultClient.mutateRowsRpc.isRetryable(request.build()));
   }
 
@@ -223,11 +222,9 @@ public class TestBigtableDataGrpcClient {
     Listener listener = listenerCaptor.getValue();
     ByteString key1 = ByteString.copyFromUtf8("Key1");
     ByteString key2 = ByteString.copyFromUtf8("Key2");
-    listener
-        .onMessage(RetryingReadRowsOperationTest.buildResponse(key1));
-    listener
-        .onMessage(RetryingReadRowsOperationTest.buildResponse(key2));
-    
+    listener.onMessage(RetryingReadRowsOperationTest.buildResponse(key1));
+    listener.onMessage(RetryingReadRowsOperationTest.buildResponse(key2));
+
     Assert.assertEquals(2, scanner.available());
     Assert.assertEquals(key1, scanner.next().getRowKey());
     listener.onClose(Status.OK, new Metadata());
@@ -246,23 +243,20 @@ public class TestBigtableDataGrpcClient {
     Listener listener = listenerCaptor.getValue();
     ByteString key1 = ByteString.copyFromUtf8("Key1");
     ByteString key2 = ByteString.copyFromUtf8("Key2");
-    listener
-        .onMessage(RetryingReadRowsOperationTest.buildResponse(key1));
-    listener
-        .onMessage(RetryingReadRowsOperationTest.buildResponse(key2));
+    listener.onMessage(RetryingReadRowsOperationTest.buildResponse(key1));
+    listener.onMessage(RetryingReadRowsOperationTest.buildResponse(key2));
     listener.onClose(
-        Status.CANCELLED.withCause(new Watchdog.StreamWaitTimeoutException(
-            Watchdog.State.IDLE, TimeUnit.MINUTES.toMillis(10))),
-        new Metadata()
-    );
+        Status.CANCELLED.withCause(
+            new Watchdog.StreamWaitTimeoutException(
+                Watchdog.State.IDLE, TimeUnit.MINUTES.toMillis(10))),
+        new Metadata());
 
     Assert.assertEquals(2, scanner.available());
     Assert.assertEquals(key1, scanner.next().getRowKey());
     Assert.assertEquals(key2, scanner.next().getRowKey());
 
     ByteString key3 = ByteString.copyFromUtf8("Key3");
-    listener
-        .onMessage(RetryingReadRowsOperationTest.buildResponse(key3));
+    listener.onMessage(RetryingReadRowsOperationTest.buildResponse(key3));
 
     Assert.assertEquals(key3, scanner.next().getRowKey());
     // There was a retry based on the idle
@@ -270,16 +264,17 @@ public class TestBigtableDataGrpcClient {
   }
 
   private void setResponse(final Object response) {
-    Answer<Void> answer = new Answer<Void>(){
-      @Override
-      public Void answer(final InvocationOnMock invocation) throws Throwable {
-        checkHeader(invocation.getArgument(1, Metadata.class));
-        ClientCall.Listener listener = invocation.getArgument(0, ClientCall.Listener.class);
-        listener.onMessage(response);
-        listener.onClose(Status.OK, null);
-        return null;
-      }
-    };
+    Answer<Void> answer =
+        new Answer<Void>() {
+          @Override
+          public Void answer(final InvocationOnMock invocation) throws Throwable {
+            checkHeader(invocation.getArgument(1, Metadata.class));
+            ClientCall.Listener listener = invocation.getArgument(0, ClientCall.Listener.class);
+            listener.onMessage(response);
+            listener.onClose(Status.OK, null);
+            return null;
+          }
+        };
     doAnswer(answer)
         .when(mockClientCall)
         .start(any(ClientCall.Listener.class), any(Metadata.class));

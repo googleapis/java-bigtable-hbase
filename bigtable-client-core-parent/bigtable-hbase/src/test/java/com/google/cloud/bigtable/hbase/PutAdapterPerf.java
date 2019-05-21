@@ -22,33 +22,29 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
-
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
-/**
- * Simple microbenchmark for {@link PutAdapter}
- */
+/** Simple microbenchmark for {@link PutAdapter} */
 public class PutAdapterPerf {
   private static RequestContext requestContext;
+
   public static void main(String[] args) {
     String rowKey = String.format("rowKey0");
     Put put = new Put(Bytes.toBytes(rowKey));
     byte[] value = RandomStringUtils.randomAlphanumeric(10000).getBytes();
     put.addColumn(Bytes.toBytes("Family1"), Bytes.toBytes("Qaulifier"), value);
 
-    BigtableOptions options = BigtableOptions.builder()
-        .setInstanceId("instanceId")
-        .setProjectId("projectId")
-        .build();
+    BigtableOptions options =
+        BigtableOptions.builder().setInstanceId("instanceId").setProjectId("projectId").build();
     HBaseRequestAdapter adapter =
-        new HBaseRequestAdapter(options,
-            TableName.valueOf("tableName"), new Configuration());
-    requestContext = RequestContext
-        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+        new HBaseRequestAdapter(options, TableName.valueOf("tableName"), new Configuration());
+    requestContext =
+        RequestContext.create(
+            options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
     for (int i = 0; i < 10; i++) {
       putAdapterPerf(adapter, put);
     }
@@ -59,18 +55,19 @@ public class PutAdapterPerf {
   private static void putAdapterPerf(HBaseRequestAdapter adapter, Put put) {
     System.out.println("Size: " + adapter.adapt(put).toProto(requestContext).getSerializedSize());
     System.gc();
-    { 
+    {
       long start = System.nanoTime();
       for (int i = 0; i < count; i++) {
         adapter.adapt(put);
       }
       long time = System.nanoTime() - start;
       System.out.println(
-          String.format("adapted: %,d rows merged in %,d ms.  %,d nanos per row.", count,
-              time / 1000000, time / count));
+          String.format(
+              "adapted: %,d rows merged in %,d ms.  %,d nanos per row.",
+              count, time / 1000000, time / count));
     }
     System.gc();
-    { 
+    {
       long start = System.nanoTime();
       for (int i = 0; i < count; i++) {
         RowMutation adapted = adapter.adapt(put);
@@ -78,11 +75,12 @@ public class PutAdapterPerf {
       }
       long time = System.nanoTime() - start;
       System.out.println(
-          String.format("adapted, streamRequest: %,d rows merged in %,d ms.  %,d nanos per row.", count,
-              time / 1000000, time / count));
+          String.format(
+              "adapted, streamRequest: %,d rows merged in %,d ms.  %,d nanos per row.",
+              count, time / 1000000, time / count));
     }
     System.gc();
-    { 
+    {
       long start = System.nanoTime();
       for (int i = 0; i < count; i++) {
         MutateRowRequest adapted = adapter.adapt(put).toProto(requestContext);
@@ -90,9 +88,10 @@ public class PutAdapterPerf {
         BigtableGrpc.getMutateRowMethod().streamRequest(adapted);
       }
       long time = System.nanoTime() - start;
-      System.out.println(String.format(
-        "adapted, getSerializedSize, streamRequest: %,d rows merged in %,d ms.  %,d nanos per row.",
-        count, time / 1000000, time / count));
+      System.out.println(
+          String.format(
+              "adapted, getSerializedSize, streamRequest: %,d rows merged in %,d ms.  %,d nanos per row.",
+              count, time / 1000000, time / count));
     }
   }
 }

@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 
 import java.io.IOException;
 import java.util.regex.Pattern;
-
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
@@ -31,47 +30,44 @@ public class TestSnapshots extends AbstractTestSnapshot {
 
   @Override
   protected void createTable(TableName tableName) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       HTableDescriptor descriptor = new HTableDescriptor(tableName);
       descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
       admin.createTable(descriptor);
     }
-    
   }
 
   @Override
-  protected void snapshot(String snapshotName, TableName tableName)
-      throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+  protected void snapshot(String snapshotName, TableName tableName) throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
       admin.snapshot(snapshotName, tableName);
     }
   }
 
   @Override
   protected int listSnapshotsSize(String regEx) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       return admin.listSnapshots(regEx).size();
     }
   }
 
   @Override
   protected void deleteSnapshot(String snapshotName) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       admin.deleteSnapshot(snapshotName);
     }
-    
   }
 
   @Override
   protected boolean tableExists(TableName tableName) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       return admin.tableExists(tableName);
     }
   }
 
   @Override
   protected void disableTable(TableName tableName) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       admin.disableTable(tableName);
     }
   }
@@ -79,56 +75,55 @@ public class TestSnapshots extends AbstractTestSnapshot {
   @Override
   protected void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       admin.cloneSnapshot(snapshotName, tableName);
     }
   }
 
   @Override
   protected void deleteSnapshots(Pattern pattern) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       admin.deleteSnapshots(pattern);
     }
   }
 
   @Override
-  protected int listTableSnapshotsSize(String tableNameRegex,
-      String snapshotNameRegex) throws IOException {
-//    try(Admin admin = getConnection().getAdmin()) {
-//      return admin.listTableSnapshots(tableNameRegex, snapshotNameRegex).size();
-//    }
+  protected int listTableSnapshotsSize(String tableNameRegex, String snapshotNameRegex)
+      throws IOException {
+    //    try(Admin admin = getConnection().getAdmin()) {
+    //      return admin.listTableSnapshots(tableNameRegex, snapshotNameRegex).size();
+    //    }
     return 0;
-
   }
 
   @Override
   protected int listSnapshotsSize(Pattern pattern) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       return admin.listSnapshots(pattern).size();
     }
   }
 
   @Override
-  protected int listTableSnapshotsSize(Pattern tableNamePattern,
-      Pattern snapshotNamePattern) throws IOException {
-//    try(Admin admin = getConnection().getAdmin()) {
-//      return admin.listTableSnapshots(tableNamePattern, snapshotNamePattern).size();
-//    }
+  protected int listTableSnapshotsSize(Pattern tableNamePattern, Pattern snapshotNamePattern)
+      throws IOException {
+    //    try(Admin admin = getConnection().getAdmin()) {
+    //      return admin.listTableSnapshots(tableNamePattern, snapshotNamePattern).size();
+    //    }
     return 0;
   }
 
   @Override
   protected void deleteTable(TableName tableName) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       admin.deleteTable(tableName);
     }
   }
 
   @Override
   protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
-//    try(Admin admin = getConnection().getAdmin()){
-//      return admin.listTableSnapshots(tableNamePattern, Pattern.compile(".*")).size();
-//    }
+    //    try(Admin admin = getConnection().getAdmin()){
+    //      return admin.listTableSnapshots(tableNamePattern, Pattern.compile(".*")).size();
+    //    }
     return 0;
   }
 }

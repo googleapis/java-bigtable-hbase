@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,15 +20,13 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-
 import com.google.protobuf.ByteString;
+import java.io.IOException;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 
-import java.io.IOException;
-
 /**
- * An adapter to transform an HBase MultipleColumnPrefixFilter into a
- * Bigtable RowFilter with each column prefix in an interleaved stream.
+ * An adapter to transform an HBase MultipleColumnPrefixFilter into a Bigtable RowFilter with each
+ * column prefix in an interleaved stream.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -38,9 +36,8 @@ public class MultipleColumnPrefixFilterAdapter
 
   /** {@inheritDoc} */
   @Override
-  public Filter adapt(
-      FilterAdapterContext context,
-      MultipleColumnPrefixFilter filter) throws IOException {
+  public Filter adapt(FilterAdapterContext context, MultipleColumnPrefixFilter filter)
+      throws IOException {
     InterleaveFilter interleave = FILTERS.interleave();
     ByteString.Output outputStream = null;
     for (byte[] prefix : filter.getPrefix()) {
@@ -61,8 +58,7 @@ public class MultipleColumnPrefixFilterAdapter
   /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
-      FilterAdapterContext context,
-      MultipleColumnPrefixFilter filter) {
+      FilterAdapterContext context, MultipleColumnPrefixFilter filter) {
     return FilterSupportStatus.SUPPORTED;
   }
 }

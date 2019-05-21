@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,9 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
-
 import org.apache.commons.lang.RandomStringUtils;
-import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -31,10 +30,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-
 public class TestPut extends AbstractTestPut {
- 
 
   @Test(expected = NoSuchColumnFamilyException.class)
   @Category(KnownGap.class)
@@ -62,7 +58,7 @@ public class TestPut extends AbstractTestPut {
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, goodQual, goodValue);
     put.addColumn(badfamily, badQual, badValue);
-    
+
     // TODO investigate the changed behavior - hbase 1.x threw RetriesExhaustedWithDetailsException
     NoSuchColumnFamilyException thrownException = null;
     try {
@@ -70,11 +66,11 @@ public class TestPut extends AbstractTestPut {
     } catch (NoSuchColumnFamilyException e) {
       thrownException = e;
     }
-    
+
     Assert.assertNotNull("Exception should have been thrown", thrownException);
-    //Assert.assertEquals("Expecting one exception", 1, thrownException.getNumExceptions());
-    //Assert.assertArrayEquals("Row key", rowKey, thrownException.getRow.getRow());
-    //Assert.assertTrue("Cause: NoSuchColumnFamilyException",
+    // Assert.assertEquals("Expecting one exception", 1, thrownException.getNumExceptions());
+    // Assert.assertArrayEquals("Row key", rowKey, thrownException.getRow.getRow());
+    // Assert.assertTrue("Cause: NoSuchColumnFamilyException",
     //    thrownException.getCause() instanceof NoSuchColumnFamilyException);
 
     Get get = new Get(rowKey);
@@ -83,7 +79,8 @@ public class TestPut extends AbstractTestPut {
     table.close();
   }
 
-  protected Get getGetAddColumnVersion(int version, byte[] rowKey, byte[] qualifier) throws IOException {
+  protected Get getGetAddColumnVersion(int version, byte[] rowKey, byte[] qualifier)
+      throws IOException {
     Get get = new Get(rowKey);
     get.addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualifier);
     get.readVersions(version);

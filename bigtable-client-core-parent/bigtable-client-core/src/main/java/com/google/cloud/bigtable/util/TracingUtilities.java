@@ -15,24 +15,23 @@
  */
 package com.google.cloud.bigtable.util;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
 import com.google.bigtable.v2.BigtableGrpc;
-
 import io.grpc.MethodDescriptor;
 import io.grpc.ServiceDescriptor;
 import io.opencensus.trace.Tracing;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * These utilities are to be used in conjunction with the opencensus-contrib-zpages artifact to
- * display a consistent set of Cloud Bigtable RPC methods.<p>
+ * display a consistent set of Cloud Bigtable RPC methods.
  *
- * <b>NOTE: if you are using HBase, use HBaseTracingUtilities instead of TracingUtilities.</b><p>
+ * <p><b>NOTE: if you are using HBase, use HBaseTracingUtilities instead of TracingUtilities.</b>
  *
- * <p> After including the artifact, the following code can be
- * used for enabling grpcz pages:
+ * <p>
+ *
+ * <p>After including the artifact, the following code can be used for enabling grpcz pages:
  *
  * <pre>
  * int port = ... ; // Choose a port number
@@ -60,7 +59,7 @@ public final class TracingUtilities {
   /**
    * This is a one time setup for grpcz pages. This adds all of the methods to the Tracing
    * environment required to show a consistent set of methods relating to Cloud Bigtable on the
-   * grpcz page.  If HBase artifacts are present, this will add tracing metadata for HBase methods.
+   * grpcz page. If HBase artifacts are present, this will add tracing metadata for HBase methods.
    */
   public static void setupTracingConfig() {
     List<String> descriptors = new ArrayList<>();
@@ -76,7 +75,7 @@ public final class TracingUtilities {
    *
    * @param descriptors a {@link} of Strings to add Open Census tags to
    * @param serviceDescriptor A {@link ServiceDescriptor} that contains a list of RPCs that are
-   *          provided by that service
+   *     provided by that service
    */
   private static void addDescriptor(List<String> descriptors, ServiceDescriptor serviceDescriptor) {
     for (MethodDescriptor<?, ?> method : serviceDescriptor.getMethods()) {
@@ -85,6 +84,5 @@ public final class TracingUtilities {
     }
   }
 
-  private TracingUtilities() {
-  }
+  private TracingUtilities() {}
 }

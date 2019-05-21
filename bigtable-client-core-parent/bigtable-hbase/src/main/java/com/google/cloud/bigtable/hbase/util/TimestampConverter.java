@@ -1,6 +1,5 @@
 package com.google.cloud.bigtable.hbase.util;
 
-
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.hbase.HConstants;
 
@@ -9,15 +8,15 @@ public class TimestampConverter {
   private static final long FACTOR = 1000l;
 
   /**
-   * Maximum timestamp (in usecs) that bigtable can handle while preserving lossless conversion to hbase timestamps in
-   * ms)
+   * Maximum timestamp (in usecs) that bigtable can handle while preserving lossless conversion to
+   * hbase timestamps in ms)
    */
   @VisibleForTesting
   static final long BIGTABLE_MAX_TIMESTAMP = Long.MAX_VALUE - (Long.MAX_VALUE % FACTOR);
 
   /**
-   * Maximum timestamp that hbase can send to bigtable in ms. This limitation exists because bigtable operates on usecs,
-   * while hbase operates on ms.
+   * Maximum timestamp that hbase can send to bigtable in ms. This limitation exists because
+   * bigtable operates on usecs, while hbase operates on ms.
    */
   @VisibleForTesting
   static final long HBASE_EFFECTIVE_MAX_TIMESTAMP = BIGTABLE_MAX_TIMESTAMP / FACTOR;

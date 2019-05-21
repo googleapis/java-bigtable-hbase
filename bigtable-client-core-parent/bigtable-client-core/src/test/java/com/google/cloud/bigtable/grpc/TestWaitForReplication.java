@@ -26,6 +26,7 @@ import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
+import java.util.concurrent.TimeoutException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -33,15 +34,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.concurrent.TimeoutException;
-
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestWaitForReplication {
 
   // Class that implements a consistency service that returns dummy tokens and returns consistent
   // after a configurable number of calls.
-  private static class ConsistencyServiceImpl extends BigtableTableAdminGrpc.BigtableTableAdminImplBase {
+  private static class ConsistencyServiceImpl
+      extends BigtableTableAdminGrpc.BigtableTableAdminImplBase {
 
     // How many calls need to be done before tokens are consistent.
     private int callsToConsistency = 0;
@@ -54,7 +54,8 @@ public class TestWaitForReplication {
     }
 
     @Override
-    public void generateConsistencyToken(GenerateConsistencyTokenRequest request,
+    public void generateConsistencyToken(
+        GenerateConsistencyTokenRequest request,
         StreamObserver<GenerateConsistencyTokenResponse> responseObserver) {
 
       // Generates a token like "TokenFor-projects/P/instances/I/tables/T"
@@ -68,7 +69,8 @@ public class TestWaitForReplication {
     }
 
     @Override
-    public void checkConsistency(CheckConsistencyRequest request,
+    public void checkConsistency(
+        CheckConsistencyRequest request,
         StreamObserver<CheckConsistencyResponse> responseObserver) {
       calls++;
 
@@ -76,20 +78,17 @@ public class TestWaitForReplication {
       if (!request.getConsistencyToken().equals("TokenFor-" + request.getName())) {
         responseObserver.onError(new StatusException(Status.INVALID_ARGUMENT));
         return;
-
       }
 
-      CheckConsistencyResponse response = CheckConsistencyResponse.newBuilder()
-              .setConsistent(calls >= callsToConsistency)
-              .build();
+      CheckConsistencyResponse response =
+          CheckConsistencyResponse.newBuilder().setConsistent(calls >= callsToConsistency).build();
 
       responseObserver.onNext(response);
       responseObserver.onCompleted();
     }
   }
 
-  @Rule
-  public final GrpcServerRule grpcServerRule = new GrpcServerRule();
+  @Rule public final GrpcServerRule grpcServerRule = new GrpcServerRule();
 
   private static final BigtableTableName TABLE_NAME =
       new BigtableTableName("projects/SomeProject/instances/SomeInstance/tables/SomeTable");
@@ -103,7 +102,9 @@ public class TestWaitForReplication {
     service = new ConsistencyServiceImpl();
     grpcServerRule.getServiceRegistry().addService(service);
 
-    tableAdminClient = new BigtableTableAdminGrpcClient(grpcServerRule.getChannel(), null, BigtableOptions.getDefaultOptions());
+    tableAdminClient =
+        new BigtableTableAdminGrpcClient(
+            grpcServerRule.getChannel(), null, BigtableOptions.getDefaultOptions());
     backoff = new MockBackOff();
   }
 

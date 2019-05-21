@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 package com.google.cloud.bigtable.grpc.scanner;
+
+import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
+import static org.hamcrest.CoreMatchers.any;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertThat;
 
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
@@ -24,15 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
-import static org.hamcrest.CoreMatchers.any;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
-
-/**
- * Basic unit tests for the {@link RowMatcher} utility class.
- */
+/** Basic unit tests for the {@link RowMatcher} utility class. */
 @RunWith(JUnit4.class)
 public class RowMatcherTest {
   @Test
@@ -86,14 +84,15 @@ public class RowMatcherTest {
     // Not enough families expected.
     assertThat(row, not(matchesRow("row-1").withFamily("some family")));
     // Correct.
-    assertThat(row, matchesRow("row-1")
-        .withFamily("some family")
-        .withFamily("other family"));
+    assertThat(row, matchesRow("row-1").withFamily("some family").withFamily("other family"));
     // Too many families expected.
-    assertThat(row, not(matchesRow("row-1")
-        .withFamily("some family")
-        .withFamily("other family")
-        .withFamily("third family")));
+    assertThat(
+        row,
+        not(
+            matchesRow("row-1")
+                .withFamily("some family")
+                .withFamily("other family")
+                .withFamily("third family")));
   }
 
   @Test
@@ -114,11 +113,9 @@ public class RowMatcherTest {
     // Missing column, cell, etc.
     assertThat(row, not(matchesRow("row-1").withFamily("some family")));
     // Fully specified should match.
-    assertThat(row,
-        matchesRow("row-1")
-            .withFamily("some family")
-            .withColumn("column")
-            .withCellValue("cell"));
+    assertThat(
+        row,
+        matchesRow("row-1").withFamily("some family").withColumn("column").withCellValue("cell"));
   }
 
   @Test
@@ -147,14 +144,24 @@ public class RowMatcherTest {
     // Missing column, cell, etc.
     assertThat(row, not(matchesRow("row-1").withFamily("some family")));
     // Missing timestamp for the second column in the matcher.
-    assertThat(row,
-        not(matchesRow("row-1").withFamily("some family")
-            .withColumn("column").withCellValue("cell")
-            .withColumn("second column").withCellValue("other cell")));
+    assertThat(
+        row,
+        not(
+            matchesRow("row-1")
+                .withFamily("some family")
+                .withColumn("column")
+                .withCellValue("cell")
+                .withColumn("second column")
+                .withCellValue("other cell")));
     // Fully specified should match.
-    assertThat(row,
-        matchesRow("row-1").withFamily("some family")
-            .withColumn("column").withCellValue("cell")
-            .withColumn("second column").withCellValue("other cell").atTimestamp(12345));
+    assertThat(
+        row,
+        matchesRow("row-1")
+            .withFamily("some family")
+            .withColumn("column")
+            .withCellValue("cell")
+            .withColumn("second column")
+            .withCellValue("other cell")
+            .atTimestamp(12345));
   }
 }

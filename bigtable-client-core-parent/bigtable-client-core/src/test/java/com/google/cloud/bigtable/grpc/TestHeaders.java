@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
+
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
@@ -58,11 +60,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
-
-/**
- * This class tests value present in User-Agent's on netty server.
- */
+/** This class tests value present in User-Agent's on netty server. */
 @RunWith(JUnit4.class)
 public class TestHeaders {
 
@@ -84,7 +82,7 @@ public class TestHeaders {
 
   @After
   public void tearDown() throws Exception {
-    if(dataClient != null){
+    if (dataClient != null) {
       dataClient.close();
       dataClient = null;
     }
@@ -98,16 +96,16 @@ public class TestHeaders {
   }
 
   /**
-   * To Test Headers & PlainText Negotiation type
-   * when cloud-bigtable-client {@link com.google.cloud.bigtable.grpc.BigtableDataClient}.
+   * To Test Headers & PlainText Negotiation type when cloud-bigtable-client {@link
+   * com.google.cloud.bigtable.grpc.BigtableDataClient}.
    */
   @Test
-  public void testCBC_UserAgentUsingPlainTextNegotiation() throws Exception{
+  public void testCBC_UserAgentUsingPlainTextNegotiation() throws Exception {
     ServerSocket serverSocket = new ServerSocket(0);
     final int availablePort = serverSocket.getLocalPort();
     serverSocket.close();
 
-    //Creates non-ssl server.
+    // Creates non-ssl server.
     createServer(availablePort);
 
     BigtableOptions bigtableOptions =
@@ -124,15 +122,14 @@ public class TestHeaders {
 
     xGoogApiPattern = Pattern.compile(".* cbt/.*");
     try (BigtableSession session = new BigtableSession(bigtableOptions)) {
-      session.getDataClientWrapper()
-          .readFlatRows(Query.create("fake-table")).next();
+      session.getDataClientWrapper().readFlatRows(Query.create("fake-table")).next();
       Assert.assertTrue(serverPasses.get());
     }
   }
 
   /**
-   * To Test UserAgent & PlainText Negotiation type
-   * when {@link BigtableDataSettings} is created using {@link BigtableOptions}.
+   * To Test UserAgent & PlainText Negotiation type when {@link BigtableDataSettings} is created
+   * using {@link BigtableOptions}.
    */
   @Test
   public void testGCJ_UserAgentUsingPlainTextNegotiation() throws Exception {
@@ -140,7 +137,7 @@ public class TestHeaders {
     final int availablePort = serverSocket.getLocalPort();
     serverSocket.close();
 
-    //Creates non-ssl server.
+    // Creates non-ssl server.
     createServer(availablePort);
 
     BigtableOptions bigtableOptions =
@@ -158,7 +155,7 @@ public class TestHeaders {
     dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(bigtableOptions);
 
     xGoogApiPattern = Pattern.compile(".* gapic/.*");
-    try(BigtableDataClient dataClient = BigtableDataClient.create(dataSettings)){
+    try (BigtableDataClient dataClient = BigtableDataClient.create(dataSettings)) {
       dataClient.readRow(TABLE_ID, ROWKEY);
       Assert.assertTrue(serverPasses.get());
     }
@@ -174,7 +171,7 @@ public class TestHeaders {
     final int availablePort = serverSocket.getLocalPort();
     serverSocket.close();
 
-    //Creates SSL enabled server.
+    // Creates SSL enabled server.
     createSecuredServer(availablePort);
 
     BigtableDataSettings.Builder builder =
@@ -183,22 +180,24 @@ public class TestHeaders {
             .setInstanceId(TEST_INSTANCE_ID)
             .setCredentialsProvider(NoCredentialsProvider.create());
 
-    //Loads secured Certificate
-    final SslContext sslContext  = buildSslContext();
+    // Loads secured Certificate
+    final SslContext sslContext = buildSslContext();
 
     final String endpoint = "localhost" + ":" + availablePort;
     HeaderProvider headers = FixedHeaderProvider.create(USER_AGENT_KEY.name(), TEST_USER_AGENT);
 
-    builder.setTransportChannelProvider(InstantiatingGrpcChannelProvider.newBuilder()
-        .setHeaderProvider(headers)
-        .setEndpoint(endpoint)
-        .setChannelConfigurator(new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder input) {
-            return ((NettyChannelBuilder)input).sslContext(sslContext);
-          }
-        })
-        .build());
+    builder.setTransportChannelProvider(
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setHeaderProvider(headers)
+            .setEndpoint(endpoint)
+            .setChannelConfigurator(
+                new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+                  @Override
+                  public ManagedChannelBuilder apply(ManagedChannelBuilder input) {
+                    return ((NettyChannelBuilder) input).sslContext(sslContext);
+                  }
+                })
+            .build());
 
     // Setting this to null, because as of 3/4/2019 the header doesn't get passed through.
     xGoogApiPattern = null;
@@ -209,24 +208,30 @@ public class TestHeaders {
   }
 
   /** Creates simple server to intercept plainText Negotiation RPCs. */
-  private void createServer(int port) throws Exception{
-    server = ServerBuilder.forPort(port).addService(
-        ServerInterceptors.intercept(new BigtableExtendedImpl(), new HeaderServerInterceptor()))
-        .build();
+  private void createServer(int port) throws Exception {
+    server =
+        ServerBuilder.forPort(port)
+            .addService(
+                ServerInterceptors.intercept(
+                    new BigtableExtendedImpl(), new HeaderServerInterceptor()))
+            .build();
     server.start();
   }
 
   /** Creates secured server to intercept TLS Negotiation RPCs. */
   private void createSecuredServer(int port) throws Exception {
-    ServerBuilder builder = ServerBuilder.forPort(port).addService(
-        ServerInterceptors.intercept(new BigtableExtendedImpl(), new HeaderServerInterceptor()));
+    ServerBuilder builder =
+        ServerBuilder.forPort(port)
+            .addService(
+                ServerInterceptors.intercept(
+                    new BigtableExtendedImpl(), new HeaderServerInterceptor()));
 
     try {
       URL serverCertChain = Resources.getResource("sslCertificates/server_trust.crt");
       URL privateKey = Resources.getResource("sslCertificates/server_key.pem");
 
-      builder.useTransportSecurity(new File(serverCertChain.getFile()),
-          new File(privateKey.getFile()));
+      builder.useTransportSecurity(
+          new File(serverCertChain.getFile()), new File(privateKey.getFile()));
     } catch (Exception ex) {
       throw new AssertionError("No server certificates found");
     }
@@ -249,35 +254,39 @@ public class TestHeaders {
   }
 
   /**
-   * Overrides {@link BigtableImplBase#readRows(ReadRowsRequest, StreamObserver)} and returns
-   * dummy response.
-   * */
+   * Overrides {@link BigtableImplBase#readRows(ReadRowsRequest, StreamObserver)} and returns dummy
+   * response.
+   */
   private static class BigtableExtendedImpl extends BigtableImplBase {
     @Override
-    public void readRows(ReadRowsRequest request,
-        StreamObserver<ReadRowsResponse> responseObserver) {
+    public void readRows(
+        ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
       responseObserver.onNext(ReadRowsResponse.getDefaultInstance());
       responseObserver.onCompleted();
     }
   }
 
   /**
-   * Asserts value of UserAgent header with EXPECTED_HEADER_PATTERN passed to the
-   * {@link InstantiatingGrpcChannelProvider}.
+   * Asserts value of UserAgent header with EXPECTED_HEADER_PATTERN passed to the {@link
+   * InstantiatingGrpcChannelProvider}.
    *
-   * Throws {@link AssertionError} when UserAgent's pattern does not match.
+   * <p>Throws {@link AssertionError} when UserAgent's pattern does not match.
    */
   private class HeaderServerInterceptor implements ServerInterceptor {
     @Override
-    public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
-        final Metadata requestHeaders, ServerCallHandler<ReqT, RespT> next) {
+    public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
+        ServerCall<ReqT, RespT> call,
+        final Metadata requestHeaders,
+        ServerCallHandler<ReqT, RespT> next) {
 
-      //Logging all available headers.
+      // Logging all available headers.
       logger.info("headers received from BigtableDataClient:" + requestHeaders);
 
       testHeader(requestHeaders, "user-agent", EXPECTED_HEADER_PATTERN);
       if (xGoogApiPattern != null) {
-        testHeader(requestHeaders, ApiClientHeaderProvider.getDefaultApiClientHeaderKey(),
+        testHeader(
+            requestHeaders,
+            ApiClientHeaderProvider.getDefaultApiClientHeaderKey(),
             xGoogApiPattern);
       }
 
@@ -286,16 +295,16 @@ public class TestHeaders {
 
       serverPasses.set(true);
 
-      return next.startCall(new ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(call) {
-      }, requestHeaders);
+      return next.startCall(
+          new ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(call) {},
+          requestHeaders);
     }
 
     protected void testHeader(Metadata requestHeaders, String keyName, Pattern pattern) {
-      Metadata.Key<String> key =
-          Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER);
+      Metadata.Key<String> key = Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER);
       String headerValue = requestHeaders.get(key);
 
-      //In case of user-agent not matching, throwing AssertionError.
+      // In case of user-agent not matching, throwing AssertionError.
       if (headerValue == null || !pattern.matcher(headerValue).matches()) {
         throw new AssertionError(keyName + "'s format did not match.  header: " + headerValue);
       }

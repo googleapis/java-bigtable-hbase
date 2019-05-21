@@ -17,9 +17,14 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.OperationAccountant;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,7 +32,6 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -35,16 +39,11 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
-
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import org.apache.hadoop.hbase.client.RowMutations;
 
 /**
  * A helper for Bigtable's {@link org.apache.hadoop.hbase.client.BufferedMutator} implementations.
+ *
  * @author sduskis
  * @version $Id: $Id
  */
@@ -56,10 +55,11 @@ public class BigtableBufferedMutatorHelper {
   private final Configuration configuration;
 
   /**
-   * Makes sure that mutations and flushes are safe to proceed.  Ensures that while the mutator
-   * is closing, there will be no additional writes.
+   * Makes sure that mutations and flushes are safe to proceed. Ensures that while the mutator is
+   * closing, there will be no additional writes.
    */
   private final ReentrantReadWriteLock isClosedLock = new ReentrantReadWriteLock();
+
   private final ReadLock closedReadLock = isClosedLock.readLock();
   private final WriteLock closedWriteLock = isClosedLock.writeLock();
 
@@ -72,17 +72,14 @@ public class BigtableBufferedMutatorHelper {
   private final OperationAccountant operationAccountant;
 
   /**
-   * <p>
    * Constructor for BigtableBufferedMutator.
-   * </p>
+   *
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
    * @param session a {@link BigtableSession} object.
    */
   public BigtableBufferedMutatorHelper(
-      HBaseRequestAdapter adapter,
-      Configuration configuration,
-      BigtableSession session) {
+      HBaseRequestAdapter adapter, Configuration configuration, BigtableSession session) {
     this.adapter = adapter;
     this.configuration = configuration;
     this.options = session.getOptions();
@@ -150,9 +147,10 @@ public class BigtableBufferedMutatorHelper {
   }
 
   /**
-   * Being a Mutation. This method will block if either of the following are true:
-   * 1) There are more than {@code maxInflightRpcs} RPCs in flight
-   * 2) There are more than {@link #getWriteBufferSize()} bytes pending
+   * Being a Mutation. This method will block if either of the following are true: 1) There are more
+   * than {@code maxInflightRpcs} RPCs in flight 2) There are more than {@link
+   * #getWriteBufferSize()} bytes pending
+   *
    * @param mutation a {@link Mutation} object.
    * @return a {@link ApiFuture} object.
    */
@@ -190,16 +188,17 @@ public class BigtableBufferedMutatorHelper {
   }
 
   /**
-   * Send the operations to the async executor asynchronously.  The conversion from hbase
-   * object to cloud bigtable proto and the async call both take time (microseconds worth) that
-   * could be parallelized, or at least removed from the user's thread.
+   * Send the operations to the async executor asynchronously. The conversion from hbase object to
+   * cloud bigtable proto and the async call both take time (microseconds worth) that could be
+   * parallelized, or at least removed from the user's thread.
    */
   private ApiFuture<?> offer(Mutation mutation) {
     ApiFuture<?> future = null;
     try {
       if (mutation == null) {
-        future = ApiFutures.immediateFailedFuture(
-          new IllegalArgumentException("Cannot perform a mutation on a null object."));
+        future =
+            ApiFutures.immediateFailedFuture(
+                new IllegalArgumentException("Cannot perform a mutation on a null object."));
       } else if (mutation instanceof Put) {
         future = bulkMutation.add(adapter.adaptEntry((Put) mutation));
       } else if (mutation instanceof Delete) {
@@ -211,8 +210,10 @@ public class BigtableBufferedMutatorHelper {
         future = dataClient.readModifyWriteRowAsync(adapter.adapt((Append) mutation));
         operationAccountant.registerOperation(ApiFutureUtil.adapt(future));
       } else {
-        future = ApiFutures.immediateFailedFuture(new IllegalArgumentException(
-            "Encountered unknown mutation type: " + mutation.getClass()));
+        future =
+            ApiFutures.immediateFailedFuture(
+                new IllegalArgumentException(
+                    "Encountered unknown mutation type: " + mutation.getClass()));
       }
     } catch (Exception e) {
       // issueRequest(mutation) could throw an Exception for validation issues. Remove the heapsize
@@ -223,11 +224,13 @@ public class BigtableBufferedMutatorHelper {
   }
 
   /**
-   * <p>hasInflightRequests.</p>
+   * hasInflightRequests.
    *
    * @return a boolean.
    */
   public boolean hasInflightRequests() {
-    return bulkMutation != null && !bulkMutation.isFlushed() && operationAccountant.hasInflightOperations();
+    return bulkMutation != null
+        && !bulkMutation.isFlushed()
+        && operationAccountant.hasInflightOperations();
   }
 }

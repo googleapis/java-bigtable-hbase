@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.bigtable.repackaged.io.grpc.Status;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
@@ -28,15 +28,11 @@ import org.junit.runners.JUnit4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.bigtable.repackaged.io.grpc.Status;
-import com.google.cloud.bigtable.beam.AbstractCloudBigtableTableDoFn;
-
-
 @RunWith(JUnit4.class)
 public class AbstractCloudBigtableTableDoFnTest {
 
   @Test
-  public void testLogRetriesExhaustedWithDetailsException(){
+  public void testLogRetriesExhaustedWithDetailsException() {
     // Make sure that the logging doesn't have any exceptions. The details can be manually verified.
     // TODO: add a mock logger to confirm that the logging is correct.
     Logger log = LoggerFactory.getLogger(getClass());
@@ -48,7 +44,7 @@ public class AbstractCloudBigtableTableDoFnTest {
       actions.add(new Get(RandomStringUtils.randomAlphabetic(8).getBytes()));
       hostnameAndPort.add("");
     }
-    AbstractCloudBigtableTableDoFn.logRetriesExhaustedWithDetailsException(log, null,
-      new RetriesExhaustedWithDetailsException(exceptions, actions, hostnameAndPort));
+    AbstractCloudBigtableTableDoFn.logRetriesExhaustedWithDetailsException(
+        log, null, new RetriesExhaustedWithDetailsException(exceptions, actions, hostnameAndPort));
   }
 }

@@ -15,10 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
+import java.io.IOException;
+import java.util.Arrays;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
@@ -30,11 +34,6 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Arrays;
-
-import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 public class TestFilters extends AbstractTestFilters {
 
@@ -60,14 +59,13 @@ public class TestFilters extends AbstractTestFilters {
     Assert.assertEquals("Should have three cells, timestamps 4 and 5.", 2, cells.length);
 
     // Since the qualifiers are random, ignore the order of the returned cells.
-    long[] timestamps =
-        new long[] { cells[0].getTimestamp(), cells[1].getTimestamp() };
+    long[] timestamps = new long[] {cells[0].getTimestamp(), cells[1].getTimestamp()};
     Arrays.sort(timestamps);
-    Assert.assertArrayEquals(new long[] { 4L, 5L }, timestamps);
+    Assert.assertArrayEquals(new long[] {4L, 5L}, timestamps);
 
     table.close();
   }
-  
+
   @Test
   public void testBigtableFilter() throws IOException {
     if (!sharedTestEnv.isBigtable()) {
@@ -80,10 +78,11 @@ public class TestFilters extends AbstractTestFilters {
     byte[] valA = dataHelper.randomData("a");
     byte[] valB = dataHelper.randomData("b");
 
-    try(Table table = getDefaultTable()){
-      table.put(new Put(rowKey)
-        .addColumn(COLUMN_FAMILY, qualA, valA)
-        .addColumn(COLUMN_FAMILY, qualB, valB));
+    try (Table table = getDefaultTable()) {
+      table.put(
+          new Put(rowKey)
+              .addColumn(COLUMN_FAMILY, qualA, valA)
+              .addColumn(COLUMN_FAMILY, qualB, valB));
 
       Filters.Filter qualAFilter =
           Filters.FILTERS.qualifier().exactMatch(ByteString.copyFrom(qualA));
@@ -97,7 +96,7 @@ public class TestFilters extends AbstractTestFilters {
 
   /**
    * This test case is used to validate TimestampRangeFilter with Integer.MAX_VALUE #1552
-   * 
+   *
    * @throws IOException
    */
   @Test
@@ -121,14 +120,13 @@ public class TestFilters extends AbstractTestFilters {
     Cell[] cells = result.rawCells();
     Assert.assertEquals("Should have all cells.", 2, cells.length);
 
-    long[] timestamps =
-        new long[] { cells[0].getTimestamp(), cells[1].getTimestamp() };
+    long[] timestamps = new long[] {cells[0].getTimestamp(), cells[1].getTimestamp()};
     Arrays.sort(timestamps);
-    Assert.assertArrayEquals(new long[] { start, Integer.MAX_VALUE-1 }, timestamps);
+    Assert.assertArrayEquals(new long[] {start, Integer.MAX_VALUE - 1}, timestamps);
 
     table.close();
   }
-  
+
   @Override
   protected void getGetAddVersion(Get get, int version) throws IOException {
     get.readVersions(version);

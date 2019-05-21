@@ -22,7 +22,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.FilterBase;
@@ -51,9 +50,7 @@ public class TimestampRangeFilter extends FilterBase implements Serializable {
   }
 
   @Override
-  /**
-   * This is for HBase compatibility, and will not be used for Cloud Bigtable
-   */
+  /** This is for HBase compatibility, and will not be used for Cloud Bigtable */
   public ReturnCode filterKeyValue(Cell cell) throws IOException {
     long timestamp = cell.getTimestamp();
     if (this.startTimestampInclusive <= timestamp && timestamp < endTimestampExclusive) {
@@ -82,9 +79,8 @@ public class TimestampRangeFilter extends FilterBase implements Serializable {
     }
   }
 
-  public static TimestampRangeFilter parseFrom(final byte [] bytes)
-  throws DeserializationException {
-    try (ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(bytes))){
+  public static TimestampRangeFilter parseFrom(final byte[] bytes) throws DeserializationException {
+    try (ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
       return (TimestampRangeFilter) is.readObject();
     } catch (Exception e) {
       throw new DeserializationException(e);

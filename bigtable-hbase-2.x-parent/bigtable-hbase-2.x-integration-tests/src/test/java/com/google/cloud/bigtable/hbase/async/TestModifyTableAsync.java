@@ -15,20 +15,17 @@
  */
 package com.google.cloud.bigtable.hbase.async;
 
+import com.google.cloud.bigtable.hbase.AbstractTestModifyTable;
+import com.google.common.base.Function;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
 import javax.annotation.Nullable;
-
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import com.google.cloud.bigtable.hbase.AbstractTestModifyTable;
-import com.google.common.base.Function;
 
 @RunWith(JUnit4.class)
 public class TestModifyTableAsync extends AbstractTestModifyTable {
@@ -36,20 +33,21 @@ public class TestModifyTableAsync extends AbstractTestModifyTable {
   private AsyncAdmin getAsyncAdmin() throws InterruptedException, ExecutionException {
     return AbstractAsyncTest.getAsyncConnection().getAdmin();
   }
-  
+
   @Test
   public void testModifyTable_HBase2_Async() throws IOException {
-    super.testModifyTable(new Function<HTableDescriptor, Void>() {
-      @Nullable
-      @Override
-      public Void apply(@Nullable HTableDescriptor descriptor) {
-        try {
-          getAsyncAdmin().modifyTable(descriptor).get(1, TimeUnit.MINUTES);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-        return null;
-      }
-    });
+    super.testModifyTable(
+        new Function<HTableDescriptor, Void>() {
+          @Nullable
+          @Override
+          public Void apply(@Nullable HTableDescriptor descriptor) {
+            try {
+              getAsyncAdmin().modifyTable(descriptor).get(1, TimeUnit.MINUTES);
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+            return null;
+          }
+        });
   }
 }

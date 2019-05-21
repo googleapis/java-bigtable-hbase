@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
@@ -22,12 +23,8 @@ import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Assert;
 import org.junit.Test;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
-import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 
-/**
- * Tests for {@link CloudBigtableScanConfiguration}.
- */
+/** Tests for {@link com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration}. */
 public class CloudBigtableScanConfigurationTest {
 
   public static final String PROJECT = "project";
@@ -37,12 +34,13 @@ public class CloudBigtableScanConfigurationTest {
   public static final byte[] START_ROW = "aa".getBytes();
   public static final byte[] STOP_ROW = "zz".getBytes();
 
-  private static final CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
-      .withProjectId(PROJECT)
-      .withInstanceId(INSTANCE)
-      .withTableId(TABLE)
-      .withScan(new Scan(START_ROW, STOP_ROW))
-      .build();
+  private static final CloudBigtableScanConfiguration config =
+      new CloudBigtableScanConfiguration.Builder()
+          .withProjectId(PROJECT)
+          .withInstanceId(INSTANCE)
+          .withTableId(TABLE)
+          .withScan(new Scan(START_ROW, STOP_ROW))
+          .build();
 
   @Test
   public void testSerialization() {
@@ -73,12 +71,8 @@ public class CloudBigtableScanConfigurationTest {
   @Test
   public void testQuery() {
     Filters.Filter filter = Filters.FILTERS.family().exactMatch("someFamily");
-    ReadRowsRequest request = config.toBuilder().withQuery(
-        Query
-            .create("SomeTable")
-            .filter(filter))
-        .build()
-        .getRequest();
+    ReadRowsRequest request =
+        config.toBuilder().withQuery(Query.create("SomeTable").filter(filter)).build().getRequest();
     Assert.assertEquals(request.getTableName(), config.getRequest().getTableName());
     Assert.assertEquals(request.getFilter(), filter.toProto());
   }

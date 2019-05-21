@@ -44,7 +44,12 @@ import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -70,16 +75,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
-
-/**
- * Tests {@link BatchExecutor}
- */
+/** Tests {@link BatchExecutor} */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBatchExecutor {
 
@@ -96,8 +92,7 @@ public class TestBatchExecutor {
     return new BaseMatcher<Result>() {
 
       @Override
-      public void describeTo(Description description) {
-      }
+      public void describeTo(Description description) {}
 
       @Override
       public boolean matches(Object item) {
@@ -110,25 +105,19 @@ public class TestBatchExecutor {
       }
 
       @Override
-      public void describeMismatch(Object item, Description mismatchDescription) {
-      }
+      public void describeMismatch(Object item, Description mismatchDescription) {}
     };
   }
 
-  @Mock
-  private BigtableSession mockBigtableSession;
+  @Mock private BigtableSession mockBigtableSession;
 
-  @Mock
-  private BulkRead mockBulkRead;
+  @Mock private BulkRead mockBulkRead;
 
-  @Mock
-  private IBulkMutation mockBulkMutation;
+  @Mock private IBulkMutation mockBulkMutation;
 
-  @Mock
-  private IBigtableDataClient mockDataClient;
+  @Mock private IBigtableDataClient mockDataClient;
 
-  @Mock
-  private ApiFuture mockFuture;
+  @Mock private ApiFuture mockFuture;
 
   private HBaseRequestAdapter requestAdapter;
 
@@ -136,28 +125,32 @@ public class TestBatchExecutor {
 
   @Before
   public void setup() {
-    options = BigtableOptions.builder()
-        .setProjectId("projectId")
-        .setInstanceId("instanceId")
-        .build();
+    options =
+        BigtableOptions.builder().setProjectId("projectId").setInstanceId("instanceId").build();
     requestAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
-    RequestContext requetsContext = RequestContext
-        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+    RequestContext requetsContext =
+        RequestContext.create(
+            options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
 
     MockitoAnnotations.initMocks(this);
     when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getDataClientWrapper()).thenReturn(mockDataClient);
-    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class))).thenReturn(mockFuture);
-    when(mockBigtableSession.createBulkMutationWrapper(any(BigtableTableName.class))).thenReturn(mockBulkMutation);
+    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))
+        .thenReturn(mockFuture);
+    when(mockBigtableSession.createBulkMutationWrapper(any(BigtableTableName.class)))
+        .thenReturn(mockBulkMutation);
     when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgument(0, Runnable.class).run();
-        return null;
-      }
-    }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
+    doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocation) throws Throwable {
+                invocation.getArgument(0, Runnable.class).run();
+                return null;
+              }
+            })
+        .when(mockFuture)
+        .addListener(any(Runnable.class), any(Executor.class));
     doReturn(true).when(mockFuture).isDone();
   }
 
@@ -168,7 +161,8 @@ public class TestBatchExecutor {
     FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
     setFuture(ImmutableList.of(response));
     Result[] results = batch(Arrays.asList(new Get(key)));
-    Assert.assertTrue(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response)).matches(results[0]));
+    Assert.assertTrue(
+        matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response)).matches(results[0]));
   }
 
   @Test
@@ -225,25 +219,31 @@ public class TestBatchExecutor {
     byte[] key1 = randomBytes(8);
     byte[] key2 = randomBytes(8);
     FlatRow response1 =
-        FlatRow
-            .newBuilder().withRowKey(ByteString.copyFrom(key1)).addCell(new Cell("cf",
-                ByteString.EMPTY, 10, ByteString.copyFromUtf8("hi!"), new ArrayList<String>()))
+        FlatRow.newBuilder()
+            .withRowKey(ByteString.copyFrom(key1))
+            .addCell(
+                new Cell(
+                    "cf",
+                    ByteString.EMPTY,
+                    10,
+                    ByteString.copyFromUtf8("hi!"),
+                    new ArrayList<String>()))
             .build();
 
     RuntimeException exception = new RuntimeException("Something bad happened");
     when(mockBulkRead.add(any(Query.class)))
         .thenReturn(ApiFutures.immediateFuture(response1))
-        .thenReturn(ApiFutures.<FlatRow> immediateFailedFuture(exception));
+        .thenReturn(ApiFutures.<FlatRow>immediateFailedFuture(exception));
 
     List<Get> gets = Arrays.asList(new Get(key1), new Get(key2));
     Object[] results = new Object[2];
 
     try {
       createExecutor(options).batch(gets, results);
-    } catch(RetriesExhaustedWithDetailsException ignored) {
+    } catch (RetriesExhaustedWithDetailsException ignored) {
     }
     Assert.assertTrue("first result is a result", results[0] instanceof Result);
-    Assert.assertTrue(Bytes.equals(((Result)results[0]).getRow(), key1));
+    Assert.assertTrue(Bytes.equals(((Result) results[0]).getRow(), key1));
     Assert.assertEquals(exception, results[1]);
   }
 
@@ -257,8 +257,11 @@ public class TestBatchExecutor {
     List<Get> gets = Arrays.asList(new Get(key));
     createExecutor(options).batchCallback(gets, new Object[1], callback);
 
-    verify(callback, times(1)).update(same(BatchExecutor.NO_REGION), same(key),
-        argThat(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response))));
+    verify(callback, times(1))
+        .update(
+            same(BatchExecutor.NO_REGION),
+            same(key),
+            argThat(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response))));
   }
 
   @Test
@@ -267,30 +270,38 @@ public class TestBatchExecutor {
     final List<ApiFuture<FlatRow>> expected = new ArrayList<>(10);
 
     gets.add(new Get(Bytes.toBytes("key0")));
-    expected.add(ApiFutures.<FlatRow> immediateFuture(null));
+    expected.add(ApiFutures.<FlatRow>immediateFuture(null));
     for (int i = 1; i < 10; i++) {
       byte[] row_key = randomBytes(8);
       gets.add(new Get(row_key));
       ByteString key = ByteStringer.wrap(row_key);
       ByteString cellValue = ByteString.copyFrom(randomBytes(8));
-      expected.add(ApiFutures.immediateFuture(FlatRow.newBuilder().withRowKey(key)
-          .addCell("family", ByteString.EMPTY, System.nanoTime() / 1000, cellValue).build()));
+      expected.add(
+          ApiFutures.immediateFuture(
+              FlatRow.newBuilder()
+                  .withRowKey(key)
+                  .addCell("family", ByteString.EMPTY, System.nanoTime() / 1000, cellValue)
+                  .build()));
     }
 
     // Test 10 gets, but return only 9 to test the row not found case.
     when(mockBulkRead.add(any(Query.class)))
-        .then(new Answer<ApiFuture<FlatRow>>() {
-          final AtomicInteger counter = new AtomicInteger();
+        .then(
+            new Answer<ApiFuture<FlatRow>>() {
+              final AtomicInteger counter = new AtomicInteger();
 
-          @Override
-          public ApiFuture<FlatRow> answer(InvocationOnMock invocation) throws Throwable {
-            return expected.get(counter.getAndIncrement());
-          }
-        });
+              @Override
+              public ApiFuture<FlatRow> answer(InvocationOnMock invocation) throws Throwable {
+                return expected.get(counter.getAndIncrement());
+              }
+            });
     ByteString key = ByteStringer.wrap(randomBytes(8));
     ByteString cellValue = ByteString.copyFrom(randomBytes(8));
-    FlatRow row = FlatRow.newBuilder().withRowKey(key)
-        .addCell("family", ByteString.EMPTY, System.nanoTime() / 1000, cellValue).build();
+    FlatRow row =
+        FlatRow.newBuilder()
+            .withRowKey(key)
+            .addCell("family", ByteString.EMPTY, System.nanoTime() / 1000, cellValue)
+            .build();
     when(mockFuture.get()).thenReturn(row);
 
     BatchExecutor underTest = createExecutor(options);
@@ -300,9 +311,11 @@ public class TestBatchExecutor {
     Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
     for (int i = 1; i < results.length; i++) {
       Assert.assertTrue(
-        "Expected " + Bytes.toString(gets.get(i).getRow()) + " but was "
-            + Bytes.toString(results[i].getRow()),
-        Bytes.equals(results[i].getRow(), gets.get(i).getRow()));
+          "Expected "
+              + Bytes.toString(gets.get(i).getRow())
+              + " but was "
+              + Bytes.toString(results[i].getRow()),
+          Bytes.equals(results[i].getRow(), gets.get(i).getRow()));
     }
   }
 

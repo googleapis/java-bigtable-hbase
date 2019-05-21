@@ -53,16 +53,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/**
- * Unit tests for the {@link BigtableDataClientWrapper}.
- */
+/** Unit tests for the {@link BigtableDataClientWrapper}. */
 @RunWith(MockitoJUnitRunner.class)
 public class TestBigtableDataClientWrapper {
 
@@ -81,13 +78,11 @@ public class TestBigtableDataClientWrapper {
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
 
-  @Mock
-  private BigtableDataClient client;
+  @Mock private BigtableDataClient client;
 
   private BigtableDataClientWrapper clientWrapper;
 
-  @Mock
-  private ResultScanner<FlatRow> mockFlatRow;
+  @Mock private ResultScanner<FlatRow> mockFlatRow;
 
   @Before
   public void setUp() {
@@ -115,7 +110,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testCheckMutateRow(){
+  public void testCheckMutateRow() {
     Mutation mutation = Mutation.create();
     mutation.setCell("family", "qualifier", "some other value");
     ConditionalRowMutation conditonalMutation =
@@ -130,7 +125,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testCheckMutateRowWhenNoPredicateMatch(){
+  public void testCheckMutateRowWhenNoPredicateMatch() {
     Mutation mutation = Mutation.create();
     mutation.setCell("family", "qualifier", "some other value");
     ConditionalRowMutation conditonalMutation =
@@ -145,7 +140,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testCheckMutateRowAsync() throws Exception{
+  public void testCheckMutateRowAsync() throws Exception {
     Mutation mutation = Mutation.create();
     mutation.setCell("family", "qualifier", "some other value");
     ConditionalRowMutation conditonalMutation =
@@ -162,7 +157,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testCheckMutateRowAsyncWhenNoPredicateMatch() throws Exception{
+  public void testCheckMutateRowAsyncWhenNoPredicateMatch() throws Exception {
     Mutation mutation = Mutation.create();
     mutation.setCell("family", "qualifier", "some other value");
     ConditionalRowMutation conditonalMutation =
@@ -179,7 +174,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testReadModifyWriteWithOneCell(){
+  public void testReadModifyWriteWithOneCell() {
     ReadModifyWriteRow readModify = ReadModifyWriteRow.create(TABLE_ID, "test-key");
     ReadModifyWriteRowRequest request = readModify.toProto(REQUEST_CONTEXT);
     Row expectedRow = buildRow();
@@ -187,7 +182,8 @@ public class TestBigtableDataClientWrapper {
         ReadModifyWriteRowResponse.newBuilder().setRow(expectedRow).build();
     RowCell rowCell = RowCell.create("firstFamily", QUALIFIER_1, TIMESTAMP, LABEL_LIST, VALUE);
     com.google.cloud.bigtable.data.v2.models.Row modelRow =
-        com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Collections.singletonList(rowCell));
+        com.google.cloud.bigtable.data.v2.models.Row.create(
+            ROW_KEY, Collections.singletonList(rowCell));
 
     when(client.readModifyWriteRow(request)).thenReturn(response);
     com.google.cloud.bigtable.data.v2.models.Row actualRow =
@@ -197,7 +193,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testReadModifyWriteAsync() throws Exception{
+  public void testReadModifyWriteAsync() throws Exception {
     ReadModifyWriteRow readModify = ReadModifyWriteRow.create(TABLE_ID, "test-key");
     ReadModifyWriteRowRequest request = readModify.toProto(REQUEST_CONTEXT);
     Row expectedRow = buildRow();
@@ -207,7 +203,8 @@ public class TestBigtableDataClientWrapper {
         Futures.immediateFuture(response);
     RowCell rowCell = RowCell.create("firstFamily", QUALIFIER_1, TIMESTAMP, LABEL_LIST, VALUE);
     com.google.cloud.bigtable.data.v2.models.Row modelRow =
-        com.google.cloud.bigtable.data.v2.models.Row.create(ROW_KEY, Collections.singletonList(rowCell));
+        com.google.cloud.bigtable.data.v2.models.Row.create(
+            ROW_KEY, Collections.singletonList(rowCell));
 
     when(client.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
     Future<com.google.cloud.bigtable.data.v2.models.Row> output =
@@ -217,62 +214,67 @@ public class TestBigtableDataClientWrapper {
   }
 
   private static Row buildRow() {
-    Cell cell = Cell.newBuilder()
-        .setValue(VALUE)
-        .setTimestampMicros(TIMESTAMP)
-        .addLabels(LABEL)
-        .build();
+    Cell cell =
+        Cell.newBuilder().setValue(VALUE).setTimestampMicros(TIMESTAMP).addLabels(LABEL).build();
     return Row.newBuilder()
         .setKey(ROW_KEY)
-        .addFamilies(Family.newBuilder()
-            .setName("firstFamily")
-            .addColumns(Column.newBuilder()
-                .setQualifier(QUALIFIER_1)
-                .addCells(cell)
+        .addFamilies(
+            Family.newBuilder()
+                .setName("firstFamily")
+                .addColumns(Column.newBuilder().setQualifier(QUALIFIER_1).addCells(cell).build())
                 .build())
-            .build())
         .build();
   }
 
   @Test
-  public void testReadModifyWriteWithMultipleCell(){
-    Row row = Row.newBuilder()
-        .setKey(ROW_KEY)
-        .addFamilies(Family.newBuilder()
-            .setName("firstFamily")
-            .addColumns(Column.newBuilder()
-                .setQualifier(QUALIFIER_1)
-                .addCells(Cell.newBuilder()
-                    .setValue(VALUE)
-                    .setTimestampMicros(TIMESTAMP)
-                    .addLabels(LABEL)
+  public void testReadModifyWriteWithMultipleCell() {
+    Row row =
+        Row.newBuilder()
+            .setKey(ROW_KEY)
+            .addFamilies(
+                Family.newBuilder()
+                    .setName("firstFamily")
+                    .addColumns(
+                        Column.newBuilder()
+                            .setQualifier(QUALIFIER_1)
+                            .addCells(
+                                Cell.newBuilder()
+                                    .setValue(VALUE)
+                                    .setTimestampMicros(TIMESTAMP)
+                                    .addLabels(LABEL)
+                                    .build())
+                            .build())
+                    .addColumns(
+                        Column.newBuilder()
+                            .setQualifier(QUALIFIER_2)
+                            .addCells(
+                                Cell.newBuilder()
+                                    .setValue(VALUE)
+                                    .setTimestampMicros(TIMESTAMP)
+                                    .addLabels(LABEL)
+                                    .build())
+                            .addCells(
+                                Cell.newBuilder()
+                                    .setValue(VALUE)
+                                    .setTimestampMicros(54321)
+                                    .addLabels(LABEL)
+                                    .build())
+                            .build())
                     .build())
-                .build())
-            .addColumns(Column.newBuilder()
-                .setQualifier(QUALIFIER_2)
-                .addCells(Cell.newBuilder()
-                    .setValue(VALUE)
-                    .setTimestampMicros(TIMESTAMP)
-                    .addLabels(LABEL)
-                    .build())
-                .addCells(Cell.newBuilder()
-                    .setValue(VALUE)
-                    .setTimestampMicros(54321)
-                    .addLabels(LABEL)
-                    .build())
-                .build())
-            .build())
-        .addFamilies(Family.newBuilder()
-            .setName("secondFamily")
-            .addColumns(Column.newBuilder()
-                .setQualifier(QUALIFIER_1)
-                .addCells(Cell.newBuilder()
-                    .setValue(VALUE)
-                    .setTimestampMicros(TIMESTAMP)
-                    .addLabels(LABEL)
-                    .build())
-                .build()))
-        .build();
+            .addFamilies(
+                Family.newBuilder()
+                    .setName("secondFamily")
+                    .addColumns(
+                        Column.newBuilder()
+                            .setQualifier(QUALIFIER_1)
+                            .addCells(
+                                Cell.newBuilder()
+                                    .setValue(VALUE)
+                                    .setTimestampMicros(TIMESTAMP)
+                                    .addLabels(LABEL)
+                                    .build())
+                            .build()))
+            .build();
     ReadModifyWriteRowResponse response =
         ReadModifyWriteRowResponse.newBuilder().setRow(row).build();
     ReadModifyWriteRow readModify = ReadModifyWriteRow.create(TABLE_ID, "test-key");
@@ -293,7 +295,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testSampleRowKeys(){
+  public void testSampleRowKeys() {
     final ByteString ROW_KEY_1 = ByteString.copyFromUtf8("row-key-1");
     final ByteString ROW_KEY_2 = ByteString.copyFromUtf8("row-key-2");
     final ByteString ROW_KEY_3 = ByteString.copyFromUtf8("row-key-3");
@@ -302,12 +304,12 @@ public class TestBigtableDataClientWrapper {
     SampleRowKeysRequest requestProto =
         SampleRowKeysRequest.newBuilder().setTableName(tableName).build();
     ImmutableList.Builder sampleKeys = ImmutableList.builder();
-    sampleKeys.add(SampleRowKeysResponse.newBuilder()
-        .setRowKey(ROW_KEY_1).setOffsetBytes(11).build());
-    sampleKeys.add(SampleRowKeysResponse.newBuilder()
-        .setRowKey(ROW_KEY_2).setOffsetBytes(12).build());
-    sampleKeys.add(SampleRowKeysResponse.newBuilder()
-        .setRowKey(ROW_KEY_3).setOffsetBytes(13).build());
+    sampleKeys.add(
+        SampleRowKeysResponse.newBuilder().setRowKey(ROW_KEY_1).setOffsetBytes(11).build());
+    sampleKeys.add(
+        SampleRowKeysResponse.newBuilder().setRowKey(ROW_KEY_2).setOffsetBytes(12).build());
+    sampleKeys.add(
+        SampleRowKeysResponse.newBuilder().setRowKey(ROW_KEY_3).setOffsetBytes(13).build());
     when(client.sampleRowKeys(requestProto)).thenReturn(sampleKeys.build());
 
     List<KeyOffset> keyOffsetList = clientWrapper.sampleRowKeys(TABLE_ID);
@@ -318,7 +320,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testSampleRowKeysAsync() throws Exception{
+  public void testSampleRowKeysAsync() throws Exception {
     final ByteString ROW_KEY_1 = ByteString.copyFromUtf8("row-key-1");
     final ByteString ROW_KEY_2 = ByteString.copyFromUtf8("row-key-2");
     final ByteString ROW_KEY_3 = ByteString.copyFromUtf8("row-key-3");
@@ -327,14 +329,15 @@ public class TestBigtableDataClientWrapper {
     SampleRowKeysRequest requestProto =
         SampleRowKeysRequest.newBuilder().setTableName(tableName).build();
     ImmutableList.Builder sampleKeys = ImmutableList.builder();
-    sampleKeys.add(SampleRowKeysResponse.newBuilder()
-        .setRowKey(ROW_KEY_1).setOffsetBytes(11).build());
-    sampleKeys.add(SampleRowKeysResponse.newBuilder()
-        .setRowKey(ROW_KEY_2).setOffsetBytes(12).build());
-    sampleKeys.add(SampleRowKeysResponse.newBuilder()
-        .setRowKey(ROW_KEY_3).setOffsetBytes(13).build());
+    sampleKeys.add(
+        SampleRowKeysResponse.newBuilder().setRowKey(ROW_KEY_1).setOffsetBytes(11).build());
+    sampleKeys.add(
+        SampleRowKeysResponse.newBuilder().setRowKey(ROW_KEY_2).setOffsetBytes(12).build());
+    sampleKeys.add(
+        SampleRowKeysResponse.newBuilder().setRowKey(ROW_KEY_3).setOffsetBytes(13).build());
     List<SampleRowKeysResponse> responseProtos = sampleKeys.build();
-    when(client.sampleRowKeysAsync(requestProto)).thenReturn(Futures.immediateFuture(responseProtos));
+    when(client.sampleRowKeysAsync(requestProto))
+        .thenReturn(Futures.immediateFuture(responseProtos));
 
     List<KeyOffset> keyOffsetList = clientWrapper.sampleRowKeysAsync(TABLE_ID).get();
     assertEquals(keyOffsetList.get(0).getKey(), ROW_KEY_1);
@@ -344,7 +347,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testReadRows() throws Exception{
+  public void testReadRows() throws Exception {
     Query query = Query.create(TABLE_ID);
     FlatRow row = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key")).build();
     when(client.readFlatRows(query.toProto(REQUEST_CONTEXT))).thenReturn(mockFlatRow);
@@ -358,7 +361,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testReadRowsAsync() throws Exception{
+  public void testReadRowsAsync() throws Exception {
     Query query = Query.create(TABLE_ID);
     FlatRow flatRow = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key")).build();
     List<FlatRow> listFlatRows = Arrays.asList(flatRow);
@@ -372,7 +375,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testReadFlatRowsList(){
+  public void testReadFlatRowsList() {
     Query query = Query.create(TABLE_ID);
     FlatRow flatRow = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key")).build();
     List<FlatRow> listFlatRows = Arrays.asList(flatRow);
@@ -382,7 +385,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testReadFlatRows(){
+  public void testReadFlatRows() {
     Query query = Query.create(TABLE_ID).range("start", "end");
     when(client.readFlatRows(query.toProto(REQUEST_CONTEXT))).thenReturn(mockFlatRow);
     clientWrapper.readFlatRows(query);
@@ -390,7 +393,7 @@ public class TestBigtableDataClientWrapper {
   }
 
   @Test
-  public void testReadFlatRowsAsync(){
+  public void testReadFlatRowsAsync() {
     Query query = Query.create(TABLE_ID);
     FlatRow flatRow = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key")).build();
     List<FlatRow> listFlatRows = Arrays.asList(flatRow);

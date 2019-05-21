@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.bigtable.v2.ColumnRange;
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.protobuf.ByteString;
 import java.io.IOException;
-
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -24,9 +26,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import com.google.bigtable.v2.ColumnRange;
-import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
 public class TestColumnRangeFilterAdapter {
@@ -37,18 +36,18 @@ public class TestColumnRangeFilterAdapter {
 
   @Test
   public void testColumnRangeFilterThrowsWithNoFamilies() {
-    ColumnRangeFilter filter = new ColumnRangeFilter(
-        Bytes.toBytes("a"), true, Bytes.toBytes("b"), true);
+    ColumnRangeFilter filter =
+        new ColumnRangeFilter(Bytes.toBytes("a"), true, Bytes.toBytes("b"), true);
     Assert.assertFalse(filterAdapter.isFilterSupported(emptyScanContext, filter).isSupported());
   }
 
   @Test
   public void testColumnRangeFilterWithASingleFamily_startAndEnd() throws IOException {
-    ColumnRangeFilter filter = new ColumnRangeFilter(
-        Bytes.toBytes("a"), true, Bytes.toBytes("b"), false);
+    ColumnRangeFilter filter =
+        new ColumnRangeFilter(Bytes.toBytes("a"), true, Bytes.toBytes("b"), false);
     Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
-    Filters.Filter expected = filterAdapter.adapt(
-        new FilterAdapterContext(familyScan, null), filter);
+    Filters.Filter expected =
+        filterAdapter.adapt(new FilterAdapterContext(familyScan, null), filter);
 
     ColumnRange columnRange = expected.toProto().getColumnRangeFilter();
     Assert.assertEquals(0, columnRange.getStartQualifierOpen().size());
@@ -59,11 +58,10 @@ public class TestColumnRangeFilterAdapter {
 
   @Test
   public void testColumnRangeFilterWithASingleFamily_openStart() throws IOException {
-    ColumnRangeFilter filter = new ColumnRangeFilter(
-        null, true, Bytes.toBytes("b"), false);
+    ColumnRangeFilter filter = new ColumnRangeFilter(null, true, Bytes.toBytes("b"), false);
     Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
-    Filters.Filter expectedFilter = filterAdapter.adapt(
-        new FilterAdapterContext(familyScan, null), filter);
+    Filters.Filter expectedFilter =
+        filterAdapter.adapt(new FilterAdapterContext(familyScan, null), filter);
 
     ColumnRange columnRange = expectedFilter.toProto().getColumnRangeFilter();
     Assert.assertEquals(0, columnRange.getStartQualifierClosed().size());
@@ -74,11 +72,10 @@ public class TestColumnRangeFilterAdapter {
 
   @Test
   public void testColumnRangeFilterWithASingleFamily_openEnd() throws IOException {
-    ColumnRangeFilter filter = new ColumnRangeFilter(
-        Bytes.toBytes("a"), true, null, false);
+    ColumnRangeFilter filter = new ColumnRangeFilter(Bytes.toBytes("a"), true, null, false);
     Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
-    Filters.Filter expectedFilter = filterAdapter.adapt(
-        new FilterAdapterContext(familyScan, null), filter);
+    Filters.Filter expectedFilter =
+        filterAdapter.adapt(new FilterAdapterContext(familyScan, null), filter);
 
     ColumnRange columnRange = expectedFilter.toProto().getColumnRangeFilter();
     Assert.assertEquals("a", toString(columnRange.getStartQualifierClosed()));

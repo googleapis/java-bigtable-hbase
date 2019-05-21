@@ -21,8 +21,12 @@ import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-
 import com.google.common.collect.RangeSet;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
@@ -45,12 +49,6 @@ import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * An adapter for converting an HBase Filter into Bigtable RowFilter objects
  *
@@ -66,44 +64,27 @@ public class FilterAdapter {
    */
   public static FilterAdapter buildAdapter() {
     FilterAdapter adapter = new FilterAdapter();
-    adapter.addFilterAdapter(
-        ColumnPrefixFilter.class, new ColumnPrefixFilterAdapter());
-    adapter.addFilterAdapter(
-        ColumnRangeFilter.class, new ColumnRangeFilterAdapter());
-    adapter.addFilterAdapter(
-        KeyOnlyFilter.class, new KeyOnlyFilterAdapter());
+    adapter.addFilterAdapter(ColumnPrefixFilter.class, new ColumnPrefixFilterAdapter());
+    adapter.addFilterAdapter(ColumnRangeFilter.class, new ColumnRangeFilterAdapter());
+    adapter.addFilterAdapter(KeyOnlyFilter.class, new KeyOnlyFilterAdapter());
     adapter.addFilterAdapter(
         MultipleColumnPrefixFilter.class, new MultipleColumnPrefixFilterAdapter());
-    adapter.addFilterAdapter(
-        TimestampsFilter.class, new TimestampsFilterAdapter());
-    adapter.addFilterAdapter(
-      TimestampRangeFilter.class, new TimestampRangeFilterAdapter());
+    adapter.addFilterAdapter(TimestampsFilter.class, new TimestampsFilterAdapter());
+    adapter.addFilterAdapter(TimestampRangeFilter.class, new TimestampRangeFilterAdapter());
     ValueFilterAdapter valueFilterAdapter = new ValueFilterAdapter();
+    adapter.addFilterAdapter(ValueFilter.class, valueFilterAdapter);
+    SingleColumnValueFilterAdapter scvfa = new SingleColumnValueFilterAdapter(valueFilterAdapter);
+    adapter.addFilterAdapter(SingleColumnValueFilter.class, scvfa);
     adapter.addFilterAdapter(
-        ValueFilter.class, valueFilterAdapter);
-    SingleColumnValueFilterAdapter scvfa =
-        new SingleColumnValueFilterAdapter(valueFilterAdapter);
-    adapter.addFilterAdapter(
-        SingleColumnValueFilter.class, scvfa);
-    adapter.addFilterAdapter(
-        SingleColumnValueExcludeFilter.class,
-        new SingleColumnValueExcludeFilterAdapter(scvfa));
-    adapter.addFilterAdapter(
-        ColumnPaginationFilter.class, new ColumnPaginationFilterAdapter());
-    adapter.addFilterAdapter(
-        FirstKeyOnlyFilter.class, new FirstKeyOnlyFilterAdapter());
-    adapter.addFilterAdapter(
-        ColumnCountGetFilter.class, new ColumnCountGetFilterAdapter());
-    adapter.addFilterAdapter(
-        RandomRowFilter.class, new RandomRowFilterAdapter());
-    adapter.addFilterAdapter(
-        PrefixFilter.class, new PrefixFilterAdapter());
-    adapter.addFilterAdapter(
-        QualifierFilter.class, new QualifierFilterAdapter());
-    adapter.addFilterAdapter(
-        PageFilter.class, new PageFilterAdapter());
-    adapter.addFilterAdapter(
-      WhileMatchFilter.class, new WhileMatchFilterAdapter(adapter));
+        SingleColumnValueExcludeFilter.class, new SingleColumnValueExcludeFilterAdapter(scvfa));
+    adapter.addFilterAdapter(ColumnPaginationFilter.class, new ColumnPaginationFilterAdapter());
+    adapter.addFilterAdapter(FirstKeyOnlyFilter.class, new FirstKeyOnlyFilterAdapter());
+    adapter.addFilterAdapter(ColumnCountGetFilter.class, new ColumnCountGetFilterAdapter());
+    adapter.addFilterAdapter(RandomRowFilter.class, new RandomRowFilterAdapter());
+    adapter.addFilterAdapter(PrefixFilter.class, new PrefixFilterAdapter());
+    adapter.addFilterAdapter(QualifierFilter.class, new QualifierFilterAdapter());
+    adapter.addFilterAdapter(PageFilter.class, new PageFilterAdapter());
+    adapter.addFilterAdapter(WhileMatchFilter.class, new WhileMatchFilterAdapter(adapter));
     adapter.addFilterAdapter(
         org.apache.hadoop.hbase.filter.RowFilter.class, new RowFilterAdapter());
     adapter.addFilterAdapter(FuzzyRowFilter.class, new FuzzyRowFilterAdapter());
@@ -114,8 +95,7 @@ public class FilterAdapter {
     try {
       adapter.addFilterAdapter(
           org.apache.hadoop.hbase.filter.MultiRowRangeFilter.class,
-          new MultiRowRangeFilterAdapter()
-      );
+          new MultiRowRangeFilterAdapter());
     } catch (NoClassDefFoundError ignored) {
     }
 
@@ -124,15 +104,14 @@ public class FilterAdapter {
     FilterListAdapter filterListAdapter = new FilterListAdapter(adapter);
     // FilterList implements UnsupportedStatusCollector so it should
     // be used when possible (third parameter to addFilterAdapter()).
-    adapter.addFilterAdapter(
-        FilterList.class, filterListAdapter, filterListAdapter);
+    adapter.addFilterAdapter(FilterList.class, filterListAdapter, filterListAdapter);
 
     return adapter;
   }
 
   /**
-   * A map of Class entries mapping to SingleFilterAdapter instances. Each supported Filter
-   * subclass should have an entry in this map.
+   * A map of Class entries mapping to SingleFilterAdapter instances. Each supported Filter subclass
+   * should have an entry in this map.
    */
   private Map<Class<? extends Filter>, SingleFilterAdapter<?>> adapterMap = new HashMap<>();
 
@@ -146,21 +125,20 @@ public class FilterAdapter {
       TypedFilterAdapter<T> typedFilterAdapter,
       UnsupportedStatusCollector<T> collector) {
     adapterMap.put(
-        filterType,
-        new SingleFilterAdapter<>(filterType, typedFilterAdapter, collector));
+        filterType, new SingleFilterAdapter<>(filterType, typedFilterAdapter, collector));
   }
 
   /**
-   * Building the adapter map properly requires using a reference to the main FilterAdapter (to
-   * pass to FilterListAdapter). As a result, a full adapter should be acquired via #buildAdapter().
+   * Building the adapter map properly requires using a reference to the main FilterAdapter (to pass
+   * to FilterListAdapter). As a result, a full adapter should be acquired via #buildAdapter().
    */
-  protected FilterAdapter() {
-  }
+  protected FilterAdapter() {}
 
   /**
    * Adapt an HBase filter into a Cloud Bigtable Rowfilter.
    *
-   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext}
+   *     object.
    * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
    * @return a {@link com.google.common.base.Optional} object.
    * @throws java.io.IOException if any.
@@ -172,8 +150,8 @@ public class FilterAdapter {
   }
 
   /**
-   * Throw a new UnsupportedFilterException if the given filter cannot be adapted to bigtable
-   * reader expressions.
+   * Throw a new UnsupportedFilterException if the given filter cannot be adapted to bigtable reader
+   * expressions.
    *
    * @param scan a {@link org.apache.hadoop.hbase.client.Scan} object.
    * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
@@ -192,8 +170,9 @@ public class FilterAdapter {
    *
    * @param filter The filter to inspect
    * @param statuses A mutable list of status into which we will add any that indicate an
-   * unsupported Filter was found.
-   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   *     unsupported Filter was found.
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext}
+   *     object.
    */
   public void collectUnsupportedStatuses(
       FilterAdapterContext context, Filter filter, List<FilterSupportStatus> statuses) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,25 +15,22 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import java.util.List;
 import org.apache.hadoop.hbase.filter.Filter;
 
-import java.util.List;
-
 /**
- * FilterSupportStatus is a result type indicating whether a filter has a supported adaptation
- * to bigtable reader expressions.
+ * FilterSupportStatus is a result type indicating whether a filter has a supported adaptation to
+ * bigtable reader expressions.
  *
- * The isSupported method indicates whether the Filter is supported and if isSupport() is false
- * a reason may be provided by the adapter.
+ * <p>The isSupported method indicates whether the Filter is supported and if isSupport() is false a
+ * reason may be provided by the adapter.
  *
  * @author sduskis
  * @version $Id: $Id
  */
 public class FilterSupportStatus {
 
-  /**
-   * A static instance for all supported Filter adaptations.
-   */
+  /** A static instance for all supported Filter adaptations. */
   public static final FilterSupportStatus SUPPORTED = new FilterSupportStatus(true, null);
 
   /**
@@ -43,8 +40,8 @@ public class FilterSupportStatus {
   public static final FilterSupportStatus NOT_SUPPORTED_WRONG_TYPE =
       newNotSupported("Wrong filter type passed to adapter.");
   /**
-   * Static helper to construct not support adaptations due to no adapter being available for
-   * the given Filter type.
+   * Static helper to construct not support adaptations due to no adapter being available for the
+   * given Filter type.
    *
    * @param unknownFilterType The unknown filter instance.
    * @return A new FilterSupportStatus.
@@ -52,8 +49,7 @@ public class FilterSupportStatus {
   public static FilterSupportStatus newUnknownFilterType(Filter unknownFilterType) {
     return new FilterSupportStatus(
         false,
-        String.format(
-            "Don't know how to adapt Filter class '%s'", unknownFilterType.getClass()));
+        String.format("Don't know how to adapt Filter class '%s'", unknownFilterType.getClass()));
   }
 
   /**
@@ -75,7 +71,7 @@ public class FilterSupportStatus {
   public static FilterSupportStatus newCompositeNotSupported(
       List<FilterSupportStatus> unsupportedSubfilters) {
     StringBuilder builder = new StringBuilder();
-    for (FilterSupportStatus subStatus: unsupportedSubfilters) {
+    for (FilterSupportStatus subStatus : unsupportedSubfilters) {
       builder.append(subStatus.getReason());
       builder.append("\n");
     }
@@ -99,9 +95,7 @@ public class FilterSupportStatus {
     return isSupported;
   }
 
-  /**
-   * The reason why the adaptation is not supported, if any.
-   */
+  /** The reason why the adaptation is not supported, if any. */
   String getReason() {
     return reason;
   }
@@ -109,7 +103,6 @@ public class FilterSupportStatus {
   /** {@inheritDoc} */
   @Override
   public String toString() {
-    return String.format(
-        "FilterSupportStatus{isSupported=%s, reason='%s'}", isSupported, reason);
+    return String.format("FilterSupportStatus{isSupported=%s, reason='%s'}", isSupported, reason);
   }
 }

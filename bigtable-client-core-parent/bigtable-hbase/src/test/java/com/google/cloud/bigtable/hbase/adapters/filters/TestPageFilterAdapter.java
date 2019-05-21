@@ -21,7 +21,7 @@ import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
-
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
@@ -35,20 +35,18 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-
 @RunWith(JUnit4.class)
 public class TestPageFilterAdapter {
 
   PageFilterAdapter pageFilterAdapter = new PageFilterAdapter();
+
   @Test
   public void mustPassOneIsNotSupported() {
     FilterAdapterContext context = new FilterAdapterContext(new Scan(), new DefaultReadHooks());
     PageFilter filter = new PageFilter(20);
     FilterList filterList = new FilterList(Operator.MUST_PASS_ONE, filter);
-    try(ContextCloseable ignroed = context.beginFilterList(filterList)) {
-      FilterSupportStatus status =
-          pageFilterAdapter.isFilterSupported(context, filter);
+    try (ContextCloseable ignroed = context.beginFilterList(filterList)) {
+      FilterSupportStatus status = pageFilterAdapter.isFilterSupported(context, filter);
       Assert.assertFalse(
           "MUST_PASS_ONE FilterLists should not be supported.", status.isSupported());
     }
@@ -58,10 +56,8 @@ public class TestPageFilterAdapter {
   public void topLevelPageFilterIsSupported() {
     FilterAdapterContext context = new FilterAdapterContext(new Scan(), new DefaultReadHooks());
     PageFilter filter = new PageFilter(20);
-    FilterSupportStatus status =
-        pageFilterAdapter.isFilterSupported(context, filter);
-    Assert.assertTrue(
-        "Top-level page filter should be supported", status.isSupported());
+    FilterSupportStatus status = pageFilterAdapter.isFilterSupported(context, filter);
+    Assert.assertTrue("Top-level page filter should be supported", status.isSupported());
   }
 
   @Test
@@ -69,9 +65,8 @@ public class TestPageFilterAdapter {
     FilterAdapterContext context = new FilterAdapterContext(new Scan(), new DefaultReadHooks());
     PageFilter filter = new PageFilter(20);
     FilterList filterList = new FilterList(Operator.MUST_PASS_ALL, filter);
-    try(ContextCloseable ignored = context.beginFilterList(filterList)) {
-      FilterSupportStatus status =
-          pageFilterAdapter.isFilterSupported(context, filter);
+    try (ContextCloseable ignored = context.beginFilterList(filterList)) {
+      FilterSupportStatus status = pageFilterAdapter.isFilterSupported(context, filter);
       Assert.assertTrue(
           "MUST_PASS_ALL should be supported at the top-level.", status.isSupported());
     }
@@ -84,9 +79,8 @@ public class TestPageFilterAdapter {
         new ValueFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("value")));
     PageFilter pageFilter = new PageFilter(20);
     FilterList filterList = new FilterList(Operator.MUST_PASS_ALL, pageFilter, valueFilter);
-    try(ContextCloseable ignored = context.beginFilterList(filterList)) {
-      FilterSupportStatus status =
-          pageFilterAdapter.isFilterSupported(context, pageFilter);
+    try (ContextCloseable ignored = context.beginFilterList(filterList)) {
+      FilterSupportStatus status = pageFilterAdapter.isFilterSupported(context, pageFilter);
       Assert.assertFalse(
           "PageFilter must be in the last position of a MUST_PASS_ALL filter list",
           status.isSupported());
@@ -101,8 +95,7 @@ public class TestPageFilterAdapter {
     FilterList topLevelList = new FilterList(Operator.MUST_PASS_ALL, secondLevelList);
     try (ContextCloseable ignored = context.beginFilterList(topLevelList)) {
       try (ContextCloseable evenMoreIgnored = context.beginFilterList(secondLevelList)) {
-        FilterSupportStatus status =
-            pageFilterAdapter.isFilterSupported(context, pageFilter);
+        FilterSupportStatus status = pageFilterAdapter.isFilterSupported(context, pageFilter);
         Assert.assertFalse(
             "MUST_PASS_ALL should not be supported lower than top level.", status.isSupported());
       }

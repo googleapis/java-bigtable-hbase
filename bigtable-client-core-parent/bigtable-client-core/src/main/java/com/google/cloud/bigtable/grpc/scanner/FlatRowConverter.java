@@ -25,6 +25,7 @@ import com.google.protobuf.ByteString;
 
 /**
  * This class converts between instances of {@link FlatRow} and {@link Row}.
+ *
  * @author tyagihas
  * @version $Id: $Id
  */
@@ -93,12 +94,16 @@ public class FlatRowConverter {
       rowCellList.add(toRowCell(cell));
     }
 
-    return com.google.cloud.bigtable.data.v2.models.Row.create(row.getRowKey(),
-        rowCellList.build());
+    return com.google.cloud.bigtable.data.v2.models.Row.create(
+        row.getRowKey(), rowCellList.build());
   }
 
   private static RowCell toRowCell(FlatRow.Cell cell) {
-    return RowCell.create(cell.getFamily(), cell.getQualifier(), cell.getTimestamp(),
-        cell.getLabels(), cell.getValue());
+    return RowCell.create(
+        cell.getFamily(),
+        cell.getQualifier(),
+        cell.getTimestamp(),
+        cell.getLabels(),
+        cell.getValue());
   }
 }

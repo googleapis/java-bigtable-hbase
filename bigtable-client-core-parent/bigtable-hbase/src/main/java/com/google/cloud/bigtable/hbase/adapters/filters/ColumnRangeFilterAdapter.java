@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,10 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Filters.QualifierRangeFilter;
 import com.google.protobuf.ByteString;
-
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import java.io.IOException;
 
 /**
  * Adapter for a single ColumnRangeFilter to a Cloud Bigtable RowFilter.
@@ -43,10 +41,10 @@ public class ColumnRangeFilterAdapter extends TypedFilterAdapterBase<ColumnRange
 
   /** {@inheritDoc} */
   @Override
-  public Filter adapt(FilterAdapterContext context, ColumnRangeFilter filter)
-      throws IOException {
+  public Filter adapt(FilterAdapterContext context, ColumnRangeFilter filter) throws IOException {
     byte[] familyName = getSingleFamily(context.getScan());
-    QualifierRangeFilter rangeBuilder = FILTERS.qualifier().rangeWithinFamily(Bytes.toString(familyName));
+    QualifierRangeFilter rangeBuilder =
+        FILTERS.qualifier().rangeWithinFamily(Bytes.toString(familyName));
 
     if (filter.getMinColumn() != null) {
       ByteString startQualifier = ByteString.copyFrom(filter.getMinColumn());
@@ -71,8 +69,7 @@ public class ColumnRangeFilterAdapter extends TypedFilterAdapterBase<ColumnRange
   /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
-      FilterAdapterContext context,
-      ColumnRangeFilter filter) {
+      FilterAdapterContext context, ColumnRangeFilter filter) {
     // We require a single column family to be specified:
     int familyCount = context.getScan().numFamilies();
     if (familyCount != 1) {

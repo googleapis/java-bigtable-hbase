@@ -21,13 +21,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.bigtable.v2.BigtableGrpc;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
+import com.google.common.util.concurrent.ListenableFuture;
+import io.grpc.CallOptions;
+import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
+import io.grpc.DeadlineUtil;
+import io.grpc.Metadata;
+import io.grpc.Status;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.google.cloud.bigtable.config.RetryOptions;
-import io.grpc.DeadlineUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,21 +48,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.bigtable.v2.BigtableGrpc;
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.ReadRowsResponse;
-import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
-import com.google.common.util.concurrent.ListenableFuture;
-import io.grpc.CallOptions;
-import io.grpc.ClientCall;
-import io.grpc.Metadata;
-import io.grpc.ClientCall.Listener;
-import io.grpc.Status;
-
-/**
- * Test for {@link RetryingUnaryOperation} and {@link AbstractRetryingOperation}
- * functionality.
- */
+/** Test for {@link RetryingUnaryOperation} and {@link AbstractRetryingOperation} functionality. */
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestRetryingUnaryOperation {
@@ -63,13 +58,11 @@ public class TestRetryingUnaryOperation {
   private static final BigtableAsyncRpc.RpcMetrics metrics =
       BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.getReadRowsMethod());
 
-  @Mock
-  private BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readAsync;
+  @Mock private BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readAsync;
 
   private OperationClock clock;
 
-  @Mock
-  private ScheduledExecutorService executorService;
+  @Mock private ScheduledExecutorService executorService;
 
   @Before
   public void setup() {
@@ -86,29 +79,31 @@ public class TestRetryingUnaryOperation {
   @Test
   public void testOK() throws Exception {
     final ReadRowsResponse result = ReadRowsResponse.getDefaultInstance();
-    Answer<Void> answer = new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) {
-        Listener listener = invocation.getArgument(1, ClientCall.Listener.class);
-        listener.onMessage(result);
-        listener.onClose(Status.OK, null);
-        return null;
-      }
-    };
+    Answer<Void> answer =
+        new Answer<Void>() {
+          @Override
+          public Void answer(InvocationOnMock invocation) {
+            Listener listener = invocation.getArgument(1, ClientCall.Listener.class);
+            listener.onMessage(result);
+            listener.onClose(Status.OK, null);
+            return null;
+          }
+        };
     doAnswer(answer)
         .when(readAsync)
         .start(
-            (ReadRowsRequest)any(),
-            (ClientCall.Listener)any(),
-            (Metadata)any(),
-            (ClientCall)any());
+            (ReadRowsRequest) any(),
+            (ClientCall.Listener) any(),
+            (Metadata) any(),
+            (ClientCall) any());
     ListenableFuture future = createOperation(CallOptions.DEFAULT).getAsyncResult();
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
-    verify(readAsync, times(1)).start(
-        (ReadRowsRequest) any(),
-        (ClientCall.Listener)any(),
-        (Metadata)any(),
-        (ClientCall)any());
+    verify(readAsync, times(1))
+        .start(
+            (ReadRowsRequest) any(),
+            (ClientCall.Listener) any(),
+            (Metadata) any(),
+            (ClientCall) any());
   }
 
   @Test
@@ -116,21 +111,27 @@ public class TestRetryingUnaryOperation {
     final ReadRowsResponse result = ReadRowsResponse.getDefaultInstance();
     final Status errorStatus = Status.UNAVAILABLE;
     final AtomicInteger counter = new AtomicInteger(0);
-    Answer<Void> answer = new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        Listener listener = invocation.getArgument(1);
-        if (counter.incrementAndGet() < 5) {
-          listener.onClose(errorStatus, null);
-        } else {
-          listener.onMessage(result);
-          listener.onClose(Status.OK, null);
-        }
-        return null;
-      }
-    };
-    doAnswer(answer).when(readAsync).start(Mockito.<ReadRowsRequest>any(),
-            Mockito.<ClientCall.Listener>any(), Mockito.<Metadata>any(), Mockito.<ClientCall>any());
+    Answer<Void> answer =
+        new Answer<Void>() {
+          @Override
+          public Void answer(InvocationOnMock invocation) throws Throwable {
+            Listener listener = invocation.getArgument(1);
+            if (counter.incrementAndGet() < 5) {
+              listener.onClose(errorStatus, null);
+            } else {
+              listener.onMessage(result);
+              listener.onClose(Status.OK, null);
+            }
+            return null;
+          }
+        };
+    doAnswer(answer)
+        .when(readAsync)
+        .start(
+            Mockito.<ReadRowsRequest>any(),
+            Mockito.<ClientCall.Listener>any(),
+            Mockito.<Metadata>any(),
+            Mockito.<ClientCall>any());
     ListenableFuture future = createOperation(CallOptions.DEFAULT).getAsyncResult();
 
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
@@ -151,20 +152,17 @@ public class TestRetryingUnaryOperation {
   private void testTimeout(long expectedTimeoutMs, CallOptions options)
       throws InterruptedException, java.util.concurrent.TimeoutException {
     final Status errorStatus = Status.UNAVAILABLE;
-    Answer<Void> answer = new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) {
-        invocation.<Listener>getArgument(1).onClose(errorStatus, null);
-        return null;
-      }
-    };
+    Answer<Void> answer =
+        new Answer<Void>() {
+          @Override
+          public Void answer(InvocationOnMock invocation) {
+            invocation.<Listener>getArgument(1).onClose(errorStatus, null);
+            return null;
+          }
+        };
     doAnswer(answer)
         .when(readAsync)
-        .start(
-            (ReadRowsRequest)any(),
-            (Listener)any(),
-            (Metadata)any(),
-            (ClientCall)any());
+        .start((ReadRowsRequest) any(), (Listener) any(), (Metadata) any(), (ClientCall) any());
     try {
       createOperation(options).getAsyncResult().get(1, TimeUnit.SECONDS);
       Assert.fail();
@@ -177,8 +175,13 @@ public class TestRetryingUnaryOperation {
   }
 
   private RetryingUnaryOperation createOperation(CallOptions options) {
-    return new RetryingUnaryOperation<>(RETRY_OPTIONS, ReadRowsRequest.getDefaultInstance(),
-        readAsync, options, executorService, new Metadata(), clock);
+    return new RetryingUnaryOperation<>(
+        RETRY_OPTIONS,
+        ReadRowsRequest.getDefaultInstance(),
+        readAsync,
+        options,
+        executorService,
+        new Metadata(),
+        clock);
   }
-
 }

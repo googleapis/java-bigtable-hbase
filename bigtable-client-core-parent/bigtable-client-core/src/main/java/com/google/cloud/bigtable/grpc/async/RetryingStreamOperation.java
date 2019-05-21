@@ -15,15 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-
 import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.collect.ImmutableList;
-
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * An extension of {@link AbstractRetryingOperation} that aggregates all responses from a streaming
@@ -38,7 +36,7 @@ public class RetryingStreamOperation<RequestT, ResponseT>
   private ImmutableList.Builder<ResponseT> buffer;
 
   /**
-   * <p>Constructor for RetryingCollectingClientCallListener.</p>
+   * Constructor for RetryingCollectingClientCallListener.
    *
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param request a RequestT object.
@@ -48,9 +46,14 @@ public class RetryingStreamOperation<RequestT, ResponseT>
    * @param metadata a {@link io.grpc.Metadata} object.
    * @param clock a {@link ApiClock} object
    */
-  public RetryingStreamOperation(RetryOptions retryOptions, RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, CallOptions callOptions,
-      ScheduledExecutorService executorService, Metadata metadata, ApiClock clock) {
+  public RetryingStreamOperation(
+      RetryOptions retryOptions,
+      RequestT request,
+      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
+      CallOptions callOptions,
+      ScheduledExecutorService executorService,
+      Metadata metadata,
+      ApiClock clock) {
     super(retryOptions, request, retryableRpc, callOptions, executorService, metadata, clock);
   }
 

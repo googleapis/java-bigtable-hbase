@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,31 +17,29 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import com.google.cloud.bigtable.data.v2.models.Query;
-import com.google.cloud.bigtable.hbase.util.TimestampConverter;
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.TimestampRangeFilter;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Optional;
+import com.google.common.collect.BoundType;
+import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
 import com.google.protobuf.ByteString;
-
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.io.TimeRange;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableSet;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.io.TimeRange;
 
 /**
  * An adapter for {@link Scan} operation that makes use of the proto filter language.
@@ -57,13 +55,13 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   /**
    * HBase supports include(Stop|Start)Row only at 1.4.0+, so check to make sure that the HBase
-   * runtime dependency supports this feature.  Specifically, Beam uses HBase 1.2.0.
+   * runtime dependency supports this feature. Specifically, Beam uses HBase 1.2.0.
    */
   private static boolean isOpenClosedAvailable() {
     try {
       new Scan().includeStopRow();
       return true;
-    } catch(NoSuchMethodError e) {
+    } catch (NoSuchMethodError e) {
       return false;
     }
   }
@@ -72,7 +70,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     try {
       new Scan().setLimit(1);
       return true;
-    } catch(NoSuchMethodError e) {
+    } catch (NoSuchMethodError e) {
       return false;
     }
   }
@@ -81,7 +79,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   private final RowRangeAdapter rowRangeAdapter;
 
   /**
-   * <p>Constructor for ScanAdapter.</p>
+   * Constructor for ScanAdapter.
    *
    * @param filterAdapter a {@link FilterAdapter} object.
    * @param rowRangeAdapter a {@link RowRangeAdapter} object.
@@ -92,7 +90,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   }
 
   /**
-   * <p>throwIfUnsupportedScan.</p>
+   * throwIfUnsupportedScan.
    *
    * @param scan a {@link Scan} object.
    */
@@ -182,8 +180,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     try {
       return ReaderExpressionHelper.quoteRegularExpression(unquoted);
     } catch (IOException e) {
-      throw new IllegalStateException(
-          "IOException when writing to ByteArrayOutputStream", e);
+      throw new IllegalStateException("IOException when writing to ByteArrayOutputStream", e);
     }
   }
 
@@ -245,7 +242,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     // Build a filter of the form:
     // (fam1 | (qual1 + qual2 + qual3)) + (fam2 | qual1) + (fam3)
     InterleaveFilter interleave = FILTERS.interleave();
-    Map<byte[],NavigableSet<byte[]>> familyMap = scan.getFamilyMap();
+    Map<byte[], NavigableSet<byte[]>> familyMap = scan.getFamilyMap();
     for (Map.Entry<byte[], NavigableSet<byte[]>> entry : familyMap.entrySet()) {
       Filters.Filter familyFilter = createFamilyFilter(entry.getKey());
 
@@ -257,14 +254,11 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
           columnFilters.filter(createColumnQualifierFilter(qualifier));
         }
         // Build filter of the form "family | (qual1 + qual2 + qual3)"
-        interleave.filter(FILTERS.chain()
-            .filter(familyFilter)
-            .filter(columnFilters));
+        interleave.filter(FILTERS.chain().filter(familyFilter).filter(columnFilters));
       } else {
         interleave.filter(familyFilter);
       }
     }
-    return Optional.<Filters.Filter> of(interleave);
+    return Optional.<Filters.Filter>of(interleave);
   }
-
 }

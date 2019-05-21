@@ -28,7 +28,7 @@ class MiniClusterEnv extends SharedTestEnv {
   static {
     try {
       HBaseRpcController.class.getName();
-    } catch(Throwable t) {
+    } catch (Throwable t) {
       t.printStackTrace();
     }
   }
@@ -39,8 +39,8 @@ class MiniClusterEnv extends SharedTestEnv {
   protected void setup() throws Exception {
     LOG.info("Starting hbase minicluster");
 
-    System.setProperty("org.apache.hadoop.hbase.shaded.io.netty.packagePrefix",
-      "org.apache.hadoop.hbase.shaded.");
+    System.setProperty(
+        "org.apache.hadoop.hbase.shaded.io.netty.packagePrefix", "org.apache.hadoop.hbase.shaded.");
 
     helper = HBaseTestingUtility.createLocalHTU();
     helper.startMiniCluster();
@@ -49,10 +49,7 @@ class MiniClusterEnv extends SharedTestEnv {
     // leaking hadoop configs, which messes up local mapreduce jobs
     configuration = HBaseConfiguration.create();
 
-    String[] keys = new String[]{
-        "hbase.zookeeper.quorum",
-        "hbase.zookeeper.property.clientPort"
-    };
+    String[] keys = new String[] {"hbase.zookeeper.quorum", "hbase.zookeeper.property.clientPort"};
     for (String key : keys) {
       configuration.set(key, helper.getConfiguration().get(key));
     }

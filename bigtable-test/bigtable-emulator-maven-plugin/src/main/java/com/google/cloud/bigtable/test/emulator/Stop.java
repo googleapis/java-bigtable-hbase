@@ -22,15 +22,14 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 
-
 @Mojo(name = "stop", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST)
 public class Stop extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    EmulatorController controller = (EmulatorController) getPluginContext().get(EmulatorController.class);
+    EmulatorController controller =
+        (EmulatorController) getPluginContext().get(EmulatorController.class);
 
-    if(controllerIsRunning(controller))
-      controller.stop();
+    if (controllerIsRunning(controller)) controller.stop();
   }
 
   private boolean controllerIsRunning(EmulatorController controller) {

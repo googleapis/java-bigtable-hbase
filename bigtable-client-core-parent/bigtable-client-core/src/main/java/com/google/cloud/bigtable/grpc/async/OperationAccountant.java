@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-
 import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
@@ -34,14 +33,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class OperationAccountant {
   /** Constant <code>LOG</code> */
-  @VisibleForTesting
-  static Logger LOG = new Logger(OperationAccountant.class);
+  @VisibleForTesting static Logger LOG = new Logger(OperationAccountant.class);
 
-  @VisibleForTesting
-  static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
+  @VisibleForTesting static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
 
-
-  // In awaitCompletion, wait up to this number of nanoseconds without any operations completing.  If
+  // In awaitCompletion, wait up to this number of nanoseconds without any operations completing.
+  // If
   // this amount of time goes by without any updates, awaitCompletion will log a warning.  Flush()
   // will still wait to complete.
   private static final long INTERVAL_NO_SUCCESS_WARNING_NANOS = TimeUnit.SECONDS.toNanos(30);
@@ -55,9 +52,7 @@ public class OperationAccountant {
   private long noSuccessCheckDeadlineNanos;
   private int noSuccessWarningCount;
 
-  /**
-   * <p>Constructor for {@link OperationAccountant}.</p>
-   */
+  /** Constructor for {@link OperationAccountant}. */
   public OperationAccountant() {
     this(NanoClock.SYSTEM, DEFAULT_FINISH_WAIT_MILLIS);
   }
@@ -75,17 +70,20 @@ public class OperationAccountant {
    */
   public void registerOperation(final ListenableFuture<?> future) {
     count.incrementAndGet();
-    Futures.addCallback(future, new FutureCallback<Object>() {
-      @Override
-      public void onSuccess(Object result) {
-        onOperationCompletion();
-      }
+    Futures.addCallback(
+        future,
+        new FutureCallback<Object>() {
+          @Override
+          public void onSuccess(Object result) {
+            onOperationCompletion();
+          }
 
-      @Override
-      public void onFailure(Throwable t) {
-        onOperationCompletion();
-      }
-    }, MoreExecutors.directExecutor());
+          @Override
+          public void onFailure(Throwable t) {
+            onOperationCompletion();
+          }
+        },
+        MoreExecutors.directExecutor());
   }
 
   /**
@@ -127,23 +125,21 @@ public class OperationAccountant {
     return true;
   }
 
-
   private void logNoSuccessWarning(long now) {
     long lastUpdateNanos = now - noSuccessCheckDeadlineNanos + INTERVAL_NO_SUCCESS_WARNING_NANOS;
     long lastUpdated = TimeUnit.NANOSECONDS.toSeconds(lastUpdateNanos);
     LOG.warn(
-      "No operations completed within the last %d seconds. "
-          + "There are still %d operations in progress.",
-      lastUpdated, count.get());
+        "No operations completed within the last %d seconds. "
+            + "There are still %d operations in progress.",
+        lastUpdated, count.get());
     noSuccessWarningCount++;
   }
 
   /**
-   * <p>
    * hasInflightRequests.
-   * </p>
-   * @return true if there are any outstanding requests being tracked by this
-   *         {@link OperationAccountant}
+   *
+   * @return true if there are any outstanding requests being tracked by this {@link
+   *     OperationAccountant}
    */
   public boolean hasInflightOperations() {
     return count.get() > 0;

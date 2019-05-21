@@ -38,6 +38,7 @@ public interface IBigtableTableAdminClient {
   /**
    * Creates a new table. The table can be created with a full set of initial column families,
    * specified in the request.
+   *
    * @param request a {@link CreateTableRequest} object.
    */
   Table createTable(CreateTableRequest request);
@@ -75,22 +76,19 @@ public interface IBigtableTableAdminClient {
   /**
    * Lists the names of all tables in an instance asynchronously.
    *
-   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
-   *   successful otherwise exception will be thrown.
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is successful
+   *     otherwise exception will be thrown.
    */
   ApiFuture<List<String>> listTablesAsync();
 
-  /**
-   * Permanently deletes a specified table and all of its data.
-   *
-   */
+  /** Permanently deletes a specified table and all of its data. */
   void deleteTable(String tableId);
 
   /**
    * Permanently deletes a specified table and all of its data.
    *
-   * @return a {@link ApiFuture} of type {@link Void} will be set when request is
-   *  successful otherwise exception will be thrown.
+   * @return a {@link ApiFuture} of type {@link Void} will be set when request is successful
+   *     otherwise exception will be thrown.
    */
   ApiFuture<Void> deleteTableAsync(String tableId);
 
@@ -98,7 +96,7 @@ public interface IBigtableTableAdminClient {
    * Creates, modifies or deletes a new column family within a specified table.
    *
    * @param request a {@link ModifyColumnFamiliesRequest} object.
-   * @return return {@link Table} object  that contains the updated table structure.
+   * @return return {@link Table} object that contains the updated table structure.
    */
   Table modifyFamilies(ModifyColumnFamiliesRequest request);
 
@@ -106,8 +104,8 @@ public interface IBigtableTableAdminClient {
    * Creates, modifies or deletes a new column family within a specified table.
    *
    * @param request a {@link ModifyColumnFamiliesRequest} object.
-   * @return a {@link ApiFuture} that returns {@link Table} object that contains
-   *  the updated table structure.
+   * @return a {@link ApiFuture} that returns {@link Table} object that contains the updated table
+   *     structure.
    */
   ApiFuture<Table> modifyFamiliesAsync(ModifyColumnFamiliesRequest request);
 
@@ -145,6 +143,7 @@ public interface IBigtableTableAdminClient {
   // ////////////// SNAPSHOT methods /////////////
   /**
    * Creates a new snapshot from a table in a specific cluster.
+   *
    * @param request a {@link SnapshotTableRequest} object.
    * @return The long running {@link Operation} for the request.
    */
@@ -152,6 +151,7 @@ public interface IBigtableTableAdminClient {
 
   /**
    * Gets metadata information about the specified snapshot.
+   *
    * @param request a {@link GetSnapshotRequest} object.
    * @return The {@link Snapshot} definied by the request.
    */
@@ -159,6 +159,7 @@ public interface IBigtableTableAdminClient {
 
   /**
    * Lists all snapshots associated with the specified cluster.
+   *
    * @param request a {@link ListSnapshotsRequest} object.
    * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
    */
@@ -166,12 +167,14 @@ public interface IBigtableTableAdminClient {
 
   /**
    * Permanently deletes the specified snapshot.
+   *
    * @param request a {@link DeleteSnapshotRequest} object.
    */
   ApiFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request);
 
   /**
    * Creates a new table from a snapshot.
+   *
    * @param request a {@link CreateTableFromSnapshotRequest} object.
    * @return The long running {@link Operation} for the request.
    */

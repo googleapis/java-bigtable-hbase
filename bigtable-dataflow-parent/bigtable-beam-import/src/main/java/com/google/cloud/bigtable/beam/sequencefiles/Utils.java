@@ -33,6 +33,7 @@ class Utils {
 
   /**
    * Helper to tweak default pipelineOptions for import/export jobs
+   *
    * @param opts
    * @return PipelineOptions
    */
@@ -51,9 +52,7 @@ class Utils {
     return dataflowOpts;
   }
 
-  /**
-   * A default project id provider for bigtable that reads the default {@link GcpOptions}
-   */
+  /** A default project id provider for bigtable that reads the default {@link GcpOptions} */
   public static class DefaultBigtableProjectFactory implements DefaultValueFactory<String> {
     @Override
     public String create(PipelineOptions options) {
@@ -61,9 +60,7 @@ class Utils {
     }
   }
 
-  /**
-   * A simple converter to adapt strings representing directories to {@link ResourceId}s.
-   */
+  /** A simple converter to adapt strings representing directories to {@link ResourceId}s. */
   static class StringToDirectoryResourceId extends SimpleFunction<String, ResourceId> {
     @Override
     public ResourceId apply(String input) {

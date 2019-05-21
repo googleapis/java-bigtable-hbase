@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
-
 import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
@@ -36,23 +35,24 @@ public class TestCheckAndMutateHBase2 extends AbstractTestCheckAndMutate {
   }
 
   @Override
-  protected boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, CompareOp op,
-      byte[] value, Put put) throws IOException {
+  protected boolean checkAndPut(
+      byte[] row, byte[] family, byte[] qualifier, CompareOp op, byte[] value, Put put)
+      throws IOException {
     return getDefaultTable()
         .checkAndPut(row, family, qualifier, CompareOperator.valueOf(op.name()), value, put);
   }
 
   @Override
-  protected boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value,
-      Delete delete) throws IOException {
+  protected boolean checkAndDelete(
+      byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws IOException {
     return getDefaultTable().checkAndDelete(row, family, qualifier, value, delete);
   }
 
   @Override
-  protected boolean checkAndMutate(byte[] row, byte[] family, byte[] qualifier, CompareOp op,
-      byte[] value, RowMutations rm) throws IOException {
-    return getDefaultTable().checkAndMutate(row, family, qualifier,
-        CompareOperator.valueOf(op.name()), value, rm);
+  protected boolean checkAndMutate(
+      byte[] row, byte[] family, byte[] qualifier, CompareOp op, byte[] value, RowMutations rm)
+      throws IOException {
+    return getDefaultTable()
+        .checkAndMutate(row, family, qualifier, CompareOperator.valueOf(op.name()), value, rm);
   }
-
 }

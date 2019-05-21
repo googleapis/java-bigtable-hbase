@@ -15,4 +15,4 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-public interface KnownEmulatorGap { }
+public interface KnownEmulatorGap {}

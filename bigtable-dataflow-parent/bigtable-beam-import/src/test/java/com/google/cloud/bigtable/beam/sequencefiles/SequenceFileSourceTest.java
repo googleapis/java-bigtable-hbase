@@ -54,11 +54,9 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class SequenceFileSourceTest {
 
-  @Rule
-  public final TemporaryFolder workDir = new TemporaryFolder();
+  @Rule public final TemporaryFolder workDir = new TemporaryFolder();
 
-  public SequenceFileSourceTest() {
-  }
+  public SequenceFileSourceTest() {}
 
   @Test
   public void testSimpleWritable() throws IOException {
@@ -72,23 +70,26 @@ public class SequenceFileSourceTest {
     // Write data to read
     File targetFile = workDir.newFile();
 
-    try (Writer writer = SequenceFile.createWriter(config,
-        Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
-        Writer.keyClass(Text.class),
-        Writer.valueClass(Text.class)
-    )) {
+    try (Writer writer =
+        SequenceFile.createWriter(
+            config,
+            Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
+            Writer.keyClass(Text.class),
+            Writer.valueClass(Text.class))) {
       for (KV<Text, Text> kv : data) {
         writer.append(kv.getKey(), kv.getValue());
       }
     }
 
     // Setup the source
-    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
-        StaticValueProvider.of(targetFile.getAbsolutePath()),
-        Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class,
-        SequenceFile.SYNC_INTERVAL
-    );
+    SequenceFileSource<Text, Text> source =
+        new SequenceFileSource<>(
+            StaticValueProvider.of(targetFile.getAbsolutePath()),
+            Text.class,
+            WritableSerialization.class,
+            Text.class,
+            WritableSerialization.class,
+            SequenceFile.SYNC_INTERVAL);
 
     List<KV<Text, Text>> results = SourceTestUtils.readFromSource(source, null);
     assertThat(results, containsInAnyOrder(data.toArray()));
@@ -104,59 +105,62 @@ public class SequenceFileSourceTest {
     for (int i = 0; i < nRows; i++) {
       String keyStr = String.format("%03d", i);
 
-      ImmutableBytesWritable rowKey = new ImmutableBytesWritable(
-          keyStr.getBytes());
+      ImmutableBytesWritable rowKey = new ImmutableBytesWritable(keyStr.getBytes());
 
-      Result value = Result.create(Collections.singletonList(
-          CellUtil.createCell(
-              keyStr.getBytes(),
-              ("family" + i).getBytes(),
-              ("qualifier" + i).getBytes(),
-              123456,
-              Type.Put.getCode(),
-              ("value" + i).getBytes()
-          )));
-      data.add(
-          KV.of(rowKey, value)
-      );
+      Result value =
+          Result.create(
+              Collections.singletonList(
+                  CellUtil.createCell(
+                      keyStr.getBytes(),
+                      ("family" + i).getBytes(),
+                      ("qualifier" + i).getBytes(),
+                      123456,
+                      Type.Put.getCode(),
+                      ("value" + i).getBytes())));
+      data.add(KV.of(rowKey, value));
     }
 
     // Write the file
     Configuration config = new Configuration(false);
-    config.setStrings("io.serializations",
+    config.setStrings(
+        "io.serializations",
         ResultSerialization.class.getName(),
-        WritableSerialization.class.getName()
-    );
+        WritableSerialization.class.getName());
 
-    try (Writer writer = SequenceFile.createWriter(config,
-        Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
-        Writer.keyClass(ImmutableBytesWritable.class),
-        Writer.valueClass(Result.class)
-    )) {
+    try (Writer writer =
+        SequenceFile.createWriter(
+            config,
+            Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
+            Writer.keyClass(ImmutableBytesWritable.class),
+            Writer.valueClass(Result.class))) {
       for (KV<ImmutableBytesWritable, Result> kv : data) {
         writer.append(kv.getKey(), kv.getValue());
       }
     }
 
     // Read the file
-    SequenceFileSource<ImmutableBytesWritable, Result> source = new SequenceFileSource<>(
-        StaticValueProvider.of(targetFile.getAbsolutePath()),
-        ImmutableBytesWritable.class, WritableSerialization.class,
-        Result.class, ResultSerialization.class,
-        SequenceFile.SYNC_INTERVAL
-    );
+    SequenceFileSource<ImmutableBytesWritable, Result> source =
+        new SequenceFileSource<>(
+            StaticValueProvider.of(targetFile.getAbsolutePath()),
+            ImmutableBytesWritable.class,
+            WritableSerialization.class,
+            Result.class,
+            ResultSerialization.class,
+            SequenceFile.SYNC_INTERVAL);
 
     // Verify
     List<KV<ImmutableBytesWritable, Result>> actual = SourceTestUtils.readFromSource(source, null);
     assertThat(actual, hasSize(data.size()));
 
-    Collections.sort(actual, new Comparator<KV<ImmutableBytesWritable, Result>>() {
-      @Override
-      public int compare(KV<ImmutableBytesWritable, Result> o1,
-          KV<ImmutableBytesWritable, Result> o2) {
-        return o1.getKey().compareTo(o2.getKey());
-      }
-    });
+    Collections.sort(
+        actual,
+        new Comparator<KV<ImmutableBytesWritable, Result>>() {
+          @Override
+          public int compare(
+              KV<ImmutableBytesWritable, Result> o1, KV<ImmutableBytesWritable, Result> o2) {
+            return o1.getKey().compareTo(o2.getKey());
+          }
+        });
     for (int i = 0; i < data.size(); i++) {
       KV<ImmutableBytesWritable, Result> expectedKv = data.get(i);
       KV<ImmutableBytesWritable, Result> actualKv = actual.get(i);
@@ -187,25 +191,28 @@ public class SequenceFileSourceTest {
       // Write data to read
       File targetFile = workDir.newFile();
 
-      try (Writer writer = SequenceFile.createWriter(config,
-          Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
-          Writer.keyClass(Text.class),
-          Writer.valueClass(Text.class),
-          Writer.compression(compressionType)
+      try (Writer writer =
+          SequenceFile.createWriter(
+              config,
+              Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
+              Writer.keyClass(Text.class),
+              Writer.valueClass(Text.class),
+              Writer.compression(compressionType))) {
 
-      )) {
         for (KV<Text, Text> kv : data) {
           writer.append(kv.getKey(), kv.getValue());
         }
       }
 
       // Setup the source
-      SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
-          StaticValueProvider.of(targetFile.getAbsolutePath()),
-          Text.class, WritableSerialization.class,
-          Text.class, WritableSerialization.class,
-          SequenceFile.SYNC_INTERVAL
-      );
+      SequenceFileSource<Text, Text> source =
+          new SequenceFileSource<>(
+              StaticValueProvider.of(targetFile.getAbsolutePath()),
+              Text.class,
+              WritableSerialization.class,
+              Text.class,
+              WritableSerialization.class,
+              SequenceFile.SYNC_INTERVAL);
 
       List<KV<Text, Text>> results = SourceTestUtils.readFromSource(source, null);
       assertThat(results, containsInAnyOrder(data.toArray()));
@@ -217,15 +224,17 @@ public class SequenceFileSourceTest {
     File targetFile = generateTextData(100, 10);
 
     // Setup the source with a single split
-    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
-        StaticValueProvider.of(targetFile.getAbsolutePath()),
-        Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class,
-        Long.MAX_VALUE
-    );
+    SequenceFileSource<Text, Text> source =
+        new SequenceFileSource<>(
+            StaticValueProvider.of(targetFile.getAbsolutePath()),
+            Text.class,
+            WritableSerialization.class,
+            Text.class,
+            WritableSerialization.class,
+            Long.MAX_VALUE);
 
-    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
-        .split(targetFile.length(), null);
+    List<? extends FileBasedSource<KV<Text, Text>>> splits =
+        source.split(targetFile.length(), null);
 
     for (FileBasedSource<KV<Text, Text>> subSource : splits) {
       int items = SourceTestUtils.readFromSource(subSource, null).size();
@@ -234,20 +243,16 @@ public class SequenceFileSourceTest {
       SourceTestUtils.assertSplitAtFractionFails(subSource, 0, 0.0, null);
       SourceTestUtils.assertSplitAtFractionFails(subSource, 0, 0.7, null);
       SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, 1, 0.7, null);
-      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(
-          subSource, 10, 0.7, null);
-      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(
-          subSource, 1, 0.1, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, 10, 0.7, null);
+      SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, 1, 0.1, null);
       // The split should fail after reading 11 items, (the start of the 11th item is at 10% of the
       // file. However because of syncs, 0.1 will put the cursor 20 bytes ahead of the current
       // position. So we pad the test with an extra item
-      SourceTestUtils.assertSplitAtFractionFails(
-          subSource, 11 + 1, 0.1, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, 11 + 1, 0.1, null);
       SourceTestUtils.assertSplitAtFractionFails(subSource, 33, 0.3, null);
       SourceTestUtils.assertSplitAtFractionFails(subSource, items, 0.9, null);
       SourceTestUtils.assertSplitAtFractionFails(subSource, items, 1.0, null);
       SourceTestUtils.assertSplitAtFractionSucceedsAndConsistent(subSource, items, 0.999, null);
-
     }
   }
 
@@ -255,19 +260,20 @@ public class SequenceFileSourceTest {
   public void testSplitAtFractionNonoverlapping() throws Exception {
     File targetFile = generateTextData(100, 10);
     // Setup the source with a single split
-    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
-        StaticValueProvider.of(targetFile.getAbsolutePath()),
-        Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class,
-        Long.MAX_VALUE
-    );
+    SequenceFileSource<Text, Text> source =
+        new SequenceFileSource<>(
+            StaticValueProvider.of(targetFile.getAbsolutePath()),
+            Text.class,
+            WritableSerialization.class,
+            Text.class,
+            WritableSerialization.class,
+            Long.MAX_VALUE);
 
-    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
-        .split(targetFile.length(), null);
+    List<? extends FileBasedSource<KV<Text, Text>>> splits =
+        source.split(targetFile.length(), null);
 
     for (FileBasedSource<KV<Text, Text>> subSource : splits) {
-      SourceTestUtils.assertSplitAtFractionFails(
-          subSource, 11 + 1, 0.1, null);
+      SourceTestUtils.assertSplitAtFractionFails(subSource, 11 + 1, 0.1, null);
 
       BoundedReader<KV<Text, Text>> reader = subSource.createReader(null);
       List<KV<Text, Text>> before = SourceTestUtils.readNItemsFromUnstartedReader(reader, 11);
@@ -282,12 +288,14 @@ public class SequenceFileSourceTest {
     File targetFile = generateTextData(100, 10);
 
     // Setup the source with a single split
-    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
-        StaticValueProvider.of(targetFile.getAbsolutePath()),
-        Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class,
-        Long.MAX_VALUE
-    );
+    SequenceFileSource<Text, Text> source =
+        new SequenceFileSource<>(
+            StaticValueProvider.of(targetFile.getAbsolutePath()),
+            Text.class,
+            WritableSerialization.class,
+            Text.class,
+            WritableSerialization.class,
+            Long.MAX_VALUE);
 
     SourceTestUtils.assertSplitAtFractionExhaustive(source, null);
   }
@@ -297,22 +305,25 @@ public class SequenceFileSourceTest {
     File targetFile = generateTextData(100, 10);
 
     // Setup the source with a single split
-    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
-        StaticValueProvider.of(targetFile.getAbsolutePath()),
-        Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class,
-        Long.MAX_VALUE
-    );
+    SequenceFileSource<Text, Text> source =
+        new SequenceFileSource<>(
+            StaticValueProvider.of(targetFile.getAbsolutePath()),
+            Text.class,
+            WritableSerialization.class,
+            Text.class,
+            WritableSerialization.class,
+            Long.MAX_VALUE);
 
-    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
-        .split(targetFile.length(), null);
+    List<? extends FileBasedSource<KV<Text, Text>>> splits =
+        source.split(targetFile.length(), null);
 
     for (FileBasedSource<KV<Text, Text>> subSource : splits) {
       BoundedReader<KV<Text, Text>> origReader = subSource.createReader(null);
       assertThat(origReader, instanceOf(SequenceFileSource.SeqFileReader.class));
 
       @SuppressWarnings("unchecked")
-      SequenceFileSource.SeqFileReader<Text, Text> reader = (SequenceFileSource.SeqFileReader<Text, Text>) origReader;
+      SequenceFileSource.SeqFileReader<Text, Text> reader =
+          (SequenceFileSource.SeqFileReader<Text, Text>) origReader;
 
       reader.start();
       assertTrue(reader.isAtSplitPoint());
@@ -331,15 +342,17 @@ public class SequenceFileSourceTest {
   public void testAllRead() throws Exception {
     File targetFile = generateTextData(10, 10);
     // Setup the source with a single split
-    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
-        StaticValueProvider.of(targetFile.getAbsolutePath()),
-        Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class,
-        Long.MAX_VALUE
-    );
+    SequenceFileSource<Text, Text> source =
+        new SequenceFileSource<>(
+            StaticValueProvider.of(targetFile.getAbsolutePath()),
+            Text.class,
+            WritableSerialization.class,
+            Text.class,
+            WritableSerialization.class,
+            Long.MAX_VALUE);
 
-    List<? extends FileBasedSource<KV<Text, Text>>> splits = source
-        .split(targetFile.length(), null);
+    List<? extends FileBasedSource<KV<Text, Text>>> splits =
+        source.split(targetFile.length(), null);
 
     List<KV<Text, Text>> results = SourceTestUtils.readFromSource(splits.get(0), null);
     assertThat(results, hasSize(10));
@@ -350,20 +363,22 @@ public class SequenceFileSourceTest {
 
     List<KV<Text, Text>> data = Lists.newArrayList();
     for (int i = 0; i < recordCount; i++) {
-      data.add(KV.of(new Text(String.format("key-%010d", i)),
-          new Text(String.format("value-%010d", i))));
+      data.add(
+          KV.of(
+              new Text(String.format("key-%010d", i)), new Text(String.format("value-%010d", i))));
     }
 
     // Write data to read
     File targetFile = workDir.newFile();
 
-    try (Writer writer = SequenceFile.createWriter(config,
-        Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
-        Writer.keyClass(Text.class),
-        Writer.valueClass(Text.class),
-        Writer.blockSize(1),
-        Writer.compression(CompressionType.NONE)
-    )) {
+    try (Writer writer =
+        SequenceFile.createWriter(
+            config,
+            Writer.file(new org.apache.hadoop.fs.Path(targetFile.toString())),
+            Writer.keyClass(Text.class),
+            Writer.valueClass(Text.class),
+            Writer.blockSize(1),
+            Writer.compression(CompressionType.NONE))) {
       int noSyncCount = 0;
       for (KV<Text, Text> kv : data) {
         writer.append(kv.getKey(), kv.getValue());
@@ -378,4 +393,3 @@ public class SequenceFileSourceTest {
     return targetFile;
   }
 }
-

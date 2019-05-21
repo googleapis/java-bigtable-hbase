@@ -20,41 +20,34 @@ import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.stub.ClientCallStreamObserver;
-
 import javax.annotation.Nullable;
 
 /**
- * Wraps a {@link ClientCall}, and implements {@link ClientCallStreamObserver} to allow access to the call's
- * underlying functionality.
- * <p>
- *   This class is intended to be used by the user to control flow and the life of the call.
- * </p>
+ * Wraps a {@link ClientCall}, and implements {@link ClientCallStreamObserver} to allow access to
+ * the call's underlying functionality.
+ *
+ * <p>This class is intended to be used by the user to control flow and the life of the call.
  */
-public class CallController<RequestT, ResponseT>
-    extends ClientCallStreamObserver<RequestT> {
+public class CallController<RequestT, ResponseT> extends ClientCallStreamObserver<RequestT> {
   @SuppressWarnings("rawtypes")
-  private static final ClientCall NULL_CALL = new ClientCall() {
+  private static final ClientCall NULL_CALL =
+      new ClientCall() {
 
-    @Override
-    public void start(Listener responseListener, Metadata headers) {
-    }
+        @Override
+        public void start(Listener responseListener, Metadata headers) {}
 
-    @Override
-    public void request(int numMessages) {
-    }
+        @Override
+        public void request(int numMessages) {}
 
-    @Override
-    public void cancel(String message, Throwable cause) {
-    }
+        @Override
+        public void cancel(String message, Throwable cause) {}
 
-    @Override
-    public void halfClose() {
-    }
+        @Override
+        public void halfClose() {}
 
-    @Override
-    public void sendMessage(Object message) {
-    }
-  };
+        @Override
+        public void sendMessage(Object message) {}
+      };
 
   private boolean autoFlowControlEnabled = true;
   private ClientCall<RequestT, ResponseT> call = NULL_CALL;
@@ -63,8 +56,11 @@ public class CallController<RequestT, ResponseT>
     call = NULL_CALL;
   }
 
-  synchronized void setCallAndStart(BigtableAsyncRpc<RequestT, ResponseT> rpc,
-      CallOptions callOptions, RequestT request, ClientCall.Listener<ResponseT> listener,
+  synchronized void setCallAndStart(
+      BigtableAsyncRpc<RequestT, ResponseT> rpc,
+      CallOptions callOptions,
+      RequestT request,
+      ClientCall.Listener<ResponseT> listener,
       Metadata metadata) {
     // There's a subtle race condition in RetryingStreamOperation which requires a separate
     // newCall/start split. The call variable needs to be set before onMessage() happens; that
@@ -90,7 +86,8 @@ public class CallController<RequestT, ResponseT>
 
   @Override
   public void onCompleted() {
-    throw new UnsupportedOperationException("onCompleted() and client-streaming are not supported.");
+    throw new UnsupportedOperationException(
+        "onCompleted() and client-streaming are not supported.");
   }
 
   @Override
@@ -104,10 +101,12 @@ public class CallController<RequestT, ResponseT>
   }
 
   /**
-   * Disable automatic calls to {@link ClientCall#request(int)}, and the user will explicitly request
-   * more results using {@link #request(int)}.  Currently, this is only used for reading rows.
+   * Disable automatic calls to {@link ClientCall#request(int)}, and the user will explicitly
+   * request more results using {@link #request(int)}. Currently, this is only used for reading
+   * rows.
    *
-   * @see com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader#beforeStart(ClientCallStreamObserver)
+   * @see
+   *     com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader#beforeStart(ClientCallStreamObserver)
    * @see ResponseQueueReader#getNextMergedRow()
    */
   @Override

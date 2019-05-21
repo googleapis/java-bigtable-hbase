@@ -16,11 +16,15 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.MutationApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.conf.Configuration;
@@ -33,13 +37,9 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
-
 /**
- * Adapts HBase Deletes, Gets, Scans, Puts, RowMutations, Appends and Increments to Bigtable requests.
+ * Adapts HBase Deletes, Gets, Scans, Puts, RowMutations, Appends and Increments to Bigtable
+ * requests.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -73,7 +73,7 @@ public class HBaseRequestAdapter {
   protected final BigtableTableName bigtableTableName;
 
   /**
-   * <p>Constructor for HBaseRequestAdapter.</p>
+   * Constructor for HBaseRequestAdapter.
    *
    * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
@@ -84,42 +84,42 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>Constructor for HBaseRequestAdapter.</p>
+   * Constructor for HBaseRequestAdapter.
    *
    * @param options a {@link BigtableOptions} object.
    * @param tableName a {@link TableName} object.
    * @param mutationAdapters a {@link MutationAdapters} object.
    */
-  public HBaseRequestAdapter(BigtableOptions options,
-                             TableName tableName,
-                             MutationAdapters mutationAdapters) {
-    this(tableName,
+  public HBaseRequestAdapter(
+      BigtableOptions options, TableName tableName, MutationAdapters mutationAdapters) {
+    this(
+        tableName,
         options.getInstanceName().toTableName(tableName.getQualifierAsString()),
         mutationAdapters);
   }
 
   /**
-   * <p>Constructor for HBaseRequestAdapter.</p>
+   * Constructor for HBaseRequestAdapter.
    *
    * @param tableName a {@link TableName} object.
    * @param bigtableTableName a {@link BigtableTableName} object.
    * @param mutationAdapters a {@link MutationAdapters} object.
    */
   @VisibleForTesting
-  HBaseRequestAdapter(TableName tableName,
-                              BigtableTableName bigtableTableName,
-                              MutationAdapters mutationAdapters) {
+  HBaseRequestAdapter(
+      TableName tableName, BigtableTableName bigtableTableName, MutationAdapters mutationAdapters) {
     this.tableName = tableName;
     this.bigtableTableName = bigtableTableName;
     this.mutationAdapters = mutationAdapters;
   }
 
-  public HBaseRequestAdapter withServerSideTimestamps(){
-    return new HBaseRequestAdapter(tableName, bigtableTableName, mutationAdapters.withServerSideTimestamps());
+  public HBaseRequestAdapter withServerSideTimestamps() {
+    return new HBaseRequestAdapter(
+        tableName, bigtableTableName, mutationAdapters.withServerSideTimestamps());
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param delete a {@link org.apache.hadoop.hbase.client.Delete} object.
    * @return a {@link RowMutation} object.
@@ -131,7 +131,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param delete a {@link org.apache.hadoop.hbase.client.Delete} object.
    * @param mutationApi a {@link com.google.cloud.bigtable.data.v2.models.MutationApi} object.
@@ -142,7 +142,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param delete a {@link Delete} object.
    * @return a {@link RowMutation} object.
@@ -154,7 +154,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param get a {@link Get} object.
    * @return a {@link Query} object.
@@ -168,7 +168,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param scan a {@link Scan} object.
    * @return a {@link Query} object.
@@ -182,33 +182,35 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param append a {@link Append} object.
    * @return a {@link ReadModifyWriteRow} object.
    */
   public ReadModifyWriteRow adapt(Append append) {
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(bigtableTableName.getTableId(), ByteString.copyFrom(append.getRow()));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(
+            bigtableTableName.getTableId(), ByteString.copyFrom(append.getRow()));
     Adapters.APPEND_ADAPTER.adapt(append, readModifyWriteRow);
     return readModifyWriteRow;
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param increment a {@link Increment} object.
    * @return a {@link ReadModifyWriteRow} object.
    */
   public ReadModifyWriteRow adapt(Increment increment) {
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(bigtableTableName.getTableId(), ByteString.copyFrom(increment.getRow()));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(
+            bigtableTableName.getTableId(), ByteString.copyFrom(increment.getRow()));
     Adapters.INCREMENT_ADAPTER.adapt(increment, readModifyWriteRow);
     return readModifyWriteRow;
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param put a {@link org.apache.hadoop.hbase.client.Put} object.
    * @return a {@link RowMutation} object.
@@ -220,7 +222,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param put a {@link org.apache.hadoop.hbase.client.Put} object.
    * @param mutationApi a {@link com.google.cloud.bigtable.data.v2.models.MutationApi} object.
@@ -230,7 +232,7 @@ public class HBaseRequestAdapter {
     mutationAdapters.putAdapter.adapt(put, mutationApi);
   }
   /**
-   * <p>adaptEntry.</p>
+   * adaptEntry.
    *
    * @param put a {@link Put} object.
    * @return a {@link RowMutation} object.
@@ -242,7 +244,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
    * @return a {@link RowMutation} object.
@@ -254,7 +256,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
    * @param mutationApi a {@link MutationApi} object.
@@ -265,7 +267,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adaptEntry.</p>
+   * adaptEntry.
    *
    * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
    * @return a {@link RowMutation} object.
@@ -277,7 +279,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
    * @return a {@link RowMutation} object.
@@ -289,7 +291,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
    * @param mutationApi a {@link MutationApi} object.
@@ -300,16 +302,16 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>Getter for the field <code>bigtableTableName</code>.</p>
+   * Getter for the field <code>bigtableTableName</code>.
    *
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
    */
   public BigtableTableName getBigtableTableName() {
     return bigtableTableName;
   }
-  
+
   /**
-   * <p>Getter for the field <code>tableName</code>.</p>
+   * Getter for the field <code>tableName</code>.
    *
    * @return a {@link org.apache.hadoop.hbase.TableName} object.
    */
@@ -318,7 +320,7 @@ public class HBaseRequestAdapter {
   }
 
   /**
-   * <p>getTableNameString.</p>
+   * getTableNameString.
    *
    * @return a {@link java.lang.String} object.
    */
@@ -326,14 +328,11 @@ public class HBaseRequestAdapter {
     return getBigtableTableName().toString();
   }
 
-  private RowMutation newRowMutationModel(byte [] rowKey) {
+  private RowMutation newRowMutationModel(byte[] rowKey) {
     if (!mutationAdapters.putAdapter.isSetClientTimestamp()) {
       return RowMutation.create(
-          bigtableTableName.getTableId(),
-          ByteString.copyFrom(rowKey),
-          Mutation.createUnsafe());
+          bigtableTableName.getTableId(), ByteString.copyFrom(rowKey), Mutation.createUnsafe());
     }
     return RowMutation.create(bigtableTableName.getTableId(), ByteString.copyFrom(rowKey));
   }
-
 }

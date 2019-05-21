@@ -32,7 +32,7 @@ public class GoogleCloudResourcePrefixInterceptor extends HeaderInterceptor {
       Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER);
 
   /**
-   * <p>Constructor for GoogleCloudResourcePrefixInterceptor.</p>
+   * Constructor for GoogleCloudResourcePrefixInterceptor.
    *
    * @param defaultValue a {@link java.lang.String} object.
    */

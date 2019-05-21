@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,8 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.protobuf.ByteString;
-
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -28,9 +29,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @RunWith(JUnit4.class)
 public class TestSampledRowKeysAdapter {
@@ -49,17 +47,11 @@ public class TestSampledRowKeysAdapter {
     List<HRegionLocation> locations = adapter.adaptResponse(rowKeys);
     Assert.assertEquals(1, locations.size());
     HRegionLocation location = locations.get(0);
-    Assert.assertArrayEquals(
-        HConstants.EMPTY_START_ROW,
-        location.getRegionInfo().getStartKey());
-    Assert.assertArrayEquals(
-        HConstants.EMPTY_END_ROW,
-        location.getRegionInfo().getEndKey());
+    Assert.assertArrayEquals(HConstants.EMPTY_START_ROW, location.getRegionInfo().getStartKey());
+    Assert.assertArrayEquals(HConstants.EMPTY_END_ROW, location.getRegionInfo().getEndKey());
 
-    Assert.assertEquals("host",
-        location.getHostname());
-    Assert.assertEquals(123,
-        location.getPort());
+    Assert.assertEquals("host", location.getHostname());
+    Assert.assertEquals(123, location.getPort());
   }
 
   @Test
@@ -73,22 +65,13 @@ public class TestSampledRowKeysAdapter {
     Assert.assertEquals(2, locations.size());
 
     HRegionLocation location = locations.get(0);
-    Assert.assertArrayEquals(
-        HConstants.EMPTY_START_ROW,
-        location.getRegionInfo().getStartKey());
-    Assert.assertArrayEquals(
-        rowKey,
-        location.getRegionInfo().getEndKey());
+    Assert.assertArrayEquals(HConstants.EMPTY_START_ROW, location.getRegionInfo().getStartKey());
+    Assert.assertArrayEquals(rowKey, location.getRegionInfo().getEndKey());
 
     location = locations.get(1);
-    Assert.assertArrayEquals(
-        rowKey,
-        location.getRegionInfo().getStartKey());
-    Assert.assertArrayEquals(
-        HConstants.EMPTY_END_ROW,
-        location.getRegionInfo().getEndKey());
+    Assert.assertArrayEquals(rowKey, location.getRegionInfo().getStartKey());
+    Assert.assertArrayEquals(HConstants.EMPTY_END_ROW, location.getRegionInfo().getEndKey());
   }
-
 
   @Test
   public void testEmptyRow() {
@@ -100,11 +83,7 @@ public class TestSampledRowKeysAdapter {
     List<HRegionLocation> locations = adapter.adaptResponse(responses);
     Assert.assertEquals(1, locations.size());
     HRegionLocation location = locations.get(0);
-    Assert.assertArrayEquals(
-        HConstants.EMPTY_START_ROW,
-        location.getRegionInfo().getStartKey());
-    Assert.assertArrayEquals(
-        HConstants.EMPTY_END_ROW,
-        location.getRegionInfo().getEndKey());
+    Assert.assertArrayEquals(HConstants.EMPTY_START_ROW, location.getRegionInfo().getStartKey());
+    Assert.assertArrayEquals(HConstants.EMPTY_END_ROW, location.getRegionInfo().getEndKey());
   }
 }

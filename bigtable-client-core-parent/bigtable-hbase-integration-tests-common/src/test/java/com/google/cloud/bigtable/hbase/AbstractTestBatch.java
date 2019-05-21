@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Append;
@@ -48,11 +47,11 @@ public abstract class AbstractTestBatch extends AbstractTest {
    * Requirement 8.1 - Batch performs a collection of Deletes, Gets, Puts, Increments, and Appends
    * on multiple rows, returning results in the same order as the requested actions.
    *
-   * Requirement 8.5 - A batch() should return an empty Result object for successful put/delete
+   * <p>Requirement 8.5 - A batch() should return an empty Result object for successful put/delete
    * operations and get operations with no matching column.
    *
-   * Requirement 8.6 - Get operations with matching values should return populated Result object in
-   * a batch() operation.
+   * <p>Requirement 8.6 - Get operations with matching values should return populated Result object
+   * in a batch() operation.
    */
   @Test
   public void testBatchPutGetAndDelete() throws IOException, InterruptedException {
@@ -100,8 +99,10 @@ public abstract class AbstractTestBatch extends AbstractTest {
     for (int i = 0; i < count; i++) {
       Assert.assertTrue("Should be Result", results[i] instanceof Result);
       Assert.assertEquals("Should be one value", 1, ((Result) results[i]).size());
-      Assert.assertArrayEquals("Value is incorrect", values[i],
-        CellUtil.cloneValue(((Result) results[i]).getColumnLatestCell(COLUMN_FAMILY, quals[i])));
+      Assert.assertArrayEquals(
+          "Value is incorrect",
+          values[i],
+          CellUtil.cloneValue(((Result) results[i]).getColumnLatestCell(COLUMN_FAMILY, quals[i])));
     }
     Assert.assertEquals("Should be empty", 0, ((Result) results[count]).size());
 
@@ -123,9 +124,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
     table.close();
   }
 
-  /**
-   * Requirement 8.1
-   */
+  /** Requirement 8.1 */
   @Test
   public void testBatchIncrement() throws IOException, InterruptedException {
     // Initialize data
@@ -154,19 +153,25 @@ public abstract class AbstractTestBatch extends AbstractTest {
     batch.add(increment2);
     Object[] results = new Object[2];
     table.batch(batch, results);
-    Assert.assertEquals("Should be value1 + 1", value1 + 1, Bytes.toLong(
-      CellUtil.cloneValue(((Result) results[0]).getColumnLatestCell(COLUMN_FAMILY, qual1))));
-    Assert.assertEquals("Should be value2 + 1", value2 + 1, Bytes.toLong(
-      CellUtil.cloneValue(((Result) results[1]).getColumnLatestCell(COLUMN_FAMILY, qual2))));
+    Assert.assertEquals(
+        "Should be value1 + 1",
+        value1 + 1,
+        Bytes.toLong(
+            CellUtil.cloneValue(((Result) results[0]).getColumnLatestCell(COLUMN_FAMILY, qual1))));
+    Assert.assertEquals(
+        "Should be value2 + 1",
+        value2 + 1,
+        Bytes.toLong(
+            CellUtil.cloneValue(((Result) results[1]).getColumnLatestCell(COLUMN_FAMILY, qual2))));
 
     table.close();
   }
 
   /**
-   * Requirement 8.2 - Batch throws an exception if any of the calls failed.  Any successful
+   * Requirement 8.2 - Batch throws an exception if any of the calls failed. Any successful
    * mutations that did not throw an exception will succeed.
    *
-   * Requirement 8.7 - Server errors should populate those return elements in a batch() call with
+   * <p>Requirement 8.7 - Server errors should populate those return elements in a batch() call with
    * corresponding Throwables.
    */
   @Test
@@ -189,9 +194,9 @@ public abstract class AbstractTestBatch extends AbstractTest {
     List<Row> batch = new ArrayList<Row>(5);
     Object[] results = new Object[5];
     batch.add(put0);
-    batch.add(put1);  // This one is bad
+    batch.add(put1); // This one is bad
     batch.add(put2);
-    batch.add(put3);  // So's this one
+    batch.add(put3); // So's this one
     batch.add(put4);
     RetriesExhaustedWithDetailsException exception = null;
     try {
@@ -201,18 +206,20 @@ public abstract class AbstractTestBatch extends AbstractTest {
     }
     Assert.assertNotNull("Exception should have been thrown", exception);
     Assert.assertEquals("There should have been two exceptions", 2, exception.getNumExceptions());
-    Assert.assertTrue("Cause should be NoSuchColumnFamilyException",
-      exception.getCause(0) instanceof NoSuchColumnFamilyException);
+    Assert.assertTrue(
+        "Cause should be NoSuchColumnFamilyException",
+        exception.getCause(0) instanceof NoSuchColumnFamilyException);
     Assert.assertArrayEquals("Row key should be #1", rowKeys[1], exception.getRow(0).getRow());
-    Assert.assertTrue("Cause should be NoSuchColumnFamilyException",
-      exception.getCause(1) instanceof NoSuchColumnFamilyException);
+    Assert.assertTrue(
+        "Cause should be NoSuchColumnFamilyException",
+        exception.getCause(1) instanceof NoSuchColumnFamilyException);
     Assert.assertArrayEquals("Row key should be #3", rowKeys[3], exception.getRow(1).getRow());
     Assert.assertTrue("#0 should be a Result", results[0] instanceof Result);
-    Assert.assertTrue("#1 should be the exception cause",
-      results[1] instanceof NoSuchColumnFamilyException);
+    Assert.assertTrue(
+        "#1 should be the exception cause", results[1] instanceof NoSuchColumnFamilyException);
     Assert.assertTrue("#2 should be a Result", results[2] instanceof Result);
-    Assert.assertTrue("#3 should be the exception cause",
-      results[3] instanceof NoSuchColumnFamilyException);
+    Assert.assertTrue(
+        "#3 should be the exception cause", results[3] instanceof NoSuchColumnFamilyException);
     Assert.assertTrue("#4 should be a Result", results[4] instanceof Result);
 
     // Check values.  The good puts should have worked.
@@ -221,14 +228,20 @@ public abstract class AbstractTestBatch extends AbstractTest {
       gets.add(new Get(rowKeys[i]));
     }
     Result[] getResults = table.get(gets);
-    Assert.assertArrayEquals("Row #0 should have value #0", values[0],
-      CellUtil.cloneValue(getResults[0].getColumnLatestCell(COLUMN_FAMILY, quals[0])));
+    Assert.assertArrayEquals(
+        "Row #0 should have value #0",
+        values[0],
+        CellUtil.cloneValue(getResults[0].getColumnLatestCell(COLUMN_FAMILY, quals[0])));
     Assert.assertTrue("Row #1 should be empty", getResults[1].isEmpty());
-    Assert.assertArrayEquals("Row #2 should have value #2", values[2],
-      CellUtil.cloneValue(getResults[2].getColumnLatestCell(COLUMN_FAMILY, quals[2])));
+    Assert.assertArrayEquals(
+        "Row #2 should have value #2",
+        values[2],
+        CellUtil.cloneValue(getResults[2].getColumnLatestCell(COLUMN_FAMILY, quals[2])));
     Assert.assertTrue("Row #3 should be empty", getResults[3].isEmpty());
-    Assert.assertArrayEquals("Row #4 should have value #4", values[4],
-      CellUtil.cloneValue(getResults[4].getColumnLatestCell(COLUMN_FAMILY, quals[4])));
+    Assert.assertArrayEquals(
+        "Row #4 should have value #4",
+        values[4],
+        CellUtil.cloneValue(getResults[4].getColumnLatestCell(COLUMN_FAMILY, quals[4])));
 
     table.close();
   }
@@ -256,10 +269,14 @@ public abstract class AbstractTestBatch extends AbstractTest {
     // Check
     Result result = table.get(new Get(rowKey));
     Assert.assertEquals("Should have two values", 2, result.size());
-    Assert.assertArrayEquals("Value #0 should exist", values[0],
-      CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[0])));
-    Assert.assertArrayEquals("Value #1 should exist", values[1],
-      CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[1])));
+    Assert.assertArrayEquals(
+        "Value #0 should exist",
+        values[0],
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[0])));
+    Assert.assertArrayEquals(
+        "Value #1 should exist",
+        values[1],
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[1])));
 
     // Now delete the value #1 and insert value #3
     Delete delete = new Delete(rowKey).addColumns(COLUMN_FAMILY, quals[1]);
@@ -272,10 +289,14 @@ public abstract class AbstractTestBatch extends AbstractTest {
     // Check
     result = table.get(new Get(rowKey));
     Assert.assertEquals("Should have two values", 2, result.size());
-    Assert.assertArrayEquals("Value #0 should exist", values[0],
-      CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[0])));
-    Assert.assertArrayEquals("Value #2 should exist", values[2],
-      CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[2])));
+    Assert.assertArrayEquals(
+        "Value #0 should exist",
+        values[0],
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[0])));
+    Assert.assertArrayEquals(
+        "Value #2 should exist",
+        values[2],
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[2])));
 
     table.close();
   }
@@ -321,10 +342,14 @@ public abstract class AbstractTestBatch extends AbstractTest {
     Assert.assertEquals("Should be one value", 1, ((Result) results[0]).size());
     Assert.assertEquals("Should be one value", 1, ((Result) results[1]).size());
     Assert.assertEquals("Should be empty", 0, ((Result) results[2]).size());
-    Assert.assertArrayEquals("Should be value1", value1,
-      CellUtil.cloneValue(((Result) results[0]).getColumnLatestCell(COLUMN_FAMILY, qual1)));
-    Assert.assertArrayEquals("Should be value2", value2,
-      CellUtil.cloneValue(((Result) results[1]).getColumnLatestCell(COLUMN_FAMILY, qual2)));
+    Assert.assertArrayEquals(
+        "Should be value1",
+        value1,
+        CellUtil.cloneValue(((Result) results[0]).getColumnLatestCell(COLUMN_FAMILY, qual1)));
+    Assert.assertArrayEquals(
+        "Should be value2",
+        value2,
+        CellUtil.cloneValue(((Result) results[1]).getColumnLatestCell(COLUMN_FAMILY, qual2)));
 
     table.close();
   }
@@ -332,20 +357,18 @@ public abstract class AbstractTestBatch extends AbstractTest {
   @Test
   public void testBatchDoesntHang() throws Exception {
     Table table;
-    try(Connection closedConnection = createNewConnection()) {
+    try (Connection closedConnection = createNewConnection()) {
       table = closedConnection.getTable(sharedTestEnv.getDefaultTableName());
     }
 
     try {
       table.batch(Arrays.asList(new Get(Bytes.toBytes("key"))), new Object[1]);
       Assert.fail("Expected an exception");
-    } catch(Exception e) {
+    } catch (Exception e) {
     }
   }
-  
-  /**
-   * Requirement 8.1
-   */
+
+  /** Requirement 8.1 */
   @Test
   public void testBatchAppend() throws IOException, InterruptedException {
     // Initialize data
@@ -377,13 +400,18 @@ public abstract class AbstractTestBatch extends AbstractTest {
     batch.add(append2);
     Object[] results = new Object[2];
     table.batch(batch, results);
-    Assert.assertArrayEquals("Should be value1_1 + value1_2", ArrayUtils.addAll(value1_1, value1_2),
-      CellUtil.cloneValue(((Result) results[0]).getColumnLatestCell(COLUMN_FAMILY, qual1)));
-    Assert.assertArrayEquals("Should be value1_1 + value1_2", ArrayUtils.addAll(value2_1, value2_2),
-      CellUtil.cloneValue(((Result) results[1]).getColumnLatestCell(COLUMN_FAMILY, qual2)));
+    Assert.assertArrayEquals(
+        "Should be value1_1 + value1_2",
+        ArrayUtils.addAll(value1_1, value1_2),
+        CellUtil.cloneValue(((Result) results[0]).getColumnLatestCell(COLUMN_FAMILY, qual1)));
+    Assert.assertArrayEquals(
+        "Should be value1_1 + value1_2",
+        ArrayUtils.addAll(value2_1, value2_2),
+        CellUtil.cloneValue(((Result) results[1]).getColumnLatestCell(COLUMN_FAMILY, qual2)));
 
     table.close();
   }
-  
-  protected abstract void appendAdd(Append append, byte[] columnFamily, byte[] qualifier, byte[] value);
+
+  protected abstract void appendAdd(
+      Append append, byte[] columnFamily, byte[] qualifier, byte[] value);
 }

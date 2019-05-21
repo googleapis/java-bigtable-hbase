@@ -15,6 +15,15 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import static com.google.api.core.ApiFutures.immediateFuture;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ResponseObserver;
@@ -42,14 +51,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import static com.google.api.core.ApiFutures.immediateFuture;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class TestBigtableDataGCJClient {
@@ -66,22 +67,27 @@ public class TestBigtableDataGCJClient {
   private static final ByteString VALUE_2 = ByteString.copyFromUtf8("test-value-2");
   private static final Query request = Query.create(TABLE_ID);
 
-  private static final List<Row> rows = ImmutableList.of(
-      Row.create(ByteString.copyFromUtf8(ROW_KEY),
-          ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1))),
-      Row.create(ByteString.copyFromUtf8("row-key-2"),
-          ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_2, TIMESTAMP, LABELS, VALUE_2))));
+  private static final List<Row> rows =
+      ImmutableList.of(
+          Row.create(
+              ByteString.copyFromUtf8(ROW_KEY),
+              ImmutableList.of(
+                  RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1))),
+          Row.create(
+              ByteString.copyFromUtf8("row-key-2"),
+              ImmutableList.of(
+                  RowCell.create(COL_FAMILY, QUALIFIER_2, TIMESTAMP, LABELS, VALUE_2))));
 
-  private static final List<FlatRow> flatRows = ImmutableList.of(
-      FlatRow.newBuilder()
-          .withRowKey(ByteString.copyFromUtf8(ROW_KEY))
-          .addCell(COL_FAMILY, QUALIFIER_1, TIMESTAMP, VALUE_1, LABELS)
-          .build(),
-      FlatRow.newBuilder()
-          .withRowKey(ByteString.copyFromUtf8(ROW_KEY))
-          .addCell(COL_FAMILY, QUALIFIER_2, TIMESTAMP, VALUE_2, LABELS)
-          .build());
-
+  private static final List<FlatRow> flatRows =
+      ImmutableList.of(
+          FlatRow.newBuilder()
+              .withRowKey(ByteString.copyFromUtf8(ROW_KEY))
+              .addCell(COL_FAMILY, QUALIFIER_1, TIMESTAMP, VALUE_1, LABELS)
+              .build(),
+          FlatRow.newBuilder()
+              .withRowKey(ByteString.copyFromUtf8(ROW_KEY))
+              .addCell(COL_FAMILY, QUALIFIER_2, TIMESTAMP, VALUE_2, LABELS)
+              .build());
 
   private static ServerStreamingCallable<Query, FlatRow> serverStreaming =
       mock(ServerStreamingCallable.class);
@@ -89,7 +95,7 @@ public class TestBigtableDataGCJClient {
   private BigtableDataGCJClient dataGCJClient;
 
   @Before
-  public void setUp(){
+  public void setUp() {
     dataClientV2 = mock(BigtableDataClient.class);
     dataGCJClient = new BigtableDataGCJClient(dataClientV2);
   }
@@ -106,7 +112,7 @@ public class TestBigtableDataGCJClient {
   public void testMutateRowAsync() throws Exception {
     RowMutation rowMutation = RowMutation.create(TABLE_ID, ROW_KEY);
     when(dataClientV2.mutateRowAsync(rowMutation))
-        .thenReturn(ApiFutures.<Void>immediateFuture( null));
+        .thenReturn(ApiFutures.<Void>immediateFuture(null));
     dataGCJClient.mutateRowAsync(rowMutation).get();
     verify(dataClientV2).mutateRowAsync(rowMutation);
   }
@@ -114,8 +120,10 @@ public class TestBigtableDataGCJClient {
   @Test
   public void testReadModifyWriteRow() {
     ReadModifyWriteRow mutation = ReadModifyWriteRow.create(TABLE_ID, ROW_KEY);
-    Row expectedRow = Row.create(ByteString.copyFromUtf8(ROW_KEY),
-        ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1)));
+    Row expectedRow =
+        Row.create(
+            ByteString.copyFromUtf8(ROW_KEY),
+            ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1)));
     when(dataClientV2.readModifyWriteRow(mutation)).thenReturn(expectedRow);
     Row actualRow = dataGCJClient.readModifyWriteRow(mutation);
     assertEquals(expectedRow, actualRow);
@@ -125,10 +133,11 @@ public class TestBigtableDataGCJClient {
   @Test
   public void testReadModifyWriteRowAsync() throws Exception {
     ReadModifyWriteRow mutation = ReadModifyWriteRow.create(TABLE_ID, ROW_KEY);
-    Row expectedRow = Row.create(ByteString.copyFromUtf8(ROW_KEY),
-        ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1)));
-    when(dataClientV2.readModifyWriteRowAsync(mutation))
-        .thenReturn(immediateFuture(expectedRow));
+    Row expectedRow =
+        Row.create(
+            ByteString.copyFromUtf8(ROW_KEY),
+            ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1)));
+    when(dataClientV2.readModifyWriteRowAsync(mutation)).thenReturn(immediateFuture(expectedRow));
     Row actualRow = dataGCJClient.readModifyWriteRowAsync(mutation).get();
     assertEquals(expectedRow, actualRow);
     verify(dataClientV2).readModifyWriteRowAsync(mutation);
@@ -136,8 +145,9 @@ public class TestBigtableDataGCJClient {
 
   @Test
   public void testCheckAndMutateRow() {
-    ConditionalRowMutation checkAndMutate = ConditionalRowMutation.create(TABLE_ID, ROW_KEY)
-        .then(Mutation.create().setCell(COL_FAMILY, QUALIFIER_1, VALUE_1));
+    ConditionalRowMutation checkAndMutate =
+        ConditionalRowMutation.create(TABLE_ID, ROW_KEY)
+            .then(Mutation.create().setCell(COL_FAMILY, QUALIFIER_1, VALUE_1));
     when(dataClientV2.checkAndMutateRow(checkAndMutate)).thenReturn(Boolean.TRUE);
     assertTrue(dataGCJClient.checkAndMutateRow(checkAndMutate));
     verify(dataClientV2).checkAndMutateRow(checkAndMutate);
@@ -145,8 +155,9 @@ public class TestBigtableDataGCJClient {
 
   @Test
   public void testCheckAndMutateRowAsync() throws Exception {
-    ConditionalRowMutation checkAndMutate = ConditionalRowMutation.create(TABLE_ID, ROW_KEY)
-        .then(Mutation.create().setCell(COL_FAMILY, QUALIFIER_1, VALUE_1));
+    ConditionalRowMutation checkAndMutate =
+        ConditionalRowMutation.create(TABLE_ID, ROW_KEY)
+            .then(Mutation.create().setCell(COL_FAMILY, QUALIFIER_1, VALUE_1));
     when(dataClientV2.checkAndMutateRowAsync(checkAndMutate))
         .thenReturn(immediateFuture(Boolean.TRUE));
     assertTrue(dataGCJClient.checkAndMutateRowAsync(checkAndMutate).get());
@@ -177,11 +188,16 @@ public class TestBigtableDataGCJClient {
   public void testReadRowAsync() throws Exception {
     ServerStreamingCallable<Query, Row> serverStreaming = mock(ServerStreamingCallable.class);
     UnaryCallable<Query, List<Row>> unaryCallable = mock(UnaryCallable.class);
-    List<Row> expectedRows = ImmutableList.of(
-        Row.create(ByteString.copyFromUtf8(ROW_KEY),
-            ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1))),
-        Row.create(ByteString.copyFromUtf8("row-key-2"),
-            ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_2, TIMESTAMP, LABELS, VALUE_2))));
+    List<Row> expectedRows =
+        ImmutableList.of(
+            Row.create(
+                ByteString.copyFromUtf8(ROW_KEY),
+                ImmutableList.of(
+                    RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1))),
+            Row.create(
+                ByteString.copyFromUtf8("row-key-2"),
+                ImmutableList.of(
+                    RowCell.create(COL_FAMILY, QUALIFIER_2, TIMESTAMP, LABELS, VALUE_2))));
 
     when(dataClientV2.readRowsCallable()).thenReturn(serverStreaming);
     when(serverStreaming.all()).thenReturn(unaryCallable);
@@ -199,8 +215,7 @@ public class TestBigtableDataGCJClient {
     ServerStreamingCallable<Query, FlatRow> serverStreaming = mock(ServerStreamingCallable.class);
     UnaryCallable<Query, List<FlatRow>> unaryCallable = mock(UnaryCallable.class);
 
-    when(dataClientV2.readRowsCallable(any(FlatRowAdapter.class)))
-        .thenReturn(serverStreaming);
+    when(dataClientV2.readRowsCallable(any(FlatRowAdapter.class))).thenReturn(serverStreaming);
     when(serverStreaming.all()).thenReturn(unaryCallable);
     when(unaryCallable.call(request)).thenReturn(flatRows);
     List<FlatRow> actualFlatRows = dataGCJClient.readFlatRowsList(request);
@@ -276,7 +291,7 @@ public class TestBigtableDataGCJClient {
   }
 
   @Test
-  public void testCreateBulkMutationBatcher(){
+  public void testCreateBulkMutationBatcher() {
     UnaryCallable<RowMutation, Void> unaryCallable = mock(UnaryCallable.class);
     BulkMutationBatcher batcher = new BulkMutationBatcher(unaryCallable);
     when(dataClientV2.newBulkMutationBatcher()).thenReturn(batcher);
