@@ -9,7 +9,7 @@ export MAVEN_OPTS="-Xmx1024m"
 
 # build & run tests
 /usr/bin/time -v \
-  mvn --batch-mode clean verify \
+  mvn --batch-mode com.coveo:fmt-maven-plugin:check clean verify  \
   | egrep -v "(^\[INFO\] Download|^\[INFO\].*skipping)"
 
 # TODO(igorbernstein2): enable integration tests
