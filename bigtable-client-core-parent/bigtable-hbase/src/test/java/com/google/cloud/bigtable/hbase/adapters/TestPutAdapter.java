@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,15 +23,13 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-
 import com.google.protobuf.ByteString;
+import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
 public class TestPutAdapter {
@@ -67,9 +65,7 @@ public class TestPutAdapter {
 
     Assert.assertArrayEquals(family, setCell.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier, setCell.getColumnQualifier().toByteArray());
-    Assert.assertEquals(
-        TimeUnit.MILLISECONDS.toMicros(timestamp),
-        setCell.getTimestampMicros());
+    Assert.assertEquals(TimeUnit.MILLISECONDS.toMicros(timestamp), setCell.getTimestampMicros());
     Assert.assertArrayEquals(value, setCell.getValue().toByteArray());
   }
 
@@ -98,18 +94,14 @@ public class TestPutAdapter {
     SetCell setCell = mutation.getSetCell();
     Assert.assertArrayEquals(family, setCell.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
-    Assert.assertEquals(
-        TimeUnit.MILLISECONDS.toMicros(timestamp1),
-        setCell.getTimestampMicros());
+    Assert.assertEquals(TimeUnit.MILLISECONDS.toMicros(timestamp1), setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
 
     Mutation mod2 = request.getMutations(1);
     SetCell setCell2 = mod2.getSetCell();
     Assert.assertArrayEquals(family, setCell2.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier2, setCell2.getColumnQualifier().toByteArray());
-    Assert.assertEquals(
-        TimeUnit.MILLISECONDS.toMicros(timestamp2),
-        setCell2.getTimestampMicros());
+    Assert.assertEquals(TimeUnit.MILLISECONDS.toMicros(timestamp2), setCell2.getTimestampMicros());
     Assert.assertArrayEquals(value2, setCell2.getValue().toByteArray());
   }
 
@@ -140,18 +132,14 @@ public class TestPutAdapter {
     SetCell setCell = mutation1.getSetCell();
     Assert.assertArrayEquals(family1, setCell.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
-    Assert.assertEquals(
-        TimeUnit.MILLISECONDS.toMicros(timestamp1),
-        setCell.getTimestampMicros());
+    Assert.assertEquals(TimeUnit.MILLISECONDS.toMicros(timestamp1), setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
 
     Mutation mutation2 = request.getMutations(1);
     SetCell setCell2 = mutation2.getSetCell();
     Assert.assertArrayEquals(family2, setCell2.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier2, setCell2.getColumnQualifier().toByteArray());
-    Assert.assertEquals(
-        TimeUnit.MILLISECONDS.toMicros(timestamp2),
-        setCell2.getTimestampMicros());
+    Assert.assertEquals(TimeUnit.MILLISECONDS.toMicros(timestamp2), setCell2.getTimestampMicros());
     Assert.assertArrayEquals(value2, setCell2.getValue().toByteArray());
   }
 
@@ -163,15 +151,14 @@ public class TestPutAdapter {
     byte[] value1 = dataHelper.randomData("v1");
     long startTimeMillis = System.currentTimeMillis();
 
-    Put hbasePut = new Put(row)
-        .addColumn(family1, qualifier1, value1);
+    Put hbasePut = new Put(row).addColumn(family1, qualifier1, value1);
 
     com.google.cloud.bigtable.data.v2.models.Mutation unsafeMutation =
         com.google.cloud.bigtable.data.v2.models.Mutation.createUnsafe();
     adapter.adapt(hbasePut, unsafeMutation);
-    MutateRowRequest request = RowMutation
-        .create(TABLE_ID, ByteString.copyFrom(hbasePut.getRow()), unsafeMutation)
-        .toProto(REQUEST_CONTEXT);
+    MutateRowRequest request =
+        RowMutation.create(TABLE_ID, ByteString.copyFrom(hbasePut.getRow()), unsafeMutation)
+            .toProto(REQUEST_CONTEXT);
     Assert.assertArrayEquals(row, request.getRowKey().toByteArray());
 
     Assert.assertEquals(1, request.getMutationsCount());
@@ -245,5 +232,4 @@ public class TestPutAdapter {
     adapter.adapt(put, rowMutation);
     return rowMutation.toProto(REQUEST_CONTEXT);
   }
-
 }

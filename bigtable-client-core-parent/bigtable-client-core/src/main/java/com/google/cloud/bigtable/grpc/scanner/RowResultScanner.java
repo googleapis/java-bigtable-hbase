@@ -22,15 +22,14 @@ import com.google.cloud.bigtable.metrics.Timer;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-/**
- * A {@link ResultScanner} that wraps GCJ {@link ServerStream}.
- */
+/** A {@link ResultScanner} that wraps GCJ {@link ServerStream}. */
 public class RowResultScanner<T> implements ResultScanner<T> {
 
   private static final Meter resultsMeter =
       BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "scanner.results");
-  private static final Timer resultsTimer = BigtableClientMetrics
-      .timer(BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
+  private static final Timer resultsTimer =
+      BigtableClientMetrics.timer(
+          BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
 
   private final ServerStream<T> stream;
   private final Iterator<T> iterator;

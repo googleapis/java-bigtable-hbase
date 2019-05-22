@@ -41,11 +41,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TestBulkMutationGCJClient {
 
-  @Rule
-  public ExpectedException expect = ExpectedException.none();
+  @Rule public ExpectedException expect = ExpectedException.none();
 
-  @Mock
-  private UnaryCallable<RowMutation, Void> callable;
+  @Mock private UnaryCallable<RowMutation, Void> callable;
 
   private BulkMutationGCJClient bulkMutationClient;
   private SettableApiFuture<Void> future;
@@ -87,13 +85,16 @@ public class TestBulkMutationGCJClient {
 
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
     try {
-      executor.schedule(new Runnable() {
-        @Override
-        public void run() {
-          future.set(null);
-          future2.set(null);
-        }
-      }, 50, TimeUnit.MILLISECONDS);
+      executor.schedule(
+          new Runnable() {
+            @Override
+            public void run() {
+              future.set(null);
+              future2.set(null);
+            }
+          },
+          50,
+          TimeUnit.MILLISECONDS);
 
       // flush should block until the responses are resolved.
       bulkMutationClient.flush();

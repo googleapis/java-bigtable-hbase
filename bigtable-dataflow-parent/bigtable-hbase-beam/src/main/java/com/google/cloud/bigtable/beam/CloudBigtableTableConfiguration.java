@@ -29,17 +29,15 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
   private static final long serialVersionUID = 2435897354284600685L;
 
-  /**
-   * Builds a {@link CloudBigtableTableConfiguration}.
-   */
+  /** Builds a {@link CloudBigtableTableConfiguration}. */
   public static class Builder extends CloudBigtableConfiguration.Builder {
     protected ValueProvider<String> tableId;
 
-    public Builder() {
-    }
+    public Builder() {}
 
     /**
      * Specifies the table to connect to.
+     *
      * @param tableId The table to connect to.
      * @return The {@link CloudBigtableTableConfiguration.Builder} for chaining convenience.
      */
@@ -49,6 +47,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
     /**
      * Specifies the table to connect to.
+     *
      * @param tableId The table to connect to.
      * @return The {@link CloudBigtableTableConfiguration.Builder} for chaining convenience.
      */
@@ -59,8 +58,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
     /**
      * {@inheritDoc}
-     * 
-     * Overrides {@link CloudBigtableConfiguration.Builder#withProjectId(String)} so that it
+     *
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withProjectId(String)} so that it
      * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
@@ -68,11 +67,11 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
       super.withProjectId(projectId);
       return this;
     }
- 
+
     /**
      * {@inheritDoc}
-     * 
-     * Overrides {@link CloudBigtableConfiguration.Builder#withProjectId(String)} so that it
+     *
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withProjectId(String)} so that it
      * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
@@ -83,8 +82,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
     /**
      * {@inheritDoc}
-     * 
-     * Overrides {@link CloudBigtableConfiguration.Builder#withInstanceId(String)} so that it
+     *
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withInstanceId(String)} so that it
      * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
@@ -95,8 +94,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
     /**
      * {@inheritDoc}
-     * 
-     * Overrides {@link CloudBigtableConfiguration.Builder#withInstanceId(String)} so that it
+     *
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withInstanceId(String)} so that it
      * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
@@ -108,7 +107,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      *
-     * Overrides {@link CloudBigtableConfiguration.Builder#withAppProfileId(String)} so that it
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withAppProfileId(String)} so that it
      * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
@@ -120,7 +119,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      *
-     * Overrides {@link CloudBigtableConfiguration.Builder#withAppProfileId(String)} so that it
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withAppProfileId(String)} so that it
      * returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
@@ -132,7 +131,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      *
-     * Overrides {@link CloudBigtableConfiguration.Builder#withConfiguration(String, String)} so
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withConfiguration(String, String)} so
      * that it returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
@@ -144,7 +143,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      *
-     * Overrides {@link CloudBigtableConfiguration.Builder#withConfiguration(String, String)} so
+     * <p>Overrides {@link CloudBigtableConfiguration.Builder#withConfiguration(String, String)} so
      * that it returns {@link CloudBigtableTableConfiguration.Builder}.
      */
     @Override
@@ -155,6 +154,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
     /**
      * Builds the {@link CloudBigtableTableConfiguration}.
+     *
      * @return The new {@link CloudBigtableTableConfiguration}.
      */
     @Override
@@ -167,8 +167,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   protected ValueProvider<String> tableId;
 
   // This is required for serialization of CloudBigtableScanConfiguration.
-  CloudBigtableTableConfiguration() {
-  }
+  CloudBigtableTableConfiguration() {}
 
   /**
    * Creates a {@link CloudBigtableTableConfiguration} using the specified configuration.
@@ -189,6 +188,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
   /**
    * Gets the table specified by the configuration.
+   *
    * @return The table ID.
    */
   public String getTableId() {

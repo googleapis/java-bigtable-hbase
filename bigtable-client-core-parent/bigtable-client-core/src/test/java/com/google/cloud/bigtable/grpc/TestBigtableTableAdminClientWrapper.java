@@ -66,28 +66,28 @@ public class TestBigtableTableAdminClientWrapper {
   private static final String TEST_TABLE_ID_2 = "test-table-2";
   private static final String TEST_TABLE_ID_3 = "test-table-3";
 
-  private BigtableOptions options = BigtableOptions.builder()
-      .setProjectId(PROJECT_ID)
-      .setInstanceId(INSTANCE_ID)
-      .setAppProfileId(APP_PROFILE_ID)
-      .build();
-  private static final BigtableInstanceName INSTANCE_NAME = new BigtableInstanceName(PROJECT_ID,
-      INSTANCE_ID);
+  private BigtableOptions options =
+      BigtableOptions.builder()
+          .setProjectId(PROJECT_ID)
+          .setInstanceId(INSTANCE_ID)
+          .setAppProfileId(APP_PROFILE_ID)
+          .build();
+  private static final BigtableInstanceName INSTANCE_NAME =
+      new BigtableInstanceName(PROJECT_ID, INSTANCE_ID);
   private static final String TABLE_NAME = INSTANCE_NAME.toTableNameStr(TABLE_ID);
 
   private BigtableTableAdminClient mockAdminClient;
 
   private BigtableTableAdminClientWrapper clientWrapper;
 
-
   @Before
-  public void setUp(){
+  public void setUp() {
     mockAdminClient = Mockito.mock(BigtableTableAdminClient.class);
     clientWrapper = new BigtableTableAdminClientWrapper(mockAdminClient, options);
   }
 
   @Test
-  public void testCreateTable(){
+  public void testCreateTable() {
     CreateTableRequest request = CreateTableRequest.of(TABLE_ID);
     GetTableRequest getTableRequest = GetTableRequest.newBuilder().setName(TABLE_NAME).build();
 
@@ -101,7 +101,7 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void testCreateTableAsync() throws Exception{
+  public void testCreateTableAsync() throws Exception {
     CreateTableRequest request = CreateTableRequest.of(TABLE_ID);
 
     when(mockAdminClient.createTableAsync(request.toProto(PROJECT_ID, INSTANCE_ID)))
@@ -113,7 +113,7 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void testGetTable(){
+  public void testGetTable() {
     GetTableRequest request = GetTableRequest.newBuilder().setName(TABLE_NAME).build();
 
     when(mockAdminClient.getTable(request)).thenReturn(createTableData());
@@ -124,11 +124,10 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void testGetTableAsync() throws Exception{
+  public void testGetTableAsync() throws Exception {
     GetTableRequest request = GetTableRequest.newBuilder().setName(TABLE_NAME).build();
 
-    when(mockAdminClient.getTableAsync(request))
-        .thenReturn(immediateFuture(createTableData()));
+    when(mockAdminClient.getTableAsync(request)).thenReturn(immediateFuture(createTableData()));
     Future<Table> response = clientWrapper.getTableAsync(TABLE_ID);
 
     assertEquals(Table.fromProto(createTableData()), response.get());
@@ -136,9 +135,9 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void testListTables(){
-    ImmutableList<String> tableIdList = ImmutableList.of(TEST_TABLE_ID_1, TEST_TABLE_ID_2,
-        TEST_TABLE_ID_3);
+  public void testListTables() {
+    ImmutableList<String> tableIdList =
+        ImmutableList.of(TEST_TABLE_ID_1, TEST_TABLE_ID_2, TEST_TABLE_ID_3);
     ListTablesRequest request =
         ListTablesRequest.newBuilder().setParent(INSTANCE_NAME.toString()).build();
     ListTablesResponse.Builder builder = ListTablesResponse.newBuilder();
@@ -154,9 +153,9 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void testListTablesAsync() throws Exception{
-    ImmutableList<String> tableIdList = ImmutableList.of(TEST_TABLE_ID_1, TEST_TABLE_ID_2,
-        TEST_TABLE_ID_3);
+  public void testListTablesAsync() throws Exception {
+    ImmutableList<String> tableIdList =
+        ImmutableList.of(TEST_TABLE_ID_1, TEST_TABLE_ID_2, TEST_TABLE_ID_3);
     ListTablesRequest request =
         ListTablesRequest.newBuilder().setParent(INSTANCE_NAME.toString()).build();
     ListTablesResponse.Builder builder = ListTablesResponse.newBuilder();
@@ -172,7 +171,7 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void testDeleteTable(){
+  public void testDeleteTable() {
     DeleteTableRequest request = DeleteTableRequest.newBuilder().setName(TABLE_NAME).build();
 
     doNothing().when(mockAdminClient).deleteTable(request);
@@ -182,7 +181,7 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void testDeleteTableAsync(){
+  public void testDeleteTableAsync() {
     DeleteTableRequest request = DeleteTableRequest.newBuilder().setName(TABLE_NAME).build();
 
     when(mockAdminClient.deleteTableAsync(request))
@@ -193,10 +192,9 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void testModifyFamilies(){
+  public void testModifyFamilies() {
     ModifyColumnFamiliesRequest request =
-        ModifyColumnFamiliesRequest
-            .of(TABLE_ID)
+        ModifyColumnFamiliesRequest.of(TABLE_ID)
             .addFamily(COLUMN_FAMILY, GCRULES.maxVersions(1))
             .updateFamily(UPDATE_FAMILY, GCRULES.defaultRule());
 
@@ -209,10 +207,9 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void testModifyFamiliesAsync() throws Exception{
+  public void testModifyFamiliesAsync() throws Exception {
     ModifyColumnFamiliesRequest request =
-        ModifyColumnFamiliesRequest
-            .of(TABLE_ID)
+        ModifyColumnFamiliesRequest.of(TABLE_ID)
             .addFamily(COLUMN_FAMILY, GCRULES.maxVersions(1))
             .updateFamily(UPDATE_FAMILY, GCRULES.defaultRule());
 
@@ -225,12 +222,13 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void dropRowRangeForDeleteByPrefix(){
-    DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
-        .setName(TABLE_NAME)
-        .setDeleteAllDataFromTable(false)
-        .setRowKeyPrefix(ByteString.copyFromUtf8(ROW_KEY_PREFIX))
-        .build();
+  public void dropRowRangeForDeleteByPrefix() {
+    DropRowRangeRequest request =
+        DropRowRangeRequest.newBuilder()
+            .setName(TABLE_NAME)
+            .setDeleteAllDataFromTable(false)
+            .setRowKeyPrefix(ByteString.copyFromUtf8(ROW_KEY_PREFIX))
+            .build();
 
     doNothing().when(mockAdminClient).dropRowRange(request);
     clientWrapper.dropRowRange(TABLE_ID, ROW_KEY_PREFIX);
@@ -239,11 +237,12 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void dropRowRangeForTruncate(){
-    DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
-        .setName(TABLE_NAME)
-        .setDeleteAllDataFromTable(true)
-        .build();
+  public void dropRowRangeForTruncate() {
+    DropRowRangeRequest request =
+        DropRowRangeRequest.newBuilder()
+            .setName(TABLE_NAME)
+            .setDeleteAllDataFromTable(true)
+            .build();
 
     doNothing().when(mockAdminClient).dropRowRange(request);
     clientWrapper.dropAllRows(TABLE_ID);
@@ -252,12 +251,13 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void dropRowRangeAsyncForDeleteByPrefix(){
-    DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
-        .setName(TABLE_NAME)
-        .setDeleteAllDataFromTable(false)
-        .setRowKeyPrefix(ByteString.copyFromUtf8(ROW_KEY_PREFIX))
-        .build();
+  public void dropRowRangeAsyncForDeleteByPrefix() {
+    DropRowRangeRequest request =
+        DropRowRangeRequest.newBuilder()
+            .setName(TABLE_NAME)
+            .setDeleteAllDataFromTable(false)
+            .setRowKeyPrefix(ByteString.copyFromUtf8(ROW_KEY_PREFIX))
+            .build();
 
     when(mockAdminClient.dropRowRangeAsync(request))
         .thenReturn(immediateFuture(Empty.newBuilder().build()));
@@ -267,11 +267,12 @@ public class TestBigtableTableAdminClientWrapper {
   }
 
   @Test
-  public void dropRowRangeAsyncForTruncate(){
-    DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
-        .setName(TABLE_NAME)
-        .setDeleteAllDataFromTable(true)
-        .build();
+  public void dropRowRangeAsyncForTruncate() {
+    DropRowRangeRequest request =
+        DropRowRangeRequest.newBuilder()
+            .setName(TABLE_NAME)
+            .setDeleteAllDataFromTable(true)
+            .build();
 
     when(mockAdminClient.dropRowRangeAsync(request))
         .thenReturn(immediateFuture(Empty.newBuilder().build()));
@@ -282,10 +283,8 @@ public class TestBigtableTableAdminClientWrapper {
 
   @Test
   public void testSnapshotTableAsync() throws Exception {
-    SnapshotTableRequest request = SnapshotTableRequest.newBuilder()
-        .setSnapshotId("snaphsotId")
-        .setName(TABLE_NAME)
-        .build();
+    SnapshotTableRequest request =
+        SnapshotTableRequest.newBuilder().setSnapshotId("snaphsotId").setName(TABLE_NAME).build();
     Operation response = Operation.getDefaultInstance();
     when(mockAdminClient.snapshotTableAsync(request)).thenReturn(Futures.immediateFuture(response));
     Future<Operation> actualResponse = clientWrapper.snapshotTableAsync(request);
@@ -295,9 +294,7 @@ public class TestBigtableTableAdminClientWrapper {
 
   @Test
   public void testGetSnapshotAsync() throws Exception {
-    GetSnapshotRequest request = GetSnapshotRequest.newBuilder()
-        .setName(TABLE_NAME)
-        .build();
+    GetSnapshotRequest request = GetSnapshotRequest.newBuilder().setName(TABLE_NAME).build();
     Snapshot response = Snapshot.getDefaultInstance();
     when(mockAdminClient.getSnapshotAsync(request)).thenReturn(Futures.immediateFuture(response));
     Future<Snapshot> actualResponse = clientWrapper.getSnapshotAsync(request);
@@ -307,9 +304,7 @@ public class TestBigtableTableAdminClientWrapper {
 
   @Test
   public void testListSnapshotsAsync() throws Exception {
-    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder()
-        .setParent(TABLE_NAME)
-        .build();
+    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder().setParent(TABLE_NAME).build();
     ListSnapshotsResponse response = ListSnapshotsResponse.getDefaultInstance();
     when(mockAdminClient.listSnapshotsAsync(request)).thenReturn(Futures.immediateFuture(response));
     Future<ListSnapshotsResponse> actualResponse = clientWrapper.listSnapshotsAsync(request);
@@ -317,12 +312,9 @@ public class TestBigtableTableAdminClientWrapper {
     verify(mockAdminClient).listSnapshotsAsync(request);
   }
 
-
   @Test
   public void testDeleteSnapshotAsync() {
-    DeleteSnapshotRequest request = DeleteSnapshotRequest.newBuilder()
-        .setName(TABLE_NAME)
-        .build();
+    DeleteSnapshotRequest request = DeleteSnapshotRequest.newBuilder().setName(TABLE_NAME).build();
     when(mockAdminClient.deleteSnapshotAsync(request))
         .thenReturn(Futures.immediateFuture(Empty.getDefaultInstance()));
     clientWrapper.deleteSnapshotAsync(request);
@@ -331,10 +323,11 @@ public class TestBigtableTableAdminClientWrapper {
 
   @Test
   public void testCreateTableFromSnapshotAsync() throws Exception {
-    CreateTableFromSnapshotRequest request = CreateTableFromSnapshotRequest.newBuilder()
-        .setTableId(TABLE_ID)
-        .setSourceSnapshot("test-snapshot")
-        .build();
+    CreateTableFromSnapshotRequest request =
+        CreateTableFromSnapshotRequest.newBuilder()
+            .setTableId(TABLE_ID)
+            .setSourceSnapshot("test-snapshot")
+            .build();
     Operation response = Operation.getDefaultInstance();
     when(mockAdminClient.createTableFromSnapshotAsync(request))
         .thenReturn(Futures.immediateFuture(response));
@@ -343,10 +336,9 @@ public class TestBigtableTableAdminClientWrapper {
     verify(mockAdminClient).createTableFromSnapshotAsync(request);
   }
 
-  private static com.google.bigtable.admin.v2.Table createTableData(){
+  private static com.google.bigtable.admin.v2.Table createTableData() {
     GCRules.GCRule gcRule = GCRULES.maxVersions(1);
-    ColumnFamily columnFamily = ColumnFamily.newBuilder()
-        .setGcRule(gcRule.toProto()).build();
+    ColumnFamily columnFamily = ColumnFamily.newBuilder().setGcRule(gcRule.toProto()).build();
 
     return com.google.bigtable.admin.v2.Table.newBuilder()
         .setName(TABLE_NAME)

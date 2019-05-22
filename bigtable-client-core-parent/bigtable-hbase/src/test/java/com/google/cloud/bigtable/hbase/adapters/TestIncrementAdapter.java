@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
-
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -31,18 +31,16 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-
 @RunWith(JUnit4.class)
 public class TestIncrementAdapter {
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   private static final String PROJECT_ID = "test-project-id";
   private static final String INSTANCE_ID = "test-instance-id";
   private static final String TABLE_ID = "test-table-id";
   private static final String APP_PROFILE_ID = "test-app-profile-id";
-  private RequestContext requestContext = RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
+  private RequestContext requestContext =
+      RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
   protected IncrementAdapter incrementAdapter = new IncrementAdapter();
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
@@ -50,8 +48,8 @@ public class TestIncrementAdapter {
   public void testBasicRowKeyIncrement() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Increment incr = new Increment(rowKey);
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(TABLE_ID, ByteString.copyFrom(rowKey));
     incrementAdapter.adapt(incr, readModifyWriteRow);
     ReadModifyWriteRowRequest requestBuilder = readModifyWriteRow.toProto(requestContext);
     ByteString adaptedRowKey = requestBuilder.getRowKey();
@@ -68,8 +66,8 @@ public class TestIncrementAdapter {
     Increment incr = new Increment(rowKey);
     incr.addColumn(family, qualifier, amount);
 
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(TABLE_ID, ByteString.copyFrom(rowKey));
     incrementAdapter.adapt(incr, readModifyWriteRow);
     ReadModifyWriteRowRequest requestBuilder = readModifyWriteRow.toProto(requestContext);
 
@@ -97,8 +95,8 @@ public class TestIncrementAdapter {
     incr.addColumn(family1, qualifier1, amount1);
     incr.addColumn(family2, qualifier2, amount2);
 
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(TABLE_ID, ByteString.copyFrom(rowKey));
     incrementAdapter.adapt(incr, readModifyWriteRow);
     ReadModifyWriteRowRequest requestBuilder = readModifyWriteRow.toProto(requestContext);
     Assert.assertEquals(2, requestBuilder.getRulesCount());
@@ -113,7 +111,6 @@ public class TestIncrementAdapter {
     Assert.assertEquals("qualifier2", rule.getColumnQualifier().toStringUtf8());
     Assert.assertEquals(amount2, rule.getIncrementAmount());
   }
-
 
   @Test
   public void testMultipleIncrementWithDuplicateQualifier() {
@@ -134,8 +131,8 @@ public class TestIncrementAdapter {
     incr.addColumn(family2, qualifier2, amount2);
     incr.addColumn(family2, qualifier2, amount3);
 
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(TABLE_ID, ByteString.copyFrom(rowKey));
     incrementAdapter.adapt(incr, readModifyWriteRow);
     ReadModifyWriteRowRequest requestBuilder = readModifyWriteRow.toProto(requestContext);
     Assert.assertEquals(2, requestBuilder.getRulesCount());
@@ -152,7 +149,6 @@ public class TestIncrementAdapter {
     Assert.assertEquals(amount3, rule.getIncrementAmount());
   }
 
-
   @Test
   public void testIncrementTimeRange() throws IOException {
     byte[] rowKey = dataHelper.randomData("rk1-");
@@ -161,8 +157,8 @@ public class TestIncrementAdapter {
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Setting the time range in an Increment is not implemented");
 
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(TABLE_ID, ByteString.copyFrom(rowKey));
     incrementAdapter.adapt(incr, readModifyWriteRow);
   }
 }

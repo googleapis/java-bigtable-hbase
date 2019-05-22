@@ -15,6 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.admin.v2.CheckConsistencyRequest;
 import com.google.bigtable.admin.v2.CheckConsistencyResponse;
@@ -30,9 +37,7 @@ import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
-
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.RetryOptions;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -40,6 +45,9 @@ import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,35 +58,20 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBigtableTableAdminGrpcClient {
 
-  private static final BigtableInstanceName INSTANCE_NAME = new BigtableInstanceName("projectId", "instanceId");
+  private static final BigtableInstanceName INSTANCE_NAME =
+      new BigtableInstanceName("projectId", "instanceId");
 
   private static final String TABLE_NAME = INSTANCE_NAME.toTableNameStr("tableId");
 
-  @Mock
-  Channel mockChannel;
+  @Mock Channel mockChannel;
 
-  @Mock
-  ClientCall mockClientCall;
+  @Mock ClientCall mockClientCall;
 
-  @Mock
-  NanoClock nanoClock;
+  @Mock NanoClock nanoClock;
 
   BigtableTableAdminGrpcClient defaultClient;
 
@@ -114,8 +107,8 @@ public class TestBigtableTableAdminGrpcClient {
 
   @Test
   public void testCreateTable() {
-    CreateTableRequest request = CreateTableRequest.newBuilder()
-        .setParent(INSTANCE_NAME.getInstanceName()).build();
+    CreateTableRequest request =
+        CreateTableRequest.newBuilder().setParent(INSTANCE_NAME.getInstanceName()).build();
     complete();
     defaultClient.createTable(request);
     verifyRequestCalled(request);
@@ -123,8 +116,7 @@ public class TestBigtableTableAdminGrpcClient {
 
   @Test
   public void testDropRowRanges() {
-    DropRowRangeRequest request = DropRowRangeRequest.newBuilder()
-        .setName(TABLE_NAME).build();
+    DropRowRangeRequest request = DropRowRangeRequest.newBuilder().setName(TABLE_NAME).build();
     complete();
     defaultClient.dropRowRange(request);
     verifyRequestCalled(request);
@@ -132,47 +124,43 @@ public class TestBigtableTableAdminGrpcClient {
 
   @Test
   public void testGenerateConsistencyToken() throws TimeoutException, InterruptedException {
-    GenerateConsistencyTokenRequest request = GenerateConsistencyTokenRequest.newBuilder()
-        .setName(TABLE_NAME).build();
+    GenerateConsistencyTokenRequest request =
+        GenerateConsistencyTokenRequest.newBuilder().setName(TABLE_NAME).build();
     final AtomicInteger counter = new AtomicInteger(0);
-    Answer<Void> answer = new Answer<Void>(){
-      @Override
-      public Void answer(final InvocationOnMock invocation) throws Throwable {
-        Listener listener = invocation.getArgument(0, Listener.class);
-        if (counter.incrementAndGet() == 1) {
-          listener.onMessage(GenerateConsistencyTokenResponse.getDefaultInstance());
-        } else {
-          listener.onMessage(CheckConsistencyResponse.newBuilder().setConsistent(true).build());
-        }
-        listener.onClose(Status.OK, null);
-        return null;
-      }
-    };
-    doAnswer(answer)
-        .when(mockClientCall)
-        .start(any(Listener.class), any(Metadata.class));
+    Answer<Void> answer =
+        new Answer<Void>() {
+          @Override
+          public Void answer(final InvocationOnMock invocation) throws Throwable {
+            Listener listener = invocation.getArgument(0, Listener.class);
+            if (counter.incrementAndGet() == 1) {
+              listener.onMessage(GenerateConsistencyTokenResponse.getDefaultInstance());
+            } else {
+              listener.onMessage(CheckConsistencyResponse.newBuilder().setConsistent(true).build());
+            }
+            listener.onClose(Status.OK, null);
+            return null;
+          }
+        };
+    doAnswer(answer).when(mockClientCall).start(any(Listener.class), any(Metadata.class));
     defaultClient.waitForReplication(INSTANCE_NAME.toTableName("TABLE_NAME"), 6000);
     verify(mockClientCall, times(2)).start(any(Listener.class), any(Metadata.class));
-    verify(mockClientCall, times(1)).sendMessage(Matchers.isA(GenerateConsistencyTokenRequest.class));
+    verify(mockClientCall, times(1))
+        .sendMessage(Matchers.isA(GenerateConsistencyTokenRequest.class));
     verify(mockClientCall, times(1)).sendMessage(Matchers.isA(CheckConsistencyRequest.class));
     verify(mockClientCall, times(2)).halfClose();
   }
 
-
   @Test
   public void testSnapshotTable() throws Exception {
-    SnapshotTableRequest request = SnapshotTableRequest.newBuilder()
-        .setName(TABLE_NAME).build();
+    SnapshotTableRequest request = SnapshotTableRequest.newBuilder().setName(TABLE_NAME).build();
     complete();
     defaultClient.snapshotTableAsync(request).get(1, TimeUnit.SECONDS);
     verifyRequestCalled(request);
   }
 
-
   @Test
   public void testGetSnapshot() throws Exception {
-    GetSnapshotRequest request = GetSnapshotRequest.newBuilder()
-        .setName(TABLE_NAME).build();
+    GetSnapshotRequest request = GetSnapshotRequest.newBuilder().setName(TABLE_NAME).build();
     complete();
     defaultClient.getSnapshotAsync(request).get(1, TimeUnit.SECONDS);
     verifyRequestCalled(request);
@@ -180,8 +168,7 @@ public class TestBigtableTableAdminGrpcClient {
 
   @Test
   public void testListSnapshots() throws Exception {
-    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder()
-        .setParent(TABLE_NAME).build();
+    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder().setParent(TABLE_NAME).build();
     complete();
     defaultClient.listSnapshotsAsync(request).get(1, TimeUnit.SECONDS);
     verifyRequestCalled(request);
@@ -189,8 +176,7 @@ public class TestBigtableTableAdminGrpcClient {
 
   @Test
   public void testDeleteSnapshot() throws Exception {
-    DeleteSnapshotRequest request = DeleteSnapshotRequest.newBuilder()
-        .setName(TABLE_NAME).build();
+    DeleteSnapshotRequest request = DeleteSnapshotRequest.newBuilder().setName(TABLE_NAME).build();
     complete();
     defaultClient.deleteSnapshotAsync(request).get(1, TimeUnit.SECONDS);
     verifyRequestCalled(request);
@@ -198,41 +184,41 @@ public class TestBigtableTableAdminGrpcClient {
 
   @Test
   public void testCreateTableFromSnapshot() throws Exception {
-    CreateTableFromSnapshotRequest request = CreateTableFromSnapshotRequest.newBuilder()
-        .setParent(INSTANCE_NAME.getInstanceName()).build();
+    CreateTableFromSnapshotRequest request =
+        CreateTableFromSnapshotRequest.newBuilder()
+            .setParent(INSTANCE_NAME.getInstanceName())
+            .build();
     complete();
     defaultClient.createTableFromSnapshotAsync(request).get(1, TimeUnit.SECONDS);
     verifyRequestCalled(request);
   }
 
-  private void  complete() {
-    Answer<Void> answer = new Answer<Void>(){
-      @Override
-      public Void answer(final InvocationOnMock invocation) throws Throwable {
-        Listener listener = invocation.getArgument(0, Listener.class);
-        listener.onMessage("");
-        listener.onClose(Status.OK, null);
-        return null;
-      }
-    };
-    doAnswer(answer)
-        .when(mockClientCall)
-        .start(any(Listener.class), any(Metadata.class));
+  private void complete() {
+    Answer<Void> answer =
+        new Answer<Void>() {
+          @Override
+          public Void answer(final InvocationOnMock invocation) throws Throwable {
+            Listener listener = invocation.getArgument(0, Listener.class);
+            listener.onMessage("");
+            listener.onClose(Status.OK, null);
+            return null;
+          }
+        };
+    doAnswer(answer).when(mockClientCall).start(any(Listener.class), any(Metadata.class));
   }
-  
+
   private void setResponse(final Object response) {
-    Answer<Void> answer = new Answer<Void>(){
-      @Override
-      public Void answer(final InvocationOnMock invocation) throws Throwable {
-        Listener listener = invocation.getArgument(0, Listener.class);
-        listener.onMessage(response);
-        listener.onClose(Status.OK, null);
-        return null;
-      }
-    };
-    doAnswer(answer)
-        .when(mockClientCall)
-        .start(any(Listener.class), any(Metadata.class));
+    Answer<Void> answer =
+        new Answer<Void>() {
+          @Override
+          public Void answer(final InvocationOnMock invocation) throws Throwable {
+            Listener listener = invocation.getArgument(0, Listener.class);
+            listener.onMessage(response);
+            listener.onClose(Status.OK, null);
+            return null;
+          }
+        };
+    doAnswer(answer).when(mockClientCall).start(any(Listener.class), any(Metadata.class));
   }
 
   private void verifyRequestCalled(Object request) {

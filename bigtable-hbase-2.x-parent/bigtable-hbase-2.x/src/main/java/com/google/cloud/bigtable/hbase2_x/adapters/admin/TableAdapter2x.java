@@ -16,32 +16,32 @@
 package com.google.cloud.bigtable.hbase2_x.adapters.admin;
 
 import com.google.api.core.InternalApi;
-
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
-import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 
 /**
- * Need this extended class as {@link TableAdapter#adapt(HTableDescriptor, CreateTableRequest)}
- * is not binary compatible with {@link TableAdapter2x#adapt(TableDescriptor, byte[][])}
- * 
- * Similarly, {@link ColumnDescriptorAdapter#adapt(HColumnDescriptor)} is not binary compatible with
- * {@link ColumnFamilyDescriptor}.
- * 
+ * Need this extended class as {@link TableAdapter#adapt(HTableDescriptor, CreateTableRequest)} is
+ * not binary compatible with {@link TableAdapter2x#adapt(TableDescriptor, byte[][])}
+ *
+ * <p>Similarly, {@link ColumnDescriptorAdapter#adapt(HColumnDescriptor)} is not binary compatible
+ * with {@link ColumnFamilyDescriptor}.
+ *
  * @author spollapally
  */
 @InternalApi
 public class TableAdapter2x {
-  protected static final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
+  protected static final ColumnDescriptorAdapter columnDescriptorAdapter =
+      new ColumnDescriptorAdapter();
 
   public static CreateTableRequest adapt(TableDescriptor desc, byte[][] splitKeys) {
     return TableAdapter.adapt(new HTableDescriptor(desc), splitKeys);
@@ -49,8 +49,7 @@ public class TableAdapter2x {
 
   public static HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor column) {
     TableDescriptor desc =
-        TableDescriptorBuilder.newBuilder(TableName.valueOf("N_A")).setColumnFamily(column)
-            .build();
+        TableDescriptorBuilder.newBuilder(TableName.valueOf("N_A")).setColumnFamily(column).build();
     return new HTableDescriptor(desc).getColumnFamilies()[0];
   }
 
@@ -61,7 +60,7 @@ public class TableAdapter2x {
   }
 
   /**
-   * <p>adapt.</p>
+   * adapt.
    *
    * @param table a {@link Table} object.
    * @return a {@link TableDescriptor} object.

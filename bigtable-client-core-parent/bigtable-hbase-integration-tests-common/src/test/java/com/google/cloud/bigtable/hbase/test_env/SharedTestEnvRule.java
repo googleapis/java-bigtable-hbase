@@ -20,10 +20,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -47,19 +45,20 @@ public class SharedTestEnvRule extends ExternalResource {
 
   static {
     try {
-      Class<? extends TableCreator> clazz = (Class<? extends TableCreator>) Class
-          .forName("com.google.cloud.bigtable.hbase.test_env.TableCreatorImpl");
+      Class<? extends TableCreator> clazz =
+          (Class<? extends TableCreator>)
+              Class.forName("com.google.cloud.bigtable.hbase.test_env.TableCreatorImpl");
       tableCreator = clazz.getDeclaredConstructor().newInstance();
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  public synchronized static SharedTestEnvRule getInstance() {
-    if(instance == null) {
+  public static synchronized SharedTestEnvRule getInstance() {
+    if (instance == null) {
       instance = new SharedTestEnvRule();
     }
-    
+
     return instance;
   }
 
@@ -96,7 +95,7 @@ public class SharedTestEnvRule extends ExternalResource {
       throw new RuntimeException("Error deleting table after the integration tests", e);
     }
 
-    for(Entry<String, Closeable> entry : closeables.entrySet()) {
+    for (Entry<String, Closeable> entry : closeables.entrySet()) {
       try {
         entry.getValue().close();
       } catch (IOException e) {
@@ -142,14 +141,12 @@ public class SharedTestEnvRule extends ExternalResource {
   }
 
   public TableName newTestTableName() {
-    String suffix = String.format(
-        "%016x-%016x", System.currentTimeMillis(), new Random().nextLong()
-    );
+    String suffix =
+        String.format("%016x-%016x", System.currentTimeMillis(), new Random().nextLong());
     return TableName.valueOf("test_table2-" + suffix);
   }
 
   public ExecutorService getExecutor() {
     return sharedTestEnv.getExecutor();
   }
-  
 }

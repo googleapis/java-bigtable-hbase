@@ -17,11 +17,12 @@ package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import com.google.bigtable.repackaged.com.google.common.util.concurrent.SettableFuture;
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -37,11 +38,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.repackaged.com.google.common.util.concurrent.SettableFuture;
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-
 /**
  * Test to make sure that basic {@link AsyncTable} operations work
+ *
  * @author sduskis
  */
 @RunWith(JUnit4.class)
@@ -92,9 +91,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
     Scan scan = new Scan();
     scan.setRowPrefixFilter(Bytes.toBytes(prefix));
 
-    List<Result> results = getDefaultAsyncTable()
-        .scanAll(scan)
-        .get(1, TimeUnit.MINUTES);
+    List<Result> results = getDefaultAsyncTable().scanAll(scan).get(1, TimeUnit.MINUTES);
 
     Assert.assertEquals(rowKeys.length, results.size());
     for (Result result : results) {
@@ -108,30 +105,34 @@ public class TestAsyncScan extends AbstractAsyncTest {
     scan.setRowPrefixFilter(Bytes.toBytes(prefix));
 
     SettableFuture<Integer> lock = SettableFuture.create();
-    getDefaultAsyncTable().scan(scan, new ScanResultConsumer() {
-      int count = 0;
-      @Override
-      public boolean onNext(Result result) {
-        try {
-          verify(result);
-          count++;
-          return true;
-        } catch (Exception e) {
-          lock.setException(e);
-          return false;
-        }
-      }
+    getDefaultAsyncTable()
+        .scan(
+            scan,
+            new ScanResultConsumer() {
+              int count = 0;
 
-      @Override
-      public void onError(Throwable e) {
-        lock.setException(e);
-      }
+              @Override
+              public boolean onNext(Result result) {
+                try {
+                  verify(result);
+                  count++;
+                  return true;
+                } catch (Exception e) {
+                  lock.setException(e);
+                  return false;
+                }
+              }
 
-      @Override
-      public void onComplete() {
-        lock.set(count);
-      }
-    });
+              @Override
+              public void onError(Throwable e) {
+                lock.setException(e);
+              }
+
+              @Override
+              public void onComplete() {
+                lock.set(count);
+              }
+            });
 
     Assert.assertEquals(rowKeys.length, lock.get().intValue());
   }
@@ -166,9 +167,8 @@ public class TestAsyncScan extends AbstractAsyncTest {
     Assert.assertEquals(values.length, result.size());
     for (int i = 0; i < values.length; ++i) {
       Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, quals[i]));
-      Assert.assertArrayEquals(values[i],
-          CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
+      Assert.assertArrayEquals(
+          values[i], CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
     }
   }
-
 }

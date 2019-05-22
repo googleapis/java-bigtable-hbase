@@ -37,14 +37,14 @@ import io.grpc.stub.StreamObserver;
 import java.util.List;
 
 /**
- * This class implements existing {@link com.google.cloud.bigtable.core.IBigtableDataClient} operations with
- * Google-cloud-java's {@link com.google.cloud.bigtable.data.v2.BigtableDataClient}.
+ * This class implements existing {@link com.google.cloud.bigtable.core.IBigtableDataClient}
+ * operations with Google-cloud-java's {@link com.google.cloud.bigtable.data.v2.BigtableDataClient}.
  */
 public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable {
 
   private final BigtableDataClient delegate;
 
-  public BigtableDataGCJClient(BigtableDataClient delegate){
+  public BigtableDataGCJClient(BigtableDataClient delegate) {
     this.delegate = delegate;
   }
 
@@ -123,8 +123,9 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
 
   @Override
   public void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer) {
-    delegate.readRowsCallable(new FlatRowAdapter()).call(request,
-        new StreamObserverAdapter<FlatRow>(observer));
+    delegate
+        .readRowsCallable(new FlatRowAdapter())
+        .call(request, new StreamObserverAdapter<FlatRow>(observer));
   }
 
   @Override
@@ -133,11 +134,11 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
   }
 
   /**
-   * To wrap stream of native CBT client's {@link StreamObserver} onto GCJ
-   * {@link com.google.api.gax.rpc.ResponseObserver}.
+   * To wrap stream of native CBT client's {@link StreamObserver} onto GCJ {@link
+   * com.google.api.gax.rpc.ResponseObserver}.
    *
    * <p>Note:Inspired from {@link com.google.api.gax.rpc.ApiStreamObserverAdapter} of GCJ.
-   * */
+   */
   private static class StreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
     private final StreamObserver<T> delegate;
 
@@ -145,8 +146,7 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
       this.delegate = delegate;
     }
 
-    protected void onStartImpl(StreamController controller) {
-    }
+    protected void onStartImpl(StreamController controller) {}
 
     protected void onResponseImpl(T response) {
       this.delegate.onNext(response);

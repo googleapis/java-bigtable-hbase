@@ -15,36 +15,34 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.auth.Credentials;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import com.google.auth.Credentials;
-
 /**
- * <p>
- * This class encapsulates the method the Cloud Bigtable client should use to look up
- * {@link com.google.auth.Credentials}. Here are the credential types supported:
- * </p>
+ * This class encapsulates the method the Cloud Bigtable client should use to look up {@link
+ * com.google.auth.Credentials}. Here are the credential types supported:
+ *
  * <ol>
- * <li>DefaultCredentials - Initializes OAuth2 credential using preconfigured ServiceAccount
- * settings on the local Google Compute Engine instance or GOOGLE_APPLICATION_CREDENTIALS
- * environment variable or gcloud configured security. See: <a
- * href="https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances"
- * >Creating and Enabling Service Accounts for Instances</a> and <a
- * href="https://developers.google.com/identity/protocols/application-default-credentials"
- * >Application Default Credentials</a>.</li>
- * <li>P12 - Initializes OAuth2 credential from a private keyfile, as described in <a
- * href="https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#service_accounts"
- * >Service accounts</a>.</li>
- * <li>UserSupplied - User supplies a fully formed Credentials.
- * <li>None - used for unit testing</li>
+ *   <li>DefaultCredentials - Initializes OAuth2 credential using preconfigured ServiceAccount
+ *       settings on the local Google Compute Engine instance or GOOGLE_APPLICATION_CREDENTIALS
+ *       environment variable or gcloud configured security. See: <a
+ *       href="https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances"
+ *       >Creating and Enabling Service Accounts for Instances</a> and <a
+ *       href="https://developers.google.com/identity/protocols/application-default-credentials"
+ *       >Application Default Credentials</a>.
+ *   <li>P12 - Initializes OAuth2 credential from a private keyfile, as described in <a
+ *       href="https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#service_accounts"
+ *       >Service accounts</a>.
+ *   <li>UserSupplied - User supplies a fully formed Credentials.
+ *   <li>None - used for unit testing
  * </ol>
  *
  * @see CredentialFactory#getCredentials(CredentialOptions) CredentialFactory for more details on
- *      how CredentialOptions are used to create a {@link com.google.auth.Credentials}.
+ *     how CredentialOptions are used to create a {@link com.google.auth.Credentials}.
  * @author sduskis
  * @version $Id: $Id
  */
@@ -65,7 +63,7 @@ public class CredentialOptions implements Serializable {
   }
 
   /**
-   * <p>jsonCredentials.</p>
+   * jsonCredentials.
    *
    * @param jsonInputStream a {@link java.io.InputStream} object.
    * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
@@ -75,9 +73,8 @@ public class CredentialOptions implements Serializable {
   }
 
   /**
-   * <p>
    * jsonCredentials.
-   * </p>
+   *
    * @param jsonString a {@link String} object.
    * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
    */
@@ -96,17 +93,14 @@ public class CredentialOptions implements Serializable {
   }
 
   /**
-   * <p>
    * Use the Application Default Credentials which are credentials that identify and authorize the
    * whole application. This is the built-in service account if running on Google Compute Engine.
    * Alternatively, the credentials file from the path in the environment variable
    * GOOGLE_APPLICATION_CREDENTIAL. If GOOGLE_APPLICATION_CREDENTIAL is not set, look at the
    * gcloud/application_default_credentials.json file in the (User)/APPDATA/ directory on Windows or
-   * ~/.config/ directory on other OSs .
-   * </p>
-   * Initializes OAuth2 credential using preconfigured ServiceAccount settings on the local Google
-   * Compute Engine VM. See:
-   * <a href="https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances"
+   * ~/.config/ directory on other OSs . Initializes OAuth2 credential using preconfigured
+   * ServiceAccount settings on the local Google Compute Engine VM. See: <a
+   * href="https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances"
    * >Creating and Enabling Service Accounts for Instances</a>.
    *
    * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
@@ -148,9 +142,7 @@ public class CredentialOptions implements Serializable {
     return new CredentialOptions(CredentialType.None);
   }
 
-  /**
-   * A CredentialOptions defined by a serviceAccount and a p12 key file.
-   */
+  /** A CredentialOptions defined by a serviceAccount and a p12 key file. */
   public static class P12CredentialOptions extends CredentialOptions {
     private static final long serialVersionUID = 596647835888116163L;
     private final String serviceAccount;
@@ -170,10 +162,7 @@ public class CredentialOptions implements Serializable {
       return serviceAccount;
     }
 
-    /**
-     * P12 file -
-     * https://developers.google.com/identity/protocols/OAuth2ServiceAccount
-     */
+    /** P12 file - https://developers.google.com/identity/protocols/OAuth2ServiceAccount */
     public String getKeyFile() {
       return keyFile;
     }
@@ -189,9 +178,7 @@ public class CredentialOptions implements Serializable {
     }
   }
 
-  /**
-   * A CredentialOption that supplies the Credentials directly.
-   */
+  /** A CredentialOption that supplies the Credentials directly. */
   public static class UserSuppliedCredentialOptions extends CredentialOptions {
     private static final long serialVersionUID = -7167146778823641468L;
     private final Credentials credential;
@@ -257,11 +244,10 @@ public class CredentialOptions implements Serializable {
     this.credentialType = credentialType;
   }
 
-  private CredentialOptions() {
-  }
+  private CredentialOptions() {}
 
   /**
-   * <p>Getter for the field <code>credentialType</code>.</p>
+   * Getter for the field <code>credentialType</code>.
    *
    * @return a {@link com.google.cloud.bigtable.config.CredentialOptions.CredentialType} object.
    */
@@ -272,7 +258,7 @@ public class CredentialOptions implements Serializable {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (obj == null || obj.getClass() != CredentialOptions.class){
+    if (obj == null || obj.getClass() != CredentialOptions.class) {
       return false;
     }
     CredentialOptions other = (CredentialOptions) obj;

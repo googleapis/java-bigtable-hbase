@@ -15,11 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-
-import com.google.api.client.util.BackOff;
 import com.google.api.core.ApiClock;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
@@ -27,29 +22,43 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.MutateRowsRequestManager.ProcessingStatus;
 import com.google.common.collect.ImmutableMap;
-
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.opencensus.trace.AttributeValue;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 
-/**
- * Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations.
- */
-public class RetryingMutateRowsOperation extends
-    AbstractRetryingOperation<MutateRowsRequest, MutateRowsResponse, List<MutateRowsResponse>> {
-  private final static io.grpc.Status INVALID_RESPONSE =
+/** Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations. */
+public class RetryingMutateRowsOperation
+    extends AbstractRetryingOperation<
+        MutateRowsRequest, MutateRowsResponse, List<MutateRowsResponse>> {
+  private static final io.grpc.Status INVALID_RESPONSE =
       io.grpc.Status.INTERNAL.withDescription("The server returned an invalid response");
 
   private final MutateRowsRequestManager requestManager;
 
-  public RetryingMutateRowsOperation(RetryOptions retryOptions, MutateRowsRequest originalRquest,
-      BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> retryableRpc, CallOptions callOptions,
-      ScheduledExecutorService retryExecutorService, Metadata originalMetadata, ApiClock clock) {
-    super(retryOptions, originalRquest, retryableRpc, callOptions, retryExecutorService,
-        originalMetadata, clock);
+  public RetryingMutateRowsOperation(
+      RetryOptions retryOptions,
+      MutateRowsRequest originalRquest,
+      BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> retryableRpc,
+      CallOptions callOptions,
+      ScheduledExecutorService retryExecutorService,
+      Metadata originalMetadata,
+      ApiClock clock) {
+    super(
+        retryOptions,
+        originalRquest,
+        retryableRpc,
+        callOptions,
+        retryExecutorService,
+        originalMetadata,
+        clock);
     requestManager = new MutateRowsRequestManager(retryOptions, originalRquest);
-    operationSpan.addAnnotation("MutationCount", ImmutableMap.of("count",
-      AttributeValue.longAttributeValue(originalRquest.getEntriesCount())));
+    operationSpan.addAnnotation(
+        "MutationCount",
+        ImmutableMap.of(
+            "count", AttributeValue.longAttributeValue(originalRquest.getEntriesCount())));
   }
 
   @Override
@@ -89,15 +98,21 @@ public class RetryingMutateRowsOperation extends
       // Return the response as is, and don't retry;
       rpc.getRpcMetrics().markRetriesExhasted();
       completionFuture.set(Arrays.asList(requestManager.buildResponse()));
-      operationSpan.addAnnotation("MutationCount", ImmutableMap.of("failureCount",
-        AttributeValue.longAttributeValue(requestManager.getRetryRequest().getEntriesCount())));
+      operationSpan.addAnnotation(
+          "MutationCount",
+          ImmutableMap.of(
+              "failureCount",
+              AttributeValue.longAttributeValue(
+                  requestManager.getRetryRequest().getEntriesCount())));
       return true;
     }
 
     performRetry(nextBackOff);
-    operationSpan.addAnnotation("MutationCount", ImmutableMap.of("retryCount",
-      AttributeValue.longAttributeValue(requestManager.getRetryRequest().getEntriesCount())));
+    operationSpan.addAnnotation(
+        "MutationCount",
+        ImmutableMap.of(
+            "retryCount",
+            AttributeValue.longAttributeValue(requestManager.getRetryRequest().getEntriesCount())));
     return false;
   }
-
 }

@@ -21,15 +21,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.common.base.Optional;
-
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.WhileMatchFilter;
-import org.apache.hadoop.hbase.filter.FilterList.Operator;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
+import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 
 /**
  * Adapter for {@link org.apache.hadoop.hbase.filter.WhileMatchFilter}.
@@ -38,16 +36,17 @@ import java.util.List;
  * @version $Id: $Id
  */
 public class WhileMatchFilterAdapter extends TypedFilterAdapterBase<WhileMatchFilter> {
-  
+
   static final String IN_LABEL_SUFFIX = "-in";
   static final String OUT_LABEL_SUFFIX = "-out";
 
   private final FilterAdapter subFilterAdapter;
 
   /**
-   * <p>Constructor for WhileMatchFilterAdapter.</p>
+   * Constructor for WhileMatchFilterAdapter.
    *
-   * @param subFilterAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
+   * @param subFilterAdapter a {@link
+   *     com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
    */
   public WhileMatchFilterAdapter(FilterAdapter subFilterAdapter) {
     this.subFilterAdapter = subFilterAdapter;
@@ -56,43 +55,33 @@ public class WhileMatchFilterAdapter extends TypedFilterAdapterBase<WhileMatchFi
   /**
    * {@inheritDoc}
    *
-   * Adapt {@link WhileMatchFilter} as follow:
+   * <p>Adapt {@link WhileMatchFilter} as follow:
    *
-   *                |
-   *                V
-   *       +--------+--------+
-   *       |                 |
-   *       |                 |
-   * label('id-in')  wrappedFilter.filter()
-   *       |                 |
-   *       |                 |
-   *     sink()        +-----+-----+
-   *       +           |           |
-   *            label('id-out')  all()
-   *                   |           |
-   *                 sink()        |
-   *                   +           v
+   * <p>| V +--------+--------+ | | | | label('id-in') wrappedFilter.filter() | | | | sink()
+   * +-----+-----+ + | | label('id-out') all() | | sink() | + v
    *
-   * The above implementation gives enough information from the server side to determine whether the
-   * remaining rows should be filtered out. For each {@link WhileMatchFilter} instance, an unique ID
-   * is generated for labeling. The input label is the unique ID suffixed by "-in" and the output
-   * label is the unique ID suffixed by "-out". When {@code wrappedFilter} decides to filter out the
-   * rest of rows, there is no out label ("id-out") applied in the output. In other words, when
-   * there is a missing "id-out" for an input "id-in", {@link
+   * <p>The above implementation gives enough information from the server side to determine whether
+   * the remaining rows should be filtered out. For each {@link WhileMatchFilter} instance, an
+   * unique ID is generated for labeling. The input label is the unique ID suffixed by "-in" and the
+   * output label is the unique ID suffixed by "-out". When {@code wrappedFilter} decides to filter
+   * out the rest of rows, there is no out label ("id-out") applied in the output. In other words,
+   * when there is a missing "id-out" for an input "id-in", {@link
    * WhileMatchFilter#filterAllRemaining()} returns {@code true}. Since the server continues to send
-   * result even though {@link
-   * WhileMatchFilter#filterAllRemaining()} returns {@code true}, we need to replace this {@link
-   * WhileMatchFilter} instance with a "block all" filter and rescan from the next row.
+   * result even though {@link WhileMatchFilter#filterAllRemaining()} returns {@code true}, we need
+   * to replace this {@link WhileMatchFilter} instance with a "block all" filter and rescan from the
+   * next row.
    */
   @Override
-  public Filters.Filter adapt(FilterAdapterContext context, WhileMatchFilter filter) throws IOException {
+  public Filters.Filter adapt(FilterAdapterContext context, WhileMatchFilter filter)
+      throws IOException {
     // We need to eventually support more than one {@link WhileMatchFilter}s soon. Checking the size
     // of a list of {@link WhileMatchFilter}s makes more sense than verifying a single boolean flag.
     checkArgument(
         context.getNumberOfWhileMatchFilters() == 0,
         "More than one WhileMatchFilter is not supported.");
     checkNotNull(filter.getFilter(), "The wrapped filter for a WhileMatchFilter cannot be null.");
-    Optional<Filters.Filter> wrappedFilter = subFilterAdapter.adaptFilter(context, filter.getFilter());
+    Optional<Filters.Filter> wrappedFilter =
+        subFilterAdapter.adaptFilter(context, filter.getFilter());
     checkArgument(
         wrappedFilter.isPresent(), "Unable to adapted the wrapped filter: " + filter.getFilter());
 
@@ -104,7 +93,8 @@ public class WhileMatchFilterAdapter extends TypedFilterAdapterBase<WhileMatchFi
     Filters.Filter outLabel = FILTERS.label(whileMatchFilterId + OUT_LABEL_SUFFIX);
     Filters.Filter outLabelAndSink = FILTERS.chain().filter(outLabel).filter(FILTERS.sink());
 
-    Filters.Filter outInterleave = FILTERS.interleave().filter(outLabelAndSink).filter(FILTERS.pass());
+    Filters.Filter outInterleave =
+        FILTERS.interleave().filter(outLabelAndSink).filter(FILTERS.pass());
     Filters.Filter outChain = FILTERS.chain().filter(wrappedFilter.get()).filter(outInterleave);
 
     Filters.Filter finalFilter = FILTERS.interleave().filter(inLabelAndSink).filter(outChain);
@@ -160,9 +150,7 @@ public class WhileMatchFilterAdapter extends TypedFilterAdapterBase<WhileMatchFi
     return false;
   }
 
-  /**
-   * Return {@code true} iff {@code whileMatchFilter} is in {@code filter}.
-   */
+  /** Return {@code true} iff {@code whileMatchFilter} is in {@code filter}. */
   private boolean hasFilter(Filter filter, WhileMatchFilter whileMatchFilter) {
     if (filter == whileMatchFilter) {
       return true;

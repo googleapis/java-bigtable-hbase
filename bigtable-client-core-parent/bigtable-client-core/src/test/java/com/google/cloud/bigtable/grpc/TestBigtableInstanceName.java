@@ -15,15 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.ListTablesRequest;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import com.google.bigtable.admin.v2.CreateTableRequest;
-import com.google.bigtable.admin.v2.ListTablesRequest;
 
 @RunWith(JUnit4.class)
 public class TestBigtableInstanceName {
@@ -32,8 +31,7 @@ public class TestBigtableInstanceName {
       new BigtableInstanceName("some-project", "some-instance");
   private String instanceName = "projects/some-project/instances/some-instance";
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testFormat() {
@@ -56,8 +54,7 @@ public class TestBigtableInstanceName {
 
   @Test
   public void testGoodTableQualifier() {
-    bigtableInstanceName
-        .toTableId(instanceName + BigtableInstanceName.TABLE_SEPARATOR + "foo");
+    bigtableInstanceName.toTableId(instanceName + BigtableInstanceName.TABLE_SEPARATOR + "foo");
   }
 
   @Test
@@ -69,8 +66,10 @@ public class TestBigtableInstanceName {
   @Test
   public void testBadQualifier() {
     expectedException.expect(IllegalStateException.class);
-    bigtableInstanceName.toTableId(instanceName.replace("some-instance", "another-instance")
-        + BigtableInstanceName.TABLE_SEPARATOR + "foo");
+    bigtableInstanceName.toTableId(
+        instanceName.replace("some-instance", "another-instance")
+            + BigtableInstanceName.TABLE_SEPARATOR
+            + "foo");
   }
 
   @Test

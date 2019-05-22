@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncBufferedMutator;
@@ -33,8 +32,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Requirement 1.1 - Writes are buffered in the client by default (can be disabled).  Buffer size
- * can be defined programmatically or configuring the hbase.client.write.buffer property.
+ * Requirement 1.1 - Writes are buffered in the client by default (can be disabled). Buffer size can
+ * be defined programmatically or configuring the hbase.client.write.buffer property.
  */
 public class TestAsyncBufferedMutator extends AbstractAsyncTest {
 
@@ -47,7 +46,7 @@ public class TestAsyncBufferedMutator extends AbstractAsyncTest {
     final byte[] value = dataHelper.randomData("testValue-");
 
     try (AsyncBufferedMutator mutator = getAsyncConnection().getBufferedMutator(defaultTableName);
-        Table tableForRead = getDefaultTable();) {
+        Table tableForRead = getDefaultTable(); ) {
       Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, value);
       Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, qualifier);
       CompletableFuture<Void> future = mutator.mutate(put);
@@ -69,10 +68,9 @@ public class TestAsyncBufferedMutator extends AbstractAsyncTest {
     Get get1 = new Get(rowKey1);
     Get get2 = new Get(rowKey2);
 
-    
     TableName defaultTableName = sharedTestEnv.getDefaultTableName();
     try (AsyncBufferedMutator mutator = getAsyncConnection().getBufferedMutator(defaultTableName);
-        Table tableForRead = getDefaultTable();) {
+        Table tableForRead = getDefaultTable(); ) {
       List<CompletableFuture<Void>> futures = mutator.mutate(Arrays.asList(put1, put2));
       mutator.flush();
       for (CompletableFuture<Void> f : futures) {

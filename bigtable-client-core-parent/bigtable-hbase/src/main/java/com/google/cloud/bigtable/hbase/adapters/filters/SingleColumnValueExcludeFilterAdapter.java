@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,9 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Filters.QualifierRangeFilter;
 import com.google.protobuf.ByteString;
-
+import java.io.IOException;
 import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import java.io.IOException;
 
 /**
  * Adapter for the {@link org.apache.hadoop.hbase.filter.SingleColumnValueFilter}
@@ -44,9 +42,10 @@ public class SingleColumnValueExcludeFilterAdapter
   private final SingleColumnValueFilterAdapter delegateAdapter;
 
   /**
-   * <p>Constructor for SingleColumnValueExcludeFilterAdapter.</p>
+   * Constructor for SingleColumnValueExcludeFilterAdapter.
    *
-   * @param delegateAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.SingleColumnValueFilterAdapter} object.
+   * @param delegateAdapter a {@link
+   *     com.google.cloud.bigtable.hbase.adapters.filters.SingleColumnValueFilterAdapter} object.
    */
   public SingleColumnValueExcludeFilterAdapter(SingleColumnValueFilterAdapter delegateAdapter) {
     this.delegateAdapter = delegateAdapter;
@@ -58,12 +57,14 @@ public class SingleColumnValueExcludeFilterAdapter
       throws IOException {
     String family = Bytes.toString(context.getScan().getFamilies()[0]);
     ByteString qualifier = ByteString.copyFrom(filter.getQualifier());
-    return FILTERS.chain()
+    return FILTERS
+        .chain()
         .filter(delegateAdapter.toFilter(context, filter))
-        .filter(FILTERS.interleave()
-            .filter(range(family).endOpen(qualifier))
-            .filter(range(family).startOpen(qualifier)));
-        
+        .filter(
+            FILTERS
+                .interleave()
+                .filter(range(family).endOpen(qualifier))
+                .filter(range(family).startOpen(qualifier)));
   }
 
   private static QualifierRangeFilter range(String family) {

@@ -19,12 +19,10 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
 
-/**
- * Helpers for creating HBase {@link Cell}s in tests.
- */
+/** Helpers for creating HBase {@link Cell}s in tests. */
 public class HBaseCellUtils {
   // Dummy value for all data cells.
-  private static final byte[] VALUE = new byte[] { '1' };
+  private static final byte[] VALUE = new byte[] {'1'};
 
   // Delete Marker added as result of Delete(row).addColumn(family, qualifier) or
   // Delete(row).addColumn(family, qualifier, timestamp).

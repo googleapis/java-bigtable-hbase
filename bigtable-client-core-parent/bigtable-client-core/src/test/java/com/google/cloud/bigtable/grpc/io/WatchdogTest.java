@@ -73,11 +73,10 @@ public class WatchdogTest {
 
     call.listener.onClose(
         Status.ABORTED.withDescription("Some upstream exception representing cancellation"),
-        new Metadata()
-    );
+        new Metadata());
 
-    Assert.assertEquals(listener.closeStatus.getDescription(),
-        "Some upstream exception representing cancellation");
+    Assert.assertEquals(
+        listener.closeStatus.getDescription(), "Some upstream exception representing cancellation");
   }
 
   @Test
@@ -90,13 +89,12 @@ public class WatchdogTest {
     watchdog.run();
     Assert.assertNotNull(call.cancelMessage);
 
-    call.listener
-        .onClose(
-            Status.CANCELLED.withDescription("Some upstream exception representing cancellation"),
-            new Metadata());
+    call.listener.onClose(
+        Status.CANCELLED.withDescription("Some upstream exception representing cancellation"),
+        new Metadata());
 
-    Assert.assertEquals(listener.closeStatus.getDescription(),
-        "Some upstream exception representing cancellation");
+    Assert.assertEquals(
+        listener.closeStatus.getDescription(), "Some upstream exception representing cancellation");
   }
 
   @Test
@@ -112,13 +110,12 @@ public class WatchdogTest {
     watchdog.run();
     Assert.assertNotNull(call.cancelMessage);
 
-    call.listener
-        .onClose(
-            Status.CANCELLED.withDescription("Some upstream exception representing cancellation"),
-            new Metadata());
+    call.listener.onClose(
+        Status.CANCELLED.withDescription("Some upstream exception representing cancellation"),
+        new Metadata());
 
-    Assert.assertEquals(listener.closeStatus.getDescription(),
-        "Some upstream exception representing cancellation");
+    Assert.assertEquals(
+        listener.closeStatus.getDescription(), "Some upstream exception representing cancellation");
   }
 
   @Test
@@ -178,5 +175,4 @@ public class WatchdogTest {
       closeStatus = status;
     }
   }
-
 }

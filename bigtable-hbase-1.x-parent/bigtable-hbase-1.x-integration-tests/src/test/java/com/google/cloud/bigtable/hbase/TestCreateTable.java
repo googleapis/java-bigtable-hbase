@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -36,8 +35,7 @@ public class TestCreateTable extends AbstractTestCreateTable {
   }
 
   @Override
-  protected void createTable(TableName tableName, byte[] start, byte[] end,
-      int splitCount)
+  protected void createTable(TableName tableName, byte[] start, byte[] end, int splitCount)
       throws IOException {
     getConnection().getAdmin().createTable(createDescriptor(tableName), start, end, splitCount);
   }
@@ -48,19 +46,17 @@ public class TestCreateTable extends AbstractTestCreateTable {
   }
 
   private HTableDescriptor createDescriptor(TableName tableName) {
-    return new HTableDescriptor(tableName)
-        .addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+    return new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY));
   }
 
   @Override
-  protected List<HRegionLocation> getRegions(TableName tableName)
-      throws Exception {
+  protected List<HRegionLocation> getRegions(TableName tableName) throws Exception {
     return getConnection().getRegionLocator(tableName).getAllRegionLocations();
   }
 
   @Override
   protected boolean asyncGetRegions(TableName tableName) throws Exception {
-    return true;//This method does not exists in 1.x version.
+    return true; // This method does not exists in 1.x version.
   }
 
   @Override

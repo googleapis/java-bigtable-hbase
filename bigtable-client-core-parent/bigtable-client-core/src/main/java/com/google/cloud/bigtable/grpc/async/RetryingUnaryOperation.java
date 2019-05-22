@@ -15,16 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import com.google.api.core.ApiClock;
 import com.google.cloud.bigtable.config.RetryOptions;
-
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A {@link AbstractRetryingOperation} for a unary operation.
@@ -40,7 +37,7 @@ public class RetryingUnaryOperation<RequestT, ResponseT>
   private ResponseT value;
 
   /**
-   * <p>Constructor for RetryingUnaryRpcListener.</p>
+   * Constructor for RetryingUnaryRpcListener.
    *
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param request a RequestT object.
@@ -50,9 +47,14 @@ public class RetryingUnaryOperation<RequestT, ResponseT>
    * @param metadata a {@link io.grpc.Metadata} object.
    * @param clock a {@link ApiClock} object
    */
-  public RetryingUnaryOperation(RetryOptions retryOptions, RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, CallOptions callOptions,
-      ScheduledExecutorService executorService, Metadata metadata, ApiClock clock) {
+  public RetryingUnaryOperation(
+      RetryOptions retryOptions,
+      RequestT request,
+      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
+      CallOptions callOptions,
+      ScheduledExecutorService executorService,
+      Metadata metadata,
+      ApiClock clock) {
     super(retryOptions, request, retryableRpc, callOptions, executorService, metadata, clock);
   }
 

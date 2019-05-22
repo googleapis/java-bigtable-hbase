@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,8 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-
 import java.util.Collections;
 import java.util.List;
-
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Increment;
@@ -39,16 +37,11 @@ import org.mockito.MockitoAnnotations;
 @RunWith(JUnit4.class)
 public class TestHBaseMutationAdapter {
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-  @Mock
-  private MutationAdapter<Delete> deleteAdapter;
-  @Mock
-  private MutationAdapter<Put> putAdapter;
-  @Mock
-  private MutationAdapter<Increment> incrementAdapter;
-  @Mock
-  private MutationAdapter<Append> appendAdapter;
+  @Rule public ExpectedException expectedException = ExpectedException.none();
+  @Mock private MutationAdapter<Delete> deleteAdapter;
+  @Mock private MutationAdapter<Put> putAdapter;
+  @Mock private MutationAdapter<Increment> incrementAdapter;
+  @Mock private MutationAdapter<Append> appendAdapter;
 
   private HBaseMutationAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -69,11 +62,7 @@ public class TestHBaseMutationAdapter {
 
   @After
   public void tearDown() {
-    Mockito.verifyNoMoreInteractions(
-        deleteAdapter,
-        putAdapter,
-        incrementAdapter,
-        appendAdapter);
+    Mockito.verifyNoMoreInteractions(deleteAdapter, putAdapter, incrementAdapter, appendAdapter);
   }
 
   @Test

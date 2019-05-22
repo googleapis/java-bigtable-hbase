@@ -15,14 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import io.opencensus.common.Scope;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Nullable;
-
 import com.google.api.core.ApiClock;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
@@ -39,13 +31,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Deadline;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.Status.Code;
+import io.opencensus.common.Scope;
 import io.opencensus.contrib.grpc.util.StatusConverter;
 import io.opencensus.trace.Annotation;
 import io.opencensus.trace.AttributeValue;
@@ -53,18 +45,22 @@ import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 import org.threeten.bp.temporal.ChronoUnit;
 
-/**
- * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
- */
+/** A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request. */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
-    extends ClientCall.Listener<ResponseT>  {
+    extends ClientCall.Listener<ResponseT> {
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
+
   private static final Tracer TRACER = Tracing.getTracer();
   private static final EndSpanOptions END_SPAN_OPTIONS_WITH_SAMPLE_STORE =
       EndSpanOptions.builder().setSampleToLocalSpanStore(true).build();
@@ -124,7 +120,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected final Span operationSpan;
 
   /**
-   * <p>Constructor for AbstractRetryingRpcListener.</p>
+   * Constructor for AbstractRetryingRpcListener.
    *
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param request a RequestT object.
@@ -135,13 +131,13 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @param clock a {@link ApiClock} object
    */
   public AbstractRetryingOperation(
-          RetryOptions retryOptions,
-          RequestT request,
-          BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
-          CallOptions callOptions,
-          ScheduledExecutorService retryExecutorService,
-          Metadata originalMetadata,
-          ApiClock clock) {
+      RetryOptions retryOptions,
+      RequestT request,
+      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
+      CallOptions callOptions,
+      ScheduledExecutorService retryExecutorService,
+      Metadata originalMetadata,
+      ApiClock clock) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
@@ -199,11 +195,13 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
     String channelId = ChannelPool.extractIdentifier(trailers);
     // Non retry scenario
-    if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)
-    // Unauthenticated is special because the request never made it to
-    // to the server, so all requests are retryable
+    if (!retryOptions.enableRetries()
+        || !retryOptions.isRetryable(code)
+        // Unauthenticated is special because the request never made it to
+        // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
-      LOG.error("Could not complete RPC. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+      LOG.error(
+          "Could not complete RPC. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
       rpc.getRpcMetrics().markFailure();
       finalizeStats(status);
@@ -217,11 +215,13 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
     // Backoffs timed out.
     if (nextBackOff == null) {
-      LOG.error("All retries were exhausted. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+      LOG.error(
+          "All retries were exhausted. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
       setException(getExhaustedRetriesException(status));
     } else {
-      LOG.warn("Retrying failed call. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+      LOG.warn(
+          "Retrying failed call. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
       performRetry(nextBackOff);
     }
@@ -236,8 +236,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   protected void performRetry(long nextBackOff) {
-    operationSpan.addAnnotation("retryWithBackoff",
-      ImmutableMap.of("backoff", AttributeValue.longAttributeValue(nextBackOff)));
+    operationSpan.addAnnotation(
+        "retryWithBackoff",
+        ImmutableMap.of("backoff", AttributeValue.longAttributeValue(nextBackOff)));
     rpc.getRpcMetrics().markRetry();
     retryExecutorService.schedule(getRunnable(), nextBackOff, TimeUnit.MILLISECONDS);
   }
@@ -263,6 +264,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * A subclass has the opportunity to perform the final operations it needs now that the RPC is
    * successfully complete. If a subclass has to retry, due to the message, this method will return
    * false
+   *
    * @return true if the operation was really completed.
    */
   protected abstract boolean onOK(Metadata trailers);
@@ -281,8 +283,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     if (!exponentialRetryAlgorithm.shouldRetry(currentBackoff)) {
 
       // TODO: consider creating a subclass of exponentialRetryAlgorithm to encapsulate this logic
-      long timeLeftNs =  currentBackoff.getGlobalSettings().getTotalTimeout().toNanos() -
-          (clock.nanoTime() - currentBackoff.getFirstAttemptStartTimeNanos());
+      long timeLeftNs =
+          currentBackoff.getGlobalSettings().getTotalTimeout().toNanos()
+              - (clock.nanoTime() - currentBackoff.getFirstAttemptStartTimeNanos());
       long timeLeftMs = TimeUnit.NANOSECONDS.toMillis(timeLeftNs);
 
       if (timeLeftMs > currentBackoff.getGlobalSettings().getInitialRetryDelay().toMillis()) {
@@ -314,7 +317,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   /**
-   * <p>createBackoff.</p>
+   * createBackoff.
    *
    * @return a {@link ExponentialRetryAlgorithm} object.
    */
@@ -326,25 +329,24 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       timeoutMs = deadline.timeRemaining(TimeUnit.MILLISECONDS);
     }
 
-    RetrySettings retrySettings = RetrySettings.newBuilder()
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setJittered(true)
 
-        .setJittered(true)
+            // How long should the sleep be between RPC failure and the next RPC retry?
+            .setInitialRetryDelay(toDuration(retryOptions.getInitialBackoffMillis()))
 
-        // How long should the sleep be between RPC failure and the next RPC retry?
-        .setInitialRetryDelay(toDuration(retryOptions.getInitialBackoffMillis()))
+            // How fast should the retry delay increase?
+            .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
 
-        // How fast should the retry delay increase?
-        .setRetryDelayMultiplier(retryOptions.getBackoffMultiplier())
+            // What is the maximum amount of sleep time between retries?
+            // There needs to be some sane number for max retry delay, and it's unclear what that
+            // number ought to be.  1 Minute time was chosen because some number is needed.
+            .setMaxRetryDelay(Duration.of(1, ChronoUnit.MINUTES))
 
-        // What is the maximum amount of sleep time between retries?
-        // There needs to be some sane number for max retry delay, and it's unclear what that
-        // number ought to be.  1 Minute time was chosen because some number is needed.
-        .setMaxRetryDelay(Duration.of(1, ChronoUnit.MINUTES))
-
-        // How long should we wait before giving up retries after the first failure?
-        .setTotalTimeout(toDuration(timeoutMs))
-
-        .build();
+            // How long should we wait before giving up retries after the first failure?
+            .setTotalTimeout(toDuration(timeoutMs))
+            .build();
     return new ExponentialRetryAlgorithm(retrySettings, clock);
   }
 
@@ -353,15 +355,17 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   /**
-   * Calls {@link BigtableAsyncRpc#newCall(CallOptions)} and
-   * {@link BigtableAsyncRpc#start(Object, io.grpc.ClientCall.Listener, Metadata, ClientCall)} }
-   * with this as the listener so that retries happen correctly.
+   * Calls {@link BigtableAsyncRpc#newCall(CallOptions)} and {@link BigtableAsyncRpc#start(Object,
+   * io.grpc.ClientCall.Listener, Metadata, ClientCall)} } with this as the listener so that retries
+   * happen correctly.
    */
   protected void run() {
     try (Scope scope = TRACER.withSpan(operationSpan)) {
       rpcTimerContext = rpc.getRpcMetrics().timeRpc();
-      operationSpan.addAnnotation(Annotation.fromDescriptionAndAttributes("rpcStart",
-        ImmutableMap.of("attempt", AttributeValue.longAttributeValue(failedCount))));
+      operationSpan.addAnnotation(
+          Annotation.fromDescriptionAndAttributes(
+              "rpcStart",
+              ImmutableMap.of("attempt", AttributeValue.longAttributeValue(failedCount))));
       Metadata metadata = new Metadata();
       metadata.merge(originalMetadata);
       callWrapper.setCallAndStart(rpc, getRpcCallOptions(), getRetryRequest(), this, metadata);
@@ -371,7 +375,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   /**
-   * Returns the {@link CallOptions} that a user set for the entire Operation, which can span multiple RPCs/retries.
+   * Returns the {@link CallOptions} that a user set for the entire Operation, which can span
+   * multiple RPCs/retries.
+   *
    * @return The {@link CallOptions}
    */
   protected CallOptions getOperationCallOptions() {
@@ -381,24 +387,25 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   /**
    * Create an {@link CallOptions} that has a fail safe RPC deadline to make sure that unary
    * operations don't hang. This will have to be overridden for streaming RPCs like read rows.
-   * <p>
-   * The logic is as follows:
+   *
+   * <p>The logic is as follows:
+   *
    * <ol>
-   *   <li> If the user provides a deadline, use the deadline</li>
-   *   <li> Else If this is a streaming read, don't set an explicit deadline.  The
-   *   {@link com.google.cloud.bigtable.grpc.io.Watchdog} will handle hanging</li>
-   *   <li> Else Set a deadline of {@link #UNARY_DEADLINE_MINUTES} minutes deadline.</li>
+   *   <li>If the user provides a deadline, use the deadline
+   *   <li>Else If this is a streaming read, don't set an explicit deadline. The {@link
+   *       com.google.cloud.bigtable.grpc.io.Watchdog} will handle hanging
+   *   <li>Else Set a deadline of {@link #UNARY_DEADLINE_MINUTES} minutes deadline.
    * </ol>
    *
    * @see com.google.cloud.bigtable.grpc.io.Watchdog Watchdog which handles hanging for streaming
-   * reads.
-   *
+   *     reads.
    * @return a {@link CallOptions}
    */
   protected CallOptions getRpcCallOptions() {
     if (callOptions.getDeadline() != null || isStreamingRead()) {
       // If the user set a deadline, honor it.
-      // If this is a streaming read, then the Watchdog will take affect and ensure that hanging does not occur.
+      // If this is a streaming read, then the Watchdog will take affect and ensure that hanging
+      // does not occur.
       return getOperationCallOptions();
     } else {
       // Unary calls should fail after 6 minutes, if there isn't any response from the server.
@@ -409,17 +416,15 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   // TODO(sduskis): This is only required because BigtableDataGrpcClient doesn't always use
   //      RetryingReadRowsOperation like it should.
   protected boolean isStreamingRead() {
-    return request instanceof ReadRowsRequest &&
-            !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request);
+    return request instanceof ReadRowsRequest
+        && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request);
   }
 
   protected RequestT getRetryRequest() {
     return request;
   }
 
-  /**
-   * Initial execution of the RPC.
-   */
+  /** Initial execution of the RPC. */
   public ListenableFuture<ResultT> getAsyncResult() {
     Preconditions.checkState(operationTimerContext == null);
     operationTimerContext = rpc.getRpcMetrics().timeOperation();
@@ -427,9 +432,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     return completionFuture;
   }
 
-  /**
-   * Cancels the RPC.
-   */
+  /** Cancels the RPC. */
   public void cancel() {
     cancel("User requested cancelation.");
   }

@@ -17,27 +17,24 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.common.base.Objects;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * Adapt between a {@link FlatRow} and an hbase client {@link org.apache.hadoop.hbase.client.Result}.
+ * Adapt between a {@link FlatRow} and an hbase client {@link
+ * org.apache.hadoop.hbase.client.Result}.
  *
  * @author sduskis
  * @version $Id: $Id
  */
 public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
-  /**
-   * {@inheritDoc} Convert a {@link FlatRow} to a {@link Result}.
-   */
+  /** {@inheritDoc} Convert a {@link FlatRow} to a {@link Result}. */
   @Override
   public Result adaptResponse(FlatRow flatRow) {
     // flatRow shouldn't ever have a null row key. The second check is defensive only.
@@ -54,8 +51,8 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
       // TODO: the filtering logic should be moved into a WhileMatchFilter specific extension.
       if (cell.getLabels().isEmpty()) {
         String family = cell.getFamily();
-        byte[] familyBytes = !Objects.equal(family, previousFamily)
-            ? Bytes.toBytes(family) : previousFamilyBytes;
+        byte[] familyBytes =
+            !Objects.equal(family, previousFamily) ? Bytes.toBytes(family) : previousFamilyBytes;
         hbaseCells.add(toRowCell(RowKey, cell, familyBytes));
         previousFamily = family;
         previousFamilyBytes = familyBytes;
@@ -95,17 +92,15 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
     if (rawCells != null && rawCells.length > 0) {
       for (Cell rawCell : rawCells) {
         rowBuilder.addCell(
-          Bytes.toString(rawCell.getFamilyArray(),
-              rawCell.getFamilyOffset(), rawCell.getFamilyLength()
-          ),
-          ByteStringer.wrap(rawCell.getQualifierArray(),
-              rawCell.getQualifierOffset(), rawCell.getQualifierLength()
-          ),
-          TimestampConverter.hbase2bigtable(rawCell.getTimestamp()),
-          ByteStringer.wrap(rawCell.getValueArray(),
-              rawCell.getValueOffset(), rawCell.getValueLength()
-          )
-        );
+            Bytes.toString(
+                rawCell.getFamilyArray(), rawCell.getFamilyOffset(), rawCell.getFamilyLength()),
+            ByteStringer.wrap(
+                rawCell.getQualifierArray(),
+                rawCell.getQualifierOffset(),
+                rawCell.getQualifierLength()),
+            TimestampConverter.hbase2bigtable(rawCell.getTimestamp()),
+            ByteStringer.wrap(
+                rawCell.getValueArray(), rawCell.getValueOffset(), rawCell.getValueLength()));
       }
     }
 

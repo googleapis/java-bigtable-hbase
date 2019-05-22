@@ -69,7 +69,8 @@ public class Watchdog implements Runnable {
 
   // Dummy value to convert the ConcurrentHashMap into a Set
   private static Object PRESENT = new Object();
-  private final ConcurrentHashMap<WatchedCall<?,?>, Object> openStreams = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<WatchedCall<?, ?>, Object> openStreams =
+      new ConcurrentHashMap<>();
 
   private final Clock clock;
   private final long waitTimeoutMs;
@@ -92,12 +93,12 @@ public class Watchdog implements Runnable {
   }
 
   public void run() {
-    Iterator<Entry<WatchedCall<?,?>, Object>> it = openStreams.entrySet().iterator();
+    Iterator<Entry<WatchedCall<?, ?>, Object>> it = openStreams.entrySet().iterator();
 
     int count = 0;
 
     while (it.hasNext()) {
-      WatchedCall<?,?> stream = it.next().getKey();
+      WatchedCall<?, ?> stream = it.next().getKey();
       if (stream.cancelIfStale()) {
         count++;
         it.remove();
@@ -114,16 +115,16 @@ public class Watchdog implements Runnable {
     long minTimeoutMs = Math.min(waitTimeoutMs, idleTimeoutMs);
     long checkPeriodMs = Math.max(minTimeoutMs / 2, MIN_CHECK_PERIOD_MS);
 
-    scheduledFuture = executor.scheduleAtFixedRate(this,
-        checkPeriodMs, checkPeriodMs, TimeUnit.MILLISECONDS);
+    scheduledFuture =
+        executor.scheduleAtFixedRate(this, checkPeriodMs, checkPeriodMs, TimeUnit.MILLISECONDS);
   }
 
   public void stop() {
     ScheduledFuture<?> tmp = scheduledFuture;
     scheduledFuture = null;
-    
+
     if (tmp != null) {
-        tmp.cancel(true);
+      tmp.cancel(true);
     }
   }
 
@@ -154,28 +155,30 @@ public class Watchdog implements Runnable {
 
       openStreams.put(this, PRESENT);
 
-      call.start(new SimpleForwardingClientCallListener<RespT>(listener) {
-        @Override
-        public void onMessage(RespT message) {
-          setState(State.DELIVERING);
+      call.start(
+          new SimpleForwardingClientCallListener<RespT>(listener) {
+            @Override
+            public void onMessage(RespT message) {
+              setState(State.DELIVERING);
 
-          try {
-            super.onMessage(message);
-          } finally {
-            synchronized (lock) {
-              pendingCount--;
-              setState((pendingCount > 0) ? State.WAITING : State.IDLE);
+              try {
+                super.onMessage(message);
+              } finally {
+                synchronized (lock) {
+                  pendingCount--;
+                  setState((pendingCount > 0) ? State.WAITING : State.IDLE);
+                }
+              }
             }
-          }
-        }
 
-        @Override
-        public void onClose(Status status, Metadata trailers) {
-          openStreams.remove(WatchedCall.this);
+            @Override
+            public void onClose(Status status, Metadata trailers) {
+              openStreams.remove(WatchedCall.this);
 
-          super.onClose(status, trailers);
-        }
-      }, metadata);
+              super.onClose(status, trailers);
+            }
+          },
+          metadata);
     }
 
     private void setState(State state) {
@@ -188,8 +191,7 @@ public class Watchdog implements Runnable {
     @Override
     public void request(int count) {
       synchronized (lock) {
-        Preconditions.checkState(state != State.NOT_STARTED,
-            "The Call was not started");
+        Preconditions.checkState(state != State.NOT_STARTED, "The Call was not started");
         // Increment the request count without overflow
         int maxIncrement = Integer.MAX_VALUE - pendingCount;
         pendingCount += Math.min(maxIncrement, count);
@@ -202,47 +204,46 @@ public class Watchdog implements Runnable {
       super.request(count);
     }
 
-    /**
-     *
-     * @return true if this RPC was cancelled.
-     */
+    /** @return true if this RPC was cancelled. */
     private boolean cancelIfStale() {
       synchronized (lock) {
         long waitTime = clock.currentTimeMillis() - lastActivityAt;
 
         switch (this.state) {
-        case NOT_STARTED:
-        case IDLE:
-          if (waitTime >= idleTimeoutMs) {
-            delegate().cancel("Canceled due to idle connection",
-                new StreamWaitTimeoutException(this.state, waitTime));
-            return true;
-          }
-          break;
+          case NOT_STARTED:
+          case IDLE:
+            if (waitTime >= idleTimeoutMs) {
+              delegate()
+                  .cancel(
+                      "Canceled due to idle connection",
+                      new StreamWaitTimeoutException(this.state, waitTime));
+              return true;
+            }
+            break;
 
-        case WAITING:
-          if (waitTime >= waitTimeoutMs) {
-            delegate().cancel("Canceled due to timeout waiting for next response",
-                new StreamWaitTimeoutException(this.state, waitTime));
-            return true;
-          }
-          break;
+          case WAITING:
+            if (waitTime >= waitTimeoutMs) {
+              delegate()
+                  .cancel(
+                      "Canceled due to timeout waiting for next response",
+                      new StreamWaitTimeoutException(this.state, waitTime));
+              return true;
+            }
+            break;
 
-        case DELIVERING:
-          // Don't cancel the stream while it's results are being processed by user code.
-          break;
+          case DELIVERING:
+            // Don't cancel the stream while it's results are being processed by user code.
+            break;
 
-        default:
-          throw new IllegalStateException("Unknown state: " + this.state);
+          default:
+            throw new IllegalStateException("Unknown state: " + this.state);
         }
         return false;
       }
     }
   }
 
-  /**
-   * Marker exception to replace cancelled status with aborted to allow retries.
-   */
+  /** Marker exception to replace cancelled status with aborted to allow retries. */
   public static class StreamWaitTimeoutException extends RuntimeException {
     private final State state;
     private final long waitTimeMs;

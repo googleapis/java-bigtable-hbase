@@ -25,20 +25,18 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.threeten.bp.Duration;
-
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.threeten.bp.Duration;
 
 /**
- * Adapt a single instance of an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor} to
- * an instance of {@link com.google.bigtable.admin.v2.ColumnFamily}
+ * Adapt a single instance of an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor} to an
+ * instance of {@link com.google.bigtable.admin.v2.ColumnFamily}
  *
  * @author sduskis
  * @version $Id: $Id
@@ -48,18 +46,13 @@ public class ColumnDescriptorAdapter {
   public static final ColumnDescriptorAdapter INSTANCE = new ColumnDescriptorAdapter();
 
   /**
-   * Configuration keys that we can support unconditionally and we provide
-   * a mapped version of the column descriptor to Bigtable.
+   * Configuration keys that we can support unconditionally and we provide a mapped version of the
+   * column descriptor to Bigtable.
    */
   public static final Set<String> SUPPORTED_OPTION_KEYS =
-      ImmutableSet.of(
-          HColumnDescriptor.MIN_VERSIONS,
-          HColumnDescriptor.TTL,
-          HConstants.VERSIONS);
+      ImmutableSet.of(HColumnDescriptor.MIN_VERSIONS, HColumnDescriptor.TTL, HConstants.VERSIONS);
 
-  /**
-   * Configuration keys that we ignore unconditionally
-   */
+  /** Configuration keys that we ignore unconditionally */
   public static final Set<String> IGNORED_OPTION_KEYS =
       ImmutableSet.of(
           HColumnDescriptor.COMPRESSION,
@@ -78,8 +71,8 @@ public class ColumnDescriptorAdapter {
           HConstants.IN_MEMORY);
 
   /**
-   * Configuration option values that we ignore as long as the value is the one specified below.
-   * Any other value results in an exception.
+   * Configuration option values that we ignore as long as the value is the one specified below. Any
+   * other value results in an exception.
    */
   public static final Map<String, String> SUPPORTED_OPTION_VALUES =
       ImmutableMap.of(
@@ -126,24 +119,24 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Throw an {@link java.lang.UnsupportedOperationException} if the column descriptor cannot be adapted due
-   * to it having unknown configuration keys.
+   * Throw an {@link java.lang.UnsupportedOperationException} if the column descriptor cannot be
+   * adapted due to it having unknown configuration keys.
    *
    * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
    */
   public static void throwIfRequestingUnknownFeatures(HColumnDescriptor columnDescriptor) {
     List<String> unknownFeatures = getUnknownFeatures(columnDescriptor);
     if (!unknownFeatures.isEmpty()) {
-      String featureString = String.format(
-          "Unknown configuration options: [%s]",
-          Joiner.on(", ").join(unknownFeatures));
+      String featureString =
+          String.format(
+              "Unknown configuration options: [%s]", Joiner.on(", ").join(unknownFeatures));
       throw new UnsupportedOperationException(featureString);
     }
   }
 
   /**
-   * Throw an {@link java.lang.UnsupportedOperationException} if the column descriptor cannot be adapted due
-   * to it having configuration values that are not supported.
+   * Throw an {@link java.lang.UnsupportedOperationException} if the column descriptor cannot be
+   * adapted due to it having configuration values that are not supported.
    *
    * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
    */
@@ -155,9 +148,9 @@ public class ColumnDescriptorAdapter {
         configurationStrings.add(String.format("(%s: %s)", entry.getKey(), entry.getValue()));
       }
 
-      String exceptionMessage = String.format(
-          "Unsupported configuration options: %s",
-          Joiner.on(",").join(configurationStrings));
+      String exceptionMessage =
+          String.format(
+              "Unsupported configuration options: %s", Joiner.on(",").join(configurationStrings));
       throw new UnsupportedOperationException(exceptionMessage);
     }
   }
@@ -173,7 +166,8 @@ public class ColumnDescriptorAdapter {
     int minVersions = columnDescriptor.getMinVersions();
     int ttlSeconds = columnDescriptor.getTimeToLive();
 
-    Preconditions.checkState(minVersions < maxVersions,
+    Preconditions.checkState(
+        minVersions < maxVersions,
         "HColumnDescriptor min versions must be less than max versions.");
 
     if (ttlSeconds == HColumnDescriptor.DEFAULT_TTL) {
@@ -205,56 +199,54 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * <p>
-   * Parse a Bigtable {@link GcRule} that is in line with
-   * {@link #buildGarbageCollectionRule(HColumnDescriptor)} into the provided
-   * {@link HColumnDescriptor}.
-   * </p>
-   * <p>
-   * This method will likely throw IllegalStateException or IllegalArgumentException if the GC Rule
-   * isn't similar to {@link #buildGarbageCollectionRule(HColumnDescriptor)}'s rule.
-   * </p>
+   * Parse a Bigtable {@link GcRule} that is in line with {@link
+   * #buildGarbageCollectionRule(HColumnDescriptor)} into the provided {@link HColumnDescriptor}.
+   *
+   * <p>This method will likely throw IllegalStateException or IllegalArgumentException if the GC
+   * Rule isn't similar to {@link #buildGarbageCollectionRule(HColumnDescriptor)}'s rule.
    */
-  private static void convertGarbageCollectionRule(GcRule gcRule,
-      HColumnDescriptor columnDescriptor) {
+  private static void convertGarbageCollectionRule(
+      GcRule gcRule, HColumnDescriptor columnDescriptor) {
 
     // The Bigtable default is to have infinite versions.
     columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
     if (gcRule == null || gcRule.equals(GcRule.getDefaultInstance())) {
       return;
     }
-    switch(gcRule.getRuleCase()) {
-    case MAX_AGE:
-      columnDescriptor.setTimeToLive((int) gcRule.getMaxAge().getSeconds());
-      return;
-    case MAX_NUM_VERSIONS:
-      columnDescriptor.setMaxVersions(gcRule.getMaxNumVersions());
-      return;
-    case INTERSECTION: {
-      // minVersions and maxAge are set.
-      processIntersection(gcRule, columnDescriptor);
-      return;
-    }
-    case UNION: {
-      // (minVersion && maxAge) || maxVersions
-      List<GcRule> unionRules = gcRule.getUnion().getRulesList();
-      Preconditions.checkArgument(unionRules.size() == 2, "Cannot process rule " + gcRule);
-      if (hasRule(unionRules, RuleCase.INTERSECTION)) {
-        processIntersection(getRule(unionRules, RuleCase.INTERSECTION), columnDescriptor);
-      } else {
-        columnDescriptor
-            .setTimeToLive((int) getRule(unionRules, RuleCase.MAX_AGE).getMaxAge().getSeconds());
-      }
-      columnDescriptor.setMaxVersions(getVersionCount(unionRules));
-      return;
-    }
-    default:
-      throw new IllegalArgumentException("Could not proess gc rules: " + gcRule);
+    switch (gcRule.getRuleCase()) {
+      case MAX_AGE:
+        columnDescriptor.setTimeToLive((int) gcRule.getMaxAge().getSeconds());
+        return;
+      case MAX_NUM_VERSIONS:
+        columnDescriptor.setMaxVersions(gcRule.getMaxNumVersions());
+        return;
+      case INTERSECTION:
+        {
+          // minVersions and maxAge are set.
+          processIntersection(gcRule, columnDescriptor);
+          return;
+        }
+      case UNION:
+        {
+          // (minVersion && maxAge) || maxVersions
+          List<GcRule> unionRules = gcRule.getUnion().getRulesList();
+          Preconditions.checkArgument(unionRules.size() == 2, "Cannot process rule " + gcRule);
+          if (hasRule(unionRules, RuleCase.INTERSECTION)) {
+            processIntersection(getRule(unionRules, RuleCase.INTERSECTION), columnDescriptor);
+          } else {
+            columnDescriptor.setTimeToLive(
+                (int) getRule(unionRules, RuleCase.MAX_AGE).getMaxAge().getSeconds());
+          }
+          columnDescriptor.setMaxVersions(getVersionCount(unionRules));
+          return;
+        }
+      default:
+        throw new IllegalArgumentException("Could not proess gc rules: " + gcRule);
     }
   }
 
   /**
-   * <p>processIntersection.</p>
+   * processIntersection.
    *
    * @param gcRule a {@link com.google.bigtable.admin.v2.GcRule} object.
    * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
@@ -294,12 +286,12 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * <p>Adapt a single instance of an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor} to
-   * an instance of {@link com.google.bigtable.admin.v2.ColumnFamily.Builder}.</p>
+   * Adapt a single instance of an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor} to an
+   * instance of {@link com.google.bigtable.admin.v2.ColumnFamily.Builder}.
    *
-   * <p>NOTE: This method does not set the name of the ColumnFamily.Builder.  The assumption is
-   * that the CreateTableRequest or CreateColumFamilyRequest takes care of the naming.  As of now
-   * (3/11/2015), the server insists on having a blank name.</p>
+   * <p>NOTE: This method does not set the name of the ColumnFamily.Builder. The assumption is that
+   * the CreateTableRequest or CreateColumFamilyRequest takes care of the naming. As of now
+   * (3/11/2015), the server insists on having a blank name.
    *
    * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
    * @return a {@link com.google.bigtable.admin.v2.ColumnFamily.Builder} object.
@@ -317,17 +309,18 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Convert a Bigtable {@link com.google.cloud.bigtable.admin.v2.models.ColumnFamily} to an
-   * HBase {@link HColumnDescriptor}.
-   * See {@link #convertGarbageCollectionRule(GcRule, HColumnDescriptor)} for more info.
+   * Convert a Bigtable {@link com.google.cloud.bigtable.admin.v2.models.ColumnFamily} to an HBase
+   * {@link HColumnDescriptor}. See {@link #convertGarbageCollectionRule(GcRule, HColumnDescriptor)}
+   * for more info.
    *
    * @param columnFamily a {@link com.google.cloud.bigtable.admin.v2.models.ColumnFamily} object.
    * @return a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
    */
-  public HColumnDescriptor adapt(com.google.cloud.bigtable.admin.v2.models.ColumnFamily columnFamily) {
+  public HColumnDescriptor adapt(
+      com.google.cloud.bigtable.admin.v2.models.ColumnFamily columnFamily) {
     HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(columnFamily.getId());
     GCRule gcRule = columnFamily.getGCRule();
-    if(gcRule != null){
+    if (gcRule != null) {
       convertGarbageCollectionRule(gcRule.toProto(), hColumnDescriptor);
     }
     return hColumnDescriptor;

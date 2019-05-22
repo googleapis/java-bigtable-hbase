@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.AsyncTable;
@@ -39,6 +38,7 @@ import org.junit.runners.JUnit4;
 
 /**
  * Test to make sure that basic {@link AsyncTable} operations work
+ *
  * @author sduskis
  */
 @RunWith(JUnit4.class)
@@ -58,8 +58,9 @@ public class TestAsyncBatch extends AbstractAsyncTest {
         .thenApply(v -> futures.stream().map(f -> f.getNow(null)).collect(toList()));
   }
 
-  private void testPutsGetsDeletes(boolean doGet, byte[][] rowKeys, byte[][] testQualifiers,
-      byte[][] testValues) throws IOException, InterruptedException, ExecutionException {
+  private void testPutsGetsDeletes(
+      boolean doGet, byte[][] rowKeys, byte[][] testQualifiers, byte[][] testValues)
+      throws IOException, InterruptedException, ExecutionException {
     AsyncTable<ScanResultConsumer> table = getDefaultAsyncTable();
 
     // setup
@@ -67,11 +68,9 @@ public class TestAsyncBatch extends AbstractAsyncTest {
     List<Put> puts = new ArrayList<>();
     List<Delete> deletes = new ArrayList<>();
     for (int i = 0; i < rowKeys.length; i++) {
-      puts.add(new Put(rowKeys[i])
-        .addColumn(COLUMN_FAMILY, testQualifiers[i], testValues[i]));
+      puts.add(new Put(rowKeys[i]).addColumn(COLUMN_FAMILY, testQualifiers[i], testValues[i]));
 
-      gets.add(new Get(rowKeys[i])
-        .addColumn(COLUMN_FAMILY, testQualifiers[i]));
+      gets.add(new Get(rowKeys[i]).addColumn(COLUMN_FAMILY, testQualifiers[i]));
 
       deletes.add(new Delete(rowKeys[i]));
     }
@@ -88,7 +87,7 @@ public class TestAsyncBatch extends AbstractAsyncTest {
     if (doGet) {
       stopwatch.print("Get took %d ms");
       List<Result> results = allOf(table.get(gets)).get();
-      Assert.assertEquals(rowKeys.length, results.size()); 
+      Assert.assertEquals(rowKeys.length, results.size());
       for (int i = 0; i < rowKeys.length; i++) {
         Result result = results.get(i);
         Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifiers[i]));

@@ -32,24 +32,21 @@ import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
 
-/**
- * Adapter for {@link MultiRowRangeFilter}, it converts the filter into an index scan hint
- */
-public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowRangeFilter>  {
+/** Adapter for {@link MultiRowRangeFilter}, it converts the filter into an index scan hint */
+public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowRangeFilter> {
   private static final FilterSupportStatus NO_MUST_PASS_ONE =
       FilterSupportStatus.newNotSupported(
           "MultiRowRange filters can not be contained in MUST_PASS_ONE FilterLists");
 
   @Override
-  public Filter adapt(FilterAdapterContext context, MultiRowRangeFilter filter)
-      throws IOException {
+  public Filter adapt(FilterAdapterContext context, MultiRowRangeFilter filter) throws IOException {
 
     return FILTERS.pass();
   }
 
   @Override
-  public FilterSupportStatus isFilterSupported(FilterAdapterContext context,
-      MultiRowRangeFilter filter) {
+  public FilterSupportStatus isFilterSupported(
+      FilterAdapterContext context, MultiRowRangeFilter filter) {
 
     // Since this filter only affects the top level row ranges, it can't support arbitrary usage.
     // Specifically, it can't 'or' filter lists. Cases like:
@@ -84,14 +81,11 @@ public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowR
 
     if (startUnbounded && stopUnbounded) {
       return Range.all();
-    }
-    else if (startUnbounded) {
+    } else if (startUnbounded) {
       return Range.upTo(stop, stopboundType);
-    }
-    else if (stopUnbounded) {
+    } else if (stopUnbounded) {
       return Range.downTo(start, startboundType);
-    }
-    else {
+    } else {
       return Range.range(start, startboundType, stop, stopboundType);
     }
   }

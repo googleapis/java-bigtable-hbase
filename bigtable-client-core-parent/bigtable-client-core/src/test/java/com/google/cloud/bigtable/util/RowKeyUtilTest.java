@@ -18,13 +18,11 @@ package com.google.cloud.bigtable.util;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * Created by igorbernstein on 3/7/17.
- */
+/** Created by igorbernstein on 3/7/17. */
 public class RowKeyUtilTest {
 
   @Test
-  public void test_simple()  {
+  public void test_simple() {
     byte[] key = "test".getBytes();
     byte[] nextKey = RowKeyUtil.calculateTheClosestNextRowKeyForPrefix(key);
     Assert.assertEquals((byte) (key[key.length - 1] + 1), nextKey[key.length - 1]);
@@ -32,15 +30,15 @@ public class RowKeyUtilTest {
 
   @Test
   public void test_unsignedRange() {
-    byte[] key = new byte[] { 0x7f };
+    byte[] key = new byte[] {0x7f};
     byte[] nextKey = RowKeyUtil.calculateTheClosestNextRowKeyForPrefix(key);
     Assert.assertEquals((byte) 0x80, nextKey[0]);
   }
 
   @Test
   public void test_trailing0xFF() {
-    byte trailer = (byte)0xFF;
-    byte[] key = new byte[] { 0x01, trailer, trailer, trailer };
+    byte trailer = (byte) 0xFF;
+    byte[] key = new byte[] {0x01, trailer, trailer, trailer};
     byte[] nextKey = RowKeyUtil.calculateTheClosestNextRowKeyForPrefix(key);
     Assert.assertEquals((byte) 0x2, nextKey[0]);
   }

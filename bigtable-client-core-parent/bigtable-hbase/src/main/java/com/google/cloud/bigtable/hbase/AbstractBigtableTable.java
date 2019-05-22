@@ -15,20 +15,35 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.metrics.Timer;
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.ImmutableMap;
 import io.opencensus.common.Scope;
+import io.opencensus.trace.AttributeValue;
+import io.opencensus.trace.Span;
 import io.opencensus.trace.Status;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -57,34 +72,14 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.Descriptors;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.Message;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
-
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
-import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-import com.google.cloud.bigtable.metrics.Timer;
-import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableMap;
-
-import io.opencensus.trace.AttributeValue;
-import io.opencensus.trace.Span;
-import io.opencensus.trace.Tracer;
-import io.opencensus.trace.Tracing;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * <p>BigtableTable class.</p>
- *
- * Scan methods return rows in key order.
+ * BigtableTable class. Scan methods return rows in key order.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -102,8 +97,10 @@ public abstract class AbstractBigtableTable implements Table {
   }
 
   private static void addBatchSizeAnnotation(Collection<?> c) {
-    TRACER.getCurrentSpan().addAnnotation("batchSize",
-      ImmutableMap.of("size", AttributeValue.longAttributeValue(c.size())));
+    TRACER
+        .getCurrentSpan()
+        .addAnnotation(
+            "batchSize", ImmutableMap.of("size", AttributeValue.longAttributeValue(c.size())));
   }
 
   protected final TableName tableName;
@@ -121,8 +118,8 @@ public abstract class AbstractBigtableTable implements Table {
    * @param bigtableConnection a {@link AbstractBigtableConnection} object.
    * @param hbaseAdapter a {@link HBaseRequestAdapter} object.
    */
-  public AbstractBigtableTable(AbstractBigtableConnection bigtableConnection,
-      HBaseRequestAdapter hbaseAdapter) {
+  public AbstractBigtableTable(
+      AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     this.bigtableConnection = bigtableConnection;
     BigtableSession session = bigtableConnection.getSession();
     this.options = session.getOptions();
@@ -146,8 +143,7 @@ public abstract class AbstractBigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
-    try (
-        Scope scope = TRACER.spanBuilder("BigtableTable.getTableDescriptor").startScopedSpan();
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.getTableDescriptor").startScopedSpan();
         Admin admin = this.bigtableConnection.getAdmin()) {
       return admin.getTableDescriptor(tableName);
     }
@@ -158,7 +154,8 @@ public abstract class AbstractBigtableTable implements Table {
   public boolean exists(Get get) throws IOException {
     try (Scope scope = TRACER.spanBuilder("BigtableTable.exists").startScopedSpan()) {
       LOG.trace("exists(Get)");
-      return !convertToResult(getResults(GetAdapter.setCheckExistenceOnly(get), "exists")).isEmpty();
+      return !convertToResult(getResults(GetAdapter.setCheckExistenceOnly(get), "exists"))
+          .isEmpty();
     }
   }
 
@@ -169,7 +166,7 @@ public abstract class AbstractBigtableTable implements Table {
     try (Scope scope = TRACER.spanBuilder("BigtableTable.existsAll").startScopedSpan()) {
       addBatchSizeAnnotation(gets);
       List<Get> existGets = new ArrayList<>(gets.size());
-      for(Get get : gets ){
+      for (Get get : gets) {
         existGets.add(GetAdapter.setCheckExistenceOnly(get));
       }
       return getBatchExecutor().exists(existGets);
@@ -200,8 +197,9 @@ public abstract class AbstractBigtableTable implements Table {
 
   /** {@inheritDoc} */
   @Override
-  public <R> void batchCallback(List<? extends Row> actions, Object[] results,
-      Batch.Callback<R> callback) throws IOException, InterruptedException {
+  public <R> void batchCallback(
+      List<? extends Row> actions, Object[] results, Batch.Callback<R> callback)
+      throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
     try (Scope scope = TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
       addBatchSizeAnnotation(actions);
@@ -231,8 +229,8 @@ public abstract class AbstractBigtableTable implements Table {
       return new Result[0];
     } else if (gets.size() == 1) {
       try {
-        return new Result[] { get(gets.get(0)) };
-      } catch(IOException e) {
+        return new Result[] {get(gets.get(0))};
+      } catch (IOException e) {
         throw createRetriesExhaustedWithDetailsException(e, gets.get(0));
       }
     } else {
@@ -243,10 +241,10 @@ public abstract class AbstractBigtableTable implements Table {
     }
   }
 
-  private RetriesExhaustedWithDetailsException
-      createRetriesExhaustedWithDetailsException(Throwable e, Row action) {
-    return new RetriesExhaustedWithDetailsException(Arrays.asList(e), Arrays.asList(action),
-        Arrays.asList(options.getDataHost().toString()));
+  private RetriesExhaustedWithDetailsException createRetriesExhaustedWithDetailsException(
+      Throwable e, Row action) {
+    return new RetriesExhaustedWithDetailsException(
+        Arrays.asList(e), Arrays.asList(action), Arrays.asList(options.getDataHost().toString()));
   }
 
   /** {@inheritDoc} */
@@ -261,13 +259,13 @@ public abstract class AbstractBigtableTable implements Table {
   private FlatRow getResults(Get get, String method) {
     try (Timer.Context ignored = metrics.getTimer.time()) {
       List<FlatRow> list = clientWrapper.readFlatRowsList(hbaseAdapter.adapt(get));
-      switch(list.size()) {
-      case 0:
-        return null;
-      case 1:
-        return list.get(0);
-      default:
-        throw new IllegalStateException("Multiple responses found for " + method);
+      switch (list.size()) {
+        case 0:
+          return null;
+        case 1:
+          return list.get(0);
+        default:
+          throw new IllegalStateException("Multiple responses found for " + method);
       }
     }
   }
@@ -286,8 +284,8 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("getScanner(Scan)");
     Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow>
-          scanner = clientWrapper.readFlatRows(hbaseAdapter.adapt(scan));
+      com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
+          clientWrapper.readFlatRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
       }
@@ -300,9 +298,7 @@ public abstract class AbstractBigtableTable implements Table {
       span.end();
       throw new IOException(
           makeGenericExceptionMessage(
-              "getScanner",
-              options.getProjectId(),
-              tableName.getQualifierAsString()),
+              "getScanner", options.getProjectId(), tableName.getQualifierAsString()),
           throwable);
     }
   }
@@ -311,7 +307,7 @@ public abstract class AbstractBigtableTable implements Table {
     if (filter instanceof WhileMatchFilter) {
       return true;
     }
- 
+
     if (filter instanceof FilterList) {
       FilterList list = (FilterList) filter;
       for (Filter subFilter : list.getFilters()) {
@@ -372,8 +368,14 @@ public abstract class AbstractBigtableTable implements Table {
 
   /** {@inheritDoc} */
   @Override
-  public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
-      CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
+  public boolean checkAndPut(
+      byte[] row,
+      byte[] family,
+      byte[] qualifier,
+      CompareFilter.CompareOp compareOp,
+      byte[] value,
+      Put put)
+      throws IOException {
     LOG.trace("checkAndPut(byte[], byte[], byte[], CompareOp, value, Put)");
     ConditionalRowMutation request =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
@@ -404,15 +406,21 @@ public abstract class AbstractBigtableTable implements Table {
 
   /** {@inheritDoc} */
   @Override
-  public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value,
-      Delete delete) throws IOException {
+  public boolean checkAndDelete(
+      byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws IOException {
     return checkAndDelete(row, family, qualifier, CompareFilter.CompareOp.EQUAL, value, delete);
   }
 
   /** {@inheritDoc} */
   @Override
-  public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
-      CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
+  public boolean checkAndDelete(
+      byte[] row,
+      byte[] family,
+      byte[] qualifier,
+      CompareFilter.CompareOp compareOp,
+      byte[] value,
+      Delete delete)
+      throws IOException {
     LOG.trace("checkAndDelete(byte[], byte[], byte[], CompareOp, byte[], Delete)");
     ConditionalRowMutation request =
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family)
@@ -427,8 +435,12 @@ public abstract class AbstractBigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public boolean checkAndMutate(
-      final byte [] row, final byte [] family, final byte [] qualifier,
-      final CompareFilter.CompareOp compareOp, final byte [] value, final RowMutations rm)
+      final byte[] row,
+      final byte[] family,
+      final byte[] qualifier,
+      final CompareFilter.CompareOp compareOp,
+      final byte[] value,
+      final RowMutations rm)
       throws IOException {
     LOG.trace("checkAndMutate(byte[], byte[], byte[], CompareOp, byte[], RowMutations)");
 
@@ -527,10 +539,7 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.error("Encountered exception when executing " + type + ".", t);
     return new DoNotRetryIOException(
         makeGenericExceptionMessage(
-            type,
-            options.getProjectId(),
-            tableName.getQualifierAsString(),
-            row),
+            type, options.getProjectId(), tableName.getQualifierAsString(), row),
         t);
   }
 
@@ -539,8 +548,7 @@ public abstract class AbstractBigtableTable implements Table {
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
       throws IOException {
     LOG.trace("incrementColumnValue(byte[], byte[], byte[], long)");
-    try (
-        Scope scope = TRACER.spanBuilder("BigtableTable.incrementColumnValue").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.incrementColumnValue").startScopedSpan()) {
       Increment incr = new Increment(row);
       incr.addColumn(family, qualifier, amount);
       Result result = increment(incr);
@@ -550,10 +558,7 @@ public abstract class AbstractBigtableTable implements Table {
         LOG.error("Failed to find a incremented value in result of increment");
         throw new IOException(
             makeGenericExceptionMessage(
-                "increment",
-                options.getProjectId(),
-                tableName.getQualifierAsString(),
-                row));
+                "increment", options.getProjectId(), tableName.getQualifierAsString(), row));
       }
       return Bytes.toLong(CellUtil.cloneValue(cell));
     }
@@ -561,8 +566,9 @@ public abstract class AbstractBigtableTable implements Table {
 
   /** {@inheritDoc} */
   @Override
-  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount,
-      Durability durability) throws IOException {
+  public long incrementColumnValue(
+      byte[] row, byte[] family, byte[] qualifier, long amount, Durability durability)
+      throws IOException {
     LOG.trace("incrementColumnValue(byte[], byte[], byte[], long, Durability)");
     return incrementColumnValue(row, family, qualifier, amount);
   }
@@ -577,25 +583,31 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public CoprocessorRpcChannel coprocessorService(byte[] row) {
     LOG.error("Unsupported coprocessorService(byte[]) called.");
-    throw new UnsupportedOperationException();  // TODO
+    throw new UnsupportedOperationException(); // TODO
   }
 
   /** {@inheritDoc} */
   @Override
-  public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey,
-      byte[] endKey, Batch.Call<T, R> callable) throws ServiceException, Throwable {
-    LOG.error("Unsupported coprocessorService(Class, byte[], byte[], Batch.Call) called.");
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public <T extends Service, R> void coprocessorService(Class<T> service, byte[] startKey,
-      byte[] endKey, Batch.Call<T, R> callable, Batch.Callback<R> callback)
+  public <T extends Service, R> Map<byte[], R> coprocessorService(
+      Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T, R> callable)
       throws ServiceException, Throwable {
-    LOG.error("Unsupported coprocessorService("
-        + "Class, byte[], byte[], Batch.Call, Batch.Callback) called.");
-    throw new UnsupportedOperationException();  // TODO
+    LOG.error("Unsupported coprocessorService(Class, byte[], byte[], Batch.Call) called.");
+    throw new UnsupportedOperationException(); // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public <T extends Service, R> void coprocessorService(
+      Class<T> service,
+      byte[] startKey,
+      byte[] endKey,
+      Batch.Call<T, R> callable,
+      Batch.Callback<R> callback)
+      throws ServiceException, Throwable {
+    LOG.error(
+        "Unsupported coprocessorService("
+            + "Class, byte[], byte[], Batch.Call, Batch.Callback) called.");
+    throw new UnsupportedOperationException(); // TODO
   }
 
   /** {@inheritDoc} */
@@ -603,7 +615,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public long getWriteBufferSize() {
     LOG.error("Unsupported getWriteBufferSize() called");
-    throw new UnsupportedOperationException();  // TODO
+    throw new UnsupportedOperationException(); // TODO
   }
 
   /** {@inheritDoc} */
@@ -611,27 +623,38 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void setWriteBufferSize(long writeBufferSize) throws IOException {
     LOG.error("Unsupported getWriteBufferSize() called");
-    throw new UnsupportedOperationException();  // TODO
+    throw new UnsupportedOperationException(); // TODO
   }
 
   /** {@inheritDoc} */
   @Override
   public <R extends Message> Map<byte[], R> batchCoprocessorService(
-      Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
-      R r) throws ServiceException, Throwable {
-    LOG.error("Unsupported batchCoprocessorService("
-        + "MethodDescriptor, Message, byte[], byte[], R) called.");
-    throw new UnsupportedOperationException();  // TODO
+      Descriptors.MethodDescriptor methodDescriptor,
+      Message message,
+      byte[] bytes,
+      byte[] bytes2,
+      R r)
+      throws ServiceException, Throwable {
+    LOG.error(
+        "Unsupported batchCoprocessorService("
+            + "MethodDescriptor, Message, byte[], byte[], R) called.");
+    throw new UnsupportedOperationException(); // TODO
   }
 
   /** {@inheritDoc} */
   @Override
   public <R extends Message> void batchCoprocessorService(
-      Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
-      R r, Batch.Callback<R> rCallback) throws ServiceException, Throwable {
-    LOG.error("Unsupported batchCoprocessorService("
-        + "MethodDescriptor, Message, byte[], byte[], R, Batch.Callback<R>) called.");
-    throw new UnsupportedOperationException();  // TODO
+      Descriptors.MethodDescriptor methodDescriptor,
+      Message message,
+      byte[] bytes,
+      byte[] bytes2,
+      R r,
+      Batch.Callback<R> rCallback)
+      throws ServiceException, Throwable {
+    LOG.error(
+        "Unsupported batchCoprocessorService("
+            + "MethodDescriptor, Message, byte[], byte[], R, Batch.Callback<R>) called.");
+    throw new UnsupportedOperationException(); // TODO
   }
 
   /** {@inheritDoc} */
@@ -649,26 +672,18 @@ public abstract class AbstractBigtableTable implements Table {
   static String makeGenericExceptionMessage(String operation, String projectId, String tableName) {
     return String.format(
         "Failed to perform operation. Operation='%s', projectId='%s', tableName='%s'",
-        operation,
-        projectId,
-        tableName);
+        operation, projectId, tableName);
   }
 
   static String makeGenericExceptionMessage(
-      String operation,
-      String projectId,
-      String tableName,
-      byte[] rowKey) {
+      String operation, String projectId, String tableName, byte[] rowKey) {
     return String.format(
         "Failed to perform operation. Operation='%s', projectId='%s', tableName='%s', rowKey='%s'",
-        operation,
-        projectId,
-        tableName,
-        Bytes.toStringBinary(rowKey));
+        operation, projectId, tableName, Bytes.toStringBinary(rowKey));
   }
 
   /**
-   * <p>Getter for the field <code>batchExecutor</code>.</p>
+   * Getter for the field <code>batchExecutor</code>.
    *
    * @return a {@link com.google.cloud.bigtable.hbase.BatchExecutor} object.
    */
@@ -678,7 +693,6 @@ public abstract class AbstractBigtableTable implements Table {
     }
     return batchExecutor;
   }
-
 
   @Override
   public void setOperationTimeout(int i) {

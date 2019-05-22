@@ -23,7 +23,6 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.StatusException;
 
 /**
  * Adds a header ("google-cloud-resource-prefix") that usually contains a fully qualified instance
@@ -39,7 +38,7 @@ public class HeaderInterceptor implements ClientInterceptor {
   private final String defaultValue;
 
   /**
-   * <p>Constructor for GoogleCloudResourcePrefixInterceptor.</p>
+   * Constructor for GoogleCloudResourcePrefixInterceptor.
    *
    * @param defaultValue a {@link String} object.
    */
@@ -50,8 +49,8 @@ public class HeaderInterceptor implements ClientInterceptor {
 
   /** {@inheritDoc} */
   @Override
-  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-      CallOptions callOptions, Channel next) {
+  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+      MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
     return new CheckedForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
       @Override
       protected void checkedStart(Listener<RespT> responseListener, Metadata headers) {
@@ -70,6 +69,7 @@ public class HeaderInterceptor implements ClientInterceptor {
 
   @Override
   public String toString() {
-    return String.format("%s: (key='%s' value='%s')", getClass().getName(), key.name(), defaultValue);
+    return String.format(
+        "%s: (key='%s' value='%s')", getClass().getName(), key.name(), defaultValue);
   }
 }

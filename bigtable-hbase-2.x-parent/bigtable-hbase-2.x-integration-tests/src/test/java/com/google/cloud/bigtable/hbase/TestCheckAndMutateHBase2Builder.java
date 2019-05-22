@@ -15,24 +15,22 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.hbase.CompareOperator;
-import org.apache.hadoop.hbase.client.Table.CheckAndMutateBuilder;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.Table.CheckAndMutateBuilder;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.concurrent.ExecutionException;
-
 @RunWith(JUnit4.class)
 @SuppressWarnings("deprecation")
 public class TestCheckAndMutateHBase2Builder extends AbstractTestCheckAndMutate {
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Override
   protected boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put)
@@ -45,8 +43,9 @@ public class TestCheckAndMutateHBase2Builder extends AbstractTestCheckAndMutate 
   }
 
   @Override
-  protected boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, CompareOp op,
-      byte[] value, Put put) throws Exception {
+  protected boolean checkAndPut(
+      byte[] row, byte[] family, byte[] qualifier, CompareOp op, byte[] value, Put put)
+      throws Exception {
     try {
       return getBuilder(row, family, qualifier, op, value).thenPut(put);
     } catch (ExecutionException e) {
@@ -55,8 +54,8 @@ public class TestCheckAndMutateHBase2Builder extends AbstractTestCheckAndMutate 
   }
 
   @Override
-  protected boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value,
-      Delete delete) throws Exception {
+  protected boolean checkAndDelete(
+      byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws Exception {
     try {
       return getBuilder(row, family, qualifier, CompareOp.EQUAL, value).thenDelete(delete);
     } catch (ExecutionException e) {
@@ -65,8 +64,9 @@ public class TestCheckAndMutateHBase2Builder extends AbstractTestCheckAndMutate 
   }
 
   @Override
-  protected boolean checkAndMutate(byte[] row, byte[] family, byte[] qualifier, CompareOp op,
-      byte[] value, RowMutations rm) throws Exception {
+  protected boolean checkAndMutate(
+      byte[] row, byte[] family, byte[] qualifier, CompareOp op, byte[] value, RowMutations rm)
+      throws Exception {
     try {
       return getBuilder(row, family, qualifier, op, value).thenMutate(rm);
     } catch (ExecutionException e) {
@@ -74,10 +74,10 @@ public class TestCheckAndMutateHBase2Builder extends AbstractTestCheckAndMutate 
     }
   }
 
-  private CheckAndMutateBuilder getBuilder(byte[] row, byte[] family, byte[] qualifier,
-      CompareOp op, byte[] value) throws Exception {
-    CheckAndMutateBuilder builder = getDefaultTable().checkAndMutate(row,family)
-        .qualifier(qualifier);
+  private CheckAndMutateBuilder getBuilder(
+      byte[] row, byte[] family, byte[] qualifier, CompareOp op, byte[] value) throws Exception {
+    CheckAndMutateBuilder builder =
+        getDefaultTable().checkAndMutate(row, family).qualifier(qualifier);
     if (value == null && op != CompareOp.NOT_EQUAL) {
       return builder.ifNotExists();
     } else {

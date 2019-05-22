@@ -17,9 +17,7 @@ package com.google.cloud.bigtable.metrics;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * A registry of metric instances.
- */
+/** A registry of metric instances. */
 public interface MetricRegistry {
   /** Creates a named {@link Counter}. */
   Counter counter(String name);

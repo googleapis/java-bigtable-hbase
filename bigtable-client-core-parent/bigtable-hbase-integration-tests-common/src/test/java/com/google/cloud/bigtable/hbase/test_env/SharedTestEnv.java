@@ -17,18 +17,16 @@ package com.google.cloud.bigtable.hbase.test_env;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import org.apache.hadoop.conf.Configuration;
 
 /**
  * A singleton test environment.
  *
- * This can be either be backed by bigtable or an hbase minicluster. In both cases a minihadoop cluster will be running
- * to submit mapreduce jobs.
+ * <p>This can be either be backed by bigtable or an hbase minicluster. In both cases a minihadoop
+ * cluster will be running to submit mapreduce jobs.
  */
 abstract class SharedTestEnv {
 
@@ -63,8 +61,12 @@ abstract class SharedTestEnv {
   private synchronized void retain() throws Exception {
     refCount++;
     if (refCount == 1) {
-      executor = Executors.newCachedThreadPool(
-        new ThreadFactoryBuilder().setDaemon(true).setNameFormat("shared-test-env-rule").build());
+      executor =
+          Executors.newCachedThreadPool(
+              new ThreadFactoryBuilder()
+                  .setDaemon(true)
+                  .setNameFormat("shared-test-env-rule")
+                  .build());
       setup();
     }
   }

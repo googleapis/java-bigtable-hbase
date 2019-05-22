@@ -17,48 +17,46 @@ package com.google.cloud.bigtable.grpc;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 
-import com.google.api.core.NanoClock;
-import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
-import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.GetSnapshotRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.bigtable.admin.v2.SnapshotTableRequest;
-import com.google.longrunning.Operation;
-import com.google.common.primitives.Ints;
-import java.io.IOException;
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
-import com.google.bigtable.admin.v2.CheckConsistencyRequest;
-import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
-import com.google.common.annotations.VisibleForTesting;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeoutException;
-
+import com.google.api.core.NanoClock;
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
+import com.google.bigtable.admin.v2.CheckConsistencyRequest;
 import com.google.bigtable.admin.v2.CheckConsistencyResponse;
+import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenResponse;
+import com.google.bigtable.admin.v2.GetSnapshotRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
+import com.google.bigtable.admin.v2.Snapshot;
+import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryOperation;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
+import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
-
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
+import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A gRPC client for accessing the Bigtable Table Admin API.
@@ -76,66 +74,83 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   private final BigtableAsyncRpc<ModifyColumnFamiliesRequest, Table> modifyColumnFamilyRpc;
   private final BigtableAsyncRpc<DeleteTableRequest, Empty> deleteTableRpc;
   private final BigtableAsyncRpc<DropRowRangeRequest, Empty> dropRowRangeRpc;
-  private final BigtableAsyncRpc<GenerateConsistencyTokenRequest, GenerateConsistencyTokenResponse> generateConsistencyTokenRpc;
-  private final BigtableAsyncRpc<CheckConsistencyRequest, CheckConsistencyResponse> checkConsistencyRpc;
+  private final BigtableAsyncRpc<GenerateConsistencyTokenRequest, GenerateConsistencyTokenResponse>
+      generateConsistencyTokenRpc;
+  private final BigtableAsyncRpc<CheckConsistencyRequest, CheckConsistencyResponse>
+      checkConsistencyRpc;
 
   private final BigtableAsyncRpc<SnapshotTableRequest, Operation> snapshotTableRpc;
   private final BigtableAsyncRpc<GetSnapshotRequest, Snapshot> getSnapshotRpc;
   private final BigtableAsyncRpc<ListSnapshotsRequest, ListSnapshotsResponse> listSnapshotsRpc;
   private final BigtableAsyncRpc<DeleteSnapshotRequest, Empty> deleteSnapshotRpc;
-  private final BigtableAsyncRpc<CreateTableFromSnapshotRequest, Operation> createTableFromSnapshotRpc;
+  private final BigtableAsyncRpc<CreateTableFromSnapshotRequest, Operation>
+      createTableFromSnapshotRpc;
 
   /**
-   * <p>Constructor for BigtableTableAdminGrpcClient.</p>
+   * Constructor for BigtableTableAdminGrpcClient.
    *
    * @param channel a {@link io.grpc.Channel} object.
    */
-  public BigtableTableAdminGrpcClient(Channel channel,
-      ScheduledExecutorService retryExecutorService, BigtableOptions bigtableOptions) {
+  public BigtableTableAdminGrpcClient(
+      Channel channel,
+      ScheduledExecutorService retryExecutorService,
+      BigtableOptions bigtableOptions) {
     BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
 
     // Read only methods.  These are always retried.
-    this.listTablesRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getListTablesMethod(),
-        Predicates.<ListTablesRequest> alwaysTrue());
-    this.getTableRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getGetTableMethod(),
-        Predicates.<GetTableRequest> alwaysTrue());
+    this.listTablesRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getListTablesMethod(),
+            Predicates.<ListTablesRequest>alwaysTrue());
+    this.getTableRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getGetTableMethod(), Predicates.<GetTableRequest>alwaysTrue());
 
     // Write methods. These are only retried for UNAVAILABLE or UNAUTHORIZED
-    this.createTableRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getCreateTableMethod(),
-        Predicates.<CreateTableRequest> alwaysFalse());
-    this.modifyColumnFamilyRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getModifyColumnFamiliesMethod(),
-        Predicates.<ModifyColumnFamiliesRequest> alwaysFalse());
-    this.deleteTableRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getDeleteTableMethod(),
-        Predicates.<DeleteTableRequest> alwaysFalse());
-    this.dropRowRangeRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getDropRowRangeMethod(),
-        Predicates.<DropRowRangeRequest> alwaysFalse());
-    this.generateConsistencyTokenRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getGenerateConsistencyTokenMethod(),
-        Predicates.<GenerateConsistencyTokenRequest> alwaysFalse());
-    this.checkConsistencyRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getCheckConsistencyMethod(),
-        Predicates.<CheckConsistencyRequest> alwaysFalse());
-    this.snapshotTableRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getSnapshotTableMethod(),
-        Predicates.<SnapshotTableRequest>alwaysFalse());
-    this.getSnapshotRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getGetSnapshotMethod(),
-        Predicates.<GetSnapshotRequest>alwaysTrue());
-    this.listSnapshotsRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getListSnapshotsMethod(),
-        Predicates.<ListSnapshotsRequest>alwaysTrue());
-    this.deleteSnapshotRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getDeleteSnapshotMethod(),
-        Predicates.<DeleteSnapshotRequest>alwaysFalse());
-    this.createTableFromSnapshotRpc = asyncUtilities.createAsyncRpc(
-        BigtableTableAdminGrpc.getCreateTableFromSnapshotMethod(),
-        Predicates.<CreateTableFromSnapshotRequest>alwaysFalse());
+    this.createTableRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getCreateTableMethod(),
+            Predicates.<CreateTableRequest>alwaysFalse());
+    this.modifyColumnFamilyRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getModifyColumnFamiliesMethod(),
+            Predicates.<ModifyColumnFamiliesRequest>alwaysFalse());
+    this.deleteTableRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getDeleteTableMethod(),
+            Predicates.<DeleteTableRequest>alwaysFalse());
+    this.dropRowRangeRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getDropRowRangeMethod(),
+            Predicates.<DropRowRangeRequest>alwaysFalse());
+    this.generateConsistencyTokenRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getGenerateConsistencyTokenMethod(),
+            Predicates.<GenerateConsistencyTokenRequest>alwaysFalse());
+    this.checkConsistencyRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getCheckConsistencyMethod(),
+            Predicates.<CheckConsistencyRequest>alwaysFalse());
+    this.snapshotTableRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getSnapshotTableMethod(),
+            Predicates.<SnapshotTableRequest>alwaysFalse());
+    this.getSnapshotRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getGetSnapshotMethod(),
+            Predicates.<GetSnapshotRequest>alwaysTrue());
+    this.listSnapshotsRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getListSnapshotsMethod(),
+            Predicates.<ListSnapshotsRequest>alwaysTrue());
+    this.deleteSnapshotRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getDeleteSnapshotMethod(),
+            Predicates.<DeleteSnapshotRequest>alwaysFalse());
+    this.createTableFromSnapshotRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getCreateTableFromSnapshotMethod(),
+            Predicates.<CreateTableFromSnapshotRequest>alwaysFalse());
 
     this.retryOptions = bigtableOptions.getRetryOptions();
     this.retryExecutorService = retryExecutorService;
@@ -171,8 +186,11 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     createUnaryListener(request, createTableRpc, request.getParent()).getBlockingResult();
   }
 
-  /** {@inheritDoc}
-   * @return */
+  /**
+   * {@inheritDoc}
+   *
+   * @return
+   */
   @Override
   public ListenableFuture<Table> createTableAsync(CreateTableRequest request) {
     return createUnaryListener(request, createTableRpc, request.getParent()).getAsyncResult();
@@ -185,8 +203,11 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         .getBlockingResult();
   }
 
-  /** {@inheritDoc}
-   * @return */
+  /**
+   * {@inheritDoc}
+   *
+   * @return
+   */
   @Override
   public ListenableFuture<Table> modifyColumnFamilyAsync(ModifyColumnFamiliesRequest request) {
     return createUnaryListener(request, modifyColumnFamilyRpc, request.getName()).getAsyncResult();
@@ -198,8 +219,11 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     createUnaryListener(request, deleteTableRpc, request.getName()).getBlockingResult();
   }
 
-  /** {@inheritDoc}
-   * @return */
+  /**
+   * {@inheritDoc}
+   *
+   * @return
+   */
   @Override
   public ListenableFuture<Empty> deleteTableAsync(DeleteTableRequest request) {
     return createUnaryListener(request, deleteTableRpc, request.getName()).getAsyncResult();
@@ -211,29 +235,34 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     createUnaryListener(request, dropRowRangeRpc, request.getName()).getBlockingResult();
   }
 
-  /** {@inheritDoc}
-   * @return */
+  /**
+   * {@inheritDoc}
+   *
+   * @return
+   */
   @Override
   public ListenableFuture<Empty> dropRowRangeAsync(DropRowRangeRequest request) {
     return createUnaryListener(request, dropRowRangeRpc, request.getName()).getAsyncResult();
   }
 
-
   /** {@inheritDoc} */
   @Override
-  public void waitForReplication(BigtableTableName tableName, long timeout) throws InterruptedException, TimeoutException {
+  public void waitForReplication(BigtableTableName tableName, long timeout)
+      throws InterruptedException, TimeoutException {
     // A backoff that randomizes with an interval of 10s.
-    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
-        .setInitialIntervalMillis(10 * 1000)
-        .setMaxIntervalMillis(10 * 1000)
-        .setMaxElapsedTimeMillis(Ints.checkedCast(timeout * 1000))
-        .build();
+    ExponentialBackOff backOff =
+        new ExponentialBackOff.Builder()
+            .setInitialIntervalMillis(10 * 1000)
+            .setMaxIntervalMillis(10 * 1000)
+            .setMaxElapsedTimeMillis(Ints.checkedCast(timeout * 1000))
+            .build();
 
     waitForReplication(tableName, backOff);
   }
 
   @VisibleForTesting
-  void waitForReplication(BigtableTableName tableName, BackOff backOff) throws InterruptedException, TimeoutException {
+  void waitForReplication(BigtableTableName tableName, BackOff backOff)
+      throws InterruptedException, TimeoutException {
     String token = generateConsistencyToken(tableName);
 
     while (!checkConsistency(tableName, token)) {
@@ -265,10 +294,11 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   }
 
   private boolean checkConsistency(BigtableTableName tableName, String token) {
-    CheckConsistencyRequest request = CheckConsistencyRequest.newBuilder()
-        .setName(tableName.toString())
-        .setConsistencyToken(token)
-        .build();
+    CheckConsistencyRequest request =
+        CheckConsistencyRequest.newBuilder()
+            .setName(tableName.toString())
+            .setConsistencyToken(token)
+            .build();
 
     return createUnaryListener(request, checkConsistencyRpc, request.getName())
         .getBlockingResult()
@@ -279,13 +309,17 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String resource) {
     CallOptions callOptions = CallOptions.DEFAULT;
     Metadata metadata = createMetadata(resource);
-    return new RetryingUnaryOperation<>(retryOptions, request, rpc, callOptions,
-        retryExecutorService, metadata, NanoClock.getDefaultClock());
+    return new RetryingUnaryOperation<>(
+        retryOptions,
+        request,
+        rpc,
+        callOptions,
+        retryExecutorService,
+        metadata,
+        NanoClock.getDefaultClock());
   }
 
-  /**
-   * Creates a {@link Metadata} that contains pertinent headers.
-   */
+  /** Creates a {@link Metadata} that contains pertinent headers. */
   private Metadata createMetadata(String resource) {
     Metadata metadata = new Metadata();
     if (resource != null) {
@@ -293,7 +327,6 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     }
     return metadata;
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -321,7 +354,9 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   /** {@inheritDoc} */
   @Override
-  public ListenableFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request) {
-    return createUnaryListener(request, createTableFromSnapshotRpc, request.getParent()).getAsyncResult();
+  public ListenableFuture<Operation> createTableFromSnapshotAsync(
+      CreateTableFromSnapshotRequest request) {
+    return createUnaryListener(request, createTableFromSnapshotRpc, request.getParent())
+        .getAsyncResult();
   }
 }

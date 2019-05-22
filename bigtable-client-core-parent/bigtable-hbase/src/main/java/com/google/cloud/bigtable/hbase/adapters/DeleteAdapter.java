@@ -19,18 +19,16 @@ import static com.google.cloud.bigtable.data.v2.models.Range.TimestampRange;
 
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.protobuf.ByteString;
-
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 
-import java.util.List;
-import java.util.Map;
-
 /**
- * Adapt a single Delete operation to a Google Cloud Java
- * {@link com.google.cloud.bigtable.data.v2.models.MutationApi}.
+ * Adapt a single Delete operation to a Google Cloud Java {@link
+ * com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -58,8 +56,7 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
   }
 
   static void throwOnUnsupportedDeleteFamilyVersion(Cell cell) {
-    throw new UnsupportedOperationException(
-        "Cannot perform column family deletion at timestamp.");
+    throw new UnsupportedOperationException("Cannot perform column family deletion at timestamp.");
   }
 
   static void throwIfUnsupportedDeleteFamily(Cell cell) {
@@ -89,24 +86,28 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
   static void addDeleteFromColumnMods(
       ByteString familyByteString,
       Cell cell,
-      com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation
-  ) {
+      com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
 
-    ByteString cellQualifierByteString = ByteString.copyFrom(
-        cell.getQualifierArray(),
-        cell.getQualifierOffset(),
-        cell.getQualifierLength());
+    ByteString cellQualifierByteString =
+        ByteString.copyFrom(
+            cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength());
 
     long endTimestamp = TimestampConverter.hbase2bigtable(cell.getTimestamp() + 1);
 
     if (isPointDelete(cell)) {
       // Delete a single cell
       long startTimestamp = TimestampConverter.hbase2bigtable(cell.getTimestamp());
-      mutation.deleteCells(familyByteString.toStringUtf8(), cellQualifierByteString, TimestampRange.create(startTimestamp, endTimestamp));
+      mutation.deleteCells(
+          familyByteString.toStringUtf8(),
+          cellQualifierByteString,
+          TimestampRange.create(startTimestamp, endTimestamp));
     } else {
       // Delete all cells before a timestamp
       if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
-        mutation.deleteCells(familyByteString.toStringUtf8(), cellQualifierByteString, TimestampRange.unbounded().endOpen(endTimestamp));
+        mutation.deleteCells(
+            familyByteString.toStringUtf8(),
+            cellQualifierByteString,
+            TimestampRange.unbounded().endOpen(endTimestamp));
       } else {
         mutation.deleteCells(familyByteString.toStringUtf8(), cellQualifierByteString);
       }
@@ -115,7 +116,8 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
 
   @Override
   /** {@inheritDoc} */
-  public void adapt(Delete operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
+  public void adapt(
+      Delete operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     if (operation.getFamilyCellMap().isEmpty()) {
       throwIfUnsupportedDeleteRow(operation);
 

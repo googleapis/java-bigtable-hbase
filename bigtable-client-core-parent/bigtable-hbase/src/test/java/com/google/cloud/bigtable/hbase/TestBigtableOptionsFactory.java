@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
+import static org.junit.Assert.assertEquals;
 
 import com.google.auth.Credentials;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
-import com.google.cloud.bigtable.config.CredentialOptions;
+import com.google.cloud.bigtable.config.RetryOptions;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,11 +31,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import static org.junit.Assert.assertEquals;
-
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.RetryOptions;
 import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
@@ -45,8 +41,7 @@ public class TestBigtableOptionsFactory {
   public static final String TEST_PROJECT_ID = "project-foo";
   public static final String TEST_INSTANCE_ID = "test-instance";
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
   private Configuration configuration;
 
   @Before
@@ -109,18 +104,14 @@ public class TestBigtableOptionsFactory {
   public void testDefaultRetryOptions() throws IOException {
     RetryOptions retryOptions =
         BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
+    assertEquals(RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES, retryOptions.enableRetries());
     assertEquals(
-      RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES,
-      retryOptions.enableRetries());
-    assertEquals(
-        RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS,
-        retryOptions.getMaxElapsedBackoffMillis());
+        RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, retryOptions.getMaxElapsedBackoffMillis());
     assertEquals(
         RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS,
         retryOptions.getReadPartialRowTimeoutMillis());
     assertEquals(
-        RetryOptions.DEFAULT_MAX_SCAN_TIMEOUT_RETRIES,
-        retryOptions.getMaxScanTimeoutRetries());
+        RetryOptions.DEFAULT_MAX_SCAN_TIMEOUT_RETRIES, retryOptions.getMaxScanTimeoutRetries());
   }
 
   @Test
@@ -151,4 +142,4 @@ public class TestBigtableOptionsFactory {
     Credentials actualCreds = CredentialFactory.getCredentials(options.getCredentialOptions());
     Assert.assertSame(credentials, actualCreds);
   }
- }
+}

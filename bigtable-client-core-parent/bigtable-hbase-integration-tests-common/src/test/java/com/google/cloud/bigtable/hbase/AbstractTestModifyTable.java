@@ -18,28 +18,25 @@ package com.google.cloud.bigtable.hbase;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
 import com.google.common.base.Function;
+import java.io.IOException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public abstract class AbstractTestModifyTable extends AbstractTest {
-  
+
   public static final byte[] COLUMN_FAMILY3 = Bytes.toBytes("COLUMN_FAMILY3");
 
   public void testModifyTable(Function<HTableDescriptor, Void> modifyTable) throws IOException {
     TableName tableName = sharedTestEnv.newTestTableName();
     sharedTestEnv.createTable(tableName);
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       try {
         HTableDescriptor descriptor = new HTableDescriptor(tableName);
         descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY3));

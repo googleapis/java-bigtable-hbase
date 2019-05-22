@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,14 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -34,15 +42,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
 
 public class TestGet extends AbstractTest {
   /**
@@ -72,8 +71,10 @@ public class TestGet extends AbstractTest {
     Assert.assertEquals(numValues, result.size());
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, quals[i]));
-      Assert.assertArrayEquals(values[i],
-          CellUtil.cloneValue(result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, quals[i])));
+      Assert.assertArrayEquals(
+          values[i],
+          CellUtil.cloneValue(
+              result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, quals[i])));
     }
 
     // Cleanup
@@ -82,9 +83,7 @@ public class TestGet extends AbstractTest {
     table.close();
   }
 
-  /**
-   * Requirement 3.3 - Multiple family:qualifiers can be requested for a single row.
-   */
+  /** Requirement 3.3 - Multiple family:qualifiers can be requested for a single row. */
   @Test
   public void testMultipleQualifiers() throws IOException {
     // Initialize variables
@@ -103,7 +102,7 @@ public class TestGet extends AbstractTest {
 
     // Select some, but not all columns, and confirm that's what's returned.
     Get get = new Get(rowKey);
-    int[] colsToSelect = { 0, 2 };
+    int[] colsToSelect = {0, 2};
     for (int i : colsToSelect) {
       get.addColumn(SharedTestEnvRule.COLUMN_FAMILY, quals[i]);
     }
@@ -111,8 +110,10 @@ public class TestGet extends AbstractTest {
     Assert.assertEquals(colsToSelect.length, result.size());
     for (int i : colsToSelect) {
       Assert.assertTrue(result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, quals[i]));
-      Assert.assertArrayEquals(values[i],
-          CellUtil.cloneValue(result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, quals[i])));
+      Assert.assertArrayEquals(
+          values[i],
+          CellUtil.cloneValue(
+              result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, quals[i])));
     }
 
     // Cleanup
@@ -167,9 +168,7 @@ public class TestGet extends AbstractTest {
     table.close();
   }
 
-  /**
-   * Requirement 3.5 - A single timestamp can be specified.
-   */
+  /** Requirement 3.5 - A single timestamp can be specified. */
   @Test
   public void testSingleTimestamp() throws IOException {
     // Initialize variables
@@ -207,9 +206,7 @@ public class TestGet extends AbstractTest {
     table.close();
   }
 
-  /**
-   * Requirement 3.6 - Client can request a maximum # of most recent versions returned.
-   */
+  /** Requirement 3.6 - Client can request a maximum # of most recent versions returned. */
   @Test
   public void testMaxVersions() throws IOException {
     // Initialize data
@@ -253,7 +250,7 @@ public class TestGet extends AbstractTest {
   /**
    * Requirement 3.7 - Specify maximum # of results to return per row, per column family.
    *
-   * Requirement 3.8 - Can specify an offset to skip the first N qualifiers in a column family.
+   * <p>Requirement 3.8 - Can specify an offset to skip the first N qualifiers in a column family.
    */
   @Test
   @Category(KnownGap.class)
@@ -303,9 +300,7 @@ public class TestGet extends AbstractTest {
     table.close();
   }
 
-  /**
-   * Requirement 3.11 - Result can contain empty values. (zero-length byte[]).
-   */
+  /** Requirement 3.11 - Result can contain empty values. (zero-length byte[]). */
   @Test
   public void testEmptyValues() throws IOException {
     // Initialize data
@@ -327,7 +322,8 @@ public class TestGet extends AbstractTest {
     Result result = table.get(get);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(result.containsColumn(SharedTestEnvRule.COLUMN_FAMILY, quals[i]));
-      Assert.assertArrayEquals(new byte[0], result.getValue(SharedTestEnvRule.COLUMN_FAMILY, quals[i]));
+      Assert.assertArrayEquals(
+          new byte[0], result.getValue(SharedTestEnvRule.COLUMN_FAMILY, quals[i]));
     }
 
     // Cleanup
@@ -340,7 +336,7 @@ public class TestGet extends AbstractTest {
    * Requirement 3.12 - Exists tests whether one or more of the row/columns exists, as specified in
    * the Get object.
    *
-   * An OR operation. If multiple columns are in the Get, then only one has to exist.
+   * <p>An OR operation. If multiple columns are in the Get, then only one has to exist.
    */
   @Test
   @Category(KnownGap.class)
@@ -363,7 +359,7 @@ public class TestGet extends AbstractTest {
 
     // Test just keys, both individually and as batch.
     List<Get> gets = new ArrayList<Get>(numValues);
-    for(int i = 0; i < numValues; ++i) {
+    for (int i = 0; i < numValues; ++i) {
       Get get = new Get(rowKeys[i]);
       Assert.assertTrue(table.exists(get));
       gets.add(get);
@@ -376,7 +372,7 @@ public class TestGet extends AbstractTest {
 
     // Test keys and familes, both individually and as batch.
     gets.clear();
-    for(int i = 0; i < numValues; ++i) {
+    for (int i = 0; i < numValues; ++i) {
       Get get = new Get(rowKeys[i]);
       get.addFamily(SharedTestEnvRule.COLUMN_FAMILY);
       Assert.assertTrue(table.exists(get));
@@ -390,7 +386,7 @@ public class TestGet extends AbstractTest {
 
     // Test keys and qualifiers, both individually and as batch.
     gets.clear();
-    for(int i = 0; i < numValues; ++i) {
+    for (int i = 0; i < numValues; ++i) {
       Get get = new Get(rowKeys[i]);
       get.addColumn(SharedTestEnvRule.COLUMN_FAMILY, quals[i]);
       Assert.assertTrue(table.exists(get));
@@ -404,7 +400,7 @@ public class TestGet extends AbstractTest {
 
     // Test bad rows, both individually and as batch
     gets.clear();
-    for(int i = 0; i < numValues; ++i) {
+    for (int i = 0; i < numValues; ++i) {
       Get get = new Get(dataHelper.randomData("badRow-"));
       Assert.assertFalse(table.exists(get));
       gets.add(get);
@@ -417,7 +413,7 @@ public class TestGet extends AbstractTest {
 
     // Test bad column family, both individually and as batch
     gets.clear();
-    for(int i = 0; i < numValues; ++i) {
+    for (int i = 0; i < numValues; ++i) {
       Get get = new Get(rowKeys[i]);
       get.addFamily(dataHelper.randomData("badFamily-"));
       boolean throwsException = false;
@@ -468,9 +464,7 @@ public class TestGet extends AbstractTest {
     }
   }
 
-  /**
-   * Requirement 3.16 - When submitting an array of Get operations, if one fails, they all fail.
-   */
+  /** Requirement 3.16 - When submitting an array of Get operations, if one fails, they all fail. */
   @Test
   public void testOneBadApple() throws IOException {
     // Initialize data
@@ -488,9 +482,7 @@ public class TestGet extends AbstractTest {
 
     // Now add a poison get.
     Get get = new Get(dataHelper.randomData("testRow-"));
-    get.addColumn(
-        dataHelper.randomData("badFamily-"),
-        dataHelper.randomData("qual-"));
+    get.addColumn(dataHelper.randomData("badFamily-"), dataHelper.randomData("qual-"));
     gets.add(get);
 
     boolean throwsException = false;
@@ -505,16 +497,17 @@ public class TestGet extends AbstractTest {
 
   @Test
   public void testReadSpecialCharactersInColumnQualifiers() throws IOException {
-    byte[][] qualifiers = new byte[][] {
-        Bytes.toBytes("}"),
-        Bytes.toBytes("{"),
-        Bytes.toBytes("@"),
-        Bytes.toBytes("}{"),
-        Bytes.toBytes("@}}"),
-        Bytes.toBytes("@@}}"),
-        Bytes.toBytes("@{{"),
-        Bytes.toBytes("@@{{")
-    };
+    byte[][] qualifiers =
+        new byte[][] {
+          Bytes.toBytes("}"),
+          Bytes.toBytes("{"),
+          Bytes.toBytes("@"),
+          Bytes.toBytes("}{"),
+          Bytes.toBytes("@}}"),
+          Bytes.toBytes("@@}}"),
+          Bytes.toBytes("@{{"),
+          Bytes.toBytes("@@{{")
+        };
     byte[][] values = dataHelper.randomData("value-", qualifiers.length);
     byte[] rowKey = dataHelper.randomData("rowKey");
     Table table = getDefaultTable();
@@ -534,7 +527,9 @@ public class TestGet extends AbstractTest {
     Assert.assertEquals(qualifiers.length, result.listCells().size());
 
     for (int i = 0; i < qualifiers.length; i++) {
-      byte[] value = CellUtil.cloneValue(result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifiers[i]));
+      byte[] value =
+          CellUtil.cloneValue(
+              result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qualifiers[i]));
       Assert.assertArrayEquals(values[i], value);
     }
   }
@@ -557,10 +552,14 @@ public class TestGet extends AbstractTest {
         byte[] rowKey = Bytes.toBytes("rowKey");
         Put put = new Put(rowKey);
         for (String family : randomFamilies) {
-          put.addColumn(Bytes.toBytes(family), Bytes.toBytes(UUID.randomUUID().toString()),
-            Bytes.toBytes(UUID.randomUUID().toString()));
-          put.addColumn(Bytes.toBytes(family), Bytes.toBytes(UUID.randomUUID().toString()),
-            Bytes.toBytes(UUID.randomUUID().toString()));
+          put.addColumn(
+              Bytes.toBytes(family),
+              Bytes.toBytes(UUID.randomUUID().toString()),
+              Bytes.toBytes(UUID.randomUUID().toString()));
+          put.addColumn(
+              Bytes.toBytes(family),
+              Bytes.toBytes(UUID.randomUUID().toString()),
+              Bytes.toBytes(UUID.randomUUID().toString()));
         }
         table.put(put);
         Result result = table.get(new Get(rowKey));

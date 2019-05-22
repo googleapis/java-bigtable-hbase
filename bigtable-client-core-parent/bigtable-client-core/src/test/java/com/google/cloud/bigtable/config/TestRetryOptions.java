@@ -15,19 +15,17 @@
  */
 package com.google.cloud.bigtable.config;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Status;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-/**
- * Unit tests for {@link RetryOptions}.
- */
+/** Unit tests for {@link RetryOptions}. */
 @RunWith(JUnit4.class)
 public class TestRetryOptions {
 
@@ -47,8 +45,7 @@ public class TestRetryOptions {
     assertTrue(options.isRetryable(Status.UNAVAILABLE.getCode()));
     assertTrue(options.isRetryable(Status.ABORTED.getCode()));
     assertFalse(options.isRetryable(Status.FAILED_PRECONDITION.getCode()));
-    assertEquals(
-        retryOnDeadlineExceeded, options.isRetryable(Status.DEADLINE_EXCEEDED.getCode()));
+    assertEquals(retryOnDeadlineExceeded, options.isRetryable(Status.DEADLINE_EXCEEDED.getCode()));
   }
 
   @Test

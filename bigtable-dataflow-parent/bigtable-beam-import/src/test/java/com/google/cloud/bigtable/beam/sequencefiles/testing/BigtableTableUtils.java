@@ -31,8 +31,8 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 
 /**
- * Helper for creating, deleting and reading a Cloud Bigtable during tests. Each instance manages
- * a specific table.
+ * Helper for creating, deleting and reading a Cloud Bigtable during tests. Each instance manages a
+ * specific table.
  */
 public class BigtableTableUtils implements AutoCloseable {
   private static final int MAX_VERSISON = 50;
@@ -42,8 +42,8 @@ public class BigtableTableUtils implements AutoCloseable {
   private final TableName tableName;
   private final String[] columnFamilyNames;
 
-  public BigtableTableUtils(
-      Connection connection, String tableName, String ...columnFamilyNames) throws IOException {
+  public BigtableTableUtils(Connection connection, String tableName, String... columnFamilyNames)
+      throws IOException {
     this.connection = connection;
     this.admin = connection.getAdmin();
     this.tableName = TableName.valueOf(tableName);
@@ -51,8 +51,8 @@ public class BigtableTableUtils implements AutoCloseable {
   }
 
   /**
-   * Creates an empty table with column families specified by {@code columnFamilyNames}.
-   * If table already exists, it is removed and recreated.
+   * Creates an empty table with column families specified by {@code columnFamilyNames}. If table
+   * already exists, it is removed and recreated.
    */
   public void createEmptyTable() throws IOException {
     if (admin.tableExists(tableName)) {
@@ -75,9 +75,7 @@ public class BigtableTableUtils implements AutoCloseable {
     }
   }
 
-  /**
-   * Returns true if table already exists.
-   */
+  /** Returns true if table already exists. */
   public boolean isTableExists() throws IOException {
     return admin.tableExists(tableName);
   }
@@ -86,9 +84,7 @@ public class BigtableTableUtils implements AutoCloseable {
     return connection;
   }
 
-  /**
-   * Drops the table.
-   */
+  /** Drops the table. */
   @Override
   public void close() throws IOException {
     if (admin.tableExists(tableName)) {
@@ -98,8 +94,8 @@ public class BigtableTableUtils implements AutoCloseable {
   }
 
   /**
-   * Returns the content of the table as a {@link Set} of {@link Cell}s. This is only suitable
-   * for small tables.
+   * Returns the content of the table as a {@link Set} of {@link Cell}s. This is only suitable for
+   * small tables.
    */
   public Set<? extends Cell> readAllCellsFromTable() throws IOException {
     Table table = connection.getTable(tableName);

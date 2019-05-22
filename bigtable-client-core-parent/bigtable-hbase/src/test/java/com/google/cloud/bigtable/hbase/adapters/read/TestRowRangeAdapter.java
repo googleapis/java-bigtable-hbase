@@ -59,14 +59,13 @@ public class TestRowRangeAdapter {
   @Test
   public void testSingleKeyRowSet() {
     ByteString key = ByteString.copyFromUtf8("myKey");
-    RowSet in = RowSet.newBuilder()
-        .addRowKeys(key)
-        .build();
+    RowSet in = RowSet.newBuilder().addRowKeys(key).build();
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.closed(new RowKeyWrapper(key), new RowKeyWrapper(key)))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.closed(new RowKeyWrapper(key), new RowKeyWrapper(key)))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -78,18 +77,16 @@ public class TestRowRangeAdapter {
     ByteString key1 = ByteString.copyFromUtf8("myKey");
     ByteString key2 = ByteString.copyFromUtf8("otherKey");
 
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setStartKeyClosed(key1)
-                .setEndKeyClosed(key2)
-        )
-        .build();
+    RowSet in =
+        RowSet.newBuilder()
+            .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key1).setEndKeyClosed(key2))
+            .build();
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.closed(new RowKeyWrapper(key1), new RowKeyWrapper(key2)))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.closed(new RowKeyWrapper(key1), new RowKeyWrapper(key2)))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -101,18 +98,16 @@ public class TestRowRangeAdapter {
     ByteString key1 = ByteString.copyFromUtf8("myKey");
     ByteString key2 = ByteString.copyFromUtf8("otherKey");
 
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setStartKeyOpen(key1)
-                .setEndKeyOpen(key2)
-        )
-        .build();
+    RowSet in =
+        RowSet.newBuilder()
+            .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyOpen(key2))
+            .build();
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.open(new RowKeyWrapper(key1), new RowKeyWrapper(key2)))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.open(new RowKeyWrapper(key1), new RowKeyWrapper(key2)))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -124,18 +119,16 @@ public class TestRowRangeAdapter {
     ByteString key1 = ByteString.copyFromUtf8("myKey");
     ByteString key2 = ByteString.copyFromUtf8("otherKey");
 
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setStartKeyOpen(key1)
-                .setEndKeyClosed(key2)
-        )
-        .build();
+    RowSet in =
+        RowSet.newBuilder()
+            .addRowRanges(RowRange.newBuilder().setStartKeyOpen(key1).setEndKeyClosed(key2))
+            .build();
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.openClosed(new RowKeyWrapper(key1), new RowKeyWrapper(key2)))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.openClosed(new RowKeyWrapper(key1), new RowKeyWrapper(key2)))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -147,18 +140,16 @@ public class TestRowRangeAdapter {
     ByteString key1 = ByteString.copyFromUtf8("myKey");
     ByteString key2 = ByteString.copyFromUtf8("otherKey");
 
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setStartKeyClosed(key1)
-                .setEndKeyOpen(key2)
-        )
-        .build();
+    RowSet in =
+        RowSet.newBuilder()
+            .addRowRanges(RowRange.newBuilder().setStartKeyClosed(key1).setEndKeyOpen(key2))
+            .build();
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.closedOpen(new RowKeyWrapper(key1), new RowKeyWrapper(key2)))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.closedOpen(new RowKeyWrapper(key1), new RowKeyWrapper(key2)))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -167,15 +158,12 @@ public class TestRowRangeAdapter {
 
   @Test
   public void testAllRowSet() {
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(RowRange.newBuilder())
-        .build();
+    RowSet in = RowSet.newBuilder().addRowRanges(RowRange.newBuilder()).build();
 
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.<RowKeyWrapper>all())
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder().add(Range.<RowKeyWrapper>all()).build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -184,18 +172,17 @@ public class TestRowRangeAdapter {
 
   @Test
   public void testAllRowSet2() {
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setStartKeyClosed(ByteString.EMPTY)
-                .setEndKeyOpen(ByteString.EMPTY)
-        )
-        .build();
+    RowSet in =
+        RowSet.newBuilder()
+            .addRowRanges(
+                RowRange.newBuilder()
+                    .setStartKeyClosed(ByteString.EMPTY)
+                    .setEndKeyOpen(ByteString.EMPTY))
+            .build();
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.<RowKeyWrapper>all())
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder().add(Range.<RowKeyWrapper>all()).build();
 
     assertEquals(expected, out);
     // NOTE: this isn't symmetrical, ['','') is converted to its canonical form of unset bounds
@@ -205,18 +192,15 @@ public class TestRowRangeAdapter {
   public void testGreaterThan() {
     ByteString key = ByteString.copyFromUtf8("hi");
 
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setStartKeyOpen(key)
-        )
-        .build();
+    RowSet in =
+        RowSet.newBuilder().addRowRanges(RowRange.newBuilder().setStartKeyOpen(key)).build();
 
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.greaterThan(new RowKeyWrapper(key)))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.greaterThan(new RowKeyWrapper(key)))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -227,18 +211,15 @@ public class TestRowRangeAdapter {
   public void testGreaterOrEqThan() {
     ByteString key = ByteString.copyFromUtf8("hi");
 
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setStartKeyClosed(key)
-        )
-        .build();
+    RowSet in =
+        RowSet.newBuilder().addRowRanges(RowRange.newBuilder().setStartKeyClosed(key)).build();
 
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.atLeast(new RowKeyWrapper(key)))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.atLeast(new RowKeyWrapper(key)))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -249,18 +230,14 @@ public class TestRowRangeAdapter {
   public void testLesserThan() {
     ByteString key = ByteString.copyFromUtf8("hi");
 
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setEndKeyOpen(key)
-        )
-        .build();
+    RowSet in = RowSet.newBuilder().addRowRanges(RowRange.newBuilder().setEndKeyOpen(key)).build();
 
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.lessThan(new RowKeyWrapper(key)))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.lessThan(new RowKeyWrapper(key)))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -271,18 +248,15 @@ public class TestRowRangeAdapter {
   public void testLesserOrEqThan() {
     ByteString key = ByteString.copyFromUtf8("hi");
 
-    RowSet in = RowSet.newBuilder()
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setEndKeyClosed(key)
-        )
-        .build();
+    RowSet in =
+        RowSet.newBuilder().addRowRanges(RowRange.newBuilder().setEndKeyClosed(key)).build();
 
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.atMost(new RowKeyWrapper(key)))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.atMost(new RowKeyWrapper(key)))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);
@@ -291,38 +265,31 @@ public class TestRowRangeAdapter {
 
   @Test
   public void testMultipleDisjoint() {
-    RowSet in = RowSet.newBuilder()
-        .addRowKeys(ByteString.copyFromUtf8("point1"))
-        .addRowKeys(ByteString.copyFromUtf8("point2"))
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setEndKeyClosed(ByteString.copyFromUtf8("b"))
-        )
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setStartKeyClosed(ByteString.copyFromUtf8("c"))
-                .setEndKeyClosed(ByteString.copyFromUtf8("d"))
-        )
-        .addRowRanges(
-            RowRange.newBuilder()
-                .setStartKeyOpen(ByteString.copyFromUtf8("y"))
-        )
-        .build();
+    RowSet in =
+        RowSet.newBuilder()
+            .addRowKeys(ByteString.copyFromUtf8("point1"))
+            .addRowKeys(ByteString.copyFromUtf8("point2"))
+            .addRowRanges(RowRange.newBuilder().setEndKeyClosed(ByteString.copyFromUtf8("b")))
+            .addRowRanges(
+                RowRange.newBuilder()
+                    .setStartKeyClosed(ByteString.copyFromUtf8("c"))
+                    .setEndKeyClosed(ByteString.copyFromUtf8("d")))
+            .addRowRanges(RowRange.newBuilder().setStartKeyOpen(ByteString.copyFromUtf8("y")))
+            .build();
 
     RangeSet<RowKeyWrapper> out = adapter.rowSetToRangeSet(in);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.singleton(new RowKeyWrapper(ByteString.copyFromUtf8("point1"))))
-        .add(Range.singleton(new RowKeyWrapper(ByteString.copyFromUtf8("point2"))))
-        .add(Range.atMost(new RowKeyWrapper(ByteString.copyFromUtf8("b"))))
-        .add(
-            Range.closed(
-                new RowKeyWrapper(ByteString.copyFromUtf8("c")),
-                new RowKeyWrapper(ByteString.copyFromUtf8("d"))
-            )
-        )
-        .add(Range.greaterThan(new RowKeyWrapper(ByteString.copyFromUtf8("y"))))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(Range.singleton(new RowKeyWrapper(ByteString.copyFromUtf8("point1"))))
+            .add(Range.singleton(new RowKeyWrapper(ByteString.copyFromUtf8("point2"))))
+            .add(Range.atMost(new RowKeyWrapper(ByteString.copyFromUtf8("b"))))
+            .add(
+                Range.closed(
+                    new RowKeyWrapper(ByteString.copyFromUtf8("c")),
+                    new RowKeyWrapper(ByteString.copyFromUtf8("d"))))
+            .add(Range.greaterThan(new RowKeyWrapper(ByteString.copyFromUtf8("y"))))
+            .build();
 
     assertEquals(expected, out);
     adapter.rangeSetToByteStringRange(out, query);

@@ -16,14 +16,14 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.cloud.bigtable.util.ThreadUtil;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * This class contains executors and other thread pool related resources that can be reused across a
- * few {@link com.google.cloud.bigtable.grpc.BigtableSession}s.  All executors are automatically expand if there is higher use.
+ * few {@link com.google.cloud.bigtable.grpc.BigtableSession}s. All executors are automatically
+ * expand if there is higher use.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -48,38 +48,36 @@ public class BigtableSessionSharedThreadPools {
     return INSTANCE;
   }
 
-  /**
-   * This is used to do i/o work.
-   */
+  /** This is used to do i/o work. */
   protected ExecutorService batchThreadPool;
 
-  /**
-   * Used for a few cases that benefit from retries, such as puts, gets and scans.
-   */
+  /** Used for a few cases that benefit from retries, such as puts, gets and scans. */
   protected ScheduledExecutorService retryExecutor;
 
   /**
-   * <p>Getter for the field <code>batchThreadPool</code>.</p>
+   * Getter for the field <code>batchThreadPool</code>.
    *
    * @return a {@link java.util.concurrent.ExecutorService} object.
    */
   public synchronized ExecutorService getBatchThreadPool() {
     if (batchThreadPool == null) {
-      batchThreadPool = Executors
-          .newCachedThreadPool(ThreadUtil.getThreadFactory(BATCH_POOL_THREAD_NAME_PATTERN, true));
+      batchThreadPool =
+          Executors.newCachedThreadPool(
+              ThreadUtil.getThreadFactory(BATCH_POOL_THREAD_NAME_PATTERN, true));
     }
     return batchThreadPool;
   }
 
   /**
-   * <p>Getter for the field <code>retryExecutor</code>.</p>
+   * Getter for the field <code>retryExecutor</code>.
    *
    * @return a {@link java.util.concurrent.ScheduledExecutorService} object.
    */
   public synchronized ScheduledExecutorService getRetryExecutor() {
     if (retryExecutor == null) {
-      retryExecutor = Executors.newScheduledThreadPool(RETRY_THREAD_COUNT,
-          ThreadUtil.getThreadFactory(RETRY_THREADPOOL_NAME_PATTERN, true));
+      retryExecutor =
+          Executors.newScheduledThreadPool(
+              RETRY_THREAD_COUNT, ThreadUtil.getThreadFactory(RETRY_THREADPOOL_NAME_PATTERN, true));
     }
     return retryExecutor;
   }

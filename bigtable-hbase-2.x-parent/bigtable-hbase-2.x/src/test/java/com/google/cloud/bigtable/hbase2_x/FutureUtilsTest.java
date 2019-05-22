@@ -15,36 +15,34 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import org.hamcrest.core.IsInstanceOf;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.hamcrest.core.IsInstanceOf;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 /**
  * Unit tests for {@link FutureUtils}
- * 
+ *
  * @author spollapally
  */
 public class FutureUtilsTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testFailedFuture() throws Exception {
@@ -64,15 +62,18 @@ public class FutureUtilsTest {
   public void testToCompletableFuture() throws Exception {
     String result = "Result";
 
-    ListeningExecutorService service = MoreExecutors
-        .listeningDecorator(BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
+    ListeningExecutorService service =
+        MoreExecutors.listeningDecorator(
+            BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
 
-    ListenableFuture<String> listenableFuture = service.submit(new Callable<String>() {
-      public String call() throws Exception {
-        Thread.sleep(1000);
-        return result;
-      }
-    });
+    ListenableFuture<String> listenableFuture =
+        service.submit(
+            new Callable<String>() {
+              public String call() throws Exception {
+                Thread.sleep(1000);
+                return result;
+              }
+            });
 
     CompletableFuture<String> completableFuture = FutureUtils.toCompletableFuture(listenableFuture);
     assertFalse("Should be in progress", completableFuture.isDone());
@@ -89,14 +90,17 @@ public class FutureUtilsTest {
 
   @Test
   public void testToCompletableFuture_exception() throws Exception {
-    ListeningExecutorService service = MoreExecutors
-        .listeningDecorator(BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
+    ListeningExecutorService service =
+        MoreExecutors.listeningDecorator(
+            BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
 
-    ListenableFuture<String> listenableFuture = service.submit(new Callable<String>() {
-      public String call() throws Exception {
-        throw new IllegalStateException("Test failed feature");
-      }
-    });
+    ListenableFuture<String> listenableFuture =
+        service.submit(
+            new Callable<String>() {
+              public String call() throws Exception {
+                throw new IllegalStateException("Test failed feature");
+              }
+            });
 
     CompletableFuture<String> completableFuture = FutureUtils.toCompletableFuture(listenableFuture);
 

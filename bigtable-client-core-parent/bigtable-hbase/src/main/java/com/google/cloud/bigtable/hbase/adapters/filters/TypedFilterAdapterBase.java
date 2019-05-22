@@ -21,10 +21,7 @@ import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import org.apache.hadoop.hbase.filter.Filter;
 
-
-/**
- * Base functionality for all filter adapters
- */
+/** Base functionality for all filter adapters */
 public abstract class TypedFilterAdapterBase<S extends Filter> implements TypedFilterAdapter<S> {
 
   @Override

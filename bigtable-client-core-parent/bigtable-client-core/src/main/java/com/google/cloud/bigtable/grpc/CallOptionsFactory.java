@@ -15,20 +15,19 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import java.util.concurrent.TimeUnit;
-
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
-
 import io.grpc.CallOptions;
 import io.grpc.Context;
 import io.grpc.Deadline;
 import io.grpc.MethodDescriptor;
+import java.util.concurrent.TimeUnit;
 
 /**
- * A factory that creates {@link io.grpc.CallOptions} for use in {@link com.google.cloud.bigtable.grpc.BigtableDataClient} RPCs.
+ * A factory that creates {@link io.grpc.CallOptions} for use in {@link
+ * com.google.cloud.bigtable.grpc.BigtableDataClient} RPCs.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -36,29 +35,30 @@ import io.grpc.MethodDescriptor;
 public interface CallOptionsFactory {
 
   /**
-   * Provide a {@link io.grpc.CallOptions} object to be used in a single RPC. {@link io.grpc.CallOptions} can
-   * contain state, specifically start time with an expiration is set; in cases when timeouts are
-   * used, implementations should create a new CallOptions each time this method is called.
+   * Provide a {@link io.grpc.CallOptions} object to be used in a single RPC. {@link
+   * io.grpc.CallOptions} can contain state, specifically start time with an expiration is set; in
+   * cases when timeouts are used, implementations should create a new CallOptions each time this
+   * method is called.
    *
    * @param descriptor The RPC that's being called. Different methods have different performance
-   *          characteristics, so this parameter can be useful to craft the right timeout for the
-   *          right method.
+   *     characteristics, so this parameter can be useful to craft the right timeout for the right
+   *     method.
    * @param request Some methods, specifically ReadRows, can have variability depending on the
-   *          request. The request can be for either a single row, or a range. This parameter can be
-   *          used to tune timeouts
+   *     request. The request can be for either a single row, or a range. This parameter can be used
+   *     to tune timeouts
    * @param <RequestT> a RequestT object.
    * @return a {@link io.grpc.CallOptions} object.
    */
   <RequestT> CallOptions create(MethodDescriptor<RequestT, ?> descriptor, RequestT request);
 
   /**
-   * Returns {@link CallOptions#DEFAULT} with any {@link Context#current()}'s {@link Context#getDeadline()}
-   *  applied to it.
+   * Returns {@link CallOptions#DEFAULT} with any {@link Context#current()}'s {@link
+   * Context#getDeadline()} applied to it.
    */
   public static class Default implements CallOptionsFactory {
     @Override
-    public <RequestT> CallOptions create(MethodDescriptor<RequestT, ?> descriptor,
-        RequestT request) {
+    public <RequestT> CallOptions create(
+        MethodDescriptor<RequestT, ?> descriptor, RequestT request) {
       Deadline contextDeadline = Context.current().getDeadline();
       if (contextDeadline != null) {
         return CallOptions.DEFAULT.withDeadline(contextDeadline);
@@ -78,20 +78,23 @@ public interface CallOptionsFactory {
 
     @Override
     /**
-     * Creates a {@link CallOptions} with a focus on {@link Deadlines}.  Deadlines are decided in the following order:
-     * <ol>
-     *     <li> If a user set a  {@link Context} deadline (see {@link Context#getDeadline()}), use that</li>
-     *     <li> If a user configured deadlines via {@link CallOptionsConfig}, use it.</li>
-     *     <li> Otherwise, use {@link CallOptions#DEFAULT}.</li>
-     * </ol>
+     * Creates a {@link CallOptions} with a focus on {@link Deadlines}. Deadlines are decided in the
+     * following order:
      *
+     * <ol>
+     *   <li>If a user set a {@link Context} deadline (see {@link Context#getDeadline()}), use that
+     *   <li>If a user configured deadlines via {@link CallOptionsConfig}, use it.
+     *   <li>Otherwise, use {@link CallOptions#DEFAULT}.
+     * </ol>
      */
-    public <RequestT> CallOptions create(MethodDescriptor<RequestT, ?> descriptor, RequestT request) {
+    public <RequestT> CallOptions create(
+        MethodDescriptor<RequestT, ?> descriptor, RequestT request) {
       Deadline contextDeadline = Context.current().getDeadline();
       if (contextDeadline != null) {
         return CallOptions.DEFAULT.withDeadline(contextDeadline);
       } else if (config.isUseTimeout() && request != null) {
-        int timeout = isLongRequest(request) ? config.getLongRpcTimeoutMs() : config.getShortRpcTimeoutMs();
+        int timeout =
+            isLongRequest(request) ? config.getLongRpcTimeoutMs() : config.getShortRpcTimeoutMs();
         return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
       } else {
         return CallOptions.DEFAULT;
@@ -101,7 +104,7 @@ public interface CallOptionsFactory {
     /**
      * @param request
      * @return true if this is a {@link MutateRowsRequest} or a {@link ReadRowsRequest} that's a
-     *         scan.
+     *     scan.
      */
     public static boolean isLongRequest(Object request) {
       if (request instanceof ReadRowsRequest) {

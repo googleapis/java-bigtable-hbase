@@ -35,37 +35,43 @@ public class TestModifyTableBuilder {
   private static final String COLUMN_FAMILY = "myColumnFamily";
 
   @Test
-  public void testBuildModificationForAddFamily(){
+  public void testBuildModificationForAddFamily() {
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     HColumnDescriptor addColumn = new HColumnDescriptor(COLUMN_FAMILY);
     tableDescriptor.addFamily(addColumn);
-    ModifyTableBuilder actualRequest = ModifyTableBuilder
-        .buildModifications(tableDescriptor, new HTableDescriptor(TableName.valueOf(TABLE_ID)));
+    ModifyTableBuilder actualRequest =
+        ModifyTableBuilder.buildModifications(
+            tableDescriptor, new HTableDescriptor(TableName.valueOf(TABLE_ID)));
 
-    ModifyColumnFamiliesRequest expectedRequest = ModifyColumnFamiliesRequest.of(TABLE_ID)
-        .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
+    ModifyColumnFamiliesRequest expectedRequest =
+        ModifyColumnFamiliesRequest.of(TABLE_ID)
+            .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
 
-    Assert.assertEquals(expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+    Assert.assertEquals(
+        expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
         actualRequest.build().toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
-  public void testBuildModificationForUpdateFamily(){
+  public void testBuildModificationForUpdateFamily() {
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     HColumnDescriptor addColumn = new HColumnDescriptor(COLUMN_FAMILY);
     tableDescriptor.addFamily(addColumn);
-    ModifyTableBuilder actualRequest = ModifyTableBuilder
-        .buildModifications(tableDescriptor, new HTableDescriptor(tableDescriptor));
+    ModifyTableBuilder actualRequest =
+        ModifyTableBuilder.buildModifications(
+            tableDescriptor, new HTableDescriptor(tableDescriptor));
 
-    ModifyColumnFamiliesRequest expectedRequest = ModifyColumnFamiliesRequest.of(TABLE_ID)
-        .updateFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
+    ModifyColumnFamiliesRequest expectedRequest =
+        ModifyColumnFamiliesRequest.of(TABLE_ID)
+            .updateFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn));
 
-    Assert.assertEquals(expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+    Assert.assertEquals(
+        expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
         actualRequest.build().toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
-  public void testBuildModificationForDropFamily(){
+  public void testBuildModificationForDropFamily() {
     final String NEW_COLUMN_FAMILY = "anotherColumnFamily";
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     HColumnDescriptor addColumn = new HColumnDescriptor(COLUMN_FAMILY);
@@ -77,11 +83,13 @@ public class TestModifyTableBuilder {
     ModifyTableBuilder actualRequest =
         ModifyTableBuilder.buildModifications(tableDescriptor, newTableDesc);
 
-    ModifyColumnFamiliesRequest expectedRequest = ModifyColumnFamiliesRequest.of(TABLE_ID)
-        .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn))
-        .dropFamily(NEW_COLUMN_FAMILY);
+    ModifyColumnFamiliesRequest expectedRequest =
+        ModifyColumnFamiliesRequest.of(TABLE_ID)
+            .addFamily(COLUMN_FAMILY, buildGarbageCollectionRule(addColumn))
+            .dropFamily(NEW_COLUMN_FAMILY);
 
-    Assert.assertEquals(expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+    Assert.assertEquals(
+        expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
         actualRequest.build().toProto(PROJECT_ID, INSTANCE_ID));
   }
 }

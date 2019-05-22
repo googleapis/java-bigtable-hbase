@@ -11,7 +11,7 @@ public class BigtableVersionInfo {
   public static final String CLIENT_VERSION = getVersion();
   public static final String JDK_VERSION = getJavaVersion();
 
-  public static final String CORE_USER_AGENT = "bigtable-" + CLIENT_VERSION +",jdk-" + JDK_VERSION;
+  public static final String CORE_USER_AGENT = "bigtable-" + CLIENT_VERSION + ",jdk-" + JDK_VERSION;
 
   /**
    * Gets user agent from bigtable-version.properties. Returns a default dev user agent with current
@@ -21,8 +21,7 @@ public class BigtableVersionInfo {
     final String defaultVersion = "dev-" + System.currentTimeMillis();
     final String fileName = "bigtable-version.properties";
     final String versionProperty = "bigtable.version";
-    try (InputStream stream =
-        BigtableVersionInfo.class.getResourceAsStream(fileName)) {
+    try (InputStream stream = BigtableVersionInfo.class.getResourceAsStream(fileName)) {
       if (stream == null) {
         LOG.error("Could not load properties file bigtable-version.properties");
         return defaultVersion;
@@ -33,7 +32,7 @@ public class BigtableVersionInfo {
       String value = properties.getProperty(versionProperty);
       if (value == null) {
         LOG.error("%s not found in %s.", versionProperty, fileName);
-      } else if (value.startsWith("$")){
+      } else if (value.startsWith("$")) {
         LOG.info("%s property is not replaced.", versionProperty);
       } else {
         return value;
@@ -44,9 +43,7 @@ public class BigtableVersionInfo {
     return defaultVersion;
   }
 
-  /**
-   * @return The java specification version; for example, 1.7 or 1.8.
-   */
+  /** @return The java specification version; for example, 1.7 or 1.8. */
   private static String getJavaVersion() {
     return System.getProperty("java.specification.version");
   }

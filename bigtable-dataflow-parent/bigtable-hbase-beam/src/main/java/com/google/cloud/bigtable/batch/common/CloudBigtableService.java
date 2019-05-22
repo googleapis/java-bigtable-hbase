@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.batch.common;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
-
 import java.io.IOException;
 import java.util.List;
 

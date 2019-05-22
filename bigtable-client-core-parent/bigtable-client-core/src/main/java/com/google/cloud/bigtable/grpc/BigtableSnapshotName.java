@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.common.base.Preconditions;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,8 +43,8 @@ public class BigtableSnapshotName {
   }
 
   /**
-   * Returns the fully qualified Snapshot name. This method returns the same result as
-   * {@link #getSnapshotName()}.
+   * Returns the fully qualified Snapshot name. This method returns the same result as {@link
+   * #getSnapshotName()}.
    */
   @Override
   public String toString() {
@@ -54,8 +53,8 @@ public class BigtableSnapshotName {
 
   /**
    * @return The id of the instance that contains this cluster. It's the second group in the
-   *         Snapshot name:
-   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
+   *     Snapshot name:
+   *     "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
    */
   public String getInstanceId() {
     return instanceId;
@@ -63,7 +62,7 @@ public class BigtableSnapshotName {
 
   /**
    * @return The id of this cluster. It's the third group in the Snapshot name:
-   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
+   *     "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
    */
   public String getClusterId() {
     return clusterId;
@@ -71,7 +70,7 @@ public class BigtableSnapshotName {
 
   /**
    * @return The id of this snapshot. It's the fourth group in the Snapshot name:
-   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
+   *     "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
    */
   public String getSnapshotId() {
     return snapshotId;
@@ -79,7 +78,7 @@ public class BigtableSnapshotName {
 
   /**
    * @return The name of this snapshot. It will look like the following
-   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
+   *     "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
    */
   public String getSnapshotName() {
     return snapshotName;

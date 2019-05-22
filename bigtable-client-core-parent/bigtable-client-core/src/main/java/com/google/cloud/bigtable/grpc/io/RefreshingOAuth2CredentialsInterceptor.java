@@ -30,23 +30,20 @@ import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Client interceptor that authenticates all calls by binding header data provided by a credential.
  * Typically this will populate the Authorization header but other headers may also be filled out.
- * <p>
- * Uses the new and simplified Google auth library:
+ *
+ * <p>Uses the new and simplified Google auth library:
  * https://github.com/google/google-auth-library-java
- * </p>
- * <p>
- * TODO: COPIED FROM io.grpc.auth.ClientAuthInterceptor. The logic added here for initialization and
- * locking could be moved back to gRPC. This implementation takes advantage of the fact that all of
- * the Bigtable endpoints are OAuth2 based. It uses the OAuth AccessToken to get the token value and
- * next refresh time. The refresh is scheduled asynchronously.
- * </p>
+ *
+ * <p>TODO: COPIED FROM io.grpc.auth.ClientAuthInterceptor. The logic added here for initialization
+ * and locking could be moved back to gRPC. This implementation takes advantage of the fact that all
+ * of the Bigtable endpoints are OAuth2 based. It uses the OAuth AccessToken to get the token value
+ * and next refresh time. The refresh is scheduled asynchronously.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -54,12 +51,11 @@ import java.util.concurrent.TimeUnit;
 public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor {
   private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
 
-  @VisibleForTesting
-  static final long TIMEOUT_MILLISECONDS = TimeUnit.SECONDS.toMillis(15);
+  @VisibleForTesting static final long TIMEOUT_MILLISECONDS = TimeUnit.SECONDS.toMillis(15);
 
   @VisibleForTesting
-  static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY = Metadata.Key.of(
-      "Authorization", Metadata.ASCII_STRING_MARSHALLER);
+  static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY =
+      Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
   private final OAuthCredentialsCache store;
   private final RateLimiter rateLimiter;
@@ -87,12 +83,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   /**
-   * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
+   * Constructor for RefreshingOAuth2CredentialsInterceptor.
    *
    * @param scheduler a {@link ExecutorService} object.
    * @param credentials a {@link OAuth2Credentials} object.
    */
-  public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials) {
+  public RefreshingOAuth2CredentialsInterceptor(
+      ExecutorService scheduler, OAuth2Credentials credentials) {
     this(new OAuthCredentialsCache(scheduler, credentials));
   }
 
@@ -104,12 +101,10 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     rateLimiter = RateLimiter.create(0.1);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-      final CallOptions callOptions, Channel next) {
+  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+      MethodDescriptor<ReqT, RespT> method, final CallOptions callOptions, Channel next) {
     return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
 
       /**

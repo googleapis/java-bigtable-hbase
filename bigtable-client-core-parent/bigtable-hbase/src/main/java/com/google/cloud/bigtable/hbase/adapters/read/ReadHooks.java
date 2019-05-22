@@ -21,8 +21,8 @@ import com.google.common.base.Function;
 /**
  * Hooks for modifying a {@link Query} before being sent to Cloud Bigtable.
  *
- * Note that it is expected that this will be extended to include post-read
- * hooks to transform Rows when appropriate.
+ * <p>Note that it is expected that this will be extended to include post-read hooks to transform
+ * Rows when appropriate.
  *
  * @author sduskis
  * @version $Id: $Id

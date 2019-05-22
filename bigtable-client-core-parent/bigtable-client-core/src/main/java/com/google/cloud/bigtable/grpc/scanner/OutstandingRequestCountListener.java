@@ -15,16 +15,15 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A {@link io.grpc.ClientCall.Listener} that wraps a {@link io.grpc.stub.StreamObserver} and decrements
- * outstandingRequestCount when a message is received.
+ * A {@link io.grpc.ClientCall.Listener} that wraps a {@link io.grpc.stub.StreamObserver} and
+ * decrements outstandingRequestCount when a message is received.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -34,13 +33,13 @@ public class OutstandingRequestCountListener<ResponseT> extends ClientCall.Liste
   private AtomicInteger outstandingRequestCount;
 
   /**
-   * <p>Constructor for OutstandingRequestCountListener.</p>
+   * Constructor for OutstandingRequestCountListener.
    *
    * @param observer a {@link io.grpc.stub.StreamObserver} object.
    * @param outstandingRequestCount a {@link java.util.concurrent.atomic.AtomicInteger} object.
    */
-  public OutstandingRequestCountListener(StreamObserver<ResponseT> observer,
-      AtomicInteger outstandingRequestCount) {
+  public OutstandingRequestCountListener(
+      StreamObserver<ResponseT> observer, AtomicInteger outstandingRequestCount) {
     this.outstandingRequestCount = outstandingRequestCount;
     this.observer = observer;
   }

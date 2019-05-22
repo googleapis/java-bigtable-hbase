@@ -15,37 +15,32 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
+import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
+import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.util.ByteStringComparator;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.protobuf.ByteString;
+import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.util.ByteStringComparator;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.ReadRowsResponse;
-import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
-import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
-import com.google.bigtable.v2.RowFilter.Interleave;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.protobuf.ByteString;
-
-import io.grpc.stub.StreamObserver;
-
 /**
- * <p>
  * Builds a complete {@link FlatRow} from {@link com.google.bigtable.v2.ReadRowsResponse} objects. A
  * {@link com.google.bigtable.v2.ReadRowsResponse} may contain a single {@link FlatRow}, multiple
  * {@link FlatRow}s, or even a part of a {@link com.google.bigtable.v2.Cell} if the cell is
- * </p>
- * <p>
- * Each RowMerger object is valid only for building a single FlatRow. Expected usage is along the
+ *
+ * <p>Each RowMerger object is valid only for building a single FlatRow. Expected usage is along the
  * lines of:
- * </p>
  *
  * <pre>
  * {@link io.grpc.stub.StreamObserver}&lt;{@link FlatRow}&gt; observer = ...;
@@ -55,47 +50,47 @@ import io.grpc.stub.StreamObserver;
  * ..
  * rowMerger.onComplete();
  * </pre>
- * <p>
- * When a complete row is found, {@link io.grpc.stub.StreamObserver#onNext(Object)} will be called.
- * {@link io.grpc.stub.StreamObserver#onError(Throwable)} will be called for
- * </p>
- * <p>
- * <b>NOTE: RowMerger is not threadsafe.</b>
- * </p>
+ *
+ * <p>When a complete row is found, {@link io.grpc.stub.StreamObserver#onNext(Object)} will be
+ * called. {@link io.grpc.stub.StreamObserver#onError(Throwable)} will be called for
+ *
+ * <p><b>NOTE: RowMerger is not threadsafe.</b>
+ *
  * @author sduskis
  * @version $Id: $Id
  */
 public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
-protected static final Logger LOG = new Logger(RowMerger.class);
+  protected static final Logger LOG = new Logger(RowMerger.class);
 
   /**
-   * <p>toRows.</p>
+   * toRows.
    *
    * @param responses a {@link java.lang.Iterable} object.
    * @return a {@link java.util.List} object.
    */
   public static List<FlatRow> toRows(Iterable<ReadRowsResponse> responses) {
     final ArrayList<FlatRow> result = new ArrayList<>();
-    RowMerger rowMerger = new RowMerger(new StreamObserver<FlatRow>() {
-      @Override
-      public void onNext(FlatRow value) {
-        result.add(value);
-      }
+    RowMerger rowMerger =
+        new RowMerger(
+            new StreamObserver<FlatRow>() {
+              @Override
+              public void onNext(FlatRow value) {
+                result.add(value);
+              }
 
-      @Override
-      public void onError(Throwable t) {
-        if (t instanceof RuntimeException) {
-          throw (RuntimeException) t;
-        } else {
-          throw new IllegalStateException(t);
-        }
-      }
+              @Override
+              public void onError(Throwable t) {
+                if (t instanceof RuntimeException) {
+                  throw (RuntimeException) t;
+                } else {
+                  throw new IllegalStateException(t);
+                }
+              }
 
-      @Override
-      public void onCompleted() {
-      }
-    });
+              @Override
+              public void onCompleted() {}
+            });
     for (ReadRowsResponse response : responses) {
       rowMerger.onNext(response);
     }
@@ -103,35 +98,37 @@ protected static final Logger LOG = new Logger(RowMerger.class);
     return result;
   }
 
-  /**
-   * Encapsulates validation for different states based on the stream of the {@link CellChunk}.
-   */
+  /** Encapsulates validation for different states based on the stream of the {@link CellChunk}. */
   private enum RowMergerState {
 
-    /**
-     * A new {@link CellChunk} represents a completely new {@link FlatRow}.
-     */
+    /** A new {@link CellChunk} represents a completely new {@link FlatRow}. */
     NewRow {
       @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
-        Preconditions.checkArgument(rowInProgess == null || !rowInProgess.hasRowKey(),
-          "A new row cannot have existing state: %s", newChunk);
-        Preconditions.checkArgument(newChunk.getRowStatusCase() != RowStatusCase.RESET_ROW,
-          "A new row cannot be reset: %s", newChunk);
+        Preconditions.checkArgument(
+            rowInProgess == null || !rowInProgess.hasRowKey(),
+            "A new row cannot have existing state: %s",
+            newChunk);
+        Preconditions.checkArgument(
+            newChunk.getRowStatusCase() != RowStatusCase.RESET_ROW,
+            "A new row cannot be reset: %s",
+            newChunk);
         Preconditions.checkArgument(newChunk.hasFamilyName(), "A family must be set: %s", newChunk);
         final ByteString rowKey = newChunk.getRowKey();
-        Preconditions.checkArgument(!rowKey.isEmpty(), "A row key must be set: %s",
-          newChunk);
-        if (previousKey != null &&
-            ByteStringComparator.INSTANCE.compare(previousKey, rowKey) >= 0) {
-          throw new IllegalArgumentException(String
-              .format("Found key '%s' after key '%s'", rowKey.toStringUtf8(),
-                  previousKey.toStringUtf8()));
+        Preconditions.checkArgument(!rowKey.isEmpty(), "A row key must be set: %s", newChunk);
+        if (previousKey != null
+            && ByteStringComparator.INSTANCE.compare(previousKey, rowKey) >= 0) {
+          throw new IllegalArgumentException(
+              String.format(
+                  "Found key '%s' after key '%s'",
+                  rowKey.toStringUtf8(), previousKey.toStringUtf8()));
         }
-        Preconditions.checkArgument(newChunk.hasQualifier(), "A column qualifier must be set: %s",
-          newChunk);
-        Preconditions.checkArgument(!newChunk.getCommitRow() || newChunk.getValueSize() == 0,
-          "A row cannot be have a value size and be a commit row: %s", newChunk);
+        Preconditions.checkArgument(
+            newChunk.hasQualifier(), "A column qualifier must be set: %s", newChunk);
+        Preconditions.checkArgument(
+            !newChunk.getCommitRow() || newChunk.getValueSize() == 0,
+            "A row cannot be have a value size and be a commit row: %s",
+            newChunk);
       }
 
       @Override
@@ -140,28 +137,32 @@ protected static final Logger LOG = new Logger(RowMerger.class);
       }
     },
 
-    /**
-     * A new {@link CellChunk} represents a new {@link FlatRow.Cell} in a {@link FlatRow}.
-     */
+    /** A new {@link CellChunk} represents a new {@link FlatRow.Cell} in a {@link FlatRow}. */
     RowInProgress {
       @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
         if (newChunk.hasFamilyName()) {
-          Preconditions.checkArgument(newChunk.hasQualifier(), "A qualifier must be specified: %s",
-            newChunk);
+          Preconditions.checkArgument(
+              newChunk.hasQualifier(), "A qualifier must be specified: %s", newChunk);
         }
         ByteString newRowKey = newChunk.getRowKey();
         if (newChunk.getResetRow()) {
           Preconditions.checkState(
-            newRowKey.isEmpty() && !newChunk.hasFamilyName() && !newChunk.hasQualifier()
-                && newChunk.getValue().isEmpty() && newChunk.getTimestampMicros() == 0,
-            "A reset should have no data");
+              newRowKey.isEmpty()
+                  && !newChunk.hasFamilyName()
+                  && !newChunk.hasQualifier()
+                  && newChunk.getValue().isEmpty()
+                  && newChunk.getTimestampMicros() == 0,
+              "A reset should have no data");
         } else {
           Preconditions.checkState(
-            newRowKey.isEmpty() || newRowKey.equals(rowInProgess.getRowKey()),
-            "A commit is required between row keys: %s", newChunk);
-          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !newChunk.getCommitRow(),
-            "A row cannot be have a value size and be a commit row: %s", newChunk);
+              newRowKey.isEmpty() || newRowKey.equals(rowInProgess.getRowKey()),
+              "A commit is required between row keys: %s",
+              newChunk);
+          Preconditions.checkArgument(
+              newChunk.getValueSize() == 0 || !newChunk.getCommitRow(),
+              "A row cannot be have a value size and be a commit row: %s",
+              newChunk);
         }
       }
 
@@ -178,16 +179,19 @@ protected static final Logger LOG = new Logger(RowMerger.class);
     CellInProgress {
       @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
-        if(newChunk.getResetRow()) {
-          Preconditions.checkState(newChunk.getRowKey().isEmpty() &&
-            !newChunk.hasFamilyName() &&
-            !newChunk.hasQualifier() &&
-            newChunk.getValue().isEmpty() &&
-            newChunk.getTimestampMicros() == 0,
+        if (newChunk.getResetRow()) {
+          Preconditions.checkState(
+              newChunk.getRowKey().isEmpty()
+                  && !newChunk.hasFamilyName()
+                  && !newChunk.hasQualifier()
+                  && newChunk.getValue().isEmpty()
+                  && newChunk.getTimestampMicros() == 0,
               "A reset should have no data");
         } else {
-          Preconditions.checkArgument(newChunk.getValueSize() == 0 || !newChunk.getCommitRow(),
-            "A row cannot be have a value size and be a commit row: %s", newChunk);
+          Preconditions.checkArgument(
+              newChunk.getValueSize() == 0 || !newChunk.getCommitRow(),
+              "A row cannot be have a value size and be a commit row: %s",
+              newChunk);
         }
       }
 
@@ -197,16 +201,16 @@ protected static final Logger LOG = new Logger(RowMerger.class);
       }
     };
 
-    abstract void validateChunk(RowInProgress rowInProgess, ByteString previousKey,
-        CellChunk newChunk) throws Exception;
+    abstract void validateChunk(
+        RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) throws Exception;
 
     abstract void handleOnComplete(StreamObserver<FlatRow> observer);
   }
 
   /**
    * A CellIdentifier represents the matadata for a Cell. The information in this class can be
-   * collected from a variety of {@link CellChunk}, for example the rowKey will be expressed only
-   * in the first {@link CellChunk}, and family will be present only when a family changes.
+   * collected from a variety of {@link CellChunk}, for example the rowKey will be expressed only in
+   * the first {@link CellChunk}, and family will be present only when a family changes.
    */
   private static class CellIdentifier {
     String family;
@@ -238,13 +242,11 @@ protected static final Logger LOG = new Logger(RowMerger.class);
     }
   }
 
-  /**
-   * This class represents the data in the row that's currently being processed.
-   */
+  /** This class represents the data in the row that's currently being processed. */
   private static final class RowInProgress {
 
     // 50MB is pretty large for a row, so log any rows that are of that size
-    private final static int LARGE_ROW_SIZE = 50 * 1024 * 1024;
+    private static final int LARGE_ROW_SIZE = 50 * 1024 * 1024;
 
     private ByteString rowKey;
 
@@ -265,7 +267,8 @@ protected static final Logger LOG = new Logger(RowMerger.class);
       currentByteSize += chunk.getSerializedSize();
       addCell(chunk.getValue());
       if (currentByteSize >= loggedAtSize + LARGE_ROW_SIZE) {
-        LOG.warn("Large row read is in progress. key: `%s`, size: %d, cells: %d",
+        LOG.warn(
+            "Large row read is in progress. key: `%s`, size: %d, cells: %d",
             rowKey.toStringUtf8(), currentByteSize, cellCount);
         loggedAtSize = currentByteSize;
       }
@@ -283,9 +286,9 @@ protected static final Logger LOG = new Logger(RowMerger.class);
      * ordering of qualifiers, and finally by timestamp descending. Each cell can appear more than
      * once, if there are {@link Interleave}s in the {@link ReadRowsRequest#getFilter()}, but the
      * duplicates will appear one after the other.
-     * <p>
-     * The end result will be that {@link #cells} will be lexicographically ordered by family, and
-     * the list of cells will be ordered by qualifier and timestamp. A flattened version of the
+     *
+     * <p>The end result will be that {@link #cells} will be lexicographically ordered by family,
+     * and the list of cells will be ordered by qualifier and timestamp. A flattened version of the
      * {@link #cells} map will be sorted correctly.
      */
     private void addCell(ByteString value) {
@@ -296,8 +299,13 @@ protected static final Logger LOG = new Logger(RowMerger.class);
         previousNoLabelCell = null;
       }
 
-      FlatRow.Cell cell = new FlatRow.Cell(currentId.family, currentId.qualifier,
-        currentId.timestampMicros, value, currentId.labels);
+      FlatRow.Cell cell =
+          new FlatRow.Cell(
+              currentId.family,
+              currentId.qualifier,
+              currentId.timestampMicros,
+              value,
+              currentId.labels);
       if (!currentId.labels.isEmpty()) {
         currentFamilyRowCells.add(cell);
       } else if (!isSameTimestampAndQualifier()) {
@@ -310,8 +318,9 @@ protected static final Logger LOG = new Logger(RowMerger.class);
 
     /**
      * Checks to see if the current {@link FlatRow.Cell}'s qualifier and timestamp are equal to the
-     * previous {@link #previousNoLabelCell}'s. This method assumes that the family is the same
-     * and the {@link #previousNoLabelCell} is not null.
+     * previous {@link #previousNoLabelCell}'s. This method assumes that the family is the same and
+     * the {@link #previousNoLabelCell} is not null.
+     *
      * @return true if the new cell and old cell have logical equivalency.
      */
     private boolean isSameTimestampAndQualifier() {
@@ -320,9 +329,7 @@ protected static final Logger LOG = new Logger(RowMerger.class);
           && Objects.equal(previousNoLabelCell.getQualifier(), currentId.qualifier);
     }
 
-    /**
-     * update the current key with the new chunk info
-     */
+    /** update the current key with the new chunk info */
     private final void updateCurrentKey(ReadRowsResponse.CellChunk chunk) {
       ByteString newRowKey = chunk.getRowKey();
       if (rowKey == null || (!newRowKey.isEmpty() && !newRowKey.equals(rowKey))) {
@@ -361,7 +368,8 @@ protected static final Logger LOG = new Logger(RowMerger.class);
 
     private FlatRow buildRow() {
       if (currentByteSize >= LARGE_ROW_SIZE) {
-        LOG.warn("Large row was read. key: `%s`, size: %d, cellCount: %d",
+        LOG.warn(
+            "Large row was read. key: `%s`, size: %d, cellCount: %d",
             rowKey.toStringUtf8(), currentByteSize, cellCount);
       }
 
@@ -369,11 +377,12 @@ protected static final Logger LOG = new Logger(RowMerger.class);
     }
 
     /**
-     * This method flattens the {@link #cells} which has a map of Lists keyed by family name.
-     * The {@link #cells} TreeMap is sorted lexicographically, and each List is sorted by
-     * qualifier in lexicographically ascending order, and timestamp in descending order.
+     * This method flattens the {@link #cells} which has a map of Lists keyed by family name. The
+     * {@link #cells} TreeMap is sorted lexicographically, and each List is sorted by qualifier in
+     * lexicographically ascending order, and timestamp in descending order.
      *
-     * @return an array of HBase {@link FlatRow.Cell}s that is sorted by family asc, qualifier asc, timestamp desc.
+     * @return an array of HBase {@link FlatRow.Cell}s that is sorted by family asc, qualifier asc,
+     *     timestamp desc.
      */
     private ImmutableList<FlatRow.Cell> flattenCells() {
       ImmutableList.Builder<FlatRow.Cell> combined = ImmutableList.builder();
@@ -393,7 +402,7 @@ protected static final Logger LOG = new Logger(RowMerger.class);
   private Integer rowCountInLastMessage = null;
 
   /**
-   * <p>Constructor for RowMerger.</p>
+   * Constructor for RowMerger.
    *
    * @param observer a {@link io.grpc.stub.StreamObserver} object.
    */
@@ -425,7 +434,7 @@ protected static final Logger LOG = new Logger(RowMerger.class);
           state = RowMergerState.NewRow;
           continue;
         }
-        if(state == RowMergerState.NewRow) {
+        if (state == RowMergerState.NewRow) {
           rowInProgress = new RowInProgress();
           rowInProgress.updateCurrentKey(chunk);
         } else if (state == RowMergerState.RowInProgress) {
@@ -477,7 +486,7 @@ protected static final Logger LOG = new Logger(RowMerger.class);
   /**
    * {@inheritDoc}
    *
-   * All {@link ReadRowsResponse} have been processed, and HTTP OK was sent.
+   * <p>All {@link ReadRowsResponse} have been processed, and HTTP OK was sent.
    */
   @Override
   public void onCompleted() {

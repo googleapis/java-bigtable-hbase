@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Status;
-
-import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-
-import java.io.IOException;
 
 /**
  * Adapt a Bigtable ResultScanner to an HBase Result Scanner.
@@ -37,7 +34,7 @@ public class BigtableResultScannerAdapter<T> {
   final ResponseAdapter<T, Result> rowAdapter;
 
   /**
-   * <p>Constructor for BigtableResultScannerAdapter.</p>
+   * Constructor for BigtableResultScannerAdapter.
    *
    * @param rowAdapter a {@link com.google.cloud.bigtable.hbase.adapters.ResponseAdapter} object.
    */
@@ -46,14 +43,12 @@ public class BigtableResultScannerAdapter<T> {
   }
 
   /**
-   * <p>
    * adapt.
-   * </p>
+   *
    * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
-   *          object.
+   *     object.
    * @param span A parent {@link Span} for the scan that needs to be closed when the scanning is
-   *          complete. The span has an HBase specific tag, which needs to be handled by the
-   *          adapter.
+   *     complete. The span has an HBase specific tag, which needs to be handled by the adapter.
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(
@@ -61,6 +56,7 @@ public class BigtableResultScannerAdapter<T> {
       final Span span) {
     return new AbstractClientScanner() {
       int rowCount = 0;
+
       @Override
       public Result next() throws IOException {
         T row = bigtableResultScanner.next();
@@ -86,8 +82,8 @@ public class BigtableResultScannerAdapter<T> {
       }
 
       /**
-       * This is an HBase concept that was added in HBase 1.0.2.  It's not relevant for Cloud
-       * Bigtable.  It will not be called from the HBase code and should not be called by the user.
+       * This is an HBase concept that was added in HBase 1.0.2. It's not relevant for Cloud
+       * Bigtable. It will not be called from the HBase code and should not be called by the user.
        */
       // Developers Note: Do not add @Override so that this can remain backwards compatible with
       // 1.0.1.

@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 
+import com.google.cloud.bigtable.hbase.AbstractTest.QualifierValue;
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -42,13 +43,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.cloud.bigtable.hbase.AbstractTest.QualifierValue;
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-
-public abstract class AbstractTestPut extends AbstractTest{
+public abstract class AbstractTestPut extends AbstractTest {
   static final int NUM_CELLS = 100;
   static final int NUM_ROWS = 100;
-  
+
   /**
    * Test inserting a row with multiple cells.
    *
@@ -122,7 +120,7 @@ public abstract class AbstractTestPut extends AbstractTest{
 
     // Get
     List<Get> gets = new ArrayList<Get>(NUM_ROWS);
-    Collections.shuffle(keys);  // Retrieve in random order
+    Collections.shuffle(keys); // Retrieve in random order
     for (String key : keys) {
       Get get = new Get(Bytes.toBytes(key));
       get.addColumn(COLUMN_FAMILY, insertedKeyValues.get(key).qualifier);
@@ -136,11 +134,12 @@ public abstract class AbstractTestPut extends AbstractTest{
       QualifierValue entry = insertedKeyValues.get(rowKey);
       String descriptor = "Row " + i + " (" + rowKey + ": ";
       Assert.assertEquals(descriptor, 1, result[i].size());
-      Assert.assertTrue(descriptor,
-          result[i].containsNonEmptyColumn(COLUMN_FAMILY, entry.qualifier));
-      Assert.assertEquals(descriptor, entry.value,
-          CellUtil.cloneValue(result[i].getColumnCells(COLUMN_FAMILY, entry.qualifier).get(0))
-      );
+      Assert.assertTrue(
+          descriptor, result[i].containsNonEmptyColumn(COLUMN_FAMILY, entry.qualifier));
+      Assert.assertEquals(
+          descriptor,
+          entry.value,
+          CellUtil.cloneValue(result[i].getColumnCells(COLUMN_FAMILY, entry.qualifier).get(0)));
     }
 
     // Delete
@@ -177,11 +176,10 @@ public abstract class AbstractTestPut extends AbstractTest{
     Result result = table.get(get);
     long timestamp1 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier).getTimestamp();
     Assert.assertTrue(
-        "Latest timestamp is off by > 15 minutes",
-        Math.abs(timestamp1 - now) < fifteenMinutes);
+        "Latest timestamp is off by > 15 minutes", Math.abs(timestamp1 - now) < fifteenMinutes);
 
     try {
-      TimeUnit.MILLISECONDS.sleep(10);  // Make sure the clock has a chance to move
+      TimeUnit.MILLISECONDS.sleep(10); // Make sure the clock has a chance to move
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("sleep was interrupted", e);
@@ -194,7 +192,7 @@ public abstract class AbstractTestPut extends AbstractTest{
     Assert.assertTrue("Time doesn't move too fast", (timestamp2 - timestamp1) < oneMinute);
     table.close();
   }
-  
+
   @Test
   @Category(KnownGap.class)
   public void testMultiplePutsOneBadSameRow() throws Exception {
@@ -265,13 +263,13 @@ public abstract class AbstractTestPut extends AbstractTest{
     List<Cell> cells = result.listCells();
     Assert.assertEquals(NUM_CELLS * 2, cells.size());
     Assert.assertTrue(
-        "CF 1 should sort before CF2",
-        Bytes.compareTo(COLUMN_FAMILY, COLUMN_FAMILY2) < 0);
+        "CF 1 should sort before CF2", Bytes.compareTo(COLUMN_FAMILY, COLUMN_FAMILY2) < 0);
     // Check results in sort order
     Collections.sort(family1KeyValues);
     for (int i = 0; i < NUM_CELLS; ++i) {
       Assert.assertArrayEquals(COLUMN_FAMILY, CellUtil.cloneFamily(cells.get(i)));
-      Assert.assertArrayEquals(family1KeyValues.get(i).qualifier, CellUtil.cloneQualifier(cells.get(i)));
+      Assert.assertArrayEquals(
+          family1KeyValues.get(i).qualifier, CellUtil.cloneQualifier(cells.get(i)));
       Assert.assertArrayEquals(family1KeyValues.get(i).value, CellUtil.cloneValue(cells.get(i)));
     }
     Collections.sort(family2KeyValues);
@@ -322,11 +320,12 @@ public abstract class AbstractTestPut extends AbstractTest{
     Assert.assertNotNull("Exception should have been thrown", thrownException);
     Assert.assertEquals("Expecting one exception", 1, thrownException.getNumExceptions());
     Assert.assertArrayEquals("Row key", badkey, thrownException.getRow(0).getRow());
-    Assert.assertTrue("Cause: NoSuchColumnFamilyException",
+    Assert.assertTrue(
+        "Cause: NoSuchColumnFamilyException",
         thrownException.getCause(0) instanceof NoSuchColumnFamilyException);
     table.close();
   }
-  
+
   @Test
   public void testPutSameTimestamp() throws Exception {
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
@@ -345,12 +344,13 @@ public abstract class AbstractTestPut extends AbstractTest{
     Result result = table.get(get);
     Assert.assertEquals(1, result.size());
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qualifier));
-    Assert.assertEquals(timestamp,
-      result.getColumnLatestCell(COLUMN_FAMILY, qualifier).getTimestamp());
-    Assert.assertArrayEquals(value2,
-      CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qualifier)));
+    Assert.assertEquals(
+        timestamp, result.getColumnLatestCell(COLUMN_FAMILY, qualifier).getTimestamp());
+    Assert.assertArrayEquals(
+        value2, CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qualifier)));
     table.close();
   }
-  
-  protected abstract Get getGetAddColumnVersion(int version, byte[] rowKey, byte[] qualifier) throws IOException;
+
+  protected abstract Get getGetAddColumnVersion(int version, byte[] rowKey, byte[] qualifier)
+      throws IOException;
 }

@@ -21,8 +21,8 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 /**
- * Adapts a {@link io.grpc.stub.StreamObserver} to a {@link io.grpc.ClientCall.Listener}.
- * {@link io.grpc.ClientCall#request(int)} will be called onNext.
+ * Adapts a {@link io.grpc.stub.StreamObserver} to a {@link io.grpc.ClientCall.Listener}. {@link
+ * io.grpc.ClientCall#request(int)} will be called onNext.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -34,7 +34,7 @@ public class StreamObserverAdapter<T> extends ClientCall.Listener<T> {
   private boolean statusRecieved = false;
 
   /**
-   * <p>Constructor for StreamObserverAdapter.</p>
+   * Constructor for StreamObserverAdapter.
    *
    * @param call a {@link io.grpc.ClientCall} object.
    * @param observer a {@link io.grpc.stub.StreamObserver} object.
@@ -62,9 +62,7 @@ public class StreamObserverAdapter<T> extends ClientCall.Listener<T> {
     }
   }
 
-  /**
-   * @return true if {@link #onClose(Status, Metadata)} was called.
-   */
+  /** @return true if {@link #onClose(Status, Metadata)} was called. */
   public boolean hasStatusBeenRecieved() {
     return statusRecieved;
   }

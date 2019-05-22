@@ -40,23 +40,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link DoFn} function that converts a {@link Result} in the pipeline input to a
- * {@link Mutation} for output.
+ * A {@link DoFn} function that converts a {@link Result} in the pipeline input to a {@link
+ * Mutation} for output.
  */
-class HBaseResultToMutationFn
-    extends DoFn<KV<ImmutableBytesWritable, Result>, Mutation> {
+class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Result>, Mutation> {
   private static Logger logger = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
 
   private static final long serialVersionUID = 1L;
 
   private static final int MAX_CELLS = 100_000 - 1;
 
-  private static final Predicate<Cell> IS_DELETE_MARKER_FILTER =  new Predicate<Cell>() {
-    @Override
-    public boolean apply(Cell cell) {
-      return CellUtil.isDelete(cell);
-    }
-  };
+  private static final Predicate<Cell> IS_DELETE_MARKER_FILTER =
+      new Predicate<Cell>() {
+        @Override
+        public boolean apply(Cell cell) {
+          return CellUtil.isDelete(cell);
+        }
+      };
 
   private static final Function<Cell, String> COLUMN_FAMILY_EXTRACTOR =
       new Function<Cell, String>() {
@@ -92,10 +92,10 @@ class HBaseResultToMutationFn
     // Split the row into multiple puts if it exceeds the maximum mutation limit
     Iterator<Cell> cellIt = cells.iterator();
 
-    while(cellIt.hasNext()) {
+    while (cellIt.hasNext()) {
       Put put = new Put(kv.getKey().get());
 
-      for(int i=0; i < MAX_CELLS && cellIt.hasNext(); i++) {
+      for (int i = 0; i < MAX_CELLS && cellIt.hasNext(); i++) {
         put.add(cellIt.next());
       }
 
@@ -119,11 +119,12 @@ class HBaseResultToMutationFn
     // Group cells by column family, since DeleteMarkers do not apply across families.
     Map<String, Collection<Cell>> dataCellsByFamilyMap =
         Multimaps.index(
-            Iterables.filter(cells, Predicates.not(IS_DELETE_MARKER_FILTER)),
-            COLUMN_FAMILY_EXTRACTOR).asMap();
+                Iterables.filter(cells, Predicates.not(IS_DELETE_MARKER_FILTER)),
+                COLUMN_FAMILY_EXTRACTOR)
+            .asMap();
     Map<String, Collection<Cell>> deleteMarkersByFamilyMap =
-        Multimaps.index(
-            Iterables.filter(cells, IS_DELETE_MARKER_FILTER), COLUMN_FAMILY_EXTRACTOR).asMap();
+        Multimaps.index(Iterables.filter(cells, IS_DELETE_MARKER_FILTER), COLUMN_FAMILY_EXTRACTOR)
+            .asMap();
     for (Map.Entry<String, Collection<Cell>> e : dataCellsByFamilyMap.entrySet()) {
       processOneColumnFamily(resultCells, e.getValue(), deleteMarkersByFamilyMap.get(e.getKey()));
     }
@@ -139,8 +140,10 @@ class HBaseResultToMutationFn
       // Build a filter for live data cells that should be sent to bigtable.
       // These are cells not marked by any delete markers in this row/family.
       Predicate<Cell> liveDataCellPredicate =
-          Predicates.not(Predicates.or(Lists.newArrayList(
-              Iterables.transform(deleteMarkers, DATA_CELL_PREDICATE_FACTORY))));
+          Predicates.not(
+              Predicates.or(
+                  Lists.newArrayList(
+                      Iterables.transform(deleteMarkers, DATA_CELL_PREDICATE_FACTORY))));
       for (Cell cell : dataCells) {
         if (liveDataCellPredicate.apply(cell)) {
           resultCells.add(cell);

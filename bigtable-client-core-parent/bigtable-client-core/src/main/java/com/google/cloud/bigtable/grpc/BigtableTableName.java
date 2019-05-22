@@ -15,13 +15,12 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.common.base.Preconditions;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.base.Preconditions;
-
 /**
- * This class encapsulates a tableName.  A tableName is of the form
+ * This class encapsulates a tableName. A tableName is of the form
  * projects/(projectId)/zones/(zoneId)/clusters/(clusterId)/tables/(tableId).
  *
  * @author sduskis
@@ -48,23 +47,23 @@ public class BigtableTableName {
 
   /**
    * @return The id of the project that contains this table. It's the first group in the table name
-   *         name: "projects/{projectId}/instances/{instanceId}/tables/{tableId}".
+   *     name: "projects/{projectId}/instances/{instanceId}/tables/{tableId}".
    */
   public String getProjectId() {
     return projectId;
   }
 
   /**
-   * @return The id of the instance that contains this table. It's the second group in the table name
-   *         name: "projects/{projectId}/instances/{instanceId}/tables/{tableId}".
+   * @return The id of the instance that contains this table. It's the second group in the table
+   *     name name: "projects/{projectId}/instances/{instanceId}/tables/{tableId}".
    */
   public String getInstanceId() {
     return instanceId;
   }
 
   /**
-   * @return The id of the table. It's the third group in the table name
-   *         name: "projects/{projectId}/instances/{instanceId}/tables/{tableId}".
+   * @return The id of the table. It's the third group in the table name name:
+   *     "projects/{projectId}/instances/{instanceId}/tables/{tableId}".
    */
   public String getTableId() {
     return tableId;

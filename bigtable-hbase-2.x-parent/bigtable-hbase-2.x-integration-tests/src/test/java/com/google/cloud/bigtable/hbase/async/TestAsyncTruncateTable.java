@@ -17,9 +17,9 @@ package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import com.google.cloud.bigtable.hbase.AbstractTestTruncateTable;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
@@ -28,15 +28,13 @@ import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.hbase.AbstractTestTruncateTable;
-
 @RunWith(JUnit4.class)
 public class TestAsyncTruncateTable extends AbstractTestTruncateTable {
 
   private AsyncAdmin getAsyncAdmin() throws InterruptedException, ExecutionException {
     return AbstractAsyncTest.getAsyncConnection().getAdmin();
   }
-	
+
   private TableDescriptor createDescriptor(TableName tableName) {
     return TableDescriptorBuilder.newBuilder(tableName)
         .addColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder(COLUMN_FAMILY).build())
@@ -45,12 +43,12 @@ public class TestAsyncTruncateTable extends AbstractTestTruncateTable {
 
   @Override
   protected void createTable(TableName tableName, byte[][] ranges) throws IOException {
-    try{
-	  getAsyncAdmin().createTable(createDescriptor(tableName), ranges).get();
-	} catch (InterruptedException | ExecutionException e) {
-	  e.printStackTrace();
-	}
-   }
+    try {
+      getAsyncAdmin().createTable(createDescriptor(tableName), ranges).get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
 
   @Override
   protected void doTruncate(TableName tableName) throws Exception {

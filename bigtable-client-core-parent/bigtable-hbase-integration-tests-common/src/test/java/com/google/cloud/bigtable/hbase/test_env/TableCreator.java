@@ -15,10 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
+import java.io.IOException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
-
-import java.io.IOException;
 
 public interface TableCreator {
   void createTable(Admin admin, TableName tableName) throws IOException;

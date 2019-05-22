@@ -16,19 +16,17 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
-
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A ResultScanner that attempts to resume the readRows call when it encounters gRPC INTERNAL
  * errors.
+ *
  * @author sduskis
  * @version $Id: $Id
  */
@@ -46,9 +44,8 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
   private boolean isConsumed;
 
   /**
-   * <p>
    * Constructor for ResumingStreamingResultScanner.
-   * </p>
+   *
    * @param responseQueueReader a {@link ResponseQueueReader} which queues up {@link FlatRow}s.
    */
   public ResumingStreamingResultScanner(ResponseQueueReader responseQueueReader) {
@@ -76,7 +73,7 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
       return null;
     }
 
-    try(Timer.Context ignored = resultsTimer.time()) {
+    try (Timer.Context ignored = resultsTimer.time()) {
       FlatRow result = responseQueueReader.getNextMergedRow();
       if (result != null) {
         resultsMeter.mark();
@@ -84,7 +81,7 @@ public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
         isConsumed = true;
       }
       return result;
-    } catch(RuntimeException|IOException e) {
+    } catch (RuntimeException | IOException e) {
       isConsumed = true;
       throw e;
     }

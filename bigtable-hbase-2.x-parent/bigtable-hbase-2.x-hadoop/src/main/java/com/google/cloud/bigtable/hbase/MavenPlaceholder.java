@@ -26,7 +26,5 @@ package com.google.cloud.bigtable.hbase;
  */
 public final class MavenPlaceholder {
 
-  private MavenPlaceholder() {
-
-  }
+  private MavenPlaceholder() {}
 }

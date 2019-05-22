@@ -13,12 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- package com.google.cloud.bigtable.beam;
+package com.google.cloud.bigtable.beam;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -48,16 +56,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 @RunWith(JUnit4.class)
 public class CloudBigtableIOIntegrationTest {
   private static final String BIGTABLE_PROJECT_KEY = "google.bigtable.project.id";
@@ -73,8 +71,7 @@ public class CloudBigtableIOIntegrationTest {
 
   private static int LARGE_VALUE_SIZE = 201326;
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   public static TableName newTestTableName() {
     return TableName.valueOf("test-dataflow-" + UUID.randomUUID().toString());
@@ -83,7 +80,7 @@ public class CloudBigtableIOIntegrationTest {
   private static TableName createNewTable(Admin admin) throws IOException {
     TableName tableName = newTestTableName();
     admin.createTable(
-      new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
+        new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
     return tableName;
   }
 
@@ -119,7 +116,8 @@ public class CloudBigtableIOIntegrationTest {
     return builder.withTableId(tableName.getNameAsString()).build();
   }
 
-  @Test @Ignore 
+  @Test
+  @Ignore
   public void testWriteToTable_dataWrittenBuffered() throws Exception {
     final int INSERT_COUNT = 50;
     try (Admin admin = connection.getAdmin()) {
@@ -136,7 +134,8 @@ public class CloudBigtableIOIntegrationTest {
     }
   }
 
-  @Test @Ignore 
+  @Test
+  @Ignore
   public void testWriteToTable_multiTablewrites() throws Exception {
     final int INSERT_COUNT_PER_TABLE = 50;
     int BATCH_SIZE = INSERT_COUNT_PER_TABLE / 2;
@@ -149,10 +148,10 @@ public class CloudBigtableIOIntegrationTest {
       try {
         DoFnTester<KV<String, Iterable<Mutation>>, Void> tester = DoFnTester.of(writer);
         tester.processBundle(
-          createKV(tableName1, 0, BATCH_SIZE),
-          createKV(tableName2, 0, BATCH_SIZE),
-          createKV(tableName1, BATCH_SIZE, BATCH_SIZE),
-          createKV(tableName2, BATCH_SIZE, BATCH_SIZE));
+            createKV(tableName1, 0, BATCH_SIZE),
+            createKV(tableName2, 0, BATCH_SIZE),
+            createKV(tableName1, BATCH_SIZE, BATCH_SIZE),
+            createKV(tableName2, BATCH_SIZE, BATCH_SIZE));
         checkTableRowCount(tableName1, INSERT_COUNT_PER_TABLE);
         checkTableRowCount(tableName2, INSERT_COUNT_PER_TABLE);
       } finally {
@@ -162,22 +161,31 @@ public class CloudBigtableIOIntegrationTest {
     }
   }
 
-  protected KV<String, Iterable<Mutation>> createKV(TableName tableName, int start_count, int insertCount) {
+  protected KV<String, Iterable<Mutation>> createKV(
+      TableName tableName, int start_count, int insertCount) {
     List<Mutation> mutations = new ArrayList<>();
     for (int i = 0; i < insertCount; i++) {
       byte[] row = Bytes.toBytes("row_" + (i + start_count));
-      mutations.add(new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER1,
-        Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8))));
+      mutations.add(
+          new Put(row)
+              .addColumn(
+                  COLUMN_FAMILY,
+                  QUALIFIER1,
+                  Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8))));
     }
-    return KV.<String, Iterable<Mutation>> of(tableName.getNameAsString(), mutations);
+    return KV.<String, Iterable<Mutation>>of(tableName.getNameAsString(), mutations);
   }
 
   private void writeThroughDataflow(DoFn<Mutation, Void> writer, int insertCount) throws Exception {
     DoFnTester<Mutation, Void> fnTester = DoFnTester.of(writer);
     for (int i = 0; i < insertCount; i++) {
       byte[] row = Bytes.toBytes("row_" + i);
-      Mutation mutation =  new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER1,
-          Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8)));
+      Mutation mutation =
+          new Put(row)
+              .addColumn(
+                  COLUMN_FAMILY,
+                  QUALIFIER1,
+                  Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8)));
 
       fnTester.processBundle(mutation);
     }
@@ -194,7 +202,8 @@ public class CloudBigtableIOIntegrationTest {
     Assert.assertEquals(rowCount, readCount);
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   public void testReadFromTable_singleResultDataflowReader() throws Exception {
     final int INSERT_COUNT = 50;
     try (Admin admin = connection.getAdmin()) {
@@ -212,15 +221,20 @@ public class CloudBigtableIOIntegrationTest {
     List<Put> puts = new ArrayList<>();
     for (int i = 0; i < rowCount; i++) {
       byte[] row = Bytes.toBytes("row_" + i);
-      puts.add(new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER1,
-        Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8))));
+      puts.add(
+          new Put(row)
+              .addColumn(
+                  COLUMN_FAMILY,
+                  QUALIFIER1,
+                  Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8))));
     }
-    try (Table t = connection.getTable(tableName);) {
+    try (Table t = connection.getTable(tableName); ) {
       t.put(puts);
     }
   }
 
-  private void checkTableRowCountViaDataflowResultReader(TableName tableName, int rowCount) throws Exception {
+  private void checkTableRowCountViaDataflowResultReader(TableName tableName, int rowCount)
+      throws Exception {
     BoundedSource<Result> source = CloudBigtableIO.read(createScanConfig(tableName));
     List<? extends BoundedSource<Result>> splits = source.split(1 << 20, null);
     int count = 0;
@@ -236,16 +250,19 @@ public class CloudBigtableIOIntegrationTest {
     Assert.assertEquals(rowCount, count);
   }
 
-
-  @Test @Ignore 
+  @Test
+  @Ignore
   public void testEstimatedAndSplitForSmallTable() throws Exception {
     try (Admin admin = connection.getAdmin()) {
       LOG.info("Creating table in testEstimatedAndSplitForSmallTable()");
       TableName tableName = createNewTable(admin);
       try (Table table = connection.getTable(tableName)) {
-        table.put(Arrays.asList(
-          new Put(Bytes.toBytes("row1")).addColumn(COLUMN_FAMILY, QUALIFIER1, Bytes.toBytes("1")),
-          new Put(Bytes.toBytes("row2")).addColumn(COLUMN_FAMILY, QUALIFIER1, Bytes.toBytes("2"))));
+        table.put(
+            Arrays.asList(
+                new Put(Bytes.toBytes("row1"))
+                    .addColumn(COLUMN_FAMILY, QUALIFIER1, Bytes.toBytes("1")),
+                new Put(Bytes.toBytes("row2"))
+                    .addColumn(COLUMN_FAMILY, QUALIFIER1, Bytes.toBytes("2"))));
       }
 
       LOG.info("getSampleKeys() in testEstimatedAndSplitForSmallTable()");
@@ -275,7 +292,7 @@ public class CloudBigtableIOIntegrationTest {
     }
   }
 
-  @Test 
+  @Test
   public void testEstimatedAndSplitForLargeTable() throws Exception {
     try (Admin admin = connection.getAdmin()) {
       LOG.info("Creating table in testEstimatedAndSplitForLargeTable()");
@@ -284,10 +301,10 @@ public class CloudBigtableIOIntegrationTest {
       final int rowCount = 1000;
       LOG.info("Adding %d rows in testEstimatedAndSplitForLargeTable()", rowCount);
       try (BufferedMutator mutator = connection.getBufferedMutator(tableName)) {
-        for (int i = 0; i < rowCount; i++ ) {
+        for (int i = 0; i < rowCount; i++) {
           byte[] largeValue = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(LARGE_VALUE_SIZE));
-          mutator.mutate(new Put(Bytes.toBytes("row" + i)).addColumn(COLUMN_FAMILY, QUALIFIER1,
-            largeValue));
+          mutator.mutate(
+              new Put(Bytes.toBytes("row" + i)).addColumn(COLUMN_FAMILY, QUALIFIER1, largeValue));
         }
       }
 
@@ -311,20 +328,21 @@ public class CloudBigtableIOIntegrationTest {
         ExecutorService es = Executors.newCachedThreadPool();
         try {
           for (final BoundedSource<Result> bundle : bundles) {
-            es.submit(new Runnable() {
-              @Override
-              public void run() {
-                try (BoundedReader<Result> reader = bundle.createReader(null)) {
-                  reader.start();
-                  while (reader.getCurrent() != null) {
-                    count.incrementAndGet();
-                    reader.advance();
+            es.submit(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    try (BoundedReader<Result> reader = bundle.createReader(null)) {
+                      reader.start();
+                      while (reader.getCurrent() != null) {
+                        count.incrementAndGet();
+                        reader.advance();
+                      }
+                    } catch (IOException e) {
+                      LOG.warn("Could not read bundle: %s", e, bundle);
+                    }
                   }
-                } catch (IOException e) {
-                  LOG.warn("Could not read bundle: %s", e, bundle);
-                }
-              }
-            });
+                });
           }
         } finally {
           LOG.info("Shutting down executor in testEstimatedAndSplitForLargeTable()");

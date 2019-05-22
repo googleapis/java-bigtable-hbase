@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -28,12 +27,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/**
- * Simple microbenchmark for {@link ResourceLimiter}
- */
+/** Simple microbenchmark for {@link ResourceLimiter} */
 public class ResourceLimiterPerf {
-  final static long SIZE = 10_000L;
-  final static int REGISTER_COUNT = ((int) SIZE) * 100;
+  static final long SIZE = 10_000L;
+  static final int REGISTER_COUNT = ((int) SIZE) * 100;
 
   public static void main(String[] args) throws Exception {
     ListeningExecutorService pool =

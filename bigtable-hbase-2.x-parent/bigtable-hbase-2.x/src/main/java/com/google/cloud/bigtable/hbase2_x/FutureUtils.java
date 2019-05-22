@@ -15,9 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
@@ -26,12 +23,14 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 /**
- * Utility methods for converting guava {@link ListenableFuture} Future to
- * {@link CompletableFuture}. Useful to convert the ListenableFuture types used by
- * bigtable-client-core component to Java 8 CompletableFuture types used in Hbase 2
- * 
+ * Utility methods for converting guava {@link ListenableFuture} Future to {@link
+ * CompletableFuture}. Useful to convert the ListenableFuture types used by bigtable-client-core
+ * component to Java 8 CompletableFuture types used in Hbase 2
+ *
  * @author spollapally
  */
 public class FutureUtils {
@@ -40,48 +39,52 @@ public class FutureUtils {
   static Logger logger = new Logger(FutureUtils.class);
 
   public static <T> CompletableFuture<T> toCompletableFuture(ApiFuture<T> apiFuture) {
-    CompletableFuture<T> completableFuture = new CompletableFuture<T>() {
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-        boolean result = apiFuture.cancel(mayInterruptIfRunning);
-        super.cancel(mayInterruptIfRunning);
-        return result;
-      }
-    };
+    CompletableFuture<T> completableFuture =
+        new CompletableFuture<T>() {
+          @Override
+          public boolean cancel(boolean mayInterruptIfRunning) {
+            boolean result = apiFuture.cancel(mayInterruptIfRunning);
+            super.cancel(mayInterruptIfRunning);
+            return result;
+          }
+        };
 
-    ApiFutureCallback<T> callback = new ApiFutureCallback<T>() {
-      public void onFailure(Throwable throwable) {
-        completableFuture.completeExceptionally(throwable);
-      }
+    ApiFutureCallback<T> callback =
+        new ApiFutureCallback<T>() {
+          public void onFailure(Throwable throwable) {
+            completableFuture.completeExceptionally(throwable);
+          }
 
-      public void onSuccess(T t) {
-        completableFuture.complete(t);
-      }
-    };
+          public void onSuccess(T t) {
+            completableFuture.complete(t);
+          }
+        };
     ApiFutures.addCallback(apiFuture, callback, MoreExecutors.directExecutor());
 
     return completableFuture;
   }
 
   public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
-    CompletableFuture<T> completableFuture = new CompletableFuture<T>() {
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-        boolean result = listenableFuture.cancel(mayInterruptIfRunning);
-        super.cancel(mayInterruptIfRunning);
-        return result;
-      }
-    };
+    CompletableFuture<T> completableFuture =
+        new CompletableFuture<T>() {
+          @Override
+          public boolean cancel(boolean mayInterruptIfRunning) {
+            boolean result = listenableFuture.cancel(mayInterruptIfRunning);
+            super.cancel(mayInterruptIfRunning);
+            return result;
+          }
+        };
 
-    FutureCallback<T> callback = new FutureCallback<T>() {
-      public void onFailure(Throwable throwable) {
-        completableFuture.completeExceptionally(throwable);
-      }
+    FutureCallback<T> callback =
+        new FutureCallback<T>() {
+          public void onFailure(Throwable throwable) {
+            completableFuture.completeExceptionally(throwable);
+          }
 
-      public void onSuccess(T t) {
-        completableFuture.complete(t);
-      }
-    };
+          public void onSuccess(T t) {
+            completableFuture.complete(t);
+          }
+        };
     Futures.addCallback(listenableFuture, callback, MoreExecutors.directExecutor());
 
     return completableFuture;
@@ -92,5 +95,4 @@ public class FutureUtils {
     future.completeExceptionally(error);
     return future;
   }
-
 }

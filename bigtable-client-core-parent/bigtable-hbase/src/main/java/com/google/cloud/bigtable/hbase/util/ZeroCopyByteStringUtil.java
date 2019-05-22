@@ -15,17 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import com.google.protobuf.ByteOutput;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.UnsafeByteOperations;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Helper class to extract byte arrays from {@link com.google.protobuf.ByteString} without copy.
- * <p>
- * Without this protobufs would force us to copy every single byte array out of the objects
+ *
+ * <p>Without this protobufs would force us to copy every single byte array out of the objects
  * de-serialized from the wire (which already do one copy, on top of the copies the JVM does to go
  * from kernel buffer to C buffer and from C buffer to JVM buffer).
  *

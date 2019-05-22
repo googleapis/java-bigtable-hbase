@@ -17,16 +17,14 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
 import com.google.common.base.Preconditions;
-
 import io.grpc.Status;
-
 import java.io.IOException;
 import java.util.Objects;
 
-
 /**
- * An entry in the result queue which may be one of: A data message,
- * a Throwable or a marker indicating end-of-stream.
+ * An entry in the result queue which may be one of: A data message, a Throwable or a marker
+ * indicating end-of-stream.
+ *
  * @param <T> The type of messages representing data.
  */
 abstract class ResultQueueEntry<T> {
@@ -39,7 +37,7 @@ abstract class ResultQueueEntry<T> {
   }
 
   /**
-   * <p>fromResponse.</p>
+   * fromResponse.
    *
    * @param response a T object.
    * @param <T> a T object.
@@ -51,7 +49,7 @@ abstract class ResultQueueEntry<T> {
   }
 
   /**
-   * <p>fromThrowable.</p>
+   * fromThrowable.
    *
    * @param throwable a {@link java.lang.Throwable} object.
    * @param <T> a T object.
@@ -63,7 +61,7 @@ abstract class ResultQueueEntry<T> {
   }
 
   /**
-   * <p>completionMarker.</p>
+   * completionMarker.
    *
    * @param <T> a T object.
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
@@ -74,7 +72,7 @@ abstract class ResultQueueEntry<T> {
   }
 
   /**
-   * <p>retrieveResultMarker.</p>
+   * retrieveResultMarker.
    *
    * @param <T> a T object.
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
@@ -102,7 +100,8 @@ abstract class ResultQueueEntry<T> {
 
     @Override
     public boolean equals(Object obj) {
-      ExceptionResultQueueEntry<T> other = (ExceptionResultQueueEntry<T>) toResultQueueEntryForEquals(obj);
+      ExceptionResultQueueEntry<T> other =
+          (ExceptionResultQueueEntry<T>) toResultQueueEntryForEquals(obj);
       return other != null && Objects.equals(throwable, other.throwable);
     }
   }
@@ -122,7 +121,8 @@ abstract class ResultQueueEntry<T> {
 
     @Override
     public boolean equals(Object obj) {
-      ResponseResultQueueEntry<T> other = (ResponseResultQueueEntry<T>) toResultQueueEntryForEquals(obj);
+      ResponseResultQueueEntry<T> other =
+          (ResponseResultQueueEntry<T>) toResultQueueEntryForEquals(obj);
       return other != null && Objects.equals(response, other.response);
     }
   }
@@ -149,8 +149,7 @@ abstract class ResultQueueEntry<T> {
       new ResultQueueEntry(Type.RequestResultMarker) {
         @Override
         public Object getResponseOrThrow() throws IOException {
-          throw new IOException(
-              "Attempt to interpret a result marker as a result");
+          throw new IOException("Attempt to interpret a result marker as a result");
         }
 
         @Override
@@ -168,7 +167,7 @@ abstract class ResultQueueEntry<T> {
   }
 
   /**
-   * <p>isCompletionMarker.</p>
+   * isCompletionMarker.
    *
    * @return a boolean.
    */
@@ -177,7 +176,7 @@ abstract class ResultQueueEntry<T> {
   }
 
   /**
-   * <p>getResponseOrThrow.</p>
+   * getResponseOrThrow.
    *
    * @return a T object.
    * @throws java.io.IOException if any.
@@ -186,9 +185,10 @@ abstract class ResultQueueEntry<T> {
 
   /**
    * This is a utility function for checking equality between this and another ResultQueueEntry.
+   *
    * @param obj the object to compare to
    * @return a reference to ResultQueueEntry if obj is: 1) not null, 2) a ResultQueueEntry, 3) has
-   *         the same type as this.
+   *     the same type as this.
    */
   @SuppressWarnings("unchecked")
   protected ResultQueueEntry<T> toResultQueueEntryForEquals(Object obj) {

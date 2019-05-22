@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,22 +15,19 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import io.opencensus.trace.Span;
-import io.opencensus.trace.Status;
-
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-
+import io.opencensus.trace.Span;
+import io.opencensus.trace.Status;
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 
-import java.io.IOException;
-
 /**
- * Adapt a Bigtable ResultScanner to an HBase Result Scanner. Stops when {@link org.apache.hadoop.hbase.filter.WhileMatchFilter}
- * filters out the remaining rows.
+ * Adapt a Bigtable ResultScanner to an HBase Result Scanner. Stops when {@link
+ * org.apache.hadoop.hbase.filter.WhileMatchFilter} filters out the remaining rows.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -43,7 +40,7 @@ public class BigtableWhileMatchResultScannerAdapter {
   final ResponseAdapter<FlatRow, Result> rowAdapter;
 
   /**
-   * <p>Constructor for BigtableWhileMatchResultScannerAdapter.</p>
+   * Constructor for BigtableWhileMatchResultScannerAdapter.
    *
    * @param rowAdapter a {@link com.google.cloud.bigtable.hbase.adapters.ResponseAdapter} object.
    */
@@ -52,14 +49,12 @@ public class BigtableWhileMatchResultScannerAdapter {
   }
 
   /**
-   * <p>
    * adapt.
-   * </p>
+   *
    * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
-   *          object.
+   *     object.
    * @param span A parent {@link Span} for the scan that needs to be closed when the scanning is
-   *          complete. The span has an HBase specific tag, which needs to be handled by the
-   *          adapter.
+   *     complete. The span has an HBase specific tag, which needs to be handled by the adapter.
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(
@@ -96,8 +91,8 @@ public class BigtableWhileMatchResultScannerAdapter {
       }
 
       /**
-       * This is an HBase concept that was added in hbase 1.0.2.  It's not relevent for Cloud
-       * Bigtable.  It will not be called from the hbase code and should not be called by the user.
+       * This is an HBase concept that was added in hbase 1.0.2. It's not relevent for Cloud
+       * Bigtable. It will not be called from the hbase code and should not be called by the user.
        */
       // Developers Note: Do not add @Override so that this can remain backwards compatible with
       // 1.0.1.
@@ -110,6 +105,7 @@ public class BigtableWhileMatchResultScannerAdapter {
   /**
    * Returns {@code true} iff there are matching {@link WhileMatchFilter} labels or no {@link
    * WhileMatchFilter} labels.
+   *
    * @param row a {@link FlatRow} object.
    * @return a boolean value.
    */

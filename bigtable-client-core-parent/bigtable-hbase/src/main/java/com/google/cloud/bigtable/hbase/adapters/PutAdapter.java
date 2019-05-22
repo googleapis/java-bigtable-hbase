@@ -19,17 +19,15 @@ import com.google.api.client.util.Clock;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
-
+import java.util.List;
+import java.util.Map.Entry;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
 
-import java.util.List;
-import java.util.Map.Entry;
-
 /**
- * Adapt an HBase {@link Put} Operation into a Google Cloud Java
- * {@link com.google.cloud.bigtable.data.v2.models.MutationApi}.
+ * Adapt an HBase {@link Put} Operation into a Google Cloud Java {@link
+ * com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -38,11 +36,10 @@ public class PutAdapter extends MutationAdapter<Put> {
   private final int maxKeyValueSize;
   private final boolean setClientTimestamp;
 
-  @VisibleForTesting
-  Clock clock = Clock.SYSTEM;
+  @VisibleForTesting Clock clock = Clock.SYSTEM;
 
   /**
-   * <p>Constructor for PutAdapter.</p>
+   * Constructor for PutAdapter.
    *
    * @param maxKeyValueSize a int.
    */
@@ -52,7 +49,7 @@ public class PutAdapter extends MutationAdapter<Put> {
   }
 
   /**
-   * <p>Constructor for PutAdapter.</p>
+   * Constructor for PutAdapter.
    *
    * @param maxKeyValueSize a int.
    * @param setClientTimestamp a boolean.
@@ -68,7 +65,8 @@ public class PutAdapter extends MutationAdapter<Put> {
 
   @Override
   /** {@inheritDoc} */
-  public void adapt(Put operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
+  public void adapt(
+      Put operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     if (operation.isEmpty()) {
       throw new IllegalArgumentException("No columns to insert");
     }
@@ -85,33 +83,27 @@ public class PutAdapter extends MutationAdapter<Put> {
       for (Cell cell : entry.getValue()) {
         int qualifierLength = cell.getQualifierLength();
         int valueLength = cell.getValueLength();
-        // Since we are not using the interface involving KeyValues, we reconstruct how big they would be.
+        // Since we are not using the interface involving KeyValues, we reconstruct how big they
+        // would be.
         // 20 bytes for metadata plus the length of all the elements.
         int keyValueSize = (20 + rowLength + familySize + qualifierLength + valueLength);
         if (maxKeyValueSize > 0 && keyValueSize > maxKeyValueSize) {
           throw new IllegalArgumentException("KeyValue size too large");
         }
 
-        ByteString cellQualifierByteString = ByteString.copyFrom(
-            cell.getQualifierArray(),
-            cell.getQualifierOffset(),
-            qualifierLength);
+        ByteString cellQualifierByteString =
+            ByteString.copyFrom(
+                cell.getQualifierArray(), cell.getQualifierOffset(), qualifierLength);
 
-        ByteString value = ByteString.copyFrom(
-            cell.getValueArray(),
-            cell.getValueOffset(),
-            valueLength);
+        ByteString value =
+            ByteString.copyFrom(cell.getValueArray(), cell.getValueOffset(), valueLength);
 
         long timestampMicros = currentTimestampMicros;
         if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
           timestampMicros = TimestampConverter.hbase2bigtable(cell.getTimestamp());
         }
         mutation.setCell(
-            familyString.toStringUtf8(),
-            cellQualifierByteString,
-            timestampMicros,
-            value
-        );
+            familyString.toStringUtf8(), cellQualifierByteString, timestampMicros, value);
       }
     }
   }

@@ -16,6 +16,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.util.NanoClock;
+import com.google.bigtable.v2.MutateRowResponse;
+import com.google.bigtable.v2.MutateRowsRequest;
+import com.google.bigtable.v2.MutateRowsResponse;
+import com.google.bigtable.v2.Mutation;
+import com.google.bigtable.v2.Mutation.SetCell;
+import com.google.cloud.bigtable.config.BulkOptions;
+import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.grpc.async.BulkMutation.Batch;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.ByteString;
+import io.grpc.Status;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,8 +44,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.google.cloud.bigtable.core.IBigtableDataClient;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,41 +55,23 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.api.client.util.NanoClock;
-import com.google.bigtable.v2.MutateRowResponse;
-import com.google.bigtable.v2.MutateRowsRequest;
-import com.google.bigtable.v2.MutateRowsResponse;
-import com.google.bigtable.v2.Mutation;
-import com.google.bigtable.v2.Mutation.SetCell;
-import com.google.cloud.bigtable.config.BulkOptions;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.BulkMutation.Batch;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.ByteString;
-
-import io.grpc.Status;
-
-/**
- * Tests for {@link BulkMutation}
- */
+/** Tests for {@link BulkMutation} */
 @SuppressWarnings("rawtypes")
 @RunWith(JUnit4.class)
 public class TestBulkMutation {
-  final static BigtableTableName TABLE_NAME =
+  static final BigtableTableName TABLE_NAME =
       new BigtableInstanceName("project", "instance").toTableName("table");
-  private final static ByteString QUALIFIER = ByteString.copyFrom("qual".getBytes());
-  private final static int MAX_ROW_COUNT = 10;
-  private final static BulkOptions BULK_OPTIONS = BulkOptions.builder()
-      .setBulkMaxRequestSize(1000000L).setBulkMaxRowKeyCount(MAX_ROW_COUNT).build();
+  private static final ByteString QUALIFIER = ByteString.copyFrom("qual".getBytes());
+  private static final int MAX_ROW_COUNT = 10;
+  private static final BulkOptions BULK_OPTIONS =
+      BulkOptions.builder()
+          .setBulkMaxRequestSize(1000000L)
+          .setBulkMaxRowKeyCount(MAX_ROW_COUNT)
+          .build();
 
   static MutateRowsRequest.Entry createEntry() {
-    SetCell setCell = SetCell.newBuilder()
-        .setFamilyName("cf1")
-        .setColumnQualifier(QUALIFIER)
-        .build();
+    SetCell setCell =
+        SetCell.newBuilder().setFamilyName("cf1").setColumnQualifier(QUALIFIER).build();
     return MutateRowsRequest.Entry.newBuilder()
         .setRowKey(ByteString.copyFrom("SomeKey".getBytes()))
         .addMutations(Mutation.newBuilder().setSetCell(setCell))
@@ -96,13 +92,14 @@ public class TestBulkMutation {
   @Before
   public void setup() {
     time = new AtomicLong(System.nanoTime());
-    NanoClock clock = new NanoClock() {
-      @Override
-      public long nanoTime() {
-        timeIncrementCount.incrementAndGet();
-        return time.get();
-      }
-    };
+    NanoClock clock =
+        new NanoClock() {
+          @Override
+          public long nanoTime() {
+            timeIncrementCount.incrementAndGet();
+            return time.get();
+          }
+        };
     MockitoAnnotations.initMocks(this);
 
     future = SettableFuture.create();
@@ -127,24 +124,22 @@ public class TestBulkMutation {
     MutateRowsRequest.Entry entry = createRequestEntry();
     underTest.add(entry);
     underTest.sendUnsent();
-    MutateRowsRequest expected = MutateRowsRequest.newBuilder()
-        .setTableName(TABLE_NAME.toString())
-        .addEntries(entry)
-        .build();
+    MutateRowsRequest expected =
+        MutateRowsRequest.newBuilder()
+            .setTableName(TABLE_NAME.toString())
+            .addEntries(entry)
+            .build();
 
     verify(client, times(1)).mutateRowsAsync(eq(expected));
   }
 
   public static MutateRowsRequest.Entry createRequestEntry() {
-    SetCell setCell = SetCell.newBuilder()
-        .setFamilyName("cf1")
-        .setColumnQualifier(QUALIFIER)
-        .build();
+    SetCell setCell =
+        SetCell.newBuilder().setFamilyName("cf1").setColumnQualifier(QUALIFIER).build();
     ByteString rowKey = ByteString.copyFrom("SomeKey".getBytes());
     return MutateRowsRequest.Entry.newBuilder()
         .setRowKey(rowKey)
-        .addMutations(Mutation.newBuilder()
-          .setSetCell(setCell))
+        .addMutations(Mutation.newBuilder().setSetCell(setCell))
         .build();
   }
 
@@ -210,8 +205,7 @@ public class TestBulkMutation {
       rowFuture.get();
       Assert.fail("Expected exception");
     } catch (ExecutionException e) {
-      Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(),
-        Status.fromThrowable(e).getCode());
+      Assert.assertEquals(Status.DEADLINE_EXCEEDED.getCode(), Status.fromThrowable(e).getCode());
     }
 
     Assert.assertFalse(operationAccountant.hasInflightOperations());
@@ -249,20 +243,24 @@ public class TestBulkMutation {
 
     MutateRowsResponse.Builder responseBuilder = MutateRowsResponse.newBuilder();
     for (int i = 0; i < MAX_ROW_COUNT; i++) {
-      responseBuilder.addEntriesBuilder().setIndex(i).getStatusBuilder()
+      responseBuilder
+          .addEntriesBuilder()
+          .setIndex(i)
+          .getStatusBuilder()
           .setCode(Status.Code.OK.value());
     }
     future.set(Arrays.asList(responseBuilder.build()));
-    Runnable r = new Runnable() {
-      @Override
-      public void run() {
-        BulkMutation bulkMutation = createBulkMutation();
-        for (int i = 0; i < batchCount * MAX_ROW_COUNT; i++) {
-          futures.add(bulkMutation.add(createRequestEntry()));
-        }
-        bulkMutation.sendUnsent();
-      }
-    };
+    Runnable r =
+        new Runnable() {
+          @Override
+          public void run() {
+            BulkMutation bulkMutation = createBulkMutation();
+            for (int i = 0; i < batchCount * MAX_ROW_COUNT; i++) {
+              futures.add(bulkMutation.add(createRequestEntry()));
+            }
+            bulkMutation.sendUnsent();
+          }
+        };
     ExecutorService pool = Executors.newFixedThreadPool(100);
 
     for (int i = 0; i < concurrentBulkMutationCount; i++) {
@@ -291,8 +289,13 @@ public class TestBulkMutation {
   public void testAutoflush() throws Exception {
     // Setup a BulkMutation with autoflush enabled: the scheduled flusher will get captured by the
     // scheduled executor mock
-    underTest = new BulkMutation(TABLE_NAME, client, operationAccountant,
-        retryExecutorService, BulkOptions.builder().setAutoflushMs(1000L).build());
+    underTest =
+        new BulkMutation(
+            TABLE_NAME,
+            client,
+            operationAccountant,
+            retryExecutorService,
+            BulkOptions.builder().setAutoflushMs(1000L).build());
     ArgumentCaptor<Runnable> autoflusher = ArgumentCaptor.forClass(Runnable.class);
     when(retryExecutorService.schedule(autoflusher.capture(), anyLong(), any(TimeUnit.class)))
         .thenReturn(mockScheduledFuture);
@@ -343,12 +346,9 @@ public class TestBulkMutation {
   public void testLotsOfMutations() throws Exception {
     MutateRowsRequest.Entry smallRequest = createRequestEntry();
     MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry().toBuilder();
-    bigRequest.addAllMutations(
-        Collections.nCopies(20_000, bigRequest.getMutations(0))
-    );
-    MutateRowsRequest.Entry lastRequest = bigRequest.clone().setRowKey(
-        ByteString.copyFrom("SomeOtherKey".getBytes())
-    ).build();
+    bigRequest.addAllMutations(Collections.nCopies(20_000, bigRequest.getMutations(0)));
+    MutateRowsRequest.Entry lastRequest =
+        bigRequest.clone().setRowKey(ByteString.copyFrom("SomeOtherKey".getBytes())).build();
 
     underTest.add(smallRequest);
     underTest.add(bigRequest.build());
@@ -366,41 +366,43 @@ public class TestBulkMutation {
   public void testTooManyMutations() {
     MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry().toBuilder();
     bigRequest.addAllMutations(
-        Collections.nCopies((int) BulkMutation.MAX_NUMBER_OF_MUTATIONS, bigRequest.getMutations(0))
-    );
+        Collections.nCopies(
+            (int) BulkMutation.MAX_NUMBER_OF_MUTATIONS, bigRequest.getMutations(0)));
     underTest.add(bigRequest.build());
   }
 
   private BulkMutation createBulkMutation() {
-    return new BulkMutation(TABLE_NAME, client, operationAccountant,
-        retryExecutorService, BULK_OPTIONS);
+    return new BulkMutation(
+        TABLE_NAME, client, operationAccountant, retryExecutorService, BULK_OPTIONS);
   }
 
   private void setupScheduler(final boolean inNewThread) {
     when(retryExecutorService.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
-        .then(new Answer<ScheduledFuture>() {
-          @Override
-          public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
-            TimeUnit timeUnit = invocation.getArgument(2, TimeUnit.class);
-            long nanos = timeUnit.toNanos(invocation.getArgument(1, Long.class));
-            time.addAndGet(nanos);
-            Runnable runnable = invocation.getArgument(0, Runnable.class);
-            if (inNewThread) {
-              new Thread(runnable).start();
-            } else {
-              runnable.run();
-            }
-            return null;
-          }
-        });
+        .then(
+            new Answer<ScheduledFuture>() {
+              @Override
+              public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
+                TimeUnit timeUnit = invocation.getArgument(2, TimeUnit.class);
+                long nanos = timeUnit.toNanos(invocation.getArgument(1, Long.class));
+                time.addAndGet(nanos);
+                Runnable runnable = invocation.getArgument(0, Runnable.class);
+                if (inNewThread) {
+                  new Thread(runnable).start();
+                } else {
+                  runnable.run();
+                }
+                return null;
+              }
+            });
   }
 
   private void setResponse(Status code) {
     MutateRowsResponse.Builder responseBuilder = MutateRowsResponse.newBuilder();
-    responseBuilder.addEntriesBuilder()
+    responseBuilder
+        .addEntriesBuilder()
         .setIndex(0)
         .getStatusBuilder()
-            .setCode(code.getCode().value());
+        .setCode(code.getCode().value());
     future.set(Arrays.asList(responseBuilder.build()));
     underTest.sendUnsent();
   }

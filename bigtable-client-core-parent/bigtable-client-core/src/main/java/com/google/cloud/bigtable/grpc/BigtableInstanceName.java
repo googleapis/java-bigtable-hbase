@@ -15,15 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import java.io.Serializable;
-
 import com.google.api.client.util.Strings;
 import com.google.common.base.Preconditions;
+import java.io.Serializable;
 
 /**
- * This class encapsulates a Bigtable instance name.  An instance name is of the form
- * projects/(projectId)/instances/(instanceId).  It also has convenience methods
- * to create a tableName and a tableId.  TableName is (instanceName)/tables/(tableId).
+ * This class encapsulates a Bigtable instance name. An instance name is of the form
+ * projects/(projectId)/instances/(instanceId). It also has convenience methods to create a
+ * tableName and a tableId. TableName is (instanceName)/tables/(tableId).
  *
  * @author sduskis
  * @version $Id: $Id
@@ -42,7 +41,7 @@ public class BigtableInstanceName implements Serializable {
   private final String instanceId;
 
   /**
-   * <p>Constructor for BigtableInstanceName.</p>
+   * Constructor for BigtableInstanceName.
    *
    * @param projectId a {@link java.lang.String} object.
    * @param instanceId a {@link java.lang.String} object.
@@ -58,7 +57,7 @@ public class BigtableInstanceName implements Serializable {
   /**
    * {@inheritDoc}
    *
-   * Get the instance name.
+   * <p>Get the instance name.
    */
   @Override
   public String toString() {
@@ -75,26 +74,28 @@ public class BigtableInstanceName implements Serializable {
   public String toTableId(String tableName) {
     Preconditions.checkNotNull(tableName, "Table name cannot be null");
     String tablesPrefix = instanceName + TABLE_SEPARATOR;
-    Preconditions.checkState(tableName.startsWith(tablesPrefix),
-        "'%s' does not start with '%s'", tableName, tablesPrefix);
+    Preconditions.checkState(
+        tableName.startsWith(tablesPrefix),
+        "'%s' does not start with '%s'",
+        tableName,
+        tablesPrefix);
     String tableId = tableName.substring(tablesPrefix.length()).trim();
     Preconditions.checkState(!tableId.isEmpty(), "Table id is blank");
     return tableId;
   }
 
-
   /**
-   * <p>toTableNameStr.</p>
+   * toTableNameStr.
    *
    * @param tableId a {@link java.lang.String} object.
    * @return a {@link java.lang.String} object.
    */
   public String toTableNameStr(String tableId) {
-    return instanceName +  TABLE_SEPARATOR + tableId;
+    return instanceName + TABLE_SEPARATOR + tableId;
   }
 
   /**
-   * <p>toTableName.</p>
+   * toTableName.
    *
    * @param tableId a {@link java.lang.String} object.
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
@@ -115,7 +116,7 @@ public class BigtableInstanceName implements Serializable {
 
   /**
    * @return the fully qualified instanceName with the form
-   *         'projects/{projectId}/instances/{instanceId}'.
+   *     'projects/{projectId}/instances/{instanceId}'.
    */
   public String getInstanceName() {
     return instanceName;
@@ -125,4 +126,3 @@ public class BigtableInstanceName implements Serializable {
     return new BigtableClusterName(instanceName + "/clusters/" + clusterId);
   }
 }
-

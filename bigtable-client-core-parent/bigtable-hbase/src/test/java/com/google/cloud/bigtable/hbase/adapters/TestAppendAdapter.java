@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,15 +21,13 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
-
+import java.util.List;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.List;
 
 @RunWith(JUnit4.class)
 public class TestAppendAdapter {
@@ -46,8 +44,8 @@ public class TestAppendAdapter {
   public void testBasicRowKeyAppend() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Append append = new Append(rowKey);
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(TABLE_ID, ByteString.copyFrom(rowKey));
     appendAdapter.adapt(append, readModifyWriteRow);
     ReadModifyWriteRowRequest request = readModifyWriteRow.toProto(requestContext);
     ByteString adaptedRowKey = request.getRowKey();
@@ -70,8 +68,8 @@ public class TestAppendAdapter {
     append.add(family1, qualifier1, value1);
     append.add(family2, qualifier2, value2);
 
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(TABLE_ID, ByteString.copyFrom(rowKey));
     appendAdapter.adapt(append, readModifyWriteRow);
     ReadModifyWriteRowRequest request = readModifyWriteRow.toProto(requestContext);
     List<ReadModifyWriteRule> rules = request.getRulesList();
@@ -105,8 +103,8 @@ public class TestAppendAdapter {
     append.add(family2, qualifier2, value2);
     append.add(family2, qualifier2, value3);
 
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(TABLE_ID, ByteString.copyFrom(rowKey));
     appendAdapter.adapt(append, readModifyWriteRow);
     ReadModifyWriteRowRequest request = readModifyWriteRow.toProto(requestContext);
     List<ReadModifyWriteRule> rules = request.getRulesList();
@@ -137,8 +135,8 @@ public class TestAppendAdapter {
     append.add(family1, qualifier1, value1);
     append.add(family2, qualifier1, value2);
 
-    ReadModifyWriteRow readModifyWriteRow = ReadModifyWriteRow
-        .create(TABLE_ID, ByteString.copyFrom(rowKey));
+    ReadModifyWriteRow readModifyWriteRow =
+        ReadModifyWriteRow.create(TABLE_ID, ByteString.copyFrom(rowKey));
     appendAdapter.adapt(append, readModifyWriteRow);
     ReadModifyWriteRowRequest request = readModifyWriteRow.toProto(requestContext);
     List<ReadModifyWriteRule> rules = request.getRulesList();

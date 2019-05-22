@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
@@ -25,13 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
-import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-
-/**
- * Tests for {@link CloudBigtableTableConfiguration}.
- */
+/** Tests for {@link com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration}. */
 @RunWith(JUnit4.class)
 public class CloudBigtableTableConfigurationTest {
 
@@ -89,7 +84,7 @@ public class CloudBigtableTableConfigurationTest {
   }
 
   @Test
-  public void testToBuilder(){
+  public void testToBuilder() {
     CloudBigtableTableConfiguration underTest =
         buildConfiguration().toBuilder().withConfiguration("somekey", "somevalue").build();
     CloudBigtableTableConfiguration copy = underTest.toBuilder().build();
@@ -117,4 +112,3 @@ public class CloudBigtableTableConfigurationTest {
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);
   }
 }
-

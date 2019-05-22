@@ -18,22 +18,20 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
-
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Bigtable's {@link org.apache.hadoop.hbase.client.BufferedMutator} implementation.
@@ -62,7 +60,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final String host;
 
   /**
-   * <p>Constructor for BigtableBufferedMutator.</p>
+   * Constructor for BigtableBufferedMutator.
    *
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
@@ -124,9 +122,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
   /**
    * {@inheritDoc}
    *
-   * Being a Mutation. This method will block if either of the following are true:
-   * 1) There are more than {@code maxInflightRpcs} RPCs in flight
-   * 2) There are more than {@link #getWriteBufferSize()} bytes pending
+   * <p>Being a Mutation. This method will block if either of the following are true: 1) There are
+   * more than {@code maxInflightRpcs} RPCs in flight 2) There are more than {@link
+   * #getWriteBufferSize()} bytes pending
    */
   @Override
   public void mutate(Mutation mutation) throws IOException {
@@ -151,14 +149,14 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   /**
-   * <p>hasInflightRequests.</p>
+   * hasInflightRequests.
    *
    * @return a boolean.
    */
   public boolean hasInflightRequests() {
     return helper.hasInflightRequests();
   }
-  
+
   /**
    * Create a {@link RetriesExhaustedWithDetailsException} if there were any async exceptions and
    * send it to the {@link org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener}.
@@ -211,8 +209,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
 
     @Override
-    public void onSuccess(Object ignored) {
-    }
+    public void onSuccess(Object ignored) {}
   }
 
   private void addGlobalException(Row mutation, Throwable t) {

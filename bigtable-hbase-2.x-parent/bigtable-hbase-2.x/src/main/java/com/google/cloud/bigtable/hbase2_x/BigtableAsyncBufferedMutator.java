@@ -17,18 +17,16 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
 
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.hbase.BigtableBufferedMutatorHelper;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncBufferedMutator;
 import org.apache.hadoop.hbase.client.Mutation;
-
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.hbase.BigtableBufferedMutatorHelper;
-import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 
 /**
  * Bigtable implementation of {@link AsyncBufferedMutator}
@@ -37,20 +35,17 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
  */
 public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
 
-
   private final BigtableBufferedMutatorHelper helper;
 
   /**
-   * <p>Constructor for BigtableBufferedMutator.</p>
+   * Constructor for BigtableBufferedMutator.
    *
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
    * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession}
    */
   public BigtableAsyncBufferedMutator(
-      HBaseRequestAdapter adapter,
-      Configuration configuration,
-      BigtableSession session) {
+      HBaseRequestAdapter adapter, Configuration configuration, BigtableSession session) {
     helper = new BigtableBufferedMutatorHelper(adapter, configuration, session);
   }
 
@@ -87,25 +82,20 @@ public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
   /** {@inheritDoc} */
   @Override
   public List<CompletableFuture<Void>> mutate(List<? extends Mutation> mutations) {
-    return helper
-        .mutate(mutations)
-        .stream()
-        .map(listenableFuture ->
-            toCompletableFuture(listenableFuture)
-                .thenApply(r-> (Void) null))
+    return helper.mutate(mutations).stream()
+        .map(listenableFuture -> toCompletableFuture(listenableFuture).thenApply(r -> (Void) null))
         .collect(Collectors.toList());
   }
 
   /**
    * {@inheritDoc}
    *
-   * Being a Mutation. This method will block if either of the following are true:
-   * 1) There are more than {@code maxInflightRpcs} RPCs in flight
-   * 2) There are more than {@link #getWriteBufferSize()} bytes pending
+   * <p>Being a Mutation. This method will block if either of the following are true: 1) There are
+   * more than {@code maxInflightRpcs} RPCs in flight 2) There are more than {@link
+   * #getWriteBufferSize()} bytes pending
    */
   @Override
   public CompletableFuture<Void> mutate(final Mutation mutation) {
-    return toCompletableFuture(helper.mutate(mutation))
-        .thenApply(r -> null);
+    return toCompletableFuture(helper.mutate(mutation)).thenApply(r -> null);
   }
 }

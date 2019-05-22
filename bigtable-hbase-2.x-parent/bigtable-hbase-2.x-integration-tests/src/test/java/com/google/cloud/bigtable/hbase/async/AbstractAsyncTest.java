@@ -15,15 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase.async;
 
+import com.google.cloud.bigtable.hbase.AbstractTest;
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.util.concurrent.ExecutionException;
-
 import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
-
-import com.google.cloud.bigtable.hbase.AbstractTest;
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 
 public abstract class AbstractAsyncTest extends AbstractTest {
 
@@ -40,9 +38,9 @@ public abstract class AbstractAsyncTest extends AbstractTest {
     return conn;
   }
 
-  protected AsyncTable<ScanResultConsumer> getDefaultAsyncTable() throws InterruptedException, ExecutionException {
-    return getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(),
-      sharedTestEnv.getExecutor());
+  protected AsyncTable<ScanResultConsumer> getDefaultAsyncTable()
+      throws InterruptedException, ExecutionException {
+    return getAsyncConnection()
+        .getTable(sharedTestEnv.getDefaultTableName(), sharedTestEnv.getExecutor());
   }
-
 }

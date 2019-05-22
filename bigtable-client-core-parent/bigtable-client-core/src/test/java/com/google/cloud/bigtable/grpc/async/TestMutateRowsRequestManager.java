@@ -15,18 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-import org.mockito.MockitoAnnotations;
-
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsRequest.Entry;
 import com.google.bigtable.v2.MutateRowsResponse;
@@ -35,12 +23,19 @@ import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.MutateRowsRequestManager.ProcessingStatus;
 import com.google.rpc.Status;
-
 import io.grpc.Status.Code;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.mockito.MockitoAnnotations;
 
-/**
- * Tests for {@link MutateRowsRequestManager}
- */
+/** Tests for {@link MutateRowsRequestManager} */
 @RunWith(JUnit4.class)
 public class TestMutateRowsRequestManager {
 
@@ -51,14 +46,16 @@ public class TestMutateRowsRequestManager {
   private static MutateRowsRequest createRequest(int entryCount) {
     MutateRowsRequest.Builder builder = MutateRowsRequest.newBuilder();
     for (int i = 0; i < entryCount; i++) {
-      Mutation mutation = Mutation.newBuilder()
-          .setSetCell(SetCell.newBuilder().setFamilyName("Family" + i).build()).build();
+      Mutation mutation =
+          Mutation.newBuilder()
+              .setSetCell(SetCell.newBuilder().setFamilyName("Family" + i).build())
+              .build();
       builder.addEntries(Entry.newBuilder().addMutations(mutation));
     }
     return builder.build();
   }
 
-  private static MutateRowsRequest createRequest(MutateRowsRequest original, int ... indices) {
+  private static MutateRowsRequest createRequest(MutateRowsRequest original, int... indices) {
     MutateRowsRequest.Builder builder = MutateRowsRequest.newBuilder();
     for (int i : indices) {
       builder.addEntries(original.getEntries(i));
@@ -82,8 +79,8 @@ public class TestMutateRowsRequestManager {
     return Status.newBuilder().setCode(code.value()).build();
   }
 
-  private static ProcessingStatus send(MutateRowsRequestManager underTest,
-      MutateRowsResponse response) {
+  private static ProcessingStatus send(
+      MutateRowsRequestManager underTest, MutateRowsResponse response) {
     underTest.onMessage(response);
     return underTest.onOK();
   }
@@ -99,9 +96,7 @@ public class TestMutateRowsRequestManager {
   }
 
   @Test
-  /**
-   * An empty request should return an empty response
-   */
+  /** An empty request should return an empty response */
   public void testEmptySuccess() {
     MutateRowsRequestManager underTest =
         new MutateRowsRequestManager(retryOptions, createRequest(0));
@@ -110,9 +105,7 @@ public class TestMutateRowsRequestManager {
   }
 
   @Test
-  /**
-   * A single successful entry should work.
-   */
+  /** A single successful entry should work. */
   public void testSingleSuccess() {
     MutateRowsRequestManager underTest =
         new MutateRowsRequestManager(retryOptions, createRequest(1));
@@ -121,9 +114,7 @@ public class TestMutateRowsRequestManager {
   }
 
   @Test
-  /**
-   * Two individual calls with one retry should work.
-   */
+  /** Two individual calls with one retry should work. */
   public void testTwoTrySuccessOneFailure() {
     MutateRowsRequest originalRequest = createRequest(3);
     MutateRowsRequestManager underTest =
@@ -136,17 +127,25 @@ public class TestMutateRowsRequestManager {
   }
 
   @Test
-  /**
-   * Two individual calls in a more complicated case with one retry should work.
-   */
+  /** Two individual calls in a more complicated case with one retry should work. */
   public void testMultiSuccess() {
     MutateRowsRequest originalRequest = createRequest(10);
     MutateRowsRequestManager underTest =
         new MutateRowsRequestManager(retryOptions, originalRequest);
 
     // 5 mutations succeed, 5 mutations are retryable.
-    MutateRowsResponse firstResponse = createResponse(OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED,
-      OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED, OK, DEADLINE_EXCEEDED);
+    MutateRowsResponse firstResponse =
+        createResponse(
+            OK,
+            DEADLINE_EXCEEDED,
+            OK,
+            DEADLINE_EXCEEDED,
+            OK,
+            DEADLINE_EXCEEDED,
+            OK,
+            DEADLINE_EXCEEDED,
+            OK,
+            DEADLINE_EXCEEDED);
     send(underTest, firstResponse);
     Assert.assertEquals(createRequest(originalRequest, 1, 3, 5, 7, 9), underTest.getRetryRequest());
     Assert.assertEquals(firstResponse, underTest.buildResponse());
@@ -154,20 +153,20 @@ public class TestMutateRowsRequestManager {
     // 3 mutations succeed, 2 mutations are retryable.
     send(underTest, createResponse(OK, DEADLINE_EXCEEDED, OK, OK, DEADLINE_EXCEEDED));
     Assert.assertEquals(createRequest(originalRequest, 3, 9), underTest.getRetryRequest());
-    MutateRowsResponse secondResponse = createResponse(OK, OK, OK, DEADLINE_EXCEEDED,
-      OK, OK, OK, OK, OK, DEADLINE_EXCEEDED);
+    MutateRowsResponse secondResponse =
+        createResponse(OK, OK, OK, DEADLINE_EXCEEDED, OK, OK, OK, OK, OK, DEADLINE_EXCEEDED);
     Assert.assertEquals(secondResponse, underTest.buildResponse());
 
     // The final 2 mutations are OK
     send(underTest, createResponse(OK, OK));
-    Assert.assertEquals(createResponse(OK, OK, OK, OK, OK, OK, OK, OK, OK, OK),
-      underTest.buildResponse());
+    Assert.assertEquals(
+        createResponse(OK, OK, OK, OK, OK, OK, OK, OK, OK, OK), underTest.buildResponse());
   }
 
   @Test
   /**
    * Multiple attempts at retries should work as expected. 10 mutations are added, and 1 gets an OK
-   * status for 9 rounds until 1 mutation is left.  Each success shows up in a random location.
+   * status for 9 rounds until 1 mutation is left. Each success shows up in a random location.
    */
   public void testMultiAttempt() {
     MutateRowsRequest originalRequest = createRequest(10);
@@ -195,8 +194,8 @@ public class TestMutateRowsRequestManager {
 
       // Make sure that the request is retryable, and that the retry request looks reasonable.
       Assert.assertEquals(ProcessingStatus.RETRYABLE, send(underTest, createResponse(statuses)));
-      Assert.assertEquals(createRequest(originalRequest, toIntArray(remaining)),
-        underTest.getRetryRequest());
+      Assert.assertEquals(
+          createRequest(originalRequest, toIntArray(remaining)), underTest.getRetryRequest());
     }
 
     // Only one Mutation should be outstanding at this point. Create a response that has all OKs,
@@ -219,8 +218,8 @@ public class TestMutateRowsRequestManager {
   public void testNotRetryable() {
     MutateRowsRequestManager underTest =
         new MutateRowsRequestManager(retryOptions, createRequest(3));
-    Assert.assertEquals(ProcessingStatus.NOT_RETRYABLE,
-      send(underTest, createResponse(OK, OK, NOT_FOUND)));
+    Assert.assertEquals(
+        ProcessingStatus.NOT_RETRYABLE, send(underTest, createResponse(OK, OK, NOT_FOUND)));
     Assert.assertEquals(createResponse(OK, OK, NOT_FOUND), underTest.buildResponse());
   }
 

@@ -15,12 +15,26 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+
 import com.google.api.client.util.Clock;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.grpc.io.OAuthCredentialsCache.CacheState;
 import com.google.cloud.bigtable.grpc.io.OAuthCredentialsCache.HeaderCacheElement;
 import com.google.common.util.concurrent.SettableFuture;
+import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,25 +48,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
-
-
-/**
- * Tests for {@link OAuthCredentialsCache}
- */
+/** Tests for {@link OAuthCredentialsCache} */
 @RunWith(JUnit4.class)
 public class OAuthCredentialsCacheTest {
   private static long TIMEOUT_SECONDS = 5;
@@ -71,8 +67,7 @@ public class OAuthCredentialsCacheTest {
 
   private OAuthCredentialsCache underTest;
 
-  @Mock
-  private OAuth2Credentials mockCredentials;
+  @Mock private OAuth2Credentials mockCredentials;
 
   @Before
   public void setupMocks() {
@@ -81,12 +76,13 @@ public class OAuthCredentialsCacheTest {
   }
 
   private void setTimeInMillieconds(final long timeMs) {
-    OAuthCredentialsCache.clock = new Clock() {
-      @Override
-      public long currentTimeMillis() {
-        return timeMs;
-      }
-    };
+    OAuthCredentialsCache.clock =
+        new Clock() {
+          @Override
+          public long currentTimeMillis() {
+            return timeMs;
+          }
+        };
   }
 
   @Test
@@ -121,8 +117,7 @@ public class OAuthCredentialsCacheTest {
   @Test
   public void testNullExpiration() throws Exception {
     setTimeInMillieconds(100);
-    Mockito.when(mockCredentials.refreshAccessToken()).thenReturn(
-        new AccessToken("", null));
+    Mockito.when(mockCredentials.refreshAccessToken()).thenReturn(new AccessToken("", null));
     underTest = new OAuthCredentialsCache(executorService, mockCredentials);
     underTest.asyncRefresh().get(100, TimeUnit.MILLISECONDS);
     Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
@@ -156,7 +151,8 @@ public class OAuthCredentialsCacheTest {
         underTest.getHeader(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     Assert.assertTrue(token2.getStatus().isOk());
     Assert.assertThat(token2.getHeader(), containsString("hi"));
-    // Make sure that the token was only requested twice: once for the first failure & second time for background recovery
+    // Make sure that the token was only requested twice: once for the first failure & second time
+    // for background recovery
     Mockito.verify(mockCredentials, times(2)).refreshAccessToken();
   }
 
@@ -199,7 +195,8 @@ public class OAuthCredentialsCacheTest {
     Assert.assertEquals(CacheState.Good, underTest.getHeaderCache().getCacheState());
     Assert.assertThat(thirdResult.getHeader(), containsString("good"));
 
-    // Make sure that the token was only requested twice: once for the stale token & second time for the good token
+    // Make sure that the token was only requested twice: once for the stale token & second time for
+    // the good token
     Mockito.verify(mockCredentials, times(2)).refreshAccessToken();
   }
 
@@ -253,8 +250,7 @@ public class OAuthCredentialsCacheTest {
     final FutureAnswer<AccessToken> answer = new FutureAnswer<>();
     Mockito.when(mockCredentials.refreshAccessToken()).thenAnswer(answer);
 
-    underTest =
-        new OAuthCredentialsCache(executorService, mockCredentials);
+    underTest = new OAuthCredentialsCache(executorService, mockCredentials);
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
@@ -316,9 +312,10 @@ public class OAuthCredentialsCacheTest {
     underTest.asyncRefresh().get(500, TimeUnit.MILLISECONDS);
   }
 
-  private void initialize(long expiration) throws Exception, ExecutionException, InterruptedException {
-    Mockito.when(mockCredentials.refreshAccessToken()).thenReturn(
-        new AccessToken("", new Date(expiration)));
+  private void initialize(long expiration)
+      throws Exception, ExecutionException, InterruptedException {
+    Mockito.when(mockCredentials.refreshAccessToken())
+        .thenReturn(new AccessToken("", new Date(expiration)));
     underTest = new OAuthCredentialsCache(executorService, mockCredentials);
     Assert.assertEquals(CacheState.Expired, underTest.getHeaderCache().getCacheState());
     underTest.asyncRefresh().get();

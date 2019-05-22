@@ -16,11 +16,12 @@
 
 package com.google.cloud.bigtable.hbase.async;
 
+import com.google.cloud.bigtable.hbase.AbstractTestSnapshot;
+import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
@@ -31,49 +32,44 @@ import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.hbase.AbstractTestSnapshot;
-import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-
 @RunWith(JUnit4.class)
 public class TestAsyncSnapshots extends AbstractTestSnapshot {
 
   private AsyncAdmin getAsyncAdmin() throws InterruptedException, ExecutionException {
     return AbstractAsyncTest.getAsyncConnection().getAdmin();
   }
-  
+
   @Override
   protected void createTable(TableName tableName) throws IOException {
-    try{
+    try {
       getAsyncAdmin().createTable(createDescriptor(tableName)).get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while creating table: "+e.getCause());
+      throw new IOException("Error while creating table: " + e.getCause());
     }
-  }  
-  
+  }
+
   private TableDescriptor createDescriptor(TableName tableName) {
     return TableDescriptorBuilder.newBuilder(tableName)
-        .addColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder(SharedTestEnvRule.COLUMN_FAMILY).build())
+        .addColumnFamily(
+            ColumnFamilyDescriptorBuilder.newBuilder(SharedTestEnvRule.COLUMN_FAMILY).build())
         .build();
   }
 
   @Override
-  protected void snapshot(String snapshotName, TableName tableName)
-      throws IOException {
+  protected void snapshot(String snapshotName, TableName tableName) throws IOException {
     try {
-      getAsyncAdmin().snapshot(snapshotName,tableName).get();
+      getAsyncAdmin().snapshot(snapshotName, tableName).get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while creating snapshot: "+e.getCause());
+      throw new IOException("Error while creating snapshot: " + e.getCause());
     }
-    
   }
-
 
   @Override
   protected void deleteSnapshot(String snapshotName) throws IOException {
     try {
       getAsyncAdmin().deleteSnapshot(snapshotName).get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while deleting snapshot: "+e.getCause());
+      throw new IOException("Error while deleting snapshot: " + e.getCause());
     }
   }
 
@@ -82,7 +78,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     try {
       return getAsyncAdmin().tableExists(tableName).get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while checking table exists: "+e.getCause());
+      throw new IOException("Error while checking table exists: " + e.getCause());
     }
   }
 
@@ -91,7 +87,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     try {
       getAsyncAdmin().disableTable(tableName).get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while disabling table: "+e.getCause());
+      throw new IOException("Error while disabling table: " + e.getCause());
     }
   }
 
@@ -99,9 +95,9 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   protected void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     try {
-      getAsyncAdmin().cloneSnapshot(snapshotName,tableName).get();
+      getAsyncAdmin().cloneSnapshot(snapshotName, tableName).get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while creating clone of snapshot: "+e.getCause());
+      throw new IOException("Error while creating clone of snapshot: " + e.getCause());
     }
   }
 
@@ -110,7 +106,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     try {
       getAsyncAdmin().deleteSnapshots(pattern).get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while deleting snapshots: "+e.getCause());
+      throw new IOException("Error while deleting snapshots: " + e.getCause());
     }
   }
 
@@ -120,19 +116,19 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       Pattern pattern = Pattern.compile(regEx);
       return getAsyncAdmin().listSnapshots(pattern).get().size();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while listing snapshots size: "+e.getCause());
+      throw new IOException("Error while listing snapshots size: " + e.getCause());
     }
   }
 
   @Override
-  protected int listTableSnapshotsSize(String tableNameRegex,
-      String snapshotNameRegex) throws IOException {
+  protected int listTableSnapshotsSize(String tableNameRegex, String snapshotNameRegex)
+      throws IOException {
     try {
       Pattern tableNamePattern = Pattern.compile(tableNameRegex);
       Pattern snapshotNamePattern = Pattern.compile(snapshotNameRegex);
       return getAsyncAdmin().listTableSnapshots(tableNamePattern, snapshotNamePattern).get().size();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while listing table snapshot size: "+e.getCause());
+      throw new IOException("Error while listing table snapshot size: " + e.getCause());
     }
   }
 
@@ -141,17 +137,17 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     try {
       return getAsyncAdmin().listSnapshots(pattern).get().size();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while listing snapshots size: "+e.getCause());
+      throw new IOException("Error while listing snapshots size: " + e.getCause());
     }
   }
 
   @Override
-  protected int listTableSnapshotsSize(Pattern tableNamePattern,
-      Pattern snapshotNamePattern) throws IOException {
+  protected int listTableSnapshotsSize(Pattern tableNamePattern, Pattern snapshotNamePattern)
+      throws IOException {
     try {
       return getAsyncAdmin().listTableSnapshots(tableNamePattern, snapshotNamePattern).get().size();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while listing table snapshot size: "+e.getCause());
+      throw new IOException("Error while listing table snapshot size: " + e.getCause());
     }
   }
 
@@ -160,16 +156,16 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     try {
       getAsyncAdmin().deleteTable(tableName).get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while deleting table: "+e.getCause());
+      throw new IOException("Error while deleting table: " + e.getCause());
     }
   }
 
   @Override
   protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
-	try {
+    try {
       return getAsyncAdmin().listTableSnapshots(tableNamePattern).get(60, TimeUnit.SECONDS).size();
-	} catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while listing table snapshots: "+e.getCause());
-	}
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while listing table snapshots: " + e.getCause());
+    }
   }
 }

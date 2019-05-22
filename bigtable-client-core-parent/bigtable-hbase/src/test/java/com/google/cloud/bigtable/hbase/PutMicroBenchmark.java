@@ -25,30 +25,27 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.util.Bytes;
 
 public class PutMicroBenchmark {
   static final int NUM_CELLS = 10;
   private static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
-  private final static int REAL_CHANNEL_PUT_COUNT = 100;
-  private final static int FAKE_CHANNEL_PUT_COUNT = 100_000;
+  private static final int REAL_CHANNEL_PUT_COUNT = 100;
+  private static final int FAKE_CHANNEL_PUT_COUNT = 100_000;
   private static final int VALUE_SIZE = 100;
   private static BigtableOptions options;
   private static RequestContext requestContext;
@@ -58,23 +55,27 @@ public class PutMicroBenchmark {
     String instanceId = args.length > 1 ? args[1] : "instanceId";
     String tableId = args.length > 2 ? args[2] : "table";
 
-    options = BigtableOptions.builder()
-        .setProjectId(projectId)
-        .setInstanceId(instanceId)
-        .setUserAgent("put_microbenchmark")
-        .build();
+    options =
+        BigtableOptions.builder()
+            .setProjectId(projectId)
+            .setInstanceId(instanceId)
+            .setUserAgent("put_microbenchmark")
+            .build();
     boolean useRealConnection = args.length >= 2;
     int putCount = useRealConnection ? REAL_CHANNEL_PUT_COUNT : FAKE_CHANNEL_PUT_COUNT;
     HBaseRequestAdapter hbaseAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf(tableId), new Configuration(false));
-    requestContext = RequestContext
-        .create(options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+    requestContext =
+        RequestContext.create(
+            options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
 
     testCreatePuts(10_000);
 
     Put put = createPut();
-    System.out.println(String.format("Put size: %d, proto size: %d", put.heapSize(),
-        hbaseAdapter.adapt(put).toProto(requestContext).getSerializedSize()));
+    System.out.println(
+        String.format(
+            "Put size: %d, proto size: %d",
+            put.heapSize(), hbaseAdapter.adapt(put).toProto(requestContext).getSerializedSize()));
     run(hbaseAdapter, put, getChannelPool(useRealConnection), putCount);
   }
 
@@ -109,9 +110,10 @@ public class PutMicroBenchmark {
 
   private static Put createPut() {
     DataGenerationHelper dataHelper = new DataGenerationHelper();
-    return createPuts(dataHelper.randomData("testrow-"),
-      dataHelper.randomData("testQualifier-", NUM_CELLS),
-      dataHelper.randomData("testValue-", NUM_CELLS));
+    return createPuts(
+        dataHelper.randomData("testrow-"),
+        dataHelper.randomData("testQualifier-", NUM_CELLS),
+        dataHelper.randomData("testValue-", NUM_CELLS));
   }
 
   protected static Put createPuts(byte[] rowKey, byte[][] quals, byte[][] values) {
@@ -122,33 +124,37 @@ public class PutMicroBenchmark {
     return put;
   }
 
-  protected static void run(final HBaseRequestAdapter hbaseAdapter, final Put put, ManagedChannel cp,
-      final int putCount) throws InterruptedException {
-    final BigtableDataClient client = new BigtableDataGrpcClient(cp,
-        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
+  protected static void run(
+      final HBaseRequestAdapter hbaseAdapter, final Put put, ManagedChannel cp, final int putCount)
+      throws InterruptedException {
+    final BigtableDataClient client =
+        new BigtableDataGrpcClient(
+            cp, BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
 
-    Runnable r1 = new Runnable() {
-      @Override
-      public void run() {
-        long start = System.nanoTime();
-        for (int i = 0; i < putCount; i++) {
-          client.mutateRow(hbaseAdapter.adapt(put).toProto(requestContext));
-        }
-        print("constantly adapted", start, putCount);
-      }
-    };
+    Runnable r1 =
+        new Runnable() {
+          @Override
+          public void run() {
+            long start = System.nanoTime();
+            for (int i = 0; i < putCount; i++) {
+              client.mutateRow(hbaseAdapter.adapt(put).toProto(requestContext));
+            }
+            print("constantly adapted", start, putCount);
+          }
+        };
 
-    Runnable r2 = new Runnable() {
-      @Override
-      public void run() {
-        long start = System.nanoTime();
-        final MutateRowRequest adapted = hbaseAdapter.adapt(put).toProto(requestContext);
-        for (int i = 0; i < putCount; i++) {
-          client.mutateRow(adapted);
-        }
-        print("preadapted", start, putCount);
-      }
-    };
+    Runnable r2 =
+        new Runnable() {
+          @Override
+          public void run() {
+            long start = System.nanoTime();
+            final MutateRowRequest adapted = hbaseAdapter.adapt(put).toProto(requestContext);
+            for (int i = 0; i < putCount; i++) {
+              client.mutateRow(adapted);
+            }
+            print("preadapted", start, putCount);
+          }
+        };
 
     r1.run();
     r2.run();
@@ -168,8 +174,9 @@ public class PutMicroBenchmark {
     serialRun("pre adapted", putCount, r2, roundCount);
   }
 
-  protected static void runParallel(final String key, Runnable r, final int putCount,
-      int roundCount) throws InterruptedException {
+  protected static void runParallel(
+      final String key, Runnable r, final int putCount, int roundCount)
+      throws InterruptedException {
     ExecutorService e = Executors.newFixedThreadPool(roundCount);
     long start = System.nanoTime();
     for (int i = 0; i < roundCount; i++) {
@@ -213,48 +220,49 @@ public class PutMicroBenchmark {
     long totalTime = System.nanoTime() - startTimeNanos;
 
     System.out.printf(
-        "%s, Put %,d in %d ms.  %,d nanos/put.  %,f put/sec", key,
-        count, totalTime / 1000000, totalTime / count, count * 1000000000.0 / totalTime);
-    System.out.println(); 
+        "%s, Put %,d in %d ms.  %,d nanos/put.  %,f put/sec",
+        key, count, totalTime / 1000000, totalTime / count, count * 1000000000.0 / totalTime);
+    System.out.println();
   }
 
-  final static ManagedChannel channel = new ManagedChannel() {
-    @Override
-    public <RequestT, ResponseT> ClientCall<RequestT, ResponseT>
-        newCall(MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
-      return createNewCall();
-    }
+  static final ManagedChannel channel =
+      new ManagedChannel() {
+        @Override
+        public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
+            MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
+          return createNewCall();
+        }
 
-    @Override
-    public String authority() {
-      return null;
-    }
+        @Override
+        public String authority() {
+          return null;
+        }
 
-    @Override
-    public ManagedChannel shutdownNow() {
-      return null;
-    }
+        @Override
+        public ManagedChannel shutdownNow() {
+          return null;
+        }
 
-    @Override
-    public ManagedChannel shutdown() {
-      return null;
-    }
+        @Override
+        public ManagedChannel shutdown() {
+          return null;
+        }
 
-    @Override
-    public boolean isTerminated() {
-      return false;
-    }
+        @Override
+        public boolean isTerminated() {
+          return false;
+        }
 
-    @Override
-    public boolean isShutdown() {
-      return false;
-    }
+        @Override
+        public boolean isShutdown() {
+          return false;
+        }
 
-    @Override
-    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-      return false;
-    }
-  };
+        @Override
+        public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+          return false;
+        }
+      };
 
   private static ManagedChannel createFakeChannel() {
     return channel;
@@ -271,12 +279,10 @@ public class PutMicroBenchmark {
       }
 
       @Override
-      public void request(int numMessages) {
-      }
+      public void request(int numMessages) {}
 
       @Override
-      public void halfClose() {
-      }
+      public void halfClose() {}
 
       @Override
       @SuppressWarnings("unchecked")
@@ -286,8 +292,7 @@ public class PutMicroBenchmark {
       }
 
       @Override
-      public void cancel(String message, Throwable cause) {
-      }
+      public void cancel(String message, Throwable cause) {}
     };
   }
 }

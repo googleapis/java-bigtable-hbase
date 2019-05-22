@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
+
 import io.grpc.Metadata;
 import org.junit.Assert;
 import org.junit.Before;

@@ -20,7 +20,8 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Strings;
-
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -30,13 +31,10 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.util.GenericOptionsParser;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-
 /**
  * A simple utility class for checking and displaying common Bigtable-HBase configuration values.
  *
- * Expected usage: hbase com.google.cloud.bigtable.hbase.CheckConfig
+ * <p>Expected usage: hbase com.google.cloud.bigtable.hbase.CheckConfig
  *
  * @author sduskis
  * @version $Id: $Id
@@ -44,7 +42,7 @@ import java.security.GeneralSecurityException;
 @SuppressWarnings("deprecation")
 public class CheckConfig {
   /**
-   * <p>main.</p>
+   * main.
    *
    * @param args an array of {@link java.lang.String} objects.
    * @throws java.io.IOException if any.
@@ -97,8 +95,7 @@ public class CheckConfig {
     System.out.println(
         String.format(
             "HBase Connection Class = %s %s",
-            configuredConnectionClass,
-            isCorrectClassSpecified ? "(OK)" : "(Configuration error)"));
+            configuredConnectionClass, isCorrectClassSpecified ? "(OK)" : "(Configuration error)"));
 
     System.out.println("Opening table admin connection...");
     try (Connection conn = ConnectionFactory.createConnection(fullConfiguration)) {

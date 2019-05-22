@@ -8,6 +8,8 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -15,8 +17,6 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.TableName;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 
 /**
  * Common interface for {@link AbstractBigtableConnection} and HBase 2's BigtableAsyncConnection.
@@ -25,38 +25,39 @@ public interface CommonConnection extends Closeable {
 
   /**
    * Get a {@link BigtableSession} on which operations can be performed.
+   *
    * @return a {@link BigtableSession} object.
    */
   BigtableSession getSession();
 
   /**
-   * Returns the {@link Configuration} object used by this instance. The
-   * reference returned is not a copy, so any change made to it will affect this instance.
+   * Returns the {@link Configuration} object used by this instance. The reference returned is not a
+   * copy, so any change made to it will affect this instance.
+   *
    * @return a {@link Configuration} object.
    */
   Configuration getConfiguration();
 
   /**
-   * <p>
    * Getter for the field <code>options</code>.
-   * </p>
+   *
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
   BigtableOptions getOptions();
 
   /**
-   * <p>
    * Getter for the field <code>disabledTables</code>.
-   * </p>
+   *
    * @return a {@link Set} object that are disabled.
    */
   Set<TableName> getDisabledTables();
 
   /**
    * Retrieve a region information on a table.
+   *
    * @param tableName Name of the table for which to return region info.
    * @return A {@link java.util.List} HRegionInfo object
-   * @throws  java.io.IOException if any.
+   * @throws java.io.IOException if any.
    */
   List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException;
 }

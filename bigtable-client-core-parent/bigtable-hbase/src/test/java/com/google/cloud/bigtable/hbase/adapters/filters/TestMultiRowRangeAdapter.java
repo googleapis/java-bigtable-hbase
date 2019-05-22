@@ -53,121 +53,110 @@ public class TestMultiRowRangeAdapter {
 
   @Test
   public void testClosedSingle() throws IOException {
-    MultiRowRangeFilter filter = new MultiRowRangeFilter(Collections.singletonList(
-        new RowRange("cc", true, "ee", true)
-    ));
+    MultiRowRangeFilter filter =
+        new MultiRowRangeFilter(Collections.singletonList(new RowRange("cc", true, "ee", true)));
 
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
-        Range.closed(
-            new RowKeyWrapper(ByteString.copyFromUtf8("cc")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("ee"))
-        )
-    );
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.of(
+            Range.closed(
+                new RowKeyWrapper(ByteString.copyFromUtf8("cc")),
+                new RowKeyWrapper(ByteString.copyFromUtf8("ee"))));
     Assert.assertEquals(expected, indexScanHint);
   }
 
   @Test
   public void testOpenSingle() throws IOException {
-    MultiRowRangeFilter filter = new MultiRowRangeFilter(Collections.singletonList(
-        new RowRange("cc", false, "ee", false)
-    ));
+    MultiRowRangeFilter filter =
+        new MultiRowRangeFilter(Collections.singletonList(new RowRange("cc", false, "ee", false)));
 
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
-        Range.open(
-            new RowKeyWrapper(ByteString.copyFromUtf8("cc")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("ee"))
-        )
-    );
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.of(
+            Range.open(
+                new RowKeyWrapper(ByteString.copyFromUtf8("cc")),
+                new RowKeyWrapper(ByteString.copyFromUtf8("ee"))));
     Assert.assertEquals(expected, indexScanHint);
   }
 
   @Test
   public void testOpenClosedSingle() throws IOException {
-    MultiRowRangeFilter filter = new MultiRowRangeFilter(Collections.singletonList(
-        new RowRange("cc", false, "ee", true)
-    ));
+    MultiRowRangeFilter filter =
+        new MultiRowRangeFilter(Collections.singletonList(new RowRange("cc", false, "ee", true)));
 
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
-        Range.openClosed(
-            new RowKeyWrapper(ByteString.copyFromUtf8("cc")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("ee"))
-        )
-    );
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.of(
+            Range.openClosed(
+                new RowKeyWrapper(ByteString.copyFromUtf8("cc")),
+                new RowKeyWrapper(ByteString.copyFromUtf8("ee"))));
     Assert.assertEquals(expected, indexScanHint);
   }
 
   @Test
   public void testClosedOpenSingle() throws IOException {
-    MultiRowRangeFilter filter = new MultiRowRangeFilter(Collections.singletonList(
-        new RowRange("cc", true, "ee", false)
-    ));
+    MultiRowRangeFilter filter =
+        new MultiRowRangeFilter(Collections.singletonList(new RowRange("cc", true, "ee", false)));
 
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
-        Range.closedOpen(
-            new RowKeyWrapper(ByteString.copyFromUtf8("cc")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("ee"))
-        )
-    );
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.of(
+            Range.closedOpen(
+                new RowKeyWrapper(ByteString.copyFromUtf8("cc")),
+                new RowKeyWrapper(ByteString.copyFromUtf8("ee"))));
     Assert.assertEquals(expected, indexScanHint);
   }
 
   @Test
   public void testUnboundedStartSingle() throws IOException {
-    MultiRowRangeFilter filter = new MultiRowRangeFilter(Collections.singletonList(
-        new RowRange(HConstants.EMPTY_START_ROW, true, "ee".getBytes(), true)
-    ));
+    MultiRowRangeFilter filter =
+        new MultiRowRangeFilter(
+            Collections.singletonList(
+                new RowRange(HConstants.EMPTY_START_ROW, true, "ee".getBytes(), true)));
 
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
-        Range.atMost(
-            new RowKeyWrapper(ByteString.copyFromUtf8("ee"))
-        )
-    );
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.of(Range.atMost(new RowKeyWrapper(ByteString.copyFromUtf8("ee"))));
     Assert.assertEquals(expected, indexScanHint);
   }
 
   @Test
   public void testUnboundedStopSingle() throws IOException {
-    MultiRowRangeFilter filter = new MultiRowRangeFilter(Collections.singletonList(
-        new RowRange("cc".getBytes(), true, HConstants.EMPTY_END_ROW, true)
-    ));
+    MultiRowRangeFilter filter =
+        new MultiRowRangeFilter(
+            Collections.singletonList(
+                new RowRange("cc".getBytes(), true, HConstants.EMPTY_END_ROW, true)));
 
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
-        Range.atLeast(
-            new RowKeyWrapper(ByteString.copyFromUtf8("cc"))
-        )
-    );
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.of(Range.atLeast(new RowKeyWrapper(ByteString.copyFromUtf8("cc"))));
     Assert.assertEquals(expected, indexScanHint);
   }
 
   @Test
   public void testUnbounded() throws IOException {
-    MultiRowRangeFilter filter = new MultiRowRangeFilter(Collections.singletonList(
-        new RowRange(HConstants.EMPTY_START_ROW, true, HConstants.EMPTY_END_ROW, true)
-    ));
+    MultiRowRangeFilter filter =
+        new MultiRowRangeFilter(
+            Collections.singletonList(
+                new RowRange(HConstants.EMPTY_START_ROW, true, HConstants.EMPTY_END_ROW, true)));
 
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
@@ -179,59 +168,58 @@ public class TestMultiRowRangeAdapter {
 
   @Test
   public void testDisjoint() throws IOException {
-    MultiRowRangeFilter filter = new MultiRowRangeFilter(Arrays.asList(
-        new RowRange("bb", true, "cc", true),
-        new RowRange("ss", true, "yy", true)
-    ));
+    MultiRowRangeFilter filter =
+        new MultiRowRangeFilter(
+            Arrays.asList(
+                new RowRange("bb", true, "cc", true), new RowRange("ss", true, "yy", true)));
 
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.<RowKeyWrapper>builder()
-        .add(Range.closed(
-            new RowKeyWrapper(ByteString.copyFromUtf8("bb")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("cc"))
-        ))
-        .add(Range.closed(
-            new RowKeyWrapper(ByteString.copyFromUtf8("ss")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("yy"))
-        ))
-        .build();
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.<RowKeyWrapper>builder()
+            .add(
+                Range.closed(
+                    new RowKeyWrapper(ByteString.copyFromUtf8("bb")),
+                    new RowKeyWrapper(ByteString.copyFromUtf8("cc"))))
+            .add(
+                Range.closed(
+                    new RowKeyWrapper(ByteString.copyFromUtf8("ss")),
+                    new RowKeyWrapper(ByteString.copyFromUtf8("yy"))))
+            .build();
     Assert.assertEquals(expected, indexScanHint);
   }
 
   @Test
   public void testOverlap() throws IOException {
-    MultiRowRangeFilter filter = new MultiRowRangeFilter(Arrays.asList(
-        new RowRange("bb", true, "cc", true),
-        new RowRange("ca", true, "yy", true)
-    ));
+    MultiRowRangeFilter filter =
+        new MultiRowRangeFilter(
+            Arrays.asList(
+                new RowRange("bb", true, "cc", true), new RowRange("ca", true, "yy", true)));
 
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
     Assert.assertEquals(unaffectedRowFilter, adaptedFilter);
 
     RangeSet<RowKeyWrapper> indexScanHint = adapter.getIndexScanHint(filter);
 
-    RangeSet<RowKeyWrapper> expected = ImmutableRangeSet.of(
-        Range.closed(
-            new RowKeyWrapper(ByteString.copyFromUtf8("bb")),
-            new RowKeyWrapper(ByteString.copyFromUtf8("yy"))
-        )
-    );
+    RangeSet<RowKeyWrapper> expected =
+        ImmutableRangeSet.of(
+            Range.closed(
+                new RowKeyWrapper(ByteString.copyFromUtf8("bb")),
+                new RowKeyWrapper(ByteString.copyFromUtf8("yy"))));
     Assert.assertEquals(expected, indexScanHint);
   }
 
   @Test
   public void testInterleaveIsUnsupported() throws IOException {
-    MultiRowRangeFilter rangeFilter = new MultiRowRangeFilter(Arrays.asList(
-        new RowRange("b", true, "b", true)
-    ));
+    MultiRowRangeFilter rangeFilter =
+        new MultiRowRangeFilter(Arrays.asList(new RowRange("b", true, "b", true)));
     ColumnPrefixFilter colPrefix = new ColumnPrefixFilter("c".getBytes());
     FilterList filterList = new FilterList(Operator.MUST_PASS_ONE, rangeFilter, colPrefix);
 
-    try(ContextCloseable ignored = context.beginFilterList(filterList)) {
+    try (ContextCloseable ignored = context.beginFilterList(filterList)) {
       Assert.assertFalse(adapter.isFilterSupported(context, rangeFilter).isSupported());
     }
   }

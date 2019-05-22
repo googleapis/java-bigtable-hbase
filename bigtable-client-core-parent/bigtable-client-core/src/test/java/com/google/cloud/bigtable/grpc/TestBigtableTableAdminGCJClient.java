@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
@@ -49,9 +52,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 @RunWith(JUnit4.class)
 public class TestBigtableTableAdminGCJClient {
 
@@ -68,23 +68,24 @@ public class TestBigtableTableAdminGCJClient {
   private BigtableTableAdminClient adminClientV2;
   private BaseBigtableTableAdminClient baseClient;
   private BigtableTableAdminGCJClient adminGCJClient;
-  private FakeBigtableAdminServiceImpl  serviceImpl;
+  private FakeBigtableAdminServiceImpl serviceImpl;
 
   @Before
-  public void setUp() throws Exception{
+  public void setUp() throws Exception {
     ServerSocket serverSocket = new ServerSocket(0);
     final int availablePort = serverSocket.getLocalPort();
     serverSocket.close();
-    BigtableOptions options = BigtableOptions.builder()
-        .setAdminHost("localhost")
-        .setPort(availablePort)
-        .setProjectId(PROJECT_ID)
-        .setInstanceId(INSTANCE_ID)
-        .setAppProfileId("AppProfileId")
-        .setUseGCJClient(true)
-        .setCredentialOptions(CredentialOptions.nullCredential())
-        .setUsePlaintextNegotiation(true)
-        .build();
+    BigtableOptions options =
+        BigtableOptions.builder()
+            .setAdminHost("localhost")
+            .setPort(availablePort)
+            .setProjectId(PROJECT_ID)
+            .setInstanceId(INSTANCE_ID)
+            .setAppProfileId("AppProfileId")
+            .setUseGCJClient(true)
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .setUsePlaintextNegotiation(true)
+            .build();
 
     serviceImpl = new FakeBigtableAdminServiceImpl();
     server = ServerBuilder.forPort(availablePort).addService(serviceImpl).build();
@@ -99,7 +100,7 @@ public class TestBigtableTableAdminGCJClient {
   }
 
   @Test
-  public void testCreateTable(){
+  public void testCreateTable() {
     CreateTableRequest req = CreateTableRequest.of(TABLE_ID);
     Table response = adminGCJClient.createTable(req);
     assertEquals(TABLE_ID, response.getId());
@@ -133,12 +134,11 @@ public class TestBigtableTableAdminGCJClient {
   @Test
   public void testListTablesAsync() throws Exception {
     Future<List<String>> tableIds = adminGCJClient.listTablesAsync();
-    assertEquals(Arrays.asList(TEST_TABLE_ID_1, TEST_TABLE_ID_2,
-        TEST_TABLE_ID_3), tableIds.get());
+    assertEquals(Arrays.asList(TEST_TABLE_ID_1, TEST_TABLE_ID_2, TEST_TABLE_ID_3), tableIds.get());
   }
 
   @Test
-  public void testDeleteTable(){
+  public void testDeleteTable() {
     adminGCJClient.deleteTable("deleteTableID");
     DeleteTableRequest deleteTableReq = (DeleteTableRequest) serviceImpl.getRequests().get(0);
     assertEquals("deleteTableID", NameUtil.extractTableIdFromTableName(deleteTableReq.getName()));
@@ -146,26 +146,28 @@ public class TestBigtableTableAdminGCJClient {
 
   @Test
   public void testDeleteTableAsync() throws Exception {
-    Future<Void> deleteResponse =  adminGCJClient.deleteTableAsync("deleteAsyncTableID");
+    Future<Void> deleteResponse = adminGCJClient.deleteTableAsync("deleteAsyncTableID");
     deleteResponse.get();
     DeleteTableRequest deleteTableReq = (DeleteTableRequest) serviceImpl.getRequests().get(0);
-    assertEquals("deleteAsyncTableID", NameUtil.extractTableIdFromTableName(deleteTableReq.getName()));
+    assertEquals(
+        "deleteAsyncTableID", NameUtil.extractTableIdFromTableName(deleteTableReq.getName()));
   }
 
   @Test
-  public void testModifyFamily(){
-    ModifyColumnFamiliesRequest request = ModifyColumnFamiliesRequest.of(TABLE_ID)
-        .addFamily("first-family");
+  public void testModifyFamily() {
+    ModifyColumnFamiliesRequest request =
+        ModifyColumnFamiliesRequest.of(TABLE_ID).addFamily("first-family");
     Table response = adminGCJClient.modifyFamilies(request);
     List<ColumnFamily> columnFamilies = response.getColumnFamilies();
     assertEquals("first-family", columnFamilies.get(0).getId());
   }
 
   @Test
-  public void testModifyFamilyAsync() throws Exception{
-    ModifyColumnFamiliesRequest request = ModifyColumnFamiliesRequest.of(TABLE_ID)
-        .addFamily("first-family")
-        .addFamily("another-family");
+  public void testModifyFamilyAsync() throws Exception {
+    ModifyColumnFamiliesRequest request =
+        ModifyColumnFamiliesRequest.of(TABLE_ID)
+            .addFamily("first-family")
+            .addFamily("another-family");
     Future<Table> response = adminGCJClient.modifyFamiliesAsync(request);
     List<ColumnFamily> columnFamilies = response.get().getColumnFamilies();
     assertEquals("first-family", columnFamilies.get(0).getId());
@@ -173,7 +175,7 @@ public class TestBigtableTableAdminGCJClient {
   }
 
   @Test
-  public void dropRowRange(){
+  public void dropRowRange() {
     String rowKey = "cf-dropRange";
     adminGCJClient.dropRowRange(TABLE_ID, rowKey);
     DropRowRangeRequest rangeRequest = (DropRowRangeRequest) serviceImpl.getRequests().get(0);
@@ -182,7 +184,7 @@ public class TestBigtableTableAdminGCJClient {
   }
 
   @Test
-  public void dropRowRangeAsync() throws Exception{
+  public void dropRowRangeAsync() throws Exception {
     String rowKey = "cf-dropRange-async";
     adminGCJClient.dropRowRangeAsync(TABLE_ID, rowKey).get();
     DropRowRangeRequest rangeRequest = (DropRowRangeRequest) serviceImpl.getRequests().get(0);
@@ -191,7 +193,7 @@ public class TestBigtableTableAdminGCJClient {
   }
 
   @Test
-  public void dropAllRows(){
+  public void dropAllRows() {
     String tableId = "tableWithNoDataId";
     adminGCJClient.dropAllRows(tableId);
     DropRowRangeRequest rangeRequest = (DropRowRangeRequest) serviceImpl.getRequests().get(0);
@@ -199,7 +201,7 @@ public class TestBigtableTableAdminGCJClient {
   }
 
   @Test
-  public void dropAllRowsAsync() throws Exception{
+  public void dropAllRowsAsync() throws Exception {
     String tableId = "tableWithNoDataId";
     adminGCJClient.dropAllRowsAsync(tableId).get();
     DropRowRangeRequest rangeRequest = (DropRowRangeRequest) serviceImpl.getRequests().get(0);
@@ -208,40 +210,31 @@ public class TestBigtableTableAdminGCJClient {
 
   @Test
   public void testSnapshotTableAsync() throws Exception {
-    SnapshotTableRequest request = SnapshotTableRequest.newBuilder()
-        .setSnapshotId("snapshotId")
-        .setName(tableName)
-        .build();
+    SnapshotTableRequest request =
+        SnapshotTableRequest.newBuilder().setSnapshotId("snapshotId").setName(tableName).build();
     Future<Operation> actualResponse = adminGCJClient.snapshotTableAsync(request);
     assertTrue(actualResponse.get().getDone());
   }
 
   @Test
   public void testGetSnapshotAsync() throws Exception {
-    GetSnapshotRequest request = GetSnapshotRequest.newBuilder()
-        .setName(tableName)
-        .build();
+    GetSnapshotRequest request = GetSnapshotRequest.newBuilder().setName(tableName).build();
     Future<Snapshot> actualResponse = adminGCJClient.getSnapshotAsync(request);
     assertEquals("testSnapshotName", actualResponse.get().getName());
   }
 
   @Test
   public void testListSnapshotsAsync() throws Exception {
-    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder()
-        .setParent(tableName)
-        .build();
+    ListSnapshotsRequest request = ListSnapshotsRequest.newBuilder().setParent(tableName).build();
     Future<ListSnapshotsResponse> actualResponse = adminGCJClient.listSnapshotsAsync(request);
-    assertEquals("firstSnapshotName",
-        actualResponse.get().getSnapshots(0).getName());
-    assertEquals("secondSnapshotName",
-        actualResponse.get().getSnapshots(1).getName());
+    assertEquals("firstSnapshotName", actualResponse.get().getSnapshots(0).getName());
+    assertEquals("secondSnapshotName", actualResponse.get().getSnapshots(1).getName());
   }
 
   @Test
-  public void testDeleteSnapshotAsync() throws Exception{
-    DeleteSnapshotRequest request = DeleteSnapshotRequest.newBuilder()
-        .setName("testSnapshotName")
-        .build();
+  public void testDeleteSnapshotAsync() throws Exception {
+    DeleteSnapshotRequest request =
+        DeleteSnapshotRequest.newBuilder().setName("testSnapshotName").build();
     adminGCJClient.deleteSnapshotAsync(request).get();
     DeleteSnapshotRequest receivedReq = (DeleteSnapshotRequest) serviceImpl.getRequests().get(0);
     assertEquals("testSnapshotName", receivedReq.getName());
@@ -249,25 +242,26 @@ public class TestBigtableTableAdminGCJClient {
 
   @Test
   public void testCreateTableFromSnapshotAsync() throws Exception {
-    CreateTableFromSnapshotRequest request = CreateTableFromSnapshotRequest.newBuilder()
-        .setTableId(TABLE_ID)
-        .setSourceSnapshot("test-snapshot")
-        .build();
+    CreateTableFromSnapshotRequest request =
+        CreateTableFromSnapshotRequest.newBuilder()
+            .setTableId(TABLE_ID)
+            .setSourceSnapshot("test-snapshot")
+            .build();
     Future<Operation> actualResponse = adminGCJClient.createTableFromSnapshotAsync(request);
     assertTrue(actualResponse.get().getDone());
   }
 
   @After
-  public void tearDown() throws Exception{
-    if(adminClientV2 != null){
+  public void tearDown() throws Exception {
+    if (adminClientV2 != null) {
       adminClientV2.close();
       adminClientV2 = null;
     }
-    if(baseClient != null){
+    if (baseClient != null) {
       baseClient.close();
       baseClient = null;
     }
-    if(server != null){
+    if (server != null) {
       server.shutdown();
       server.awaitTermination();
       server = null;

@@ -19,7 +19,8 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.common.collect.ImmutableList;
-
+import java.io.IOException;
+import java.util.List;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -29,28 +30,29 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-import java.util.List;
-
-@RunWith(JUnit4.class) public class TestFuzzyRowFilterAdapter {
+@RunWith(JUnit4.class)
+public class TestFuzzyRowFilterAdapter {
   FuzzyRowFilterAdapter adapter = new FuzzyRowFilterAdapter();
   Scan emptyScan = new Scan();
   FilterAdapterContext context = new FilterAdapterContext(emptyScan, null);
 
-  @Test public void fuzzyKeysAreTranslatedToRegularExpressions() throws IOException {
-    List<Pair<byte[], byte[]>> testPairs = ImmutableList.<Pair<byte[], byte[]>>builder()
-        .add(new Pair<>(Bytes.toBytes("abcd"), new byte[] { -1, -1, -1, -1 }))
-        .add(new Pair<>(Bytes.toBytes(".fgh"), new byte[] { 0, 0, 1, 0 }))
-        .add(new Pair<>(Bytes.toBytes("ijkl"), new byte[] { 1, 1, 1, 1 }))
-        .build();
+  @Test
+  public void fuzzyKeysAreTranslatedToRegularExpressions() throws IOException {
+    List<Pair<byte[], byte[]>> testPairs =
+        ImmutableList.<Pair<byte[], byte[]>>builder()
+            .add(new Pair<>(Bytes.toBytes("abcd"), new byte[] {-1, -1, -1, -1}))
+            .add(new Pair<>(Bytes.toBytes(".fgh"), new byte[] {0, 0, 1, 0}))
+            .add(new Pair<>(Bytes.toBytes("ijkl"), new byte[] {1, 1, 1, 1}))
+            .build();
 
     FuzzyRowFilter filter = new FuzzyRowFilter(testPairs);
     Filters.Filter adaptedFilter = adapter.adapt(context, filter);
-    Filters.Filter expected = FILTERS.interleave()
-        .filter(FILTERS.key().regex("abcd\\C*"))
-        .filter(FILTERS.key().regex("\\.f\\Ch\\C*"))
-        .filter(FILTERS.key().regex("\\C\\C\\C\\C\\C*"));
-
+    Filters.Filter expected =
+        FILTERS
+            .interleave()
+            .filter(FILTERS.key().regex("abcd\\C*"))
+            .filter(FILTERS.key().regex("\\.f\\Ch\\C*"))
+            .filter(FILTERS.key().regex("\\C\\C\\C\\C\\C*"));
 
     Assert.assertEquals(expected.toProto(), adaptedFilter.toProto());
   }

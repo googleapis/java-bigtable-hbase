@@ -17,10 +17,7 @@ package com.google.cloud.bigtable.metrics;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * Performance test for our metrics implementations.
- *
- */
+/** Performance test for our metrics implementations. */
 public class MetricsPerf {
 
   private static final int TEST_COUNT = 10_000_000;
@@ -63,7 +60,6 @@ public class MetricsPerf {
     print("Meters", start);
   }
 
-
   private static void timeTimers() {
     final Timer timer = registry.timer("testTimer");
     long start = System.nanoTime();
@@ -76,8 +72,15 @@ public class MetricsPerf {
   private static void print(String type, long start) {
     long diffNanos = System.nanoTime() - start;
     long nanosPer = diffNanos / TEST_COUNT;
-    System.out.println("=== " + TEST_COUNT + " " + type + " in "
-        + TimeUnit.NANOSECONDS.toMillis(diffNanos) + " ms.  That's " + nanosPer + " nano/metric");
+    System.out.println(
+        "=== "
+            + TEST_COUNT
+            + " "
+            + type
+            + " in "
+            + TimeUnit.NANOSECONDS.toMillis(diffNanos)
+            + " ms.  That's "
+            + nanosPer
+            + " nano/metric");
   }
-
 }

@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -36,8 +38,6 @@ import com.google.protobuf.Empty;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-
 /**
  * This class implements existing {@link IBigtableTableAdminClient} operations with
  * Google-cloud-java's {@link BigtableTableAdminClient} & {@link BaseBigtableTableAdminClient}.
@@ -47,7 +47,8 @@ public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient, A
   private final BigtableTableAdminClient delegate;
   private final BaseBigtableTableAdminClient baseAdminClient;
 
-  public BigtableTableAdminGCJClient(@Nonnull BigtableTableAdminClient delegate,
+  public BigtableTableAdminGCJClient(
+      @Nonnull BigtableTableAdminClient delegate,
       @Nonnull BaseBigtableTableAdminClient baseAdminClient) {
     this.delegate = delegate;
     this.baseAdminClient = baseAdminClient;
@@ -158,13 +159,15 @@ public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient, A
   /** {@inheritDoc} */
   @Override
   public ApiFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request) {
-    return ApiFutures.transform(baseAdminClient.deleteSnapshotCallable().futureCall(request),
+    return ApiFutures.transform(
+        baseAdminClient.deleteSnapshotCallable().futureCall(request),
         new ApiFunction<Empty, Void>() {
           @Override
           public Void apply(Empty input) {
             return null;
           }
-        }, directExecutor());
+        },
+        directExecutor());
   }
 
   /** {@inheritDoc} */

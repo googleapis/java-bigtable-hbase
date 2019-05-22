@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,8 @@ import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
+import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
@@ -37,51 +39,46 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 
-import javax.annotation.Nullable;
-import java.util.Arrays;
-
 public class CheckAndMutateUtil {
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
   // them (which they shouldn't since we built the filter), throw an exception.
-  private static final ReadHooks UNSUPPORTED_READ_HOOKS = new ReadHooks() {
-    @Override
-    public void composePreSendHook(Function<Query, Query> newHook) {
-      throw new IllegalStateException(
-          "We built a bad Filter for conditional mutation.");
-    }
+  private static final ReadHooks UNSUPPORTED_READ_HOOKS =
+      new ReadHooks() {
+        @Override
+        public void composePreSendHook(Function<Query, Query> newHook) {
+          throw new IllegalStateException("We built a bad Filter for conditional mutation.");
+        }
 
-    @Override
-    public void applyPreSendHook(Query query) {
-      throw new UnsupportedOperationException(
-          "We built a bad Filter for conditional mutation.");
-    }
-  };
+        @Override
+        public void applyPreSendHook(Query query) {
+          throw new UnsupportedOperationException(
+              "We built a bad Filter for conditional mutation.");
+        }
+      };
 
   /**
-   * <p>wasMutationApplied.</p>
+   * wasMutationApplied.
    *
    * @param request a {@link ConditionalRowMutation} object.
    * @param predicateMatched a {@link Boolean} object.
    * @return a boolean.
    */
   public static boolean wasMutationApplied(
-      ConditionalRowMutation request,
-      Boolean predicateMatched) {
-
+      ConditionalRowMutation request, Boolean predicateMatched) {
 
     // TODO: ConditionalRowMutation should have methods to check if it has true/false mutations
     CheckAndMutateRowRequest proto =
         request.toProto(RequestContext.create("SomeProject", "Some Instance", ""));
     // If we have true mods, we want the predicate to have matched.
     // If we have false mods, we did not want the predicate to have matched.
-    return (proto.getTrueMutationsCount() > 0  && predicateMatched)
+    return (proto.getTrueMutationsCount() > 0 && predicateMatched)
         || (proto.getFalseMutationsCount() > 0 && !predicateMatched);
   }
 
   /**
-   * This class can be used to convert HBase checkAnd* operations to Bigtable
-   * {@link ConditionalRowMutation}s.
+   * This class can be used to convert HBase checkAnd* operations to Bigtable {@link
+   * ConditionalRowMutation}s.
    */
   public static class RequestBuilder {
     private final HBaseRequestAdapter hbaseAdapter;
@@ -97,12 +94,11 @@ public class CheckAndMutateUtil {
     private Filter timeFilter = null;
 
     /**
-     * <p>
      * RequestBuilder.
-     * </p>
-     * @param hbaseAdapter a {@link HBaseRequestAdapter} used to convert HBase
-     *          {@link org.apache.hadoop.hbase.client.Mutation} to Cloud Bigtable
-     *          {@link com.google.cloud.bigtable.data.v2.models.Mutation}
+     *
+     * @param hbaseAdapter a {@link HBaseRequestAdapter} used to convert HBase {@link
+     *     org.apache.hadoop.hbase.client.Mutation} to Cloud Bigtable {@link
+     *     com.google.cloud.bigtable.data.v2.models.Mutation}
      * @param row the RowKey in which to to check value matching
      * @param family the family in which to check value matching.
      */
@@ -110,56 +106,65 @@ public class CheckAndMutateUtil {
       this.row = Preconditions.checkNotNull(row, "row is null");
       this.family = Preconditions.checkNotNull(family, "family is null");
 
-      // The hbaseAdapter used here should not set client-side timestamps, since that may cause strange contention
+      // The hbaseAdapter used here should not set client-side timestamps, since that may cause
+      // strange contention
       // issues.  See issue #1709.
       this.hbaseAdapter = hbaseAdapter.withServerSideTimestamps();
     }
 
     public RequestBuilder qualifier(byte[] qualifier) {
-      this.qualifier = Preconditions.checkNotNull(qualifier, "qualifier is null. Consider using" +
-          " an empty byte array, or just do not call this method if you want a null qualifier");
+      this.qualifier =
+          Preconditions.checkNotNull(
+              qualifier,
+              "qualifier is null. Consider using"
+                  + " an empty byte array, or just do not call this method if you want a null qualifier");
       return this;
     }
 
     public RequestBuilder ifNotExists() {
-      Preconditions.checkState(compareOp == null,
-          "ifNotExists and ifMatches are mutually exclusive");
+      Preconditions.checkState(
+          compareOp == null, "ifNotExists and ifMatches are mutually exclusive");
       this.checkNonExistence = true;
       return this;
     }
 
     /**
      * For non-null values, this produces a {@link RowFilter} equivalent to:
+     *
      * <pre>
      *   new ValueFilter(reverseCompareOp(compareOp), new BinaryComparator(value)
      * </pre>
-     * <p>
-     * Null values are bit tricky. In HBase 1.* style check and mutate, value == null always means `check non-existence`
-     * regardless of compareOp.  That's semantically confusing for CompareOperators other than EQUALS.
-     * It's even more confusing if value == null and compareOp = NOT_EQUALS.
-     * <p>
-     * HBase 2.* APIs introduced an explicit method of checking for "Non-Existence" as an independent concept from
-     * compareOp, which is the inspiration for the {@link #ifNotExists()} method.
-     * <p>
-     * Checking for existence in HBase can be expressed as follows:
+     *
+     * <p>Null values are bit tricky. In HBase 1.* style check and mutate, value == null always
+     * means `check non-existence` regardless of compareOp. That's semantically confusing for
+     * CompareOperators other than EQUALS. It's even more confusing if value == null and compareOp =
+     * NOT_EQUALS.
+     *
+     * <p>HBase 2.* APIs introduced an explicit method of checking for "Non-Existence" as an
+     * independent concept from compareOp, which is the inspiration for the {@link #ifNotExists()}
+     * method.
+     *
+     * <p>Checking for existence in HBase can be expressed as follows:
+     *
      * <pre>
      * compareOp = CompareOp.GREATER_OR_EQUAL, value = new byte[]{Byte.MIN_VALUE})
      * </pre>
-     * <p>
-     * Bigtable decided that value == null with a compareOp of NOT_EQUALS actually means check for existence, even
-     * though HBase will still treat it as non-existence.
+     *
+     * <p>Bigtable decided that value == null with a compareOp of NOT_EQUALS actually means check
+     * for existence, even though HBase will still treat it as non-existence.
      *
      * @param compareOp a {@link CompareOp}
      * @param value a byte array.
      * @return a {@link RequestBuilder} object with compareOp and byte array value.
      */
     public RequestBuilder ifMatches(CompareOp compareOp, @Nullable byte[] value) {
-      Preconditions.checkState(checkNonExistence == false,
-          "ifNotExists and ifMatches are mutually exclusive");
+      Preconditions.checkState(
+          checkNonExistence == false, "ifNotExists and ifMatches are mutually exclusive");
 
       this.compareOp = Preconditions.checkNotNull(compareOp, "compareOp is null");
 
-      // TODO (issue #1704): only NOT_EQUALS should allow null.  Everything else should use ifNotExists();
+      // TODO (issue #1704): only NOT_EQUALS should allow null.  Everything else should use
+      // ifNotExists();
       this.value = value;
       return this;
     }
@@ -199,11 +204,13 @@ public class CheckAndMutateUtil {
     }
 
     public ConditionalRowMutation build() {
-      Preconditions.checkState(checkNonExistence || compareOp != null,
-          "condition is null. You need to specify the condition by" +
-          " calling ifNotExists/ifEquals/ifMatches before executing the request");
-      ConditionalRowMutation conditionalRowMutation = ConditionalRowMutation
-          .create(hbaseAdapter.getBigtableTableName().getTableId(), ByteString.copyFrom(row));
+      Preconditions.checkState(
+          checkNonExistence || compareOp != null,
+          "condition is null. You need to specify the condition by"
+              + " calling ifNotExists/ifEquals/ifMatches before executing the request");
+      ConditionalRowMutation conditionalRowMutation =
+          ConditionalRowMutation.create(
+              hbaseAdapter.getBigtableTableName().getTableId(), ByteString.copyFrom(row));
       Scan scan = new Scan();
       scan.setMaxVersions(1);
       scan.addColumn(family, qualifier);
@@ -231,8 +238,7 @@ public class CheckAndMutateUtil {
         conditionalRowMutation.then(mutations);
       }
       conditionalRowMutation.condition(
-         Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS)
-      );
+          Adapters.SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS));
 
       return conditionalRowMutation;
     }
@@ -247,20 +253,20 @@ public class CheckAndMutateUtil {
    */
   private static CompareOp reverseCompareOp(CompareOp compareOp) {
     switch (compareOp) {
-    case EQUAL:
-    case NOT_EQUAL:
-    case NO_OP:
-      return compareOp;
-    case LESS:
-      return CompareOp.GREATER;
-    case LESS_OR_EQUAL:
-      return CompareOp.GREATER_OR_EQUAL;
-    case GREATER:
-      return CompareOp.LESS;
-    case GREATER_OR_EQUAL:
-      return CompareOp.LESS_OR_EQUAL;
-    default:
-      return CompareOp.NO_OP;
+      case EQUAL:
+      case NOT_EQUAL:
+      case NO_OP:
+        return compareOp;
+      case LESS:
+        return CompareOp.GREATER;
+      case LESS_OR_EQUAL:
+        return CompareOp.GREATER_OR_EQUAL;
+      case GREATER:
+        return CompareOp.LESS;
+      case GREATER_OR_EQUAL:
+        return CompareOp.LESS_OR_EQUAL;
+      default:
+        return CompareOp.NO_OP;
     }
   }
 }

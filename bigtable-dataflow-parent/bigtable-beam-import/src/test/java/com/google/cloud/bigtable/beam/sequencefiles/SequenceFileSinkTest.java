@@ -39,54 +39,48 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 public class SequenceFileSinkTest {
-  @Rule
-  public TestPipeline writePipeline = TestPipeline.create();
+  @Rule public TestPipeline writePipeline = TestPipeline.create();
 
-  @Rule
-  public TestPipeline readPipeline = TestPipeline.create();
+  @Rule public TestPipeline readPipeline = TestPipeline.create();
 
-  @Rule
-  public final TemporaryFolder workDir = new TemporaryFolder();
+  @Rule public final TemporaryFolder workDir = new TemporaryFolder();
 
   @Test
   @Category(NeedsRunner.class)
   public void testSeqFileWriteAndRead() throws Throwable {
     List<KV<Text, Text>> data = Lists.newArrayList();
-    for(int i=0; i < 100; i++) {
-      data.add(KV.of(new Text("key" + i), new Text("value"+i)));
+    for (int i = 0; i < 100; i++) {
+      data.add(KV.of(new Text("key" + i), new Text("value" + i)));
     }
 
-    ValueProvider<ResourceId> output = StaticValueProvider.of(
-        LocalResources.fromFile(workDir.getRoot(), true)
-    );
+    ValueProvider<ResourceId> output =
+        StaticValueProvider.of(LocalResources.fromFile(workDir.getRoot(), true));
 
-    FilenamePolicy filenamePolicy = DefaultFilenamePolicy
-        .fromStandardParameters(output, null, null, false);
+    FilenamePolicy filenamePolicy =
+        DefaultFilenamePolicy.fromStandardParameters(output, null, null, false);
 
-    SequenceFileSink<Text, Text> sink = new SequenceFileSink<>(
-        output, filenamePolicy,
-        Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class);
+    SequenceFileSink<Text, Text> sink =
+        new SequenceFileSink<>(
+            output,
+            filenamePolicy,
+            Text.class,
+            WritableSerialization.class,
+            Text.class,
+            WritableSerialization.class);
 
-    writePipeline
-        .apply(Create.of(data))
-        .apply(
-            WriteFiles.to(sink)
-                .withNumShards(1)
-        );
+    writePipeline.apply(Create.of(data)).apply(WriteFiles.to(sink).withNumShards(1));
 
     writePipeline.run().waitUntilFinish();
 
-
-    SequenceFileSource<Text, Text> source = new SequenceFileSource<>(
-        StaticValueProvider.of(workDir.getRoot().toString() + "/*"),
-        Text.class, WritableSerialization.class,
-        Text.class, WritableSerialization.class,
-        SequenceFile.SYNC_INTERVAL
-    );
-    PAssert.that(
-      readPipeline.apply(Read.from(source))
-    ).containsInAnyOrder(data);
+    SequenceFileSource<Text, Text> source =
+        new SequenceFileSource<>(
+            StaticValueProvider.of(workDir.getRoot().toString() + "/*"),
+            Text.class,
+            WritableSerialization.class,
+            Text.class,
+            WritableSerialization.class,
+            SequenceFile.SYNC_INTERVAL);
+    PAssert.that(readPipeline.apply(Read.from(source))).containsInAnyOrder(data);
 
     readPipeline.run();
   }

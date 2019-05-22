@@ -19,6 +19,9 @@ import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
@@ -29,78 +32,76 @@ import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.io.TimeRange;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 public class BigtableTable extends AbstractBigtableTable {
 
   @SuppressWarnings("deprecation")
   public static final CompareOp toCompareOp(CompareOperator compareOp) {
-    switch(compareOp) {
-    case EQUAL:
-      return CompareOp.EQUAL;
-    case GREATER:
-      return CompareOp.GREATER;
-    case GREATER_OR_EQUAL:
-      return CompareOp.GREATER_OR_EQUAL;
-    case LESS:
-      return CompareOp.LESS;
-    case LESS_OR_EQUAL:
-      return CompareOp.LESS_OR_EQUAL;
-    case NO_OP:
-      return CompareOp.NO_OP;
-    case NOT_EQUAL:
-      return CompareOp.NOT_EQUAL;
-    default:
-      throw new IllegalArgumentException("CompareOp type: " + compareOp + " cannot be converted");
+    switch (compareOp) {
+      case EQUAL:
+        return CompareOp.EQUAL;
+      case GREATER:
+        return CompareOp.GREATER;
+      case GREATER_OR_EQUAL:
+        return CompareOp.GREATER_OR_EQUAL;
+      case LESS:
+        return CompareOp.LESS;
+      case LESS_OR_EQUAL:
+        return CompareOp.LESS_OR_EQUAL;
+      case NO_OP:
+        return CompareOp.NO_OP;
+      case NOT_EQUAL:
+        return CompareOp.NOT_EQUAL;
+      default:
+        throw new IllegalArgumentException("CompareOp type: " + compareOp + " cannot be converted");
     }
   }
 
-  public BigtableTable(AbstractBigtableConnection bigtableConnection,
-      HBaseRequestAdapter hbaseAdapter) {
+  public BigtableTable(
+      AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     super(bigtableConnection, hbaseAdapter);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
-      CompareOperator compareOp, byte[] value, Delete delete) throws IOException {
+  public boolean checkAndDelete(
+      byte[] row,
+      byte[] family,
+      byte[] qualifier,
+      CompareOperator compareOp,
+      byte[] value,
+      Delete delete)
+      throws IOException {
     return super.checkAndDelete(row, family, qualifier, toCompareOp(compareOp), value, delete);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public boolean checkAndMutate(final byte[] row, final byte[] family, final byte[] qualifier,
-      final CompareOperator compareOp, final byte[] value, final RowMutations rm)
+  public boolean checkAndMutate(
+      final byte[] row,
+      final byte[] family,
+      final byte[] qualifier,
+      final CompareOperator compareOp,
+      final byte[] value,
+      final RowMutations rm)
       throws IOException {
     return super.checkAndMutate(row, family, qualifier, toCompareOp(compareOp), value, rm);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
-      CompareOperator compareOp, byte[] value, Put put) throws IOException {
+  public boolean checkAndPut(
+      byte[] row, byte[] family, byte[] qualifier, CompareOperator compareOp, byte[] value, Put put)
+      throws IOException {
     return super.checkAndPut(row, family, qualifier, toCompareOp(compareOp), value, put);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public boolean[] exists(List<Get> gets) throws IOException {
     return existsAll(gets);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public TableDescriptor getDescriptor() throws IOException {
     return super.getTableDescriptor();
@@ -152,27 +153,21 @@ public class BigtableTable extends AbstractBigtableTable {
         new CheckAndMutateUtil.RequestBuilder(hbaseAdapter, row, family);
 
     return new CheckAndMutateBuilder() {
-      /**
-       * {@inheritDoc}
-       */
+      /** {@inheritDoc} */
       @Override
       public CheckAndMutateBuilder qualifier(byte[] qualifier) {
         builder.qualifier(qualifier);
         return this;
       }
 
-      /**
-       * {@inheritDoc}
-       */
+      /** {@inheritDoc} */
       @Override
       public CheckAndMutateBuilder ifNotExists() {
         builder.ifNotExists();
         return this;
       }
 
-      /**
-       * {@inheritDoc}
-       */
+      /** {@inheritDoc} */
       @Override
       public CheckAndMutateBuilder ifMatches(CompareOperator compareOp, byte[] value) {
         Preconditions.checkNotNull(compareOp, "compareOp is null");
@@ -183,17 +178,13 @@ public class BigtableTable extends AbstractBigtableTable {
         return this;
       }
 
-      /**
-       * {@inheritDoc}
-       */
+      /** {@inheritDoc} */
       public CheckAndMutateBuilder timeRange(TimeRange timeRange) {
         builder.timeRange(timeRange.getMin(), timeRange.getMax());
         return this;
       }
 
-      /**
-       * {@inheritDoc}
-       */
+      /** {@inheritDoc} */
       @Override
       public boolean thenPut(Put put) throws IOException {
         try {
@@ -204,9 +195,7 @@ public class BigtableTable extends AbstractBigtableTable {
         }
       }
 
-      /**
-       * {@inheritDoc}
-       */
+      /** {@inheritDoc} */
       @Override
       public boolean thenDelete(Delete delete) throws IOException {
         try {
@@ -217,9 +206,7 @@ public class BigtableTable extends AbstractBigtableTable {
         }
       }
 
-      /**
-       * {@inheritDoc}
-       */
+      /** {@inheritDoc} */
       @Override
       public boolean thenMutate(RowMutations rowMutations) throws IOException {
         try {

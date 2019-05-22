@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.admin;
 
 import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
+
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
@@ -37,50 +38,49 @@ public class TestTableAdapter {
   private static final String PROJECT_ID = "fakeProject";
   private static final String INSTANCE_ID = "fakeInstance";
   private static final String TABLE_ID = "myTable";
-  private static final String INSTANCE_NAME = "projects/" + PROJECT_ID + "/instances/" + INSTANCE_ID;
+  private static final String INSTANCE_NAME =
+      "projects/" + PROJECT_ID + "/instances/" + INSTANCE_ID;
   private static final String TABLE_NAME = INSTANCE_NAME + "/tables/" + TABLE_ID;
   private static final String COLUMN_FAMILY = "myColumnFamily";
 
   private TableAdapter tableAdapter;
 
   @Before
-  public void setUp(){
+  public void setUp() {
     BigtableInstanceName bigtableInstanceName = new BigtableInstanceName(PROJECT_ID, INSTANCE_ID);
     tableAdapter = new TableAdapter(bigtableInstanceName);
   }
 
   @Test
-  public void testAdaptWithHTableDescriptor(){
-    byte[][] splits = new byte[][] {
-            Bytes.toBytes("AAA"),
-            Bytes.toBytes("BBB"),
-            Bytes.toBytes("CCC"),
-    };
+  public void testAdaptWithHTableDescriptor() {
+    byte[][] splits =
+        new byte[][] {
+          Bytes.toBytes("AAA"), Bytes.toBytes("BBB"), Bytes.toBytes("CCC"),
+        };
     CreateTableRequest actualRequest =
-            TableAdapter.adapt(new HTableDescriptor(TableName.valueOf(TABLE_ID)), splits);
+        TableAdapter.adapt(new HTableDescriptor(TableName.valueOf(TABLE_ID)), splits);
 
     CreateTableRequest expectedRequest = CreateTableRequest.of(TABLE_ID);
     TableAdapter.addSplitKeys(splits, expectedRequest);
     Assert.assertEquals(
-            expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
-            actualRequest.toProto(PROJECT_ID, INSTANCE_ID));
+        expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+        actualRequest.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
-
   @Test
-  public void testAdaptWithHTableDescriptorWhenSplitIsEmpty(){
+  public void testAdaptWithHTableDescriptorWhenSplitIsEmpty() {
     byte[][] splits = new byte[0][0];
     CreateTableRequest actualRequest =
-            TableAdapter.adapt(new HTableDescriptor(TableName.valueOf(TABLE_ID)), splits);
+        TableAdapter.adapt(new HTableDescriptor(TableName.valueOf(TABLE_ID)), splits);
 
     CreateTableRequest expectedRequest = CreateTableRequest.of(TABLE_ID);
     Assert.assertEquals(
-            expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
-            actualRequest.toProto(PROJECT_ID, INSTANCE_ID));
+        expectedRequest.toProto(PROJECT_ID, INSTANCE_ID),
+        actualRequest.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
-  public void testAdaptWithColumnDesc(){
+  public void testAdaptWithColumnDesc() {
     HColumnDescriptor columnDesc = new HColumnDescriptor(COLUMN_FAMILY);
     HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     CreateTableRequest request = CreateTableRequest.of(TABLE_ID);
@@ -89,24 +89,24 @@ public class TestTableAdapter {
     TableAdapter.adapt(desc, request);
 
     GCRule gcRule = ColumnDescriptorAdapter.buildGarbageCollectionRule(columnDesc);
-    CreateTableRequest expected =
-            CreateTableRequest.of(TABLE_ID).addFamily(COLUMN_FAMILY, gcRule);
-    Assert.assertEquals(request.toProto(PROJECT_ID, INSTANCE_ID), expected.toProto(PROJECT_ID, INSTANCE_ID));
+    CreateTableRequest expected = CreateTableRequest.of(TABLE_ID).addFamily(COLUMN_FAMILY, gcRule);
+    Assert.assertEquals(
+        request.toProto(PROJECT_ID, INSTANCE_ID), expected.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
-
   @Test
-  public void testAdaptForTable(){
-    //If no GcRule passed to ColumnFamily, then ColumnDescriptorAdapter#buildGarbageCollectionRule
-    //updates maxVersion to Integer.MAX_VALUE
+  public void testAdaptForTable() {
+    // If no GcRule passed to ColumnFamily, then ColumnDescriptorAdapter#buildGarbageCollectionRule
+    // updates maxVersion to Integer.MAX_VALUE
     GCRule gcRule = GCRULES.maxVersions(1);
-    ColumnFamily columnFamily = ColumnFamily.newBuilder()
-            .setGcRule(gcRule.toProto()).build();
-    Table table = Table.newBuilder()
+    ColumnFamily columnFamily = ColumnFamily.newBuilder().setGcRule(gcRule.toProto()).build();
+    Table table =
+        Table.newBuilder()
             .setName(TABLE_NAME)
-            .putColumnFamilies(COLUMN_FAMILY, columnFamily).build();
-    HTableDescriptor actualTableDesc = tableAdapter.adapt(
-        com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
+            .putColumnFamilies(COLUMN_FAMILY, columnFamily)
+            .build();
+    HTableDescriptor actualTableDesc =
+        tableAdapter.adapt(com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
 
     HTableDescriptor expected = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     expected.addFamily(new HColumnDescriptor(COLUMN_FAMILY));

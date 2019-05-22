@@ -15,7 +15,12 @@
  */
 package com.google.cloud.bigtable.metrics;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
+
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,28 +28,18 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
-
 public class TestBigtableClientMetrics {
 
   private MetricRegistry originalMetricRegistry;
   private MetricLevel originalLevelToLog;
 
-  @Mock
-  MetricRegistry mockMetricRegistry;
+  @Mock MetricRegistry mockMetricRegistry;
 
-  @Mock
-  Timer mockTimer;
+  @Mock Timer mockTimer;
 
-  @Mock
-  Meter mockMeter;
+  @Mock Meter mockMeter;
 
-  @Mock
-  Counter mockCounter;
+  @Mock Counter mockCounter;
 
   @Before
   public void setup() {
@@ -55,7 +50,7 @@ public class TestBigtableClientMetrics {
     when(mockMetricRegistry.meter(any(String.class))).thenReturn(mockMeter);
     when(mockMetricRegistry.counter(any(String.class))).thenReturn(mockCounter);
   }
-  
+
   @After
   public void teardown() {
     BigtableClientMetrics.setMetricRegistry(originalMetricRegistry);
@@ -94,4 +89,3 @@ public class TestBigtableClientMetrics {
     }
   }
 }
-

@@ -23,9 +23,7 @@ import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
 
-/**
- * This class wraps existing {@link BulkMutation} with Google-cloud-java's model.
- */
+/** This class wraps existing {@link BulkMutation} with Google-cloud-java's model. */
 public class BulkMutationWrapper implements IBulkMutation {
 
   private final BulkMutation delegate;
@@ -39,7 +37,8 @@ public class BulkMutationWrapper implements IBulkMutation {
   /** {@inheritDoc} */
   @Override
   public ApiFuture<Void> add(RowMutation rowMutation) {
-    return ApiFutureUtil.transformAndAdapt(delegate.add(rowMutation.toBulkProto(requestContext).getEntries(0)),
+    return ApiFutureUtil.transformAndAdapt(
+        delegate.add(rowMutation.toBulkProto(requestContext).getEntries(0)),
         new Function<MutateRowResponse, Void>() {
           @Override
           public Void apply(MutateRowResponse response) {

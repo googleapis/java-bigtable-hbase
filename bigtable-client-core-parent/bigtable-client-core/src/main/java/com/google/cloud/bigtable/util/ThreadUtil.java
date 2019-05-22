@@ -18,18 +18,19 @@ package com.google.cloud.bigtable.util;
 import com.google.cloud.PlatformInformation;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.util.concurrent.ThreadFactory;
 
 /**
  * Creates a {@link ThreadFactory} that's safe to use in App Engine.
- * <p>
- * This class copies code that originates in {@link io.grpc.internal.GrpcUtil#getThreadFactory(String, boolean)}.
+ *
+ * <p>This class copies code that originates in {@link
+ * io.grpc.internal.GrpcUtil#getThreadFactory(String, boolean)}.
  */
 public class ThreadUtil {
 
   /**
    * Get a {@link ThreadFactory} suitable for use in the current environment.
+   *
    * @param nameFormat to apply to threads created by the factory.
    * @param daemon {@code true} if the threads the factory creates are daemon threads, {@code false}
    *     otherwise.
@@ -39,10 +40,7 @@ public class ThreadUtil {
     if (PlatformInformation.isOnGAEStandard7() || PlatformInformation.isOnGAEStandard8()) {
       return MoreExecutors.platformThreadFactory();
     } else {
-      return new ThreadFactoryBuilder()
-          .setDaemon(daemon)
-          .setNameFormat(nameFormat)
-          .build();
+      return new ThreadFactoryBuilder().setDaemon(daemon).setNameFormat(nameFormat).build();
     }
   }
 }

@@ -15,12 +15,11 @@
  */
 package com.google.cloud.bigtable.config;
 
-import java.io.Serializable;
-
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import java.io.Serializable;
 
 /**
  * An immutable class providing access to bulk related configuration options for Bigtable.
@@ -62,17 +61,15 @@ public class BulkOptions implements Serializable, Cloneable {
    */
   public static final int BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT = 100;
 
-  /**
-   * The maximum amount of time a row will be buffered for. By default 0: indefinitely.
-   */
+  /** The maximum amount of time a row will be buffered for. By default 0: indefinitely. */
   public static long BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT = 0;
 
   /** Default rpc count per channel. */
   public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 10;
 
   /**
-    * This is the maximum accumulated size of uncompleted requests that we allow before throttling.
-    * Default to 10% of available memory with a max of 1GB.
+   * This is the maximum accumulated size of uncompleted requests that we allow before throttling.
+   * Default to 10% of available memory with a max of 1GB.
    */
   public static final long BIGTABLE_MAX_MEMORY_DEFAULT =
       (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
@@ -80,17 +77,15 @@ public class BulkOptions implements Serializable, Cloneable {
   public static Builder builder() {
     return new Builder();
   }
-  
-  /**
-   * A mutable builder for BigtableConnectionOptions.
-   */
+
+  /** A mutable builder for BigtableConnectionOptions. */
   public static class Builder {
 
     private BulkOptions options;
 
     @Deprecated
     public Builder() {
-      options =  new BulkOptions();
+      options = new BulkOptions();
       options.asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
       options.useBulkApi = true;
       options.bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
@@ -102,7 +97,9 @@ public class BulkOptions implements Serializable, Cloneable {
       options.bulkMutationRpcTargetMs = BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
     }
 
-    private Builder(BulkOptions options) { this.options = options.clone(); }
+    private Builder(BulkOptions options) {
+      this.options = options.clone();
+    }
 
     public Builder setAsyncMutatorWorkerCount(int asyncMutatorCount) {
       Preconditions.checkArgument(
@@ -118,21 +115,20 @@ public class BulkOptions implements Serializable, Cloneable {
 
     public Builder setBulkMaxRowKeyCount(int bulkMaxRowKeyCount) {
       Preconditions.checkArgument(
-        bulkMaxRowKeyCount >= 0, "bulkMaxRowKeyCount must be greater or equal to 0.");
+          bulkMaxRowKeyCount >= 0, "bulkMaxRowKeyCount must be greater or equal to 0.");
       options.bulkMaxRowKeyCount = bulkMaxRowKeyCount;
       return this;
     }
 
     public Builder setBulkMaxRequestSize(long bulkMaxRequestSize) {
       Preconditions.checkArgument(
-        bulkMaxRequestSize >= 0, "bulkMaxRequestSize must be greater or equal to 0.");
+          bulkMaxRequestSize >= 0, "bulkMaxRequestSize must be greater or equal to 0.");
       options.bulkMaxRequestSize = bulkMaxRequestSize;
       return this;
     }
 
     public Builder setAutoflushMs(long autoflushMs) {
-      Preconditions.checkArgument(
-          autoflushMs >= 0, "autoflushMs must be greater or equal to 0.");
+      Preconditions.checkArgument(autoflushMs >= 0, "autoflushMs must be greater or equal to 0.");
       options.autoflushMs = autoflushMs;
       return this;
     }
@@ -151,8 +147,8 @@ public class BulkOptions implements Serializable, Cloneable {
 
     /**
      * Enable an experimental feature that will throttle requests from {@link BulkMutation} if
-     * request latency surpasses a latency threshold. The default is
-     * {@link BulkOptions#BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT}.
+     * request latency surpasses a latency threshold. The default is {@link
+     * BulkOptions#BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT}.
      *
      * @return a {@link Builder} object, for convenience.
      */
@@ -166,7 +162,9 @@ public class BulkOptions implements Serializable, Cloneable {
       return this;
     }
 
-    public BulkOptions build() { return options; }
+    public BulkOptions build() {
+      return options;
+    }
   }
 
   private int asyncMutatorCount;
@@ -183,15 +181,15 @@ public class BulkOptions implements Serializable, Cloneable {
 
   @VisibleForTesting
   BulkOptions() {
-      asyncMutatorCount = 1;
-      useBulkApi = false;
-      bulkMaxRowKeyCount = -1;
-      bulkMaxRequestSize = -1;
-      autoflushMs = -1l;
-      maxInflightRpcs = -1;
-      maxMemory = -1l;
-      enableBulkMutationThrottling = false;
-      bulkMutationRpcTargetMs = -1;
+    asyncMutatorCount = 1;
+    useBulkApi = false;
+    bulkMaxRowKeyCount = -1;
+    bulkMaxRequestSize = -1;
+    autoflushMs = -1l;
+    maxInflightRpcs = -1;
+    maxMemory = -1l;
+    enableBulkMutationThrottling = false;
+    bulkMutationRpcTargetMs = -1;
   }
 
   private BulkOptions(
@@ -216,7 +214,7 @@ public class BulkOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>asyncMutatorCount</code>.</p>
+   * Getter for the field <code>asyncMutatorCount</code>.
    *
    * @return a int.
    */
@@ -225,7 +223,7 @@ public class BulkOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>useBulkApi.</p>
+   * useBulkApi.
    *
    * @return a boolean.
    */
@@ -234,7 +232,7 @@ public class BulkOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>bulkMaxRowKeyCount</code>.</p>
+   * Getter for the field <code>bulkMaxRowKeyCount</code>.
    *
    * @return a int.
    */
@@ -243,7 +241,7 @@ public class BulkOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>bulkMaxRequestSize</code>.</p>
+   * Getter for the field <code>bulkMaxRequestSize</code>.
    *
    * @return a long.
    */
@@ -252,7 +250,8 @@ public class BulkOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>autoflushMs</code>.</p>
+   * Getter for the field <code>autoflushMs</code>.
+   *
    * @return a long
    */
   public long getAutoflushMs() {
@@ -260,7 +259,7 @@ public class BulkOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>maxInflightRpcs</code>.</p>
+   * Getter for the field <code>maxInflightRpcs</code>.
    *
    * @return a int.
    */
@@ -269,7 +268,7 @@ public class BulkOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>maxMemory</code>.</p>
+   * Getter for the field <code>maxMemory</code>.
    *
    * @return a long.
    */
@@ -289,8 +288,9 @@ public class BulkOptions implements Serializable, Cloneable {
   /**
    * if {@link #isEnableBulkMutationThrottling()}, then bulk mutation RPC latency will be compared
    * against this value. If the RPC latency is higher, then some throttling will be applied.
+   *
    * @return the number of milliseconds that is an appropriate amount of time for a bulk mutation
-   *         RPC.
+   *     RPC.
    */
   public int getBulkMutationRpcTargetMs() {
     return bulkMutationRpcTargetMs;
@@ -335,7 +335,7 @@ public class BulkOptions implements Serializable, Cloneable {
   }
 
   /**
-   * <p>toBuilder.</p>
+   * toBuilder.
    *
    * @return a {@link com.google.cloud.bigtable.config.BulkOptions.Builder} object.
    */
@@ -346,7 +346,7 @@ public class BulkOptions implements Serializable, Cloneable {
   protected BulkOptions clone() {
     try {
       return (BulkOptions) super.clone();
-    } catch(CloneNotSupportedException e) {
+    } catch (CloneNotSupportedException e) {
       throw new RuntimeException("Could not clone BulkOptions");
     }
   }

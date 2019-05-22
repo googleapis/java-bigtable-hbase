@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,24 +30,25 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Requirement 1.1 - Writes are buffered in the client by default (can be disabled).  Buffer size
- * can be defined programmatically or configuring the hbase.client.write.buffer property.
+ * Requirement 1.1 - Writes are buffered in the client by default (can be disabled). Buffer size can
+ * be defined programmatically or configuring the hbase.client.write.buffer property.
  *
- * TODO - Test buffer size definitions
+ * <p>TODO - Test buffer size definitions
  */
 public class TestBufferedMutator extends AbstractTest {
 
   @Test
   public void testAutoFlushOff() throws Exception {
-    try (BufferedMutator mutator = getConnection().getBufferedMutator(sharedTestEnv.getDefaultTableName());
+    try (BufferedMutator mutator =
+            getConnection().getBufferedMutator(sharedTestEnv.getDefaultTableName());
         Connection c = createNewConnection();
-        Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName());) {
+        Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName()); ) {
       // Set up the tiny write and read
       mutator.mutate(getPut());
       Get get = getGet();
 
       // Bigtable pushes the change right away.  This test would be flaky.
-//      Assert.assertEquals("Expecting no results", 0, tableForRead.get(get).size());
+      //      Assert.assertEquals("Expecting no results", 0, tableForRead.get(get).size());
       mutator.flush();
       Assert.assertEquals("Expecting one result", 1, tableForRead.get(get).size());
     }
@@ -57,18 +58,18 @@ public class TestBufferedMutator extends AbstractTest {
   public void testAutoFlushOn() throws Exception {
     try (Table mutator = getDefaultTable();
         Connection c = createNewConnection();
-        Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName());) {
+        Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName()); ) {
       mutator.put(getPut());
       Assert.assertEquals("Expecting one result", 1, tableForRead.get(getGet()).size());
     }
   }
 
   @Test
-  @Ignore(value="We need a better test now that BigtableBufferedMutator has different logic")
+  @Ignore(value = "We need a better test now that BigtableBufferedMutator has different logic")
   public void testBufferSizeFlush() throws Exception {
     int maxSize = 1024;
-    BufferedMutatorParams params = new BufferedMutatorParams(sharedTestEnv.getDefaultTableName())
-        .writeBufferSize(maxSize);
+    BufferedMutatorParams params =
+        new BufferedMutatorParams(sharedTestEnv.getDefaultTableName()).writeBufferSize(maxSize);
     try (BufferedMutator mutator = getConnection().getBufferedMutator(params)) {
       // HBase 1.0.0 has a bug in it. It returns maxSize instead of the buffer size for
       // getWriteBufferSize.  https://issues.apache.org/jira/browse/HBASE-13113
@@ -80,8 +81,10 @@ public class TestBufferedMutator extends AbstractTest {
       Assert.assertTrue(mutator.getWriteBufferSize() > 0);
 
       Put largePut = new Put(dataHelper.randomData("testrow-"));
-      largePut.addColumn(COLUMN_FAMILY, qualifier,
-        Bytes.toBytes(RandomStringUtils.randomAlphanumeric(maxSize * 2)));
+      largePut.addColumn(
+          COLUMN_FAMILY,
+          qualifier,
+          Bytes.toBytes(RandomStringUtils.randomAlphanumeric(maxSize * 2)));
       long heapSize = largePut.heapSize();
       Assert.assertTrue("largePut heapsize is : " + heapSize, heapSize > maxSize);
       mutator.mutate(largePut);

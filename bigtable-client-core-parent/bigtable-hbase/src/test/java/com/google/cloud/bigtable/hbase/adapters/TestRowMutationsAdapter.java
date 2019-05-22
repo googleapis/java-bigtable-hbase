@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
-
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.junit.Assert;
@@ -34,11 +36,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.times;
-
 @RunWith(JUnit4.class)
 public class TestRowMutationsAdapter {
 
@@ -49,8 +46,7 @@ public class TestRowMutationsAdapter {
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
 
-  @Mock
-  private MutationAdapter<org.apache.hadoop.hbase.client.Mutation> mutationAdapter;
+  @Mock private MutationAdapter<org.apache.hadoop.hbase.client.Mutation> mutationAdapter;
 
   private RowMutationsAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -85,13 +81,9 @@ public class TestRowMutationsAdapter {
     byte[] qualifier2 = dataHelper.randomData("qualifier2");
     byte[] value2 = dataHelper.randomData("value2");
 
-    mutations.add(
-        new Put(rowKey)
-            .addColumn(family1, qualifier1, value1));
+    mutations.add(new Put(rowKey).addColumn(family1, qualifier1, value1));
 
-    mutations.add(
-        new Put(rowKey)
-            .addColumn(family2, qualifier2, value2));
+    mutations.add(new Put(rowKey).addColumn(family2, qualifier2, value2));
 
     com.google.cloud.bigtable.data.v2.models.Mutation mutation =
         com.google.cloud.bigtable.data.v2.models.Mutation.create();
@@ -100,17 +92,19 @@ public class TestRowMutationsAdapter {
     MutateRowRequest result = toMutateRowRequest(rowKey, mutation);
     Assert.assertArrayEquals(rowKey, result.getRowKey().toByteArray());
 
-    Mockito.verify(mutationAdapter, times(2)).adapt(any(
-        org.apache.hadoop.hbase.client.Mutation.class),Matchers.eq(mutation));
+    Mockito.verify(mutationAdapter, times(2))
+        .adapt(any(org.apache.hadoop.hbase.client.Mutation.class), Matchers.eq(mutation));
   }
 
-  private MutateRowRequest toMutateRowRequest(byte[] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
+  private MutateRowRequest toMutateRowRequest(
+      byte[] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
     RowMutation rowMutation = toRowMutationModel(rowKey, mutation);
     MutateRowRequest.Builder builder = rowMutation.toProto(REQUEST_CONTEXT).toBuilder();
     return builder.build();
   }
 
-  private RowMutation toRowMutationModel(byte [] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
+  private RowMutation toRowMutationModel(
+      byte[] rowKey, com.google.cloud.bigtable.data.v2.models.Mutation mutation) {
     return RowMutation.create(TABLE_ID, ByteString.copyFrom(rowKey), mutation);
   }
 }

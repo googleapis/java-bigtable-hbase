@@ -15,12 +15,18 @@
  */
 package com.google.cloud.bigtable.beam.it;
 
+import static com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
+import static com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
+
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.config.Logger;
-
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,16 +67,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
-import static com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT;
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY;
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
-
 /**
- * This class contains integration test for Beam Dataflow.It creates dataflow pipelines that
- * perform the following task using pipeline chain process:</p>
+ * This class contains integration test for Beam Dataflow.It creates dataflow pipelines that perform
+ * the following task using pipeline chain process:
  *
  * <pre>
  *   <ol>
@@ -79,19 +78,15 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_
  *   </ol>
  * </pre>
  *
- * Arguments to configure in this integration test.
- *   The first four argument are required when running the test case on Google Cloud Platform.
- *        -Dgoogle.bigtable.project.id=[bigtable project] \\
- *        -Dgoogle.bigtable.instance.id=[bigtable instance id] \\
- *        -DstagingLocation=gs://[your google storage bucket] \\
- *        -DdataflowZoneId=[dataflow zone Id] \\
+ * Arguments to configure in this integration test. The first four argument are required when
+ * running the test case on Google Cloud Platform. -Dgoogle.bigtable.project.id=[bigtable project]
+ * \\ -Dgoogle.bigtable.instance.id=[bigtable instance id] \\ -DstagingLocation=gs://[your google
+ * storage bucket] \\ -DdataflowZoneId=[dataflow zone Id] \\
  *
- *   This options are optional, If not provided it will fallback to defaults.
- *        -Dgoogle.bigtable.endpoint.host=[ bigtable batch host] \\
- *        -Dgoogle.bigtable.admin.endpoint.host=[bigtable admin host] \\
- *        -DtableName=[tableName to be used] \\
- *        -Dtotal_row_count=[number of rows to write and read] \\
- *        -Dprefix_count=[cell prefix  count] \\
+ * <p>This options are optional, If not provided it will fallback to defaults.
+ * -Dgoogle.bigtable.endpoint.host=[ bigtable batch host] \\
+ * -Dgoogle.bigtable.admin.endpoint.host=[bigtable admin host] \\ -DtableName=[tableName to be used]
+ * \\ -Dtotal_row_count=[number of rows to write and read] \\ -Dprefix_count=[cell prefix count] \\
  */
 @RunWith(JUnit4.class)
 public class CloudBigtableBeamITTest {
@@ -108,9 +103,10 @@ public class CloudBigtableBeamITTest {
 
   private static final String workerMachineType =
       System.getProperty("workerMachineType", "n1" + "-standard-8");
-  private static final String dataEndpoint = System.getProperty(BIGTABLE_HOST_KEY, BIGTABLE_BATCH_DATA_HOST_DEFAULT);
-  private static final String adminEndpoint = System.getProperty(
-      BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT);
+  private static final String dataEndpoint =
+      System.getProperty(BIGTABLE_HOST_KEY, BIGTABLE_BATCH_DATA_HOST_DEFAULT);
+  private static final String adminEndpoint =
+      System.getProperty(BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT);
   private static final String TABLE_NAME_STR =
       System.getProperty("tableName", "BeamCloudBigtableIOIntegrationTest");
 
@@ -134,12 +130,12 @@ public class CloudBigtableBeamITTest {
     Configuration config = BigtableConfiguration.configure(projectId, instanceId);
     config.set(BIGTABLE_HOST_KEY, dataEndpoint);
     config.set(BIGTABLE_ADMIN_HOST_KEY, adminEndpoint);
-    try(Connection conn = BigtableConfiguration.connect(config); Admin admin = conn.getAdmin()){
+    try (Connection conn = BigtableConfiguration.connect(config);
+        Admin admin = conn.getAdmin()) {
       if (admin.tableExists(TABLE_NAME)) {
-        admin.deleteTable(TABLE_NAME );
+        admin.deleteTable(TABLE_NAME);
       }
-      admin.createTable(new HTableDescriptor(TABLE_NAME)
-          .addFamily(new HColumnDescriptor(FAMILY)));
+      admin.createTable(new HTableDescriptor(TABLE_NAME).addFamily(new HColumnDescriptor(FAMILY)));
       LOG.info("Created a table to perform batching: %s", TABLE_NAME);
     }
   }
@@ -149,8 +145,7 @@ public class CloudBigtableBeamITTest {
 
         private static final long serialVersionUID = 1L;
 
-        private Counter rowCounter =
-            Metrics.counter(CloudBigtableBeamITTest.class, "sent_puts");
+        private Counter rowCounter = Metrics.counter(CloudBigtableBeamITTest.class, "sent_puts");
 
         @ProcessElement
         public void processElement(ProcessContext context) throws Exception {
@@ -158,8 +153,9 @@ public class CloudBigtableBeamITTest {
           int max = (int) (TOTAL_ROW_COUNT / PREFIX_COUNT);
           for (int i = 0; i < max; i++) {
             rowCounter.inc();
-            context.output(new Put(Bytes.toBytes(prefix + i))
-                .addColumn(FAMILY, QUALIFIER, createRandomValue()));
+            context.output(
+                new Put(Bytes.toBytes(prefix + i))
+                    .addColumn(FAMILY, QUALIFIER, createRandomValue()));
           }
         }
       };
@@ -183,13 +179,14 @@ public class CloudBigtableBeamITTest {
       keys.add(RandomStringUtils.randomAlphanumeric(10));
     }
 
-    PipelineResult.State result = Pipeline.create(options)
-        .apply("Keys", Create.of(keys))
-        .apply("Create Puts", ParDo.of(WRITE_ONE_TENTH_PERCENT))
-        .apply("Write to BT", CloudBigtableIO.writeToTable(config))
-        .getPipeline()
-        .run()
-        .waitUntilFinish();
+    PipelineResult.State result =
+        Pipeline.create(options)
+            .apply("Keys", Create.of(keys))
+            .apply("Create Puts", ParDo.of(WRITE_ONE_TENTH_PERCENT))
+            .apply("Write to BT", CloudBigtableIO.writeToTable(config))
+            .getPipeline()
+            .run()
+            .waitUntilFinish();
 
     Assert.assertEquals(PipelineResult.State.DONE, result);
   }
@@ -213,9 +210,10 @@ public class CloudBigtableBeamITTest {
             .build();
 
     Pipeline pipeLine = Pipeline.create(options);
-    PCollection<Long> count = pipeLine
-        .apply("Read from BT", Read.from(CloudBigtableIO.read(config)))
-        .apply("Count", Count.<Result>globally());
+    PCollection<Long> count =
+        pipeLine
+            .apply("Read from BT", Read.from(CloudBigtableIO.read(config)))
+            .apply("Count", Count.<Result>globally());
 
     PAssert.thatSingleton(count).isEqualTo(TOTAL_ROW_COUNT);
     return pipeLine;
@@ -237,7 +235,7 @@ public class CloudBigtableBeamITTest {
     }
   }
 
-  private static byte[] createRandomValue(){
+  private static byte[] createRandomValue() {
     byte[] bytes = new byte[CELL_SIZE];
     new Random().nextBytes(bytes);
     return bytes;

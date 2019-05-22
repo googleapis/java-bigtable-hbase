@@ -17,6 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -27,17 +31,10 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
 import org.junit.experimental.categories.Category;
 
 public class TestBasicOps extends AbstractTest {
-  /**
-   * Happy path for a single value.
-   */
+  /** Happy path for a single value. */
   @Test
   public void testPutGetDelete() throws IOException {
     // Initialize
@@ -47,9 +44,7 @@ public class TestBasicOps extends AbstractTest {
     testPutGetDelete(true, rowKey, testQualifier, testValue);
   }
 
-  /**
-   * Requirement 1.2 - Rowkey, family, qualifer, and value are byte[]
-   */
+  /** Requirement 1.2 - Rowkey, family, qualifer, and value are byte[] */
   @Test
   public void testBinaryPutGetDelete() throws IOException {
     // Initialize
@@ -88,8 +83,8 @@ public class TestBasicOps extends AbstractTest {
     Result result = table.get(get);
     Assert.assertEquals(1, result.size());
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, null));
-    Assert.assertArrayEquals(testValue,
-        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, null)));
+    Assert.assertArrayEquals(
+        testValue, CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, null)));
 
     // Get as a null.  This should work.
     get = new Get(rowKey);
@@ -97,8 +92,8 @@ public class TestBasicOps extends AbstractTest {
     result = table.get(get);
     Assert.assertEquals(1, result.size());
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, null));
-    Assert.assertArrayEquals(testValue,
-        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, null)));
+    Assert.assertArrayEquals(
+        testValue, CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, null)));
 
     // This should return when selecting the whole family too.
     get = new Get(rowKey);
@@ -106,8 +101,8 @@ public class TestBasicOps extends AbstractTest {
     result = table.get(get);
     Assert.assertEquals(1, result.size());
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, null));
-    Assert.assertArrayEquals(testValue,
-        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, null)));
+    Assert.assertArrayEquals(
+        testValue, CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, null)));
 
     // Delete
     Delete delete = new Delete(rowKey);
@@ -120,34 +115,35 @@ public class TestBasicOps extends AbstractTest {
   }
 
   /**
-   * Requirement 2.4 - Maximum cell size is 10MB by default.  Can be overriden using
+   * Requirement 2.4 - Maximum cell size is 10MB by default. Can be overriden using
    * hbase.client.keyvalue.maxsize property.
    *
-   * Cell size includes value and key info, so the value needs to a bit less than the max to work.
+   * <p>Cell size includes value and key info, so the value needs to a bit less than the max to
+   * work.
    */
   @Test
   @Category(KnownEmulatorGap.class)
   public void testPutGetBigValue() throws IOException {
-    testPutGetDeleteExists((10 << 20) - 1024, false, true);  // 10 MB - 1kB
+    testPutGetDeleteExists((10 << 20) - 1024, false, true); // 10 MB - 1kB
   }
 
   /**
    * Test a put without a get. This will help allow us to see performance differences between put
    * alone and put/get. There are (or hopefully were, by the time this is read), performance issues
    * with testBigValue. The profile for put (uploading) is different from the profile for get
-   * (downloading).  We need a way to see where the issue is.
+   * (downloading). We need a way to see where the issue is.
    */
   @Test
   @Category(KnownEmulatorGap.class)
   public void testPutBigValue() throws IOException {
-    testPutGetDeleteExists((10 << 20) - 1024, false, false);  // 10 MB - 1kB
+    testPutGetDeleteExists((10 << 20) - 1024, false, false); // 10 MB - 1kB
   }
 
   /**
-   * Requirement 2.4 - Maximum cell size is 10MB by default.  Can be overridden using
+   * Requirement 2.4 - Maximum cell size is 10MB by default. Can be overridden using
    * hbase.client.keyvalue.maxsize property.
    *
-   * Ensure the failure case.
+   * <p>Ensure the failure case.
    */
   @Test(expected = IllegalArgumentException.class)
   @Category(KnownEmulatorGap.class)
@@ -184,7 +180,7 @@ public class TestBasicOps extends AbstractTest {
     int valueSize = size;
     if (removeMetadataSize) {
       // looks like in hbase 2.0 Cell size increased by 4. TODO verify it.
-      int metadataSize =  (20 + 4 + testRowKey.length + COLUMN_FAMILY.length + testQualifier.length);
+      int metadataSize = (20 + 4 + testRowKey.length + COLUMN_FAMILY.length + testQualifier.length);
       valueSize -= metadataSize;
     }
 
@@ -194,10 +190,8 @@ public class TestBasicOps extends AbstractTest {
     testPutGetDelete(doGet, testRowKey, testQualifier, testValue);
   }
 
-
-  private void
-      testPutGetDelete(boolean doGet, byte[] rowKey, byte[] testQualifier, byte[] testValue)
-          throws IOException {
+  private void testPutGetDelete(
+      boolean doGet, byte[] rowKey, byte[] testQualifier, byte[] testValue) throws IOException {
     Table table = getDefaultTable();
 
     Stopwatch stopwatch = new Stopwatch();

@@ -32,7 +32,8 @@ public class BigtableExtendedScan extends Scan {
   private RowSet.Builder rowSet = RowSet.newBuilder();
 
   /**
-   * @throws UnsupportedOperationException to avoid confusion.  Use {@link #addRange(byte[], byte[])} instead.
+   * @throws UnsupportedOperationException to avoid confusion. Use {@link #addRange(byte[], byte[])}
+   *     instead.
    */
   @Override
   public Scan setStartRow(byte[] startRow) {
@@ -40,7 +41,8 @@ public class BigtableExtendedScan extends Scan {
   }
 
   /**
-   * @throws UnsupportedOperationException to avoid confusion.  Use {@link #addRange(byte[], byte[])} instead.
+   * @throws UnsupportedOperationException to avoid confusion. Use {@link #addRange(byte[], byte[])}
+   *     instead.
    */
   @Override
   public Scan setStopRow(byte[] stopRow) {
@@ -48,7 +50,8 @@ public class BigtableExtendedScan extends Scan {
   }
 
   /**
-   * @throws UnsupportedOperationException to avoid confusion.  Use {@link #addRangeWithPrefix(byte[])} instead.
+   * @throws UnsupportedOperationException to avoid confusion. Use {@link
+   *     #addRangeWithPrefix(byte[])} instead.
    */
   @Override
   public Scan setRowPrefixFilter(byte[] rowPrefix) {
@@ -56,7 +59,9 @@ public class BigtableExtendedScan extends Scan {
   }
 
   /**
-   * Creates a {@link RowRange} based on a prefix.  This is similar to {@link Scan#setRowPrefixFilter(byte[])}.
+   * Creates a {@link RowRange} based on a prefix. This is similar to {@link
+   * Scan#setRowPrefixFilter(byte[])}.
+   *
    * @param prefix a byte array.
    */
   public void addRangeWithPrefix(byte[] prefix) {
@@ -64,23 +69,26 @@ public class BigtableExtendedScan extends Scan {
   }
 
   /**
-   * Adds a range to scan. This is similar to calling a combination of
-   * {@link Scan#setStartRow(byte[])} and {@link Scan#setStopRow(byte[])}. Other ranges can be
-   * constructed by creating a {@link RowRange} and calling {@link #addRange(RowRange)}
+   * Adds a range to scan. This is similar to calling a combination of {@link
+   * Scan#setStartRow(byte[])} and {@link Scan#setStopRow(byte[])}. Other ranges can be constructed
+   * by creating a {@link RowRange} and calling {@link #addRange(RowRange)}
+   *
    * @param startRow a byte array.
    * @param stopRow a byte array.
    */
   public void addRange(byte[] startRow, byte[] stopRow) {
-    addRange(RowRange.newBuilder()
-        .setStartKeyClosed(ByteStringer.wrap(startRow))
-        .setEndKeyOpen(ByteStringer.wrap(stopRow))
-        .build());
+    addRange(
+        RowRange.newBuilder()
+            .setStartKeyClosed(ByteStringer.wrap(startRow))
+            .setEndKeyOpen(ByteStringer.wrap(stopRow))
+            .build());
   }
 
   /**
    * Adds an arbitrary {@link RowRange} to the request. Ranges can have empty start keys or end
    * keys. Ranges can also be inclusive/closed or exclusive/open. The default range is inclusive
    * start and exclusive end.
+   *
    * @param range a {@link RowRange} object.
    */
   public void addRange(RowRange range) {
@@ -92,6 +100,7 @@ public class BigtableExtendedScan extends Scan {
    * Duplicate rowKeys will result in a single response in the scan results. Results of scans also
    * return rows in lexicographically sorted order, and not based on the order in which row keys
    * were added.
+   *
    * @param rowKey a byte array.
    */
   public void addRowKey(byte[] rowKey) {
@@ -99,7 +108,8 @@ public class BigtableExtendedScan extends Scan {
   }
 
   /**
-   * @return the {@link RowSet} built until now, which includes lists of individual keys and row ranges.
+   * @return the {@link RowSet} built until now, which includes lists of individual keys and row
+   *     ranges.
    */
   public RowSet getRowSet() {
     return rowSet.build();

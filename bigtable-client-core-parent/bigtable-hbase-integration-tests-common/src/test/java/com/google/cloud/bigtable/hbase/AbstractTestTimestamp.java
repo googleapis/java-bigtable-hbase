@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -30,12 +29,12 @@ import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
 
-public abstract class AbstractTestTimestamp extends AbstractTest{
-  
+public abstract class AbstractTestTimestamp extends AbstractTest {
+
   /**
    * Requirement 1.6 - Custom, arbitrary timestamps are supported.
    *
-   * Version numbers (1,2,3,...) are often used by users.  Just make sure we support this cleanly.
+   * <p>Version numbers (1,2,3,...) are often used by users. Just make sure we support this cleanly.
    */
   @Test
   public void testArbitraryTimestamp() throws IOException {
@@ -102,6 +101,6 @@ public abstract class AbstractTestTimestamp extends AbstractTest{
     Assert.assertFalse(table.exists(get));
     table.close();
   }
-  
+
   protected abstract void readVersions(Get get, int versions) throws IOException;
 }

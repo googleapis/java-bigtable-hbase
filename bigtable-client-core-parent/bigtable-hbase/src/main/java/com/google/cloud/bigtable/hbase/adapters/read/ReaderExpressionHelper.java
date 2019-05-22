@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,15 +16,13 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.protobuf.ByteString;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * Methods and constants to help build a bigtable reader expression
- * // TODO(AngusDavis): Move more ScanAdapter and FilterAdapter writing logic to here.
+ * Methods and constants to help build a bigtable reader expression // TODO(AngusDavis): Move more
+ * ScanAdapter and FilterAdapter writing logic to here.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -42,23 +40,24 @@ public class ReaderExpressionHelper {
   public static final byte[] ALL_BYTE_BYTES = Bytes.toBytes(ALL_BYTES);
   /** Constant <code>ALL_QUALIFIERS_BYTES=Bytes.toBytes(ALL_QUALIFIERS)</code> */
   public static final byte[] ALL_QUALIFIERS_BYTES = ALL_BYTE_BYTES;
-  private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
+
+  private static final byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
 
   /**
-   * Write unquoted to the OutputStream applying both RE2:QuoteMeta and Bigtable reader
-   * expression quoting.
+   * Write unquoted to the OutputStream applying both RE2:QuoteMeta and Bigtable reader expression
+   * quoting.
    *
    * @param outputStream A stream to write quoted output to
    * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
    * @throws java.io.IOException if any.
    */
   public static void writeQuotedExpression(OutputStream outputStream, byte[] unquoted)
-      throws  IOException {
+      throws IOException {
     writeQuotedRegularExpression(new QuoteFilterExpressionStream(outputStream), unquoted);
   }
 
   /**
-   * <p>quoteRegularExpression.</p>
+   * quoteRegularExpression.
    *
    * @param unquoted an array of byte.
    * @return an array of byte.
@@ -84,9 +83,7 @@ public class ReaderExpressionHelper {
     quoteMetaOutputStream.close();
   }
 
-  /**
-   * An OutputStream that performs RE2:QuoteMeta as bytes are written.
-   */
+  /** An OutputStream that performs RE2:QuoteMeta as bytes are written. */
   public static class QuoteMetaOutputStream extends OutputStream {
     protected final OutputStream delegate;
 
@@ -125,8 +122,8 @@ public class ReaderExpressionHelper {
   }
 
   /**
-   * An OutputStream that performs bigtable reader filter expression language quoting of
-   * '@', '{', and '}' by pre-pending a '@' to each.
+   * An OutputStream that performs bigtable reader filter expression language quoting of '@', '{',
+   * and '}' by pre-pending a '@' to each.
    */
   public static class QuoteFilterExpressionStream extends OutputStream {
     protected final OutputStream delegate;
@@ -137,14 +134,14 @@ public class ReaderExpressionHelper {
 
     @Override
     public void write(int unquoted) throws IOException {
-      switch(unquoted) {
-      case '@':
-      case '{':
-      case '}':
-        delegate.write('@');
-      default:
-        // fall through
-        delegate.write(unquoted);
+      switch (unquoted) {
+        case '@':
+        case '{':
+        case '}':
+          delegate.write('@');
+        default:
+          // fall through
+          delegate.write(unquoted);
       }
     }
   }

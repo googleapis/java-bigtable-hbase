@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
@@ -34,8 +33,7 @@ public class TestCreateTableHBase2 extends AbstractTestCreateTable {
   }
 
   @Override
-  protected void createTable(TableName tableName, byte[] start, byte[] end,
-      int splitCount)
+  protected void createTable(TableName tableName, byte[] start, byte[] end, int splitCount)
       throws IOException {
     getConnection().getAdmin().createTable(createDescriptor(tableName), start, end, splitCount);
   }
@@ -52,8 +50,7 @@ public class TestCreateTableHBase2 extends AbstractTestCreateTable {
   }
 
   @Override
-  protected List<HRegionLocation> getRegions(TableName tableName)
-      throws Exception {
+  protected List<HRegionLocation> getRegions(TableName tableName) throws Exception {
     return getConnection().getRegionLocator(tableName).getAllRegionLocations();
   }
 
@@ -81,5 +78,4 @@ public class TestCreateTableHBase2 extends AbstractTestCreateTable {
   protected boolean tableExists(TableName tableName) throws Exception {
     return getConnection().getAdmin().tableExists(tableName);
   }
-
 }

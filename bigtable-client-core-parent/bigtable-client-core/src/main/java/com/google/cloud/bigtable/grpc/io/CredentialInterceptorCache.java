@@ -24,20 +24,18 @@ import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.util.ThreadUtil;
 import com.google.common.base.Preconditions;
-
 import com.google.common.util.concurrent.MoreExecutors;
 import io.grpc.ClientInterceptor;
 import io.grpc.auth.ClientAuthInterceptor;
-import io.grpc.internal.GrpcUtil;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Caches {@link com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor} for default authorization cases.  In other
- * types of authorization, such as file based Credentials, it will create a new one.
+ * Caches {@link com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor} for
+ * default authorization cases. In other types of authorization, such as file based Credentials, it
+ * will create a new one.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -46,7 +44,7 @@ public class CredentialInterceptorCache {
   private static CredentialInterceptorCache instance = new CredentialInterceptorCache();
 
   /**
-   * <p>Getter for the field <code>instance</code>.</p>
+   * Getter for the field <code>instance</code>.
    *
    * @return a {@link com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache} object.
    */
@@ -59,23 +57,23 @@ public class CredentialInterceptorCache {
 
   private ClientInterceptor defaultCredentialInterceptor;
 
-  private CredentialInterceptorCache() {
-  }
+  private CredentialInterceptorCache() {}
 
   /**
-   * Given {@link com.google.cloud.bigtable.config.CredentialOptions} that define how to look up credentials, do the following:
+   * Given {@link com.google.cloud.bigtable.config.CredentialOptions} that define how to look up
+   * credentials, do the following:
    *
    * <ol>
-   *   <li> Look up the credentials
-   *   <li> If there are credentials, create a gRPC interceptor that gets OAuth2 security tokens
-   *        and add that token as a header on all calls.
-   *        <br>NOTE: {@link com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor} ensures that the token stays
-   *        fresh. It does token lookups asynchronously so that the calls themselves take as little
-   *        performance penalty as possible.
-   *   <li> Cache the interceptor in step #2 if the {@link com.google.cloud.bigtable.config.CredentialOptions} uses
-   *        <a href="https://developers.google.com/identity/protocols/application-default-credentials">
-   *        default application credentials
-   *        </a>
+   *   <li>Look up the credentials
+   *   <li>If there are credentials, create a gRPC interceptor that gets OAuth2 security tokens and
+   *       add that token as a header on all calls. <br>
+   *       NOTE: {@link com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor}
+   *       ensures that the token stays fresh. It does token lookups asynchronously so that the
+   *       calls themselves take as little performance penalty as possible.
+   *   <li>Cache the interceptor in step #2 if the {@link
+   *       com.google.cloud.bigtable.config.CredentialOptions} uses <a
+   *       href="https://developers.google.com/identity/protocols/application-default-credentials">
+   *       default application credentials </a>
    * </ol>
    *
    * @param credentialOptions Defines how credentials should be achieved

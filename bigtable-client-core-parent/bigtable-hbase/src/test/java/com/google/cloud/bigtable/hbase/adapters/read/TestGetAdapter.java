@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,8 @@ import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.common.base.Function;
 import com.google.protobuf.ByteString;
-
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -33,12 +34,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-/**
- * Unit tests for the {@link GetAdapter}
- */
+/** Unit tests for the {@link GetAdapter} */
 @RunWith(JUnit4.class)
 public class TestGetAdapter {
 
@@ -52,17 +48,18 @@ public class TestGetAdapter {
   private GetAdapter getAdapter =
       new GetAdapter(new ScanAdapter(FilterAdapter.buildAdapter(), new RowRangeAdapter()));
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
-  private ReadHooks throwingReadHooks = new ReadHooks() {
-    @Override
-    public void composePreSendHook(Function<Query, Query> newHook) {
-      throw new IllegalStateException("Read hooks not supported in tests.");
-    }
+  private ReadHooks throwingReadHooks =
+      new ReadHooks() {
+        @Override
+        public void composePreSendHook(Function<Query, Query> newHook) {
+          throw new IllegalStateException("Read hooks not supported in tests.");
+        }
 
-    @Override
-    public void applyPreSendHook(Query query) {
-      throw new IllegalStateException("Read hooks not supported in tests.");
-    }
-  };
+        @Override
+        public void applyPreSendHook(Query query) {
+          throw new IllegalStateException("Read hooks not supported in tests.");
+        }
+      };
 
   private Get makeValidGet(byte[] rowKey) throws IOException {
     Get get = new Get(rowKey);
@@ -77,8 +74,7 @@ public class TestGetAdapter {
 
     ByteString adaptedRowKey = query.toProto(requestContext).getRows().getRowKeys(0);
     Assert.assertEquals(
-        new String(get.getRow(), StandardCharsets.UTF_8),
-        adaptedRowKey.toStringUtf8());
+        new String(get.getRow(), StandardCharsets.UTF_8), adaptedRowKey.toStringUtf8());
   }
 
   @Test
@@ -87,8 +83,7 @@ public class TestGetAdapter {
     get.setMaxVersions(10);
     getAdapter.adapt(get, throwingReadHooks, query);
     Assert.assertEquals(
-        FILTERS.limit().cellsPerColumn(10).toProto(),
-        query.toProto(requestContext).getFilter());
+        FILTERS.limit().cellsPerColumn(10).toProto(), query.toProto(requestContext).getFilter());
   }
 
   @Test
@@ -107,11 +102,12 @@ public class TestGetAdapter {
     get.addColumn(Bytes.toBytes(FAMILY_ID), Bytes.toBytes(QUALIFIER_ID));
     getAdapter.adapt(get, throwingReadHooks, query);
     Assert.assertEquals(
-        FILTERS.chain()
+        FILTERS
+            .chain()
             .filter(FILTERS.family().regex(FAMILY_ID))
             .filter(FILTERS.qualifier().regex(QUALIFIER_ID))
             .toProto(),
-            query.toProto(requestContext).getFilter());
+        query.toProto(requestContext).getFilter());
   }
 
   @Test
@@ -121,11 +117,14 @@ public class TestGetAdapter {
     get.addColumn(Bytes.toBytes(FAMILY_ID), Bytes.toBytes("q2"));
     getAdapter.adapt(get, throwingReadHooks, query);
     Assert.assertEquals(
-        FILTERS.chain()
+        FILTERS
+            .chain()
             .filter(FILTERS.family().regex(FAMILY_ID))
-            .filter(FILTERS.interleave()
-                .filter(FILTERS.qualifier().regex(QUALIFIER_ID))
-                .filter(FILTERS.qualifier().regex("q2")))
+            .filter(
+                FILTERS
+                    .interleave()
+                    .filter(FILTERS.qualifier().regex(QUALIFIER_ID))
+                    .filter(FILTERS.qualifier().regex("q2")))
             .toProto(),
         query.toProto(requestContext).getFilter());
   }
@@ -149,11 +148,12 @@ public class TestGetAdapter {
     get.setCheckExistenceOnly(true);
     getAdapter.adapt(get, throwingReadHooks, query);
     Assert.assertEquals(
-        FILTERS.chain().filter(FILTERS.limit().cellsPerColumn(1))
+        FILTERS
+            .chain()
+            .filter(FILTERS.limit().cellsPerColumn(1))
             .filter(FILTERS.value().strip())
             .toProto(),
-        query.toProto(requestContext).getFilter()
-    );
+        query.toProto(requestContext).getFilter());
   }
 
   @Test
@@ -162,12 +162,10 @@ public class TestGetAdapter {
     get.setCheckExistenceOnly(true);
     get.setFilter(new KeyOnlyFilter());
     getAdapter.adapt(get, throwingReadHooks, query);
-    Filters.Filter filterOne = FILTERS.chain()
-        .filter(FILTERS.limit().cellsPerColumn(1))
-        .filter(FILTERS.value().strip());
-    Filters.Filter filterTwo = FILTERS.chain()
-        .filter(FILTERS.limit().cellsPerColumn(1))
-        .filter(FILTERS.value().strip());
+    Filters.Filter filterOne =
+        FILTERS.chain().filter(FILTERS.limit().cellsPerColumn(1)).filter(FILTERS.value().strip());
+    Filters.Filter filterTwo =
+        FILTERS.chain().filter(FILTERS.limit().cellsPerColumn(1)).filter(FILTERS.value().strip());
     Assert.assertEquals(
         FILTERS.chain().filter(filterOne).filter(filterTwo).toProto(),
         query.toProto(requestContext).getFilter());

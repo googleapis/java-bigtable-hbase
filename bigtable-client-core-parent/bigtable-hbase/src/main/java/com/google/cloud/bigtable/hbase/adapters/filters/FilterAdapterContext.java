@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,19 +19,16 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
+import javax.annotation.concurrent.NotThreadSafe;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Context for the currently executing filter adapter.
@@ -54,7 +51,7 @@ public class FilterAdapterContext {
   private final List<WhileMatchFilter> whileMatchFilters = new ArrayList<>();
 
   /**
-   * <p>Constructor for FilterAdapterContext.</p>
+   * Constructor for FilterAdapterContext.
    *
    * @param scan a {@link org.apache.hadoop.hbase.client.Scan} object.
    * @param readHooks a {@link com.google.cloud.bigtable.hbase.adapters.read.ReadHooks} object.
@@ -70,10 +67,12 @@ public class FilterAdapterContext {
   }
 
   /**
-   * <p>beginFilterList.</p>
+   * beginFilterList.
    *
    * @param lst a {@link org.apache.hadoop.hbase.filter.FilterList} object.
-   * @return a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable} object.
+   * @return a {@link
+   *     com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable}
+   *     object.
    */
   public ContextCloseable beginFilterList(final FilterList lst) {
     Preconditions.checkNotNull(lst);
@@ -88,7 +87,7 @@ public class FilterAdapterContext {
   }
 
   /**
-   * <p>getFilterListDepth.</p>
+   * getFilterListDepth.
    *
    * @return a int.
    */
@@ -97,7 +96,7 @@ public class FilterAdapterContext {
   }
 
   /**
-   * <p>getCurrentFilterList.</p>
+   * getCurrentFilterList.
    *
    * @return a {@link com.google.common.base.Optional} object.
    */
@@ -109,7 +108,7 @@ public class FilterAdapterContext {
   }
 
   /**
-   * <p>Getter for the field <code>readHooks</code>.</p>
+   * Getter for the field <code>readHooks</code>.
    *
    * @return a {@link com.google.cloud.bigtable.hbase.adapters.read.ReadHooks} object.
    */
@@ -126,9 +125,7 @@ public class FilterAdapterContext {
     return String.valueOf(++counter);
   }
 
-  /**
-   * Returns the current unique ID as a {@link String} in this adapter context.
-   */
+  /** Returns the current unique ID as a {@link String} in this adapter context. */
   @VisibleForTesting
   String getCurrentUniqueId() {
     return String.valueOf(counter);
@@ -138,7 +135,7 @@ public class FilterAdapterContext {
    * Adds a {@link WhileMatchFilter}, {@code filter} in the context.
    */
   /**
-   * <p>addWhileMatchFilter.</p>
+   * addWhileMatchFilter.
    *
    * @param filter a {@link org.apache.hadoop.hbase.filter.WhileMatchFilter} object.
    */
@@ -150,7 +147,7 @@ public class FilterAdapterContext {
    * Returns the number of {@link WhileMatchFilter}s in the context.
    */
   /**
-   * <p>getNumberOfWhileMatchFilters.</p>
+   * getNumberOfWhileMatchFilters.
    *
    * @return a int.
    */
@@ -159,7 +156,9 @@ public class FilterAdapterContext {
   }
 
   /**
-   * Get th current stack of nested FilterLists. This used by filters to check for unsupported scan configurations.
+   * Get th current stack of nested FilterLists. This used by filters to check for unsupported scan
+   * configurations.
+   *
    * @return an unmodifiable collection of current nested FilterLists
    */
   Collection<FilterList> getCurrentFilterLists() {

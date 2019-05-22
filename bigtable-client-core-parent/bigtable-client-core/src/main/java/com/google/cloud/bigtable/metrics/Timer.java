@@ -31,9 +31,7 @@ public interface Timer {
    */
   interface Context extends Closeable {
     @Override
-    /**
-     * Stops the timer.
-     */
+    /** Stops the timer. */
     public void close();
   }
 
@@ -49,7 +47,7 @@ public interface Timer {
    * Adds a recorded duration.
    *
    * @param duration the length of the duration
-   * @param unit     the scale unit of {@code duration}
+   * @param unit the scale unit of {@code duration}
    */
   void update(long duration, TimeUnit unit);
 }

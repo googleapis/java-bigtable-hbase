@@ -71,33 +71,28 @@ public class TestAppProfile {
     fakeDataService = new FakeDataService();
 
     final int port;
-    try(ServerSocket s = new ServerSocket(0)) {
+    try (ServerSocket s = new ServerSocket(0)) {
       port = s.getLocalPort();
     }
-    server = ServerBuilder.forPort(port)
-        .addService(fakeDataService)
-        .build();
+    server = ServerBuilder.forPort(port).addService(fakeDataService).build();
     server.start();
 
-
-    BigtableOptions opts = BigtableOptions.builder()
-        .setDataHost("localhost")
-        .setAdminHost("locahost")
-        .setPort(port)
-        .setProjectId("fake-project")
-        .setInstanceId("fake-instance")
-        .setUserAgent("fake-agent")
-        .setUsePlaintextNegotiation(true)
-        .setCredentialOptions(CredentialOptions.nullCredential())
-        .build();
+    BigtableOptions opts =
+        BigtableOptions.builder()
+            .setDataHost("localhost")
+            .setAdminHost("locahost")
+            .setPort(port)
+            .setProjectId("fake-project")
+            .setInstanceId("fake-instance")
+            .setUserAgent("fake-agent")
+            .setUsePlaintextNegotiation(true)
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .build();
 
     defaultSession = new BigtableSession(opts);
 
-    profileSession = new BigtableSession(
-        opts.toBuilder()
-        .setAppProfileId("my-app-profile")
-        .build()
-    );
+    profileSession =
+        new BigtableSession(opts.toBuilder().setAppProfileId("my-app-profile").build());
   }
 
   @After
@@ -148,7 +143,6 @@ public class TestAppProfile {
     profileSession.getDataClientWrapper().mutateRow(rowMutation);
     MutateRowRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
-
   }
 
   @Test
@@ -166,8 +160,7 @@ public class TestAppProfile {
   public void testCheckAndMutateRow() throws Exception {
     ConditionalRowMutation checkAndMuate =
         ConditionalRowMutation.create(TABLE_ID, "fake-key")
-            .then(Mutation.create()
-                .setCell("fakeFamily", "qualifer", "value"));
+            .then(Mutation.create().setCell("fakeFamily", "qualifer", "value"));
     defaultSession.getDataClientWrapper().checkAndMutateRow(checkAndMuate);
     CheckAndMutateRowRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
@@ -191,8 +184,8 @@ public class TestAppProfile {
 
   @Test
   public void testBulkMutation() throws Exception {
-    BigtableTableName fakeTableName = new BigtableTableName(
-        "projects/fake-project/instances/fake-instance/tables/fake-table");
+    BigtableTableName fakeTableName =
+        new BigtableTableName("projects/fake-project/instances/fake-instance/tables/fake-table");
 
     RowMutation rowMutation = RowMutation.create(TABLE_ID, "fake-key");
 
@@ -239,27 +232,27 @@ public class TestAppProfile {
 
     @SuppressWarnings("unchecked")
     <T> T popLastRequest() throws InterruptedException {
-      return (T)requests.poll(1, TimeUnit.SECONDS);
+      return (T) requests.poll(1, TimeUnit.SECONDS);
     }
 
     @Override
-    public void readRows(ReadRowsRequest request,
-        StreamObserver<ReadRowsResponse> responseObserver) {
+    public void readRows(
+        ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
       requests.add(request);
       responseObserver.onCompleted();
     }
 
     @Override
-    public void sampleRowKeys(SampleRowKeysRequest request,
-        StreamObserver<SampleRowKeysResponse> responseObserver) {
+    public void sampleRowKeys(
+        SampleRowKeysRequest request, StreamObserver<SampleRowKeysResponse> responseObserver) {
 
       requests.add(request);
       responseObserver.onCompleted();
     }
 
     @Override
-    public void mutateRow(MutateRowRequest request,
-        StreamObserver<MutateRowResponse> responseObserver) {
+    public void mutateRow(
+        MutateRowRequest request, StreamObserver<MutateRowResponse> responseObserver) {
 
       requests.add(request);
       responseObserver.onNext(MutateRowResponse.getDefaultInstance());
@@ -267,8 +260,8 @@ public class TestAppProfile {
     }
 
     @Override
-    public void mutateRows(MutateRowsRequest request,
-        StreamObserver<MutateRowsResponse> responseObserver) {
+    public void mutateRows(
+        MutateRowsRequest request, StreamObserver<MutateRowsResponse> responseObserver) {
 
       requests.add(request);
       MutateRowsResponse.Builder response = MutateRowsResponse.newBuilder();
@@ -277,27 +270,28 @@ public class TestAppProfile {
             Entry.newBuilder()
                 .setIndex(i)
                 .setStatus(Status.newBuilder().setCode(Code.OK.getNumber()).build())
-                .build()
-        );
+                .build());
       }
       responseObserver.onNext(response.build());
       responseObserver.onCompleted();
     }
 
     @Override
-    public void checkAndMutateRow(CheckAndMutateRowRequest request,
+    public void checkAndMutateRow(
+        CheckAndMutateRowRequest request,
         StreamObserver<CheckAndMutateRowResponse> responseObserver) {
 
       requests.add(request);
-      CheckAndMutateRowResponse.Builder response = CheckAndMutateRowResponse.newBuilder()
-          .setPredicateMatched(false);
+      CheckAndMutateRowResponse.Builder response =
+          CheckAndMutateRowResponse.newBuilder().setPredicateMatched(false);
 
       responseObserver.onNext(response.build());
       responseObserver.onCompleted();
     }
 
     @Override
-    public void readModifyWriteRow(ReadModifyWriteRowRequest request,
+    public void readModifyWriteRow(
+        ReadModifyWriteRowRequest request,
         StreamObserver<ReadModifyWriteRowResponse> responseObserver) {
 
       requests.add(request);

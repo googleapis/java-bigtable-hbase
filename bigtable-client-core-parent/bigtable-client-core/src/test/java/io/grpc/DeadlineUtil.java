@@ -16,12 +16,9 @@
 package io.grpc;
 
 import com.google.api.core.ApiClock;
-
 import java.util.concurrent.TimeUnit;
 
-/**
- * Hack to allow the creation of a {@link Deadline} with a constant time.
- */
+/** Hack to allow the creation of a {@link Deadline} with a constant time. */
 public class DeadlineUtil {
 
   public static CallOptions optionsWithDeadline(int duration, TimeUnit unit, final ApiClock clock) {
@@ -29,11 +26,14 @@ public class DeadlineUtil {
   }
 
   public static Deadline deadlineWithFixedTime(int duration, TimeUnit unit, final ApiClock clock) {
-    return Deadline.after(duration, unit, new Deadline.Ticker() {
-      @Override
-      public long read() {
-        return clock.nanoTime();
-      }
-    });
+    return Deadline.after(
+        duration,
+        unit,
+        new Deadline.Ticker() {
+          @Override
+          public long read() {
+            return clock.nanoTime();
+          }
+        });
   }
 }

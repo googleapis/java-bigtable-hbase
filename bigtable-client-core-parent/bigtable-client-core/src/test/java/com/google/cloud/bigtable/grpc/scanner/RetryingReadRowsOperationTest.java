@@ -24,19 +24,34 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.core.ApiClock;
+import com.google.bigtable.v2.BigtableGrpc;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.bigtable.v2.ReadRowsResponse.Builder;
+import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
+import com.google.bigtable.v2.RowRange;
+import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
 import com.google.cloud.bigtable.grpc.async.OperationClock;
 import com.google.cloud.bigtable.grpc.io.Watchdog;
 import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
+import com.google.cloud.bigtable.metrics.Timer;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.BytesValue;
+import com.google.protobuf.StringValue;
+import io.grpc.CallOptions;
+import io.grpc.ClientCall;
+import io.grpc.DeadlineUtil;
+import io.grpc.Metadata;
+import io.grpc.Status;
+import io.grpc.stub.StreamObserver;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import io.grpc.DeadlineUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,29 +63,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.bigtable.v2.BigtableGrpc;
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.ReadRowsResponse;
-import com.google.bigtable.v2.ReadRowsResponse.Builder;
-import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
-import com.google.bigtable.v2.RowRange;
-import com.google.bigtable.v2.RowSet;
-import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
-import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
-import com.google.cloud.bigtable.metrics.Timer;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.BytesValue;
-import com.google.protobuf.StringValue;
-
-import io.grpc.CallOptions;
-import io.grpc.ClientCall;
-import io.grpc.Metadata;
-import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
-
-/**
- * Test for the {@link RetryingReadRowsOperation}
- */
+/** Test for the {@link RetryingReadRowsOperation} */
 @RunWith(JUnit4.class)
 public class RetryingReadRowsOperationTest {
 
@@ -78,47 +71,47 @@ public class RetryingReadRowsOperationTest {
 
   private static ReadRowsRequest READ_ENTIRE_TABLE_REQUEST =
       ReadRowsRequest.newBuilder()
-          .setRows(RowSet.newBuilder().addRowRanges(RowRange.newBuilder()
-              .setStartKeyClosed(ByteString.EMPTY).setEndKeyOpen(ByteString.EMPTY).build()))
+          .setRows(
+              RowSet.newBuilder()
+                  .addRowRanges(
+                      RowRange.newBuilder()
+                          .setStartKeyClosed(ByteString.EMPTY)
+                          .setEndKeyOpen(ByteString.EMPTY)
+                          .build()))
           .setRowsLimit(10)
           .build();
 
-  public static ReadRowsResponse buildResponse(ByteString ... keys) throws UnsupportedEncodingException {
+  public static ReadRowsResponse buildResponse(ByteString... keys)
+      throws UnsupportedEncodingException {
     Builder builder = ReadRowsResponse.newBuilder();
     for (ByteString key : keys) {
-      builder.addChunks(CellChunk.newBuilder()
-          .setRowKey(key)
-          .setFamilyName(StringValue.newBuilder().setValue("Family"))
-          .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFrom("qualifier", "UTF-8")))
-          .setValue(ByteString.copyFrom("value", "UTF-8"))
-          .setCommitRow(true)
-          .build());
+      builder.addChunks(
+          CellChunk.newBuilder()
+              .setRowKey(key)
+              .setFamilyName(StringValue.newBuilder().setValue("Family"))
+              .setQualifier(
+                  BytesValue.newBuilder().setValue(ByteString.copyFrom("qualifier", "UTF-8")))
+              .setValue(ByteString.copyFrom("value", "UTF-8"))
+              .setCommitRow(true)
+              .build());
     }
     return builder.build();
   }
 
-  @Mock
-  private StreamObserver<FlatRow> mockFlatRowObserver;
+  @Mock private StreamObserver<FlatRow> mockFlatRowObserver;
 
-  @Mock
-  private StreamObserver<ReadRowsResponse> mockResponseObserver;
+  @Mock private StreamObserver<ReadRowsResponse> mockResponseObserver;
 
-  @Mock
-  private ScheduledExecutorService mockRetryExecutorService;
+  @Mock private ScheduledExecutorService mockRetryExecutorService;
 
   private OperationClock clock;
 
-  @Mock
-  private BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> mockRetryableRpc;
+  @Mock private BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> mockRetryableRpc;
 
-  @Mock
-  private ClientCall<ReadRowsRequest, ReadRowsResponse> mockClientCall;
-  @Mock
-  private RpcMetrics mockRpcMetrics;
-  @Mock
-  private Timer.Context mockOperationTimerContext;
-  @Mock
-  private Timer.Context mockRpcTimerContext;
+  @Mock private ClientCall<ReadRowsRequest, ReadRowsResponse> mockClientCall;
+  @Mock private RpcMetrics mockRpcMetrics;
+  @Mock private Timer.Context mockOperationTimerContext;
+  @Mock private Timer.Context mockRpcTimerContext;
 
   @SuppressWarnings("rawtypes")
   @Mock
@@ -126,7 +119,7 @@ public class RetryingReadRowsOperationTest {
 
   private Metadata metaData;
 
-  @SuppressWarnings({ "rawtypes" })
+  @SuppressWarnings({"rawtypes"})
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
@@ -148,11 +141,18 @@ public class RetryingReadRowsOperationTest {
     return createOperation(CallOptions.DEFAULT, mockFlatRowObserver);
   }
 
-  protected RetryingReadRowsOperation createOperation(CallOptions options,
-      StreamObserver<FlatRow> observer) {
+  protected RetryingReadRowsOperation createOperation(
+      CallOptions options, StreamObserver<FlatRow> observer) {
     RetryingReadRowsOperation operation =
-        new RetryingReadRowsOperation(observer, RETRY_OPTIONS, READ_ENTIRE_TABLE_REQUEST,
-            mockRetryableRpc, options, mockRetryExecutorService, metaData, clock);
+        new RetryingReadRowsOperation(
+            observer,
+            RETRY_OPTIONS,
+            READ_ENTIRE_TABLE_REQUEST,
+            mockRetryableRpc,
+            options,
+            mockRetryExecutorService,
+            metaData,
+            clock);
     operation.setResultObserver(mockResponseObserver);
     return operation;
   }
@@ -230,18 +230,24 @@ public class RetryingReadRowsOperationTest {
 
   private void testFailure(long expectedTimeMs, CallOptions options)
       throws InterruptedException, java.util.concurrent.TimeoutException {
-    doAnswer(new Answer<Void>() {
-      @Override public Void answer(InvocationOnMock invocation) {
-        invocation.getArgument(1, ClientCall.Listener.class)
-            .onClose(Status.DEADLINE_EXCEEDED, new Metadata());
-        return null;
-      }
-    }).when(mockRetryableRpc)
-        .start(any(ReadRowsRequest.class), any(ClientCall.Listener.class), any(Metadata.class),
+    doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocation) {
+                invocation
+                    .getArgument(1, ClientCall.Listener.class)
+                    .onClose(Status.DEADLINE_EXCEEDED, new Metadata());
+                return null;
+              }
+            })
+        .when(mockRetryableRpc)
+        .start(
+            any(ReadRowsRequest.class),
+            any(ClientCall.Listener.class),
+            any(Metadata.class),
             any(ClientCall.class));
 
-    RetryingReadRowsOperation underTest =
-        createOperation(options, mockFlatRowObserver);
+    RetryingReadRowsOperation underTest = createOperation(options, mockFlatRowObserver);
     try {
       underTest.getAsyncResult().get(100, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
@@ -325,7 +331,8 @@ public class RetryingReadRowsOperationTest {
   private ReadRowsResponse setCommitToFalse(ReadRowsResponse message) {
     int lastIndex = message.getChunksCount() - 1;
     CellChunk lastChunk = message.getChunks(lastIndex);
-    return message.toBuilder()
+    return message
+        .toBuilder()
         .setChunks(lastIndex, lastChunk.toBuilder().setCommitRow(false).build())
         .build();
   }
@@ -349,7 +356,6 @@ public class RetryingReadRowsOperationTest {
     verify(mockFlatRowObserver, times(0)).onCompleted();
     Assert.assertTrue(underTest.getRowMerger().isComplete());
   }
-
 
   @Test
   public void testScanIdleContinue() throws UnsupportedEncodingException {
@@ -418,14 +424,22 @@ public class RetryingReadRowsOperationTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testImmediateOnClose() {
-    Mockito.doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgument(1, ClientCall.Listener.class).onClose(Status.OK, new Metadata());
-        return null;
-      }
-    }).when(mockRetryableRpc).start(any(ReadRowsRequest.class), any(ClientCall.Listener.class),
-      any(Metadata.class), eq(mockClientCall));
+    Mockito.doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocation) throws Throwable {
+                invocation
+                    .getArgument(1, ClientCall.Listener.class)
+                    .onClose(Status.OK, new Metadata());
+                return null;
+              }
+            })
+        .when(mockRetryableRpc)
+        .start(
+            any(ReadRowsRequest.class),
+            any(ClientCall.Listener.class),
+            any(Metadata.class),
+            eq(mockClientCall));
 
     RetryingReadRowsOperation underTest = createOperation();
 
@@ -438,21 +452,18 @@ public class RetryingReadRowsOperationTest {
 
   protected void performTimeout(RetryingReadRowsOperation underTest) {
     underTest.onClose(
-        Status.CANCELLED.withCause(new
-            StreamWaitTimeoutException(
+        Status.CANCELLED.withCause(
+            new StreamWaitTimeoutException(
                 Watchdog.State.WAITING, RETRY_OPTIONS.getReadPartialRowTimeoutMillis())),
-        new Metadata()
-    );
+        new Metadata());
   }
-
 
   protected void performIdle(RetryingReadRowsOperation underTest) {
     underTest.onClose(
-        Status.CANCELLED.withCause(new
-            StreamWaitTimeoutException(
-            Watchdog.State.IDLE, RETRY_OPTIONS.getReadPartialRowTimeoutMillis())),
-        new Metadata()
-    );
+        Status.CANCELLED.withCause(
+            new StreamWaitTimeoutException(
+                Watchdog.State.IDLE, RETRY_OPTIONS.getReadPartialRowTimeoutMillis())),
+        new Metadata());
   }
 
   private void performSuccessfulScanTimeouts(RetryingReadRowsOperation underTest) {
@@ -467,11 +478,12 @@ public class RetryingReadRowsOperationTest {
     verify(mockRpcMetrics, times(1)).timeOperation();
     verify(mockRpcMetrics, times(1)).timeRpc();
     verify(mockRetryableRpc, times(1)).newCall(eq(CallOptions.DEFAULT));
-    verify(mockRetryableRpc, times(1)).start(
-      eq(READ_ENTIRE_TABLE_REQUEST),
-      same(underTest),
-      any(Metadata.class),
-      same(mockClientCall));
+    verify(mockRetryableRpc, times(1))
+        .start(
+            eq(READ_ENTIRE_TABLE_REQUEST),
+            same(underTest),
+            any(Metadata.class),
+            same(mockClientCall));
   }
 
   private void finishOK(RetryingReadRowsOperation underTest, int expectedRetryCount) {
@@ -487,8 +499,8 @@ public class RetryingReadRowsOperationTest {
     verify(mockRpcTimerContext, times(expectedRetryCount + 1)).close();
   }
 
-  private static void checkRetryRequest(RetryingReadRowsOperation underTest, ByteString key,
-      int rowCount) {
+  private static void checkRetryRequest(
+      RetryingReadRowsOperation underTest, ByteString key, int rowCount) {
     ReadRowsRequest request = underTest.buildUpdatedRequest();
     Assert.assertEquals(key, request.getRows().getRowRanges(0).getStartKeyOpen());
     Assert.assertEquals(rowCount, request.getRowsLimit());

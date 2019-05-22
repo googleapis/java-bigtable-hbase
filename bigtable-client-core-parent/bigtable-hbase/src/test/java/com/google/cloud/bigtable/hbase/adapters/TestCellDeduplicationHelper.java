@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import java.util.Arrays;
+import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Append;
@@ -24,12 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.Arrays;
-import java.util.List;
-
-/**
- * Tests for {@link com.google.cloud.bigtable.hbase.adapters.CellDeduplicationHelper}
- */
+/** Tests for {@link com.google.cloud.bigtable.hbase.adapters.CellDeduplicationHelper} */
 @RunWith(JUnit4.class)
 public class TestCellDeduplicationHelper {
   @Test
@@ -57,8 +54,8 @@ public class TestCellDeduplicationHelper {
       } else if (Arrays.equals(Bytes.toBytes("qual2"), CellUtil.cloneQualifier(cell))) {
         Assert.assertArrayEquals(Bytes.toBytes("val2.1"), CellUtil.cloneValue(cell));
       } else {
-        Assert.fail("Unexpected qualifier encountered: " +
-            Bytes.toString(CellUtil.cloneQualifier(cell)));
+        Assert.fail(
+            "Unexpected qualifier encountered: " + Bytes.toString(CellUtil.cloneQualifier(cell)));
       }
     }
   }

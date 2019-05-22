@@ -16,15 +16,20 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
@@ -38,12 +43,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 @RunWith(JUnit4.class)
 public class TestCheckAndMutateUtil {
 
@@ -51,8 +50,7 @@ public class TestCheckAndMutateUtil {
   private static final String INSTANCE_ID = "instance";
   private static final TableName TABLE_NAME = TableName.valueOf("SomeTable");
   private static final BigtableTableName BT_TABLE_NAME =
-      new BigtableInstanceName(PROJECT_ID, INSTANCE_ID)
-          .toTableName(TABLE_NAME.getNameAsString());
+      new BigtableInstanceName(PROJECT_ID, INSTANCE_ID).toTableName(TABLE_NAME.getNameAsString());
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext.create(PROJECT_ID, INSTANCE_ID, "SomeAppProfileId");
   private static final byte[] rowKey = Bytes.toBytes("rowKey");
@@ -61,9 +59,11 @@ public class TestCheckAndMutateUtil {
   private static final byte[] checkValue = Bytes.toBytes(4);
   private static final byte[] newValue = Bytes.toBytes(5);
   private static final Put PUT = new Put(rowKey).addColumn(family, qual, newValue);
-  private static final Filters.ChainFilter FAMILY_AND_QUAL_FILTER = FILTERS.chain()
-      .filter(FILTERS.family().regex("family"))
-      .filter(FILTERS.qualifier().regex("qual"));
+  private static final Filters.ChainFilter FAMILY_AND_QUAL_FILTER =
+      FILTERS
+          .chain()
+          .filter(FILTERS.family().regex("family"))
+          .filter(FILTERS.qualifier().regex("qual"));
 
   private static HBaseRequestAdapter requestAdapter;
 
@@ -72,21 +72,22 @@ public class TestCheckAndMutateUtil {
     PutAdapter putAdapter = new PutAdapter(100, true);
     HBaseRequestAdapter.MutationAdapters mutationAdapters =
         new HBaseRequestAdapter.MutationAdapters(putAdapter);
-    requestAdapter = new HBaseRequestAdapter(
-        TABLE_NAME,
-        BT_TABLE_NAME,
-        mutationAdapters);
+    requestAdapter = new HBaseRequestAdapter(TABLE_NAME, BT_TABLE_NAME, mutationAdapters);
   }
 
   private static void checkPredicate(CheckAndMutateRowRequest result) {
-    RowFilter expected = FILTERS.chain()
-        .filter(FAMILY_AND_QUAL_FILTER)
-        .filter(FILTERS.limit().cellsPerColumn(1))
-        .filter(FILTERS.value().range()
-            .startClosed(ByteString.copyFrom(checkValue))
-            .endClosed(ByteString.copyFrom(checkValue))
-        )
-        .toProto();
+    RowFilter expected =
+        FILTERS
+            .chain()
+            .filter(FAMILY_AND_QUAL_FILTER)
+            .filter(FILTERS.limit().cellsPerColumn(1))
+            .filter(
+                FILTERS
+                    .value()
+                    .range()
+                    .startClosed(ByteString.copyFrom(checkValue))
+                    .endClosed(ByteString.copyFrom(checkValue)))
+            .toProto();
     Assert.assertEquals(expected, result.getPredicateFilter());
   }
 
@@ -97,7 +98,6 @@ public class TestCheckAndMutateUtil {
     Assert.assertArrayEquals(newValue, setCell.getValue().toByteArray());
   }
 
-
   private static CheckAndMutateUtil.RequestBuilder createRequestBuilder() {
     return new CheckAndMutateUtil.RequestBuilder(requestAdapter, rowKey, family);
   }
@@ -105,16 +105,20 @@ public class TestCheckAndMutateUtil {
   //  ************************** TEST METHODS ***************************
 
   @Test
-  /** Tests that a CheckAndMutate with a {@link Put} works correctly for the filter and mutation aspects */
+  /**
+   * Tests that a CheckAndMutate with a {@link Put} works correctly for the filter and mutation
+   * aspects
+   */
   public void testPut() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    CheckAndMutateRowRequest result = underTest
-        .qualifier(qual)
-        .ifMatches(CompareOp.EQUAL, checkValue)
-        .withPut(PUT)
-        .build()
-        .toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowRequest result =
+        underTest
+            .qualifier(qual)
+            .ifMatches(CompareOp.EQUAL, checkValue)
+            .withPut(PUT)
+            .build()
+            .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -123,16 +127,20 @@ public class TestCheckAndMutateUtil {
   }
 
   @Test
-  /** Tests that a CheckAndMutate with a {@link Delete} works correctly for the filter and mutation aspects */
+  /**
+   * Tests that a CheckAndMutate with a {@link Delete} works correctly for the filter and mutation
+   * aspects
+   */
   public void testDelete() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    CheckAndMutateRowRequest result = underTest
-        .qualifier(qual)
-        .ifMatches(CompareOp.EQUAL, checkValue)
-        .withDelete(new Delete(rowKey).addColumns(family, qual))
-        .build()
-        .toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowRequest result =
+        underTest
+            .qualifier(qual)
+            .ifMatches(CompareOp.EQUAL, checkValue)
+            .withDelete(new Delete(rowKey).addColumns(family, qual))
+            .build()
+            .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -144,19 +152,23 @@ public class TestCheckAndMutateUtil {
   }
 
   @Test
-  /** Tests that a CheckAndMutate with a {@link RowMutations} works correctly for the filter and mutation aspects */
+  /**
+   * Tests that a CheckAndMutate with a {@link RowMutations} works correctly for the filter and
+   * mutation aspects
+   */
   public void testRowMutations() throws IOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
     RowMutations rowMutations = new RowMutations(rowKey);
     rowMutations.add(PUT);
 
-    CheckAndMutateRowRequest result = underTest
-        .qualifier(qual)
-        .ifMatches(CompareOp.EQUAL, checkValue)
-        .withMutations(rowMutations)
-        .build()
-        .toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowRequest result =
+        underTest
+            .qualifier(qual)
+            .ifMatches(CompareOp.EQUAL, checkValue)
+            .withMutations(rowMutations)
+            .build()
+            .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
     checkPutMutation(result.getTrueMutations(0));
@@ -165,19 +177,20 @@ public class TestCheckAndMutateUtil {
 
   @Test
   /**
-   * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a
-   * {@link ConditionalRowMutation} sets a server-side timeatamp (-1) on the
-   * {@link com.google.cloud.bigtable.data.v2.models.Mutation}
+   * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a {@link
+   * ConditionalRowMutation} sets a server-side timeatamp (-1) on the {@link
+   * com.google.cloud.bigtable.data.v2.models.Mutation}
    */
   public void testPutServerSideTimestamps() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    CheckAndMutateRowRequest result = underTest
-        .qualifier(qual)
-        .ifMatches(CompareOp.EQUAL, checkValue)
-        .withPut(PUT)
-        .build()
-        .toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowRequest result =
+        underTest
+            .qualifier(qual)
+            .ifMatches(CompareOp.EQUAL, checkValue)
+            .withPut(PUT)
+            .build()
+            .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -187,21 +200,22 @@ public class TestCheckAndMutateUtil {
 
   @Test
   /**
-   * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a
-   * {@link ConditionalRowMutation} sets a clientr-side timeatamp on the
-   * {@link com.google.cloud.bigtable.data.v2.models.Mutation}
-   * if a user explicitly sets a timestamp on the Put
+   * Tests that a CheckAndMutate with a {@link Put} which ensures that the conversion to a {@link
+   * ConditionalRowMutation} sets a clientr-side timeatamp on the {@link
+   * com.google.cloud.bigtable.data.v2.models.Mutation} if a user explicitly sets a timestamp on the
+   * Put
    */
   public void testPutServerClientTimestamps() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
     long timestamp = (long) (Math.random() * 10000000000L);
-    CheckAndMutateRowRequest result = underTest
-        .qualifier(qual)
-        .ifMatches(CompareOp.EQUAL, checkValue)
-        .withPut(new Put(rowKey).addColumn(family, qual, timestamp, newValue))
-        .build()
-        .toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowRequest result =
+        underTest
+            .qualifier(qual)
+            .ifMatches(CompareOp.EQUAL, checkValue)
+            .withPut(new Put(rowKey).addColumn(family, qual, timestamp, newValue))
+            .build()
+            .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -220,12 +234,13 @@ public class TestCheckAndMutateUtil {
 
     RowMutations rowMutations = new RowMutations(rowKey);
     rowMutations.add(PUT);
-    CheckAndMutateRowRequest result = underTest
-        .qualifier(qual)
-        .ifMatches(CompareOp.EQUAL, checkValue)
-        .withMutations(rowMutations)
-        .build()
-        .toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowRequest result =
+        underTest
+            .qualifier(qual)
+            .ifMatches(CompareOp.EQUAL, checkValue)
+            .withMutations(rowMutations)
+            .build()
+            .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
@@ -240,45 +255,45 @@ public class TestCheckAndMutateUtil {
   public void testIfNotExists() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    CheckAndMutateRowRequest result = underTest
-        .qualifier(qual)
-        .ifNotExists()
-        .withPut(PUT)
-        .build()
-        .toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowRequest result =
+        underTest.qualifier(qual).ifNotExists().withPut(PUT).build().toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getFalseMutationsCount());
     checkPutMutation(result.getFalseMutations(0));
 
-    RowFilter expected = FILTERS.chain()
-        .filter(FAMILY_AND_QUAL_FILTER)
-        .filter(FILTERS.limit().cellsPerColumn(1))
-        .toProto();
+    RowFilter expected =
+        FILTERS
+            .chain()
+            .filter(FAMILY_AND_QUAL_FILTER)
+            .filter(FILTERS.limit().cellsPerColumn(1))
+            .toProto();
     Assert.assertEquals(expected, result.getPredicateFilter());
   }
 
   @Test
   /**
    * Test to make sure that {@link CheckAndMutateUtil.RequestBuilder#ifMatches(CompareOp, byte[])}
-   * wtih {@link CompareOp#NOT_EQUAL} and a null value works as
-   * expected.
+   * wtih {@link CompareOp#NOT_EQUAL} and a null value works as expected.
    */
   public void testNotEqualsNull() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
 
-    CheckAndMutateRowRequest result = underTest
-        .qualifier(qual)
-        .ifMatches(CompareOp.NOT_EQUAL, null)
-        .withPut(PUT)
-        .build()
-        .toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowRequest result =
+        underTest
+            .qualifier(qual)
+            .ifMatches(CompareOp.NOT_EQUAL, null)
+            .withPut(PUT)
+            .build()
+            .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getTrueMutationsCount());
 
-    RowFilter expected = FILTERS.chain()
-        .filter(FAMILY_AND_QUAL_FILTER)
-        .filter(FILTERS.limit().cellsPerColumn(1))
-        .toProto();
+    RowFilter expected =
+        FILTERS
+            .chain()
+            .filter(FAMILY_AND_QUAL_FILTER)
+            .filter(FILTERS.limit().cellsPerColumn(1))
+            .toProto();
 
     checkPutMutation(result.getTrueMutations(0));
     Assert.assertEquals(expected, result.getPredicateFilter());
@@ -287,8 +302,7 @@ public class TestCheckAndMutateUtil {
   @Test
   /**
    * Test to make sure that {@link CheckAndMutateUtil.RequestBuilder#ifMatches(CompareOp, byte[])}
-   * wtih {@link CompareOp#NOT_EQUAL} and a null value works as
-   * expected.
+   * wtih {@link CompareOp#NOT_EQUAL} and a null value works as expected.
    */
   public void testCompareOpsOtherThanNotEqualsNull() throws DoNotRetryIOException {
     CheckAndMutateUtil.RequestBuilder underTest = createRequestBuilder();
@@ -297,19 +311,22 @@ public class TestCheckAndMutateUtil {
 
     otherOps.remove(CompareOp.NOT_EQUAL);
     int index = (int) (Math.random() * otherOps.size());
-    CheckAndMutateRowRequest result = underTest
-        .qualifier(qual)
-        .ifMatches(otherOps.get(index), null)
-        .withPut(PUT)
-        .build()
-        .toProto(REQUEST_CONTEXT);
+    CheckAndMutateRowRequest result =
+        underTest
+            .qualifier(qual)
+            .ifMatches(otherOps.get(index), null)
+            .withPut(PUT)
+            .build()
+            .toProto(REQUEST_CONTEXT);
 
     Assert.assertEquals(1, result.getFalseMutationsCount());
 
-    RowFilter expected = FILTERS.chain()
-        .filter(FAMILY_AND_QUAL_FILTER)
-        .filter(FILTERS.limit().cellsPerColumn(1))
-        .toProto();
+    RowFilter expected =
+        FILTERS
+            .chain()
+            .filter(FAMILY_AND_QUAL_FILTER)
+            .filter(FILTERS.limit().cellsPerColumn(1))
+            .toProto();
 
     checkPutMutation(result.getFalseMutations(0));
     Assert.assertEquals(expected, result.getPredicateFilter());

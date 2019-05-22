@@ -16,17 +16,15 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import java.io.IOException;
-
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
+import java.io.IOException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
-
-@SuppressWarnings({"resource","unused"})
+@SuppressWarnings({"resource", "unused"})
 public class TestBigtableSession {
 
   private static final String PROJECT_ID = "project_id";
@@ -36,15 +34,15 @@ public class TestBigtableSession {
   private static void createSession(String projectId, String instanceId, String userAgent)
       throws IOException {
     BigtableSession ignored =
-        new BigtableSession(BigtableOptions.builder()
-          .setProjectId(projectId)
-          .setInstanceId(instanceId)
-          .setUserAgent(userAgent)
-          .build());
+        new BigtableSession(
+            BigtableOptions.builder()
+                .setProjectId(projectId)
+                .setInstanceId(instanceId)
+                .setUserAgent(userAgent)
+                .build());
   }
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testNoProjectIdBigtableOptions() throws IOException {
@@ -76,13 +74,16 @@ public class TestBigtableSession {
 
   /**
    * Test to make sure that {@link BigtableSession#createInstanceClient()} can be created.
+   *
    * @throws Throwable
    */
   @Test
   public void testCreateInstanceClient() throws Throwable {
     try {
-      BigtableSession.createInstanceClient(BigtableOptions.builder().setCredentialOptions(
-          CredentialOptions.nullCredential()).build());
+      BigtableSession.createInstanceClient(
+          BigtableOptions.builder()
+              .setCredentialOptions(CredentialOptions.nullCredential())
+              .build());
     } catch (IOException e) {
       if (e.getMessage().toLowerCase().contains("credentials")) {
         // ignore;  This is running on a system that doesn't have default credentails,
@@ -93,5 +94,4 @@ public class TestBigtableSession {
       }
     }
   }
-
 }

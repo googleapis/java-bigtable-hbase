@@ -24,12 +24,17 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.bigtable.v2.BigtableGrpc;
+import io.grpc.CallOptions;
+import io.grpc.ClientCall;
+import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,14 +42,6 @@ import org.junit.runners.JUnit4;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
-import com.google.bigtable.v2.BigtableGrpc;
-
-import io.grpc.CallOptions;
-import io.grpc.ClientCall;
-import io.grpc.ManagedChannel;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 
 @RunWith(JUnit4.class)
 @SuppressWarnings({"rawtypes", "unchecked"})
@@ -61,13 +58,15 @@ public class ChannelPoolTest {
       when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
           .thenReturn(callStub);
       when(channel.authority()).thenReturn("");
-      when(channel.shutdown()).thenAnswer(new Answer<ManagedChannel>() {
-        @Override
-        public ManagedChannel answer(InvocationOnMock invocation) throws Throwable {
-          isShutdown.set(true);
-          return channel;
-        }
-      });
+      when(channel.shutdown())
+          .thenAnswer(
+              new Answer<ManagedChannel>() {
+                @Override
+                public ManagedChannel answer(InvocationOnMock invocation) throws Throwable {
+                  isShutdown.set(true);
+                  return channel;
+                }
+              });
       when(channel.isShutdown()).then(isShutdownAnswer(isShutdown));
       when(channel.isTerminated()).then(isShutdownAnswer(isShutdown));
       channels.add(channel);
@@ -105,7 +104,7 @@ public class ChannelPoolTest {
     pool.newCall(descriptor, CallOptions.DEFAULT);
     verify(factory.channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
     verify(factory.channels.get(1), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
-}
+  }
 
   @Test
   public void testEnsureCapcity() throws IOException {

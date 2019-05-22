@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.bigtable.v2.RowFilter;
 import com.google.common.base.Preconditions;
-
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -31,16 +30,15 @@ import org.apache.hadoop.hbase.util.Bytes;
  */
 public class FilterAdapterHelper {
 
-  /**
-   * A RowFilter that will match all cells.
-   */
+  /** A RowFilter that will match all cells. */
   public static final RowFilter ACCEPT_ALL_FILTER = FILTERS.pass().toProto();
 
   /**
-   * Extract a single family name from a FilterAdapterContext. Throws if there
-   * is not exactly 1 family present in the scan.
+   * Extract a single family name from a FilterAdapterContext. Throws if there is not exactly 1
+   * family present in the scan.
    *
-   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext}
+   *     object.
    * @return a {@link java.lang.String} object.
    */
   public static String getSingleFamilyName(FilterAdapterContext context) {

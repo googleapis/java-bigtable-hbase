@@ -25,6 +25,7 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 /**
  * An InputFormat randomizes the order of SequenceFile splits. This is needed for the Bigtable
  * import job to spread the load across all of the Bigtable tablet servers.
+ *
  * @author igorbernstein2
  * @version $Id: $Id
  */

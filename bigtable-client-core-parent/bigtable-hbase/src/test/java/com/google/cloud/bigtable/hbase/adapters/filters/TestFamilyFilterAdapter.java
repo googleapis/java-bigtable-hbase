@@ -15,8 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
+import com.google.protobuf.ByteString;
 import java.io.IOException;
-
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
@@ -28,10 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
 public class TestFamilyFilterAdapter {
@@ -50,23 +48,18 @@ public class TestFamilyFilterAdapter {
     String regexp = "^.*hello world.*$";
     RegexStringComparator comparator = new RegexStringComparator(regexp);
     org.apache.hadoop.hbase.filter.RowFilter filter =
-        new org.apache.hadoop.hbase.filter.RowFilter(
-            CompareFilter.CompareOp.EQUAL, comparator);
+        new org.apache.hadoop.hbase.filter.RowFilter(CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setRowKeyRegexFilter(
-                ByteString.copyFrom(regexp.getBytes()))
-            .build(),
+        RowFilter.newBuilder().setRowKeyRegexFilter(ByteString.copyFrom(regexp.getBytes())).build(),
         adapter.adapt(context, filter).toProto());
   }
 
   @Test
   public void testAdapt_BinaryAndEquals() throws IOException {
-    byte[] bytes = new byte[] { 0, 1, 2 };
+    byte[] bytes = new byte[] {0, 1, 2};
     BinaryComparator comparator = new BinaryComparator(bytes);
     org.apache.hadoop.hbase.filter.RowFilter filter =
-        new org.apache.hadoop.hbase.filter.RowFilter(
-            CompareFilter.CompareOp.EQUAL, comparator);
+        new org.apache.hadoop.hbase.filter.RowFilter(CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
         RowFilter.newBuilder()
             .setRowKeyRegexFilter(ReaderExpressionHelper.quoteRegularExpression(bytes))
@@ -80,29 +73,20 @@ public class TestFamilyFilterAdapter {
     String regexp = "";
     RegexStringComparator comparator = new RegexStringComparator(regexp);
     org.apache.hadoop.hbase.filter.RowFilter filter =
-        new org.apache.hadoop.hbase.filter.RowFilter(
-            CompareFilter.CompareOp.EQUAL, comparator);
+        new org.apache.hadoop.hbase.filter.RowFilter(CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setRowKeyRegexFilter(
-                ByteString.copyFrom(regexp.getBytes()))
-            .build(),
+        RowFilter.newBuilder().setRowKeyRegexFilter(ByteString.copyFrom(regexp.getBytes())).build(),
         adapter.adapt(context, filter).toProto());
   }
-
 
   @Test
   public void testAdapt_EmptyBinary() throws IOException {
     // What does BigTable do in this case?
     BinaryComparator comparator = new BinaryComparator(new byte[0]);
     org.apache.hadoop.hbase.filter.RowFilter filter =
-        new org.apache.hadoop.hbase.filter.RowFilter(
-            CompareFilter.CompareOp.EQUAL, comparator);
+        new org.apache.hadoop.hbase.filter.RowFilter(CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertEquals(
-        RowFilter.newBuilder()
-            .setRowKeyRegexFilter(
-                ByteString.copyFrom(new byte[0]))
-            .build(),
+        RowFilter.newBuilder().setRowKeyRegexFilter(ByteString.copyFrom(new byte[0])).build(),
         adapter.adapt(context, filter).toProto());
   }
 
@@ -118,16 +102,15 @@ public class TestFamilyFilterAdapter {
 
   @Test
   public void testSupported_BinaryComparatorEquals() {
-    BinaryComparator comparator = new BinaryComparator(new byte[] { 0, 1, 2 });
+    BinaryComparator comparator = new BinaryComparator(new byte[] {0, 1, 2});
     org.apache.hadoop.hbase.filter.RowFilter filter =
-        new org.apache.hadoop.hbase.filter.RowFilter(
-            CompareFilter.CompareOp.EQUAL, comparator);
+        new org.apache.hadoop.hbase.filter.RowFilter(CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertTrue(adapter.isFilterSupported(context, filter).isSupported());
   }
 
   @Test
   public void testNotSupported_BinaryNotEquals() {
-    BinaryComparator comparator = new BinaryComparator(new byte[] { 0, 1, 2 });
+    BinaryComparator comparator = new BinaryComparator(new byte[] {0, 1, 2});
     org.apache.hadoop.hbase.filter.RowFilter filter =
         new org.apache.hadoop.hbase.filter.RowFilter(
             CompareFilter.CompareOp.GREATER_OR_EQUAL, comparator);
@@ -135,11 +118,10 @@ public class TestFamilyFilterAdapter {
   }
 
   @Test
-  public void testNotSupported_OtherComparator () {
+  public void testNotSupported_OtherComparator() {
     ByteArrayComparable comparator = new LongComparator(1L);
     org.apache.hadoop.hbase.filter.RowFilter filter =
-        new org.apache.hadoop.hbase.filter.RowFilter(
-            CompareFilter.CompareOp.EQUAL, comparator);
+        new org.apache.hadoop.hbase.filter.RowFilter(CompareFilter.CompareOp.EQUAL, comparator);
     Assert.assertFalse(adapter.isFilterSupported(context, filter).isSupported());
   }
 }

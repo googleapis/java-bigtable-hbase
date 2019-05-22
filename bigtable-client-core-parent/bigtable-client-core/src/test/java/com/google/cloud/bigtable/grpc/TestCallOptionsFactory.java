@@ -23,6 +23,8 @@ import io.grpc.CallOptions;
 import io.grpc.Context;
 import io.grpc.Deadline;
 import io.grpc.DeadlineUtil;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,19 +33,13 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-/**
- * Tests for {@link CallOptionsFactory}.
- */
+/** Tests for {@link CallOptionsFactory}. */
 @RunWith(JUnit4.class)
 public class TestCallOptionsFactory {
 
   private static final long NOW = System.nanoTime();
 
-  @Mock
-  ScheduledExecutorService mockExecutor;
+  @Mock ScheduledExecutorService mockExecutor;
 
   @Before
   public void setup() {
@@ -61,16 +57,15 @@ public class TestCallOptionsFactory {
     final Deadline deadline =
         DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, new OperationClock());
     Context.CancellableContext context = Context.current().withDeadline(deadline, mockExecutor);
-    context.run(new Runnable() {
-      @Override
-      public void run() {
-        CallOptionsFactory factory = new CallOptionsFactory.Default();
-        assertEqualsDeadlines(
-            deadline.timeRemaining(TimeUnit.MILLISECONDS),
-            getDeadlineMs(factory, null)
-        );
-      }
-    });
+    context.run(
+        new Runnable() {
+          @Override
+          public void run() {
+            CallOptionsFactory factory = new CallOptionsFactory.Default();
+            assertEqualsDeadlines(
+                deadline.timeRemaining(TimeUnit.MILLISECONDS), getDeadlineMs(factory, null));
+          }
+        });
   }
 
   @Test
@@ -86,12 +81,10 @@ public class TestCallOptionsFactory {
     CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
     assertEqualsDeadlines(
         config.getShortRpcTimeoutMs(),
-        getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
-    );
+        getDeadlineMs(factory, MutateRowRequest.getDefaultInstance()));
     assertEqualsDeadlines(
         config.getLongRpcTimeoutMs(),
-        getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance())
-    );
+        getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance()));
   }
 
   @Test
@@ -99,22 +92,25 @@ public class TestCallOptionsFactory {
     Deadline deadline =
         DeadlineUtil.deadlineWithFixedTime(1, TimeUnit.SECONDS, new OperationClock());
     Context.CancellableContext context = Context.current().withDeadline(deadline, mockExecutor);
-    context.run(new Runnable() {
-      @Override
-      public void run() {
-        CallOptionsConfig config = CallOptionsConfig.builder()
-            .setUseTimeout(true)
-            .setShortRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(100))
-            .setLongRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
-            .build();
-        CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
-        // The deadline in the context in 1 second, and the deadline in the config is 100+ seconds
-        assertEqualsDeadlines(
-            TimeUnit.SECONDS.toMillis(1),
-            getDeadlineMs(factory, MutateRowRequest.getDefaultInstance())
-        );
-      }
-    });
+    context.run(
+        new Runnable() {
+          @Override
+          public void run() {
+            CallOptionsConfig config =
+                CallOptionsConfig.builder()
+                    .setUseTimeout(true)
+                    .setShortRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(100))
+                    .setLongRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
+                    .build();
+            CallOptionsFactory factory =
+                new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
+            // The deadline in the context in 1 second, and the deadline in the config is 100+
+            // seconds
+            assertEqualsDeadlines(
+                TimeUnit.SECONDS.toMillis(1),
+                getDeadlineMs(factory, MutateRowRequest.getDefaultInstance()));
+          }
+        });
   }
 
   /**

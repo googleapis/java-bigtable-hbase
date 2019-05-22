@@ -15,6 +15,11 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.core.IBulkMutation;
@@ -28,12 +33,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-@RunWith(JUnit4.class) public class TestBulkMutationWrapper {
+@RunWith(JUnit4.class)
+public class TestBulkMutationWrapper {
 
   private BulkMutation mockDelegate;
   private RequestContext requestContext =

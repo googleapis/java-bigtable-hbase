@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.async;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,10 +25,9 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.common.util.concurrent.MoreExecutors;
-
 /**
  * Integration tests to make sure that AsyncConnection methods do not throw exceptions.
+ *
  * @author sduskis
  */
 @RunWith(JUnit4.class)
@@ -36,8 +35,7 @@ public class TestAsyncConnection extends AbstractAsyncTest {
 
   private static final ExecutorService directExecutorService = MoreExecutors.sameThreadExecutor();
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testAdmin() throws InterruptedException, ExecutionException {
@@ -47,26 +45,31 @@ public class TestAsyncConnection extends AbstractAsyncTest {
 
   @Test
   public void testRegionLocator() throws InterruptedException, ExecutionException {
-    Assert
-        .assertNotNull(getAsyncConnection().getRegionLocator(sharedTestEnv.getDefaultTableName()));
+    Assert.assertNotNull(
+        getAsyncConnection().getRegionLocator(sharedTestEnv.getDefaultTableName()));
   }
 
   @Test
   public void testTable() throws InterruptedException, ExecutionException {
     Assert.assertNotNull(
-      getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), directExecutorService));
-    Assert.assertNotNull(getAsyncConnection()
-        .getTableBuilder(sharedTestEnv.getDefaultTableName(), directExecutorService).build());
+        getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), directExecutorService));
+    Assert.assertNotNull(
+        getAsyncConnection()
+            .getTableBuilder(sharedTestEnv.getDefaultTableName(), directExecutorService)
+            .build());
   }
 
   @Test
   public void testBufferedMutator() throws InterruptedException, ExecutionException {
     Assert.assertNotNull(
-      getAsyncConnection().getBufferedMutator(sharedTestEnv.getDefaultTableName()));
+        getAsyncConnection().getBufferedMutator(sharedTestEnv.getDefaultTableName()));
     Assert.assertNotNull(
-      getAsyncConnection().getBufferedMutatorBuilder(sharedTestEnv.getDefaultTableName()).build());
-    Assert.assertNotNull(getAsyncConnection()
-        .getBufferedMutatorBuilder(sharedTestEnv.getDefaultTableName(), directExecutorService)
-        .build());
+        getAsyncConnection()
+            .getBufferedMutatorBuilder(sharedTestEnv.getDefaultTableName())
+            .build());
+    Assert.assertNotNull(
+        getAsyncConnection()
+            .getBufferedMutatorBuilder(sharedTestEnv.getDefaultTableName(), directExecutorService)
+            .build());
   }
 }

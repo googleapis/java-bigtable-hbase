@@ -15,32 +15,32 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import java.io.IOException;
-
 import com.google.common.base.Function;
+import java.io.IOException;
+import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Admin;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import javax.annotation.Nullable;
-
 @RunWith(JUnit4.class)
 public class TestModifyTable extends AbstractTestModifyTable {
 
   @Test
   public void testModifyTable() throws IOException {
-    super.testModifyTable(new Function<HTableDescriptor, Void>() {
-      @Nullable @Override
-      public Void apply(@Nullable HTableDescriptor descriptor) {
-        try (Admin admin = getConnection().getAdmin()) {
-          admin.modifyTable(descriptor.getTableName(), descriptor);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        return null;
-      }
-    });
+    super.testModifyTable(
+        new Function<HTableDescriptor, Void>() {
+          @Nullable
+          @Override
+          public Void apply(@Nullable HTableDescriptor descriptor) {
+            try (Admin admin = getConnection().getAdmin()) {
+              admin.modifyTable(descriptor.getTableName(), descriptor);
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+            return null;
+          }
+        });
   }
 }

@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import java.io.IOException;
-
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -31,7 +30,7 @@ public class TestTruncateTable extends AbstractTestTruncateTable {
 
   @Override
   protected void createTable(TableName tableName, byte[][] splits) throws IOException {
-    try(Admin admin = getConnection().getAdmin()) {
+    try (Admin admin = getConnection().getAdmin()) {
       HTableDescriptor descriptor = new HTableDescriptor(tableName);
       descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
       admin.createTable(descriptor, splits);
@@ -40,9 +39,8 @@ public class TestTruncateTable extends AbstractTestTruncateTable {
 
   @Override
   protected void doTruncate(TableName tableName) throws Exception {
-    try(Admin admin = getConnection().getAdmin()) {
-      admin.truncateTable(tableName,true);
+    try (Admin admin = getConnection().getAdmin()) {
+      admin.truncateTable(tableName, true);
     }
   }
-
 }

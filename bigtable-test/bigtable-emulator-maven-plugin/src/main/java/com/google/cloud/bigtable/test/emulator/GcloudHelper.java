@@ -44,13 +44,15 @@ class GcloudHelper {
     try {
       components = getComponents();
     } catch (Exception e) {
-      throw new RuntimeException("Failed to query gcloud sdk components. Is gcloud sdk installed?", e);
+      throw new RuntimeException(
+          "Failed to query gcloud sdk components. Is gcloud sdk installed?", e);
     }
 
     if (!Arrays.asList(components).contains(BIGTABLE_EMULATOR_ID)) {
       throw new RuntimeException(
           String.format(
-              "Bigtable emulator is not installed, please install via `gcloud components install %s`", BIGTABLE_EMULATOR_ID));
+              "Bigtable emulator is not installed, please install via `gcloud components install %s`",
+              BIGTABLE_EMULATOR_ID));
     }
 
     final File sdkRoot;
@@ -60,7 +62,8 @@ class GcloudHelper {
       throw new RuntimeException("Failed to find gcloud sdk install directory.", e);
     }
 
-    final File emulatorPath = Paths.get(sdkRoot.toString(), "platform", "bigtable-emulator", "cbtemulator").toFile();
+    final File emulatorPath =
+        Paths.get(sdkRoot.toString(), "platform", "bigtable-emulator", "cbtemulator").toFile();
     if (!emulatorPath.exists()) {
       throw new RuntimeException("Emulator executable doesn't exist, despite being installed");
     }
@@ -81,7 +84,8 @@ class GcloudHelper {
   }
 
   private String[] getComponents() throws IOException, InterruptedException, ExecutionException {
-    Process p = Runtime.getRuntime().exec("gcloud components list --format=value(id) --only-local-state");
+    Process p =
+        Runtime.getRuntime().exec("gcloud components list --format=value(id) --only-local-state");
 
     Future<String> stdout = readFully(p.getInputStream());
     Future<String> stderr = readFully(p.getErrorStream());
@@ -94,20 +98,22 @@ class GcloudHelper {
   }
 
   private Future<String> readFully(final InputStream in) {
-    FutureTask<String> task = new FutureTask<>(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        byte[] data = new byte[1024];
+    FutureTask<String> task =
+        new FutureTask<>(
+            new Callable<String>() {
+              @Override
+              public String call() throws Exception {
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                byte[] data = new byte[1024];
 
-        int nRead;
-        while ((nRead = in.read(data)) > -1) {
-          buffer.write(data, 0, nRead);
-        }
+                int nRead;
+                while ((nRead = in.read(data)) > -1) {
+                  buffer.write(data, 0, nRead);
+                }
 
-        return buffer.toString();
-      }
-    });
+                return buffer.toString();
+              }
+            });
 
     executor.submit(task);
 

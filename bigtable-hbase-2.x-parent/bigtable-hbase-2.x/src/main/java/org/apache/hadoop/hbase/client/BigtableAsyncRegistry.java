@@ -23,11 +23,11 @@ import org.apache.hadoop.hbase.ServerName;
 /**
  * Bigtable implementation of {@link AsyncRegistry}. The default Habse 2 implementation provided by
  * {@link ZKAsyncRegistry} assumes a ZooKeeper environment, which is not the case for Bigtable.
- * 
- * This class is injected via the system property: "hbase.client.registry.impl" For further details
- * See {@link AsyncRegistryFactory#REGISTRY_IMPL_CONF_KEY}, and
- * {@link ConnectionFactory#createAsyncConnection()}
- * 
+ *
+ * <p>This class is injected via the system property: "hbase.client.registry.impl" For further
+ * details See {@link AsyncRegistryFactory#REGISTRY_IMPL_CONF_KEY}, and {@link
+ * ConnectionFactory#createAsyncConnection()}
+ *
  * @author spollapally
  */
 public class BigtableAsyncRegistry implements AsyncRegistry {
@@ -38,8 +38,8 @@ public class BigtableAsyncRegistry implements AsyncRegistry {
   public void close() {}
 
   /**
-   * A non null return value is required for successful creation of asyncConnection. see
-   * {@link ConnectionFactory#createAsyncConnection()}
+   * A non null return value is required for successful creation of asyncConnection. see {@link
+   * ConnectionFactory#createAsyncConnection()}
    */
   @Override
   public CompletableFuture<String> getClusterId() {
@@ -65,5 +65,4 @@ public class BigtableAsyncRegistry implements AsyncRegistry {
   public CompletableFuture<RegionLocations> getMetaRegionLocation() {
     throw new UnsupportedOperationException("getMetaRegionLocation");
   }
-
 }

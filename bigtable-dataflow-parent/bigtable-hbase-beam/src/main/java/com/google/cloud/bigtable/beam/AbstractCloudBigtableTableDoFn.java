@@ -16,7 +16,9 @@
 package com.google.cloud.bigtable.beam;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Connection;
@@ -24,14 +26,10 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 /**
  * This class can be used as a superclass for {@link DoFn}s that require a {@link Connection} in
  * Dataflow.
- * 
+ *
  * @param <In> the type of the (main) input elements
  * @param <Out> the type of the (main) output elements
  */
@@ -42,8 +40,10 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
       Logger log, String context, RetriesExhaustedWithDetailsException exception) {
 
     if (log.isDebugEnabled()) {
-      log.error("For context {}: exception occured during a bulk operation: {}", context,
-        exception.getExhaustiveDescription());
+      log.error(
+          "For context {}: exception occured during a bulk operation: {}",
+          context,
+          exception.getExhaustiveDescription());
     }
     if (exception.getNumExceptions() == 0) {
       log.error(
@@ -109,8 +109,8 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
   }
 
   /**
-   * Logs a context and the exception's
-   * {@link RetriesExhaustedWithDetailsException#getExhaustiveDescription()}.
+   * Logs a context and the exception's {@link
+   * RetriesExhaustedWithDetailsException#getExhaustiveDescription()}.
    */
   protected void logExceptions(Object context, RetriesExhaustedWithDetailsException exception) {
     logRetriesExhaustedWithDetailsException(DOFN_LOG, String.valueOf(context), exception);

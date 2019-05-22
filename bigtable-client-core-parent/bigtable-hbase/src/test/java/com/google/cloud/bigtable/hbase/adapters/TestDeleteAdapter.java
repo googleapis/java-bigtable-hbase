@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import java.util.concurrent.TimeUnit;
-
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.Mutation;
+import com.google.bigtable.v2.Mutation.MutationCase;
+import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
+import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -28,12 +32,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import com.google.bigtable.v2.MutateRowRequest;
-import com.google.bigtable.v2.Mutation;
-import com.google.bigtable.v2.Mutation.MutationCase;
-import com.google.bigtable.v2.TimestampRange;
-import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 
 @RunWith(JUnit4.class)
 public class TestDeleteAdapter {
@@ -45,8 +43,7 @@ public class TestDeleteAdapter {
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   protected DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected DataGenerationHelper randomHelper = new DataGenerationHelper();
@@ -91,8 +88,7 @@ public class TestDeleteAdapter {
 
     Assert.assertEquals(MutationCase.DELETE_FROM_FAMILY, mutationCase);
 
-    Mutation.DeleteFromFamily deleteFromFamily =
-        request.getMutations(0).getDeleteFromFamily();
+    Mutation.DeleteFromFamily deleteFromFamily = request.getMutations(0).getDeleteFromFamily();
     Assert.assertArrayEquals(family, deleteFromFamily.getFamilyNameBytes().toByteArray());
   }
 
@@ -128,8 +124,7 @@ public class TestDeleteAdapter {
 
     Assert.assertEquals(MutationCase.DELETE_FROM_COLUMN, mutationCase);
 
-    Mutation.DeleteFromColumn deleteFromColumn =
-        request.getMutations(0).getDeleteFromColumn();
+    Mutation.DeleteFromColumn deleteFromColumn = request.getMutations(0).getDeleteFromColumn();
     Assert.assertArrayEquals(family, deleteFromColumn.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier, deleteFromColumn.getColumnQualifier().toByteArray());
     Assert.assertTrue(request.getMutations(0).getDeleteFromColumn().hasTimeRange());
@@ -168,11 +163,9 @@ public class TestDeleteAdapter {
 
     Assert.assertArrayEquals(rowKey, request.getRowKey().toByteArray());
     Assert.assertEquals(1, request.getMutationsCount());
-    Assert.assertEquals(
-        MutationCase.DELETE_FROM_COLUMN, request.getMutations(0).getMutationCase());
+    Assert.assertEquals(MutationCase.DELETE_FROM_COLUMN, request.getMutations(0).getMutationCase());
 
-    Mutation.DeleteFromColumn deleteFromColumn =
-        request.getMutations(0).getDeleteFromColumn();
+    Mutation.DeleteFromColumn deleteFromColumn = request.getMutations(0).getDeleteFromColumn();
     Assert.assertArrayEquals(qualifier, deleteFromColumn.getColumnQualifier().toByteArray());
     Assert.assertTrue(request.getMutations(0).getDeleteFromColumn().hasTimeRange());
 

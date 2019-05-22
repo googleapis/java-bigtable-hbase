@@ -22,7 +22,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-
 class EmulatorController {
 
   private final File emulatorPath;
@@ -39,15 +38,18 @@ class EmulatorController {
   void start() throws IOException {
     port = getFreePort();
 
-    // `gcloud beta emulators bigtable start` creates subprocesses and java doesn't kill process trees
+    // `gcloud beta emulators bigtable start` creates subprocesses and java doesn't kill process
+    // trees
     // so we have to invoke the emulator directly
 
     try {
-      process = new ProcessBuilder(emulatorPath.toString(), "--host=localhost", "--port=" + port)
-          .redirectErrorStream(true)
-          .redirectOutput(logFile)
-          .start();
-      //process = Runtime.getRuntime().exec(emulatorPath.toString() + " --host=localhost --port=" + port);
+      process =
+          new ProcessBuilder(emulatorPath.toString(), "--host=localhost", "--port=" + port)
+              .redirectErrorStream(true)
+              .redirectOutput(logFile)
+              .start();
+      // process = Runtime.getRuntime().exec(emulatorPath.toString() + " --host=localhost --port=" +
+      // port);
     } catch (FileNotFoundException e) {
       throw new RuntimeException("cbtemulator could not be found");
     }
@@ -100,6 +102,5 @@ class EmulatorController {
 
       return new EmulatorController(emulatorPath, logFile);
     }
-
   }
 }

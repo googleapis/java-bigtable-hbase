@@ -19,16 +19,15 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
-
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.ClientCall.Listener;
 
 /**
- * This interface represents a logical asynchronous RPC end point, including creating a
- * {@link io.grpc.ClientCall} for a new request.
+ * This interface represents a logical asynchronous RPC end point, including creating a {@link
+ * io.grpc.ClientCall} for a new request.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -52,8 +51,12 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
           BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".retries.exhausted"));
     }
 
-    private RpcMetrics(Timer operationTimer, Timer rpcTimer, Meter retryCounter,
-        Meter failureCounter, Meter retriesExhastedCounter) {
+    private RpcMetrics(
+        Timer operationTimer,
+        Timer rpcTimer,
+        Meter retryCounter,
+        Meter failureCounter,
+        Meter retriesExhastedCounter) {
       this.operationTimer = operationTimer;
       this.rpcTimer = rpcTimer;
       this.retryMeter = retryCounter;
@@ -86,7 +89,6 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
    * Creates a {@link io.grpc.ClientCall} it.
    *
    * @param callOptions A set of gRPC options to use on this call.
-   *
    * @return A ClientCall that represents a new request.
    */
   ClientCall<REQUEST, RESPONSE> newCall(CallOptions callOptions);
@@ -99,7 +101,10 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
    * @param metadata A set of predefined headers to use.
    * @param call A {@link ClientCall}.
    */
-  void start(REQUEST request, Listener<RESPONSE> listener, Metadata metadata,
+  void start(
+      REQUEST request,
+      Listener<RESPONSE> listener,
+      Metadata metadata,
       ClientCall<REQUEST, RESPONSE> call);
 
   /**
@@ -111,7 +116,7 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
   boolean isRetryable(REQUEST request);
 
   /**
-   * <p>getMethodDescriptor.</p>
+   * getMethodDescriptor.
    *
    * @return {@link io.grpc.MethodDescriptor} that describes the logical endpoint.
    */

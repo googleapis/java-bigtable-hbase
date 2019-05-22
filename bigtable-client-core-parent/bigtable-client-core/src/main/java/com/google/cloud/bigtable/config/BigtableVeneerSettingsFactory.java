@@ -47,17 +47,17 @@ import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
 
 /**
- * Static methods to convert an instance of {@link BigtableOptions} to a
- * {@link BigtableDataSettings} or {@link BigtableTableAdminSettings} instance .
+ * Static methods to convert an instance of {@link BigtableOptions} to a {@link
+ * BigtableDataSettings} or {@link BigtableTableAdminSettings} instance .
  */
 public class BigtableVeneerSettingsFactory {
 
   /** Constant <code>LOG</code> */
   private static final Logger LOG = new Logger(BigtableVeneerSettingsFactory.class);
 
-  //Identifier to distinguish between CBT or GCJ adapter.
-  private static final String VENEER_ADAPTER =  BigtableVersionInfo.CORE_USER_AGENT+","
-      + "veneer-adapter,";
+  // Identifier to distinguish between CBT or GCJ adapter.
+  private static final String VENEER_ADAPTER =
+      BigtableVersionInfo.CORE_USER_AGENT + "," + "veneer-adapter,";
 
   private static final int RPC_DEADLINE_MS = 360_000;
   private static final int MAX_RETRY_TIMEOUT_MS = 60_000;
@@ -71,11 +71,12 @@ public class BigtableVeneerSettingsFactory {
    */
   public static BigtableDataSettings createBigtableDataSettings(
       @Nonnull final BigtableOptions options) throws IOException {
-    checkState(options.getRetryOptions().enableRetries(), "Disabling retries is not currently supported.");
+    checkState(
+        options.getRetryOptions().enableRetries(), "Disabling retries is not currently supported.");
     checkState(!options.useCachedChannel(), "cachedDataPool is not currently supported.");
 
     final BigtableDataSettings.Builder builder = BigtableDataSettings.newBuilder();
-    final Builder dataSettingStub =  builder.stubSettings();
+    final Builder dataSettingStub = builder.stubSettings();
     Duration shortRpcTimeoutMs = ofMillis(options.getCallOptionsConfig().getShortRpcTimeoutMs());
 
     builder
@@ -88,17 +89,15 @@ public class BigtableVeneerSettingsFactory {
         .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
-    if(options.usePlaintextNegotiation()){
-      dataSettingStub
-          .setTransportChannelProvider(buildChannelProvider(dataSettingStub.getEndpoint(), options));
+    if (options.usePlaintextNegotiation()) {
+      dataSettingStub.setTransportChannelProvider(
+          buildChannelProvider(dataSettingStub.getEndpoint(), options));
     }
 
     // Configuration for rpcTimeout & totalTimeout for non-streaming operations.
-    dataSettingStub.checkAndMutateRowSettings()
-        .setSimpleTimeoutNoRetries(shortRpcTimeoutMs);
+    dataSettingStub.checkAndMutateRowSettings().setSimpleTimeoutNoRetries(shortRpcTimeoutMs);
 
-    dataSettingStub.readModifyWriteRowSettings()
-        .setSimpleTimeoutNoRetries(shortRpcTimeoutMs);
+    dataSettingStub.readModifyWriteRowSettings().setSimpleTimeoutNoRetries(shortRpcTimeoutMs);
 
     buildBulkMutationsSettings(dataSettingStub, options);
 
@@ -125,26 +124,23 @@ public class BigtableVeneerSettingsFactory {
     final BigtableTableAdminSettings.Builder adminBuilder = BigtableTableAdminSettings.newBuilder();
     BigtableTableAdminStubSettings.Builder adminStub = adminBuilder.stubSettings();
 
-    adminBuilder
-        .setProjectId(options.getProjectId())
-        .setInstanceId(options.getInstanceId());
+    adminBuilder.setProjectId(options.getProjectId()).setInstanceId(options.getInstanceId());
 
     adminStub
         .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
         .setEndpoint(options.getAdminHost() + ":" + options.getPort())
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
-    if(options.usePlaintextNegotiation()){
-      adminStub
-        .setTransportChannelProvider(buildChannelProvider(adminStub.getEndpoint(), options));
+    if (options.usePlaintextNegotiation()) {
+      adminStub.setTransportChannelProvider(buildChannelProvider(adminStub.getEndpoint(), options));
     }
 
     return adminBuilder.build();
   }
 
   /** Creates {@link CredentialsProvider} based on {@link CredentialOptions}. */
-  private static CredentialsProvider buildCredentialProvider(
-      CredentialOptions credentialOptions) throws IOException {
+  private static CredentialsProvider buildCredentialProvider(CredentialOptions credentialOptions)
+      throws IOException {
     try {
       final Credentials credentials = CredentialFactory.getCredentials(credentialOptions);
       if (credentials == null) {
@@ -159,13 +155,12 @@ public class BigtableVeneerSettingsFactory {
   }
 
   /** Creates {@link HeaderProvider} with VENEER_ADAPTER as prefix for user agent */
-  private static HeaderProvider buildHeaderProvider(String userAgent){
+  private static HeaderProvider buildHeaderProvider(String userAgent) {
     return FixedHeaderProvider.create(USER_AGENT_KEY.name(), VENEER_ADAPTER + userAgent);
   }
 
   /** Builds {@link BatchingSettings} based on {@link BulkOptions} configuration. */
-  private static void buildBulkMutationsSettings(Builder builder,
-      BigtableOptions options) {
+  private static void buildBulkMutationsSettings(Builder builder, BigtableOptions options) {
     BulkOptions bulkOptions = options.getBulkOptions();
     BatchingSettings.Builder batchBuilder =
         builder.bulkMutateRowsSettings().getBatchingSettings().toBuilder();
@@ -194,7 +189,8 @@ public class BigtableVeneerSettingsFactory {
         buildIdempotentRetrySettings(builder.bulkMutateRowsSettings().getRetrySettings(), options);
 
     // TODO(rahulkql): implement bulkMutationThrottling & bulkMutationRpcTargetMs, once available
-    builder.bulkMutateRowsSettings()
+    builder
+        .bulkMutateRowsSettings()
         .setBatchingSettings(batchBuilder.build())
         .setRetrySettings(retrySettings)
         .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
@@ -205,7 +201,8 @@ public class BigtableVeneerSettingsFactory {
     RetrySettings retrySettings =
         buildIdempotentRetrySettings(builder.sampleRowKeysSettings().getRetrySettings(), options);
 
-    builder.sampleRowKeysSettings()
+    builder
+        .sampleRowKeysSettings()
         .setRetrySettings(retrySettings)
         .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
   }
@@ -215,7 +212,8 @@ public class BigtableVeneerSettingsFactory {
     RetrySettings retrySettings =
         buildIdempotentRetrySettings(builder.mutateRowSettings().getRetrySettings(), options);
 
-    builder.mutateRowSettings()
+    builder
+        .mutateRowSettings()
         .setRetrySettings(retrySettings)
         .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
   }
@@ -225,7 +223,8 @@ public class BigtableVeneerSettingsFactory {
     RetrySettings retrySettings =
         buildIdempotentRetrySettings(builder.readRowSettings().getRetrySettings(), options);
 
-    builder.readRowSettings()
+    builder
+        .readRowSettings()
         .setRetrySettings(retrySettings)
         .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
   }
@@ -236,11 +235,13 @@ public class BigtableVeneerSettingsFactory {
     CallOptionsConfig callOptions = options.getCallOptionsConfig();
     RetrySettings.Builder retryBuilder = builder.readRowsSettings().getRetrySettings().toBuilder();
 
-    //Timeout for ReadRows
+    // Timeout for ReadRows
     Duration rpcTimeout = ofMillis(retryOptions.getReadPartialRowTimeoutMillis());
-    Duration totalTimeout = ofMillis(callOptions.isUseTimeout()
-        ? callOptions.getLongRpcTimeoutMs()
-        : retryOptions.getMaxElapsedBackoffMillis());
+    Duration totalTimeout =
+        ofMillis(
+            callOptions.isUseTimeout()
+                ? callOptions.getLongRpcTimeoutMs()
+                : retryOptions.getMaxElapsedBackoffMillis());
 
     retryBuilder
         .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
@@ -251,14 +252,15 @@ public class BigtableVeneerSettingsFactory {
         .setMaxRpcTimeout(rpcTimeout)
         .setTotalTimeout(totalTimeout);
 
-    builder.readRowsSettings()
+    builder
+        .readRowsSettings()
         .setRetrySettings(retryBuilder.build())
         .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
   }
 
   /** Creates {@link RetrySettings} for non-streaming idempotent method. */
-  private static RetrySettings buildIdempotentRetrySettings(RetrySettings retrySettings,
-      BigtableOptions options) {
+  private static RetrySettings buildIdempotentRetrySettings(
+      RetrySettings retrySettings, BigtableOptions options) {
     RetryOptions retryOptions = options.getRetryOptions();
     CallOptionsConfig callOptions = options.getCallOptionsConfig();
     RetrySettings.Builder retryBuilder = retrySettings.toBuilder();
@@ -268,9 +270,8 @@ public class BigtableVeneerSettingsFactory {
     }
 
     // if useTimeout is false, then RPC's are defaults to 6 minutes.
-    Duration rpcTimeout = ofMillis(callOptions.isUseTimeout()
-        ? callOptions.getShortRpcTimeoutMs()
-        : RPC_DEADLINE_MS);
+    Duration rpcTimeout =
+        ofMillis(callOptions.isUseTimeout() ? callOptions.getShortRpcTimeoutMs() : RPC_DEADLINE_MS);
 
     retryBuilder
         .setInitialRetryDelay(ofMillis(retryOptions.getInitialBackoffMillis()))
@@ -295,18 +296,19 @@ public class BigtableVeneerSettingsFactory {
   }
 
   /** Creates {@link TransportChannelProvider} based on Channel Negotiation type. */
-  private static TransportChannelProvider buildChannelProvider(String endpoint,
-      BigtableOptions options) {
+  private static TransportChannelProvider buildChannelProvider(
+      String endpoint, BigtableOptions options) {
 
     return defaultGrpcTransportProviderBuilder()
         .setEndpoint(endpoint)
         .setPoolSize(options.getChannelCount())
-        .setChannelConfigurator(new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            return channelBuilder.usePlaintext();
-          }
-        })
+        .setChannelConfigurator(
+            new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+              @Override
+              public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+                return channelBuilder.usePlaintext();
+              }
+            })
         .build();
   }
 }

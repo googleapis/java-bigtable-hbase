@@ -17,38 +17,36 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.client.util.Preconditions;
 import com.google.api.core.ApiClock;
-import com.google.cloud.bigtable.grpc.async.CallController;
-import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
-import java.util.concurrent.ScheduledExecutorService;
-
-import javax.annotation.concurrent.NotThreadSafe;
-
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
+import com.google.cloud.bigtable.grpc.async.CallController;
+import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
-
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.trace.AttributeValue;
+import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
- * An extension of {@link AbstractRetryingOperation} that manages retries for the readRows
- * streaming RPC. This class will keep track of the last returned row key via
- * {@link ReadRowsRequestManager} and automatically retry from the last row key .
+ * An extension of {@link AbstractRetryingOperation} that manages retries for the readRows streaming
+ * RPC. This class will keep track of the last returned row key via {@link ReadRowsRequestManager}
+ * and automatically retry from the last row key .
  *
  * @author sduskis
  */
 @NotThreadSafe
-public class RetryingReadRowsOperation extends
-    AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, String> implements ScanHandler {
+public class RetryingReadRowsOperation
+    extends AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, String>
+    implements ScanHandler {
 
   class IdleResumingCallController extends CallController {
     private boolean isIdle = false;
@@ -88,7 +86,13 @@ public class RetryingReadRowsOperation extends
       ScheduledExecutorService retryExecutorService,
       Metadata originalMetadata,
       ApiClock clock) {
-    super(retryOptions, request, retryableRpc, callOptions, retryExecutorService, originalMetadata,
+    super(
+        retryOptions,
+        request,
+        retryableRpc,
+        callOptions,
+        retryExecutorService,
+        originalMetadata,
         clock);
     this.rowObserver = observer;
     this.rowMerger = new RowMerger(rowObserver);
@@ -106,9 +110,7 @@ public class RetryingReadRowsOperation extends
     this.resultObserver = resultObserver;
   }
 
-  /**
-   * Updates the original request via {@link ReadRowsRequestManager#buildUpdatedRequest()}.
-   */
+  /** Updates the original request via {@link ReadRowsRequestManager#buildUpdatedRequest()}. */
   @Override
   protected ReadRowsRequest getRetryRequest() {
     return nextRequest;
@@ -146,8 +148,9 @@ public class RetryingReadRowsOperation extends
 
       // Add an annotation for the number of rows that were returned in the previous response.
       int rowCountInLastMessage = rowMerger.getRowCountInLastMessage();
-      operationSpan.addAnnotation("Processed Response", ImmutableMap.of("rowCount",
-          AttributeValue.longAttributeValue(rowCountInLastMessage)));
+      operationSpan.addAnnotation(
+          "Processed Response",
+          ImmutableMap.of("rowCount", AttributeValue.longAttributeValue(rowCountInLastMessage)));
 
       totalRowsProcessed += rowCountInLastMessage;
       requestManager.incrementRowCount(rowCountInLastMessage);
@@ -177,7 +180,8 @@ public class RetryingReadRowsOperation extends
   @Override
   protected void finalizeStats(Status status) {
     // Add an annotation for the total number of rows that were returned across all responses.
-    operationSpan.addAnnotation("Total Rows Processed",
+    operationSpan.addAnnotation(
+        "Total Rows Processed",
         ImmutableMap.of("rowCount", AttributeValue.longAttributeValue(totalRowsProcessed)));
     super.finalizeStats(status);
   }
@@ -193,18 +197,18 @@ public class RetryingReadRowsOperation extends
   public void onClose(Status status, Metadata trailers) {
     if (status.getCause() instanceof StreamWaitTimeoutException) {
       StreamWaitTimeoutException timeoutException = (StreamWaitTimeoutException) status.getCause();
-      switch(timeoutException.getState()) {
-      case WAITING:
-        operationSpan.addAnnotation("Received an WAITING timeout.");
-        handleTimeoutError(status);
-        return;
-      case IDLE:
-        operationSpan.addAnnotation("Received an IDLE timeout.");
-        ((IdleResumingCallController) callWrapper).setIsIdle();
-        return;
-      default:
-        // continue with onClose.
-        break;
+      switch (timeoutException.getState()) {
+        case WAITING:
+          operationSpan.addAnnotation("Received an WAITING timeout.");
+          handleTimeoutError(status);
+          return;
+        case IDLE:
+          operationSpan.addAnnotation("Received an IDLE timeout.");
+          ((IdleResumingCallController) callWrapper).setIsIdle();
+          return;
+        default:
+          // continue with onClose.
+          break;
       }
     }
 
@@ -218,9 +222,7 @@ public class RetryingReadRowsOperation extends
     super.setException(exception);
   }
 
-  /**
-   * All read rows requests are retryable.
-   */
+  /** All read rows requests are retryable. */
   @Override
   protected boolean isRequestRetryable() {
     return true;
@@ -240,7 +242,8 @@ public class RetryingReadRowsOperation extends
    * @return true if a retry has been scheduled
    */
   private void handleTimeoutError(Status status) {
-    Preconditions.checkArgument(status.getCause() instanceof StreamWaitTimeoutException,
+    Preconditions.checkArgument(
+        status.getCause() instanceof StreamWaitTimeoutException,
         "status is not caused by a StreamWaitTimeoutException");
     StreamWaitTimeoutException e = ((StreamWaitTimeoutException) status.getCause());
 
@@ -251,14 +254,13 @@ public class RetryingReadRowsOperation extends
     // Can this request be retried
     int maxRetries = retryOptions.getMaxScanTimeoutRetries();
     if (retryOptions.enableRetries() && ++timeoutRetryCount <= maxRetries) {
-      LOG.warn("The client could not get a response in %d ms. Retrying the scan.",
-          e.getWaitTimeMs());
+      LOG.warn(
+          "The client could not get a response in %d ms. Retrying the scan.", e.getWaitTimeMs());
 
       resetStatusBasedBackoff();
       performRetry(0);
     } else {
-      LOG.warn("The client could not get a response after %d tries, giving up.",
-          timeoutRetryCount);
+      LOG.warn("The client could not get a response after %d tries, giving up.", timeoutRetryCount);
       rpc.getRpcMetrics().markFailure();
       finalizeStats(status);
       setException(getExhaustedRetriesException(status));

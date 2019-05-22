@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-
 import java.io.Closeable;
 import java.io.IOException;
 
@@ -36,8 +35,8 @@ public interface ResultScanner<T> extends Closeable {
   T next() throws IOException;
 
   /**
-   * Read the next N rows where N &lt;= count. Will block until count are available or end-of-stream is
-   * reached.
+   * Read the next N rows where N &lt;= count. Will block until count are available or end-of-stream
+   * is reached.
    *
    * @param count The number of rows to read.
    * @return an array of T objects.
@@ -46,8 +45,8 @@ public interface ResultScanner<T> extends Closeable {
   T[] next(int count) throws IOException;
 
   /**
-   * Check number of rows immediately available. Calls to {@link #next()} will not block on network for at least
-   * n results.
+   * Check number of rows immediately available. Calls to {@link #next()} will not block on network
+   * for at least n results.
    *
    * @return a int.
    */

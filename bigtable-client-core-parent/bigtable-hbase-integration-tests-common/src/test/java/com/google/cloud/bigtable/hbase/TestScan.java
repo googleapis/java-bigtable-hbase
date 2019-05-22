@@ -17,6 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
+import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -28,12 +32,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.google.protobuf.ByteString;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class TestScan extends AbstractTest {
 
@@ -58,13 +56,14 @@ public class TestScan extends AbstractTest {
   @Test
   public void testRowFollowing() {
     Assert.assertArrayEquals(
-        new byte[]{0x00, 0x01, 0x02}, rowFollowingSameLength(new byte[]{0x00, 0x01, 0x01}));
+        new byte[] {0x00, 0x01, 0x02}, rowFollowingSameLength(new byte[] {0x00, 0x01, 0x01}));
 
     Assert.assertArrayEquals(
-        new byte[]{0x00, 0x02, 0x00}, rowFollowingSameLength(new byte[]{0x00, 0x01, (byte)0xFF}));
+        new byte[] {0x00, 0x02, 0x00},
+        rowFollowingSameLength(new byte[] {0x00, 0x01, (byte) 0xFF}));
 
     Assert.assertArrayEquals(
-        new byte[]{0x00, 0x01, 0x02, 0x00}, rowFollowing(new byte[]{0x00, 0x01, 0x02}));
+        new byte[] {0x00, 0x01, 0x02, 0x00}, rowFollowing(new byte[] {0x00, 0x01, 0x02}));
   }
 
   @Test
@@ -93,7 +92,7 @@ public class TestScan extends AbstractTest {
     Assert.assertNull(resultScanner.next());
   }
 
-    @Test
+  @Test
   public void testGetScannerBeforeTimestamp() throws IOException {
     Table table = getDefaultTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
@@ -103,39 +102,33 @@ public class TestScan extends AbstractTest {
     long ts1 = 100000l;
     long ts2 = 200000l;
 
-    table.put(new Put(rowKey)
-        .addColumn(COLUMN_FAMILY, qual, ts1, values[0])
-        .addColumn(COLUMN_FAMILY, qual, ts2, values[1]));
+    table.put(
+        new Put(rowKey)
+            .addColumn(COLUMN_FAMILY, qual, ts1, values[0])
+            .addColumn(COLUMN_FAMILY, qual, ts2, values[1]));
 
-    Scan scan1 = new Scan()
-            .withStartRow(rowKey)
-            .withStopRow(rowFollowing(rowKey))
-            .setTimeRange(0, ts1);
+    Scan scan1 =
+        new Scan().withStartRow(rowKey).withStopRow(rowFollowing(rowKey)).setTimeRange(0, ts1);
     try (ResultScanner resultScanner = table.getScanner(scan1)) {
       Assert.assertNull(resultScanner.next());
     }
 
-
-    Scan scan2 = new Scan()
-        .withStartRow(rowKey)
-        .withStopRow(rowFollowing(rowKey))
-        .setTimeRange(0, ts2 + 1);
+    Scan scan2 =
+        new Scan().withStartRow(rowKey).withStopRow(rowFollowing(rowKey)).setTimeRange(0, ts2 + 1);
     try (ResultScanner resultScanner = table.getScanner(scan2)) {
       Result result = resultScanner.next();
       Assert.assertNotNull(result);
-      Assert.assertArrayEquals(values[1],
-        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual)));
+      Assert.assertArrayEquals(
+          values[1], CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual)));
     }
 
-    Scan scan3 = new Scan()
-        .withStartRow(rowKey)
-        .withStopRow(rowFollowing(rowKey))
-        .setTimeRange(0, ts1 + 1);
+    Scan scan3 =
+        new Scan().withStartRow(rowKey).withStopRow(rowFollowing(rowKey)).setTimeRange(0, ts1 + 1);
     try (ResultScanner resultScanner = table.getScanner(scan3)) {
       Result result = resultScanner.next();
       Assert.assertNotNull(result);
-      Assert.assertArrayEquals(values[0],
-        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual)));
+      Assert.assertArrayEquals(
+          values[0], CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual)));
     }
   }
 
@@ -156,10 +149,8 @@ public class TestScan extends AbstractTest {
     table.put(put);
 
     // Get without a qualifer, and confirm all results are returned.
-    Scan scan = new Scan()
-        .withStartRow(rowKey)
-        .withStopRow(rowFollowing(rowKey))
-        .addFamily(COLUMN_FAMILY);
+    Scan scan =
+        new Scan().withStartRow(rowKey).withStopRow(rowFollowing(rowKey)).addFamily(COLUMN_FAMILY);
 
     ResultScanner resultScanner = table.getScanner(scan);
     Result result = resultScanner.next();
@@ -168,8 +159,8 @@ public class TestScan extends AbstractTest {
     Assert.assertEquals(numValues, result.size());
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, quals[i]));
-      Assert.assertArrayEquals(values[i],
-          CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
+      Assert.assertArrayEquals(
+          values[i], CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
     }
 
     // Cleanup
@@ -213,7 +204,7 @@ public class TestScan extends AbstractTest {
         .withStopRow(rowFollowing(rowKeys[rowsToWrite - 1]))
         .addFamily(COLUMN_FAMILY);
 
-    try(ResultScanner resultScanner = table.getScanner(scan)) {
+    try (ResultScanner resultScanner = table.getScanner(scan)) {
       for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
         Result result = resultScanner.next();
 
@@ -222,13 +213,14 @@ public class TestScan extends AbstractTest {
         Assert.assertEquals(numValuesPerRow, result.size());
         for (int i = 0; i < numValuesPerRow; ++i) {
           Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, quals[i]));
-          Assert.assertArrayEquals(values[i],
-              CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
+          Assert.assertArrayEquals(
+              values[i], CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
         }
       }
 
       // Verify that there are no more rows:
-      Assert.assertNull("There should not be any more results in the scanner.", resultScanner.next());
+      Assert.assertNull(
+          "There should not be any more results in the scanner.", resultScanner.next());
     }
 
     // Cleanup
@@ -300,16 +292,17 @@ public class TestScan extends AbstractTest {
     byte[] value = dataHelper.randomData("value-");
 
     table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, value));
-    Scan scan = new Scan()
-        .withStartRow(rowKey)
-        .withStopRow(rowKey, true);
+    Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
     try (ResultScanner resultScanner = table.getScanner(scan)) {
       Result result = resultScanner.next();
       Assert.assertNotNull(result);
       Cell cell = result.getColumnCells(COLUMN_FAMILY, qualifier).get(0);
-      Assert.assertTrue(Bytes.equals(value,
-        ByteString.copyFrom(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
-            .toByteArray()));
+      Assert.assertTrue(
+          Bytes.equals(
+              value,
+              ByteString.copyFrom(
+                      cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
+                  .toByteArray()));
     }
   }
 }

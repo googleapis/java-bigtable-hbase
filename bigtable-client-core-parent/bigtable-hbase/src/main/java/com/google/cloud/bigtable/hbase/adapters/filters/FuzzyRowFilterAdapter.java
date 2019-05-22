@@ -17,20 +17,17 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.List;
-
-import com.google.protobuf.ByteString;
-import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
-import org.apache.hadoop.hbase.util.Pair;
-
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
-
 import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.QuoteMetaOutputStream;
 import com.google.common.base.Preconditions;
+import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.List;
+import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
+import org.apache.hadoop.hbase.util.Pair;
 
 /**
  * An adapter for {@link org.apache.hadoop.hbase.filter.FuzzyRowFilter}.
@@ -64,9 +61,7 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
       Preconditions.checkArgument(
           pair.getFirst().length == pair.getSecond().length,
           "Fuzzy info and match mask must have the same length");
-      interleave.filter(
-          createSingleRowFilter(
-              pair.getFirst(), pair.getSecond()));
+      interleave.filter(createSingleRowFilter(pair.getFirst(), pair.getSecond()));
     }
     return interleave;
   }
@@ -92,7 +87,7 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
   static List<Pair<byte[], byte[]>> extractFuzzyRowFilterPairs(FuzzyRowFilter filter)
       throws IOException {
     // TODO: Change FuzzyRowFilter to expose fuzzyKeysData.
-    if(FUZZY_KEY_DATA_FIELD_EXCEPTION != null) {
+    if (FUZZY_KEY_DATA_FIELD_EXCEPTION != null) {
       throw new IOException("Could not read the contents of the FuzzyRowFilter");
     }
     try {

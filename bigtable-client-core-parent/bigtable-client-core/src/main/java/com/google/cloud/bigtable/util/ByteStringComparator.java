@@ -15,14 +15,11 @@
  */
 package com.google.cloud.bigtable.util;
 
+import com.google.protobuf.ByteString;
 import java.util.Comparator;
 
-import com.google.protobuf.ByteString;
-
-/**
- * Compares {@link ByteString}s.
- */
-public final class ByteStringComparator implements Comparator<ByteString>{
+/** Compares {@link ByteString}s. */
+public final class ByteStringComparator implements Comparator<ByteString> {
 
   public static final ByteStringComparator INSTANCE = new ByteStringComparator();
 

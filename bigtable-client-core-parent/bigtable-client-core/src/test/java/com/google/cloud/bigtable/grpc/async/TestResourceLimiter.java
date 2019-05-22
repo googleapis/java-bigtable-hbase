@@ -23,7 +23,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -31,7 +30,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestResourceLimiter {
   @Test
-  public void testRpcCount() throws InterruptedException{
+  public void testRpcCount() throws InterruptedException {
     ResourceLimiterStats stats = new ResourceLimiterStats();
     ResourceLimiter underTest = new ResourceLimiter(stats, 100l, 2);
 
@@ -59,7 +58,7 @@ public class TestResourceLimiter {
   }
 
   @Test
-  public void testSize() throws InterruptedException{
+  public void testSize() throws InterruptedException {
     ResourceLimiter underTest = new ResourceLimiter(new ResourceLimiterStats(), 10l, 1000);
     long id = underTest.registerOperationWithHeapSize(5l);
     assertTrue(underTest.hasInflightRequests());
@@ -97,18 +96,19 @@ public class TestResourceLimiter {
       long id = underTest.registerOperationWithHeapSize(1l);
       assertTrue(underTest.isFull());
       final CountDownLatch secondRequestRegisteredLatch = new CountDownLatch(1);
-      pool.submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            underTest.registerOperationWithHeapSize(5l);
-            secondRequestRegisteredLatch.countDown();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-          }
-        }
-      });
+      pool.submit(
+          new Runnable() {
+            @Override
+            public void run() {
+              try {
+                underTest.registerOperationWithHeapSize(5l);
+                secondRequestRegisteredLatch.countDown();
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+              }
+            }
+          });
       // Give some time for the Runnable to be executed.
       Thread.sleep(10);
       assertEquals(1, secondRequestRegisteredLatch.getCount());
@@ -120,6 +120,4 @@ public class TestResourceLimiter {
       pool.shutdownNow();
     }
   }
-
-
 }

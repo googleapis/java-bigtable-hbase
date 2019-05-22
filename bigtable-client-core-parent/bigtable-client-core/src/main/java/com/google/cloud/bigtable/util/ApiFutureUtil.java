@@ -33,8 +33,8 @@ public final class ApiFutureUtil {
     return new ListenableFutureToApiFuture<T>(listenableFuture);
   }
 
-  public static <F, T> ApiFuture<T> transformAndAdapt(ListenableFuture<F> listenableFuture,
-      Function<F, T> transform) {
+  public static <F, T> ApiFuture<T> transformAndAdapt(
+      ListenableFuture<F> listenableFuture, Function<F, T> transform) {
     return adapt(Futures.transform(listenableFuture, transform, MoreExecutors.directExecutor()));
   }
 }

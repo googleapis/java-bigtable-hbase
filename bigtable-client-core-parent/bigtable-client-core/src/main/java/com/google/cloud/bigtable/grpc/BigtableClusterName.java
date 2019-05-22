@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.common.base.Preconditions;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,8 +41,8 @@ public class BigtableClusterName {
   }
 
   /**
-   * @return the fully qualified cluster name. This method returns the same result as
-   *         {@link #getClusterName()}.
+   * @return the fully qualified cluster name. This method returns the same result as {@link
+   *     #getClusterName()}.
    */
   @Override
   public String toString() {
@@ -52,7 +51,7 @@ public class BigtableClusterName {
 
   /**
    * @return The id of the instance that contains this cluster. It's the second group in the Cluster
-   *         name: "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
+   *     name: "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
    */
   public String getInstanceId() {
     return instanceId;
@@ -60,7 +59,7 @@ public class BigtableClusterName {
 
   /**
    * @return The name of this cluster. It will look like the following
-   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
+   *     "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
    */
   public String getClusterName() {
     return clusterName;
@@ -68,7 +67,7 @@ public class BigtableClusterName {
 
   /**
    * @return The id of this cluster. It's the third group in the Cluster name:
-   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
+   *     "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
    */
   public String getClusterId() {
     return clusterId;
@@ -78,9 +77,10 @@ public class BigtableClusterName {
    * Create a fully qualified snapshot name based on the the clusterName and the snapshotId.
    * Snapshot name will look like:
    * "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
+   *
    * @param snapshotId The id of the snapshot
    * @return A fully qualified snapshot name that contains the fully qualified cluster name as the
-   *         parent and the snapshot name as the child.
+   *     parent and the snapshot name as the child.
    */
   public String toSnapshotName(String snapshotId) {
     return clusterName + "/snapshots/" + snapshotId;

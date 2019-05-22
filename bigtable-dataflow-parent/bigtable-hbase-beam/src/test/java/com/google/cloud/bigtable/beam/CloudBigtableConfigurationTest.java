@@ -19,9 +19,6 @@ package com.google.cloud.bigtable.beam;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Assert;
-
-import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableConfiguration.Builder;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.util.ArrayList;
@@ -33,13 +30,12 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.ItemSpec;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.hadoop.conf.Configuration;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/**
- * Tests for {@link CloudBigtableConfiguration}.
- */
+/** Tests for {@link com.google.cloud.bigtable.beam.CloudBigtableConfiguration}. */
 @RunWith(JUnit4.class)
 public class CloudBigtableConfigurationTest {
 

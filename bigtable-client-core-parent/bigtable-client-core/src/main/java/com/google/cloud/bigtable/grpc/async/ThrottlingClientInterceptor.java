@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.MessageLite;
-
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -29,10 +28,7 @@ import io.grpc.Status;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
 
-/**
- * Throttles requests based on {@link ResourceLimiter}
- *
- */
+/** Throttles requests based on {@link ResourceLimiter} */
 public class ThrottlingClientInterceptor implements ClientInterceptor {
   private final ResourceLimiter resourceLimiter;
 
@@ -42,8 +38,10 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
   }
 
   @Override
-  public <ReqT , RespT> ClientCall<ReqT, RespT> interceptCall(
-      final MethodDescriptor<ReqT, RespT> method, final CallOptions callOptions, final Channel delegateChannel) {
+  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+      final MethodDescriptor<ReqT, RespT> method,
+      final CallOptions callOptions,
+      final Channel delegateChannel) {
     if (resourceLimiter == null) {
       return delegateChannel.newCall(method, callOptions);
     }
@@ -96,28 +94,26 @@ public class ThrottlingClientInterceptor implements ClientInterceptor {
 
         if (delegateListener != null) {
           delegateListener.onClose(
-              Status.CANCELLED
-                .withDescription(message)
-                .withCause(cause),
-              new Metadata()
-          );
+              Status.CANCELLED.withDescription(message).withCause(cause), new Metadata());
         }
       }
 
       @Override
       public void sendMessage(ReqT message) {
-        Preconditions.checkState(delegateCall == null,
-          "ThrottlingClientInterceptor only supports unary operations");
-        Preconditions.checkState(delegateListener != null && headers != null,
-          "start() has to be called before sendMessage().");
+        Preconditions.checkState(
+            delegateCall == null, "ThrottlingClientInterceptor only supports unary operations");
+        Preconditions.checkState(
+            delegateListener != null && headers != null,
+            "start() has to be called before sendMessage().");
         Preconditions.checkState(!cancelledEarly, "Call already cancelled");
 
         try {
-          id = resourceLimiter
-              .registerOperationWithHeapSize(((MessageLite) message).getSerializedSize());
+          id =
+              resourceLimiter.registerOperationWithHeapSize(
+                  ((MessageLite) message).getSerializedSize());
         } catch (InterruptedException e) {
-          delegateListener.onClose(Status.INTERNAL.withDescription("Operation was interrupted"),
-            new Metadata());
+          delegateListener.onClose(
+              Status.INTERNAL.withDescription("Operation was interrupted"), new Metadata());
           return;
         }
         delegateCall = delegateChannel.newCall(method, callOptions);

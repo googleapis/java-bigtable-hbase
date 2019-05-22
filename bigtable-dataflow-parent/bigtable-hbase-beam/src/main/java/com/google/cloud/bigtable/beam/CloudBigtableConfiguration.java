@@ -15,23 +15,20 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.Map.Entry;
-
-import org.apache.beam.sdk.options.ValueProvider;
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
-import org.apache.beam.sdk.transforms.display.DisplayData;
-import org.apache.hadoop.conf.Configuration;
-
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
+import org.apache.beam.sdk.transforms.display.DisplayData;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a Cloud
@@ -44,16 +41,13 @@ public class CloudBigtableConfiguration implements Serializable {
   // TODO(kevinsi): Rename to RUNTIME_VARIABLE_UNAVAILABLE?
   public static final String VALUE_UNAVAILABLE = "Unavailable during pipeline construction";
 
-  /**
-   * Builds a {@link CloudBigtableConfiguration}.
-   */
+  /** Builds a {@link CloudBigtableConfiguration}. */
   public static class Builder {
     protected ValueProvider<String> projectId;
     protected ValueProvider<String> instanceId;
     protected Map<String, ValueProvider<String>> additionalConfiguration = new HashMap<>();
 
-    public Builder() {
-    }
+    public Builder() {}
 
     protected void copyFrom(Map<String, ValueProvider<String>> configuration) {
       this.additionalConfiguration.putAll(configuration);
@@ -64,6 +58,7 @@ public class CloudBigtableConfiguration implements Serializable {
 
     /**
      * Specifies the project ID for the Cloud Bigtable instance.
+     *
      * @param projectId The project ID for the instance.
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
@@ -73,6 +68,7 @@ public class CloudBigtableConfiguration implements Serializable {
 
     /**
      * Specifies the project ID for the Cloud Bigtable instance.
+     *
      * @param projectId The project ID for the instance.
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
@@ -83,6 +79,7 @@ public class CloudBigtableConfiguration implements Serializable {
 
     /**
      * Specifies the Cloud Bigtable instanceId.
+     *
      * @param instanceId The Cloud Bigtable instanceId.
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
@@ -92,6 +89,7 @@ public class CloudBigtableConfiguration implements Serializable {
 
     /**
      * Specifies the Cloud Bigtable instanceId.
+     *
      * @param instanceId The Cloud Bigtable instanceId.
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
@@ -100,24 +98,21 @@ public class CloudBigtableConfiguration implements Serializable {
       return this;
     }
 
-    /**
-     * Specifies the AppProfile to use.
-     */
+    /** Specifies the AppProfile to use. */
     public Builder withAppProfileId(String appProfileId) {
       return withAppProfileId(StaticValueProvider.of(appProfileId));
     }
 
-    /**
-     * Specifies the AppProfile to use.
-     */
+    /** Specifies the AppProfile to use. */
     Builder withAppProfileId(ValueProvider<String> appProfileId) {
       return withConfiguration(BigtableOptionsFactory.APP_PROFILE_ID_KEY, appProfileId);
     }
 
     /**
-     * Adds additional connection configuration.
-     * {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
+     * Adds additional connection configuration. {@link
+     * BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
      * configuration options.
+     *
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
     public Builder withConfiguration(String key, String value) {
@@ -125,9 +120,10 @@ public class CloudBigtableConfiguration implements Serializable {
     }
 
     /**
-     * Adds additional connection configuration.
-     * {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
+     * Adds additional connection configuration. {@link
+     * BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
      * configuration options.
+     *
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
     Builder withConfiguration(String key, ValueProvider<String> value) {
@@ -144,8 +140,7 @@ public class CloudBigtableConfiguration implements Serializable {
     public CloudBigtableConfiguration build() {
       // Keeping the legacy constructor for backwards compatibility.
       // Choose the new one if instance is specified.
-      return new CloudBigtableConfiguration(
-          projectId, instanceId, additionalConfiguration);
+      return new CloudBigtableConfiguration(projectId, instanceId, additionalConfiguration);
     }
   }
 
@@ -153,8 +148,7 @@ public class CloudBigtableConfiguration implements Serializable {
   private Map<String, ValueProvider<String>> configuration;
 
   // Used for serialization of CloudBigtableScanConfiguration.
-  CloudBigtableConfiguration() {
-  }
+  CloudBigtableConfiguration() {}
 
   /**
    * Creates a {@link CloudBigtableConfiguration} using the specified project ID and instance ID.
@@ -162,8 +156,8 @@ public class CloudBigtableConfiguration implements Serializable {
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
    * @param additionalConfiguration A {@link Map} with additional connection configuration. See
-   *          {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information
-   *          about configuration options.
+   *     {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
+   *     configuration options.
    */
   protected CloudBigtableConfiguration(
       ValueProvider<String> projectId,
@@ -182,6 +176,7 @@ public class CloudBigtableConfiguration implements Serializable {
 
   /**
    * Gets the project ID for the Cloud Bigtable instance.
+   *
    * @return The project ID for the instance.
    */
   public String getProjectId() {
@@ -190,21 +185,21 @@ public class CloudBigtableConfiguration implements Serializable {
 
   /**
    * Gets the Cloud Bigtable instance id.
+   *
    * @return The Cloud Bigtable instance id.
    */
   public String getInstanceId() {
     return configuration.get(BigtableOptionsFactory.INSTANCE_ID_KEY).get();
   }
 
-  /**
-   * Get the Cloud Bigtable App Profile id.
-   */
+  /** Get the Cloud Bigtable App Profile id. */
   public String getAppProfileId() {
     return configuration.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY).get();
   }
 
   /**
    * Converts the {@link CloudBigtableConfiguration} to a {@link BigtableOptions} object.
+   *
    * @return The {@link BigtableOptions} object.
    */
   public BigtableOptions toBigtableOptions() throws IOException {
@@ -213,14 +208,14 @@ public class CloudBigtableConfiguration implements Serializable {
 
   /**
    * Converts the {@link CloudBigtableConfiguration} to an HBase {@link Configuration}.
+   *
    * @return The {@link Configuration}.
    */
   public Configuration toHBaseConfig() {
     Configuration config = new Configuration(false);
 
     /**
-     * Sets below setting for batch
-     * BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL = true
+     * Sets below setting for batch BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL = true
      * BigtableOptionsFactory.BIGTABLE_HOST_KEY = batch-bigtable.googleapis.com
      * BigtableOptionsFactory.INITIAL_ELAPSED_BACKOFF_MILLIS_KEY = 5ms
      * BigtableOptionsFactory.MAX_ELAPSED_BACKOFF_MILLIS_KEY = 5ms
@@ -230,7 +225,7 @@ public class CloudBigtableConfiguration implements Serializable {
     // This setting can potentially decrease performance for large scale writes. However, this
     // setting prevents problems that occur when streaming Sources, such as PubSub, are used.
     // To override this behavior, call:
-    //    Builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, 
+    //    Builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY,
     //                              BigtableOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
     config.set(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, "0");
     for (Entry<String, ValueProvider<String>> entry : configuration.entrySet()) {
@@ -253,6 +248,7 @@ public class CloudBigtableConfiguration implements Serializable {
 
   /**
    * Creates a new {@link Builder} object containing the existing configuration.
+   *
    * @return A new {@link Builder}.
    */
   public Builder toBuilder() {
@@ -261,9 +257,7 @@ public class CloudBigtableConfiguration implements Serializable {
     return builder;
   }
 
-  /**
-   * Gets an immutable copy of the configuration map.
-   */
+  /** Gets an immutable copy of the configuration map. */
   protected ImmutableMap<String, ValueProvider<String>> getConfiguration() {
     return ImmutableMap.copyOf(configuration);
   }
