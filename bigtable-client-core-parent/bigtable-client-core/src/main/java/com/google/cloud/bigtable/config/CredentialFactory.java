@@ -15,19 +15,16 @@
  */
 package com.google.cloud.bigtable.config;
 
-import com.google.api.client.extensions.appengine.http.UrlFetchTransport;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.util.SecurityUtils;
 import com.google.auth.Credentials;
 import com.google.auth.http.HttpTransportFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
-import com.google.cloud.PlatformInformation;
 import com.google.cloud.bigtable.config.CredentialOptions.JsonCredentialsOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.P12CredentialOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.UserSuppliedCredentialOptions;
+import com.google.cloud.http.HttpTransportOptions.DefaultHttpTransportFactory;
 import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -78,21 +75,6 @@ public class CredentialFactory {
    */
   public static void setHttpTransportFactory(HttpTransportFactory httpTransportFactory) {
     CredentialFactory.httpTransportFactory = httpTransportFactory;
-  }
-
-  private static class DefaultHttpTransportFactory implements HttpTransportFactory {
-    @Override
-    public HttpTransport create() {
-      // Consider App Engine Standard
-      if (PlatformInformation.isOnGAEStandard7() || PlatformInformation.isOnGAEStandard8()) {
-        try {
-          return new UrlFetchTransport();
-        } catch (Exception e) {
-          // ignore. May not be on AppEngine.
-        }
-      }
-      return new NetHttpTransport();
-    }
   }
 
   public static HttpTransportFactory getHttpTransportFactory() {
