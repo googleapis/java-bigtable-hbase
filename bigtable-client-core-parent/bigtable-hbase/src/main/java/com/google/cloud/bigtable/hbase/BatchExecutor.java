@@ -149,7 +149,7 @@ public class BatchExecutor {
         new BigtableBufferedMutatorHelper(
             requestAdapter,
             null, // configuration isn't passed in, but also isn't used in
-                  // BigtableBufferedMutatorHelper
+            // BigtableBufferedMutatorHelper
             session);
   }
 

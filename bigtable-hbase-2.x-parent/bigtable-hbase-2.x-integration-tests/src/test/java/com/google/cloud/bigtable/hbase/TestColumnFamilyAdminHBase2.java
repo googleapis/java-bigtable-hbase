@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
