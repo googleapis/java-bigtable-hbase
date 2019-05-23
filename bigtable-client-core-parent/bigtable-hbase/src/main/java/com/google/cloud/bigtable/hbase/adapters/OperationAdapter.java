@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-
 import org.apache.hadoop.hbase.client.Row;
 
 /**

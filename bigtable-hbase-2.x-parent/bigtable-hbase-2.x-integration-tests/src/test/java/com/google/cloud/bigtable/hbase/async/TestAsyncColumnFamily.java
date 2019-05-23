@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.async;
 
-
 import com.google.cloud.bigtable.hbase.AbstractTestColumnFamilyAdmin;
 import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.hbase.HTableDescriptor;
