@@ -109,8 +109,8 @@ public class CallOptionsConfig implements Serializable {
      *
      * @param longRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
-     *
-     * @deprecated Please use {@link #setMutateRpcTimeoutMs(int)} or {@link #setReadRowsRpcTimeoutMs(int)}.
+     * @deprecated Please use {@link #setMutateRpcTimeoutMs(int)} or {@link
+     *     #setReadRowsRpcTimeoutMs(int)}.
      */
     @Deprecated
     public Builder setLongRpcTimeoutMs(int longRpcTimeoutMs) {
@@ -121,11 +121,13 @@ public class CallOptionsConfig implements Serializable {
 
     /**
      * The amount of milliseconds to wait before issuing a client side timeout for mutation RPCs.
+     *
      * @param mutateRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
      */
     public Builder setMutateRpcTimeoutMs(int mutateRpcTimeoutMs) {
-      Preconditions.checkArgument(mutateRpcTimeoutMs > 0, "Long Timeout ms has to be greater than 0");
+      Preconditions.checkArgument(
+          mutateRpcTimeoutMs > 0, "Long Timeout ms has to be greater than 0");
       this.mutateRpcTimeoutMs = mutateRpcTimeoutMs;
       return this;
     }
@@ -133,11 +135,13 @@ public class CallOptionsConfig implements Serializable {
     /**
      * The amount of milliseconds to wait before issuing a client side timeout for readRows
      * streaming RPCs.
+     *
      * @param readStreamRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
      */
-    public Builder setReadRowsRpcTimeoutMs(int readStreamRpcTimeoutMs){
-      Preconditions.checkArgument(readStreamRpcTimeoutMs > 0, "Read Stream Timeout ms has to be greater than 0");
+    public Builder setReadRowsRpcTimeoutMs(int readStreamRpcTimeoutMs) {
+      Preconditions.checkArgument(
+          readStreamRpcTimeoutMs > 0, "Read Stream Timeout ms has to be greater than 0");
       this.readRowsRpcTimeoutMs = readStreamRpcTimeoutMs;
       return this;
     }
@@ -159,7 +163,6 @@ public class CallOptionsConfig implements Serializable {
    * @param useTimeout a boolean.
    * @param unaryRpcTimeoutMs an int.
    * @param longRpcTimeoutMs an int.
-   *
    * @deprecated Please use {@link #builder()}
    */
   @Deprecated
@@ -221,8 +224,8 @@ public class CallOptionsConfig implements Serializable {
    * Getter for the field <code>longRpcTimeoutMs</code>.
    *
    * @return an int.
-   *
-   * @deprecated Please use {@link #getMutateRpcTimeoutMs()} or {@link #getReadStreamRpcTimeoutMs()}.
+   * @deprecated Please use {@link #getMutateRpcTimeoutMs()} or {@link
+   *     #getReadStreamRpcTimeoutMs()}.
    */
   @Deprecated
   public int getLongRpcTimeoutMs() {
@@ -230,7 +233,7 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
-   * <p>Getter for the field <code>mutateRpcTimeoutMs</code>.</p>
+   * Getter for the field <code>mutateRpcTimeoutMs</code>.
    *
    * @return an int.
    */
@@ -239,7 +242,7 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
-   * <p>Getter for the field <code>readStreamRpcTimeoutMs</code>.</p>
+   * Getter for the field <code>readStreamRpcTimeoutMs</code>.
    *
    * @return an int.
    */

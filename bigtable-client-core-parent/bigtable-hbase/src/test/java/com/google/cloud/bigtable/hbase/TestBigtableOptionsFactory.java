@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
 import static org.junit.Assert.assertEquals;
 
 import com.google.auth.Credentials;
@@ -31,8 +32,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
 import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
