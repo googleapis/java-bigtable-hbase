@@ -257,6 +257,9 @@ public class BigtableOptionsFactory {
   /**
    * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
    * read? Currently, this feature is experimental.
+   *
+   * @deprecated Please use {@link #BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY} or {@link
+   *     #BIGTABLE_READ_RPC_TIMEOUT_MS_KEY} based on long operation.
    */
   @Deprecated
   public static final String BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY =
