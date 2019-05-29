@@ -105,7 +105,8 @@ public class CallOptionsConfig implements Serializable {
     }
 
     /**
-     * The amount of milliseconds to wait before issuing a client side timeout for long RPCs.
+     * The amount of milliseconds to wait before issuing a client side timeout for long running
+     * RPCs.
      *
      * @param longRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
@@ -114,26 +115,28 @@ public class CallOptionsConfig implements Serializable {
      */
     @Deprecated
     public Builder setLongRpcTimeoutMs(int longRpcTimeoutMs) {
-      Preconditions.checkArgument(longRpcTimeoutMs > 0, "Long Timeout ms has to be greater than 0");
+      Preconditions.checkArgument(
+          longRpcTimeoutMs > 0, "Long running RPC Timeout ms has to be greater than 0");
       this.longRpcTimeoutMs = longRpcTimeoutMs;
       return this;
     }
 
     /**
-     * The amount of milliseconds to wait before issuing a client side timeout for mutation RPCs.
+     * The amount of time in milliseconds to wait before issuing a client side timeout for row
+     * mutation RPCs.
      *
      * @param mutateRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
      */
     public Builder setMutateRpcTimeoutMs(int mutateRpcTimeoutMs) {
       Preconditions.checkArgument(
-          mutateRpcTimeoutMs > 0, "Long Timeout ms has to be greater than 0");
+          mutateRpcTimeoutMs > 0, "Mutate Rows RPC Timeout ms has to be greater than 0");
       this.mutateRpcTimeoutMs = mutateRpcTimeoutMs;
       return this;
     }
 
     /**
-     * The amount of milliseconds to wait before issuing a client side timeout for readRows
+     * The amount of time in millisecond to wait before issuing a client side timeout for readRows
      * streaming RPCs.
      *
      * @param readStreamRpcTimeoutMs timeout value in milliseconds.
@@ -141,7 +144,7 @@ public class CallOptionsConfig implements Serializable {
      */
     public Builder setReadRowsRpcTimeoutMs(int readStreamRpcTimeoutMs) {
       Preconditions.checkArgument(
-          readStreamRpcTimeoutMs > 0, "Read Stream Timeout ms has to be greater than 0");
+          readStreamRpcTimeoutMs > 0, "Read Stream RPC Timeout ms has to be greater than 0");
       this.readRowsRpcTimeoutMs = readStreamRpcTimeoutMs;
       return this;
     }
