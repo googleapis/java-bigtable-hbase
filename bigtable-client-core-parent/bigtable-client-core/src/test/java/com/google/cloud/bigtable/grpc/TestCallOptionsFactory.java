@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowsRequest;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
 import com.google.cloud.bigtable.grpc.async.OperationClock;
 import io.grpc.CallOptions;
@@ -37,7 +39,7 @@ import org.mockito.MockitoAnnotations;
 @RunWith(JUnit4.class)
 public class TestCallOptionsFactory {
 
-  private static final long NOW = System.nanoTime();
+  private static final int LARGE_TIMEOUT = 500_000;
 
   @Mock ScheduledExecutorService mockExecutor;
 
@@ -77,14 +79,20 @@ public class TestCallOptionsFactory {
 
   @Test
   public void testConfiguredConfigEnabled() {
-    CallOptionsConfig config = CallOptionsConfig.builder().setUseTimeout(true).build();
+    CallOptionsConfig config =
+        CallOptionsConfig.builder()
+            .setUseTimeout(true)
+            .setReadRowsRpcTimeoutMs(LARGE_TIMEOUT)
+            .build();
     CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
     assertEqualsDeadlines(
         config.getShortRpcTimeoutMs(),
-        getDeadlineMs(factory, MutateRowRequest.getDefaultInstance()));
+        getDeadlineMs(factory, SampleRowKeysRequest.getDefaultInstance()));
     assertEqualsDeadlines(
-        config.getLongRpcTimeoutMs(),
+        config.getMutateRpcTimeoutMs(),
         getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance()));
+    assertEqualsDeadlines(
+        LARGE_TIMEOUT, getDeadlineMs(factory, ReadRowsRequest.getDefaultInstance()));
   }
 
   @Test
@@ -100,7 +108,8 @@ public class TestCallOptionsFactory {
                 CallOptionsConfig.builder()
                     .setUseTimeout(true)
                     .setShortRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(100))
-                    .setLongRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
+                    .setMutateRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
+                    .setReadRowsRpcTimeoutMs((int) TimeUnit.SECONDS.toMillis(1000))
                     .build();
             CallOptionsFactory factory =
                 new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
@@ -111,6 +120,48 @@ public class TestCallOptionsFactory {
                 getDeadlineMs(factory, MutateRowRequest.getDefaultInstance()));
           }
         });
+  }
+
+  @Test
+  public void testShortAndLongRpcDeadline() {
+    int short_time = (int) TimeUnit.SECONDS.toMillis(100);
+    int read_time = (int) TimeUnit.SECONDS.toMillis(1000);
+    int mutate_time = (int) TimeUnit.SECONDS.toMillis(1500);
+    CallOptionsConfig config =
+        CallOptionsConfig.builder()
+            .setUseTimeout(true)
+            .setShortRpcTimeoutMs(short_time)
+            .setMutateRpcTimeoutMs(mutate_time)
+            .setReadRowsRpcTimeoutMs(read_time)
+            .build();
+    CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
+    // The deadline in the context in 1 second, and the deadline in the config is 100+
+    // seconds
+    assertEqualsDeadlines(
+        short_time, getDeadlineMs(factory, SampleRowKeysRequest.getDefaultInstance()));
+    assertEqualsDeadlines(
+        mutate_time, getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance()));
+    assertEqualsDeadlines(read_time, getDeadlineMs(factory, ReadRowsRequest.getDefaultInstance()));
+  }
+
+  @Test
+  public void testCallOptionsWithMutateRowsRequest() {
+    CallOptionsConfig config =
+        CallOptionsConfig.builder()
+            .setUseTimeout(true)
+            .setMutateRpcTimeoutMs(LARGE_TIMEOUT)
+            .build();
+    CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
+    assertEqualsDeadlines(
+        LARGE_TIMEOUT, getDeadlineMs(factory, MutateRowsRequest.getDefaultInstance()));
+  }
+
+  @Test
+  public void testWhenNoTimeout() {
+    CallOptionsConfig config = CallOptionsConfig.builder().setUseTimeout(false).build();
+    CallOptionsFactory factory = new CallOptionsFactory.ConfiguredCallOptionsFactory(config);
+    Assert.assertEquals(
+        CallOptions.DEFAULT, factory.create(null, ReadRowsRequest.getDefaultInstance()));
   }
 
   /**

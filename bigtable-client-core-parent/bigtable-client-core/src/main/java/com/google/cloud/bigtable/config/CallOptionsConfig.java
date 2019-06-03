@@ -55,6 +55,8 @@ public class CallOptionsConfig implements Serializable {
     private boolean useTimeout = USE_TIMEOUT_DEFAULT;
     private int shortRpcTimeoutMs = SHORT_TIMEOUT_MS_DEFAULT;
     private int longRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
+    private int mutateRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
+    private int readRowsRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
 
     @Deprecated
     public Builder() {}
@@ -63,6 +65,8 @@ public class CallOptionsConfig implements Serializable {
       this.useTimeout = original.useTimeout;
       this.shortRpcTimeoutMs = original.shortRpcTimeoutMs;
       this.longRpcTimeoutMs = original.longRpcTimeoutMs;
+      this.mutateRpcTimeoutMs = original.mutateRpcTimeoutMs;
+      this.readRowsRpcTimeoutMs = original.readStreamRpcTimeoutMs;
     }
 
     /**
@@ -101,25 +105,60 @@ public class CallOptionsConfig implements Serializable {
     }
 
     /**
-     * The amount of milliseconds to wait before issuing a client side timeout for long RPCs.
+     * The amount of milliseconds to wait before issuing a client side timeout for long running
+     * RPCs.
      *
      * @param longRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
+     * @deprecated Please use {@link #setMutateRpcTimeoutMs(int)} or {@link
+     *     #setReadRowsRpcTimeoutMs(int)}.
      */
+    @Deprecated
     public Builder setLongRpcTimeoutMs(int longRpcTimeoutMs) {
-      Preconditions.checkArgument(longRpcTimeoutMs > 0, "Long Timeout ms has to be greater than 0");
+      Preconditions.checkArgument(
+          longRpcTimeoutMs > 0, "Long running RPC Timeout ms has to be greater than 0");
       this.longRpcTimeoutMs = longRpcTimeoutMs;
       return this;
     }
 
+    /**
+     * The amount of time in milliseconds to wait before issuing a client side timeout for row
+     * mutation RPCs.
+     *
+     * @param mutateRpcTimeoutMs timeout value in milliseconds.
+     * @return a {@link Builder} object, for chaining
+     */
+    public Builder setMutateRpcTimeoutMs(int mutateRpcTimeoutMs) {
+      Preconditions.checkArgument(
+          mutateRpcTimeoutMs > 0, "Mutate Rows RPC Timeout ms has to be greater than 0");
+      this.mutateRpcTimeoutMs = mutateRpcTimeoutMs;
+      return this;
+    }
+
+    /**
+     * The amount of time in millisecond to wait before issuing a client side timeout for readRows
+     * streaming RPCs.
+     *
+     * @param readStreamRpcTimeoutMs timeout value in milliseconds.
+     * @return a {@link Builder} object, for chaining
+     */
+    public Builder setReadRowsRpcTimeoutMs(int readStreamRpcTimeoutMs) {
+      Preconditions.checkArgument(
+          readStreamRpcTimeoutMs > 0, "Read Stream RPC Timeout ms has to be greater than 0");
+      this.readRowsRpcTimeoutMs = readStreamRpcTimeoutMs;
+      return this;
+    }
+
     public CallOptionsConfig build() {
-      return new CallOptionsConfig(useTimeout, shortRpcTimeoutMs, longRpcTimeoutMs);
+      return new CallOptionsConfig(this);
     }
   }
 
   private final boolean useTimeout;
   private final int shortRpcTimeoutMs;
   private final int longRpcTimeoutMs;
+  private final int mutateRpcTimeoutMs;
+  private final int readStreamRpcTimeoutMs;
 
   /**
    * Constructor for CallOptionsConfig.
@@ -127,12 +166,32 @@ public class CallOptionsConfig implements Serializable {
    * @param useTimeout a boolean.
    * @param unaryRpcTimeoutMs an int.
    * @param longRpcTimeoutMs an int.
+   * @deprecated Please use {@link #builder()}
    */
   @Deprecated
   public CallOptionsConfig(boolean useTimeout, int unaryRpcTimeoutMs, int longRpcTimeoutMs) {
     this.useTimeout = useTimeout;
     this.shortRpcTimeoutMs = unaryRpcTimeoutMs;
     this.longRpcTimeoutMs = longRpcTimeoutMs;
+    this.mutateRpcTimeoutMs = longRpcTimeoutMs;
+    this.readStreamRpcTimeoutMs = longRpcTimeoutMs;
+  }
+
+  private CallOptionsConfig(Builder builder) {
+    this.useTimeout = builder.useTimeout;
+    this.shortRpcTimeoutMs = builder.shortRpcTimeoutMs;
+    this.longRpcTimeoutMs = builder.longRpcTimeoutMs;
+    int mutateTimeout = builder.mutateRpcTimeoutMs;
+    int readRowsTimeout = builder.readRowsRpcTimeoutMs;
+
+    if (mutateTimeout == LONG_TIMEOUT_MS_DEFAULT && longRpcTimeoutMs != LONG_TIMEOUT_MS_DEFAULT) {
+      mutateTimeout = longRpcTimeoutMs;
+    }
+    if (readRowsTimeout == LONG_TIMEOUT_MS_DEFAULT && longRpcTimeoutMs != LONG_TIMEOUT_MS_DEFAULT) {
+      readRowsTimeout = longRpcTimeoutMs;
+    }
+    this.mutateRpcTimeoutMs = mutateTimeout;
+    this.readStreamRpcTimeoutMs = readRowsTimeout;
   }
 
   /**
@@ -168,9 +227,30 @@ public class CallOptionsConfig implements Serializable {
    * Getter for the field <code>longRpcTimeoutMs</code>.
    *
    * @return an int.
+   * @deprecated Please use {@link #getMutateRpcTimeoutMs()} or {@link
+   *     #getReadStreamRpcTimeoutMs()}.
    */
+  @Deprecated
   public int getLongRpcTimeoutMs() {
     return longRpcTimeoutMs;
+  }
+
+  /**
+   * Getter for the field <code>mutateRpcTimeoutMs</code>.
+   *
+   * @return an int.
+   */
+  public int getMutateRpcTimeoutMs() {
+    return mutateRpcTimeoutMs;
+  }
+
+  /**
+   * Getter for the field <code>readStreamRpcTimeoutMs</code>.
+   *
+   * @return an int.
+   */
+  public int getReadStreamRpcTimeoutMs() {
+    return readStreamRpcTimeoutMs;
   }
 
   /** {@inheritDoc} */
@@ -185,7 +265,9 @@ public class CallOptionsConfig implements Serializable {
     CallOptionsConfig other = (CallOptionsConfig) obj;
     return useTimeout == other.useTimeout
         && shortRpcTimeoutMs == other.shortRpcTimeoutMs
-        && longRpcTimeoutMs == other.longRpcTimeoutMs;
+        && longRpcTimeoutMs == other.longRpcTimeoutMs
+        && mutateRpcTimeoutMs == other.mutateRpcTimeoutMs
+        && readStreamRpcTimeoutMs == other.readStreamRpcTimeoutMs;
   }
 
   /** {@inheritDoc} */
@@ -195,6 +277,8 @@ public class CallOptionsConfig implements Serializable {
         .add("useTimeout", useTimeout)
         .add("shortRpcTimeoutMs", shortRpcTimeoutMs)
         .add("longRpcTimeoutMs", longRpcTimeoutMs)
+        .add("mutateRpcTimeoutMs", mutateRpcTimeoutMs)
+        .add("readStreamRpcTimeoutMs", readStreamRpcTimeoutMs)
         .toString();
   }
 

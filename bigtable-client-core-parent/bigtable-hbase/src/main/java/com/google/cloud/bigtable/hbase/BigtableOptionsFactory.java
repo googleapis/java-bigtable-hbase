@@ -257,9 +257,27 @@ public class BigtableOptionsFactory {
   /**
    * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
    * read? Currently, this feature is experimental.
+   *
+   * @deprecated Please use {@link #BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY} or {@link
+   *     #BIGTABLE_READ_RPC_TIMEOUT_MS_KEY} based on long operation.
    */
+  @Deprecated
   public static final String BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY =
       "google.bigtable.long.rpc.timeout.ms";
+
+  /**
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
+   * mutation. Currently, this feature is experimental.
+   */
+  public static final String BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY =
+      "google.bigtable.mutate.rpc.timeout.ms";
+
+  /**
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
+   * read. Currently, this feature is experimental.
+   */
+  public static final String BIGTABLE_READ_RPC_TIMEOUT_MS_KEY =
+      "google.bigtable.read.rpc.timeout.ms";
 
   /** Allow namespace methods to be no-ops */
   public static final String BIGTABLE_NAMESPACE_WARNING_KEY = "google.bigtable.namespace.warnings";
@@ -453,8 +471,12 @@ public class BigtableOptionsFactory {
         configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT));
     clientCallOptionsBuilder.setShortRpcTimeoutMs(
         configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, SHORT_TIMEOUT_MS_DEFAULT));
-    clientCallOptionsBuilder.setLongRpcTimeoutMs(
-        configuration.getInt(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY, LONG_TIMEOUT_MS_DEFAULT));
+    int longTimeoutMs =
+        configuration.getInt(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY, LONG_TIMEOUT_MS_DEFAULT);
+    clientCallOptionsBuilder.setMutateRpcTimeoutMs(
+        configuration.getInt(BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY, longTimeoutMs));
+    clientCallOptionsBuilder.setReadRowsRpcTimeoutMs(
+        configuration.getInt(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, longTimeoutMs));
     bigtableOptionsBuilder.setCallOptionsConfig(clientCallOptionsBuilder.build());
   }
 
