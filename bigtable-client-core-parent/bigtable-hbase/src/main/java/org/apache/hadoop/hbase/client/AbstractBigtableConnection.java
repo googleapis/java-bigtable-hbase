@@ -78,9 +78,8 @@ public abstract class AbstractBigtableConnection
 
     // Force the loading of HConstants.class, which shares a bi-directional reference with KeyValue.
     // This bi-directional relationship causes problems when KeyValue and HConstants are class
-    // loaded
-    // in different threads. This forces a clean class loading of both HConstants and KeyValue along
-    // with a whole bunch of other classes.
+    // loaded in different threads. This forces a clean class loading of both HConstants and
+    // KeyValue along with a whole bunch of other classes.
     Adapters.class.getName();
   }
 
