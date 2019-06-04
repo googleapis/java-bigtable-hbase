@@ -193,7 +193,7 @@ public class BigtableSession implements Closeable {
   private BigtableTableAdminClient tableAdminClient;
   private BigtableInstanceGrpcClient instanceAdminClient;
 
-  /* *****************   end cloud-bigtable-cliente related variables ***************** */
+  /* *****************   end cloud-bigtable-client related variables ***************** */
 
   /* *****************   new google-cloud-bigtable related variables ***************** */
 
@@ -649,7 +649,7 @@ public class BigtableSession implements Closeable {
 
     if (options.usePlaintextNegotiation()) {
       // NOTE: usePlaintext(true) is deprecated in newer versions of grpc (1.11.0).
-      //       usePlantxext() is the preferred approach, but won't work with older versions.
+      //       usePlaintext() is the preferred approach, but won't work with older versions.
       //       This means that plaintext negotiation can't be used with Beam.
       builder.usePlaintext();
     }

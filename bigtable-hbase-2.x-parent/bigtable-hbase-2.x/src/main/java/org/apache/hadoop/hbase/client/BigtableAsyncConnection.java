@@ -118,7 +118,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public void close() throws IOException {
-    LOG.debug("closeing BigtableAsyncConnection");
+    LOG.debug("closing BigtableAsyncConnection");
     if (!this.closed) {
       this.session.close();
       this.closed = true;

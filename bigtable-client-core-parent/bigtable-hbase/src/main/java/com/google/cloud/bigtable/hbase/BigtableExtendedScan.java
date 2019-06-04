@@ -37,7 +37,7 @@ public class BigtableExtendedScan extends Scan {
    */
   @Override
   public Scan setStartRow(byte[] startRow) {
-    throw new UnsupportedOperationException("Pleaes use addRange(byte[], byte[]) instead.");
+    throw new UnsupportedOperationException("Please use addRange(byte[], byte[]) instead.");
   }
 
   /**
@@ -46,7 +46,7 @@ public class BigtableExtendedScan extends Scan {
    */
   @Override
   public Scan setStopRow(byte[] stopRow) {
-    throw new UnsupportedOperationException("Pleaes use addRange(byte[], byte[]) instead.");
+    throw new UnsupportedOperationException("Please use addRange(byte[], byte[]) instead.");
   }
 
   /**
@@ -55,7 +55,7 @@ public class BigtableExtendedScan extends Scan {
    */
   @Override
   public Scan setRowPrefixFilter(byte[] rowPrefix) {
-    throw new UnsupportedOperationException("Pleaes use addRangeWithPrefix(byte[]) instead.");
+    throw new UnsupportedOperationException("Please use addRangeWithPrefix(byte[]) instead.");
   }
 
   /**

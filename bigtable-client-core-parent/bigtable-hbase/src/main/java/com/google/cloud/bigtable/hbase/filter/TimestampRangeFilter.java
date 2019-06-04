@@ -49,8 +49,8 @@ public class TimestampRangeFilter extends FilterBase implements Serializable {
     return endTimestampExclusive;
   }
 
-  @Override
   /** This is for HBase compatibility, and will not be used for Cloud Bigtable */
+  @Override
   public ReturnCode filterKeyValue(Cell cell) throws IOException {
     long timestamp = cell.getTimestamp();
     if (this.startTimestampInclusive <= timestamp && timestamp < endTimestampExclusive) {

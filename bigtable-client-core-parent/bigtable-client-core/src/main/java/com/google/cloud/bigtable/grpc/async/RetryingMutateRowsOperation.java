@@ -40,7 +40,7 @@ public class RetryingMutateRowsOperation
 
   public RetryingMutateRowsOperation(
       RetryOptions retryOptions,
-      MutateRowsRequest originalRquest,
+      MutateRowsRequest originalRequest,
       BigtableAsyncRpc<MutateRowsRequest, MutateRowsResponse> retryableRpc,
       CallOptions callOptions,
       ScheduledExecutorService retryExecutorService,
@@ -48,17 +48,17 @@ public class RetryingMutateRowsOperation
       ApiClock clock) {
     super(
         retryOptions,
-        originalRquest,
+        originalRequest,
         retryableRpc,
         callOptions,
         retryExecutorService,
         originalMetadata,
         clock);
-    requestManager = new MutateRowsRequestManager(retryOptions, originalRquest);
+    requestManager = new MutateRowsRequestManager(retryOptions, originalRequest);
     operationSpan.addAnnotation(
         "MutationCount",
         ImmutableMap.of(
-            "count", AttributeValue.longAttributeValue(originalRquest.getEntriesCount())));
+            "count", AttributeValue.longAttributeValue(originalRequest.getEntriesCount())));
   }
 
   @Override

@@ -102,7 +102,7 @@ public class SingleColumnValueFilterAdapter
    * <pre>
    *   interleave: [ // either
    *     {
-   *       // If the family/qualifer exists and matches a value
+   *       // If the family/qualifier exists and matches a value
    *       // Then return the row
    *       // Else return nothing
    *       condition: {

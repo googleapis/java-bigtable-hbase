@@ -35,7 +35,7 @@ import org.apache.hadoop.hbase.client.Table;
  * specific table.
  */
 public class BigtableTableUtils implements AutoCloseable {
-  private static final int MAX_VERSISON = 50;
+  private static final int MAX_VERSION = 50;
 
   private final Connection connection;
   private final Admin admin;
@@ -62,7 +62,7 @@ public class BigtableTableUtils implements AutoCloseable {
     HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     for (String columnFamilyName : columnFamilyNames) {
       tableDescriptor.addFamily(
-          new HColumnDescriptor(columnFamilyName).setMaxVersions(MAX_VERSISON));
+          new HColumnDescriptor(columnFamilyName).setMaxVersions(MAX_VERSION));
     }
     admin.createTable(tableDescriptor);
   }

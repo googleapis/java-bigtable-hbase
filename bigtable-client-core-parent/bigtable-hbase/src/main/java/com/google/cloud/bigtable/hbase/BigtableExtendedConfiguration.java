@@ -6,7 +6,7 @@ import org.apache.hadoop.conf.Configuration;
 /**
  * Allows users to set an explicit {@link Credentials} object.
  *
- * @see {@link BigtableConfiguration#withCredentials(Configuration, Credentials)}.
+ * @see BigtableConfiguration#withCredentials(Configuration, Credentials).
  */
 class BigtableExtendedConfiguration extends Configuration {
   private Credentials credentials;

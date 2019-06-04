@@ -290,7 +290,7 @@ public class ColumnDescriptorAdapter {
    * instance of {@link com.google.bigtable.admin.v2.ColumnFamily.Builder}.
    *
    * <p>NOTE: This method does not set the name of the ColumnFamily.Builder. The assumption is that
-   * the CreateTableRequest or CreateColumFamilyRequest takes care of the naming. As of now
+   * the CreateTableRequest or CreateColumnFamilyRequest takes care of the naming. As of now
    * (3/11/2015), the server insists on having a blank name.
    *
    * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.

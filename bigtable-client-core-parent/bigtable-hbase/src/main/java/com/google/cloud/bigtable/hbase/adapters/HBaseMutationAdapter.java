@@ -75,8 +75,8 @@ public class HBaseMutationAdapter extends MutationAdapter<Mutation> {
     adapterMap.put(Append.class, appendAdapter);
   }
 
-  @Override
   /** {@inheritDoc} */
+  @Override
   public void adapt(
       Mutation mutation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutationModel) {
     MutationAdapter<Mutation> adapter = adapterMap.get(mutation.getClass());

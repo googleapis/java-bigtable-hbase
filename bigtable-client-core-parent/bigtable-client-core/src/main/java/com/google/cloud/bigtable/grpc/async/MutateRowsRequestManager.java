@@ -79,8 +79,8 @@ public class MutateRowsRequestManager {
     this.retryOptions = retryOptions;
     results = new Status[originalRequest.getEntriesCount()];
 
-    // This map should is a map between currentRequest and originalRquest. For now, currentRequest
-    // == originalRquest, but they could diverge if a retry occurs.
+    // This map should is a map between currentRequest and originalRequest. For now, currentRequest
+    // == originalRequest, but they could diverge if a retry occurs.
     mapToOriginalIndex = new int[originalRequest.getEntriesCount()];
     for (int i = 0; i < mapToOriginalIndex.length; i++) {
       mapToOriginalIndex[i] = i;
@@ -162,16 +162,16 @@ public class MutateRowsRequestManager {
    * Creates a new {@link MutateRowsRequest} that's a subset of the original request that
    * corresponds to a set of indices.
    *
-   * @param indiciesToRetry
+   * @param indicesToRetry
    * @return the new {@link MutateRowsRequest}.
    */
-  private MutateRowsRequest createRetryRequest(List<Integer> indiciesToRetry) {
+  private MutateRowsRequest createRetryRequest(List<Integer> indicesToRetry) {
     MutateRowsRequest.Builder updatedRequest =
         MutateRowsRequest.newBuilder().setTableName(originalRequest.getTableName());
-    mapToOriginalIndex = new int[indiciesToRetry.size()];
-    for (int i = 0; i < indiciesToRetry.size(); i++) {
-      mapToOriginalIndex[i] = indiciesToRetry.get(i);
-      updatedRequest.addEntries(originalRequest.getEntries(indiciesToRetry.get(i)));
+    mapToOriginalIndex = new int[indicesToRetry.size()];
+    for (int i = 0; i < indicesToRetry.size(); i++) {
+      mapToOriginalIndex[i] = indicesToRetry.get(i);
+      updatedRequest.addEntries(originalRequest.getEntries(indicesToRetry.get(i)));
     }
     return updatedRequest.build();
   }

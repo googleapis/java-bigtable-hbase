@@ -63,8 +63,8 @@ public class PutAdapter extends MutationAdapter<Put> {
     return new PutAdapter(maxKeyValueSize, false);
   }
 
-  @Override
   /** {@inheritDoc} */
+  @Override
   public void adapt(
       Put operation, com.google.cloud.bigtable.data.v2.models.MutationApi<?> mutation) {
     if (operation.isEmpty()) {
