@@ -77,9 +77,9 @@ public abstract class AbstractBigtableConnection
     Runtime.getRuntime().addShutdownHook(new Thread(shutDownRunnable));
 
     // Force the loading of HConstants.class, which shares a bi-directional reference with KeyValue.
-    // This bi-drectional relationship causes problems when KeyValue and HConstants are class loaded
-    // in different threads. This forces a clean class loading of both HConstants and KeyValue along
-    // with a whole bunch of other classes.
+    // This bi-directional relationship causes problems when KeyValue and HConstants are class
+    // loaded in different threads. This forces a clean class loading of both HConstants and
+    // KeyValue along with a whole bunch of other classes.
     Adapters.class.getName();
   }
 

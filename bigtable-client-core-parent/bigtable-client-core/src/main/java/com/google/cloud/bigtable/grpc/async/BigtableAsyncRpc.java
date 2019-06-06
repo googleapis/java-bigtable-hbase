@@ -39,7 +39,7 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
     private final Timer rpcTimer;
     private final Meter retryMeter;
     private final Meter failureMeter;
-    private final Meter retriesExhastedMeter;
+    private final Meter retriesExhaustedMeter;
 
     public static RpcMetrics createRpcMetrics(MethodDescriptor<?, ?> descriptor) {
       String prefix = "grpc.method." + descriptor.getFullMethodName().split("/")[1];
@@ -56,12 +56,12 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
         Timer rpcTimer,
         Meter retryCounter,
         Meter failureCounter,
-        Meter retriesExhastedCounter) {
+        Meter retriesExhaustedCounter) {
       this.operationTimer = operationTimer;
       this.rpcTimer = rpcTimer;
       this.retryMeter = retryCounter;
       this.failureMeter = failureCounter;
-      this.retriesExhastedMeter = retriesExhastedCounter;
+      this.retriesExhaustedMeter = retriesExhaustedCounter;
     }
 
     public Timer.Context timeOperation() {
@@ -81,7 +81,7 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
     }
 
     public void markRetriesExhasted() {
-      retriesExhastedMeter.mark();
+      retriesExhaustedMeter.mark();
     }
   }
 

@@ -232,9 +232,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return listTables(regex);
   }
 
-  /** {@inheritDoc} */
-  @Override
   /** Lists all table names for the cluster provided in the configuration. */
+  @Override
   public TableName[] listTableNames() throws IOException {
     // tablesList contains list of tableId.
     List<String> tablesList = tableAdminClientWrapper.listTables();
@@ -576,11 +575,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
-  public void modifyTable(TableName tableName, HTableDescriptor newDecriptor) throws IOException {
+  public void modifyTable(TableName tableName, HTableDescriptor newDescriptor) throws IOException {
     if (isTableAvailable(tableName)) {
       try {
         ModifyColumnFamiliesRequest request =
-            buildModifications(newDecriptor, getTableDescriptor(tableName)).build();
+            buildModifications(newDescriptor, getTableDescriptor(tableName)).build();
         tableAdminClientWrapper.modifyFamilies(request);
       } catch (Throwable throwable) {
         throw new IOException(

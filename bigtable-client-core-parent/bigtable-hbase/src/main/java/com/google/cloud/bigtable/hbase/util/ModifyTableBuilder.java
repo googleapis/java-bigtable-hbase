@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.util.Bytes;
 
-/** Utilitiy to create {@link ModifyColumnFamiliesRequest} from HBase {@link HColumnDescriptor}s. */
+/** Utility to create {@link ModifyColumnFamiliesRequest} from HBase {@link HColumnDescriptor}s. */
 @InternalApi
 public class ModifyTableBuilder {
 

@@ -36,7 +36,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 
 /**
- * AbstractBigtbleRegionLocator class.
+ * AbstractBigtableRegionLocator class.
  *
  * @author rupeshit
  */

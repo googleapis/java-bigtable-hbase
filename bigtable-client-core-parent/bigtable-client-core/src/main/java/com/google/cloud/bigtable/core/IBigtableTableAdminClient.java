@@ -153,7 +153,7 @@ public interface IBigtableTableAdminClient {
    * Gets metadata information about the specified snapshot.
    *
    * @param request a {@link GetSnapshotRequest} object.
-   * @return The {@link Snapshot} definied by the request.
+   * @return The {@link Snapshot} defined by the request.
    */
   ApiFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request);
 

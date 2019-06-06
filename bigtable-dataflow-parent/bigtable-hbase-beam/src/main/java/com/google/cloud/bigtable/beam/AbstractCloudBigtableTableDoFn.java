@@ -41,7 +41,7 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
 
     if (log.isDebugEnabled()) {
       log.error(
-          "For context {}: exception occured during a bulk operation: {}",
+          "For context {}: exception occurred during a bulk operation: {}",
           context,
           exception.getExhaustiveDescription());
     }
@@ -53,7 +53,7 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
     }
     log.error(
         String.format(
-            "For context %s: %d exceptions occured during a bulk operation:\n\t%s.\n"
+            "For context %s: %d exceptions occurred during a bulk operation:\n\t%s.\n"
                 + "The stack trace is a sample exception, of the first exception.\n"
                 + "Breakdown of exceptions {type - count}: %s",
             context,

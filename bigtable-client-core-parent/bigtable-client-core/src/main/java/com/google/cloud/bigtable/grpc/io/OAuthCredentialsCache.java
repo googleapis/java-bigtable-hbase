@@ -253,10 +253,10 @@ public class OAuthCredentialsCache {
       span.setStatus(StatusConverter.fromGrpcStatus(status));
       return new HeaderCacheElement(status);
     } catch (Exception e) {
-      LOG.warn("Unexpected execption while trying to refresh google credentials.", e);
+      LOG.warn("Unexpected exception while trying to refresh google credentials.", e);
       Status status =
           Status.UNAUTHENTICATED
-              .withDescription("Unexpected execption during Authentication.")
+              .withDescription("Unexpected exception during Authentication.")
               .withCause(e);
       span.setStatus(StatusConverter.fromGrpcStatus(status));
       return new HeaderCacheElement(status);

@@ -434,7 +434,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   /** Cancels the RPC. */
   public void cancel() {
-    cancel("User requested cancelation.");
+    cancel("User requested cancellation.");
   }
 
   public ResultT getBlockingResult() {

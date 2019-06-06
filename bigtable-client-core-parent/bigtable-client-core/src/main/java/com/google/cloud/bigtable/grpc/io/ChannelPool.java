@@ -239,11 +239,11 @@ public class ChannelPool extends ManagedChannel {
    */
   public ChannelPool(ChannelFactory factory, int count) throws IOException {
     Preconditions.checkArgument(count > 0, "Channel count has to be a positive number.");
-    ImmutableList.Builder<ManagedChannel> channeListBuilder = ImmutableList.builder();
+    ImmutableList.Builder<ManagedChannel> channelListBuilder = ImmutableList.builder();
     for (int i = 0; i < count; i++) {
-      channeListBuilder.add(new InstrumentedChannel(factory.create()));
+      channelListBuilder.add(new InstrumentedChannel(factory.create()));
     }
-    this.channels = channeListBuilder.build();
+    this.channels = channelListBuilder.build();
     authority = channels.get(0).authority();
   }
 

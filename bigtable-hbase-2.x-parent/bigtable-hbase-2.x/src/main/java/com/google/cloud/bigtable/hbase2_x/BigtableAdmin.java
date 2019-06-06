@@ -223,7 +223,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     asyncAdmin.snapshot(snapshot);
     LOG.warn(
         "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-            + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
+            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
   }
 
   @Override

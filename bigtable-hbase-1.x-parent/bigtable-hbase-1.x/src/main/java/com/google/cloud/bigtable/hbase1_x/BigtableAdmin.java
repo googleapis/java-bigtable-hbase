@@ -64,7 +64,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     snapshotTable(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
     LOG.warn(
         "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-            + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
+            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
     return MasterProtos.SnapshotResponse.newBuilder()
         .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5))
         .build();
