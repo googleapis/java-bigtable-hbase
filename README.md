@@ -103,7 +103,6 @@ infrequent product and client library announcements.
    mvn clean verify -PhbaseLocalMiniClusterTestH2
    ```
 
-
    You can run those commands at the top of the project, or you can run them at the appropriate integration-tests project.  
    
    Developer's NOTE: You can build the project faster by running the following command, and then run the integration test command from the appropriate integration test directory:
@@ -114,6 +113,31 @@ infrequent product and client library announcements.
    -am clean install
    ```
 3. Run `mvn -X com.coveo:fmt-maven-plugin:format` to check and enforce consistent java formatting to all of your code changes.
+
+4. You can use [google-cloud-bigtable-emulator][google-cloud-bigtable-emulator] for local testing. The minimum configuration requires to connect the emulator with `bigtable-core-client` OR `hbase-client`:
+    ```java
+    @Rule
+    public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+    private BigtableSession session;
+    private Connection connection;
+    
+    @Setup
+    public void setup() {
+      // for bigtable-core
+      BigtableOptions opts = new BigtableOptions.Builder()
+            .enableEmulator("localhost:" + bigtableEmulator.getPort())
+            .setUserAgent("fake")
+            .setProjectId("fakeproject")
+            .setInstanceId("fakeinstance")
+            .build();
+      this.session = new BigtableSession(opts);
+    
+      // for hbase
+      Configuration config = BigtableConfiguration.configure("fakeproject", "fakeinstance");
+      config.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
+      this.connection = BigtableConfiguration.connect(config);
+    }
+    ```
 
 NOTE: This project uses extensive shading which IDEs have trouble with. To overcome these issues,
 disable the `with-shaded` profile in your IDE to force it to resolve the dependencies from your local
@@ -161,3 +185,4 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 [maven-examples-repo]: https://github.com/GoogleCloudPlatform/cloud-bigtable-examples
 [google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
+[google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/master/google-cloud-testing/google-cloud-bigtable-emulator

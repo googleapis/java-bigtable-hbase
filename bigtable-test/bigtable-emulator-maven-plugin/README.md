@@ -9,7 +9,7 @@ It provides 3 maven goals:
 * stop: stops the emulator
 * run: like start, but runs the emulator in foreground
 
-_Note: You may check out [Google-cloud-Bigtable-emulator](#google-cloud-bigtable-emulator)._
+_Note: Please check out [Google-cloud-bigtable-emulator](https://github.com/googleapis/google-cloud-java/tree/master/google-cloud-testing/google-cloud-bigtable-emulator). It provides better set of features over `bigtable-emulator-maven-plugin` like JUnit `@Rule` support, Bundled binary, Programmatic control etc._ 
 
 Usage:
 
@@ -68,37 +68,3 @@ Usage:
    ```
 - If `maven.test.skip` is set to true the emulator will not start. The emulator can also be controlled directly 
   by setting the boolean property `bigtable.emulator.skip`.
-
-
-## [Google-cloud-Bigtable-emulator](https://github.com/googleapis/google-cloud-java/tree/master/google-cloud-testing/google-cloud-bigtable-emulator)
-
-  This is the latest bigtable emulator. It includes below features over `bigtable-emulator-maven-plugin`:
-  - Supports JUnit Rules
-  - Allows for direct programmatic control
-  - Bundles the emulator binary
-  - You can use a direct emulator wrapper as (i.e. [Emulator.java](https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-testing/google-cloud-bigtable-emulator/src/main/java/com/google/cloud/bigtable/emulator/v2/Emulator.java))
-
-  Example with `Cloud-Bigtable-Client`:
-  ```java
-  @Rule
-  public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
-  private BigtableSession session;
-  private Connection connection;
-
-  @Setup
-  public void setup() {
-    // for bigtable-core
-    BigtableOptions opts = new BigtableOptions.Builder()
-          .enableEmulator("localhost:" + bigtableEmulator.getPort())
-          .setUserAgent("fake")
-          .setProjectId("fakeproject")
-          .setInstanceId("fakeinstance")
-          .build();
-    this.session = new BigtableSession(opts);
-
-    // for hbase
-    Configuration config = BigtableConfiguration.configure("fakeproject", "fakeinstance");
-    config.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
-    this.connection = BigtableConfiguration.connect(config);
-  }
-  ```
