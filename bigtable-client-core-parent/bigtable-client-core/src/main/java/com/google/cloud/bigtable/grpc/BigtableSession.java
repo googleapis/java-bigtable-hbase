@@ -639,8 +639,8 @@ public class BigtableSession implements Closeable {
       String host, BigtableOptions options, ClientInterceptor... interceptors) throws SSLException {
 
     LOG.info("Creating new channel for %s", host);
-    if (LOG.getLog().isDebugEnabled()) {
-      LOG.debug(Throwables.getStackTraceAsString(new Throwable()));
+    if (LOG.getLog().isTraceEnabled()) {
+      LOG.trace(Throwables.getStackTraceAsString(new Throwable()));
     }
 
     // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
