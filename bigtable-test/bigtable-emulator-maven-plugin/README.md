@@ -9,6 +9,7 @@ It provides 3 maven goals:
 * stop: stops the emulator
 * run: like start, but runs the emulator in foreground
 
+_Note: Please check out [Google-cloud-bigtable-emulator](https://github.com/googleapis/google-cloud-java/tree/master/google-cloud-testing/google-cloud-bigtable-emulator). It provides better set of features over `bigtable-emulator-maven-plugin` like JUnit `@Rule` support, Bundled binary, Programmatic control etc._ 
 
 Usage:
 
@@ -63,7 +64,7 @@ Usage:
   ```
   Or, for hbase:
   ```java
-      Connection connection = BigtableConfiguration.connect("fakeproject", "fakeinstace");
+      Connection connection = BigtableConfiguration.connect("fakeproject", "fakeinstance");
    ```
 - If `maven.test.skip` is set to true the emulator will not start. The emulator can also be controlled directly 
   by setting the boolean property `bigtable.emulator.skip`.
