@@ -19,6 +19,7 @@ package com.google.cloud.bigtable.beam;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.beam.CloudBigtableConfiguration.Builder;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.util.ArrayList;
@@ -173,6 +174,7 @@ public class CloudBigtableConfigurationTest {
     expected.add("null:google.bigtable.project.id=my_project");
     expected.add("null:google.bigtable.instance.id=instance");
     expected.add("null:inaccessible=Unavailable during pipeline construction");
+    expected.add("null:bigtableClientVersion=" + BigtableVersionInfo.CLIENT_VERSION);
 
     Assert.assertThat(builder.itemStrings, containsInAnyOrder(expected.toArray()));
   }
