@@ -81,7 +81,7 @@ public class TestBigtableTableAdminGrpcClient {
   }
 
   protected BigtableTableAdminGrpcClient createClient() {
-    BigtableOptions options =  BigtableOptions.getDefaultOptions();
+    BigtableOptions options = BigtableOptions.getDefaultOptions();
     return new BigtableTableAdminGrpcClient(mockChannel, null, options);
   }
 
