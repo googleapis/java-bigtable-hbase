@@ -66,9 +66,8 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
   public Table createTable(CreateTableRequest request) {
     com.google.bigtable.admin.v2.CreateTableRequest requestProto =
         request.toProto(instanceName.getProjectId(), instanceName.getInstanceId());
-    delegate.createTable(requestProto);
-
-    return getTable(requestProto.getTableId());
+    com.google.bigtable.admin.v2.Table proto = delegate.createTable(requestProto);
+    return Table.fromProto(proto);
   }
 
   /** {@inheritDoc} */

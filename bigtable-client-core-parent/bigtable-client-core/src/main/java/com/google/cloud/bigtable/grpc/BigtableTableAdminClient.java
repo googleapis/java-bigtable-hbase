@@ -49,7 +49,7 @@ public interface BigtableTableAdminClient {
    *
    * @param request a {@link CreateTableRequest} object.
    */
-  void createTable(CreateTableRequest request);
+  Table createTable(CreateTableRequest request);
 
   /**
    * Creates a new table asynchronously. The table can be created with a full set of initial column

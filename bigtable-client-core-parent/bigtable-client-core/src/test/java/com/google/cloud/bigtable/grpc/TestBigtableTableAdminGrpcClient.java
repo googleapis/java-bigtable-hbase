@@ -22,7 +22,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.api.client.util.NanoClock;
 import com.google.bigtable.admin.v2.CheckConsistencyRequest;
 import com.google.bigtable.admin.v2.CheckConsistencyResponse;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
@@ -71,8 +70,6 @@ public class TestBigtableTableAdminGrpcClient {
 
   @Mock ClientCall mockClientCall;
 
-  @Mock NanoClock nanoClock;
-
   BigtableTableAdminGrpcClient defaultClient;
 
   @Before
@@ -80,10 +77,10 @@ public class TestBigtableTableAdminGrpcClient {
     MockitoAnnotations.initMocks(this);
     when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(mockClientCall);
-    defaultClient = createClient(false);
+    defaultClient = createClient();
   }
 
-  protected BigtableTableAdminGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
+  protected BigtableTableAdminGrpcClient createClient() {
     BigtableOptions options = BigtableOptions.getDefaultOptions();
     return new BigtableTableAdminGrpcClient(mockChannel, null, options);
   }
@@ -109,7 +106,7 @@ public class TestBigtableTableAdminGrpcClient {
   public void testCreateTable() {
     CreateTableRequest request =
         CreateTableRequest.newBuilder().setParent(INSTANCE_NAME.getInstanceName()).build();
-    complete();
+    setResponse(Table.getDefaultInstance());
     defaultClient.createTable(request);
     verifyRequestCalled(request);
   }
@@ -194,17 +191,7 @@ public class TestBigtableTableAdminGrpcClient {
   }
 
   private void complete() {
-    Answer<Void> answer =
-        new Answer<Void>() {
-          @Override
-          public Void answer(final InvocationOnMock invocation) throws Throwable {
-            Listener listener = invocation.getArgument(0, Listener.class);
-            listener.onMessage("");
-            listener.onClose(Status.OK, null);
-            return null;
-          }
-        };
-    doAnswer(answer).when(mockClientCall).start(any(Listener.class), any(Metadata.class));
+    setResponse("");
   }
 
   private void setResponse(final Object response) {

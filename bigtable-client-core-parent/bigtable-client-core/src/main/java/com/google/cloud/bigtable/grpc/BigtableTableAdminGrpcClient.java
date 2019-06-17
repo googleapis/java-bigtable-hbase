@@ -182,8 +182,8 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   /** {@inheritDoc} */
   @Override
-  public void createTable(CreateTableRequest request) {
-    createUnaryListener(request, createTableRpc, request.getParent()).getBlockingResult();
+  public Table createTable(CreateTableRequest request) {
+    return createUnaryListener(request, createTableRpc, request.getParent()).getBlockingResult();
   }
 
   /**
