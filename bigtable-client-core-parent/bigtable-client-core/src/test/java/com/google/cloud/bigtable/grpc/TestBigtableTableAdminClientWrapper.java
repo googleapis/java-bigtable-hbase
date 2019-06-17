@@ -89,15 +89,13 @@ public class TestBigtableTableAdminClientWrapper {
   @Test
   public void testCreateTable() {
     CreateTableRequest request = CreateTableRequest.of(TABLE_ID);
-    GetTableRequest getTableRequest = GetTableRequest.newBuilder().setName(TABLE_NAME).build();
 
-    doNothing().when(mockAdminClient).createTable(request.toProto(PROJECT_ID, INSTANCE_ID));
-    when(mockAdminClient.getTable(getTableRequest)).thenReturn(createTableData());
+    when(mockAdminClient.createTable(request.toProto(PROJECT_ID, INSTANCE_ID)))
+        .thenReturn(createTableData());
     Table response = clientWrapper.createTable(request);
 
     assertEquals(Table.fromProto(createTableData()), response);
     verify(mockAdminClient).createTable(request.toProto(PROJECT_ID, INSTANCE_ID));
-    verify(mockAdminClient).getTable(getTableRequest);
   }
 
   @Test
