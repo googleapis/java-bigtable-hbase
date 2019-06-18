@@ -222,17 +222,26 @@ limitations under the License.
                         </execution>
                     </executions>
                 </plugin>
-                <plugin>
-                    <groupId>com.coveo</groupId>
-                    <artifactId>fmt-maven-plugin</artifactId>
-                    <version>2.9</version>
-                    <configuration>
-                        <style>google</style>
-                        <verbose>true</verbose>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.coveo</groupId>
+                <artifactId>fmt-maven-plugin</artifactId>
+                <version>2.9</version>
+                <executions>
+                    <execution>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <style>google</style>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
     <profiles>
         <profile>
