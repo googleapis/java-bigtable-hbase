@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.beam;
 
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -320,6 +321,9 @@ public class CloudBigtableConfiguration implements Serializable {
                 "instanceId",
                 getDisplayValue(configuration.get(BigtableOptionsFactory.INSTANCE_ID_KEY)))
             .withLabel("Instance ID"));
+    builder.add(
+        DisplayData.item("bigtableClientVersion", BigtableVersionInfo.CLIENT_VERSION)
+            .withLabel("Bigtable Client Version"));
     Map<String, ValueProvider<String>> hashMap =
         new HashMap<String, ValueProvider<String>>(configuration);
     hashMap.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
