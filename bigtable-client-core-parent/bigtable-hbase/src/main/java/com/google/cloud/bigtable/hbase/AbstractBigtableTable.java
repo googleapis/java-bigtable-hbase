@@ -338,8 +338,10 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
-    RowMutation rowMutation = hbaseAdapter.adapt(put);
-    mutateRow(put, rowMutation, "put");
+    try (Timer.Context ignored = metrics.putTimer.time()) {
+      RowMutation rowMutation = hbaseAdapter.adapt(put);
+      mutateRow(put, rowMutation, "put");
+    }
   }
 
   /** {@inheritDoc} */
