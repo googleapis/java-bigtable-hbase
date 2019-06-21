@@ -31,7 +31,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
  */
 public class BigtableResultScannerAdapter<T> {
 
-  final ResponseAdapter<T, Result> rowAdapter;
+  private final ResponseAdapter<T, Result> rowAdapter;
 
   /**
    * Constructor for BigtableResultScannerAdapter.
