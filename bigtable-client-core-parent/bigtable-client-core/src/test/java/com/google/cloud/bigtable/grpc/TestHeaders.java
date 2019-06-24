@@ -186,18 +186,20 @@ public class TestHeaders {
     final String endpoint = "localhost" + ":" + availablePort;
     HeaderProvider headers = FixedHeaderProvider.create(USER_AGENT_KEY.name(), TEST_USER_AGENT);
 
-    builder.setTransportChannelProvider(
-        InstantiatingGrpcChannelProvider.newBuilder()
-            .setHeaderProvider(headers)
-            .setEndpoint(endpoint)
-            .setChannelConfigurator(
-                new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-                  @Override
-                  public ManagedChannelBuilder apply(ManagedChannelBuilder input) {
-                    return ((NettyChannelBuilder) input).sslContext(sslContext);
-                  }
-                })
-            .build());
+    builder
+        .stubSettings()
+        .setTransportChannelProvider(
+            InstantiatingGrpcChannelProvider.newBuilder()
+                .setHeaderProvider(headers)
+                .setEndpoint(endpoint)
+                .setChannelConfigurator(
+                    new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+                      @Override
+                      public ManagedChannelBuilder apply(ManagedChannelBuilder input) {
+                        return ((NettyChannelBuilder) input).sslContext(sslContext);
+                      }
+                    })
+                .build());
 
     // Setting this to null, because as of 3/4/2019 the header doesn't get passed through.
     xGoogApiPattern = null;

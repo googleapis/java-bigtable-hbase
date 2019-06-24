@@ -169,7 +169,7 @@ limitations under the License.
             <exclusions>
                 <exclusion>
                     <groupId>io.grpc</groupId>
-                    <artifactId>*</artifactId>
+                    <artifactId>grpc-grpclb</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
