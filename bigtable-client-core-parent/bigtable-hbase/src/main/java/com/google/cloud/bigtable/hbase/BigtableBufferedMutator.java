@@ -199,7 +199,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private class ExceptionCallback implements ApiFutureCallback {
     private final Row mutation;
 
-    public ExceptionCallback(Row mutation) {
+    ExceptionCallback(Row mutation) {
       this.mutation = mutation;
     }
 

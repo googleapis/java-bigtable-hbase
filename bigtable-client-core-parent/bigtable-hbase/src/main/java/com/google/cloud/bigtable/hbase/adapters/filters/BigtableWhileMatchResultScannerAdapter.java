@@ -37,7 +37,7 @@ public class BigtableWhileMatchResultScannerAdapter {
   private static final String WHILE_MATCH_FILTER_IN_LABEL_SUFFIX = "-in";
   private static final String WHILE_MATCH_FILTER_OUT_LABEL_SUFFIX = "-out";
 
-  final ResponseAdapter<FlatRow, Result> rowAdapter;
+  private final ResponseAdapter<FlatRow, Result> rowAdapter;
 
   /**
    * Constructor for BigtableWhileMatchResultScannerAdapter.
