@@ -166,12 +166,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.api</groupId>
             <artifactId>gax-grpc</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.grpc</groupId>
-                    <artifactId>grpc-grpclb</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!-- Metrics -->
