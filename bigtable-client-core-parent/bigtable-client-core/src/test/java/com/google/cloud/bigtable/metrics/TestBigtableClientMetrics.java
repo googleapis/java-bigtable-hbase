@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.metrics;
 
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;

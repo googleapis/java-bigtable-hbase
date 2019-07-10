@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.grpc;
 import static com.google.api.core.ApiFutures.immediateFuture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;

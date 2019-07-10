@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -51,7 +51,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
@@ -142,8 +142,9 @@ public class TestBigtableTableAdminGrpcClient {
     defaultClient.waitForReplication(INSTANCE_NAME.toTableName("TABLE_NAME"), 6000);
     verify(mockClientCall, times(2)).start(any(Listener.class), any(Metadata.class));
     verify(mockClientCall, times(1))
-        .sendMessage(Matchers.isA(GenerateConsistencyTokenRequest.class));
-    verify(mockClientCall, times(1)).sendMessage(Matchers.isA(CheckConsistencyRequest.class));
+        .sendMessage(ArgumentMatchers.isA(GenerateConsistencyTokenRequest.class));
+    verify(mockClientCall, times(1))
+        .sendMessage(ArgumentMatchers.isA(CheckConsistencyRequest.class));
     verify(mockClientCall, times(2)).halfClose();
   }
 

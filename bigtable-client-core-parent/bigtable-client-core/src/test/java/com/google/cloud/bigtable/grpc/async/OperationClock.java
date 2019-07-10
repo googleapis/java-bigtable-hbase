@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.util.NanoClock;
