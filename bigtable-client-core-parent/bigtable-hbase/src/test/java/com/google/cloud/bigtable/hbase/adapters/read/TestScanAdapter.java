@@ -16,8 +16,8 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
@@ -332,5 +332,40 @@ public class TestScanAdapter {
     RowSet actual = query.toProto(requestContext).getRows();
     RowSet expected = RowSet.newBuilder().addRowKeys(ByteString.copyFrom(key)).build();
     Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testColFamilyTimeRange() throws IOException {
+    String colFamily1 = "cf1", colFamily2 = "cf2";
+    long rangeStart = 10000L, rangeEnd = 99999L, secRangeStart = 100L, secRangeEnd = 999L;
+    Scan scan =
+        new Scan()
+            .setColumnFamilyTimeRange(colFamily1.getBytes(), rangeStart, rangeEnd)
+            .setColumnFamilyTimeRange(colFamily2.getBytes(), secRangeStart, secRangeEnd);
+    scanAdapter.adapt(scan, throwingReadHooks, query);
+    Filters.Filter expected =
+        FILTERS
+            .chain()
+            .filter(FILTERS.limit().cellsPerColumn(1))
+            .filter(
+                FILTERS
+                    .interleave()
+                    .filter(
+                        FILTERS
+                            .chain()
+                            .filter(FILTERS.family().regex(colFamily1))
+                            .filter(
+                                FILTERS.timestamp().range().of(rangeStart * 1000, rangeEnd * 1000)))
+                    .filter(
+                        FILTERS
+                            .chain()
+                            .filter(FILTERS.family().regex(colFamily2))
+                            .filter(
+                                FILTERS
+                                    .timestamp()
+                                    .range()
+                                    .of(secRangeStart * 1000, secRangeEnd * 1000))));
+
+    Assert.assertEquals(expected.toProto(), query.toProto(requestContext).getFilter());
   }
 }

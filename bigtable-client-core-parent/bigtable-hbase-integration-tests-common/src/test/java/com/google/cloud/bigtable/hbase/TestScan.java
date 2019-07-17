@@ -16,13 +16,17 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
+import static org.junit.Assert.assertTrue;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -303,6 +307,84 @@ public class TestScan extends AbstractTest {
               ByteString.copyFrom(
                       cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
                   .toByteArray()));
+    }
+  }
+
+  @Test
+  public void testColumnFamilyTimeRange() throws IOException {
+    TableName tableName = sharedTestEnv.newTestTableName();
+    String prefix = "scan_row_";
+    int rowsToWrite = 3;
+    // Initialize variables
+    sharedTestEnv.createTable(tableName);
+    Table table = getConnection().getTable(tableName);
+
+    byte[][] rowKeys = new byte[rowsToWrite][];
+    rowKeys[0] = dataHelper.randomData(prefix);
+    for (int i = 1; i < rowsToWrite; i++) {
+      rowKeys[i] = rowFollowingSameLength(rowKeys[i - 1]);
+    }
+
+    byte[][] columnFamilies = {COLUMN_FAMILY, COLUMN_FAMILY2};
+    String[][] dateRange = {
+      {"1992-04-30", "2000-01-01", "2000-12-31", "2005-06-30", "2009-12-01", "2019-02-01"},
+      {"1989-01-30", "1990-01-01", "1992-04-30", "1993-08-30", "2010-03-10", "2011-10-15"},
+    };
+
+    int numValuesPerRow = 5;
+    byte[][] quals = dataHelper.randomData("qual-", numValuesPerRow);
+    byte[][] values = dataHelper.randomData("value-", numValuesPerRow);
+
+    ArrayList<Put> puts = new ArrayList<>(rowsToWrite);
+
+    // Insert some columns
+    for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
+      Put put = new Put(rowKeys[rowIndex]);
+      for (int colFamily = 0; colFamily < columnFamilies.length; colFamily++) {
+        for (int qualifierIndex = 0; qualifierIndex < numValuesPerRow; qualifierIndex++) {
+          long time = Date.valueOf(dateRange[colFamily][qualifierIndex]).getTime();
+          put.addColumn(
+              columnFamilies[colFamily], quals[qualifierIndex], time, values[qualifierIndex]);
+        }
+      }
+      puts.add(put);
+    }
+    table.put(puts);
+
+    long rangeStart = Date.valueOf(dateRange[0][1]).getTime();
+    long rangeEnd = Date.valueOf(dateRange[0][5]).getTime();
+    long secRangeStart = Date.valueOf(dateRange[1][0]).getTime();
+    long secRangeEnd = Date.valueOf("2000-01-01").getTime();
+
+    Scan scan =
+        new Scan()
+            .setColumnFamilyTimeRange(COLUMN_FAMILY, rangeStart, rangeEnd)
+            .setColumnFamilyTimeRange(COLUMN_FAMILY2, secRangeStart, secRangeEnd);
+
+    try (ResultScanner resultScanner = table.getScanner(scan)) {
+      for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
+        Result result = resultScanner.next();
+        Assert.assertNotNull(String.format("Didn't expect row %s to be null", rowIndex), result);
+
+        Cell[] cells = result.rawCells();
+        Assert.assertEquals("Total matched timestamp should be 10", 8, cells.length);
+        for (Cell cell : result.rawCells()) {
+          if (Arrays.equals(cell.getFamilyArray(), columnFamilies[0])) {
+
+            long timestamp = cell.getTimestamp();
+            assertTrue("Timestamp is too low", timestamp >= rangeStart);
+            assertTrue("Timestamp is too high", timestamp < rangeEnd);
+          } else {
+            long timestamp = cell.getTimestamp();
+            assertTrue("Timestamp is too low", timestamp >= secRangeStart);
+            assertTrue("Timestamp is too high", timestamp < secRangeEnd);
+          }
+        }
+      }
+
+      // Verify that there are no more rows:
+      Assert.assertNull(
+          "There should not be any more results in the scanner.", resultScanner.next());
     }
   }
 }
