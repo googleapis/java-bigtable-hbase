@@ -351,6 +351,29 @@ public class TestScan extends AbstractTest {
     }
     table.put(puts);
 
+    // Verifies only single date comes, as end range is non-inclusive.
+    Scan singleCFScan =
+        new Scan()
+            .setColumnFamilyTimeRange(
+                COLUMN_FAMILY,
+                Date.valueOf(dateRange[0][1]).getTime(),
+                Date.valueOf(dateRange[0][2]).getTime());
+
+    try (ResultScanner resultScanner = table.getScanner(singleCFScan)) {
+      Result[] results = resultScanner.next(rowsToWrite);
+      for (Result result : results) {
+        Cell[] cells = result.rawCells();
+
+        // Matching only single values as output would be sorted as per random qualifier
+        Assert.assertEquals("Total matched timestamp per row should be 3", 1, cells.length);
+        Assert.assertEquals(Date.valueOf(dateRange[0][1]).getTime(), cells[0].getTimestamp());
+      }
+
+      // Verify that there are no more rows:
+      Assert.assertNull(
+          "There should not be any more results in the scanner.", resultScanner.next());
+    }
+
     long rangeStart = Date.valueOf(dateRange[0][1]).getTime();
     long rangeEnd = Date.valueOf(dateRange[0][5]).getTime();
     long secRangeStart = Date.valueOf(dateRange[1][0]).getTime();
@@ -382,7 +405,6 @@ public class TestScan extends AbstractTest {
         }
       }
 
-      // Verify that there are no more rows:
       Assert.assertNull(
           "There should not be any more results in the scanner.", resultScanner.next());
     }
