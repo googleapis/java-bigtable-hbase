@@ -88,6 +88,8 @@ public class CredentialFactory {
    * Look up a Credentials object based on a configuration of credentials described in a {@link
    * com.google.cloud.bigtable.config.CredentialOptions}.
    *
+   * <p>Note: Does not create JWT based credentials in case of batch-bigtable.
+   *
    * @param options a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
    * @return a {@link com.google.auth.Credentials} object.
    * @throws java.io.IOException if any.
@@ -97,11 +99,11 @@ public class CredentialFactory {
       throws IOException, GeneralSecurityException {
     switch (options.getCredentialType()) {
       case DefaultCredentials:
-        return getApplicationDefaultCredential();
+        return getApplicationDefaultCredential(options.isBatchMode());
       case P12:
         P12CredentialOptions p12Options = (P12CredentialOptions) options;
         return getCredentialFromPrivateKeyServiceAccount(
-            p12Options.getServiceAccount(), p12Options.getKeyFile());
+            p12Options.getServiceAccount(), p12Options.getKeyFile(), p12Options.isBatchMode());
       case SuppliedCredentials:
         return ((UserSuppliedCredentialOptions) options).getCredential();
       case SuppliedJson:
@@ -109,7 +111,8 @@ public class CredentialFactory {
         synchronized (jsonCredentialsOptions) {
           if (jsonCredentialsOptions.getCachedCredentials() == null) {
             jsonCredentialsOptions.setCachedCredentails(
-                getInputStreamCredential(jsonCredentialsOptions.getInputStream()));
+                getInputStreamCredential(
+                    jsonCredentialsOptions.getInputStream(), jsonCredentialsOptions.isBatchMode()));
           }
           return jsonCredentialsOptions.getCachedCredentials();
         }
@@ -128,12 +131,13 @@ public class CredentialFactory {
    *
    * @param serviceAccountEmail Email address of the service account associated with the keyfile.
    * @param privateKeyFile Full local path to private keyfile.
+   * @param isBatchMode a boolean to identify batch mode.
    * @return a {@link com.google.auth.Credentials} object.
    * @throws java.io.IOException if any.
    * @throws java.security.GeneralSecurityException if any.
    */
   public static Credentials getCredentialFromPrivateKeyServiceAccount(
-      String serviceAccountEmail, String privateKeyFile)
+      String serviceAccountEmail, String privateKeyFile, boolean isBatchMode)
       throws IOException, GeneralSecurityException {
 
     PrivateKey privateKey =
@@ -143,6 +147,13 @@ public class CredentialFactory {
             "notasecret",
             "privatekey",
             "notasecret");
+
+    if (isBatchMode) {
+      return ServiceAccountCredentials.newBuilder()
+          .setClientEmail(serviceAccountEmail)
+          .setPrivateKey(privateKey)
+          .build();
+    }
 
     return ServiceAccountJwtAccessCredentials.newBuilder()
         .setClientEmail(serviceAccountEmail)
@@ -191,14 +202,16 @@ public class CredentialFactory {
    * href="https://developers.google.com/identity/protocols/application-default-credentials" >
    * Application Default Credentials</a>.
    *
+   * @param isBatchMode a boolean to identify batch mode.
    * @return a {@link com.google.auth.Credentials} object.
    * @throws java.io.IOException if any.
    */
-  public static Credentials getApplicationDefaultCredential() throws IOException {
+  public static Credentials getApplicationDefaultCredential(boolean isBatchMode)
+      throws IOException {
     GoogleCredentials credentials =
         GoogleCredentials.getApplicationDefault(getHttpTransportFactory());
 
-    if (credentials instanceof ServiceAccountCredentials) {
+    if (!isBatchMode && credentials instanceof ServiceAccountCredentials) {
       return getJwtToken((ServiceAccountCredentials) credentials);
     }
 
@@ -209,14 +222,16 @@ public class CredentialFactory {
    * Initializes OAuth2 application default credentials based on an inputStream.
    *
    * @param inputStream a {@link java.io.InputStream} object.
+   * @param isBatchMode a boolean to identify batch mode.
    * @return a {@link com.google.auth.Credentials} object.
    * @throws java.io.IOException if any.
    */
-  public static Credentials getInputStreamCredential(InputStream inputStream) throws IOException {
+  public static Credentials getInputStreamCredential(InputStream inputStream, boolean isBatchMode)
+      throws IOException {
     GoogleCredentials credentials =
         GoogleCredentials.fromStream(inputStream, getHttpTransportFactory());
 
-    if (credentials instanceof ServiceAccountCredentials) {
+    if (!isBatchMode && credentials instanceof ServiceAccountCredentials) {
       return getJwtToken((ServiceAccountCredentials) credentials);
     }
     return credentials.createScoped(CLOUD_BIGTABLE_ALL_SCOPES);

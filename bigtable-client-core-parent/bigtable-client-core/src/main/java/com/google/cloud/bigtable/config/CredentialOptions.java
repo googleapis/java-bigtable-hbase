@@ -239,6 +239,7 @@ public class CredentialOptions implements Serializable {
   }
 
   private CredentialType credentialType;
+  private boolean isBatchMode;
 
   private CredentialOptions(CredentialType credentialType) {
     this.credentialType = credentialType;
@@ -253,6 +254,16 @@ public class CredentialOptions implements Serializable {
    */
   public CredentialType getCredentialType() {
     return credentialType;
+  }
+
+  /** Sets the experimental flag of identifying batch mode to true */
+  void useBatchMode() {
+    this.isBatchMode = true;
+  }
+
+  /** Getter for <code>isBatchMode</code> */
+  boolean isBatchMode() {
+    return isBatchMode;
   }
 
   /** {@inheritDoc} */

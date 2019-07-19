@@ -132,6 +132,38 @@ public class TestBigtableOptions {
     Assert.assertEquals(300_000, options.getRetryOptions().getMaxElapsedBackoffMillis());
   }
 
+  @Test
+  public void testBatchMode() {
+    BigtableOptions optionsWithNullCredentials =
+        BigtableOptions.builder()
+            .setProjectId("project")
+            .setInstanceId("instance")
+            .setUserAgent("foo")
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .build();
+    Assert.assertFalse(optionsWithNullCredentials.getCredentialOptions().isBatchMode());
+
+    CredentialOptions credentialOptions = CredentialOptions.defaultCredentials();
+    Assert.assertFalse(credentialOptions.isBatchMode());
+    BigtableOptions optionsWithDefaultCred =
+        BigtableOptions.builder()
+            .setProjectId("project")
+            .setInstanceId("instance")
+            .setUserAgent("foo")
+            .setCredentialOptions(credentialOptions)
+            .setDataHost(BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT)
+            .build();
+    Assert.assertTrue(optionsWithDefaultCred.getCredentialOptions().isBatchMode());
+
+    BigtableOptions batchModeOptions =
+        BigtableOptions.builder()
+            .setProjectId("project")
+            .setInstanceId("instance")
+            .setUserAgent("foo")
+            .setUseBatch(true)
+            .build();
+    Assert.assertTrue(batchModeOptions.getCredentialOptions().isBatchMode());
+  }
   /**
    * This is a dirty way to override the environment that is accessible to a test. It only modifies
    * the JVM's view of the environment, not the environment itself. From:

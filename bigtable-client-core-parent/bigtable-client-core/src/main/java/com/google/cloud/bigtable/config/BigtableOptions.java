@@ -274,11 +274,15 @@ public class BigtableOptions implements Serializable, Cloneable {
       } else {
         options.instanceName = null;
       }
+      if (options.dataHost.equals(BIGTABLE_BATCH_DATA_HOST_DEFAULT)) {
+        options.credentialOptions.useBatchMode();
+      }
 
       if (options.useBatch) {
         options.useCachedDataPool = true;
         if (options.dataHost.equals(BIGTABLE_DATA_HOST_DEFAULT)) {
           options.dataHost = BIGTABLE_BATCH_DATA_HOST_DEFAULT;
+          options.credentialOptions.useBatchMode();
         }
         RetryOptions.Builder retryOptionsBuilder = options.retryOptions.toBuilder();
         if (options.retryOptions.getInitialBackoffMillis()
