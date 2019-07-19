@@ -25,6 +25,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   TestAppend.class,
+  TestAuth.class,
   TestBasicOps.class,
   TestBatch.class,
   TestBufferedMutator.class,
