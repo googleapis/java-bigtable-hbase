@@ -41,7 +41,7 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
     if (flatRow == null || flatRow.getRowKey() == null) {
       return Result.EMPTY_RESULT;
     }
-    byte[] RowKey = ByteStringer.extract(flatRow.getRowKey());
+    byte[] RowKey = flatRow.getRowKey().toByteArray();
     List<FlatRow.Cell> cells = flatRow.getCells();
     List<Cell> hbaseCells = new ArrayList<>(cells.size());
     byte[] previousFamilyBytes = null;
