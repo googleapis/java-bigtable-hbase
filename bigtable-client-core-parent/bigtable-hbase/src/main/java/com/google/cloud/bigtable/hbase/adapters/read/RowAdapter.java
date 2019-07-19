@@ -45,7 +45,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
     }
 
     SortedSet<Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
-    byte[] rowKey = ByteStringer.extract(response.getKey());
+    byte[] rowKey = response.getKey().toByteArray();
 
     for (com.google.cloud.bigtable.data.v2.models.RowCell rowCell : response.getCells()) {
 
