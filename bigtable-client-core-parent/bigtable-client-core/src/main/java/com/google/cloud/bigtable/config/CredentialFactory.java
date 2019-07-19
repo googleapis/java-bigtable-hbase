@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.config;
 
 import com.google.api.client.util.SecurityUtils;
 import com.google.auth.Credentials;
+import com.google.auth.RequestMetadataCallback;
 import com.google.auth.http.HttpTransportFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -29,9 +30,13 @@ import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executor;
 
 /**
  * Simple factory for creating OAuth Credential objects for use with Bigtable.
@@ -95,6 +100,12 @@ public class CredentialFactory {
    */
   public static Credentials getCredentials(CredentialOptions options)
       throws IOException, GeneralSecurityException {
+
+    return patchCredentials(getCredentialsInner(options));
+  }
+
+  private static Credentials getCredentialsInner(CredentialOptions options)
+      throws IOException, GeneralSecurityException {
     switch (options.getCredentialType()) {
       case DefaultCredentials:
         return getApplicationDefaultCredential();
@@ -144,10 +155,11 @@ public class CredentialFactory {
             "privatekey",
             "notasecret");
 
-    return ServiceAccountJwtAccessCredentials.newBuilder()
-        .setClientEmail(serviceAccountEmail)
-        .setPrivateKey(privateKey)
-        .build();
+    return patchCredentials(
+        ServiceAccountJwtAccessCredentials.newBuilder()
+            .setClientEmail(serviceAccountEmail)
+            .setPrivateKey(privateKey)
+            .build());
   }
 
   /**
@@ -175,12 +187,13 @@ public class CredentialFactory {
             "notasecret");
 
     // Since the user specified scopes, we can't use JWT tokens
-    return ServiceAccountCredentials.newBuilder()
-        .setClientEmail(serviceAccountEmail)
-        .setPrivateKey(privateKey)
-        .setScopes(scopes)
-        .setHttpTransportFactory(getHttpTransportFactory())
-        .build();
+    return patchCredentials(
+        ServiceAccountCredentials.newBuilder()
+            .setClientEmail(serviceAccountEmail)
+            .setPrivateKey(privateKey)
+            .setScopes(scopes)
+            .setHttpTransportFactory(getHttpTransportFactory())
+            .build());
   }
 
   /**
@@ -223,11 +236,95 @@ public class CredentialFactory {
   }
 
   private static Credentials getJwtToken(ServiceAccountCredentials serviceAccount) {
-    return ServiceAccountJwtAccessCredentials.newBuilder()
-        .setClientEmail(serviceAccount.getClientEmail())
-        .setClientId(serviceAccount.getClientId())
-        .setPrivateKey(serviceAccount.getPrivateKey())
-        .setPrivateKeyId(serviceAccount.getPrivateKeyId())
-        .build();
+    return patchCredentials(
+        ServiceAccountJwtAccessCredentials.newBuilder()
+            .setClientEmail(serviceAccount.getClientEmail())
+            .setClientId(serviceAccount.getClientId())
+            .setPrivateKey(serviceAccount.getPrivateKey())
+            .setPrivateKeyId(serviceAccount.getPrivateKeyId())
+            .build());
+  }
+
+  // TODO(igorbernstein): Remove this ugly hack, once the serverside is fixed.
+  /**
+   * Workaround for broken JWT tokens in batch-bigtable.googleapis.com.
+   *
+   * <p>Currently we only accept JWT tokens destined for the audience bigtable.googleapis.com and
+   * bigtableadmin.googleapis.com. However, gRPC will set the audience based on the endpoint. This
+   * workaround will rewrite the audience to be compliant.
+   */
+  private static Credentials patchCredentials(Credentials credentials) {
+    // Wrap JWT credentials to rewrite the audience.
+    if (credentials instanceof ServiceAccountJwtAccessCredentials) {
+      credentials =
+          new JwtAudienceWorkaroundCredentials((ServiceAccountJwtAccessCredentials) credentials);
+    }
+
+    // When dealing with ServiceAccountCredentials, make sure to set the scopes. Otherwise
+    // MoreCallCredentials will try to replace it with ServiceAccountJwtAccessCredentials.
+    if (credentials instanceof ServiceAccountCredentials) {
+      ServiceAccountCredentials svcCreds = (ServiceAccountCredentials) credentials;
+      if (svcCreds.getScopes().isEmpty()) {
+        credentials = svcCreds.createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
+      }
+    }
+
+    return credentials;
+  }
+
+  private static class JwtAudienceWorkaroundCredentials extends Credentials {
+    private final ServiceAccountJwtAccessCredentials inner;
+
+    public JwtAudienceWorkaroundCredentials(ServiceAccountJwtAccessCredentials inner) {
+      this.inner = inner;
+    }
+
+    @Override
+    public String getAuthenticationType() {
+      return inner.getAuthenticationType();
+    }
+
+    // Extracted from ServiceAccountJwtAccessCredentials to maintain the performance tweak.
+    @Override
+    public void getRequestMetadata(
+        final URI uri, Executor executor, final RequestMetadataCallback callback) {
+      // It doesn't use network. Only some CPU work on par with TLS handshake. So it's preferrable
+      // to do it in the current thread, which is likely to be the network thread.
+      blockingGetToCallback(uri, callback);
+    }
+
+    @Override
+    public Map<String, List<String>> getRequestMetadata(URI uri) throws IOException {
+      if (BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT.equals(uri.getHost())) {
+        try {
+          uri =
+              new URI(
+                  uri.getScheme(),
+                  BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT,
+                  uri.getPath(),
+                  uri.getFragment());
+        } catch (URISyntaxException e) {
+          // Should never happen
+          throw new IllegalStateException("Failed to adapt batch endpoint creds uri");
+        }
+      }
+
+      return inner.getRequestMetadata(uri);
+    }
+
+    @Override
+    public boolean hasRequestMetadata() {
+      return inner.hasRequestMetadata();
+    }
+
+    @Override
+    public boolean hasRequestMetadataOnly() {
+      return inner.hasRequestMetadataOnly();
+    }
+
+    @Override
+    public void refresh() {
+      inner.refresh();
+    }
   }
 }
