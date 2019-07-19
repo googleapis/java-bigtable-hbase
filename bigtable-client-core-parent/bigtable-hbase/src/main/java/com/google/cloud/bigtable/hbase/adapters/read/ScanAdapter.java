@@ -271,7 +271,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       return Optional.absent();
     }
     // Builds filter of the form
-    // ("family1" | "rangeStart, rangeEnd") + ("family2" | "rangeStart2, rangeEnd2")
+    // ("family1" & "rangeStart, rangeEnd") | ("family2" & "rangeStart2, rangeEnd2")
     InterleaveFilter interleave = FILTERS.interleave();
     Map<byte[], TimeRange> range = scan.getColumnFamilyTimeRange();
     for (Map.Entry<byte[], TimeRange> entry : range.entrySet()) {

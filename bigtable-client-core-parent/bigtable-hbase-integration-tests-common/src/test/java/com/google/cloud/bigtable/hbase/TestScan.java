@@ -17,13 +17,12 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
-import static org.junit.Assert.assertTrue;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
@@ -311,99 +310,86 @@ public class TestScan extends AbstractTest {
   }
 
   @Test
-  public void testColumnFamilyTimeRange() throws IOException {
+  public void testColFamilyTimeRange() throws IOException {
     TableName tableName = sharedTestEnv.newTestTableName();
-    String prefix = "scan_row_";
-    int rowsToWrite = 3;
-    // Initialize variables
     sharedTestEnv.createTable(tableName);
     Table table = getConnection().getTable(tableName);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual1 = dataHelper.randomData("qual-");
+    byte[] qual2 = dataHelper.randomData("qual-");
+    byte[][] values = dataHelper.randomData("value-", 3);
 
-    byte[][] rowKeys = new byte[rowsToWrite][];
-    rowKeys[0] = dataHelper.randomData(prefix);
-    for (int i = 1; i < rowsToWrite; i++) {
-      rowKeys[i] = rowFollowingSameLength(rowKeys[i - 1]);
+    long ts1 = 100000L;
+    long ts2 = 200000L;
+
+    table.put(
+        new Put(rowKey)
+            .addColumn(COLUMN_FAMILY, qual1, ts1, values[1])
+            .addColumn(COLUMN_FAMILY, qual2, ts2, values[2]));
+
+    Scan scan1 = new Scan().setColumnFamilyTimeRange(COLUMN_FAMILY, 0, ts1);
+    try (ResultScanner resultScanner = table.getScanner(scan1)) {
+      Assert.assertNull(resultScanner.next());
     }
 
-    byte[][] columnFamilies = {COLUMN_FAMILY, COLUMN_FAMILY2};
-    String[][] dateRange = {
-      {"1992-04-30", "2000-01-01", "2000-12-31", "2005-06-30", "2009-12-01", "2019-02-01"},
-      {"1989-01-30", "1990-01-01", "1992-04-30", "1993-08-30", "2010-03-10", "2011-10-15"},
-    };
-
-    int numValuesPerRow = 5;
-    byte[][] quals = dataHelper.randomData("qual-", numValuesPerRow);
-    byte[][] values = dataHelper.randomData("value-", numValuesPerRow);
-
-    ArrayList<Put> puts = new ArrayList<>(rowsToWrite);
-
-    // Insert some columns
-    for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
-      Put put = new Put(rowKeys[rowIndex]);
-      for (int colFamily = 0; colFamily < columnFamilies.length; colFamily++) {
-        for (int qualifierIndex = 0; qualifierIndex < numValuesPerRow; qualifierIndex++) {
-          long time = Date.valueOf(dateRange[colFamily][qualifierIndex]).getTime();
-          put.addColumn(
-              columnFamilies[colFamily], quals[qualifierIndex], time, values[qualifierIndex]);
-        }
-      }
-      puts.add(put);
+    Scan scan2 = new Scan().setColumnFamilyTimeRange(COLUMN_FAMILY, 0, ts1 + 1);
+    try (ResultScanner resultScanner = table.getScanner(scan2)) {
+      Result result = resultScanner.next();
+      Assert.assertNotNull(result);
+      Assert.assertEquals(1, result.rawCells().length);
+      Assert.assertEquals(ts1, result.rawCells()[0].getTimestamp());
     }
+
+    Scan scan3 = new Scan().setColumnFamilyTimeRange(COLUMN_FAMILY, ts1, ts2 + 1);
+    try (ResultScanner resultScanner = table.getScanner(scan3)) {
+      Result result = resultScanner.next();
+      Assert.assertNotNull(result);
+      Assert.assertEquals(2, result.rawCells().length);
+      Assert.assertEquals(ts1, result.getColumnLatestCell(COLUMN_FAMILY, qual1).getTimestamp());
+      Assert.assertEquals(ts2, result.getColumnLatestCell(COLUMN_FAMILY, qual2).getTimestamp());
+    }
+  }
+
+  @Test
+  public void testColFamilyTimeRangeWithMultiRows() throws IOException {
+    TableName tableName = sharedTestEnv.newTestTableName();
+    sharedTestEnv.createTable(tableName);
+    Table table = getConnection().getTable(tableName);
+    byte[][] rowKeys = dataHelper.randomData("testrow-", 3);
+    byte[] qual = dataHelper.randomData("qual-");
+    byte[][] values = dataHelper.randomData("value-", 3);
+
+    long ts1 = 600000L;
+    long ts2 = 800000L;
+    long ts3 = 900000L;
+
+    List<Put> puts =
+        Arrays.asList(
+            new Put(rowKeys[0])
+                .addColumn(COLUMN_FAMILY, qual, ts1, values[1])
+                .addColumn(COLUMN_FAMILY2, qual, ts2, values[1]),
+            new Put(rowKeys[1])
+                .addColumn(COLUMN_FAMILY, qual, ts2, values[1])
+                .addColumn(COLUMN_FAMILY2, qual, ts3, values[1]),
+            new Put(rowKeys[2]).addColumn(COLUMN_FAMILY, qual, values[2]));
     table.put(puts);
 
-    // Verifies only single date comes, as end range is non-inclusive.
-    Scan singleCFScan =
+    Scan scan1 =
         new Scan()
-            .setColumnFamilyTimeRange(
-                COLUMN_FAMILY,
-                Date.valueOf(dateRange[0][1]).getTime(),
-                Date.valueOf(dateRange[0][2]).getTime());
+            .setColumnFamilyTimeRange(COLUMN_FAMILY, ts1 + 1, ts3)
+            .setColumnFamilyTimeRange(COLUMN_FAMILY2, ts2, ts3);
 
-    try (ResultScanner resultScanner = table.getScanner(singleCFScan)) {
-      Result[] results = resultScanner.next(rowsToWrite);
-      for (Result result : results) {
-        Cell[] cells = result.rawCells();
+    try (ResultScanner resultScanner = table.getScanner(scan1)) {
+      Result result = resultScanner.next();
+      Assert.assertNotNull(result);
+      Cell[] cells = result.rawCells();
+      Assert.assertEquals(1, cells.length);
+      Assert.assertEquals(ts2, result.rawCells()[0].getTimestamp());
 
-        // Matching only single values as output would be sorted as per random qualifier
-        Assert.assertEquals("Total matched timestamp per row should be 3", 1, cells.length);
-        Assert.assertEquals(Date.valueOf(dateRange[0][1]).getTime(), cells[0].getTimestamp());
-      }
-
-      // Verify that there are no more rows:
-      Assert.assertNull(
-          "There should not be any more results in the scanner.", resultScanner.next());
-    }
-
-    long rangeStart = Date.valueOf(dateRange[0][1]).getTime();
-    long rangeEnd = Date.valueOf(dateRange[0][5]).getTime();
-    long secRangeStart = Date.valueOf(dateRange[1][0]).getTime();
-    long secRangeEnd = Date.valueOf("2000-01-01").getTime();
-
-    Scan scan =
-        new Scan()
-            .setColumnFamilyTimeRange(COLUMN_FAMILY, rangeStart, rangeEnd)
-            .setColumnFamilyTimeRange(COLUMN_FAMILY2, secRangeStart, secRangeEnd);
-
-    try (ResultScanner resultScanner = table.getScanner(scan)) {
-      for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
-        Result result = resultScanner.next();
-        Assert.assertNotNull(String.format("Didn't expect row %s to be null", rowIndex), result);
-
-        Cell[] cells = result.rawCells();
-        Assert.assertEquals("Total matched timestamp should be 10", 8, cells.length);
-        for (Cell cell : result.rawCells()) {
-          if (Arrays.equals(cell.getFamilyArray(), columnFamilies[0])) {
-
-            long timestamp = cell.getTimestamp();
-            assertTrue("Timestamp is too low", timestamp >= rangeStart);
-            assertTrue("Timestamp is too high", timestamp < rangeEnd);
-          } else {
-            long timestamp = cell.getTimestamp();
-            assertTrue("Timestamp is too low", timestamp >= secRangeStart);
-            assertTrue("Timestamp is too high", timestamp < secRangeEnd);
-          }
-        }
-      }
+      result = resultScanner.next();
+      cells = result.rawCells();
+      Assert.assertEquals(1, cells.length);
+      Assert.assertEquals(ts2, result.rawCells()[0].getTimestamp());
 
       Assert.assertNull(
           "There should not be any more results in the scanner.", resultScanner.next());
