@@ -28,23 +28,22 @@ public class TestAuth extends AbstractTest {
     Credentials credentials = GoogleCredentials.getApplicationDefault();
 
     if (credentials instanceof ServiceAccountCredentials) {
-      ServiceAccountCredentials svcCreds = (ServiceAccountCredentials)credentials;
-      credentials = ServiceAccountJwtAccessCredentials.newBuilder()
-          .setClientId(svcCreds.getClientId())
-          .setClientEmail(svcCreds.getClientEmail())
-          .setPrivateKeyId(svcCreds.getPrivateKeyId())
-          .setPrivateKey(svcCreds.getPrivateKey())
-          .build();
+      ServiceAccountCredentials svcCreds = (ServiceAccountCredentials) credentials;
+      credentials =
+          ServiceAccountJwtAccessCredentials.newBuilder()
+              .setClientId(svcCreds.getClientId())
+              .setClientEmail(svcCreds.getClientEmail())
+              .setPrivateKeyId(svcCreds.getPrivateKeyId())
+              .setPrivateKey(svcCreds.getPrivateKey())
+              .build();
     }
 
-    Assume.assumeTrue("Service account credentials are required",
+    Assume.assumeTrue(
+        "Service account credentials are required",
         credentials instanceof ServiceAccountJwtAccessCredentials);
 
-
-    BigtableExtendedConfiguration config = new BigtableExtendedConfiguration(
-        sharedTestEnv.getConfiguration(),
-        credentials
-    );
+    BigtableExtendedConfiguration config =
+        new BigtableExtendedConfiguration(sharedTestEnv.getConfiguration(), credentials);
     config.set("google.bigtable.use.batch", "true");
 
     // Prevent the test from hanging if auth fails
