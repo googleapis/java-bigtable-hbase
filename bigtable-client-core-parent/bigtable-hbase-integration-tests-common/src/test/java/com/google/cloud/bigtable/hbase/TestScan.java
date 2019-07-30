@@ -16,13 +16,16 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -303,6 +306,93 @@ public class TestScan extends AbstractTest {
               ByteString.copyFrom(
                       cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
                   .toByteArray()));
+    }
+  }
+
+  @Test
+  public void testColFamilyTimeRange() throws IOException {
+    TableName tableName = sharedTestEnv.newTestTableName();
+    sharedTestEnv.createTable(tableName);
+    Table table = getConnection().getTable(tableName);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual1 = dataHelper.randomData("qual-");
+    byte[] qual2 = dataHelper.randomData("qual-");
+    byte[][] values = dataHelper.randomData("value-", 3);
+
+    long ts1 = 100000L;
+    long ts2 = 200000L;
+
+    table.put(
+        new Put(rowKey)
+            .addColumn(COLUMN_FAMILY, qual1, ts1, values[1])
+            .addColumn(COLUMN_FAMILY, qual2, ts2, values[2]));
+
+    Scan scan1 = new Scan().setColumnFamilyTimeRange(COLUMN_FAMILY, 0, ts1);
+    try (ResultScanner resultScanner = table.getScanner(scan1)) {
+      Assert.assertNull(resultScanner.next());
+    }
+
+    Scan scan2 = new Scan().setColumnFamilyTimeRange(COLUMN_FAMILY, 0, ts1 + 1);
+    try (ResultScanner resultScanner = table.getScanner(scan2)) {
+      Result result = resultScanner.next();
+      Assert.assertNotNull(result);
+      Assert.assertEquals(1, result.rawCells().length);
+      Assert.assertEquals(ts1, result.rawCells()[0].getTimestamp());
+    }
+
+    Scan scan3 = new Scan().setColumnFamilyTimeRange(COLUMN_FAMILY, ts1, ts2 + 1);
+    try (ResultScanner resultScanner = table.getScanner(scan3)) {
+      Result result = resultScanner.next();
+      Assert.assertNotNull(result);
+      Assert.assertEquals(2, result.rawCells().length);
+      Assert.assertEquals(ts1, result.getColumnLatestCell(COLUMN_FAMILY, qual1).getTimestamp());
+      Assert.assertEquals(ts2, result.getColumnLatestCell(COLUMN_FAMILY, qual2).getTimestamp());
+    }
+  }
+
+  @Test
+  public void testColFamilyTimeRangeWithMultiRows() throws IOException {
+    TableName tableName = sharedTestEnv.newTestTableName();
+    sharedTestEnv.createTable(tableName);
+    Table table = getConnection().getTable(tableName);
+    byte[][] rowKeys = dataHelper.randomData("testrow-", 3);
+    byte[] qual = dataHelper.randomData("qual-");
+    byte[][] values = dataHelper.randomData("value-", 3);
+
+    long ts1 = 600000L;
+    long ts2 = 800000L;
+    long ts3 = 900000L;
+
+    List<Put> puts =
+        Arrays.asList(
+            new Put(rowKeys[0])
+                .addColumn(COLUMN_FAMILY, qual, ts1, values[1])
+                .addColumn(COLUMN_FAMILY2, qual, ts2, values[1]),
+            new Put(rowKeys[1])
+                .addColumn(COLUMN_FAMILY, qual, ts2, values[1])
+                .addColumn(COLUMN_FAMILY2, qual, ts3, values[1]),
+            new Put(rowKeys[2]).addColumn(COLUMN_FAMILY, qual, values[2]));
+    table.put(puts);
+
+    Scan scan1 =
+        new Scan()
+            .setColumnFamilyTimeRange(COLUMN_FAMILY, ts1 + 1, ts3)
+            .setColumnFamilyTimeRange(COLUMN_FAMILY2, ts2, ts3);
+
+    try (ResultScanner resultScanner = table.getScanner(scan1)) {
+      Result result = resultScanner.next();
+      Assert.assertNotNull(result);
+      Cell[] cells = result.rawCells();
+      Assert.assertEquals(1, cells.length);
+      Assert.assertEquals(ts2, result.rawCells()[0].getTimestamp());
+
+      result = resultScanner.next();
+      cells = result.rawCells();
+      Assert.assertEquals(1, cells.length);
+      Assert.assertEquals(ts2, result.rawCells()[0].getTimestamp());
+
+      Assert.assertNull(
+          "There should not be any more results in the scanner.", resultScanner.next());
     }
   }
 }

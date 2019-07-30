@@ -132,6 +132,10 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       chain.filter(userFilter.get());
     }
 
+    Optional<Filters.Filter> colFamilyTimeFilter = createColFamilyTimeRange(scan);
+    if (colFamilyTimeFilter.isPresent()) {
+      chain.filter(colFamilyTimeFilter.get());
+    }
     return chain;
   }
 
@@ -258,6 +262,24 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       } else {
         interleave.filter(familyFilter);
       }
+    }
+    return Optional.<Filters.Filter>of(interleave);
+  }
+
+  private Optional<Filters.Filter> createColFamilyTimeRange(Scan scan) {
+    if (scan.getColumnFamilyTimeRange().isEmpty()) {
+      return Optional.absent();
+    }
+    // Builds filter of the form
+    // ("family1" & "rangeStart, rangeEnd") | ("family2" & "rangeStart2, rangeEnd2")
+    InterleaveFilter interleave = FILTERS.interleave();
+    Map<byte[], TimeRange> range = scan.getColumnFamilyTimeRange();
+    for (Map.Entry<byte[], TimeRange> entry : range.entrySet()) {
+      interleave.filter(
+          FILTERS
+              .chain()
+              .filter(createFamilyFilter(entry.getKey()))
+              .filter(createTimeRangeFilter(entry.getValue())));
     }
     return Optional.<Filters.Filter>of(interleave);
   }
