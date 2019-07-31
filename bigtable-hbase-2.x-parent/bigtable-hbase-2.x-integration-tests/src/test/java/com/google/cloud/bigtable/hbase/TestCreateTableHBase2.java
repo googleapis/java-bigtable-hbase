@@ -24,8 +24,23 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TestCreateTableHBase2 extends AbstractTestCreateTable {
+
+  @Test
+  public void testCreateAsync() throws Exception {
+    TableName tableName = sharedTestEnv.newTestTableName();
+    createTableAsync(tableName);
+    Assert.assertTrue(tableExists(tableName));
+    deleteTable(tableName);
+    Assert.assertFalse(tableExists(tableName));
+  }
+
+  private void createTableAsync(TableName tableName) throws Exception {
+    getConnection().getAdmin().createTableAsync(createDescriptor(tableName)).get();
+  }
 
   @Override
   protected void createTable(TableName tableName) throws IOException {

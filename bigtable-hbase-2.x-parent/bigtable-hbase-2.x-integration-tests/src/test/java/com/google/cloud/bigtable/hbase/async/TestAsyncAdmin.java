@@ -22,9 +22,11 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
@@ -91,6 +93,10 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
           .get();
       assertEquals(true, asyncAdmin.tableExists(tableName).get());
 
+      // create one more table
+      TableName anotherTableName = sharedTestEnv.newTestTableName();
+      sharedTestEnv.createTable(anotherTableName);
+
       // test listTableNames all
       List<TableName> allTableNames = asyncAdmin.listTableNames().get();
       assertTrue("listTableNames-all should list atleast one table", allTableNames.size() > 0);
@@ -128,6 +134,19 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
           patTableDescriptors.stream().anyMatch(e -> tableName.equals(e.getTableName())));
       // TODO: Verify why this test fails. getColumnFamilies() array is empyty
       // assertEquals(10, patTableDescriptors.get(0).getColumnFamilies()[0].getTimeToLive());
+
+      // test listTableDescriptors by List<TableName>
+      List<TableDescriptor> listDescriptor =
+          asyncAdmin.listTableDescriptors(Arrays.asList(tableName, anotherTableName)).get();
+      assertTrue(
+          "listTableDescriptors(list) should list at least two table", listDescriptor.size() > 1);
+      assertTrue(
+          "listTableDescriptors(list) should contain both the table ",
+          listDescriptor.stream()
+              .map(e -> e.getTableName().getNameAsString())
+              .collect(Collectors.toList())
+              .containsAll(
+                  Arrays.asList(tableName.getNameAsString(), anotherTableName.getNameAsString())));
 
       // test getTableDescriptor
       TableDescriptor tableDescriptor = asyncAdmin.getDescriptor(tableName).get();
