@@ -233,7 +233,7 @@ limitations under the License.
                     <execution>
                         <phase>process-sources</phase>
                         <goals>
-                            <goal>format</goal>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
