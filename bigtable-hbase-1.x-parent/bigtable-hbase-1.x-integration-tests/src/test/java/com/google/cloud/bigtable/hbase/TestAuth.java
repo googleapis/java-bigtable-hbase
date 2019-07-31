@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.cloud.bigtable.hbase;
 
 import com.google.bigtable.repackaged.com.google.auth.Credentials;
@@ -19,6 +34,9 @@ public class TestAuth extends AbstractTest {
   @Test
   public void testBatchJwt() throws IOException {
     Assume.assumeTrue("Batch JWT can only run against Bigtable", sharedTestEnv.isBigtable());
+    Assume.assumeFalse(
+        "GCJ client does not support cachedDataPool",
+        Boolean.getBoolean("google.bigtable.use.gcj.client"));
 
     String currentEndpoint = sharedTestEnv.getConfiguration().get("google.bigtable.endpoint.host");
     Assume.assumeTrue(
@@ -48,7 +66,7 @@ public class TestAuth extends AbstractTest {
 
     // Prevent the test from hanging if auth fails
     config.set("google.bigtable.rpc.use.timeouts", "true");
-    config.set("google.bigtable.rpc.timeout.ms", "10000");
+    config.set("google.bigtable.rpc.timeout.ms", "20000");
 
     // Create a new connection using JWT auth & batch settings
     try (Connection connection = BigtableConfiguration.connect(config)) {
