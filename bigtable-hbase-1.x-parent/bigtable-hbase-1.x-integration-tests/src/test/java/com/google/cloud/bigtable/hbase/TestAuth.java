@@ -66,7 +66,8 @@ public class TestAuth extends AbstractTest {
 
     // Prevent the test from hanging if auth fails
     config.set("google.bigtable.rpc.use.timeouts", "true");
-    config.set("google.bigtable.rpc.timeout.ms", "20000");
+    config.set("google.bigtable.rpc.timeout.ms", "10000");
+    config.set("google.bigtable.grpc.channel.count", "1");
 
     // Create a new connection using JWT auth & batch settings
     try (Connection connection = BigtableConfiguration.connect(config)) {
