@@ -58,9 +58,8 @@ limitations under the License.
         <hamcrest.version>1.3</hamcrest.version>
 
         <!-- google-cloud-java related dependency versions -->
-        <google-cloud.version>0.97.0-alpha</google-cloud.version>
+        <google-cloud.version>0.103.0-alpha</google-cloud.version>
         <opencensus.version>0.21.0</opencensus.version>
-        <guava.version>27.1-android</guava.version>
         <checkerframework.version>2.5.2</checkerframework.version>
 
         <!-- hbase dependency versions -->
@@ -74,6 +73,8 @@ limitations under the License.
         <mockito.version>2.25.1</mockito.version>
 
         <beam.version>2.11.0</beam.version>
+        <!-- referred from bigtable-beam-import and bigtable-emulator -->
+        <guava.version>28.0-android</guava.version>
     </properties>
 
     <distributionManagement>
