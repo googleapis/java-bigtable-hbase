@@ -16,10 +16,13 @@
 package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.util.Arrays;
@@ -93,7 +96,7 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
           .get();
       assertEquals(true, asyncAdmin.tableExists(tableName).get());
 
-      // create one more table
+      // create one more table with two family names(COLUMN_FAMILY, COLUMN_FAMILY2).
       TableName anotherTableName = sharedTestEnv.newTestTableName();
       sharedTestEnv.createTable(anotherTableName);
 
@@ -136,17 +139,37 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
       // assertEquals(10, patTableDescriptors.get(0).getColumnFamilies()[0].getTimeToLive());
 
       // test listTableDescriptors by List<TableName>
+      try {
+        asyncAdmin.listTableDescriptors(null).get();
+        fail("listTableDescriptors should throw an exception");
+      } catch (Exception e) {
+        Assert.assertTrue(e instanceof NullPointerException);
+      }
+
+      List<TableDescriptor> emptyListDescriptor =
+          asyncAdmin.listTableDescriptors(Arrays.asList()).get();
+      assertTrue(emptyListDescriptor.isEmpty());
+
       List<TableDescriptor> listDescriptor =
           asyncAdmin.listTableDescriptors(Arrays.asList(tableName, anotherTableName)).get();
+      assertTrue("listTableDescriptors should list at least two table", listDescriptor.size() >= 2);
       assertTrue(
-          "listTableDescriptors(list) should list at least two table", listDescriptor.size() > 1);
-      assertTrue(
-          "listTableDescriptors(list) should contain both the table ",
+          "listTableDescriptors should contain both the table ",
           listDescriptor.stream()
               .map(e -> e.getTableName().getNameAsString())
               .collect(Collectors.toList())
               .containsAll(
                   Arrays.asList(tableName.getNameAsString(), anotherTableName.getNameAsString())));
+
+      listDescriptor.stream()
+          .filter(
+              td -> td.getTableName().getNameAsString().equals(anotherTableName.getNameAsString()))
+          .forEach(
+              matchT -> {
+                assertEquals(2, matchT.getColumnFamilyCount());
+                assertArrayEquals(COLUMN_FAMILY, matchT.getColumnFamily(COLUMN_FAMILY).getName());
+                assertArrayEquals(COLUMN_FAMILY2, matchT.getColumnFamily(COLUMN_FAMILY2).getName());
+              });
 
       // test getTableDescriptor
       TableDescriptor tableDescriptor = asyncAdmin.getDescriptor(tableName).get();

@@ -33,9 +33,11 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
+import com.google.common.base.Preconditions;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -264,23 +266,18 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<List<TableDescriptor>> listTableDescriptors(List<TableName> list) {
-    if (list == null || list.isEmpty()) {
-      return CompletableFuture.completedFuture(null);
+  public CompletableFuture<List<TableDescriptor>> listTableDescriptors(List<TableName> tableNames) {
+    Preconditions.checkNotNull(tableNames, "tableNames is null");
+    if (tableNames.isEmpty()) {
+      return CompletableFuture.completedFuture(Collections.emptyList());
     }
 
     return toCompletableFuture(bigtableTableAdminClient.listTablesAsync())
         .thenApply(
             t ->
-                list.stream()
+                tableNames.stream()
                     .filter(in -> t.contains(in.getNameAsString()))
-                    .map(
-                        m ->
-                            com.google.bigtable.admin.v2.Table.newBuilder()
-                                .setName(bigtableInstanceName.toTableNameStr(m.getNameAsString()))
-                                .build())
-                    .map(Table::fromProto)
-                    .map(tableAdapter2x::adapt)
+                    .map(tbName -> getDescriptor(tbName).join())
                     .collect(Collectors.toList()));
   }
 
