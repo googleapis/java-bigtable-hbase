@@ -34,11 +34,10 @@ import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
+import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
+import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
-import org.apache.beam.sdk.util.GcsUtil;
-import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory;
-import org.apache.beam.sdk.util.gcsfs.GcsPath;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
@@ -88,7 +87,7 @@ public class EndToEndIT {
     // Cloud Storage config
     GcpOptions gcpOptions = PipelineOptionsFactory.create().as(GcpOptions.class);
     gcpOptions.setProject(projectId);
-    gcsUtil = new GcsUtilFactory().create(gcpOptions);
+    gcsUtil = new GcsUtil.GcsUtilFactory().create(gcpOptions);
 
     workDir = cloudTestDataFolder + "exports/" + UUID.randomUUID();
 
