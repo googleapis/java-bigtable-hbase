@@ -143,7 +143,7 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
         asyncAdmin.listTableDescriptors(null).get();
         fail("listTableDescriptors should throw an exception");
       } catch (Exception e) {
-        Assert.assertTrue(e instanceof NullPointerException);
+        assertTrue(e instanceof NullPointerException);
       }
 
       List<TableDescriptor> emptyListDescriptor =
@@ -165,10 +165,10 @@ public class TestAsyncAdmin extends AbstractAsyncTest {
           .filter(
               td -> td.getTableName().getNameAsString().equals(anotherTableName.getNameAsString()))
           .forEach(
-              matchT -> {
-                assertEquals(2, matchT.getColumnFamilyCount());
-                assertArrayEquals(COLUMN_FAMILY, matchT.getColumnFamily(COLUMN_FAMILY).getName());
-                assertArrayEquals(COLUMN_FAMILY2, matchT.getColumnFamily(COLUMN_FAMILY2).getName());
+              mTable -> {
+                assertEquals(2, mTable.getColumnFamilyCount());
+                assertArrayEquals(COLUMN_FAMILY, mTable.getColumnFamily(COLUMN_FAMILY).getName());
+                assertArrayEquals(COLUMN_FAMILY2, mTable.getColumnFamily(COLUMN_FAMILY2).getName());
               });
 
       // test getTableDescriptor

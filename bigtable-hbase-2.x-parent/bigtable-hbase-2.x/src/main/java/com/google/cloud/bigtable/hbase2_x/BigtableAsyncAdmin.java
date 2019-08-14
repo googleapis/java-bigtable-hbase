@@ -265,6 +265,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return listTables(Optional.of(pattern));
   }
 
+  /** {@inheritDoc} */
   @Override
   public CompletableFuture<List<TableDescriptor>> listTableDescriptors(List<TableName> tableNames) {
     Preconditions.checkNotNull(tableNames, "tableNames is null");
@@ -276,8 +277,19 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         .thenApply(
             t ->
                 tableNames.stream()
-                    .filter(in -> t.contains(in.getNameAsString()))
-                    .map(tbName -> getDescriptor(tbName).join())
+                    .filter(inputTableName -> t.contains(inputTableName.getNameAsString()))
+                    .map(
+                        tbName -> {
+                          try {
+                            return getDescriptor(tbName).join();
+                          } catch (CompletionException ex) {
+                            LOG.warn(
+                                "Table not found while fetching details for %s",
+                                ex, tbName.getNameAsString());
+                            return null;
+                          }
+                        })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList()));
   }
 
