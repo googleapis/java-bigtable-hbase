@@ -33,9 +33,11 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
+import com.google.common.base.Preconditions;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -74,8 +76,12 @@ import org.apache.hadoop.hbase.client.replication.TableCFs;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
+import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshotView;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
+import org.apache.hadoop.hbase.security.access.GetUserPermissionsRequest;
+import org.apache.hadoop.hbase.security.access.Permission;
+import org.apache.hadoop.hbase.security.access.UserPermission;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -261,6 +267,35 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   /** {@inheritDoc} */
   @Override
+  public CompletableFuture<List<TableDescriptor>> listTableDescriptors(List<TableName> tableNames) {
+    Preconditions.checkNotNull(tableNames, "tableNames is null");
+    if (tableNames.isEmpty()) {
+      return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+
+    return toCompletableFuture(bigtableTableAdminClient.listTablesAsync())
+        .thenApply(
+            t ->
+                tableNames.stream()
+                    .filter(inputTableName -> t.contains(inputTableName.getNameAsString()))
+                    .map(
+                        tbName -> {
+                          try {
+                            return getDescriptor(tbName).join();
+                          } catch (CompletionException ex) {
+                            if (ex.getCause() instanceof TableNotFoundException) {
+                              // If table not found then remove it from the list.
+                              return null;
+                            }
+                            throw ex;
+                          }
+                        })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public CompletableFuture<Boolean> isTableDisabled(TableName tableName) {
     // TODO: this might require a tableExists() check, and throw an exception if it doesn't.
     return CompletableFuture.completedFuture(disabledTables.contains(tableName));
@@ -427,6 +462,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return future;
   }
 
+  @Override
+  public CompletableFuture<Void> restoreSnapshot(
+      String snapshotName, boolean takeFailSafeSnapshot, boolean restoreAcl) {
+    throw new UnsupportedOperationException("restoreSnapshot");
+  }
+
   /**
    * To check Snapshot exists or not.
    *
@@ -529,6 +570,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
+  public CompletableFuture<Void> cloneSnapshot(
+      String snapshotName, TableName tableName, boolean restoreAcl) {
+    throw new UnsupportedOperationException("cloneSnapshot");
+  }
+
+  @Override
   public CompletableFuture<List<SnapshotDescription>> listSnapshots() {
     return CompletableFuture.supplyAsync(
             () -> {
@@ -584,6 +631,73 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> cloneTableSchema(
       TableName tableName, TableName tableName1, boolean preserveSplits) {
     throw new UnsupportedOperationException("cloneTableSchema"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Map<ServerName, Boolean>> compactionSwitch(
+      boolean switchState, List<String> serverNamesList) {
+    throw new UnsupportedOperationException("compactionSwitch");
+  }
+
+  @Override
+  public CompletableFuture<Boolean> switchRpcThrottle(boolean enable) {
+    throw new UnsupportedOperationException("switchRpcThrottle");
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isRpcThrottleEnabled() {
+    throw new UnsupportedOperationException("isRpcThrottleEnabled");
+  }
+
+  @Override
+  public CompletableFuture<Boolean> exceedThrottleQuotaSwitch(boolean enable) {
+    throw new UnsupportedOperationException("exceedThrottleQuotaSwitch");
+  }
+
+  @Override
+  public CompletableFuture<Map<TableName, Long>> getSpaceQuotaTableSizes() {
+    throw new UnsupportedOperationException("getSpaceQuotaTableSizes");
+  }
+
+  @Override
+  public CompletableFuture<? extends Map<TableName, ? extends SpaceQuotaSnapshotView>>
+      getRegionServerSpaceQuotaSnapshots(ServerName serverName) {
+    throw new UnsupportedOperationException("getRegionServerSpaceQuotaSnapshots");
+  }
+
+  @Override
+  public CompletableFuture<? extends SpaceQuotaSnapshotView> getCurrentSpaceQuotaSnapshot(
+      String namespace) {
+    throw new UnsupportedOperationException("getCurrentSpaceQuotaSnapshot");
+  }
+
+  @Override
+  public CompletableFuture<? extends SpaceQuotaSnapshotView> getCurrentSpaceQuotaSnapshot(
+      TableName tableName) {
+    throw new UnsupportedOperationException("getCurrentSpaceQuotaSnapshot");
+  }
+
+  @Override
+  public CompletableFuture<Void> grant(
+      UserPermission userPermission, boolean mergeExistingPermissions) {
+    throw new UnsupportedOperationException("grant");
+  }
+
+  @Override
+  public CompletableFuture<Void> revoke(UserPermission userPermission) {
+    throw new UnsupportedOperationException("revoke");
+  }
+
+  @Override
+  public CompletableFuture<List<UserPermission>> getUserPermissions(
+      GetUserPermissionsRequest getUserPermissionsRequest) {
+    throw new UnsupportedOperationException("getUserPermissions");
+  }
+
+  @Override
+  public CompletableFuture<List<Boolean>> hasUserPermissions(
+      String userName, List<Permission> permissions) {
+    throw new UnsupportedOperationException("hasUserPermissions");
   }
 
   @Override
@@ -829,6 +943,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
+  public CompletableFuture<Void> mergeRegions(List<byte[]> nameOfRegionsToMerge, boolean forcible) {
+    throw new UnsupportedOperationException("mergeRegions");
+  }
+
+  @Override
   public CompletableFuture<Void> modifyNamespace(NamespaceDescriptor arg0) {
     throw new UnsupportedOperationException("modifyNamespace"); // TODO
   }
@@ -950,6 +1069,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Boolean> balancerSwitch(boolean arg0) {
     throw new UnsupportedOperationException("balancerSwitch"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> balancerSwitch(boolean on, boolean drainRITs) {
+    throw new UnsupportedOperationException("balancerSwitch");
   }
 
   @Override
@@ -1122,6 +1246,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
+  public CompletableFuture<Boolean> mergeSwitch(boolean enabled, boolean drainMerges) {
+    throw new UnsupportedOperationException("mergeSwitch");
+  }
+
+  @Override
   public CompletableFuture<Void> move(byte[] arg0) {
     throw new UnsupportedOperationException("move"); // TODO
   }
@@ -1155,5 +1284,10 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Boolean> splitSwitch(boolean arg0) {
     throw new UnsupportedOperationException("splitSwitch"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<Boolean> splitSwitch(boolean enabled, boolean drainSplits) {
+    throw new UnsupportedOperationException("splitSwitch");
   }
 }

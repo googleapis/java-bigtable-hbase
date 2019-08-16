@@ -19,6 +19,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.hbase.AbstractBigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
@@ -65,6 +66,21 @@ public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocat
   public CompletableFuture<HRegionLocation> getRegionLocation(
       byte[] row, int replicaId, boolean reload) {
     return getRegionLocation(row, reload);
+  }
+
+  @Override
+  public CompletableFuture<List<HRegionLocation>> getRegionLocations(byte[] row, boolean reload) {
+    throw new UnsupportedOperationException("getRegionLocations"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<HRegionLocation>> getAllRegionLocations() {
+    throw new UnsupportedOperationException("getAllRegionLocations"); // TODO
+  }
+
+  @Override
+  public void clearRegionLocationCache() {
+    throw new UnsupportedOperationException("clearRegionLocationCache");
   }
 
   @Override

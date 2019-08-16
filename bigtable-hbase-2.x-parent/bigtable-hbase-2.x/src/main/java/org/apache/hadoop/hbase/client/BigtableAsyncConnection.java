@@ -150,6 +150,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       }
 
       @Override
+      public AsyncAdminBuilder setRetryPauseForCQTBE(long l, TimeUnit timeUnit) {
+        return this;
+      }
+
+      @Override
       public AsyncAdminBuilder setOperationTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
@@ -182,6 +187,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
       @Override
       public AsyncBufferedMutatorBuilder setWriteBufferSize(long arg0) {
+        return this;
+      }
+
+      @Override
+      public AsyncBufferedMutatorBuilder setMaxKeyValueSize(int i) {
         return this;
       }
 
@@ -225,6 +235,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   }
 
   @Override
+  public boolean isClosed() {
+    return closed;
+  }
+
+  @Override
   public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName tableName) {
     return new AsyncTableBuilder<AdvancedScanResultConsumer>() {
 
@@ -252,6 +267,12 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setRetryPause(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setRetryPauseForCQTBE(
+          long l, TimeUnit timeUnit) {
         return this;
       }
 
@@ -286,6 +307,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   }
 
   @Override
+  public void clearRegionLocationCache() {
+    throw new UnsupportedOperationException("this ddoes not supported yet");
+  }
+
+  @Override
   public AsyncTableBuilder<ScanResultConsumer> getTableBuilder(
       TableName tableName, final ExecutorService ignored) {
     return new AsyncTableBuilder<ScanResultConsumer>() {
@@ -311,6 +337,12 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
       @Override
       public AsyncTableBuilder<ScanResultConsumer> setRetryPause(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<ScanResultConsumer> setRetryPauseForCQTBE(
+          long l, TimeUnit timeUnit) {
         return this;
       }
 

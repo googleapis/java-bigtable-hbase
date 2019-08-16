@@ -72,4 +72,9 @@ public class TestAsyncConnection extends AbstractAsyncTest {
             .getBufferedMutatorBuilder(sharedTestEnv.getDefaultTableName(), directExecutorService)
             .build());
   }
+
+  @Test
+  public void testConnectionIsClosed() throws Exception {
+    Assert.assertFalse("Connection should open at this point", getAsyncConnection().isClosed());
+  }
 }

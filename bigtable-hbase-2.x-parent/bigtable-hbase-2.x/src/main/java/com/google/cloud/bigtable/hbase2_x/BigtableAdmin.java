@@ -57,9 +57,13 @@ import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
+import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshotView;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
+import org.apache.hadoop.hbase.security.access.GetUserPermissionsRequest;
+import org.apache.hadoop.hbase.security.access.Permission;
+import org.apache.hadoop.hbase.security.access.UserPermission;
 import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
@@ -98,6 +102,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
     createTable(desc.getTableName(), TableAdapter2x.adapt(desc, splitKeys));
+  }
+
+  @Override
+  public Future<Void> createTableAsync(TableDescriptor tableDescriptor) throws IOException {
+    return asyncAdmin.createTable(tableDescriptor);
   }
 
   /** {@inheritDoc} */
@@ -422,6 +431,66 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
+  public boolean switchRpcThrottle(boolean enable) throws IOException {
+    throw new UnsupportedOperationException("switchRpcThrottle");
+  }
+
+  @Override
+  public boolean isRpcThrottleEnabled() throws IOException {
+    throw new UnsupportedOperationException("isRpcThrottleEnabled");
+  }
+
+  @Override
+  public boolean exceedThrottleQuotaSwitch(boolean b) throws IOException {
+    throw new UnsupportedOperationException("exceedThrottleQuotaSwitch");
+  }
+
+  @Override
+  public Map<TableName, Long> getSpaceQuotaTableSizes() throws IOException {
+    throw new UnsupportedOperationException("getSpaceQuotaTableSizes");
+  }
+
+  @Override
+  public Map<TableName, ? extends SpaceQuotaSnapshotView> getRegionServerSpaceQuotaSnapshots(
+      ServerName serverName) throws IOException {
+    throw new UnsupportedOperationException("getRegionServerSpaceQuotaSnapshots");
+  }
+
+  @Override
+  public SpaceQuotaSnapshotView getCurrentSpaceQuotaSnapshot(String namespace) throws IOException {
+    throw new UnsupportedOperationException("getCurrentSpaceQuotaSnapshot");
+  }
+
+  @Override
+  public SpaceQuotaSnapshotView getCurrentSpaceQuotaSnapshot(TableName tableName)
+      throws IOException {
+    throw new UnsupportedOperationException("getCurrentSpaceQuotaSnapshot");
+  }
+
+  @Override
+  public void grant(UserPermission userPermission, boolean mergeExistingPermissions)
+      throws IOException {
+    throw new UnsupportedOperationException("grant");
+  }
+
+  @Override
+  public void revoke(UserPermission userPermission) throws IOException {
+    throw new UnsupportedOperationException("revoke");
+  }
+
+  @Override
+  public List<UserPermission> getUserPermissions(
+      GetUserPermissionsRequest getUserPermissionsRequest) throws IOException {
+    throw new UnsupportedOperationException("getUserPermissions");
+  }
+
+  @Override
+  public List<Boolean> hasUserPermissions(String userName, List<Permission> permissions)
+      throws IOException {
+    throw new UnsupportedOperationException("hasUserPermissions");
+  }
+
+  @Override
   public void compact(TableName arg0, CompactType arg1) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("compact");
   }
@@ -588,8 +657,19 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
+  public Map<ServerName, Boolean> compactionSwitch(
+      boolean switchState, List<String> serverNamesList) throws IOException {
+    throw new UnsupportedOperationException("compactionSwitch");
+  }
+
+  @Override
   public Future<Void> mergeRegionsAsync(byte[][] arg0, boolean arg1) throws IOException {
     throw new UnsupportedOperationException("mergeRegionsAsync"); // TODO
+  }
+
+  @Override
+  public Future<Void> splitRegionAsync(byte[] regionName) throws IOException {
+    throw new UnsupportedOperationException("splitRegionAsync");
   }
 
   @Override
@@ -735,6 +815,16 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void majorCompactRegionServer(ServerName arg0) throws IOException {
     throw new UnsupportedOperationException("majorCompactRegionServer"); // TODO
+  }
+
+  @Override
+  public void move(byte[] encodedRegionName) throws IOException {
+    throw new UnsupportedOperationException("move");
+  }
+
+  @Override
+  public void move(byte[] encodedRegionName, ServerName destServerName) throws IOException {
+    throw new UnsupportedOperationException("move");
   }
 
   @Override
