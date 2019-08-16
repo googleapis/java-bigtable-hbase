@@ -70,7 +70,7 @@ limitations under the License.
 
         <!-- testing dependency versions -->
         <junit.version>4.12</junit.version>
-        <mockito.version>2.25.1</mockito.version>
+        <mockito.version>2.28.2</mockito.version>
 
         <beam.version>2.11.0</beam.version>
         <!-- referred from bigtable-beam-import and bigtable-emulator -->
