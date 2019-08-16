@@ -284,9 +284,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
                             return getDescriptor(tbName).join();
                           } catch (CompletionException ex) {
                             if (ex.getCause() instanceof TableNotFoundException) {
-                              LOG.warn(
-                                  "Table not found while fetching details for %s",
-                                  ex, tbName.getNameAsString());
+                              // If table not found then remove it from the list.
                               return null;
                             }
                             throw ex;
