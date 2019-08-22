@@ -60,7 +60,7 @@ limitations under the License.
         <!-- google-cloud-java related dependency versions -->
         <google-cloud.version>0.103.0-alpha</google-cloud.version>
         <opencensus.version>0.23.0</opencensus.version>
-        <checkerframework.version>2.5.2</checkerframework.version>
+        <checkerframework.version>2.5.5</checkerframework.version>
 
         <!-- hbase dependency versions -->
         <hbase.version.1>1.4.10</hbase.version.1>
