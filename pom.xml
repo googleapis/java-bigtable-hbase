@@ -49,7 +49,7 @@ limitations under the License.
         <compileSource.1.8>1.8</compileSource.1.8>
 
         <!-- core dependency versions -->
-        <dropwizard.metrics.version>3.2.6</dropwizard.metrics.version>
+        <dropwizard.metrics.version>4.1.0</dropwizard.metrics.version>
         <slf4j.version>1.7.28</slf4j.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-logging.version>1.2</commons-logging.version>
