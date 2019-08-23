@@ -35,6 +35,11 @@ public class TestCreateTable extends AbstractTestCreateTable {
     getConnection().getAdmin().createTable(createDescriptor(tableName));
   }
 
+  /** HBaseV2 supports all alphabetic/ASCII characters, So skipping this test case. */
+  protected boolean isBadTableName(String tableName) {
+    return false;
+  }
+
   @Override
   protected void createTable(TableName tableName, byte[] start, byte[] end, int splitCount)
       throws IOException {

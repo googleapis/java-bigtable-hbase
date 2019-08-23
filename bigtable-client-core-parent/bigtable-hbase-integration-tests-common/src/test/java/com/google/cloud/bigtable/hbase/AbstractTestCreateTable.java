@@ -157,7 +157,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
     }
   }
 
-  private static boolean isBadTableName(String tableName) {
+  protected boolean isBadTableName(String tableName) {
     byte[] tableChars = tableName.getBytes();
     for (byte codePoint : tableChars) {
       if (!Character.isAlphabetic(codePoint)) {
