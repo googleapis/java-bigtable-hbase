@@ -66,7 +66,7 @@ limitations under the License.
       <version>${beam.version}</version>
     </dependency>
 
-    <!--  TODO: remove these dependencies when upgraded through transitive dependency
+    <!--  TODO: remove these dependencies when upgraded through transitive dependency (beam-runners-google-cloud-dataflow-java)
         these are not used directly, but upgrading due to transitive vulnerabilities in older versions-->
     <dependency>
       <groupId>commons-codec</groupId>

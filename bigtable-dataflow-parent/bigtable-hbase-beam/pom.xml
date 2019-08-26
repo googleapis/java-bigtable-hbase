@@ -60,7 +60,7 @@ limitations under the License.
 
         </dependency>
 
-        <!--  TODO: remove this dependency when upgraded through transitive dependency
+        <!--  TODO: remove this dependency when upgraded through transitive dependency (beam-sdks-java-core)
           this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
         <dependency>
             <groupId>org.apache.commons</groupId>
