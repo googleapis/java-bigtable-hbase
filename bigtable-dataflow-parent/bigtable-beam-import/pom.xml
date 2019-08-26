@@ -65,8 +65,16 @@ limitations under the License.
       <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
       <version>${beam.version}</version>
     </dependency>
-
-
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.13</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>2.7.5</version>
+    </dependency>
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
