@@ -90,10 +90,9 @@ public class TestSnapshots extends AbstractTestSnapshot {
   @Override
   protected int listTableSnapshotsSize(String tableNameRegex, String snapshotNameRegex)
       throws IOException {
-    //    try(Admin admin = getConnection().getAdmin()) {
-    //      return admin.listTableSnapshots(tableNameRegex, snapshotNameRegex).size();
-    //    }
-    return 0;
+    try (Admin admin = getConnection().getAdmin()) {
+      return admin.listTableSnapshots(tableNameRegex, snapshotNameRegex).size();
+    }
   }
 
   @Override
@@ -106,10 +105,9 @@ public class TestSnapshots extends AbstractTestSnapshot {
   @Override
   protected int listTableSnapshotsSize(Pattern tableNamePattern, Pattern snapshotNamePattern)
       throws IOException {
-    //    try(Admin admin = getConnection().getAdmin()) {
-    //      return admin.listTableSnapshots(tableNamePattern, snapshotNamePattern).size();
-    //    }
-    return 0;
+    try (Admin admin = getConnection().getAdmin()) {
+      return admin.listTableSnapshots(tableNamePattern, snapshotNamePattern).size();
+    }
   }
 
   @Override
@@ -121,9 +119,8 @@ public class TestSnapshots extends AbstractTestSnapshot {
 
   @Override
   protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
-    //    try(Admin admin = getConnection().getAdmin()){
-    //      return admin.listTableSnapshots(tableNamePattern, Pattern.compile(".*")).size();
-    //    }
-    return 0;
+    try (Admin admin = getConnection().getAdmin()) {
+      return admin.listTableSnapshots(tableNamePattern, Pattern.compile(".*")).size();
+    }
   }
 }

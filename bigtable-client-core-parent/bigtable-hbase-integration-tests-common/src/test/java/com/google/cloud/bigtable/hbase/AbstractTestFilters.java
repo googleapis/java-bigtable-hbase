@@ -2182,8 +2182,10 @@ public abstract class AbstractTestFilters extends AbstractTest {
     assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
 
     // If pass an empty string, we should not receive any rows.
+
+    // If there is no regex is provided at the end then HBase scans rows as ".*".
     expected = new int[] {};
-    conditions = new String[] {""};
+    conditions = new String[] {"$"};
     assertRowKeysWithRegex(table, conditions, rowPrefix, rowKeys, expected);
 
     // If unmatched string is passed
