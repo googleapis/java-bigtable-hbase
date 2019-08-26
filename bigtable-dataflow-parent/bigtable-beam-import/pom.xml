@@ -60,13 +60,14 @@ limitations under the License.
       <version>${beam.version}</version>
     </dependency>
 
+    <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
       <version>${beam.version}</version>
     </dependency>
 
-    <!--  TODO: remove these dependencies when upgraded through transitive dependency (beam-runners-google-cloud-dataflow-java)
+    <!-- TODO: remove these dependencies when upgraded through transitive dependency (beam-runners-google-cloud-dataflow-java)
         these are not used directly, but upgrading due to transitive vulnerabilities in older versions-->
     <dependency>
       <groupId>commons-codec</groupId>
