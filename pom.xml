@@ -173,7 +173,7 @@ limitations under the License.
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.10.4</version>
+                    <version>3.1.1</version>
                     <configuration>
                         <windowtitle>Cloud Bigtable HBase Client for Java ${project.version} API</windowtitle>
                         <doctitle>Cloud Bigtable HBase Client for Java ${project.version} API</doctitle>
