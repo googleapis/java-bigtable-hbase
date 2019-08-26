@@ -65,6 +65,9 @@ limitations under the License.
       <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
       <version>${beam.version}</version>
     </dependency>
+
+    <!--  TODO: remove these dependencies when upgraded through transitive dependency
+        these are not used directly, but upgrading due to transitive vulnerabilities in older versions-->
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
@@ -75,6 +78,7 @@ limitations under the License.
       <artifactId>okhttp</artifactId>
       <version>2.7.5</version>
     </dependency>
+
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
