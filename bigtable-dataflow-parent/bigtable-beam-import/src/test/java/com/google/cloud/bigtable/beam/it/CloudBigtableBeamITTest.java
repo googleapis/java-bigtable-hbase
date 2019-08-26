@@ -71,22 +71,30 @@ import org.junit.runners.JUnit4;
  * This class contains integration test for Beam Dataflow.It creates dataflow pipelines that perform
  * the following task using pipeline chain process:
  *
+ * <ol>
+ *   <li>Creates records and performs a Bigtable Put on each record.
+ *   <li>Creates Scan and perform count for each Row of Bigtable.
+ * </ol>
+ *
+ * <p>Arguments to configure in this integration test. These are required for running the test case
+ * on Google Cloud Platform.
+ *
  * <pre>
- *   <ol>
- *     <li> Creates records and performs a Bigtable Put on each record.
- *     <li> Creates Scan and perform count for each Row of Bigtable.
- *   </ol>
+ *  -Dgoogle.bigtable.project.id=[bigtable project] \
+ *  -Dgoogle.bigtable.instance.id=[bigtable instance id] \
+ *  -DdataflowStagingLocation=gs://[google storage bucket] \
+ *  -DdataflowZoneId=[dataflow zone Id]
  * </pre>
  *
- * Arguments to configure in this integration test. The first four argument are required when
- * running the test case on Google Cloud Platform. -Dgoogle.bigtable.project.id=[bigtable project]
- * \\ -Dgoogle.bigtable.instance.id=[bigtable instance id] \\ -DstagingLocation=gs://[your google
- * storage bucket] \\ -DdataflowZoneId=[dataflow zone Id] \\
+ * <p>These options are optional, If not provided it will fallback to defaults.
  *
- * <p>This options are optional, If not provided it will fallback to defaults.
- * -Dgoogle.bigtable.endpoint.host=[ bigtable batch host] \\
- * -Dgoogle.bigtable.admin.endpoint.host=[bigtable admin host] \\ -DtableName=[tableName to be used]
- * \\ -Dtotal_row_count=[number of rows to write and read] \\ -Dprefix_count=[cell prefix count] \\
+ * <pre>
+ *  -Dgoogle.bigtable.endpoint.host=[bigtable batch host] \
+ *  -Dgoogle.bigtable.admin.endpoint.host=[bigtable admin host] \
+ *  -DtableName=[tableName to be used] \
+ *  -Dtotal_row_count=[number of rows to write and read] \
+ *  -Dprefix_count=[cell prefix count]
+ * </pre>
  */
 @RunWith(JUnit4.class)
 public class CloudBigtableBeamITTest {
@@ -113,9 +121,9 @@ public class CloudBigtableBeamITTest {
   private static final TableName TABLE_NAME = TableName.valueOf(TABLE_NAME_STR);
   private static final byte[] FAMILY = Bytes.toBytes("test-family");
   private static final byte[] QUALIFIER = Bytes.toBytes("test-qualifier");
-  private static final int CELL_SIZE = Integer.getInteger("cell_size", 1_00);
-  private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 10_000);
-  private static final int PREFIX_COUNT = Integer.getInteger("prefix_count", 1_00);
+  private static final int CELL_SIZE = Integer.getInteger("cell_size", 1_000);
+  private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 1_000_000);
+  private static final int PREFIX_COUNT = Integer.getInteger("prefix_count", 1_000);
 
   @BeforeClass
   public static void setUpConfiguration() {
