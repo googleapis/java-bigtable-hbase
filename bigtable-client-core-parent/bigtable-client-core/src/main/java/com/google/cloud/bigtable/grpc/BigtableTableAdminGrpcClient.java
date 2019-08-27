@@ -49,6 +49,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.iam.v1.GetIamPolicyRequest;
+import com.google.iam.v1.Policy;
+import com.google.iam.v1.SetIamPolicyRequest;
+import com.google.iam.v1.TestIamPermissionsRequest;
+import com.google.iam.v1.TestIamPermissionsResponse;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 import io.grpc.CallOptions;
@@ -78,6 +83,10 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
       generateConsistencyTokenRpc;
   private final BigtableAsyncRpc<CheckConsistencyRequest, CheckConsistencyResponse>
       checkConsistencyRpc;
+  private final BigtableAsyncRpc<GetIamPolicyRequest, Policy> getIamPolicyRpc;
+  private final BigtableAsyncRpc<SetIamPolicyRequest, Policy> setIamPolicyRpc;
+  private final BigtableAsyncRpc<TestIamPermissionsRequest, TestIamPermissionsResponse>
+      testIamPermissionsRpc;
 
   private final BigtableAsyncRpc<SnapshotTableRequest, Operation> snapshotTableRpc;
   private final BigtableAsyncRpc<GetSnapshotRequest, Snapshot> getSnapshotRpc;
@@ -131,6 +140,19 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         asyncUtilities.createAsyncRpc(
             BigtableTableAdminGrpc.getCheckConsistencyMethod(),
             Predicates.<CheckConsistencyRequest>alwaysFalse());
+    this.getIamPolicyRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getIamPolicyMethod(),
+            Predicates.<GetIamPolicyRequest>alwaysFalse());
+    this.setIamPolicyRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.setIamPolicyMethod(),
+            Predicates.<SetIamPolicyRequest>alwaysFalse());
+    this.testIamPermissionsRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.testIamPermissionsMethod(),
+            Predicates.<TestIamPermissionsRequest>alwaysFalse());
+
     this.snapshotTableRpc =
         asyncUtilities.createAsyncRpc(
             BigtableTableAdminGrpc.getSnapshotTableMethod(),
@@ -260,6 +282,25 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     waitForReplication(tableName, backOff);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public Table getIamPolicy(GetIamPolicyRequest request) {
+    return createUnaryListener(request, getIamPolicyRpc, request.getResource()).getBlockingResult();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Table setIamPolicy(SetIamPolicyRequest request) {
+    return createUnaryListener(request, setIamPolicyRpc, request.getResource()).getBlockingResult();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Table testIamPermissions(TestIamPermissionsRequest request) {
+    return createUnaryListener(request, testIamPermissionsRpc, request.getResource())
+        .getBlockingResult();
+  }
+
   @VisibleForTesting
   void waitForReplication(BigtableTableName tableName, BackOff backOff)
       throws InterruptedException, TimeoutException {
@@ -304,6 +345,7 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         .getBlockingResult()
         .getConsistent();
   }
+
 
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String resource) {
