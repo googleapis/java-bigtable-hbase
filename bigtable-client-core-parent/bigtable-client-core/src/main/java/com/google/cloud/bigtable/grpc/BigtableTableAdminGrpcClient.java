@@ -346,7 +346,6 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         .getConsistent();
   }
 
-
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String resource) {
     CallOptions callOptions = CallOptions.DEFAULT;
