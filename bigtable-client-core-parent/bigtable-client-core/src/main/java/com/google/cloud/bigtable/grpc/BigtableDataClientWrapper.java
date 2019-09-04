@@ -115,7 +115,7 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
 
   /** {@inheritDoc} */
   @Override
-  public IBulkMutation createBulkMutationBatcher() {
+  public IBulkMutation createBulkMutationBatcher(String tableId) {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 

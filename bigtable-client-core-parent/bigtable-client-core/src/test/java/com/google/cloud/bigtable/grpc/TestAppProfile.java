@@ -37,6 +37,7 @@ import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Queues;
@@ -187,7 +188,7 @@ public class TestAppProfile {
     BigtableTableName fakeTableName =
         new BigtableTableName("projects/fake-project/instances/fake-instance/tables/fake-table");
 
-    RowMutation rowMutation = RowMutation.create(TABLE_ID, "fake-key");
+    RowMutationEntry rowMutation = RowMutationEntry.create("fake-key");
 
     IBulkMutation bulkMutation = defaultSession.createBulkMutationWrapper(fakeTableName);
     bulkMutation.add(rowMutation);
