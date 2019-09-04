@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
@@ -28,6 +29,7 @@ import com.google.common.base.Preconditions;
  * This class is meant to replicate existing {@link BulkMutation} while translating calls to
  * Google-Cloud-Java's {@link BulkMutationBatcher} api.
  */
+@InternalApi("For internal usage only")
 public class BulkMutationGCJClient implements IBulkMutation {
 
   private static Logger LOG = new Logger(BulkMutation.class);

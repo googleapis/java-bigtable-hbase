@@ -16,11 +16,13 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 
 /**
  * Interface to support batching multiple {@link RowMutation} request into a single grpc request.
  */
+@InternalApi("For internal usage only")
 public interface IBulkMutation {
 
   /**

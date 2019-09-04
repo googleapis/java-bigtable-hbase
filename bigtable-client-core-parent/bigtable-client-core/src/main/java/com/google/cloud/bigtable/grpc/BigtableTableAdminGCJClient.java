@@ -20,6 +20,7 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.GetSnapshotRequest;
@@ -42,6 +43,7 @@ import javax.annotation.Nonnull;
  * This class implements existing {@link IBigtableTableAdminClient} operations with
  * Google-cloud-java's {@link BigtableTableAdminClient} & {@link BaseBigtableTableAdminClient}.
  */
+@InternalApi("For internal usage only")
 public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient, AutoCloseable {
 
   private final BigtableTableAdminClient delegate;

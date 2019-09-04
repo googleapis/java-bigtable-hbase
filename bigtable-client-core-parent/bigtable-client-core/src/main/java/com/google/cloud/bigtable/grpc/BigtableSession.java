@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.grpc.GaxGrpcProperties;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.bigtable.admin.v2.ListClustersResponse;
@@ -400,6 +401,7 @@ public class BigtableSession implements Closeable {
    *
    * @return a {@link IBigtableDataClient} object.
    */
+  @InternalApi("For internal usage only")
   public IBigtableDataClient getDataClientWrapper() {
     if (options.useGCJClient()) {
       return dataGCJClient;
@@ -431,6 +433,7 @@ public class BigtableSession implements Closeable {
    * @param tableName a {@link BigtableTableName} object.
    * @return a {@link IBigtableDataClient} object.
    */
+  @InternalApi("For internal usage only")
   public IBulkMutation createBulkMutationWrapper(BigtableTableName tableName) {
     if (options.useGCJClient()) {
       return getDataClientWrapper().createBulkMutationBatcher();
@@ -456,11 +459,9 @@ public class BigtableSession implements Closeable {
   /**
    * Getter for the field <code>tableAdminClient</code>.
    *
-   * @deprecated Please use {@link #getTableAdminClientWrapper()}.
    * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
    * @throws java.io.IOException if any.
    */
-  @Deprecated
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
       ManagedChannel channel = createManagedPool(options.getAdminHost(), 1);
@@ -478,6 +479,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link BigtableTableAdminClientWrapper} object.
    * @throws java.io.IOException if any.
    */
+  @InternalApi("For internal usage only")
   public synchronized IBigtableTableAdminClient getTableAdminClientWrapper() throws IOException {
     if (options.useGCJClient()) {
       if (adminGCJClient == null) {
