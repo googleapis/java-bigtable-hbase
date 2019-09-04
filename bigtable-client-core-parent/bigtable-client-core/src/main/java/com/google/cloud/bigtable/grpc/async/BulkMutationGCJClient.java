@@ -32,7 +32,7 @@ import com.google.common.base.Preconditions;
 @InternalApi("For internal usage only")
 public class BulkMutationGCJClient implements IBulkMutation {
 
-  private static Logger LOG = new Logger(BulkMutation.class);
+  private static Logger LOG = new Logger(BulkMutationGCJClient.class);
 
   private final BulkMutationBatcher bulkMutateBatcher;
   private final OperationAccountant operationAccountant;

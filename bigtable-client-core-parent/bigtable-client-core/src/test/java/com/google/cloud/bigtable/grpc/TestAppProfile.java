@@ -146,17 +146,6 @@ public class TestAppProfile {
   }
 
   @Test
-  public void testMutateRows() throws Exception {
-    defaultSession.getDataClient().mutateRows(MutateRowsRequest.getDefaultInstance());
-    MutateRowsRequest req = fakeDataService.popLastRequest();
-    Preconditions.checkState(req.getAppProfileId().isEmpty());
-
-    profileSession.getDataClient().mutateRows(MutateRowsRequest.getDefaultInstance());
-    MutateRowsRequest req2 = fakeDataService.popLastRequest();
-    Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
-  }
-
-  @Test
   public void testCheckAndMutateRow() throws Exception {
     ConditionalRowMutation checkAndMuate =
         ConditionalRowMutation.create(TABLE_ID, "fake-key")

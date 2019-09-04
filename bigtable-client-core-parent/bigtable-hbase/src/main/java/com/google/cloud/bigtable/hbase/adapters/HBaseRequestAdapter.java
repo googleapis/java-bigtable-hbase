@@ -319,15 +319,6 @@ public class HBaseRequestAdapter {
     return tableName;
   }
 
-  /**
-   * getTableNameString.
-   *
-   * @return a {@link java.lang.String} object.
-   */
-  protected String getTableNameString() {
-    return getBigtableTableName().toString();
-  }
-
   private RowMutation newRowMutationModel(byte[] rowKey) {
     if (!mutationAdapters.putAdapter.isSetClientTimestamp()) {
       return RowMutation.create(

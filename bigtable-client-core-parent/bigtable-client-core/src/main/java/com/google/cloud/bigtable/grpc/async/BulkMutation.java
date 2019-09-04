@@ -416,7 +416,6 @@ public class BulkMutation {
               entry.getMutationsCount(),
               MAX_NUMBER_OF_MUTATIONS));
     }
-    ;
 
     boolean didSend = false;
     if (currentBatch != null && currentBatch.wouldBeFull(entry)) {

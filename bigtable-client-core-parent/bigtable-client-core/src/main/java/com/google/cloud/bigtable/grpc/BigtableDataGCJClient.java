@@ -38,8 +38,8 @@ import io.grpc.stub.StreamObserver;
 import java.util.List;
 
 /**
- * This class implements existing {@link com.google.cloud.bigtable.core.IBigtableDataClient}
- * operations with Google-cloud-java's {@link com.google.cloud.bigtable.data.v2.BigtableDataClient}.
+ * This class implements existing {@link IBigtableDataClient} operations with Google-cloud-java's
+ * {@link com.google.cloud.bigtable.data.v2.BigtableDataClient}.
  */
 @InternalApi("For internal usage only")
 public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable {
@@ -138,8 +138,6 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
   /**
    * To wrap stream of native CBT client's {@link StreamObserver} onto GCJ {@link
    * com.google.api.gax.rpc.ResponseObserver}.
-   *
-   * <p>Note:Inspired from {@link com.google.api.gax.rpc.ApiStreamObserverAdapter} of GCJ.
    */
   private static class StreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
     private final StreamObserver<T> delegate;
