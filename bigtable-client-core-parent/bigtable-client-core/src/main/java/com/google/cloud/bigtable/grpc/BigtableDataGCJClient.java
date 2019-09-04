@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
@@ -40,6 +41,7 @@ import java.util.List;
  * This class implements existing {@link com.google.cloud.bigtable.core.IBigtableDataClient}
  * operations with Google-cloud-java's {@link com.google.cloud.bigtable.data.v2.BigtableDataClient}.
  */
+@InternalApi("For internal usage only")
 public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable {
 
   private final BigtableDataClient delegate;

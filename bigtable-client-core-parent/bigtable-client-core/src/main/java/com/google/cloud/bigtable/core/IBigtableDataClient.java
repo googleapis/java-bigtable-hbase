@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -67,6 +68,7 @@ public interface IBigtableDataClient {
   ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow);
 
   /** Creates {@link IBulkMutation} batcher. */
+  @InternalApi("For internal usage only")
   IBulkMutation createBulkMutationBatcher();
 
   /**
