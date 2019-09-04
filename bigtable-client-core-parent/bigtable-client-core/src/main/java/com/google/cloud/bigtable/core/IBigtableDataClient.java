@@ -32,6 +32,7 @@ import java.util.List;
  * Interface to wrap {@link com.google.cloud.bigtable.grpc.BigtableDataClient} with
  * Google-Cloud-java's models.
  */
+@InternalApi("For internal usage only")
 public interface IBigtableDataClient {
 
   /**
@@ -68,7 +69,6 @@ public interface IBigtableDataClient {
   ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow);
 
   /** Creates {@link IBulkMutation} batcher. */
-  @InternalApi("For internal usage only")
   IBulkMutation createBulkMutationBatcher();
 
   /**
