@@ -93,6 +93,7 @@ public class BigtableBufferedMutatorHelper {
     closedWriteLock.lock();
     try {
       flush();
+      bulkMutation.close();
       closed = true;
     } finally {
       closedWriteLock.unlock();
