@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -171,5 +172,19 @@ public class TestBigtableBufferedMutator {
     verify(mockBulkMutation, times(count)).add(any(RowMutation.class));
     underTest.flush();
     verify(mockBulkMutation, times(1)).flush();
+  }
+
+  @Test
+  public void testClose() throws IOException {
+    Configuration config = new Configuration(false);
+    doNothing().when(mockBulkMutation).close();
+    when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(future);
+    BigtableBufferedMutator underTest = createMutator(config);
+    underTest.mutate(SIMPLE_PUT);
+
+    underTest.close();
+
+    verify(mockBulkMutation).add(any(RowMutation.class));
+    verify(mockBulkMutation).close();
   }
 }

@@ -18,12 +18,13 @@ package com.google.cloud.bigtable.core;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import java.io.IOException;
 
 /**
  * Interface to support batching multiple {@link RowMutation} request into a single grpc request.
  */
 @InternalApi("For internal usage only")
-public interface IBulkMutation {
+public interface IBulkMutation extends AutoCloseable {
 
   /**
    * Adds a {@link RowMutation} to the underlying IBulkMutation mechanism.
@@ -42,4 +43,7 @@ public interface IBulkMutation {
 
   /** @return false if there is any outstanding {@link RowMutation} that still needs to be sent. */
   boolean isFlushed();
+
+  @Override
+  void close() throws IOException;
 }

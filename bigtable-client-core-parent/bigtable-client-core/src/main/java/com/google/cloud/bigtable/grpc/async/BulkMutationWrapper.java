@@ -22,12 +22,15 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import java.io.IOException;
 
 /** This class wraps existing {@link BulkMutation} with Google-cloud-java's model. */
 public class BulkMutationWrapper implements IBulkMutation {
 
   private final BulkMutation delegate;
   private final RequestContext requestContext;
+  private boolean isClosed;
 
   public BulkMutationWrapper(BulkMutation bulkMutation, RequestContext requestContext) {
     this.delegate = bulkMutation;
@@ -37,6 +40,7 @@ public class BulkMutationWrapper implements IBulkMutation {
   /** {@inheritDoc} */
   @Override
   public ApiFuture<Void> add(RowMutation rowMutation) {
+    Preconditions.checkState(!isClosed, "can't mutate when the bulk mutation is closed.");
     return ApiFutureUtil.transformAndAdapt(
         delegate.add(rowMutation.toBulkProto(requestContext).getEntries(0)),
         new Function<MutateRowResponse, Void>() {
@@ -63,5 +67,10 @@ public class BulkMutationWrapper implements IBulkMutation {
   @Override
   public boolean isFlushed() {
     return delegate.isFlushed();
+  }
+
+  @Override
+  public void close() throws IOException {
+    isClosed = true;
   }
 }
