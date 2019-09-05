@@ -44,6 +44,7 @@ public interface IBulkMutation extends AutoCloseable {
   /** @return false if there is any outstanding {@link RowMutation} that still needs to be sent. */
   boolean isFlushed();
 
+  /** Closes this bulk Mutation and prevents from mutating any more elements */
   @Override
   void close() throws IOException;
 }
