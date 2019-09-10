@@ -149,15 +149,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   /**
-   * hasInflightRequests.
-   *
-   * @return a boolean.
-   */
-  public boolean hasInflightRequests() {
-    return helper.hasInflightRequests();
-  }
-
-  /**
    * Create a {@link RetriesExhaustedWithDetailsException} if there were any async exceptions and
    * send it to the {@link org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener}.
    */

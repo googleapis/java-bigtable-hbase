@@ -64,13 +64,6 @@ public class TestBulkMutationWrapper {
   }
 
   @Test
-  public void testIsFlushed() {
-    when(mockDelegate.isFlushed()).thenReturn(true);
-    assertTrue(bulkWrapper.isFlushed());
-    verify(mockDelegate).isFlushed();
-  }
-
-  @Test
   public void testAddMutate() {
     RowMutation rowMutation = RowMutation.create("tableId", "key");
     MutateRowsRequest.Entry requestProto = rowMutation.toBulkProto(requestContext).getEntries(0);

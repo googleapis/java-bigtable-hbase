@@ -29,15 +29,11 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.common.base.MoreObjects;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -52,29 +48,8 @@ import org.apache.hadoop.hbase.security.User;
  */
 public abstract class AbstractBigtableConnection
     implements Connection, CommonConnection, Closeable {
-  private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
-  private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
-      Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
 
   static {
-    Runnable shutDownRunnable =
-        new Runnable() {
-          @Override
-          public void run() {
-            for (BigtableBufferedMutator bbm : ACTIVE_BUFFERED_MUTATORS.values()) {
-              if (bbm.hasInflightRequests()) {
-                int size = ACTIVE_BUFFERED_MUTATORS.size();
-                new Logger(AbstractBigtableConnection.class)
-                    .warn(
-                        "Shutdown is commencing and you have open %d buffered mutators."
-                            + "You need to close() or flush() them so that is not lost",
-                        size);
-                break;
-              }
-            }
-          }
-        };
-    Runtime.getRuntime().addShutdownHook(new Thread(shutDownRunnable));
 
     // Force the loading of HConstants.class, which shares a bi-directional reference with KeyValue.
     // This bi-directional relationship causes problems when KeyValue and HConstants are class
@@ -171,23 +146,9 @@ public abstract class AbstractBigtableConnection
       throw new IllegalArgumentException("TableName cannot be null.");
     }
 
-    final long id = SEQUENCE_GENERATOR.incrementAndGet();
-
     HBaseRequestAdapter adapter = createAdapter(tableName);
     ExceptionListener listener = params.getListener();
-    BigtableBufferedMutator bigtableBufferedMutator =
-        new BigtableBufferedMutator(adapter, conf, session, listener) {
-          @Override
-          public void close() throws IOException {
-            try {
-              super.close();
-            } finally {
-              ACTIVE_BUFFERED_MUTATORS.remove(id);
-            }
-          }
-        };
-    ACTIVE_BUFFERED_MUTATORS.put(id, bigtableBufferedMutator);
-    return bigtableBufferedMutator;
+    return new BigtableBufferedMutator(adapter, conf, session, listener);
   }
 
   public HBaseRequestAdapter createAdapter(TableName tableName) {

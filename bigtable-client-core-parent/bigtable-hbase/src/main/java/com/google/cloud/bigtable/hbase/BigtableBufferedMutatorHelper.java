@@ -223,15 +223,4 @@ public class BigtableBufferedMutatorHelper {
     }
     return future;
   }
-
-  /**
-   * hasInflightRequests.
-   *
-   * @return a boolean.
-   */
-  public boolean hasInflightRequests() {
-    return bulkMutation != null
-        && !bulkMutation.isFlushed()
-        && operationAccountant.hasInflightOperations();
-  }
 }

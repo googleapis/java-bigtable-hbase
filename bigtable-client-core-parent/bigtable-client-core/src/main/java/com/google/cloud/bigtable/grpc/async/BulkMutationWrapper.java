@@ -63,12 +63,6 @@ public class BulkMutationWrapper implements IBulkMutation {
     delegate.flush();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public boolean isFlushed() {
-    return delegate.isFlushed();
-  }
-
   @Override
   public void close() throws IOException {
     isClosed = true;
