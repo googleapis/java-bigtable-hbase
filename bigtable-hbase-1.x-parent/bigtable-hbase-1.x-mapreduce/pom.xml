@@ -33,7 +33,7 @@ limitations under the License.
     </description>
 
     <properties>
-        <hadoop.version>2.7.3</hadoop.version>
+        <hadoop.version>2.9.2</hadoop.version>
         <hadoop.scope>provided</hadoop.scope>
     </properties>
 
