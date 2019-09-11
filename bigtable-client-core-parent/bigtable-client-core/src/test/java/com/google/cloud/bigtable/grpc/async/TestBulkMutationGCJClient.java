@@ -110,16 +110,6 @@ public class TestBulkMutationGCJClient {
   }
 
   @Test
-  public void testIsFlushed() {
-    when(callable.futureCall(rowMutation)).thenReturn(future);
-    bulkMutationClient.add(rowMutation);
-    assertFalse("BulkMutation should have one pending element", bulkMutationClient.isFlushed());
-    future.set(null);
-    assertTrue("BulkMutation should not have any pending element", bulkMutationClient.isFlushed());
-    verify(callable).futureCall(rowMutation);
-  }
-
-  @Test
   public void testIsClosed() throws IOException {
     bulkMutationClient.close();
     Exception actualEx = null;

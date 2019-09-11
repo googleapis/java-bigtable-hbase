@@ -41,9 +41,6 @@ public interface IBulkMutation extends AutoCloseable {
   /** Sends any outstanding {@link RowMutation} and wait until all requests are complete. */
   void flush() throws InterruptedException;
 
-  /** @return false if there is any outstanding {@link RowMutation} that still needs to be sent. */
-  boolean isFlushed();
-
   /** Closes this bulk Mutation and prevents from mutating any more elements */
   @Override
   void close() throws IOException;

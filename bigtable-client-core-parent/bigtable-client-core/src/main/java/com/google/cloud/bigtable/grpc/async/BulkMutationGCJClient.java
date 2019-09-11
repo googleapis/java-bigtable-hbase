@@ -69,12 +69,6 @@ public class BulkMutationGCJClient implements IBulkMutation {
     }
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public boolean isFlushed() {
-    return !operationAccountant.hasInflightOperations();
-  }
-
   @Override
   public void close() throws IOException {
     try {
