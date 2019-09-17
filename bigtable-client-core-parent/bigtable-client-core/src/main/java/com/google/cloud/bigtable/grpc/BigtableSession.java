@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.grpc.GaxGrpcProperties;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.bigtable.admin.v2.ListClustersResponse;
@@ -215,8 +216,8 @@ public class BigtableSession implements Closeable {
   /**
    * Constructor for BigtableSession.
    *
-   * @param opts a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @throws java.io.IOException if any.
+   * @param opts a {@link BigtableOptions} object.
+   * @throws IOException if any.
    */
   public BigtableSession(BigtableOptions opts) throws IOException {
     this.options = opts;
@@ -389,7 +390,7 @@ public class BigtableSession implements Closeable {
   /**
    * Getter for the field <code>dataClient</code>.
    *
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
+   * @return a {@link BigtableDataClient} object.
    */
   public BigtableDataClient getDataClient() {
     return dataClient;
@@ -400,6 +401,7 @@ public class BigtableSession implements Closeable {
    *
    * @return a {@link IBigtableDataClient} object.
    */
+  @InternalApi("For internal usage only")
   public IBigtableDataClient getDataClientWrapper() {
     if (options.useGCJClient()) {
       return dataGCJClient;
@@ -411,8 +413,8 @@ public class BigtableSession implements Closeable {
   /**
    * createBulkMutation.
    *
-   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
-   * @return a {@link com.google.cloud.bigtable.grpc.async.BulkMutation} object.
+   * @param tableName a {@link BigtableTableName} object.
+   * @return a {@link BulkMutation} object.
    */
   public BulkMutation createBulkMutation(BigtableTableName tableName) {
     if (options.useGCJClient()) {
@@ -431,6 +433,7 @@ public class BigtableSession implements Closeable {
    * @param tableName a {@link BigtableTableName} object.
    * @return a {@link IBigtableDataClient} object.
    */
+  @InternalApi("For internal usage only")
   public IBulkMutation createBulkMutationWrapper(BigtableTableName tableName) {
     if (options.useGCJClient()) {
       return getDataClientWrapper().createBulkMutationBatcher();
@@ -442,8 +445,8 @@ public class BigtableSession implements Closeable {
   /**
    * createBulkRead.
    *
-   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
-   * @return a {@link com.google.cloud.bigtable.grpc.async.BulkRead} object.
+   * @param tableName a {@link BigtableTableName} object.
+   * @return a {@link BulkRead} object.
    */
   public BulkRead createBulkRead(BigtableTableName tableName) {
     return new BulkRead(
@@ -456,11 +459,9 @@ public class BigtableSession implements Closeable {
   /**
    * Getter for the field <code>tableAdminClient</code>.
    *
-   * @deprecated Please use {@link #getTableAdminClientWrapper()}.
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
-   * @throws java.io.IOException if any.
+   * @return a {@link BigtableTableAdminClient} object.
+   * @throws IOException if any.
    */
-  @Deprecated
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
       ManagedChannel channel = createManagedPool(options.getAdminHost(), 1);
@@ -476,8 +477,9 @@ public class BigtableSession implements Closeable {
    * BigtableOptions}.
    *
    * @return a {@link BigtableTableAdminClientWrapper} object.
-   * @throws java.io.IOException if any.
+   * @throws IOException if any.
    */
+  @InternalApi("For internal usage only")
   public synchronized IBigtableTableAdminClient getTableAdminClientWrapper() throws IOException {
     if (options.useGCJClient()) {
       if (adminGCJClient == null) {
@@ -498,8 +500,8 @@ public class BigtableSession implements Closeable {
   /**
    * Getter for the field <code>instanceAdminClient</code>.
    *
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableInstanceClient} object.
-   * @throws java.io.IOException if any.
+   * @return a {@link BigtableInstanceClient} object.
+   * @throws IOException if any.
    */
   public synchronized BigtableInstanceClient getInstanceAdminClient() throws IOException {
     if (instanceAdminClient == null) {
@@ -510,11 +512,11 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   * Create a new {@link ChannelPool}, with auth headers.
    *
-   * @param hostString a {@link java.lang.String} object.
-   * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
-   * @throws java.io.IOException if any.
+   * @param hostString a {@link String} object.
+   * @return a {@link ChannelPool} object.
+   * @throws IOException if any.
    */
   protected ManagedChannel createChannelPool(final String hostString, int count)
       throws IOException {
@@ -531,13 +533,13 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers. This
-   * method allows users to override the default implementation with their own.
+   * Create a new {@link ChannelPool}, with auth headers. This method allows users to override the
+   * default implementation with their own.
    *
    * @param channelFactory a {@link ChannelPool.ChannelFactory} object.
    * @param count The number of channels in the pool.
-   * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
-   * @throws java.io.IOException if any.
+   * @return a {@link ChannelPool} object.
+   * @throws IOException if any.
    */
   protected ManagedChannel createChannelPool(
       final ChannelPool.ChannelFactory channelFactory, int count) throws IOException {
@@ -545,12 +547,12 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers, that
-   * will be cleaned up when the connection closes.
+   * Create a new {@link ChannelPool}, with auth headers, that will be cleaned up when the
+   * connection closes.
    *
-   * @param host a {@link java.lang.String} object.
-   * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
-   * @throws java.io.IOException if any.
+   * @param host a {@link String} object.
+   * @return a {@link ChannelPool} object.
+   * @throws IOException if any.
    */
   protected ManagedChannel createManagedPool(String host, int channelCount) throws IOException {
     ManagedChannel channelPool = createChannelPool(host, channelCount);
@@ -574,7 +576,7 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   * Create a new {@link ChannelPool}, with auth headers.
    *
    * @param host a {@link String} object.
    * @param options a {@link BigtableOptions} object.
@@ -588,7 +590,7 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   * Create a new {@link ChannelPool}, with auth headers.
    *
    * @param host a {@link String} object specifying the host to connect to.
    * @param options a {@link BigtableOptions} object with the credentials, retry and other
@@ -722,7 +724,7 @@ public class BigtableSession implements Closeable {
   /**
    * Getter for the field <code>options</code>.
    *
-   * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @return a {@link BigtableOptions} object.
    */
   public BigtableOptions getOptions() {
     return this.options;

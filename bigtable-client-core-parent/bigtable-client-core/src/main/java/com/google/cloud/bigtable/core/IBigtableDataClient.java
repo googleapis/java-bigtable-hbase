@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -31,6 +32,7 @@ import java.util.List;
  * Interface to wrap {@link com.google.cloud.bigtable.grpc.BigtableDataClient} with
  * Google-Cloud-java's models.
  */
+@InternalApi("For internal usage only")
 public interface IBigtableDataClient {
 
   /**

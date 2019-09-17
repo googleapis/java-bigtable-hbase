@@ -93,6 +93,7 @@ public class BigtableBufferedMutatorHelper {
     closedWriteLock.lock();
     try {
       flush();
+      bulkMutation.close();
       closed = true;
     } finally {
       closedWriteLock.unlock();
@@ -221,16 +222,5 @@ public class BigtableBufferedMutatorHelper {
       future = ApiFutures.immediateFailedFuture(e);
     }
     return future;
-  }
-
-  /**
-   * hasInflightRequests.
-   *
-   * @return a boolean.
-   */
-  public boolean hasInflightRequests() {
-    return bulkMutation != null
-        && !bulkMutation.isFlushed()
-        && operationAccountant.hasInflightOperations();
   }
 }

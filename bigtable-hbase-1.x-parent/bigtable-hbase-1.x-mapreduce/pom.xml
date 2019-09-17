@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-hbase-1.x-parent</artifactId>
-        <version>1.12.1-SNAPSHOT</version>
+        <version>1.12.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-hbase-1.x-mapreduce</artifactId>
@@ -33,7 +33,7 @@ limitations under the License.
     </description>
 
     <properties>
-        <hadoop.version>2.7.3</hadoop.version>
+        <hadoop.version>2.9.2</hadoop.version>
         <hadoop.scope>provided</hadoop.scope>
     </properties>
 

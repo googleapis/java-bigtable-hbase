@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
@@ -26,6 +27,7 @@ import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.common.util.concurrent.Futures;
+import java.io.IOException;
 import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,13 +64,6 @@ public class TestBulkMutationWrapper {
   }
 
   @Test
-  public void testIsFlushed() {
-    when(mockDelegate.isFlushed()).thenReturn(true);
-    assertTrue(bulkWrapper.isFlushed());
-    verify(mockDelegate).isFlushed();
-  }
-
-  @Test
   public void testAddMutate() {
     RowMutation rowMutation = RowMutation.create("tableId", "key");
     MutateRowsRequest.Entry requestProto = rowMutation.toBulkProto(requestContext).getEntries(0);
@@ -81,5 +76,18 @@ public class TestBulkMutationWrapper {
       throw new AssertionError("Assertion failed for BulkMutationWrapper#add(RowMutation)");
     }
     verify(mockDelegate).add(requestProto);
+  }
+
+  @Test
+  public void testIsClosed() throws IOException {
+    bulkWrapper.close();
+    Exception actualEx = null;
+    try {
+      bulkWrapper.add(RowMutation.create("tableId", "key"));
+    } catch (Exception e) {
+      actualEx = e;
+    }
+    assertTrue(actualEx instanceof IllegalStateException);
+    assertEquals("can't mutate when the bulk mutation is closed.", actualEx.getMessage());
   }
 }

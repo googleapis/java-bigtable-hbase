@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.GetSnapshotRequest;
@@ -33,6 +34,7 @@ import java.util.List;
  * Interface to wrap {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} with
  * Google-Cloud-java's models.
  */
+@InternalApi("For internal usage only")
 public interface IBigtableTableAdminClient {
 
   /**

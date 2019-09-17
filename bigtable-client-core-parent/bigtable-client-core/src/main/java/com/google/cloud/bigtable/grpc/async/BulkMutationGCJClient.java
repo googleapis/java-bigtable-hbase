@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
@@ -23,14 +24,17 @@ import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher.BulkMutation
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This class is meant to replicate existing {@link BulkMutation} while translating calls to
  * Google-Cloud-Java's {@link BulkMutationBatcher} api.
  */
+@InternalApi("For internal usage only")
 public class BulkMutationGCJClient implements IBulkMutation {
 
-  private static Logger LOG = new Logger(BulkMutation.class);
+  private static Logger LOG = new Logger(BulkMutationGCJClient.class);
 
   private final BulkMutationBatcher bulkMutateBatcher;
   private final OperationAccountant operationAccountant;
@@ -65,9 +69,12 @@ public class BulkMutationGCJClient implements IBulkMutation {
     }
   }
 
-  /** {@inheritDoc} */
   @Override
-  public boolean isFlushed() {
-    return !operationAccountant.hasInflightOperations();
+  public void close() throws IOException {
+    try {
+      bulkMutateBatcher.close();
+    } catch (InterruptedException | TimeoutException e) {
+      throw new IOException("Could not close the bulk mutation Batcher", e);
+    }
   }
 }

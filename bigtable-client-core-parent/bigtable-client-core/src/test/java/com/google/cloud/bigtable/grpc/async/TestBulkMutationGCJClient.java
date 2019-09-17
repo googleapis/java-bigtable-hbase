@@ -26,6 +26,7 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -109,12 +110,14 @@ public class TestBulkMutationGCJClient {
   }
 
   @Test
-  public void testIsFlushed() {
-    when(callable.futureCall(rowMutation)).thenReturn(future);
-    bulkMutationClient.add(rowMutation);
-    assertFalse("BulkMutation should have one pending element", bulkMutationClient.isFlushed());
-    future.set(null);
-    assertTrue("BulkMutation should not have any pending element", bulkMutationClient.isFlushed());
-    verify(callable).futureCall(rowMutation);
+  public void testIsClosed() throws IOException {
+    bulkMutationClient.close();
+    Exception actualEx = null;
+    try {
+      bulkMutationClient.add(rowMutation);
+    } catch (Exception e) {
+      actualEx = e;
+    }
+    assertTrue(actualEx instanceof IllegalStateException);
   }
 }
