@@ -142,15 +142,15 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
             Predicates.<CheckConsistencyRequest>alwaysFalse());
     this.getIamPolicyRpc =
         asyncUtilities.createAsyncRpc(
-            BigtableTableAdminGrpc.getIamPolicyMethod(),
+            BigtableTableAdminGrpc.getGetIamPolicyMethod(),
             Predicates.<GetIamPolicyRequest>alwaysFalse());
     this.setIamPolicyRpc =
         asyncUtilities.createAsyncRpc(
-            BigtableTableAdminGrpc.setIamPolicyMethod(),
+            BigtableTableAdminGrpc.getSetIamPolicyMethod(),
             Predicates.<SetIamPolicyRequest>alwaysFalse());
     this.testIamPermissionsRpc =
         asyncUtilities.createAsyncRpc(
-            BigtableTableAdminGrpc.testIamPermissionsMethod(),
+            BigtableTableAdminGrpc.getTestIamPermissionsMethod(),
             Predicates.<TestIamPermissionsRequest>alwaysFalse());
 
     this.snapshotTableRpc =
@@ -284,19 +284,19 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   /** {@inheritDoc} */
   @Override
-  public Table getIamPolicy(GetIamPolicyRequest request) {
+  public Policy getIamPolicy(GetIamPolicyRequest request) {
     return createUnaryListener(request, getIamPolicyRpc, request.getResource()).getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
-  public Table setIamPolicy(SetIamPolicyRequest request) {
+  public Policy setIamPolicy(SetIamPolicyRequest request) {
     return createUnaryListener(request, setIamPolicyRpc, request.getResource()).getBlockingResult();
   }
 
   /** {@inheritDoc} */
   @Override
-  public Table testIamPermissions(TestIamPermissionsRequest request) {
+  public TestIamPermissionsResponse testIamPermissions(TestIamPermissionsRequest request) {
     return createUnaryListener(request, testIamPermissionsRpc, request.getResource())
         .getBlockingResult();
   }
