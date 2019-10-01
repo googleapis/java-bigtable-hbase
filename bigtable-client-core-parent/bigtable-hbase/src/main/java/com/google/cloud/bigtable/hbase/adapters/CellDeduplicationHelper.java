@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -29,9 +30,9 @@ import org.apache.hadoop.hbase.client.Mutation;
  *
  * <p>This is used primarily to apply client-side Increment and Append deduplication logic.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class CellDeduplicationHelper {
 
   protected static class QualifierOnlyKey {

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,9 +25,9 @@ import org.apache.hadoop.hbase.util.Bytes;
  * Methods and constants to help build a bigtable reader expression // TODO(AngusDavis): Move more
  * ScanAdapter and FilterAdapter writing logic to here.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ReaderExpressionHelper {
   /** Constant <code>ANY_BYTE="\\C"</code> */
   public static final String ANY_BYTE = "\\C";

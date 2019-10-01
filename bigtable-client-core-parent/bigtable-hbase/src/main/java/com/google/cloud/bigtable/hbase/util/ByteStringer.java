@@ -15,12 +15,17 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
+import com.google.api.core.InternalApi;
 import com.google.protobuf.ByteString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-/** Wrapper around {@link ZeroCopyByteStringUtil} for cases where it's not available. */
-public class ByteStringer {
+/**
+ * Wrapper around {@link ZeroCopyByteStringUtil} for cases where it's not available.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")public class ByteStringer {
   private static final Log LOG = LogFactory.getLog(ByteStringer.class);
 
   /** Flag set at class loading time. */

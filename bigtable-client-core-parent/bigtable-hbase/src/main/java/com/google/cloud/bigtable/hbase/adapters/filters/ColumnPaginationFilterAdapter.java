@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.protobuf.ByteString;
@@ -27,9 +28,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * Adapter to convert a ColumnPaginationFilter to a RowFilter.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ColumnPaginationFilterAdapter extends TypedFilterAdapterBase<ColumnPaginationFilter> {
 
   private static final FilterSupportStatus UNSUPPORTED_STATUS =

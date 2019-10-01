@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Get;
@@ -26,9 +27,9 @@ import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
  * A {@link Get} adapter that transform the Get into a {@link Query} using the proto-based filter
  * language.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class GetAdapter implements ReadOperationAdapter<Get> {
 
   public static Get setCheckExistenceOnly(Get get) {

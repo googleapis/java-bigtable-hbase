@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -27,7 +28,12 @@ import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
 import com.google.protobuf.ByteString;
 
-/** Adapter to convert between a Bigtable {@link RowSet} and guava's {@link RangeSet}. */
+/**
+ * Adapter to convert between a Bigtable {@link RowSet} and guava's {@link RangeSet}.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class RowRangeAdapter {
 
   /**

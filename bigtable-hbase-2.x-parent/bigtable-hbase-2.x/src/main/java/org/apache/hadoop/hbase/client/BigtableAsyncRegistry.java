@@ -15,6 +15,7 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import com.google.api.core.InternalApi;
 import java.util.concurrent.CompletableFuture;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.RegionLocations;
@@ -28,8 +29,9 @@ import org.apache.hadoop.hbase.ServerName;
  * details See {@link AsyncRegistryFactory#REGISTRY_IMPL_CONF_KEY}, and {@link
  * ConnectionFactory#createAsyncConnection()}
  *
- * @author spollapally
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableAsyncRegistry implements AsyncRegistry {
 
   public BigtableAsyncRegistry(Configuration conf) {}

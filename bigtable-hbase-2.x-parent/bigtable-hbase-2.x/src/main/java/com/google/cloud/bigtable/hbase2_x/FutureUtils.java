@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase2_x;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -31,8 +32,9 @@ import java.util.concurrent.ExecutorService;
  * CompletableFuture}. Useful to convert the ListenableFuture types used by bigtable-client-core
  * component to Java 8 CompletableFuture types used in Hbase 2
  *
- * @author spollapally
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class FutureUtils {
 
   public static final ExecutorService DIRECT_EXECUTOR = MoreExecutors.newDirectExecutorService();

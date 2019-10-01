@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.base.Preconditions;
@@ -26,9 +27,9 @@ import org.apache.hadoop.hbase.filter.Filter;
 /**
  * A class that provides untyped-to-typed access to TypedFilterAdapter instances.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class SingleFilterAdapter<T extends Filter> {
 
   private final Class<T> filterClass;

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RowMutations;
 
@@ -22,9 +23,9 @@ import org.apache.hadoop.hbase.client.RowMutations;
  * An adapter that adapts a {@link org.apache.hadoop.hbase.client.RowMutations} object into Google
  * Cloud Java {@link com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class RowMutationsAdapter extends MutationAdapter<RowMutations> {
 
   protected final MutationAdapter<Mutation> mutationAdapter;

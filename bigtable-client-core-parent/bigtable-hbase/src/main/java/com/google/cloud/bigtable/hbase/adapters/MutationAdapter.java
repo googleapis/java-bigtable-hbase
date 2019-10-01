@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.MutationApi;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.protobuf.ByteString;
@@ -23,9 +24,9 @@ import org.apache.hadoop.hbase.client.Row;
 /**
  * Adapt an HBase {@link Row} Operation into a Google Cloud Java {@link MutationApi}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public abstract class MutationAdapter<T extends Row>
     implements OperationAdapter<T, MutationApi<?>> {
 

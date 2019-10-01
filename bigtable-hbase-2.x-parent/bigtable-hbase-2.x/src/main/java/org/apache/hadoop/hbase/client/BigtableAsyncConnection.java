@@ -15,6 +15,7 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -51,8 +52,9 @@ import org.apache.hadoop.hbase.security.User;
 /**
  * Bigtable implementation of {@link AsyncConnection}
  *
- * @author spollapally
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableAsyncConnection implements AsyncConnection, CommonConnection, Closeable {
   private final Logger LOG = new Logger(getClass());
 

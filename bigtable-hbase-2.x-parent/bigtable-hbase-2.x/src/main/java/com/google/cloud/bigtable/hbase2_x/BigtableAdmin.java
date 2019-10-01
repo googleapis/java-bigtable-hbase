@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.Snapshot;
@@ -73,9 +74,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * HBase 2.x specific implementation of {@link AbstractBigtableAdmin}.
  *
- * @author spollapally
+ * <p>For internal use only - public for technical reasons.
  */
-@SuppressWarnings("deprecation")
+@InternalApi("For internal usage only")
 public class BigtableAdmin extends AbstractBigtableAdmin {
 
   private final BigtableAsyncAdmin asyncAdmin;

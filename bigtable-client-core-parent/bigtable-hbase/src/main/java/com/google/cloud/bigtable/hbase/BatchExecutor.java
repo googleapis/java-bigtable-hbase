@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -52,9 +53,9 @@ import org.apache.hadoop.hbase.util.Bytes;
  * org.apache.hadoop.hbase.client.Table#get(List)}. This class relies on implementations found in
  * {@link BulkRead} and in {@link BigtableBufferedMutatorHelper}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BatchExecutor {
 
   /** Constant <code>LOG</code> */

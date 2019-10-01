@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.api.core.InternalApi;
 import java.util.List;
 import org.apache.hadoop.hbase.filter.Filter;
 
@@ -22,9 +23,9 @@ import org.apache.hadoop.hbase.filter.Filter;
  * An interface that classes should implement if they're able to contribute meaningfully to
  * collecting unsupported status objects from child filters.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public interface UnsupportedStatusCollector<S extends Filter> {
 
   /**

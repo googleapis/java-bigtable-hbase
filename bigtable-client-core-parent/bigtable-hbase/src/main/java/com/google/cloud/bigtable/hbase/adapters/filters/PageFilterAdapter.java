@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.common.base.Function;
@@ -27,9 +28,9 @@ import org.apache.hadoop.hbase.filter.PageFilter;
 /**
  * A TypedFilterAdapter for adapting PageFilter instances.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class PageFilterAdapter extends TypedFilterAdapterBase<PageFilter> {
 
   private static final FilterSupportStatus TOP_LEVEL_ONLY =

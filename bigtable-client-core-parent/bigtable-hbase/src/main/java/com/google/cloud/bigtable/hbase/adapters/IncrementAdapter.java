@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -27,9 +28,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * Adapter for HBase Increment operations to Bigtable ReadModifyWriteRowRequest.Builder.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class IncrementAdapter implements OperationAdapter<Increment, ReadModifyWriteRow> {
 
   /** {@inheritDoc} */

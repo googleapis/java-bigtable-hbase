@@ -15,14 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import org.apache.hadoop.hbase.client.Mutation;
 
 /**
  * An adapter that throws an Unsupported exception when its adapt method is invoked.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class UnsupportedMutationAdapter<T extends Mutation> extends MutationAdapter<T> {
 
   private final String operationDescription;

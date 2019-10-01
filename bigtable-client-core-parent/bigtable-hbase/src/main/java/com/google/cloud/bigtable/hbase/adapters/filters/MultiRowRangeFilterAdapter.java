@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.BoundType;
@@ -32,7 +33,12 @@ import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
 
-/** Adapter for {@link MultiRowRangeFilter}, it converts the filter into an index scan hint */
+/**
+ * Adapter for {@link MultiRowRangeFilter}, it converts the filter into an index scan hint
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class MultiRowRangeFilterAdapter extends TypedFilterAdapterBase<MultiRowRangeFilter> {
   private static final FilterSupportStatus NO_MUST_PASS_ONE =
       FilterSupportStatus.newNotSupported(

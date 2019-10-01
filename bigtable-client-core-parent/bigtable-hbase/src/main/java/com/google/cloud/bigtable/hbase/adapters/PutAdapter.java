@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.client.util.Clock;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
@@ -29,9 +30,9 @@ import org.apache.hadoop.hbase.client.Put;
  * Adapt an HBase {@link Put} Operation into a Google Cloud Java {@link
  * com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class PutAdapter extends MutationAdapter<Put> {
   private final int maxKeyValueSize;
   private final boolean setClientTimestamp;

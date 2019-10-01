@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
@@ -27,6 +28,7 @@ import org.apache.hadoop.hbase.client.Table;
  * allows for an arbitrary set of ranges and row keys as part of a scan. Instance of
  * BigtableExtendedScan can be used in {@link Table#getScanner(Scan)}.
  */
+@InternalExtensionOnly
 @SuppressWarnings("deprecation")
 public class BigtableExtendedScan extends Scan {
   private RowSet.Builder rowSet = RowSet.newBuilder();

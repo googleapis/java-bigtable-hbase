@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import java.util.ArrayList;
@@ -30,9 +31,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * SampledRowKeysAdapter class.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public abstract class SampledRowKeysAdapter {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(SampledRowKeysAdapter.class);

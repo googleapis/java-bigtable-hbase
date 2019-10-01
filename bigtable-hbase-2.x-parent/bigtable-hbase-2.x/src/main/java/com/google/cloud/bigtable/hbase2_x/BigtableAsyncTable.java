@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase2_x;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
 import static java.util.stream.Collectors.toList;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
@@ -64,8 +65,9 @@ import org.apache.hadoop.hbase.io.TimeRange;
 /**
  * Bigtable implementation of {@link AsyncTable}.
  *
- * @author spollapally
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   private static final Logger LOG = new Logger(AbstractBigtableTable.class);

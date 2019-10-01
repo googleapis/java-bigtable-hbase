@@ -28,6 +28,7 @@ import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_M
 import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
@@ -46,10 +47,8 @@ import org.apache.hadoop.hbase.util.VersionInfo;
 /**
  * Static methods to convert an instance of {@link org.apache.hadoop.conf.Configuration} to a {@link
  * com.google.cloud.bigtable.config.BigtableOptions} instance.
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class BigtableOptionsFactory {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableOptionsFactory.class);
@@ -219,11 +218,19 @@ public class BigtableOptionsFactory {
   /**
    * Turn on a feature that will reduce the likelihood of BufferedMutator overloading a Cloud
    * Bigtable cluster.
+   *
+   * @deprecated Bulk mutation throttling will be removed in the future
    */
+  @Deprecated
   public static final String BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING =
       "google.bigtable.buffered.mutator.throttling.enable";
 
-  /** Tweak the throttling */
+  /**
+   * Tweak the throttling
+   *
+   * @deprecated Bulk mutation throttling will be removed in the future
+   */
+  @Deprecated
   public static final String BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS =
       "google.bigtable.buffered.mutator.throttling.threshold.ms";
 

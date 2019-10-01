@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.common.base.Optional;
 import java.io.IOException;
@@ -32,9 +33,9 @@ import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 /**
  * Adapter for {@link org.apache.hadoop.hbase.filter.WhileMatchFilter}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class WhileMatchFilterAdapter extends TypedFilterAdapterBase<WhileMatchFilter> {
 
   static final String IN_LABEL_SUFFIX = "-in";

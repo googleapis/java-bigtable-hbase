@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
@@ -35,12 +37,14 @@ import org.apache.hadoop.util.GenericOptionsParser;
  * A simple utility class for checking and displaying common Bigtable-HBase configuration values.
  *
  * <p>Expected usage: hbase com.google.cloud.bigtable.hbase.CheckConfig
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 @SuppressWarnings("deprecation")
 public class CheckConfig {
+
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
+  public CheckConfig() {}
   /**
    * main.
    *

@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.admin;
 
 import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.GcRule;
 import com.google.bigtable.admin.v2.GcRule.RuleCase;
@@ -38,9 +39,9 @@ import org.threeten.bp.Duration;
  * Adapt a single instance of an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor} to an
  * instance of {@link com.google.bigtable.admin.v2.ColumnFamily}
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ColumnDescriptorAdapter {
 
   public static final ColumnDescriptorAdapter INSTANCE = new ColumnDescriptorAdapter();

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import java.io.IOException;
 import java.util.List;
@@ -36,9 +37,9 @@ import org.apache.hadoop.hbase.security.User;
 /**
  * HBase 2.x specific implementation of {@link AbstractBigtableConnection}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableConnection extends AbstractBigtableConnection {
 
   /**

@@ -41,9 +41,9 @@ import org.apache.hadoop.hbase.client.Scan;
  * Adapts HBase Deletes, Gets, Scans, Puts, RowMutations, Appends and Increments to Bigtable
  * requests.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class HBaseRequestAdapter {
 
   public static class MutationAdapters {

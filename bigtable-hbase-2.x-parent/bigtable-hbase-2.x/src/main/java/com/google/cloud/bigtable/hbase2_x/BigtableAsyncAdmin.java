@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase2_x;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
@@ -89,8 +90,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * Bigtable implementation of {@link AsyncAdmin}
  *
- * @author spollapally
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableAsyncAdmin implements AsyncAdmin {
   private final Logger LOG = new Logger(getClass());
 

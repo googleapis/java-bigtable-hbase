@@ -36,9 +36,9 @@ import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
  * <p>Similarly, {@link ColumnDescriptorAdapter#adapt(HColumnDescriptor)} is not binary compatible
  * with {@link ColumnFamilyDescriptor}.
  *
- * @author spollapally
+ * <p>For internal use only - public for technical reasons.
  */
-@InternalApi
+@InternalApi("For internal usage only")
 public class TableAdapter2x {
   protected static final ColumnDescriptorAdapter columnDescriptorAdapter =
       new ColumnDescriptorAdapter();

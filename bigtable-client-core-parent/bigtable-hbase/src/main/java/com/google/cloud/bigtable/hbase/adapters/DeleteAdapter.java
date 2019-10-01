@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import static com.google.cloud.bigtable.data.v2.models.Range.TimestampRange;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -30,9 +31,9 @@ import org.apache.hadoop.hbase.client.Delete;
  * Adapt a single Delete operation to a Google Cloud Java {@link
  * com.google.cloud.bigtable.data.v2.models.MutationApi}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class DeleteAdapter extends MutationAdapter<Delete> {
   static boolean isPointDelete(Cell cell) {
     return cell.getTypeByte() == KeyValue.Type.Delete.getCode();

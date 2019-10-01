@@ -15,16 +15,17 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import org.apache.hadoop.hbase.client.Result;
 
 /**
  * An adapter for transforming a response from the Bigtable server to a HBase result.
  *
+ * <p>For internal use only - public for technical reasons.
  * @param <T> The response type from Bigtable
  * @param <U> The HBase result type
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalApi("For internal usage only")
 public interface ResponseAdapter<T, U extends Result> {
 
   /**

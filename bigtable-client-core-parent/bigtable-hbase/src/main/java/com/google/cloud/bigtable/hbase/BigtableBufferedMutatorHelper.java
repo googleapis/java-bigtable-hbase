@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
@@ -44,9 +45,9 @@ import org.apache.hadoop.hbase.client.RowMutations;
 /**
  * A helper for Bigtable's {@link org.apache.hadoop.hbase.client.BufferedMutator} implementations.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableBufferedMutatorHelper {
 
   /** Constant <code>LOG</code> */
