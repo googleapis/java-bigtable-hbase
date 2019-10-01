@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -29,7 +30,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-/** Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations. */
+/**
+ * Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class RetryingMutateRowsOperation
     extends AbstractRetryingOperation<
         MutateRowsRequest, MutateRowsResponse, List<MutateRowsResponse>> {

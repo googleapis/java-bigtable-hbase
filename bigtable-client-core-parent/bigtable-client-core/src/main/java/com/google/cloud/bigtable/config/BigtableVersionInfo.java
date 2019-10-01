@@ -1,9 +1,14 @@
 package com.google.cloud.bigtable.config;
 
+import com.google.api.core.InternalApi;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+/**
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class BigtableVersionInfo {
 
   private static final Logger LOG = new Logger(BigtableVersionInfo.class);

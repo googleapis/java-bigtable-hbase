@@ -15,10 +15,16 @@
  */
 package com.google.cloud.bigtable.util;
 
+import com.google.api.core.InternalApi;
 import com.google.protobuf.ByteString;
 import java.util.Comparator;
 
-/** Compares {@link ByteString}s. */
+/**
+ * Compares {@link ByteString}s.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public final class ByteStringComparator implements Comparator<ByteString> {
 
   public static final ByteStringComparator INSTANCE = new ByteStringComparator();

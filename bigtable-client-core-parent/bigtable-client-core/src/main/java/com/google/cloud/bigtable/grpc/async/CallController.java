@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
@@ -26,8 +27,9 @@ import javax.annotation.Nullable;
  * Wraps a {@link ClientCall}, and implements {@link ClientCallStreamObserver} to allow access to
  * the call's underlying functionality.
  *
- * <p>This class is intended to be used by the user to control flow and the life of the call.
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class CallController<RequestT, ResponseT> extends ClientCallStreamObserver<RequestT> {
   @SuppressWarnings("rawtypes")
   private static final ClientCall NULL_CALL =

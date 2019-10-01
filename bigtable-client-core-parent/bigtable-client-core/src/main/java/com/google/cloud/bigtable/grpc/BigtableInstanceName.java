@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.util.Strings;
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
@@ -23,10 +25,8 @@ import java.io.Serializable;
  * This class encapsulates a Bigtable instance name. An instance name is of the form
  * projects/(projectId)/instances/(instanceId). It also has convenience methods to create a
  * tableName and a tableId. TableName is (instanceName)/tables/(tableId).
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class BigtableInstanceName implements Serializable {
   private static final long serialVersionUID = 1L;
 
@@ -40,12 +40,8 @@ public class BigtableInstanceName implements Serializable {
   private final String projectId;
   private final String instanceId;
 
-  /**
-   * Constructor for BigtableInstanceName.
-   *
-   * @param projectId a {@link java.lang.String} object.
-   * @param instanceId a {@link java.lang.String} object.
-   */
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public BigtableInstanceName(String projectId, String instanceId) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "projectId must be supplied");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(instanceId), "instanceId must be supplied");

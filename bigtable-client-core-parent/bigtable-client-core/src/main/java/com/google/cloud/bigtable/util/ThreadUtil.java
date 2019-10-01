@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.util;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.PlatformInformation;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -25,7 +26,10 @@ import java.util.concurrent.ThreadFactory;
  *
  * <p>This class copies code that originates in {@link
  * io.grpc.internal.GrpcUtil#getThreadFactory(String, boolean)}.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ThreadUtil {
 
   /**

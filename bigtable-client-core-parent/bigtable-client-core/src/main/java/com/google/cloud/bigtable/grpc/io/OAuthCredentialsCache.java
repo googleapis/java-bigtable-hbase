@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import com.google.api.client.util.Clock;
+import com.google.api.core.InternalApi;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
@@ -40,9 +41,9 @@ import javax.annotation.concurrent.GuardedBy;
  * This class caches calls to {@link OAuth2Credentials#refreshAccessToken()}. It asynchronously
  * refreshes the token when it becomes stale.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class OAuthCredentialsCache {
 
   private static final Logger LOG = new Logger(OAuthCredentialsCache.class);

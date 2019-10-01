@@ -18,12 +18,9 @@ package com.google.cloud.bigtable.grpc.scanner;
 import com.google.bigtable.v2.ReadRowsRequest;
 
 /**
- * A factory for creating ResultScanners that can be used to scan over Rows for a given
- * ReadRowsRequest.
- *
- * @author sduskis
- * @version $Id: $Id
+ * @deprecated This class will be removed in the future
  */
+@Deprecated
 public interface BigtableResultScannerFactory<ResponseT> {
 
   /**

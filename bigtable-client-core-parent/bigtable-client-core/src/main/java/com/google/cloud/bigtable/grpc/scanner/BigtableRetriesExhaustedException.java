@@ -15,23 +15,22 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import java.io.IOException;
 
 /**
  * An Exception that is thrown when an operation fails, even in the face of retries.
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class BigtableRetriesExhaustedException extends IOException {
   private static final long serialVersionUID = 6905598607595217072L;
 
+
   /**
-   * Constructor for BigtableRetriesExhaustedException.
-   *
-   * @param message a {@link java.lang.String} object.
-   * @param cause a {@link java.lang.Throwable} object.
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   public BigtableRetriesExhaustedException(String message, Throwable cause) {
     super(message, cause);
   }

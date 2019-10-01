@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.RowAdapter;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow.Cell;
 import com.google.common.collect.ImmutableList;
@@ -25,7 +26,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-/** Adapter for {@link RowAdapter} that uses {@link FlatRow}'s to represent logical rows. */
+/**
+ * Adapter for {@link RowAdapter} that uses {@link FlatRow}'s to represent logical rows.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class FlatRowAdapter implements RowAdapter<FlatRow> {
 
   /** {@inheritDoc} */

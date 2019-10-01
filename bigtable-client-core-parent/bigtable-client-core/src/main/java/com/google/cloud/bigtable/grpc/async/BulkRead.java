@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.core.SettableApiFuture;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowFilter;
@@ -50,10 +52,8 @@ import java.util.concurrent.ExecutorService;
  * row key into a single {@link com.google.bigtable.v2.ReadRowsRequest} with a {@link
  * com.google.bigtable.v2.RowSet} which will result in fewer round trips. This class is not thread
  * safe, and requires calling classes to make it thread safe.
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class BulkRead {
 
   /** Constant <code>LOG</code> */
@@ -84,7 +84,10 @@ public class BulkRead {
    * @param tableName a {@link BigtableTableName} object.
    * @param batchSizes The number of keys to lookup per RPC.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
+   *
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   public BulkRead(
       IBigtableDataClient client,
       BigtableTableName tableName,
@@ -222,6 +225,10 @@ public class BulkRead {
     }
   }
 
+  /**
+   * <p>For internal use only - public for technical reasons.
+   */
+  @InternalApi("For internal usage only")
   public int getBatchSizes() {
     return batchSizes;
   }

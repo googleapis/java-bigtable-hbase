@@ -42,6 +42,8 @@ import javax.annotation.Nonnull;
 /**
  * This class implements existing {@link IBigtableTableAdminClient} operations with
  * Google-cloud-java's {@link BigtableTableAdminClient} & {@link BaseBigtableTableAdminClient}.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
 public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient, AutoCloseable {

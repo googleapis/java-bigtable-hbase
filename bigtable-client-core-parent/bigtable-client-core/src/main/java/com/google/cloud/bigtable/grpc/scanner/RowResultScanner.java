@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
@@ -22,7 +23,12 @@ import com.google.cloud.bigtable.metrics.Timer;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-/** A {@link ResultScanner} that wraps GCJ {@link ServerStream}. */
+/**
+ * A {@link ResultScanner} that wraps GCJ {@link ServerStream}.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class RowResultScanner<T> implements ResultScanner<T> {
 
   private static final Meter resultsMeter =

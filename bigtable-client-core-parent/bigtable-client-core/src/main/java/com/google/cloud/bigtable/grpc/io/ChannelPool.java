@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
@@ -40,9 +42,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ChannelPool extends ManagedChannel {
 
   /** Constant <code>LOG</code> */
@@ -52,6 +54,10 @@ public class ChannelPool extends ManagedChannel {
   private static final Key<String> CHANNEL_ID_KEY =
       Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
 
+  /**
+   * <p>For internal use only - public for technical reasons.
+   */
+  @InternalApi("For internal usage only")
   public static final String extractIdentifier(Metadata trailers) {
     return trailers != null ? trailers.get(ChannelPool.CHANNEL_ID_KEY) : "";
   }

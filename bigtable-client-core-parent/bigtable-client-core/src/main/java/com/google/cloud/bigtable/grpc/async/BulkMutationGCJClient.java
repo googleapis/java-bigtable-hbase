@@ -30,6 +30,8 @@ import java.util.concurrent.TimeoutException;
 /**
  * This class is meant to replicate existing {@link BulkMutation} while translating calls to
  * Google-Cloud-Java's {@link BulkMutationBatcher} api.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
 public class BulkMutationGCJClient implements IBulkMutation {

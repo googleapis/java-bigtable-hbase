@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Meter;
@@ -27,9 +28,9 @@ import javax.annotation.concurrent.NotThreadSafe;
  * A ResultScanner that attempts to resume the readRows call when it encounters gRPC INTERNAL
  * errors.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 @NotThreadSafe
 public class ResumingStreamingResultScanner implements ResultScanner<FlatRow> {
 

@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.TimedAttemptSettings;
@@ -53,7 +54,12 @@ import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 import org.threeten.bp.temporal.ChronoUnit;
 
-/** A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request. */
+/**
+ * A {@link ClientCall.Listener} that retries a {@link BigtableAsyncRpc} request.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 @SuppressWarnings("unchecked")
 public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT> {

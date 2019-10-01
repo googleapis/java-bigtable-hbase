@@ -15,14 +15,16 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
 import java.io.IOException;
 
 /**
  * An IOException that presents timeout when reading response.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
+@Deprecated
 public class ScanTimeoutException extends IOException {
 
   private static final long serialVersionUID = 4115316291347038875L;

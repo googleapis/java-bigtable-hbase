@@ -2,6 +2,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.codahale.metrics.Timer;
 import com.google.api.client.util.NanoClock;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.common.annotations.VisibleForTesting;
@@ -17,9 +18,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * This class limits access by RPCs to system resources
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ResourceLimiter {
   private static final Logger LOG = new Logger(ResourceLimiter.class);
 

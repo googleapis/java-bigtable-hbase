@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.config;
 
 import com.google.api.client.util.SecurityUtils;
+import com.google.api.core.InternalApi;
 import com.google.auth.Credentials;
 import com.google.auth.RequestMetadataCallback;
 import com.google.auth.http.HttpTransportFactory;
@@ -41,9 +42,9 @@ import java.util.concurrent.Executor;
 /**
  * Simple factory for creating OAuth Credential objects for use with Bigtable.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class CredentialFactory {
 
   /** The OAuth scope required to perform administrator actions such as creating tables. */

@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.RetryOptions;
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
@@ -26,9 +27,9 @@ import java.util.concurrent.ScheduledExecutorService;
 /**
  * A {@link AbstractRetryingOperation} for a unary operation.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class RetryingUnaryOperation<RequestT, ResponseT>
     extends AbstractRetryingOperation<RequestT, ResponseT, ResponseT> {
   static final StatusRuntimeException NO_VALUE_SET_EXCEPTION =

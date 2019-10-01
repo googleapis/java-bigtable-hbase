@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -36,11 +38,8 @@ import java.util.List;
 
 /**
  * Interface to access v2 Bigtable data service methods.
- *
- * @author sduskis
- * @version $Id: $Id
  */
-// TODO: rename this class to differentiate it from `BigtableDataClient` amd `IBigtableDataClient`
+@InternalExtensionOnly
 public interface BigtableDataClient {
 
   /**
@@ -189,7 +188,8 @@ public interface BigtableDataClient {
    * Sets a {@link com.google.cloud.bigtable.grpc.CallOptionsFactory} which creates {@link
    * io.grpc.CallOptions}
    *
-   * @param callOptionsFactory a {@link com.google.cloud.bigtable.grpc.CallOptionsFactory} object.
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   void setCallOptionsFactory(CallOptionsFactory callOptionsFactory);
 }

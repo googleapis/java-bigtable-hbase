@@ -15,16 +15,16 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.api.core.InternalApi;
 import io.grpc.Metadata;
 
 /**
  * Adds a header ("google-cloud-resource-prefix") that usually contains a fully qualified instance
  * or table name.
  *
- * @author sduskis
- * @version $Id: $Id
- * @since 0.9.2
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class GoogleCloudResourcePrefixInterceptor extends HeaderInterceptor {
 
   /** Constant <code>GRPC_RESOURCE_PREFIX_KEY</code> */

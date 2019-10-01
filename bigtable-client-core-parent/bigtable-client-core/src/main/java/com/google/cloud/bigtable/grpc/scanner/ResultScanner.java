@@ -15,16 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalExtensionOnly;
 import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * A scanner of Bigtable rows.
- *
- * @param <T> The type of Rows this scanner will iterate over. Expected Bigtable Row objects.
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public interface ResultScanner<T> extends Closeable {
   /**
    * Read the next row and block until a row is available. Will return null on end-of-stream.

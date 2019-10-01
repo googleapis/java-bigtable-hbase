@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -51,7 +52,10 @@ import javax.annotation.Nullable;
 /**
  * This class implements the {@link IBigtableDataClient} interface and wraps {@link
  * BigtableDataClient} with Google-cloud-java's models.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableDataClientWrapper implements IBigtableDataClient {
 
   private final BigtableDataClient delegate;

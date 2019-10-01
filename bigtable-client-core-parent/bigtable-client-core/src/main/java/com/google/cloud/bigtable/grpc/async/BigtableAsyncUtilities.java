@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
 import com.google.common.base.Predicate;
@@ -29,9 +30,9 @@ import io.grpc.MethodDescriptor;
 /**
  * Utilities for creating and executing async methods.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public interface BigtableAsyncUtilities {
 
   /**
@@ -46,7 +47,7 @@ public interface BigtableAsyncUtilities {
   <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncRpc(
       MethodDescriptor<RequestT, ResponseT> method, Predicate<RequestT> isRetryable);
 
-  public static class Default implements BigtableAsyncUtilities {
+  class Default implements BigtableAsyncUtilities {
     private static final Logger LOG = new Logger(BigtableAsyncUtilities.class);
     private final Channel channel;
 

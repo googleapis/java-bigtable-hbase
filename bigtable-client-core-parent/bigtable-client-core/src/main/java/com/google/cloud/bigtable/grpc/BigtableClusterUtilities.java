@@ -16,6 +16,7 @@
 
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.ListClustersRequest;
 import com.google.bigtable.admin.v2.ListClustersResponse;
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  * large job to increase Cloud Bigtable capacity and 20 minutes after a large batch job to reduce
  * the size.
  */
+@InternalExtensionOnly
 public class BigtableClusterUtilities implements AutoCloseable {
   private static Logger logger = new Logger(BigtableClusterUtilities.class);
 
@@ -72,7 +74,10 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @return The instance id associated with the given project, zone and cluster. We expect instance
    *     and cluster to have one-to-one relationship.
    * @throws IllegalStateException if the cluster is not found
+   *
+   * @deprecated This method will be removed in future versions
    */
+  @Deprecated
   public static String lookupInstanceId(String projectId, String clusterId, String zoneId)
       throws IOException {
     BigtableClusterUtilities utils;
@@ -99,7 +104,10 @@ public class BigtableClusterUtilities implements AutoCloseable {
    *     cluster to have one-to-one relationship.
    * @throws IllegalStateException if the cluster is not found or if there are many clusters in this
    *     instance.
+   *
+   * @deprecated This method will be removed in future versions
    */
+  @Deprecated
   public static Cluster lookupCluster(String projectId, String instanceId) throws IOException {
     BigtableClusterUtilities utils;
     try {

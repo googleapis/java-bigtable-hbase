@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterce
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.core.InternalApi;
 import com.google.api.core.NanoClock;
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
 import com.google.bigtable.admin.v2.CheckConsistencyRequest;
@@ -61,9 +62,9 @@ import java.util.concurrent.TimeoutException;
 /**
  * A gRPC client for accessing the Bigtable Table Admin API.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   private final BigtableAsyncRpc<ListTablesRequest, ListTablesResponse> listTablesRpc;

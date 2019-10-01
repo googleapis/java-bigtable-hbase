@@ -33,6 +33,8 @@ import java.util.List;
 /**
  * Interface to wrap {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} with
  * Google-Cloud-java's models.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
 public interface IBigtableTableAdminClient {

@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowSet;
@@ -28,31 +30,25 @@ import java.util.concurrent.TimeUnit;
 /**
  * A factory that creates {@link CallOptions} for use in {@link BigtableDataClient} RPCs.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public interface CallOptionsFactory {
 
   /**
    * Provide a {@link CallOptions} object to be used in a single RPC. {@link CallOptions} can
    * contain state, specifically start time with an expiration is set; in cases when timeouts are
    * used, implementations should create a new CallOptions each time this method is called.
-   *
-   * @param descriptor The RPC that's being called. Different methods have different performance
-   *     characteristics, so this parameter can be useful to craft the right timeout for the right
-   *     method.
-   * @param request Some methods, specifically ReadRows, can have variability depending on the
-   *     request. The request can be for either a single row, or a range. This parameter can be used
-   *     to tune timeouts
-   * @param <RequestT> a RequestT object.
-   * @return a {@link CallOptions} object.
    */
   <RequestT> CallOptions create(MethodDescriptor<RequestT, ?> descriptor, RequestT request);
 
   /**
    * Returns {@link CallOptions#DEFAULT} with any {@link Context#current()}'s {@link
    * Context#getDeadline()} applied to it.
+   *
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   public static class Default implements CallOptionsFactory {
     @Override
     public <RequestT> CallOptions create(
@@ -66,7 +62,12 @@ public interface CallOptionsFactory {
     }
   }
 
-  /** Creates a new {@link CallOptions} based on a {@link CallOptionsConfig}. */
+  /**
+   * Creates a new {@link CallOptions} based on a {@link CallOptionsConfig}.
+   *
+   * <p>For internal use only - public for technical reasons.
+   */
+  @InternalApi("For internal usage only")
   public static class ConfiguredCallOptionsFactory implements CallOptionsFactory {
     private final CallOptionsConfig config;
 

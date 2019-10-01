@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.api.core.InternalApi;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.io.OAuthCredentialsCache.HeaderToken;
@@ -45,9 +46,9 @@ import java.util.concurrent.TimeUnit;
  * of the Bigtable endpoints are OAuth2 based. It uses the OAuth AccessToken to get the token value
  * and next refresh time. The refresh is scheduled asynchronously.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor {
   private static final Logger LOG = new Logger(RefreshingOAuth2CredentialsInterceptor.class);
 

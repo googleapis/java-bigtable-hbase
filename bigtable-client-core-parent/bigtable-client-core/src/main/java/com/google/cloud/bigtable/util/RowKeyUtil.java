@@ -15,8 +15,10 @@
  */
 package com.google.cloud.bigtable.util;
 
+import com.google.api.core.InternalExtensionOnly;
 import java.util.Arrays;
 
+@InternalExtensionOnly
 public class RowKeyUtil {
   private static final byte[] EMPTY_KEY = new byte[0];
   /**

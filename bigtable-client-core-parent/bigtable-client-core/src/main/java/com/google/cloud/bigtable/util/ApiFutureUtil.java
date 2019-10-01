@@ -17,12 +17,17 @@ package com.google.cloud.bigtable.util;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureToListenableFuture;
+import com.google.api.core.InternalApi;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 
+/**
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public final class ApiFutureUtil {
 
   public static <T> ListenableFuture<T> adapt(final ApiFuture<T> apiFuture) {

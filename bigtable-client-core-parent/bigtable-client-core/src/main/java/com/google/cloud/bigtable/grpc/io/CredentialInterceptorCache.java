@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.api.core.InternalApi;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
@@ -35,9 +36,9 @@ import java.util.concurrent.Executors;
  * default authorization cases. In other types of authorization, such as file based Credentials, it
  * will create a new one.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class CredentialInterceptorCache {
   private static CredentialInterceptorCache instance = new CredentialInterceptorCache();
 

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
@@ -37,10 +38,8 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * A client for the Cloud Bigtable Table Admin API.
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public interface BigtableTableAdminClient {
 
   /**
@@ -152,42 +151,23 @@ public interface BigtableTableAdminClient {
       throws InterruptedException, TimeoutException;
 
   // ////////////// SNAPSHOT methods /////////////
-  /**
-   * Creates a new snapshot from a table in a specific cluster.
-   *
-   * @param request a {@link SnapshotTableRequest} object.
-   * @return The long running {@link Operation} for the request.
-   */
+  /** @deprecated Snapshots will be removed in the future */
+  @Deprecated
   ListenableFuture<Operation> snapshotTableAsync(SnapshotTableRequest request);
 
-  /**
-   * Gets metadata information about the specified snapshot.
-   *
-   * @param request a {@link GetSnapshotRequest} object.
-   * @return The {@link Snapshot} defined by the request.
-   */
+  /** @deprecated Snapshots will be removed in the future */
+  @Deprecated
   ListenableFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request);
 
-  /**
-   * Lists all snapshots associated with the specified cluster.
-   *
-   * @param request a {@link ListSnapshotsRequest} object.
-   * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
-   */
+  /** @deprecated Snapshots will be removed in the future */
+  @Deprecated
   ListenableFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request);
 
-  /**
-   * Permanently deletes the specified snapshot.
-   *
-   * @param request a {@link DeleteSnapshotRequest} object.
-   */
+  /** @deprecated Snapshots will be removed in the future */
+  @Deprecated
   ListenableFuture<Empty> deleteSnapshotAsync(DeleteSnapshotRequest request);
 
-  /**
-   * Creates a new table from a snapshot.
-   *
-   * @param request a {@link CreateTableFromSnapshotRequest} object.
-   * @return The long running {@link Operation} for the request.
-   */
+  /** @deprecated Snapshots will be removed in the future */
+  @Deprecated
   ListenableFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request);
 }

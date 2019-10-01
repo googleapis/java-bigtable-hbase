@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.api.core.InternalApi;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -28,10 +29,9 @@ import io.grpc.MethodDescriptor;
  * Adds a header ("google-cloud-resource-prefix") that usually contains a fully qualified instance
  * or table name.
  *
- * @author sduskis
- * @version $Id: $Id
- * @since 0.9.2
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class HeaderInterceptor implements ClientInterceptor {
 
   private final Metadata.Key<String> key;
