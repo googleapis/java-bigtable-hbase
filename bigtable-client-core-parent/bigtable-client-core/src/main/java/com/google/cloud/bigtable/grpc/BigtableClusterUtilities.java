@@ -74,9 +74,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @return The instance id associated with the given project, zone and cluster. We expect instance
    *     and cluster to have one-to-one relationship.
    * @throws IllegalStateException if the cluster is not found
-   * @deprecated This method will be removed in future versions
    */
-  @Deprecated
   public static String lookupInstanceId(String projectId, String clusterId, String zoneId)
       throws IOException {
     BigtableClusterUtilities utils;
@@ -103,9 +101,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
    *     cluster to have one-to-one relationship.
    * @throws IllegalStateException if the cluster is not found or if there are many clusters in this
    *     instance.
-   * @deprecated This method will be removed in future versions
    */
-  @Deprecated
   public static Cluster lookupCluster(String projectId, String instanceId) throws IOException {
     BigtableClusterUtilities utils;
     try {
