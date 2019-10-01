@@ -23,15 +23,13 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
-/**
- * An immutable class providing access to bulk related configuration options for Bigtable.
- */
+/** An immutable class providing access to bulk related configuration options for Bigtable. */
 @InternalExtensionOnly
 public class BulkOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
-  /**<p>For internal use only - public for technical reasons. */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final int BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT = 2;
 
@@ -184,9 +182,7 @@ public class BulkOptions implements Serializable, Cloneable {
       return this;
     }
 
-    /**
-     * @deprecated This will be removed in the future
-     */
+    /** @deprecated This will be removed in the future */
     @Deprecated
     public Builder setBulkMutationRpcTargetMs(int bulkMutationRpcTargetMs) {
       options.bulkMutationRpcTargetMs = bulkMutationRpcTargetMs;

@@ -36,9 +36,7 @@ import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 import java.util.concurrent.TimeoutException;
 
-/**
- * A client for the Cloud Bigtable Table Admin API.
- */
+/** A client for the Cloud Bigtable Table Admin API. */
 @InternalExtensionOnly
 public interface BigtableTableAdminClient {
 

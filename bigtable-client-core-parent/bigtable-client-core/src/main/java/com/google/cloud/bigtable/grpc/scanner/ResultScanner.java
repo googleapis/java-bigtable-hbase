@@ -19,9 +19,7 @@ import com.google.api.core.InternalExtensionOnly;
 import java.io.Closeable;
 import java.io.IOException;
 
-/**
- * A scanner of Bigtable rows.
- */
+/** A scanner of Bigtable rows. */
 @InternalExtensionOnly
 public interface ResultScanner<T> extends Closeable {
   /**

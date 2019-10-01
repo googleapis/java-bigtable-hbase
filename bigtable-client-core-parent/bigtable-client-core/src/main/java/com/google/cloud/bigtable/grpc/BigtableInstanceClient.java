@@ -47,9 +47,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/**
- * BigtableInstanceClient manages instances and clusters.
- */
+/** BigtableInstanceClient manages instances and clusters. */
 @InternalExtensionOnly
 public interface BigtableInstanceClient {
   /**
@@ -105,9 +103,7 @@ public interface BigtableInstanceClient {
    */
   ListInstancesResponse listInstances(ListInstancesRequest request);
 
-  /**
-   * @deprecated Please use {@link #partialUpdateInstance(PartialUpdateInstanceRequest)}
-   */
+  /** @deprecated Please use {@link #partialUpdateInstance(PartialUpdateInstanceRequest)} */
   @Deprecated
   Instance updateInstance(Instance instance);
 

@@ -41,27 +41,27 @@ public class BigtableOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
-  /** <p>For internal use only - public for technical reasons. */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final String BIGTABLE_EMULATOR_HOST_ENV_VAR = "BIGTABLE_EMULATOR_HOST";
 
-  /** <p>For internal use only - public for technical reasons. */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final String BIGTABLE_ADMIN_HOST_DEFAULT = "bigtableadmin.googleapis.com";
 
-  /** <p>For internal use only - public for technical reasons. */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
 
-  /** <p>For internal use only - public for technical reasons. */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
 
-  /** <p>For internal use only - public for technical reasons. */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final int BIGTABLE_PORT_DEFAULT = 443;
 
-  /** <p>For internal use only - public for technical reasons. */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = getDefaultDataChannelCount();
 
@@ -74,11 +74,8 @@ public class BigtableOptions implements Serializable, Cloneable {
   @InternalApi("For internal usage only")
   public static final String BIGTABLE_APP_PROFILE_DEFAULT = "";
 
-  /**
-   * @deprecated This field will be removed in future versions.
-   */
-  @Deprecated
-  public static final String BIGTABLE_CLIENT_ADAPTER = "BIGTABLE_CLIENT_ADAPTER";
+  /** @deprecated This field will be removed in future versions. */
+  @Deprecated public static final String BIGTABLE_CLIENT_ADAPTER = "BIGTABLE_CLIENT_ADAPTER";
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
@@ -177,7 +174,7 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
-    /** <p>For internal use only - public for technical reasons. */
+    /** For internal use only - public for technical reasons. */
     @InternalApi("For internal usage only")
     public int getDataChannelCount() {
       return options.dataChannelCount;

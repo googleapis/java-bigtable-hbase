@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-/**
- * <p>For internal use only - public for technical reasons.
- */
+/** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class BigtableVersionInfo {
 

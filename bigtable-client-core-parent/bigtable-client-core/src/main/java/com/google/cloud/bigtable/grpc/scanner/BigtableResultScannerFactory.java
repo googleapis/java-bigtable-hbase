@@ -17,9 +17,7 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.bigtable.v2.ReadRowsRequest;
 
-/**
- * @deprecated This class will be removed in the future
- */
+/** @deprecated This class will be removed in the future */
 @Deprecated
 public interface BigtableResultScannerFactory<ResponseT> {
 

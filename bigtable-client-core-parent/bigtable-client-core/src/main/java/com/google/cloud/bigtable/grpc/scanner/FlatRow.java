@@ -39,9 +39,7 @@ public class FlatRow implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * <p>For internal use only - public for technical reasons.
-     */
+    /** For internal use only - public for technical reasons. */
     @InternalApi("For internal usage only")
     public static final class Builder {
       private String family;
@@ -83,9 +81,7 @@ public class FlatRow implements Serializable {
       }
     }
 
-    /**
-     * <p>For internal use only - public for technical reasons.
-     */
+    /** For internal use only - public for technical reasons. */
     @InternalApi("For internal usage only")
     public static Builder newBuilder() {
       return new Builder();
@@ -97,9 +93,7 @@ public class FlatRow implements Serializable {
     private final ByteString value;
     private final List<String> labels;
 
-    /**
-     * <p>For internal use only - public for technical reasons.
-     */
+    /** For internal use only - public for technical reasons. */
     @InternalApi("For internal usage only")
     public Cell(
         String family,
@@ -159,9 +153,7 @@ public class FlatRow implements Serializable {
     }
   }
 
-  /**
-   * <p>For internal use only - public for technical reasons.
-   */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final class Builder {
     private ByteString rowKey = null;
@@ -205,9 +197,7 @@ public class FlatRow implements Serializable {
     }
   }
 
-  /**
-   * <p>For internal use only - public for technical reasons.
-   */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static Builder newBuilder() {
     return new Builder();
@@ -216,9 +206,7 @@ public class FlatRow implements Serializable {
   private final ByteString rowKey;
   private final ImmutableList<Cell> cells;
 
-  /**
-   * <p>For internal use only - public for technical reasons.
-   */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public FlatRow(ByteString rowKey, ImmutableList<Cell> cells) {
     this.rowKey = rowKey;

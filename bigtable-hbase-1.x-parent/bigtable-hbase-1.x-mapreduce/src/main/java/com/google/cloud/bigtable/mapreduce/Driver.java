@@ -15,14 +15,11 @@
  */
 package com.google.cloud.bigtable.mapreduce;
 
+import org.apache.hadoop.classification.InterfaceStability.Evolving;
 import org.apache.hadoop.util.ProgramDriver;
 
-/**
- * Driver for bigtable mapreduce jobs. Select which to run by passing name of job to this main.
- *
- * @author sduskis
- * @version $Id: $Id
- */
+/** Driver for bigtable mapreduce jobs. Select which to run by passing name of job to this main. */
+@Evolving
 public class Driver {
 
   /**

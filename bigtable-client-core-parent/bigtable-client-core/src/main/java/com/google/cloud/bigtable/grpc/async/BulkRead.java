@@ -84,8 +84,7 @@ public class BulkRead {
    * @param tableName a {@link BigtableTableName} object.
    * @param batchSizes The number of keys to lookup per RPC.
    * @param threadPool the {@link ExecutorService} to execute the batched reads on
-   *
-   * <p>For internal use only - public for technical reasons.
+   *     <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
   public BulkRead(
@@ -225,9 +224,7 @@ public class BulkRead {
     }
   }
 
-  /**
-   * <p>For internal use only - public for technical reasons.
-   */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public int getBatchSizes() {
     return batchSizes;

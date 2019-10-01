@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;

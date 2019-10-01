@@ -19,17 +19,12 @@ import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import java.io.IOException;
 
-/**
- * An Exception that is thrown when an operation fails, even in the face of retries.
- */
+/** An Exception that is thrown when an operation fails, even in the face of retries. */
 @InternalExtensionOnly
 public class BigtableRetriesExhaustedException extends IOException {
   private static final long serialVersionUID = 6905598607595217072L;
 
-
-  /**
-   * <p>For internal use only - public for technical reasons.
-   */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public BigtableRetriesExhaustedException(String message, Throwable cause) {
     super(message, cause);

@@ -26,19 +26,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Options for retrying requests, including back off configuration.
- */
+/** Options for retrying requests, including back off configuration. */
 @InternalExtensionOnly
 public class RetryOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
-  /**
-   * @deprecated This field will be removed in the future
-   */
-  @Deprecated
-  public static int DEFAULT_STREAMING_BUFFER_SIZE = 60;
+  /** @deprecated This field will be removed in the future */
+  @Deprecated public static int DEFAULT_STREAMING_BUFFER_SIZE = 60;
 
   /**
    * Flag indicating whether or not grpc retries should be enabled. The default is to enable retries
@@ -49,7 +44,7 @@ public class RetryOptions implements Serializable, Cloneable {
   @InternalApi("For internal usage only")
   public static final boolean DEFAULT_ENABLE_GRPC_RETRIES = true;
 
-  /**   /** For internal use only - public for technical reasons. */
+  /** /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final Set<Status.Code> DEFAULT_ENABLE_GRPC_RETRIES_SET =
       ImmutableSet.of(
@@ -110,9 +105,7 @@ public class RetryOptions implements Serializable, Cloneable {
   public static class Builder {
     private RetryOptions options;
 
-    /**
-     * @deprecated Please use RetryOptions.builder()
-     */
+    /** @deprecated Please use RetryOptions.builder() */
     @Deprecated
     public Builder() {
       options = new RetryOptions();
@@ -127,9 +120,7 @@ public class RetryOptions implements Serializable, Cloneable {
       options.statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
     }
 
-    /**
-     * @deprecated Please use RetryOptions.toBuilder()
-     */
+    /** @deprecated Please use RetryOptions.toBuilder() */
     public Builder(RetryOptions options) {
       this.options = options.clone();
     }
@@ -214,8 +205,7 @@ public class RetryOptions implements Serializable, Cloneable {
   private int initialBackoffMillis;
   private int maxElapsedBackoffMillis;
   private double backoffMultiplier;
-  @Deprecated
-  private int streamingBufferSize;
+  @Deprecated private int streamingBufferSize;
   private int readPartialRowTimeoutMillis;
   private int maxScanTimeoutRetries;
   private Set<Status.Code> statusToRetryOn;
@@ -231,7 +221,6 @@ public class RetryOptions implements Serializable, Cloneable {
    * @param readPartialRowTimeoutMillis a int.
    * @param maxScanTimeoutRetries a int.
    * @param statusToRetryOn a Set.
-   *
    * @deprecated Please use RetryOptions.builder()
    */
   @Deprecated

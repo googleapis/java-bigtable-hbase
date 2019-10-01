@@ -63,17 +63,12 @@ public class BulkMutation {
           .withDescription("Mutation does not have a status")
           .asRuntimeException();
   /** Constant <code>LOG</code> */
-  @VisibleForTesting
-  static Logger LOG = new Logger(BulkMutation.class);
+  @VisibleForTesting static Logger LOG = new Logger(BulkMutation.class);
 
-  /**
-   * <p>For internal use only - public for technical reasons.
-   */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
-  /**
-   * <p>For internal use only - public for technical reasons.
-   */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final long MAX_NUMBER_OF_MUTATIONS = 100_000;
 

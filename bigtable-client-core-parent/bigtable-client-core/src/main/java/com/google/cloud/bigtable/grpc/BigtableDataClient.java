@@ -36,9 +36,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.stub.StreamObserver;
 import java.util.List;
 
-/**
- * Interface to access v2 Bigtable data service methods.
- */
+/** Interface to access v2 Bigtable data service methods. */
 @InternalExtensionOnly
 public interface BigtableDataClient {
 

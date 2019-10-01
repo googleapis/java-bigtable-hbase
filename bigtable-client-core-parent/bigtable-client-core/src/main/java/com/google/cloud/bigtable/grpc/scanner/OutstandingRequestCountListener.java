@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.api.core.InternalApi;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.Status;

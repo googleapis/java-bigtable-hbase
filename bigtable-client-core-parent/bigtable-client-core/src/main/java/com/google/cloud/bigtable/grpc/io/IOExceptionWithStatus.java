@@ -20,9 +20,7 @@ import com.google.api.core.InternalExtensionOnly;
 import io.grpc.Status;
 import java.io.IOException;
 
-/**
- * An IOException that carries a gRPC Status object.
- */
+/** An IOException that carries a gRPC Status object. */
 @InternalExtensionOnly
 public class IOExceptionWithStatus extends IOException {
   private static final long serialVersionUID = 1L;

@@ -24,9 +24,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 
-/**
- * <p>For internal use only - public for technical reasons.
- */
+/** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public final class ApiFutureUtil {
 
