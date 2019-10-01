@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
@@ -42,6 +43,7 @@ import org.apache.hadoop.hbase.client.Scan;
  * Bigtable instance; a table to connect to in the instance; and a filter on the table in the form
  * of a {@link Scan}.
  */
+@InternalExtensionOnly
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
 
   private static final long serialVersionUID = 2435897354284600685L;

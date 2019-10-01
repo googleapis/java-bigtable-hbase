@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
@@ -135,6 +137,7 @@ public class CloudBigtableIO {
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
    */
+  @InternalExtensionOnly
   @SuppressWarnings("serial")
   abstract static class AbstractSource extends BoundedSource<Result> {
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
@@ -264,7 +267,10 @@ public class CloudBigtableIO {
      * CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)} if they are not
      * yet cached. The sample row keys give information about tablet key boundaries and estimated
      * sizes.
+     *
+     * <p>For internal use only - public for technical reasons.
      */
+    @InternalApi("For internal usage only")
     public synchronized List<KeyOffset> getSampleRowKeys() throws IOException {
       if (sampleRowKeys == null) {
         sampleRowKeys = new CloudBigtableServiceImpl().getSampleRowKeys(getConfiguration());
@@ -396,6 +402,7 @@ public class CloudBigtableIO {
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
    */
+  @InternalExtensionOnly
   public static class Source extends AbstractSource {
     private static final long serialVersionUID = -5580115943635114126L;
 
@@ -856,6 +863,7 @@ public class CloudBigtableIO {
    * Mutation}s to a table specified via a {@link CloudBigtableTableConfiguration} using the
    * BufferedMutator.
    */
+  @InternalExtensionOnly
   public static class CloudBigtableSingleTableBufferedWriteFn
       extends BufferedMutatorDoFn<Mutation> {
     private static final long serialVersionUID = 2L;
@@ -913,6 +921,7 @@ public class CloudBigtableIO {
    * family is greater than one. In a case where multiple versions could be a problem, it's best to
    * add a timestamp to the {@link Put}.
    */
+  @InternalExtensionOnly
   public static class CloudBigtableMultiTableWriteFn
       extends BufferedMutatorDoFn<KV<String, Iterable<Mutation>>> {
     private static final long serialVersionUID = 2L;

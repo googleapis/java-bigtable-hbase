@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
@@ -91,9 +92,8 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  *   --gcs-location gs://[TEMPLATE_PATH] \
  *   --parameters bigtableProject=[PROJECT_ID],bigtableInstanceId=[INSTANCE],bigtableTableId=[TABLE],destinationPath=gs://[DESTINATION_PATH],filenamePrefix=[FILENAME_PREFIX]
  * </pre>
- *
- * @author igorbernstein2
  */
+@InternalExtensionOnly
 public class ExportJob {
   public interface ExportOptions extends GcpOptions {
     @Description("This Bigtable App Profile id.")

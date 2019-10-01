@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import com.google.api.core.InternalExtensionOnly;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.beam.sdk.options.ValueProvider;
@@ -25,6 +26,7 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
  * Bigtable instance, including a table to connect to in the instance.
  */
+@InternalExtensionOnly
 public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration {
 
   private static final long serialVersionUID = 2435897354284600685L;
