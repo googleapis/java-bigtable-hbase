@@ -33,9 +33,7 @@ import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.io.TimeRange;
 
-/**
- * <p>For internal use only - public for technical reasons.
- */
+/** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class BigtableTable extends AbstractBigtableTable {
 

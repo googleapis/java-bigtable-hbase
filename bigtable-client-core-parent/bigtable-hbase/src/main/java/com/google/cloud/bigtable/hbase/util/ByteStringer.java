@@ -25,7 +25,8 @@ import org.apache.commons.logging.LogFactory;
  *
  * <p>For internal use only - public for technical reasons.
  */
-@InternalApi("For internal usage only")public class ByteStringer {
+@InternalApi("For internal usage only")
+public class ByteStringer {
   private static final Log LOG = LogFactory.getLog(ByteStringer.class);
 
   /** Flag set at class loading time. */

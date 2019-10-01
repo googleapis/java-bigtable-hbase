@@ -4,7 +4,7 @@ import com.google.api.core.InternalApi;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.hbase.HConstants;
 
-/** <p>For internal use only - public for technical reasons. */
+/** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class TimestampConverter {
   // The difference between milliseconds and microseconds is a factor of 1000
