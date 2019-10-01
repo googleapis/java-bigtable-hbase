@@ -21,14 +21,10 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
-/**
- * Entry point for create-table/import/export job submission.
- */
+/** Entry point for create-table/import/export job submission. */
 @InternalExtensionOnly
 public class Main {
-  /**
-   * <p>For internal use only - public for technical reasons.
-   */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public Main() {}
 

@@ -22,9 +22,7 @@ import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * <p>For internal use only - public for technical reasons.
- */
+/** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class CloudBigtableServiceImpl implements CloudBigtableService {
 
