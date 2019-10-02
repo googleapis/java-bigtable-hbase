@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.hbase.AbstractBigtableRegionLocator;
@@ -31,8 +32,9 @@ import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 /**
  * Bigtable implementation of {@link AsyncTableRegionLocator}
  *
- * @author spollapally
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocator
     implements AsyncTableRegionLocator {
   HRegionLocation hRegionLocation = null;

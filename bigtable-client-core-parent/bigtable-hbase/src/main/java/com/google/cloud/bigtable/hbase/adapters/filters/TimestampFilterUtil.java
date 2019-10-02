@@ -17,10 +17,16 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 
-/** Common utilities for Timestamp filters. */
+/**
+ * Common utilities for Timestamp filters.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class TimestampFilterUtil {
 
   /**

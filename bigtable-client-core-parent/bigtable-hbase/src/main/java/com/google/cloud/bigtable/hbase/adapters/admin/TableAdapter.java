@@ -31,10 +31,9 @@ import org.apache.hadoop.hbase.TableName;
 /**
  * TableAdapter class.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
-@InternalApi
+@InternalApi("For internal usage only")
 public class TableAdapter {
   private static final ColumnDescriptorAdapter columnDescriptorAdapter =
       ColumnDescriptorAdapter.INSTANCE;

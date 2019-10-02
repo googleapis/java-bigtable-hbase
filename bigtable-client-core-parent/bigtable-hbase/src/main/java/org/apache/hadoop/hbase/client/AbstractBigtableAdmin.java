@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.hbase.util.ModifyTableBuilder.buildModif
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
@@ -78,9 +79,9 @@ import org.apache.hadoop.hbase.util.Pair;
 /**
  * Abstract AbstractBigtableAdmin class.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 @SuppressWarnings("deprecation")
 public abstract class AbstractBigtableAdmin implements Admin {
 

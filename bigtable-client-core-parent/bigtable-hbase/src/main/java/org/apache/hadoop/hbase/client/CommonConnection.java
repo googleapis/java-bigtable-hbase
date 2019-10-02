@@ -8,6 +8,7 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import java.io.Closeable;
@@ -20,7 +21,10 @@ import org.apache.hadoop.hbase.TableName;
 
 /**
  * Common interface for {@link AbstractBigtableConnection} and HBase 2's BigtableAsyncConnection.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public interface CommonConnection extends Closeable {
 
   /**

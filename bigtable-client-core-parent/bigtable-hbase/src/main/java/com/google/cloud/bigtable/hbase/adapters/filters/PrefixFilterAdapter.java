@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.RowKeyUtil;
@@ -31,9 +32,9 @@ import org.apache.hadoop.hbase.filter.PrefixFilter;
 /**
  * Adapter for HBase {@link org.apache.hadoop.hbase.filter.PrefixFilter} instances.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class PrefixFilterAdapter extends TypedFilterAdapterBase<PrefixFilter> {
 
   /** {@inheritDoc} */

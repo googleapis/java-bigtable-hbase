@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.filter;
 
+import com.google.api.core.InternalExtensionOnly;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,6 +31,7 @@ import org.apache.hadoop.hbase.filter.FilterBase;
  * Defines a filter that only returns cells whose version matches a start and end (both are
  * inclusive)
  */
+@InternalExtensionOnly
 public class TimestampRangeFilter extends FilterBase implements Serializable {
 
   private static final long serialVersionUID = 1L;

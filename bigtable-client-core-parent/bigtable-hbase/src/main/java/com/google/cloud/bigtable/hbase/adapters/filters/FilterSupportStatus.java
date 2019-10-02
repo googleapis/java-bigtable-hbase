@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.api.core.InternalApi;
 import java.util.List;
 import org.apache.hadoop.hbase.filter.Filter;
 
@@ -25,9 +26,9 @@ import org.apache.hadoop.hbase.filter.Filter;
  * <p>The isSupported method indicates whether the Filter is supported and if isSupport() is false a
  * reason may be provided by the adapter.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class FilterSupportStatus {
 
   /** A static instance for all supported Filter adaptations. */

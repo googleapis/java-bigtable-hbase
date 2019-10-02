@@ -15,15 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.hadoop.hbase.client.Operation;
 
 /**
  * Interface used for Scan and Get operation adapters.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public interface ReadOperationAdapter<T extends Operation> {
   /**
    * adapt.

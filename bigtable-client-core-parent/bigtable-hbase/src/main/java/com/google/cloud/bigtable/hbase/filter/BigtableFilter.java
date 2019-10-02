@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.filter;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -34,6 +35,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
  * express an expression that's more performant than a translation of a complex HBase {@link
  * FilterList}.
  */
+@InternalExtensionOnly
 public class BigtableFilter extends FilterBase implements Serializable {
 
   private static final long serialVersionUID = 1L;

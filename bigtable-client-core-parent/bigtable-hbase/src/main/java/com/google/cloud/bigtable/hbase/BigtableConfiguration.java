@@ -15,25 +15,36 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Connection;
 
-/**
- * This class provides a simplified mechanism of creating a programmatic Bigtable Connection.
- *
- * @author sduskis
- * @version $Id: $Id
- */
-@SuppressWarnings("deprecation")
+/** This class provides a simplified mechanism of creating a programmatic Bigtable Connection. */
+@InternalExtensionOnly
 public class BigtableConfiguration {
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String HBASE_CLIENT_CONNECTION_IMPL = "hbase.client.connection.impl";
+
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String HBASE_CLIENT_ASYNC_CONNECTION_IMPL =
       "hbase.client.async.connection.impl";
+
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String HBASE_CLIENT_ASYNC_REGISTRY_IMPL = "hbase.client.registry.impl";
+
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS =
       "org.apache.hadoop.hbase.client.BigtableAsyncConnection";
+
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS =
       "org.apache.hadoop.hbase.client.BigtableAsyncRegistry";
 
@@ -57,8 +68,11 @@ public class BigtableConfiguration {
   }
 
   /**
+   * For internal use only - public for technical reasons.
+   *
    * @return the default bigtable {@link Connection} implementation class found in the classpath.
    */
+  @InternalApi("For internal usage only")
   public static Class<? extends Connection> getConnectionClass() {
     Preconditions.checkState(
         CONNECTION_CLASS != null,

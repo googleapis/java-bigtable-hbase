@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Google Inc. All Rights Reserved.
  *
  * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -13,6 +13,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.HConstants;
@@ -27,9 +28,9 @@ import org.apache.hadoop.hbase.util.Bytes;
  * Each *Length() returns the length of the array. This implementation is a few microseconds quicker
  * thank KeyValue, which makes a big performance difference for large scans.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class RowCell implements Cell {
 
   private final byte[] rowArray;

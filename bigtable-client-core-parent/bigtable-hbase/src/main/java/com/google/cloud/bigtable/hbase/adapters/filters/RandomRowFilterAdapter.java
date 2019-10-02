@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import java.io.IOException;
 import org.apache.hadoop.hbase.filter.RandomRowFilter;
@@ -24,9 +25,9 @@ import org.apache.hadoop.hbase.filter.RandomRowFilter;
 /**
  * Adapter for {@link org.apache.hadoop.hbase.filter.RandomRowFilter}
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class RandomRowFilterAdapter extends TypedFilterAdapterBase<RandomRowFilter> {
   /** {@inheritDoc} */
   @Override

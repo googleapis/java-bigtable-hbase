@@ -15,12 +15,18 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import java.io.IOException;
 
-/** Converts a {@link BigtableFilter} to a {@link RowFilter}. */
+/**
+ * Converts a {@link BigtableFilter} to a {@link RowFilter}.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class BigtableFilterAdapter extends TypedFilterAdapterBase<BigtableFilter> {
 
   @Override

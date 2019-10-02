@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import java.io.IOException;
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
@@ -24,9 +25,9 @@ import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 /**
  * Adapter for the ColumnCountGetFilter. This filter does not work properly with Scans.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ColumnCountGetFilterAdapter extends TypedFilterAdapterBase<ColumnCountGetFilter> {
 
   /** {@inheritDoc} */

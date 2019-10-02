@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
@@ -22,9 +23,9 @@ import com.google.common.base.Functions;
 /**
  * Default implementation of {@link ReadHooks}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class DefaultReadHooks implements ReadHooks {
   private Function<Query, Query> preSendHook = Functions.identity();
   /** {@inheritDoc} */

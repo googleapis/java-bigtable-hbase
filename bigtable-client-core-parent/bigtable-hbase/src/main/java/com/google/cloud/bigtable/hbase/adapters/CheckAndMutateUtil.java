@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
@@ -39,6 +40,8 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 
+/** For internal use only - public for technical reasons. */
+@InternalApi("For internal usage only")
 public class CheckAndMutateUtil {
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of

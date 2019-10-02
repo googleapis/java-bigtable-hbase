@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Status;
@@ -26,9 +27,9 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 /**
  * Adapt a Bigtable ResultScanner to an HBase Result Scanner.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableResultScannerAdapter<T> {
 
   private final ResponseAdapter<T, Result> rowAdapter;

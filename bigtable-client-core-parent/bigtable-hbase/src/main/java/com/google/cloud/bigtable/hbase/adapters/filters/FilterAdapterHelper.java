@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.RowFilter;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
@@ -25,9 +26,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * Helpers for filter adapters.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class FilterAdapterHelper {
 
   /** A RowFilter that will match all cells. */

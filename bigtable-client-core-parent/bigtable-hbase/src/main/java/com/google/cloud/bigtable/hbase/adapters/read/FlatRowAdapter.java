@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
@@ -30,9 +31,9 @@ import org.apache.hadoop.hbase.util.Bytes;
  * Adapt between a {@link FlatRow} and an hbase client {@link
  * org.apache.hadoop.hbase.client.Result}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
   /** {@inheritDoc} Convert a {@link FlatRow} to a {@link Result}. */
   @Override

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.hadoop.hbase.client.Append;
@@ -29,9 +30,9 @@ import org.apache.hadoop.hbase.client.Put;
  *
  * <p>This class uses instanceof checking to determine an appropriate adaptation to apply.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class HBaseMutationAdapter extends MutationAdapter<Mutation> {
 
   static class AdapterInstanceMap {

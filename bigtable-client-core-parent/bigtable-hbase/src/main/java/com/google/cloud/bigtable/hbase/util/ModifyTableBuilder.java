@@ -27,8 +27,12 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.util.Bytes;
 
-/** Utility to create {@link ModifyColumnFamiliesRequest} from HBase {@link HColumnDescriptor}s. */
-@InternalApi
+/**
+ * Utility to create {@link ModifyColumnFamiliesRequest} from HBase {@link HColumnDescriptor}s.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class ModifyTableBuilder {
 
   private ModifyTableBuilder(String tableId) {

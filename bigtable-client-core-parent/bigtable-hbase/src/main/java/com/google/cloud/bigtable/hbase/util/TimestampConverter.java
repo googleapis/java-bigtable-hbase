@@ -1,8 +1,11 @@
 package com.google.cloud.bigtable.hbase.util;
 
+import com.google.api.core.InternalApi;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.hbase.HConstants;
 
+/** For internal use only - public for technical reasons. */
+@InternalApi("For internal usage only")
 public class TimestampConverter {
   // The difference between milliseconds and microseconds is a factor of 1000
   private static final long FACTOR = 1000l;

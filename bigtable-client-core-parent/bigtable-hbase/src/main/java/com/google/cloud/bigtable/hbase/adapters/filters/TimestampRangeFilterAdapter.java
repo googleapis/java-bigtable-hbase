@@ -15,10 +15,16 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 
-/** Converts a {@link TimestampRangeFilter} into a Cloud Bigtable {@link Filter}. */
+/**
+ * Converts a {@link TimestampRangeFilter} into a Cloud Bigtable {@link Filter}.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class TimestampRangeFilterAdapter extends TypedFilterAdapterBase<TimestampRangeFilter> {
 
   @Override

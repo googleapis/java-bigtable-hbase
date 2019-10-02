@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import static com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.quoteRegularExpression;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.common.annotations.VisibleForTesting;
@@ -29,9 +30,9 @@ import org.apache.hadoop.hbase.filter.ValueFilter;
 /**
  * Adapt SingleColumnValueFilter instances into bigtable RowFilters.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class SingleColumnValueFilterAdapter
     extends TypedFilterAdapterBase<SingleColumnValueFilter> {
 

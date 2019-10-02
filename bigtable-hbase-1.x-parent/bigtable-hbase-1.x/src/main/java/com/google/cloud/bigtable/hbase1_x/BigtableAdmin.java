@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase1_x;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.Snapshot;
@@ -49,7 +50,10 @@ import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 /**
  * This is an hbase 1.x implementation of {@link AbstractBigtableAdmin}. Most methods in this class
  * unsupported
+ *
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 @SuppressWarnings("deprecation")
 public class BigtableAdmin extends AbstractBigtableAdmin {
 

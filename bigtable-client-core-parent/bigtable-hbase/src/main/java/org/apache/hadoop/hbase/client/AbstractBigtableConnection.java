@@ -16,6 +16,7 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -43,9 +44,9 @@ import org.apache.hadoop.hbase.security.User;
 /**
  * Abstract AbstractBigtableConnection class.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public abstract class AbstractBigtableConnection
     implements Connection, CommonConnection, Closeable {
 

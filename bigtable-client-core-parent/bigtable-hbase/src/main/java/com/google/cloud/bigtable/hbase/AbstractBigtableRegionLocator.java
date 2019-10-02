@@ -21,6 +21,7 @@ import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
@@ -38,8 +39,9 @@ import org.apache.hadoop.hbase.TableName;
 /**
  * AbstractBigtableRegionLocator class.
  *
- * @author rupeshit
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public abstract class AbstractBigtableRegionLocator {
   // Reuse the results from previous calls during this time.
   /** Constant <code>MAX_REGION_AGE_MILLIS=60 * 1000</code> */

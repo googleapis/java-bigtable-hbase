@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import java.io.IOException;
 import org.apache.hadoop.hbase.Cell;
@@ -27,9 +28,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * An adapter for KeyOnlyFilter to a Bigtable strip_value_transform.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class KeyOnlyFilterAdapter extends TypedFilterAdapterBase<KeyOnlyFilter> {
   /** Constant <code>TEST_CELL</code> */
   private static final Cell TEST_CELL =

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.util.TracingUtilities;
 import io.opencensus.trace.Tracing;
 import java.util.Arrays;
@@ -45,6 +46,7 @@ import java.util.List;
  * }
  * </pre>
  */
+@InternalExtensionOnly
 public final class HBaseTracingUtilities {
 
   /**

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
+import com.google.api.core.InternalApi;
 import com.google.protobuf.ByteOutput;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.UnsafeByteOperations;
@@ -28,11 +29,9 @@ import java.nio.ByteBuffer;
  * de-serialized from the wire (which already do one copy, on top of the copies the JVM does to go
  * from kernel buffer to C buffer and from C buffer to JVM buffer).
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
-
-// sduskis (10/31/2016): Uncomment this once we upgrade to protobuf 3.0.0.
+@InternalApi("For internal usage only")
 public final class ZeroCopyByteStringUtil {
 
   /**

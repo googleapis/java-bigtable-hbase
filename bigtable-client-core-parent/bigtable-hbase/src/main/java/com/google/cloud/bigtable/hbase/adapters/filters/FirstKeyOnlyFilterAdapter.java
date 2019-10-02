@@ -17,15 +17,16 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
 /**
  * Adapter for FirstKeyOnlyFilter to RowFilter.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class FirstKeyOnlyFilterAdapter extends TypedFilterAdapterBase<FirstKeyOnlyFilter> {
 
   private static Filters.Filter LIMIT_ONE =

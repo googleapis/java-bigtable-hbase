@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
@@ -29,9 +30,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * Adapt between a {@link Row} and an hbase client {@link Result}.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class RowAdapter implements ResponseAdapter<Row, Result> {
   /**
    * {@inheritDoc}

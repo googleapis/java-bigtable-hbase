@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.common.base.Function;
 
@@ -24,9 +25,9 @@ import com.google.common.base.Function;
  * <p>Note that it is expected that this will be extended to include post-read hooks to transform
  * Rows when appropriate.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public interface ReadHooks {
 
   /**

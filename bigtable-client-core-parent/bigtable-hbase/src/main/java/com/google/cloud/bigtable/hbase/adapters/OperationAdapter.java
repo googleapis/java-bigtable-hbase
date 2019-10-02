@@ -15,17 +15,19 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.core.InternalApi;
 import org.apache.hadoop.hbase.client.Row;
 
 /**
  * An interface for adapters that will convert an HBase Operation into Google Cloud Java Bigtable
  * Models type.
  *
+ * <p>For internal use only - public for technical reasons.
+ *
  * @param <T> The HBase operation type
  * @param <U> The Google Cloud Java Bigtable Model type.
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalApi("For internal usage only")
 public interface OperationAdapter<T extends Row, U> {
 
   /**

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import io.opencensus.trace.Span;
@@ -29,9 +30,9 @@ import org.apache.hadoop.hbase.filter.WhileMatchFilter;
  * Adapt a Bigtable ResultScanner to an HBase Result Scanner. Stops when {@link
  * org.apache.hadoop.hbase.filter.WhileMatchFilter} filters out the remaining rows.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableWhileMatchResultScannerAdapter {
 
   private static final String WHILE_MATCH_FILTER_IN_LABEL_SUFFIX = "-in";

@@ -15,13 +15,19 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import org.apache.hadoop.hbase.filter.Filter;
 
-/** Base functionality for all filter adapters */
+/**
+ * Base functionality for all filter adapters
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public abstract class TypedFilterAdapterBase<S extends Filter> implements TypedFilterAdapter<S> {
 
   @Override

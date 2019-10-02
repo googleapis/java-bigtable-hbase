@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Filters.ChainFilter;
@@ -44,9 +45,9 @@ import org.apache.hadoop.hbase.io.TimeRange;
 /**
  * An adapter for {@link Scan} operation that makes use of the proto filter language.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
