@@ -32,9 +32,6 @@ import org.apache.hadoop.hbase.KeyValue;
  *
  * <p>A predicate assumes that all cells to be filtered belong to the same row and column family as
  * the seed Delete Marker, and does NOT validate this assumption on cells encountered.
- *
- * @author sduskis
- * @version $Id: $Id
  */
 class DataCellPredicateFactory implements Function<Cell, Predicate<Cell>> {
 

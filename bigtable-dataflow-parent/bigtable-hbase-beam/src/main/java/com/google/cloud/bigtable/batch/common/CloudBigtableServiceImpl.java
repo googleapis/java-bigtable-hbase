@@ -15,12 +15,15 @@
  */
 package com.google.cloud.bigtable.batch.common;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import java.io.IOException;
 import java.util.List;
 
+/** For internal use only - public for technical reasons. */
+@InternalApi("For internal usage only")
 public class CloudBigtableServiceImpl implements CloudBigtableService {
 
   @Override

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.batch.common;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
@@ -24,7 +25,10 @@ import java.util.List;
 /**
  * This interface describes functionality required by {@link CloudBigtableIO} that send requests to
  * Cloud Bigtable
+ *
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public interface CloudBigtableService {
   List<KeyOffset> getSampleRowKeys(CloudBigtableTableConfiguration config) throws IOException;
 }

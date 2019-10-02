@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLAC
 import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_PROJECT_ID;
 import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_TABLE_ID;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
@@ -41,7 +42,10 @@ import org.apache.hadoop.hbase.filter.ParseFilter;
  * <p>Utility needed to help setting runtime parameters in Bigtable configurations. This is needed
  * because the methods that take runtime parameters are package private and not intended for direct
  * public consumption for now.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class TemplateUtils {
   /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
   public static CloudBigtableTableConfiguration BuildImportConfig(ImportOptions opts) {

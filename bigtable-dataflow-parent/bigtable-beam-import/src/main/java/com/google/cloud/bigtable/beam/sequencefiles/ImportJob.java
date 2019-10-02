@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
@@ -79,6 +80,7 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  *   --parameters bigtableProject=$PROJECT,bigtableInstanceId=$INSTANCE,bigtableTableId=$TABLE,sourcePattern=gs://$SOURCE_PATTERN
  * </pre>
  */
+@InternalExtensionOnly
 public class ImportJob {
   static final long BUNDLE_SIZE = 100 * 1024 * 1024;
 
