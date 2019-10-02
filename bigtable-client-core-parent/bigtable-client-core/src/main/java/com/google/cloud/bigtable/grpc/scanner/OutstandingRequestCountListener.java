@@ -25,9 +25,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A {@link io.grpc.ClientCall.Listener} that wraps a {@link io.grpc.stub.StreamObserver} and
  * decrements outstandingRequestCount when a message is received.
  *
- * @author sduskis
- * @version $Id: $Id
+ * @deprecated This class will be removed in the future
  */
+@Deprecated
 public class OutstandingRequestCountListener<ResponseT> extends ClientCall.Listener<ResponseT> {
   private StreamObserver<ResponseT> observer;
   private AtomicInteger outstandingRequestCount;

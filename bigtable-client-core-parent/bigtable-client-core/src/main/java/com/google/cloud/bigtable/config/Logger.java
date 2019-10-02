@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.api.core.InternalApi;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -22,9 +23,9 @@ import org.apache.commons.logging.LogFactory;
  * Wrapper around {@link org.apache.commons.logging.Log} to conditionally format messages if a
  * specified log level is enabled.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class Logger {
   protected final Log log;
 

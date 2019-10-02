@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.AppProfile;
 import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
 import com.google.bigtable.admin.v2.Cluster;
@@ -56,9 +57,9 @@ import java.util.concurrent.TimeoutException;
 /**
  * BigtableInstanceGrpcClient class.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
 
   private final BigtableInstanceAdminGrpc.BigtableInstanceAdminBlockingStub instanceClient;

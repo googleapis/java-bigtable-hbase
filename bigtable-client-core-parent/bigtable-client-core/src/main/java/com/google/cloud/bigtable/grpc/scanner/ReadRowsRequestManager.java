@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowRange.EndKeyCase;
@@ -29,9 +30,9 @@ import com.google.protobuf.ByteString;
  * Keeps track of Rows returned from a readRows RPC for information relevant to resuming the RPC
  * after temporary problems.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 class ReadRowsRequestManager {
 
   // Member variables from the constructor.

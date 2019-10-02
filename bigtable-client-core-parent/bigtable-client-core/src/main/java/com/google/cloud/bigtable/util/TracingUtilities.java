@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.util;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
 import com.google.bigtable.v2.BigtableGrpc;
 import io.grpc.MethodDescriptor;
@@ -54,6 +55,7 @@ import java.util.List;
  * }
  * </pre>
  */
+@InternalExtensionOnly
 public final class TracingUtilities {
 
   /**

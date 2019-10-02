@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.Status;
@@ -24,9 +25,10 @@ import io.grpc.stub.StreamObserver;
  * Adapts a {@link io.grpc.stub.StreamObserver} to a {@link io.grpc.ClientCall.Listener}. {@link
  * io.grpc.ClientCall#request(int)} will be called onNext.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
+@Deprecated
 public class StreamObserverAdapter<T> extends ClientCall.Listener<T> {
 
   private final ClientCall<?, T> call;

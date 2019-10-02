@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.admin.v2.AppProfile;
 import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.CreateAppProfileRequest;
@@ -46,12 +47,8 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/**
- * BigtableInstanceClient manages instances and clusters.
- *
- * @author sduskis
- * @version $Id: $Id
- */
+/** BigtableInstanceClient manages instances and clusters. */
+@InternalExtensionOnly
 public interface BigtableInstanceClient {
   /**
    * Create an instance within a project.
@@ -106,12 +103,8 @@ public interface BigtableInstanceClient {
    */
   ListInstancesResponse listInstances(ListInstancesRequest request);
 
-  /**
-   * Updates an instance within a project.
-   *
-   * @param instance a {@link com.google.bigtable.admin.v2.Instance} object.
-   * @return a {@link com.google.bigtable.admin.v2.Instance} object.
-   */
+  /** @deprecated Please use {@link #partialUpdateInstance(PartialUpdateInstanceRequest)} */
+  @Deprecated
   Instance updateInstance(Instance instance);
 
   /**

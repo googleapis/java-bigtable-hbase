@@ -15,15 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import io.grpc.Status;
 import java.io.IOException;
 
-/**
- * An IOException that carries a gRPC Status object.
- *
- * @author sduskis
- * @version $Id: $Id
- */
+/** An IOException that carries a gRPC Status object. */
+@InternalExtensionOnly
 public class IOExceptionWithStatus extends IOException {
   private static final long serialVersionUID = 1L;
   private final Status status;
@@ -31,10 +29,9 @@ public class IOExceptionWithStatus extends IOException {
   /**
    * Constructor for IOExceptionWithStatus.
    *
-   * @param message a {@link java.lang.String} object.
-   * @param cause a {@link java.lang.Throwable} object.
-   * @param status a {@link io.grpc.Status} object.
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   public IOExceptionWithStatus(String message, Throwable cause, Status status) {
     super(message, cause);
     this.status = status;
@@ -43,9 +40,9 @@ public class IOExceptionWithStatus extends IOException {
   /**
    * Constructor for IOExceptionWithStatus.
    *
-   * @param message a {@link java.lang.String} object.
-   * @param status a {@link io.grpc.Status} object.
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   public IOExceptionWithStatus(String message, Status status) {
     this(message, status.asRuntimeException(), status);
   }

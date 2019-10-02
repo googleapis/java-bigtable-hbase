@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc;
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.InternalApi;
 import com.google.api.core.NanoClock;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
@@ -77,9 +78,9 @@ import javax.annotation.Nullable;
  * <p>Most of the methods are unary (single response). The only exception is ReadRows which is a
  * streaming call.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private static final ApiClock CLOCK = NanoClock.getDefaultClock();

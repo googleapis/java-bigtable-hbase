@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.common.base.Preconditions;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,6 +25,7 @@ import java.util.regex.Pattern;
  * This class encapsulates a cluster name of the form
  * projects/(projectId)/instances/(instanceId)/clusters/(clusterId)
  */
+@InternalExtensionOnly
 public class BigtableClusterName {
   // Use a very loose pattern so we don't validate more strictly than the server.
   private static final Pattern PATTERN =
@@ -32,6 +35,8 @@ public class BigtableClusterName {
   private final String instanceId;
   private final String clusterId;
 
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public BigtableClusterName(String clusterName) {
     this.clusterName = clusterName;
     Matcher matcher = PATTERN.matcher(clusterName);

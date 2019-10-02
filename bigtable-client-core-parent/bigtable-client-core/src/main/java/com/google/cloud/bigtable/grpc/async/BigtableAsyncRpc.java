@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Meter;
@@ -29,9 +30,9 @@ import io.grpc.MethodDescriptor;
  * This interface represents a logical asynchronous RPC end point, including creating a {@link
  * io.grpc.ClientCall} for a new request.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
 
   public static class RpcMetrics {

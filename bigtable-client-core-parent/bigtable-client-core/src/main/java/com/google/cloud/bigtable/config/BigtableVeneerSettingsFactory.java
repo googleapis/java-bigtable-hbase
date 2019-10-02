@@ -21,6 +21,7 @@ import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
 import static org.threeten.bp.Duration.ofMillis;
 
 import com.google.api.core.ApiFunction;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.core.CredentialsProvider;
@@ -49,7 +50,10 @@ import org.threeten.bp.Duration;
 /**
  * Static methods to convert an instance of {@link BigtableOptions} to a {@link
  * BigtableDataSettings} or {@link BigtableTableAdminSettings} instance .
+ *
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableVeneerSettingsFactory {
 
   /** Constant <code>LOG</code> */

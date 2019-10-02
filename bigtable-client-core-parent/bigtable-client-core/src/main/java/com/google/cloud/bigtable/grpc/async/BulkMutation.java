@@ -17,6 +17,8 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.client.util.NanoClock;
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
@@ -52,10 +54,8 @@ import java.util.concurrent.TimeUnit;
  * This class combines a collection of {@link MutateRowRequest}s into a single {@link
  * MutateRowsRequest}. This class is not thread safe, and requires calling classes to make it thread
  * safe.
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class BulkMutation {
 
   private static final StatusRuntimeException MISSING_ENTRY_EXCEPTION =
@@ -65,7 +65,11 @@ public class BulkMutation {
   /** Constant <code>LOG</code> */
   @VisibleForTesting static Logger LOG = new Logger(BulkMutation.class);
 
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final long MAX_RPC_WAIT_TIME_NANOS = TimeUnit.MINUTES.toNanos(12);
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final long MAX_NUMBER_OF_MUTATIONS = 100_000;
 
   private static StatusRuntimeException toException(Status status) {
@@ -354,18 +358,8 @@ public class BulkMutation {
 
   @VisibleForTesting NanoClock clock = NanoClock.SYSTEM;
 
-  /**
-   * Constructor for BulkMutation.
-   *
-   * @param tableName a {@link BigtableTableName} object for the table to which all {@link
-   *     MutateRowRequest}s will be sent.
-   * @param client a {@link BigtableDataClient} object on which to perform RPCs. RPCs that this
-   *     object performed.
-   * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
-   *     retries.
-   * @param bulkOptions a {@link BulkOptions} with the user specified options for the behavior of
-   *     this instance.
-   */
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public BulkMutation(
       BigtableTableName tableName,
       BigtableDataClient client,
@@ -374,6 +368,8 @@ public class BulkMutation {
     this(tableName, client, new OperationAccountant(), retryExecutorService, bulkOptions);
   }
 
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   BulkMutation(
       BigtableTableName tableName,
       BigtableDataClient client,

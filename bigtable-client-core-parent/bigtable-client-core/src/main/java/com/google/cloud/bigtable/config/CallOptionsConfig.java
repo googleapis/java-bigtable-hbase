@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
@@ -22,10 +23,8 @@ import java.io.Serializable;
 /**
  * Experimental options to turn on timeout options. {@link io.grpc.CallOptions} supports other
  * settings as well, which this configuration object could help set.
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class CallOptionsConfig implements Serializable {
 
   private static final long serialVersionUID = 1L;
@@ -58,6 +57,7 @@ public class CallOptionsConfig implements Serializable {
     private int mutateRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
     private int readRowsRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
 
+    /** @deprecated Please use {@link CallOptionsConfig#builder()} */
     @Deprecated
     public Builder() {}
 

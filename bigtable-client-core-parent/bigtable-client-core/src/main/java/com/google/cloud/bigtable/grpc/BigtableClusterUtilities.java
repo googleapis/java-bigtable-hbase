@@ -16,6 +16,7 @@
 
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.ListClustersRequest;
 import com.google.bigtable.admin.v2.ListClustersResponse;
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  * large job to increase Cloud Bigtable capacity and 20 minutes after a large batch job to reduce
  * the size.
  */
+@InternalExtensionOnly
 public class BigtableClusterUtilities implements AutoCloseable {
   private static Logger logger = new Logger(BigtableClusterUtilities.class);
 

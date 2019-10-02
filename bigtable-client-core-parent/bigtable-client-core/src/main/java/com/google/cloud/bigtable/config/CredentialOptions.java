@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -43,14 +45,15 @@ import java.util.Objects;
  *
  * @see CredentialFactory#getCredentials(CredentialOptions) CredentialFactory for more details on
  *     how CredentialOptions are used to create a {@link com.google.auth.Credentials}.
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class CredentialOptions implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  /** Constant <code>SERVICE_ACCOUNT_JSON_ENV_VARIABLE="GOOGLE_APPLICATION_CREDENTIALS"</code> */
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String SERVICE_ACCOUNT_JSON_ENV_VARIABLE = "GOOGLE_APPLICATION_CREDENTIALS";
+
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(CredentialOptions.class);
 
@@ -143,6 +146,7 @@ public class CredentialOptions implements Serializable {
   }
 
   /** A CredentialOptions defined by a serviceAccount and a p12 key file. */
+  @InternalExtensionOnly
   public static class P12CredentialOptions extends CredentialOptions {
     private static final long serialVersionUID = 596647835888116163L;
     private final String serviceAccount;
@@ -179,6 +183,7 @@ public class CredentialOptions implements Serializable {
   }
 
   /** A CredentialOption that supplies the Credentials directly. */
+  @InternalExtensionOnly
   public static class UserSuppliedCredentialOptions extends CredentialOptions {
     private static final long serialVersionUID = -7167146778823641468L;
     private final Credentials credential;
@@ -206,6 +211,7 @@ public class CredentialOptions implements Serializable {
    * A CredentialOption that has a json credentials configured as an InputStream instead of a system
    * environment property.
    */
+  @InternalExtensionOnly
   public static class JsonCredentialsOptions extends CredentialOptions {
     private static final long serialVersionUID = -7868808741264867962L;
     private final InputStream inputStream;

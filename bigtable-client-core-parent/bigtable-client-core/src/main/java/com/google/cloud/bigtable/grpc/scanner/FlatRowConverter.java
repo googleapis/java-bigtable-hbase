@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
@@ -26,9 +27,9 @@ import com.google.protobuf.ByteString;
 /**
  * This class converts between instances of {@link FlatRow} and {@link Row}.
  *
- * @author tyagihas
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class FlatRowConverter {
 
   public static Row convert(FlatRow row) {

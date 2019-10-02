@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
@@ -27,7 +28,10 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * This class tracks timing and counts of mutations performed by {@link BulkMutation} and throttling
  * performed by {@link ResourceLimiter}.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ResourceLimiterStats {
 
   private static Map<String, ResourceLimiterStats> stats = new HashMap<>();

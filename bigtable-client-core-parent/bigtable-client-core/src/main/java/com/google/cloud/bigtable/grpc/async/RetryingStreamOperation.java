@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
@@ -27,9 +28,9 @@ import java.util.concurrent.ScheduledExecutorService;
  * An extension of {@link AbstractRetryingOperation} that aggregates all responses from a streaming
  * request into a List.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class RetryingStreamOperation<RequestT, ResponseT>
     extends AbstractRetryingOperation<RequestT, ResponseT, List<ResponseT>> {
 

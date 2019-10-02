@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
@@ -56,9 +57,9 @@ import java.util.TreeMap;
  *
  * <p><b>NOTE: RowMerger is not threadsafe.</b>
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
   protected static final Logger LOG = new Logger(RowMerger.class);

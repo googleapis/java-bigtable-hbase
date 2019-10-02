@@ -22,6 +22,8 @@ import java.io.IOException;
 
 /**
  * Interface to support batching multiple {@link RowMutation} request into a single grpc request.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
 public interface IBulkMutation extends AutoCloseable {

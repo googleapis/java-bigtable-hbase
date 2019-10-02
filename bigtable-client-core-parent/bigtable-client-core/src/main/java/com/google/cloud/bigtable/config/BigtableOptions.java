@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.annotations.VisibleForTesting;
@@ -33,35 +36,46 @@ import java.util.concurrent.TimeUnit;
  */
 // TODO: Perhaps break this down into smaller options objects?
 // TODO: This should be @Autovalue + Builder
+@InternalExtensionOnly
 public class BigtableOptions implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
-  // If set to a host:port address, this environment variable will configure the client to connect
-  // to a Bigtable emulator running at the given address with plaintext negotiation.
-  // TODO: Link to emulator documentation when available.
-  /** Constant <code>BIGTABLE_EMULATOR_HOST_ENV_VAR="bigtableadmin.googleapis.com"</code> */
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String BIGTABLE_EMULATOR_HOST_ENV_VAR = "BIGTABLE_EMULATOR_HOST";
 
-  /** Constant <code>BIGTABLE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String BIGTABLE_ADMIN_HOST_DEFAULT = "bigtableadmin.googleapis.com";
-  /** Constant <code>BIGTABLE_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
+
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
-  /** Constant <code>BIGTABLE_BATCH_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
+
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
-  /** Constant <code>BIGTABLE_PORT_DEFAULT=443</code> */
+
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final int BIGTABLE_PORT_DEFAULT = 443;
 
-  /** Constant <code>BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT=getDefaultDataChannelCount()</code> */
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = getDefaultDataChannelCount();
 
   /**
    * Constant <code>BIGTABLE_APP_PROFILE_DEFAULT=""</code>, defaults to the server default app
    * profile
+   *
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   public static final String BIGTABLE_APP_PROFILE_DEFAULT = "";
 
-  public static final String BIGTABLE_CLIENT_ADAPTER = "BIGTABLE_CLIENT_ADAPTER";
+  /** @deprecated This field will be removed in future versions. */
+  @Deprecated public static final String BIGTABLE_CLIENT_ADAPTER = "BIGTABLE_CLIENT_ADAPTER";
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
@@ -160,6 +174,8 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
+    /** For internal use only - public for technical reasons. */
+    @InternalApi("For internal usage only")
     public int getDataChannelCount() {
       return options.dataChannelCount;
     }
@@ -202,6 +218,7 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
+    @BetaApi("Will be removed after hbase transitions away from bigtable-client-core")
     public Builder setUseGCJClient(boolean useGCJClient) {
       options.useGCJClient = useGCJClient;
       return this;
@@ -456,6 +473,7 @@ public class BigtableOptions implements Serializable, Cloneable {
    *
    * @return a boolean flag to decide which client to use for Data & Admin Operations.
    */
+  @BetaApi("Will be removed after hbase transitions away from bigtable-client-core")
   public boolean useGCJClient() {
     return useGCJClient;
   }

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
@@ -25,7 +26,12 @@ import io.grpc.Status.Code;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations. */
+/**
+ * Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class MutateRowsRequestManager {
   private static final Status STATUS_INTERNAL =
       Status.newBuilder()

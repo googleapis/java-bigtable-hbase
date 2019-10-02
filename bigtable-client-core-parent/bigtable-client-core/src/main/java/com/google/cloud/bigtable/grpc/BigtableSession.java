@@ -19,6 +19,7 @@ package com.google.cloud.bigtable.grpc;
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
 import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.grpc.GaxGrpcProperties;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.bigtable.admin.v2.ListClustersResponse;
@@ -91,10 +92,8 @@ import javax.net.ssl.SSLException;
  *   <li>Creates ChannelInterceptors - auth headers, performance interceptors.
  *   <li>Close anything above that needs to be closed (ExecutorService, ChannelImpls)
  * </ol>
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class BigtableSession implements Closeable {
 
   private static final Logger LOG = new Logger(BigtableSession.class);
@@ -399,7 +398,7 @@ public class BigtableSession implements Closeable {
   /**
    * Getter for the field <code>clientWrapper</code>.
    *
-   * @return a {@link IBigtableDataClient} object.
+   * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
   public IBigtableDataClient getDataClientWrapper() {
@@ -427,12 +426,7 @@ public class BigtableSession implements Closeable {
         options.getBulkOptions());
   }
 
-  /**
-   * createBulkMutationWrapper.
-   *
-   * @param tableName a {@link BigtableTableName} object.
-   * @return a {@link IBigtableDataClient} object.
-   */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public IBulkMutation createBulkMutationWrapper(BigtableTableName tableName) {
     if (options.useGCJClient()) {
@@ -476,8 +470,7 @@ public class BigtableSession implements Closeable {
    * Initializes bigtableTableAdminClient based on flag to use GCJ adapter, available in {@link
    * BigtableOptions}.
    *
-   * @return a {@link BigtableTableAdminClientWrapper} object.
-   * @throws IOException if any.
+   * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
   public synchronized IBigtableTableAdminClient getTableAdminClientWrapper() throws IOException {
@@ -566,10 +559,9 @@ public class BigtableSession implements Closeable {
    * project id or instance id, so {@link BigtableOptions#getDefaultOptions()} may be used if there
    * are no service account credentials settings.
    *
-   * @return a fully formed {@link BigtableInstanceClient}
-   * @throws IOException
-   * @throws GeneralSecurityException
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   public static BigtableInstanceClient createInstanceClient(BigtableOptions options)
       throws IOException, GeneralSecurityException {
     return new BigtableInstanceGrpcClient(createChannelPool(options.getAdminHost(), options));
@@ -578,12 +570,9 @@ public class BigtableSession implements Closeable {
   /**
    * Create a new {@link ChannelPool}, with auth headers.
    *
-   * @param host a {@link String} object.
-   * @param options a {@link BigtableOptions} object.
-   * @return a {@link ChannelPool} object.
-   * @throws IOException if any.
-   * @throws GeneralSecurityException
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   public static ManagedChannel createChannelPool(final String host, final BigtableOptions options)
       throws IOException, GeneralSecurityException {
     return createChannelPool(host, options, 1);
@@ -592,14 +581,9 @@ public class BigtableSession implements Closeable {
   /**
    * Create a new {@link ChannelPool}, with auth headers.
    *
-   * @param host a {@link String} object specifying the host to connect to.
-   * @param options a {@link BigtableOptions} object with the credentials, retry and other
-   *     connection options.
-   * @param count an int defining the number of channels to create
-   * @return a {@link ChannelPool} object.
-   * @throws IOException if any.
-   * @throws GeneralSecurityException
+   * <p>For internal use only - public for technical reasons.
    */
+  @InternalApi("For internal usage only")
   public static ManagedChannel createChannelPool(
       final String host, final BigtableOptions options, int count)
       throws IOException, GeneralSecurityException {
@@ -629,14 +613,8 @@ public class BigtableSession implements Closeable {
     return new ChannelPool(factory, count);
   }
 
-  /**
-   * createNettyChannel.
-   *
-   * @param host a {@link String} object.
-   * @param options a {@link BigtableOptions} object.
-   * @return a {@link ManagedChannel} object.
-   * @throws SSLException if any.
-   */
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static ManagedChannel createNettyChannel(
       String host, BigtableOptions options, ClientInterceptor... interceptors) throws SSLException {
 

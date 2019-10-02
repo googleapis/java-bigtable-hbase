@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalExtensionOnly;
 import com.google.common.base.Preconditions;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,10 +23,8 @@ import java.util.regex.Pattern;
 /**
  * This class encapsulates a tableName. A tableName is of the form
  * projects/(projectId)/zones/(zoneId)/clusters/(clusterId)/tables/(tableId).
- *
- * @author sduskis
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class BigtableTableName {
   // Use a very loose pattern so we don't validate more strictly than the server.
   private static final Pattern PATTERN =

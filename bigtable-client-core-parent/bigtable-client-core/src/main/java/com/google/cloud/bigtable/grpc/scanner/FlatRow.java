@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.v2.Row;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -27,10 +29,8 @@ import java.util.List;
 
 /**
  * This class stores represents a single row. It's a flattened version of the data of a {@link Row}
- *
- * @author tyagihas
- * @version $Id: $Id
  */
+@InternalExtensionOnly
 public class FlatRow implements Serializable {
 
   private static final long serialVersionUID = 1L;
@@ -39,6 +39,8 @@ public class FlatRow implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /** For internal use only - public for technical reasons. */
+    @InternalApi("For internal usage only")
     public static final class Builder {
       private String family;
       private ByteString qualifier;
@@ -79,6 +81,8 @@ public class FlatRow implements Serializable {
       }
     }
 
+    /** For internal use only - public for technical reasons. */
+    @InternalApi("For internal usage only")
     public static Builder newBuilder() {
       return new Builder();
     }
@@ -89,6 +93,8 @@ public class FlatRow implements Serializable {
     private final ByteString value;
     private final List<String> labels;
 
+    /** For internal use only - public for technical reasons. */
+    @InternalApi("For internal usage only")
     public Cell(
         String family,
         ByteString qualifier,
@@ -147,6 +153,8 @@ public class FlatRow implements Serializable {
     }
   }
 
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static final class Builder {
     private ByteString rowKey = null;
     private final ImmutableList.Builder<Cell> listBuilder;
@@ -189,6 +197,8 @@ public class FlatRow implements Serializable {
     }
   }
 
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public static Builder newBuilder() {
     return new Builder();
   }
@@ -196,6 +206,8 @@ public class FlatRow implements Serializable {
   private final ByteString rowKey;
   private final ImmutableList<Cell> cells;
 
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
   public FlatRow(ByteString rowKey, ImmutableList<Cell> cells) {
     this.rowKey = rowKey;
     this.cells = cells;

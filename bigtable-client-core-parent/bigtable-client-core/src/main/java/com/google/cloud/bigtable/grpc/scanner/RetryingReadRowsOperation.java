@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.client.util.Preconditions;
 import com.google.api.core.ApiClock;
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -41,8 +42,9 @@ import javax.annotation.concurrent.NotThreadSafe;
  * RPC. This class will keep track of the last returned row key via {@link ReadRowsRequestManager}
  * and automatically retry from the last row key .
  *
- * @author sduskis
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 @NotThreadSafe
 public class RetryingReadRowsOperation
     extends AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, String>

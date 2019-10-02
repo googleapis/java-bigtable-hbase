@@ -19,6 +19,7 @@ import com.codahale.metrics.Counting;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Slf4jReporter;
+import com.google.api.core.InternalExtensionOnly;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
  * A {@link MetricRegistry} that wraps a Dropwizard Metrics {@link
  * com.codahale.metrics.MetricRegistry}.
  */
+@InternalExtensionOnly
 public class DropwizardMetricRegistry implements MetricRegistry {
 
   /**

@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.client.util.NanoClock;
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
@@ -28,9 +29,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Throttles the number of operations that are outstanding at any point in time.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class OperationAccountant {
   /** Constant <code>LOG</code> */
   @VisibleForTesting static Logger LOG = new Logger(OperationAccountant.class);

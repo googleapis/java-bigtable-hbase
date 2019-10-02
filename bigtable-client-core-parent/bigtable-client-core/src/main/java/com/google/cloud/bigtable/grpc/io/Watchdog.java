@@ -46,8 +46,10 @@ import javax.annotation.concurrent.GuardedBy;
  *       stream and forcefully closing the stream. This is measured from the last time the caller
  *       had no outstanding demand.
  * </ul>
+ *
+ * <p>For internal use only - public for technical reasons.
  */
-@InternalApi
+@InternalApi("For internal usage only")
 public class Watchdog implements Runnable {
   public enum State {
     NOT_STARTED,

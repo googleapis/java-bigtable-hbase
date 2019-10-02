@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.api.core.InternalApi;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.MessageLite;
 import io.grpc.CallOptions;
@@ -28,7 +29,12 @@ import io.grpc.Status;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
 
-/** Throttles requests based on {@link ResourceLimiter} */
+/**
+ * Throttles requests based on {@link ResourceLimiter}
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
+@InternalApi("For internal usage only")
 public class ThrottlingClientInterceptor implements ClientInterceptor {
   private final ResourceLimiter resourceLimiter;
 

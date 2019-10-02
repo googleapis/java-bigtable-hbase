@@ -15,10 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalExtensionOnly;
+
 /**
  * An interface that handles timeout exception situations and request cancellations in scan
  * situations.
  */
+@InternalExtensionOnly
 public interface ScanHandler {
   /** Perform an rpc cancellation given a client-side request. */
   void cancel();

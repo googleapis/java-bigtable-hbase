@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
@@ -34,11 +34,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Manages a queue of {@link ResultQueueEntry}s of {@link FlatRow}.
  *
- * @author sduskis
- * @version $Id: $Id
- * @see BigtableDataGrpcClient#readFlatRows(com.google.bigtable.v2.ReadRowsRequest) for more
- *     information.
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class ResponseQueueReader
     implements StreamObserver<FlatRow>, ClientResponseObserver<ReadRowsRequest, FlatRow> {
 

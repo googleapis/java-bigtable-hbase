@@ -15,8 +15,11 @@
  */
 package com.google.cloud.bigtable.util;
 
+import com.google.api.core.InternalApi;
 import com.google.protobuf.ByteString;
 
+/** For internal use only - public for technical reasons. */
+@InternalApi("For internal usage only")
 public class RowKeyWrapper implements Comparable<RowKeyWrapper> {
 
   private final ByteString key;

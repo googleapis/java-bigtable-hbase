@@ -40,6 +40,8 @@ import java.util.List;
 /**
  * This class implements existing {@link IBigtableDataClient} operations with Google-cloud-java's
  * {@link com.google.cloud.bigtable.data.v2.BigtableDataClient}.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
 public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable {

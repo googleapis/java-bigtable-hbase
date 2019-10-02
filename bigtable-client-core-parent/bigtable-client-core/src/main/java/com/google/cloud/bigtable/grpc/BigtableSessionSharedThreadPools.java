@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.util.ThreadUtil;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,9 +26,9 @@ import java.util.concurrent.ScheduledExecutorService;
  * few {@link com.google.cloud.bigtable.grpc.BigtableSession}s. All executors are automatically
  * expand if there is higher use.
  *
- * @author sduskis
- * @version $Id: $Id
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BigtableSessionSharedThreadPools {
   /** Constant <code>BATCH_POOL_THREAD_NAME="bigtable-batch-pool-%d"</code> */
   private static final String BATCH_POOL_THREAD_NAME_PATTERN = "bigtable-batch-pool-%d";

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
 import com.google.common.base.Preconditions;
 import io.grpc.Status;
@@ -25,8 +26,9 @@ import java.util.Objects;
  * An entry in the result queue which may be one of: A data message, a Throwable or a marker
  * indicating end-of-stream.
  *
- * @param <T> The type of messages representing data.
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 abstract class ResultQueueEntry<T> {
 
   public enum Type {
