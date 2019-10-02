@@ -44,7 +44,7 @@ public class RetryOptions implements Serializable, Cloneable {
   @InternalApi("For internal usage only")
   public static final boolean DEFAULT_ENABLE_GRPC_RETRIES = true;
 
-  /** /** For internal use only - public for technical reasons. */
+  /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final Set<Status.Code> DEFAULT_ENABLE_GRPC_RETRIES_SET =
       ImmutableSet.of(
