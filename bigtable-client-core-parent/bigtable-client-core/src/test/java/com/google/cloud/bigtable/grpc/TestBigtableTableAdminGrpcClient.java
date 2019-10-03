@@ -37,6 +37,11 @@ import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.iam.v1.GetIamPolicyRequest;
+import com.google.iam.v1.Policy;
+import com.google.iam.v1.SetIamPolicyRequest;
+import com.google.iam.v1.TestIamPermissionsRequest;
+import com.google.iam.v1.TestIamPermissionsResponse;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -146,6 +151,31 @@ public class TestBigtableTableAdminGrpcClient {
     verify(mockClientCall, times(1))
         .sendMessage(ArgumentMatchers.isA(CheckConsistencyRequest.class));
     verify(mockClientCall, times(2)).halfClose();
+  }
+
+  @Test
+  public void testGetIamPolicy() throws Exception {
+    GetIamPolicyRequest request = GetIamPolicyRequest.newBuilder().setResource(TABLE_NAME).build();
+    setResponse(Policy.getDefaultInstance());
+    defaultClient.getIamPolicy(request);
+    verifyRequestCalled(request);
+  }
+
+  @Test
+  public void testSetIamPolicy() throws Exception {
+    SetIamPolicyRequest request = SetIamPolicyRequest.newBuilder().setResource(TABLE_NAME).build();
+    setResponse(Policy.getDefaultInstance());
+    defaultClient.setIamPolicy(request);
+    verifyRequestCalled(request);
+  }
+
+  @Test
+  public void testTestIamPermissions() throws Exception {
+    TestIamPermissionsRequest request =
+        TestIamPermissionsRequest.newBuilder().setResource(TABLE_NAME).build();
+    setResponse(TestIamPermissionsResponse.getDefaultInstance());
+    defaultClient.testIamPermissions(request);
+    verifyRequestCalled(request);
   }
 
   @Test

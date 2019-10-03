@@ -32,6 +32,11 @@ import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.iam.v1.GetIamPolicyRequest;
+import com.google.iam.v1.Policy;
+import com.google.iam.v1.SetIamPolicyRequest;
+import com.google.iam.v1.TestIamPermissionsRequest;
+import com.google.iam.v1.TestIamPermissionsResponse;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 import java.util.concurrent.TimeoutException;
@@ -147,6 +152,36 @@ public interface BigtableTableAdminClient {
    */
   void waitForReplication(BigtableTableName tableName, long timeout)
       throws InterruptedException, TimeoutException;
+
+  /**
+   * Get an IAM policy.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access
+   *     control</a>
+   * @param request a {@link com.google.iam.v1.GetIamPolicyRequest} object.
+   * @return a {@link com.google.iam.v1.Policy} object.
+   */
+  Policy getIamPolicy(GetIamPolicyRequest request);
+
+  /**
+   * Set an IAM policy.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access
+   *     control</a>
+   * @param request a {@link com.google.iam.v1.SetIamPolicyRequest} object.
+   * @return a {@link com.google.iam.v1.Policy} object.
+   */
+  Policy setIamPolicy(SetIamPolicyRequest request);
+
+  /**
+   * Tests an IAM policy.
+   *
+   * @see <a href="https://cloud.google.com/bigtable/docs/access-control">Cloud Bigtable access
+   *     control</a>
+   * @param request a {@link com.google.iam.v1.TestIamPermissionsRequest} object.
+   * @return a {@link com.google.iam.v1.TestIamPermissionsResponse} object.
+   */
+  TestIamPermissionsResponse testIamPermissions(TestIamPermissionsRequest request);
 
   // ////////////// SNAPSHOT methods /////////////
   /** @deprecated Snapshots will be removed in the future */
