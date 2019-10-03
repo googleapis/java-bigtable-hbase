@@ -17,104 +17,114 @@ package com.google.cloud.bigtable.grpc.async;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.batching.Batcher;
+import com.google.api.gax.batching.BatcherImpl;
+import com.google.api.gax.batching.BatchingDescriptor;
+import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
-import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.core.IBulkMutation;
+import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.stubbing.Answer;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnit4.class)
 public class TestBulkMutationGCJClient {
 
   @Rule public ExpectedException expect = ExpectedException.none();
 
-  @Mock private UnaryCallable<RowMutation, Void> callable;
+  @Rule public MockitoRule rule = MockitoJUnit.rule();
 
-  private BulkMutationGCJClient bulkMutationClient;
-  private SettableApiFuture<Void> future;
-  private RowMutation rowMutation = RowMutation.create("fake-table", "fake-key");
+  @Mock private Batcher<RowMutationEntry, Void> batcher;
 
-  @Before
-  public void setUp() {
-    BulkMutationBatcher bulkMutationBatcher = new BulkMutationBatcher(callable);
-    bulkMutationClient = new BulkMutationGCJClient(bulkMutationBatcher);
-    future = SettableApiFuture.create();
-  }
+  @InjectMocks private BulkMutationGCJClient bulkMutationClient;
+
+  private RowMutationEntry rowMutation = RowMutationEntry.create("fake-key");
 
   @Test
   public void testAdd() {
-    when(callable.futureCall(rowMutation)).thenReturn(future);
+    SettableApiFuture<Void> future = SettableApiFuture.create();
+    when(batcher.add(rowMutation)).thenReturn(future);
     ApiFuture<Void> result = bulkMutationClient.add(rowMutation);
     assertFalse(result.isDone());
     future.set(null);
     assertTrue(result.isDone());
-    verify(callable).futureCall(rowMutation);
+    verify(batcher).add(rowMutation);
   }
 
   @Test(expected = ExecutionException.class)
   public void testAddFailure() throws Exception {
-    when(callable.futureCall(rowMutation)).thenReturn(future);
+    SettableApiFuture<Void> future = SettableApiFuture.create();
+    when(batcher.add(rowMutation)).thenReturn(future);
     future.setException(new RuntimeException("can not perform mutation"));
     ApiFuture<Void> result = bulkMutationClient.add(rowMutation);
     assertTrue(result.isDone());
-    verify(callable).futureCall(rowMutation);
+    verify(batcher).add(rowMutation);
     result.get();
   }
 
   @Test
   public void testFlush() throws Exception {
+    final SettableApiFuture<Void> future = SettableApiFuture.create();
     final SettableApiFuture<Void> future2 = SettableApiFuture.create();
-    when(callable.futureCall(rowMutation)).thenReturn(future).thenReturn(future2);
+    when(batcher.add(rowMutation)).thenReturn(future).thenReturn(future2);
+    doAnswer(
+            new Answer() {
+              @Override
+              public Object answer(InvocationOnMock invocationOnMock) {
+                future.set(null);
+                future2.set(null);
+                return null;
+              }
+            })
+        .when(batcher)
+        .flush();
     ApiFuture<Void> result1 = bulkMutationClient.add(rowMutation);
     ApiFuture<Void> result2 = bulkMutationClient.add(rowMutation);
+    // flush should block until the responses are resolved.
+    bulkMutationClient.flush();
 
-    ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-    try {
-      executor.schedule(
-          new Runnable() {
-            @Override
-            public void run() {
-              future.set(null);
-              future2.set(null);
-            }
-          },
-          50,
-          TimeUnit.MILLISECONDS);
-
-      // flush should block until the responses are resolved.
-      bulkMutationClient.flush();
-
-      assertTrue(result1.isDone());
-      assertTrue(result2.isDone());
-    } finally {
-      executor.shutdown();
-      executor.awaitTermination(100, TimeUnit.MILLISECONDS);
-    }
-    verify(callable, times(2)).futureCall(rowMutation);
+    assertTrue(result1.isDone());
+    assertTrue(result2.isDone());
+    verify(batcher, times(2)).add(rowMutation);
+    verify(batcher).flush();
   }
 
   @Test
   public void testIsClosed() throws IOException {
-    bulkMutationClient.close();
+    @SuppressWarnings("unchecked")
+    Batcher<RowMutationEntry, Void> actualBatcher =
+        new BatcherImpl(
+            mock(BatchingDescriptor.class),
+            mock(UnaryCallable.class),
+            new Object(),
+            mock(BatchingSettings.class),
+            mock(ScheduledExecutorService.class));
+    IBulkMutation underTest = new BulkMutationGCJClient(actualBatcher);
+    underTest.close();
+
     Exception actualEx = null;
     try {
-      bulkMutationClient.add(rowMutation);
+      underTest.add(rowMutation);
     } catch (Exception e) {
       actualEx = e;
     }

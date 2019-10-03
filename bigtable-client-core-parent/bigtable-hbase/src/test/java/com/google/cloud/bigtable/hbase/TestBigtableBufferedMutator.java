@@ -29,7 +29,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
-import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -105,18 +105,18 @@ public class TestBigtableBufferedMutator {
 
   @Test
   public void testPut() throws IOException {
-    when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(future);
+    when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(SIMPLE_PUT);
-    verify(mockBulkMutation, times(1)).add(any(RowMutation.class));
+    verify(mockBulkMutation, times(1)).add(any(RowMutationEntry.class));
   }
 
   @Test
   public void testDelete() throws IOException {
-    when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(future);
+    when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(new Delete(EMPTY_BYTES));
-    verify(mockBulkMutation, times(1)).add(any(RowMutation.class));
+    verify(mockBulkMutation, times(1)).add(any(RowMutationEntry.class));
   }
 
   @Test
@@ -137,7 +137,7 @@ public class TestBigtableBufferedMutator {
 
   @Test
   public void testInvalidPut() throws Exception {
-    when(mockBulkMutation.add(any(RowMutation.class)))
+    when(mockBulkMutation.add(any(RowMutationEntry.class)))
         .thenReturn(ApiFutures.<Void>immediateFailedFuture(new RuntimeException()));
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(SIMPLE_PUT);
@@ -152,10 +152,10 @@ public class TestBigtableBufferedMutator {
   @Test
   public void testBulkSingleRequests() throws IOException, InterruptedException {
     Configuration config = new Configuration(false);
-    when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(future);
+    when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(future);
     final BigtableBufferedMutator underTest = createMutator(config);
     underTest.mutate(SIMPLE_PUT);
-    verify(mockBulkMutation, times(1)).add(any(RowMutation.class));
+    verify(mockBulkMutation, times(1)).add(any(RowMutationEntry.class));
     underTest.flush();
     verify(mockBulkMutation, times(1)).flush();
   }
@@ -163,13 +163,13 @@ public class TestBigtableBufferedMutator {
   @Test
   public void testBulkMultipleRequests() throws IOException, InterruptedException {
     Configuration config = new Configuration(false);
-    when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(future);
+    when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(config);
     int count = 30;
     for (int i = 0; i < count; i++) {
       underTest.mutate(SIMPLE_PUT);
     }
-    verify(mockBulkMutation, times(count)).add(any(RowMutation.class));
+    verify(mockBulkMutation, times(count)).add(any(RowMutationEntry.class));
     underTest.flush();
     verify(mockBulkMutation, times(1)).flush();
   }
@@ -178,13 +178,13 @@ public class TestBigtableBufferedMutator {
   public void testClose() throws IOException {
     Configuration config = new Configuration(false);
     doNothing().when(mockBulkMutation).close();
-    when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(future);
+    when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(future);
     BigtableBufferedMutator underTest = createMutator(config);
     underTest.mutate(SIMPLE_PUT);
 
     underTest.close();
 
-    verify(mockBulkMutation).add(any(RowMutation.class));
+    verify(mockBulkMutation).add(any(RowMutationEntry.class));
     verify(mockBulkMutation).close();
   }
 }

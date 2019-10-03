@@ -29,10 +29,9 @@ import com.google.api.core.ApiFutures;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
-import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
@@ -129,12 +128,9 @@ public class TestBatchExecutor {
         BigtableOptions.builder().setProjectId("projectId").setInstanceId("instanceId").build();
     requestAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
-    RequestContext requetsContext =
-        RequestContext.create(
-            options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
 
     MockitoAnnotations.initMocks(this);
-    when(mockBulkMutation.add(any(RowMutation.class))).thenReturn(mockFuture);
+    when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getDataClientWrapper()).thenReturn(mockDataClient);
     when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))
         .thenReturn(mockFuture);

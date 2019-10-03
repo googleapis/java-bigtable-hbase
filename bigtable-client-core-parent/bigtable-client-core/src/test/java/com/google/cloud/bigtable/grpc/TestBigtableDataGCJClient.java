@@ -26,12 +26,12 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.batching.Batcher;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
-import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
@@ -40,6 +40,7 @@ import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowAdapter;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -292,10 +293,9 @@ public class TestBigtableDataGCJClient {
 
   @Test
   public void testCreateBulkMutationBatcher() {
-    UnaryCallable<RowMutation, Void> unaryCallable = mock(UnaryCallable.class);
-    BulkMutationBatcher batcher = new BulkMutationBatcher(unaryCallable);
-    when(dataClientV2.newBulkMutationBatcher()).thenReturn(batcher);
-    dataGCJClient.createBulkMutationBatcher();
-    verify(dataClientV2).newBulkMutationBatcher();
+    Batcher<RowMutationEntry, Void> batcher = mock(Batcher.class);
+    when(dataClientV2.newBulkMutationBatcher(TABLE_ID)).thenReturn(batcher);
+    dataGCJClient.createBulkMutationBatcher(TABLE_ID);
+    verify(dataClientV2).newBulkMutationBatcher(TABLE_ID);
   }
 }

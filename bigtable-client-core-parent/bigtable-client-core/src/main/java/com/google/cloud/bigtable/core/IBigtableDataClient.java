@@ -71,7 +71,7 @@ public interface IBigtableDataClient {
   ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow);
 
   /** Creates {@link IBulkMutation} batcher. */
-  IBulkMutation createBulkMutationBatcher();
+  IBulkMutation createBulkMutationBatcher(String tableId);
 
   /**
    * Mutate a row atomically dependent on a precondition.
