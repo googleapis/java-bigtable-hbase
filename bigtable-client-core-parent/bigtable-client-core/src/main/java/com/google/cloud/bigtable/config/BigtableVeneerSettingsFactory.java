@@ -77,7 +77,6 @@ public class BigtableVeneerSettingsFactory {
       @Nonnull final BigtableOptions options) throws IOException {
     checkState(
         options.getRetryOptions().enableRetries(), "Disabling retries is not currently supported.");
-    checkState(!options.useCachedChannel(), "cachedDataPool is not currently supported.");
 
     final BigtableDataSettings.Builder builder = BigtableDataSettings.newBuilder();
     final Builder dataSettingStub = builder.stubSettings();
