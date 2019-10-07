@@ -274,6 +274,9 @@ public class BigtableSession implements Closeable {
                 FixedTransportChannelProvider.create(
                     Objects.requireNonNull(
                         cachedCtx.getTransportChannel())))
+            .setCredentialsProvider(
+                FixedCredentialsProvider.create(
+                    cachedCtx.getCredentials()))
             .build();
         dataSettings = builder.build();
       }
