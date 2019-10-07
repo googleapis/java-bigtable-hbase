@@ -20,8 +20,11 @@ import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.grpc.GaxGrpcProperties;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
+import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.FixedTransportChannelProvider;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.cloud.bigtable.admin.v2.BaseBigtableTableAdminClient;
@@ -76,6 +79,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -99,6 +103,9 @@ public class BigtableSession implements Closeable {
   private static final Logger LOG = new Logger(BigtableSession.class);
   // TODO: Consider caching channel pools per instance.
   private static ManagedChannel cachedDataChannelPool;
+  // Map containing cached connections to specific destination hosts for GCJ client
+  // TODO: Make reference counted so we may clean-up on Session close
+  private static Map<String, ClientContext> cachedClientContexts = new HashMap<>();
   private static final Map<String, ResourceLimiter> resourceLimiterMap = new HashMap<>();
 
   // 256 MB, server has 256 MB limit.
@@ -240,6 +247,40 @@ public class BigtableSession implements Closeable {
     if (options.useGCJClient()) {
       BigtableDataSettings dataSettings =
           BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
+
+      // If we're using a cached channel we need to check if it's set up already. If
+      //  not we need to do the setup now.
+      if (options.useCachedChannel()) {
+        synchronized (BigtableSession.class) {
+          // If it's not set up for this specific Host we set it up and save the context for
+          //  future connections.
+          if (!cachedClientContexts.containsKey(options.getDataHost())) {
+            cachedClientContexts.put(
+                options.getDataHost(), ClientContext.create(dataSettings.getStubSettings()));
+          }
+        }
+
+        BigtableDataSettings.Builder builder = dataSettings.toBuilder();
+        
+        ClientContext cachedCtx = cachedClientContexts.get(options.getDataHost());
+        
+        // Add the executor and transport channel to the settings/options
+        builder
+            .stubSettings()
+            .setExecutorProvider(
+                FixedExecutorProvider.create(
+                    cachedCtx.getExecutor()))
+            .setTransportChannelProvider(
+                FixedTransportChannelProvider.create(
+                    Objects.requireNonNull(
+                        cachedCtx.getTransportChannel())))
+            .setCredentialsProvider(
+                FixedCredentialsProvider.create(
+                    cachedCtx.getCredentials()))
+            .build();
+        dataSettings = builder.build();
+      }
+
       this.dataGCJClient =
           new BigtableDataGCJClient(
               com.google.cloud.bigtable.data.v2.BigtableDataClient.create(dataSettings));
@@ -706,5 +747,17 @@ public class BigtableSession implements Closeable {
    */
   public BigtableOptions getOptions() {
     return this.options;
+  }
+
+  /**
+   * Getter for the field <code>cachedClientContexts</code>.
+   * <p>For internal usage only - public for technical reasons.
+   * @return a HashMap of Connection Name (String) to {@link ClientContext} object.
+   */
+  @InternalApi("VisibleForTesting")
+  public HashMap<String, ClientContext> getCachedClientContexts() {
+    Preconditions.checkState(
+        options.useGCJClient(), "Client Context is only available for GCJ Client.");
+    return cachedClientContexts;
   }
 }
