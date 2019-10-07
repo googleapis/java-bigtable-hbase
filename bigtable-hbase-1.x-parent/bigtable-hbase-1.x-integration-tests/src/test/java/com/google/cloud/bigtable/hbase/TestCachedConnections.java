@@ -80,7 +80,7 @@ public class TestCachedConnections extends AbstractTest {
     BigtableConnection connection =
         (BigtableConnection) BigtableConfiguration.connect(configuration);
     checkRows(connection);
-    return connection.getSession().getGCJClientContext();
+    return connection.getSession().getCachedClientContexts();
   }
 
   private void checkRows(BigtableConnection connection) throws IOException {
