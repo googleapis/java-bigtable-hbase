@@ -4,7 +4,7 @@ import com.google.bigtable.repackaged.com.google.api.gax.rpc.ClientContext;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
@@ -52,7 +52,7 @@ public class TestCachedConnections extends AbstractTest {
     configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
 
-    HashMap<String, ClientContext> context = getContext(configuration, connectionEndpoints[0]);
+    Map<String, ClientContext> context = getContext(configuration, connectionEndpoints[0]);
     Assert.assertEquals(context.size(), 1);
     Assert.assertTrue(context.containsKey(connectionEndpoints[0]));
     ClientContext Context_0 = context.get(connectionEndpoints[0]);
@@ -74,7 +74,7 @@ public class TestCachedConnections extends AbstractTest {
     Assert.assertEquals(Context_0, context.get(connectionEndpoints[0]));
   }
 
-  private HashMap<String, ClientContext> getContext(Configuration configuration, String endpoint)
+  private Map<String, ClientContext> getContext(Configuration configuration, String endpoint)
       throws IOException {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, endpoint);
     BigtableConnection connection =

@@ -20,6 +20,7 @@ import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.grpc.GaxGrpcProperties;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
@@ -261,22 +262,17 @@ public class BigtableSession implements Closeable {
         }
 
         BigtableDataSettings.Builder builder = dataSettings.toBuilder();
-        
+
         ClientContext cachedCtx = cachedClientContexts.get(options.getDataHost());
-        
+
         // Add the executor and transport channel to the settings/options
         builder
             .stubSettings()
-            .setExecutorProvider(
-                FixedExecutorProvider.create(
-                    cachedCtx.getExecutor()))
+            .setExecutorProvider(FixedExecutorProvider.create(cachedCtx.getExecutor()))
             .setTransportChannelProvider(
                 FixedTransportChannelProvider.create(
-                    Objects.requireNonNull(
-                        cachedCtx.getTransportChannel())))
-            .setCredentialsProvider(
-                FixedCredentialsProvider.create(
-                    cachedCtx.getCredentials()))
+                    Objects.requireNonNull(cachedCtx.getTransportChannel())))
+            .setCredentialsProvider(FixedCredentialsProvider.create(cachedCtx.getCredentials()))
             .build();
         dataSettings = builder.build();
       }
@@ -751,11 +747,13 @@ public class BigtableSession implements Closeable {
 
   /**
    * Getter for the field <code>cachedClientContexts</code>.
+   *
    * <p>For internal usage only - public for technical reasons.
+   *
    * @return a HashMap of Connection Name (String) to {@link ClientContext} object.
    */
   @InternalApi("VisibleForTesting")
-  public HashMap<String, ClientContext> getCachedClientContexts() {
+  public Map<String, ClientContext> getCachedClientContexts() {
     Preconditions.checkState(
         options.useGCJClient(), "Client Context is only available for GCJ Client.");
     return cachedClientContexts;
