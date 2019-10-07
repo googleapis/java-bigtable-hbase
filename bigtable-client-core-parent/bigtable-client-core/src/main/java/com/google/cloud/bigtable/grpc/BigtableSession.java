@@ -103,8 +103,9 @@ public class BigtableSession implements Closeable {
   private static final Logger LOG = new Logger(BigtableSession.class);
   // TODO: Consider caching channel pools per instance.
   private static ManagedChannel cachedDataChannelPool;
-  // Hash map containing cached connections to specific destination hosts for GCJ client
-  private static HashMap<String, ClientContext> gcjClientContext = new HashMap<>();
+  // Map containing cached connections to specific destination hosts for GCJ client
+  // TODO: Make reference counted so we may clean-up on Session close
+  private static Map<String, ClientContext> cachedClientContexts = new HashMap<>();
   private static final Map<String, ResourceLimiter> resourceLimiterMap = new HashMap<>();
 
   // 256 MB, server has 256 MB limit.
@@ -253,24 +254,26 @@ public class BigtableSession implements Closeable {
         synchronized (BigtableSession.class) {
           // If it's not set up for this specific Host we set it up and save the context for
           //  future connections.
-          if (!gcjClientContext.containsKey(options.getDataHost())) {
-            gcjClientContext.put(
+          if (!cachedClientContexts.containsKey(options.getDataHost())) {
+            cachedClientContexts.put(
                 options.getDataHost(), ClientContext.create(dataSettings.getStubSettings()));
           }
         }
 
         BigtableDataSettings.Builder builder = dataSettings.toBuilder();
-
+        
+        ClientContext cachedCtx = cachedClientContexts.get(options.getDataHost());
+        
         // Add the executor and transport channel to the settings/options
         builder
             .stubSettings()
             .setExecutorProvider(
                 FixedExecutorProvider.create(
-                    gcjClientContext.get(options.getDataHost()).getExecutor()))
+                    cachedCtx.getExecutor()))
             .setTransportChannelProvider(
                 FixedTransportChannelProvider.create(
                     Objects.requireNonNull(
-                        gcjClientContext.get(options.getDataHost()).getTransportChannel())))
+                        cachedCtx.getTransportChannel())))
             .build();
         dataSettings = builder.build();
       }
@@ -744,13 +747,14 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * Getter for the field <code>gcjClientContext</code>.
-   *
+   * Getter for the field <code>cachedClientContexts</code>.
+   * <p>For internal usage only - public for technical reasons.
    * @return a HashMap of Connection Name (String) to {@link ClientContext} object.
    */
-  public HashMap<String, ClientContext> getGCJClientContext() {
+  @InternalApi("VisibleForTesting")
+  public HashMap<String, ClientContext> getCachedClientContexts() {
     Preconditions.checkState(
         options.useGCJClient(), "Client Context is only available for GCJ Client.");
-    return gcjClientContext;
+    return cachedClientContexts;
   }
 }
