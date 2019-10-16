@@ -32,16 +32,23 @@ $ java -jar target/benchmarks.jar \
     BigtableBenchmark.pointWrite cellsPerRow/10/cellSize/100  [Instance ID]     [Project ID]       false     false  avgt    5      5.189 ±    1.202  ms/op
      
     # Run complete. Total time: 00:18:53
-    Benchmark                              (benchmarkConfig)   (instanceId)      (projectId)  (useBatch)  (useGcj)  Mode  Cnt     Score     Error  Units
-    BigtableBenchmark.bulkScans  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false      true  avgt   40  8198.757 ± 586.135  ms/op
-    BigtableBenchmark.bulkScans  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false     false  avgt   40  7641.325 ± 226.324  ms/op
-    BigtableBenchmark.pointRead  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false      true  avgt   40     4.876 ±   0.420  ms/op
-    BigtableBenchmark.pointRead  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false     false  avgt   40     4.232 ±   0.082  ms/op
-    
-    
+    Benchmark                              (benchmarkConfig)   (instanceId)      (projectId)  (useBatch)  (useGcj)  Mode  Cnt     Score      Error   Units
+    BigtableBenchmark.bulkScans  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false      true  avgt   40    8198.757 ±  586.135  ms/op
+    BigtableBenchmark.bulkScans  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false     false  avgt   40    7641.325 ±  226.324  ms/op
+    BigtableBenchmark.pointRead  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false      true  avgt   40       4.876 ±    0.420  ms/op
+    BigtableBenchmark.pointRead  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false     false  avgt   40       4.232 ±    0.082  ms/op    
+    // Write Operation
+    BigtableBenchmark.bulkWrite  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false      true  avgt    5   19581.516 ±  4173.864 ms/op
+    BigtableBenchmark.bulkWrite  cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false     false  avgt    5   21315.619 ±  5975.093 ms/op
+    BigtableBenchmark.pointWrite cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false      true  avgt    5       5.207 ±     0.500 ms/op
+    BigtableBenchmark.pointWrite cellsPerRow/1/cellSize/1024  [Instance ID]     [Project ID]       false     false  avgt    5       4.757 ±     0.603 ms/op
+
     # Run complete. Total time: 00:36:38
     Benchmark                             (benchmarkConfig)   (instanceId)      (projectId)  (useBatch)  (useGcj)  Mode  Cnt       Score       Error  Units
-    BigtableBenchmark.bulkScans  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]       false     true   avgt   <! --- DEADLINE_EXCEED Exception  -->
-    BigtableBenchmark.bulkScans  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]       false     false  avgt   10  107989.796 ± 32414.357  ms/op
-    BigtableBenchmark.pointRead  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]       false      true  avgt   10       5.254 ±     1.497  ms/op
-    BigtableBenchmark.pointRead  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]       false     false  avgt   10       5.529 ±     0.686  ms/op
+    BigtableBenchmark.bulkScans  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]      false     true   avgt   <! --- DEADLINE_EXCEED Exception  -->
+    BigtableBenchmark.bulkScans  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]      false     false  avgt   10  107989.796 ± 32414.357  ms/op
+    BigtableBenchmark.pointRead  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]      false     true   avgt   10       5.254 ±     1.497  ms/op
+    BigtableBenchmark.pointRead  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]      false     false  avgt   10       5.529 ±     0.686  ms/op
+    // Write Operation
+    BigtableBenchmark.bulkWrite  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]      false     true   avgt    5  274212.097 ± 39328.478  ms/op
+    BigtableBenchmark.bulkWrite  cellsPerRow/100/cellSize/1  [Instance ID]     [Project ID]      false     false  avgt    5  280528.018 ± 63971.361  ms/op
