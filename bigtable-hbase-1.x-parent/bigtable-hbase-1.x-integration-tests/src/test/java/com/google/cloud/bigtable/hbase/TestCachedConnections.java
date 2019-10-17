@@ -52,6 +52,7 @@ public class TestCachedConnections extends AbstractTest {
     configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
 
+
     Map<String, ClientContext> context = getContext(configuration, connectionEndpoints[0]);
     Assert.assertEquals(context.size(), 1);
     Assert.assertTrue(context.containsKey(connectionEndpoints[0]));
