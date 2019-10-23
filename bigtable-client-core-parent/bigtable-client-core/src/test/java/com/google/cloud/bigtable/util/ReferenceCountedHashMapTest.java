@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.util;
 
+import com.google.cloud.bigtable.util.ReferenceCountedHashMap.Callable;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
@@ -27,7 +28,7 @@ public class ReferenceCountedHashMapTest {
   private final Integer[] VALUES = {1, 2};
 
   @Test
-  public void test_insertion_works() {
+  public void test_insertionWorks() {
     Map<String, Integer> testMap = new ReferenceCountedHashMap<>();
     testMap.put(KEYS[0], VALUES[0]);
     Assert.assertEquals(testMap.get(KEYS[0]), VALUES[0]);
@@ -38,7 +39,7 @@ public class ReferenceCountedHashMapTest {
   }
 
   @Test
-  public void test_multiple_insertion_does_not_update() {
+  public void test_multipleInsertionDoesNotUpdate() {
     Map<String, Integer> testMap = new ReferenceCountedHashMap<>();
     testMap.put(KEYS[0], VALUES[0]);
     testMap.put(KEYS[0], null);
@@ -49,13 +50,28 @@ public class ReferenceCountedHashMapTest {
   }
 
   @Test
-  public void test_empty_remove_returns_null() {
+  public void test_emptyRemoveReturnsNull() {
     Map<String, Integer> testMap = new ReferenceCountedHashMap<>();
     Assert.assertNull(testMap.remove(KEYS[0]));
   }
 
   @Test
-  public void test_removes_only_referenced_item() {
+  public void test_emptyDoesntCallCallback() {
+    final int[] accessor = {999};
+    Map<String, Integer> testMap =
+        new ReferenceCountedHashMap<>(
+            new Callable<Integer>() {
+              @Override
+              public void call(Integer input) {
+                accessor[0] = input;
+              }
+            });
+    Assert.assertNull(testMap.remove(KEYS[0]));
+    Assert.assertEquals(accessor[0], 999);
+  }
+
+  @Test
+  public void test_removesOnlyReferencedItem() {
     Map<String, Integer> testMap = new ReferenceCountedHashMap<>();
     testMap.put(KEYS[0], VALUES[0]);
     testMap.put(KEYS[1], VALUES[1]);
@@ -67,7 +83,28 @@ public class ReferenceCountedHashMapTest {
   }
 
   @Test
-  public void test_remove_only_deletes_when_ref_count_is_0() {
+  public void test_removeCallsCallback() {
+    final int[] accessor = {999};
+    Map<String, Integer> testMap =
+        new ReferenceCountedHashMap<>(
+            new Callable<Integer>() {
+              @Override
+              public void call(Integer input) {
+                accessor[0] = input;
+              }
+            });
+    testMap.put(KEYS[0], VALUES[0]);
+    testMap.put(KEYS[1], VALUES[1]);
+    Assert.assertEquals(testMap.size(), 2);
+    Assert.assertEquals(testMap.remove(KEYS[0]), VALUES[0]);
+    Assert.assertNull(testMap.get(KEYS[0]));
+    Assert.assertEquals(testMap.get(KEYS[1]), VALUES[1]);
+    Assert.assertEquals(testMap.size(), 1);
+    Assert.assertEquals(accessor[0], 1);
+  }
+
+  @Test
+  public void test_removeOnlyDeletesWhenRefCountIs0() {
     Map<String, Integer> testMap = new ReferenceCountedHashMap<>();
     testMap.put(KEYS[0], VALUES[0]);
     testMap.put(KEYS[0], VALUES[0]);
@@ -97,7 +134,7 @@ public class ReferenceCountedHashMapTest {
   }
 
   @Test
-  public void test_put_all() {
+  public void test_putAll() {
     Map<String, Integer> insertionMap = new HashMap<>();
     Map<String, Integer> testMap = new ReferenceCountedHashMap<>();
     insertionMap.put(KEYS[0], VALUES[0]);

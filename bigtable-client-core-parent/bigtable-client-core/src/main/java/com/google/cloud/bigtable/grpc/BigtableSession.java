@@ -20,6 +20,7 @@ import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.grpc.GaxGrpcProperties;
@@ -58,6 +59,7 @@ import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.util.ReferenceCountedHashMap;
+import com.google.cloud.bigtable.util.ReferenceCountedHashMap.Callable;
 import com.google.cloud.bigtable.util.ThreadUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -106,7 +108,16 @@ public class BigtableSession implements Closeable {
   // TODO: Consider caching channel pools per instance.
   private static ManagedChannel cachedDataChannelPool;
   // Map containing ref-counted, cached connections to specific destination hosts for GCJ client
-  private static Map<String, ClientContext> cachedClientContexts = new ReferenceCountedHashMap<>();
+  private static Map<String, ClientContext> cachedClientContexts =
+      new ReferenceCountedHashMap<>(
+          new Callable<ClientContext>() {
+            @Override
+            public void call(ClientContext context) {
+              for (BackgroundResource backgroundResource : context.getBackgroundResources()) {
+                backgroundResource.shutdown();
+              }
+            }
+          });
   private static final Map<String, ResourceLimiter> resourceLimiterMap = new HashMap<>();
 
   // 256 MB, server has 256 MB limit.

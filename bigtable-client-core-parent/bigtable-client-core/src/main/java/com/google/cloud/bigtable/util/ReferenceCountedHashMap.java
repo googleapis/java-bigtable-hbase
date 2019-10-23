@@ -34,9 +34,19 @@ public class ReferenceCountedHashMap<K, V> extends HashMap<K, V> {
   //  opposed to K typed.
   private Map<Object, Integer> counterMap;
 
+  private Callable<V> cleanerCallback;
+
   /** Constructor for ReferenceCountedHashMap. */
   public ReferenceCountedHashMap() {
     super();
+    this.cleanerCallback = null;
+    counterMap = new HashMap<>();
+  }
+
+  /** Constructor for ReferenceCountedHashMap wth a destructor callable. */
+  public ReferenceCountedHashMap(Callable<V> cleanerCallable) {
+    super();
+    this.cleanerCallback = cleanerCallable;
     counterMap = new HashMap<>();
   }
 
@@ -74,7 +84,11 @@ public class ReferenceCountedHashMap<K, V> extends HashMap<K, V> {
     Integer currentCount = this.updateReference(key, -1);
     if (currentCount == 0) {
       counterMap.remove(key);
-      return super.remove(key);
+      V value = super.remove(key);
+      if (cleanerCallback != null) {
+        cleanerCallback.call(value);
+      }
+      return value;
     } else {
       return super.get(key);
     }
@@ -119,5 +133,14 @@ public class ReferenceCountedHashMap<K, V> extends HashMap<K, V> {
     currentCounter = updateCount + ((currentCounter == null) ? 0 : currentCounter);
     counterMap.put(key, currentCounter);
     return currentCounter;
+  }
+
+  /**
+   * Interface for destructor code.
+   *
+   * @param <I> The type of the value to destroy
+   */
+  public interface Callable<I> {
+    void call(I input);
   }
 }
