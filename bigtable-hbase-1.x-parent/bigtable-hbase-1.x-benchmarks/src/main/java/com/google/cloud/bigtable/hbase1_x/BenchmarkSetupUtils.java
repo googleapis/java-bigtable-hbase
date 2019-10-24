@@ -18,15 +18,15 @@ package com.google.cloud.bigtable.hbase1_x;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_BATCH;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT;
 import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.COL_FAMILY;
-import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.ROWS_PER_BATCH;
-import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.SUFFIX_FMT;
+import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.ROW_PREFIX;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.BenchmarkJobConfig;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Random;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -37,9 +37,11 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
-public class BenchmarkDataUtils {
+class BenchmarkSetupUtils {
 
-  private static final Logger LOG = Logger.getLogger(BenchmarkDataUtils.class.getName());
+  private static final Logger LOG = Logger.getLogger(BenchmarkSetupUtils.class.getName());
+  private static final long TOTAL_DATA_IN_BYTES = 1024 * 1024 * 1024;
+  private static final Pattern CELL_PATTERN = Pattern.compile("cellsPerRow/(\\d+)/cellSize/(\\d+)");
 
   static Connection createConnection(
       String projectId, String instanceId, boolean useBatch, boolean useGcj) {
@@ -49,55 +51,47 @@ public class BenchmarkDataUtils {
     return BigtableConfiguration.connect(config);
   }
 
-  static void createAndFillTable(Connection connection, BenchmarkJobConfig jobConfig)
+  static void createAndPopulateTable(Connection connection, RowShapeParams rowShapeParams)
       throws IOException {
 
     try (Admin admin = connection.getAdmin()) {
-      if (admin.tableExists(jobConfig.tableName)) {
+      if (admin.tableExists(rowShapeParams.tableName)) {
         LOG.info("Using existing table");
         // Assuming the existing table would have all required data
         return;
       }
-      LOG.info("Did not found the the table with tableName as: " + jobConfig.tableName);
+      LOG.info("Did not found the the table with tableName as: " + rowShapeParams.tableName);
 
       admin.createTable(
-          new HTableDescriptor(jobConfig.tableName)
+          new HTableDescriptor(rowShapeParams.tableName)
               .addFamily(new HColumnDescriptor(COL_FAMILY).setMaxVersions(1)));
     }
 
-    try (BufferedMutator bufferedMutator = connection.getBufferedMutator(jobConfig.tableName)) {
+    try (BufferedMutator bufferedMutator =
+        connection.getBufferedMutator(rowShapeParams.tableName)) {
 
-      String rowPrefix = getRowPrefix(jobConfig.cellsPerRow, jobConfig.cellSize);
-      ImmutableList.Builder<Put> putBuilder = ImmutableList.builderWithExpectedSize(ROWS_PER_BATCH);
-      final long currentTimestamp = System.currentTimeMillis();
+      long timestamp = getTimeInMicroSecond();
+      byte[] cellValue = getRandomBytes(rowShapeParams.cellSize);
 
-      for (int rowInd = 0, sendBatchInd = 0;
-          rowInd < jobConfig.totalRows;
-          rowInd++, sendBatchInd++) {
-
+      for (int rowInd = 0; rowInd < rowShapeParams.totalRows; rowInd++) {
         // zero padded row-key
-        Put put = new Put(Bytes.toBytes(rowPrefix + String.format(SUFFIX_FMT, rowInd)));
+        Put put = new Put(Bytes.toBytes(ROW_PREFIX + String.format("%010d", rowInd)));
 
-        for (int cellInd = 0; cellInd < jobConfig.cellsPerRow; cellInd++) {
+        for (int cellInd = 0; cellInd < rowShapeParams.cellsPerRow; cellInd++) {
           put.addColumn(
               COL_FAMILY,
-              Bytes.toBytes("qualifier-" + String.format(SUFFIX_FMT, cellInd)),
-              currentTimestamp,
-              getRandomBytes(jobConfig.cellSize));
+              Bytes.toBytes("qualifier-" + String.format("%06d", cellInd)),
+              timestamp,
+              cellValue);
         }
-        putBuilder.add(put);
+        bufferedMutator.mutate(put);
 
-        if (sendBatchInd % ROWS_PER_BATCH == 0 || rowInd == (jobConfig.totalRows - 1)) {
-          bufferedMutator.mutate(putBuilder.build());
-
-          // Does this makes sense?
+        if (rowInd % 1000 == 0) {
           bufferedMutator.flush();
-
-          putBuilder = ImmutableList.builderWithExpectedSize(ROWS_PER_BATCH);
         }
       }
     }
-    LOG.info(String.format("Mutate table with %d rows", jobConfig.totalRows));
+    LOG.info(String.format("Mutate table with %d rows", rowShapeParams.totalRows));
   }
 
   static String getTableId(int cellsPerRow, int cellSize) {
@@ -114,17 +108,41 @@ public class BenchmarkDataUtils {
     return data;
   }
 
+  static long getTimeInMicroSecond() {
+    return System.currentTimeMillis() * 1000L;
+  }
+
   static void createTableToWrite(Connection connection, TableName writeToTableName)
       throws IOException {
     try (Admin admin = connection.getAdmin()) {
-
-      if (admin.tableExists(writeToTableName)) {
-        // Deleting the existing table to create a fresh table to write to.
-        admin.deleteTable(writeToTableName);
+      if (!admin.tableExists(writeToTableName)) {
+        admin.createTable(
+            new HTableDescriptor(writeToTableName)
+                .addFamily(new HColumnDescriptor(COL_FAMILY).setMaxVersions(1)));
       }
-      admin.createTable(
-          new HTableDescriptor(writeToTableName)
-              .addFamily(new HColumnDescriptor(COL_FAMILY).setMaxVersions(1)));
+    }
+  }
+
+  static class RowShapeParams {
+
+    final int cellsPerRow;
+    final int cellSize;
+    final TableName tableName;
+    final long totalRows;
+
+    RowShapeParams(String dataShape) {
+      Matcher matcher = CELL_PATTERN.matcher(dataShape);
+      Preconditions.checkArgument(matcher.matches(), "Benchmark job configuration did not match");
+      cellsPerRow = Integer.valueOf(matcher.group(1));
+      cellSize = Integer.valueOf(matcher.group(2));
+      Preconditions.checkArgument(
+          cellsPerRow != 0 && cellSize != 0, "CellsPerSize or CellSize cannot be zero");
+
+      tableName = TableName.valueOf(getTableId(cellsPerRow, cellSize));
+
+      // Total rows is ~1GB, 15 is the additional size of qualifier, taking this into account is
+      // necessary, especially when cellSize is provided 1.
+      totalRows = TOTAL_DATA_IN_BYTES / (cellsPerRow * (cellSize + 15));
     }
   }
 }

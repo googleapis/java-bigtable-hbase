@@ -30,13 +30,6 @@
             <artifactId>jmh-generator-annprocess</artifactId>
             <version>${jmh.version}</version>
         </dependency>
-
-        <!-- misc deps -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
