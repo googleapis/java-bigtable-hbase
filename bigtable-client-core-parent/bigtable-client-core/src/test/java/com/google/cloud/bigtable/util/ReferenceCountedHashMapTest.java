@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.util;
 
 import com.google.cloud.bigtable.util.ReferenceCountedHashMap.Callable;
-import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
@@ -131,17 +130,5 @@ public class ReferenceCountedHashMapTest {
     Assert.assertEquals(testMap.size(), 0);
     Assert.assertNull(testMap.get(KEYS[0]));
     Assert.assertNull(testMap.get(KEYS[1]));
-  }
-
-  @Test
-  public void test_putAll() {
-    Map<String, Integer> insertionMap = new HashMap<>();
-    Map<String, Integer> testMap = new ReferenceCountedHashMap<>();
-    insertionMap.put(KEYS[0], VALUES[0]);
-    insertionMap.put(KEYS[1], VALUES[1]);
-    testMap.putAll(insertionMap);
-    Assert.assertEquals(testMap.get(KEYS[0]), VALUES[0]);
-    Assert.assertEquals(testMap.get(KEYS[1]), VALUES[1]);
-    Assert.assertEquals(testMap.size(), 2);
   }
 }

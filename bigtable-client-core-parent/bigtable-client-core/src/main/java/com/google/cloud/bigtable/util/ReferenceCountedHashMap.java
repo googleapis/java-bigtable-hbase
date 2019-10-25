@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.util;
 
 import com.google.api.core.InternalApi;
+import com.google.common.base.MoreObjects;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,9 +33,9 @@ public class ReferenceCountedHashMap<K, V> extends HashMap<K, V> {
 
   // As removal operates via object reference, we must keep this map as Object as
   //  opposed to K typed.
-  private Map<Object, Integer> counterMap;
+  private final Map<Object, Integer> counterMap;
 
-  private Callable<V> cleanerCallback;
+  private final Callable<V> cleanerCallback;
 
   /** Constructor for ReferenceCountedHashMap. */
   public ReferenceCountedHashMap() {
@@ -76,14 +77,11 @@ public class ReferenceCountedHashMap<K, V> extends HashMap<K, V> {
    * @return The value removed, or null if it does not exist.
    */
   public synchronized V remove(Object key) {
-    // Normally I would throw an exception on not found, but hash map doesn't
-    //  so I'll follow suit.
     if (!super.containsKey(key)) {
       return null;
     }
     Integer currentCount = this.updateReference(key, -1);
-    if (currentCount == 0) {
-      counterMap.remove(key);
+    if (currentCount <= 0) {
       V value = super.remove(key);
       if (cleanerCallback != null) {
         cleanerCallback.call(value);
@@ -103,24 +101,13 @@ public class ReferenceCountedHashMap<K, V> extends HashMap<K, V> {
     throw new UnsupportedOperationException("Reference-counted objects should not be cloned.");
   }
 
-  /**
-   * PutAll puts several values into the HashMap adding references for each. Note that since this is
-   * iterating through the map twice, it is not the most efficient algorithm. The implementation of
-   * this method is kept for compatibility purposes, but its use is not recommended.
-   *
-   * @param m A map of all the values to be added.
-   */
   public void putAll(Map<? extends K, ? extends V> m) {
-    // Map iterations are inherently slow. As such the use of this
-    //  method is not recommended. TODO: Optimize
-    for (K key : m.keySet()) {
-      this.updateReference(key, 1);
-    }
-    super.putAll(m);
+    throw new UnsupportedOperationException("Uncommon method for this use-case.");
   }
 
   /**
    * Internal helper method to increment/decrement the reference count for a specific key.
+   * Side-effect: Deletes item from counterMap if 0.
    *
    * @param key The key reference to be updated.
    * @param updateCount The value to update it to.
@@ -129,10 +116,13 @@ public class ReferenceCountedHashMap<K, V> extends HashMap<K, V> {
   private Integer updateReference(Object key, Integer updateCount) {
     // Not making this synchronized as the methods calling this are expected to be synchronized.
     //  No reason to double lock (note: compiler might eliminate, but unsure)
-    Integer currentCounter = counterMap.get(key);
-    currentCounter = updateCount + ((currentCounter == null) ? 0 : currentCounter);
-    counterMap.put(key, currentCounter);
-    return currentCounter;
+    Integer currentCount = updateCount + MoreObjects.firstNonNull(counterMap.get(key), 0);
+    if (currentCount <= 0) {
+      counterMap.remove(key);
+    } else {
+      counterMap.put(key, currentCount);
+    }
+    return currentCount;
   }
 
   /**
