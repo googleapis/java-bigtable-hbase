@@ -45,6 +45,7 @@ class BenchmarkSetupUtils {
   private static final Logger LOG = Logger.getLogger(BenchmarkSetupUtils.class.getName());
   private static final long TOTAL_DATA_IN_BYTES = 1024 * 1024 * 1024;
   private static final Pattern CELL_PATTERN = Pattern.compile("cellsPerRow/(\\d+)/cellSize/(\\d+)");
+  private static final Random random = new Random();
 
   static Connection createConnection(
       String projectId, String instanceId, boolean useBatch, boolean useGcj) {
@@ -98,8 +99,12 @@ class BenchmarkSetupUtils {
 
   static byte[] getRandomBytes(int size) {
     byte[] data = new byte[size];
-    new Random().nextBytes(data);
+    random.nextBytes(data);
     return data;
+  }
+
+  static int getRandomInt(int bound) {
+    return random.nextInt(bound);
   }
 
   static void createTableToWrite(Connection connection, TableName writeToTableName)

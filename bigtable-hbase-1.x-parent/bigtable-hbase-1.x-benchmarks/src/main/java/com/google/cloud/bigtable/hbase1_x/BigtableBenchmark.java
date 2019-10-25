@@ -18,10 +18,10 @@ package com.google.cloud.bigtable.hbase1_x;
 import static com.google.cloud.bigtable.hbase1_x.BenchmarkSetupUtils.createAndPopulateTable;
 import static com.google.cloud.bigtable.hbase1_x.BenchmarkSetupUtils.createTableToWrite;
 import static com.google.cloud.bigtable.hbase1_x.BenchmarkSetupUtils.getRandomBytes;
+import static com.google.cloud.bigtable.hbase1_x.BenchmarkSetupUtils.getRandomInt;
 
 import com.google.cloud.bigtable.hbase1_x.BenchmarkSetupUtils.RowShapeParams;
 import java.io.IOException;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.TableName;
@@ -114,8 +114,7 @@ public class BigtableBenchmark {
   /** Reads randomly one row and iterator over the cells. */
   @Benchmark
   public void pointRead(Blackhole blackhole) throws IOException {
-    int randomRowNum = new Random().nextInt(10_000);
-    byte[] rowKey = Bytes.toBytes(READ_ROW_PREFIX + String.format("%010d", randomRowNum));
+    byte[] rowKey = Bytes.toBytes(READ_ROW_PREFIX + String.format("%010d", getRandomInt(10_000)));
 
     Result result = table.get(new Get(rowKey));
 
@@ -141,7 +140,7 @@ public class BigtableBenchmark {
   /** Write a single row with randomly generated rowKey and variably provided cells. */
   @Benchmark
   public void pointWrite() throws IOException {
-    String rowKey = MUTATE_ROW_PREFIX + String.format("%06d", new Random().nextInt(1_000_000));
+    String rowKey = MUTATE_ROW_PREFIX + String.format("%06d", getRandomInt(1_000_000));
     Put put = new Put(Bytes.toBytes(rowKey));
     byte[] cellValue = getRandomBytes(rowShapeParams.cellSize);
 
@@ -168,8 +167,9 @@ public class BigtableBenchmark {
 
       for (int rowInd = 0; rowInd < 100; rowInd++) {
         // zero padded row-key
-        int randomRowNum = new Random().nextInt(1_000_000);
-        Put put = new Put(Bytes.toBytes(MUTATE_ROW_PREFIX + String.format("%06d", randomRowNum)));
+        Put put =
+            new Put(
+                Bytes.toBytes(MUTATE_ROW_PREFIX + String.format("%06d", getRandomInt(1_000_000))));
 
         for (int cellInd = 0; cellInd < rowShapeParams.cellsPerRow; cellInd++) {
           put.addColumn(
