@@ -15,10 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase1_x;
 
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_AUTOFLUSH_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_BATCH;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT;
 import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.COL_FAMILY;
-import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.ROW_PREFIX;
+import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.READ_ROW_PREFIX;
+import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.SAMPLE_TIMESTAMP;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.common.base.Preconditions;
@@ -47,6 +50,8 @@ class BenchmarkSetupUtils {
       String projectId, String instanceId, boolean useBatch, boolean useGcj) {
     Configuration config = BigtableConfiguration.configure(projectId, instanceId);
     config.set(BIGTABLE_USE_BATCH, String.valueOf(useBatch));
+    config.set(BIGTABLE_BULK_AUTOFLUSH_MS_KEY, String.valueOf(100));
+    config.set(BIGTABLE_BULK_MAX_ROW_KEY_COUNT, String.valueOf(3000));
     config.set(BIGTABLE_USE_GCJ_CLIENT, String.valueOf(useGcj));
     return BigtableConfiguration.connect(config);
   }
@@ -70,46 +75,31 @@ class BenchmarkSetupUtils {
     try (BufferedMutator bufferedMutator =
         connection.getBufferedMutator(rowShapeParams.tableName)) {
 
-      long timestamp = getTimeInMicroSecond();
-      byte[] cellValue = getRandomBytes(rowShapeParams.cellSize);
-
       for (int rowInd = 0; rowInd < rowShapeParams.totalRows; rowInd++) {
         // zero padded row-key
-        Put put = new Put(Bytes.toBytes(ROW_PREFIX + String.format("%010d", rowInd)));
+        Put put = new Put(Bytes.toBytes(READ_ROW_PREFIX + String.format("%010d", rowInd)));
 
         for (int cellInd = 0; cellInd < rowShapeParams.cellsPerRow; cellInd++) {
           put.addColumn(
               COL_FAMILY,
               Bytes.toBytes("qualifier-" + String.format("%06d", cellInd)),
-              timestamp,
-              cellValue);
+              SAMPLE_TIMESTAMP,
+              getRandomBytes(rowShapeParams.cellSize));
         }
         bufferedMutator.mutate(put);
-
-        if (rowInd % 1000 == 0) {
-          bufferedMutator.flush();
-        }
       }
     }
     LOG.info(String.format("Mutate table with %d rows", rowShapeParams.totalRows));
   }
 
-  static String getTableId(int cellsPerRow, int cellSize) {
+  private static String getTableId(int cellsPerRow, int cellSize) {
     return String.format("benchmark_table_%d-cells_%d-bytes", cellsPerRow, cellSize);
-  }
-
-  static String getRowPrefix(int cellsPerRow, int cellSize) {
-    return String.format("key_%d-cell_%d-bytes-", cellsPerRow, cellSize);
   }
 
   static byte[] getRandomBytes(int size) {
     byte[] data = new byte[size];
     new Random().nextBytes(data);
     return data;
-  }
-
-  static long getTimeInMicroSecond() {
-    return System.currentTimeMillis() * 1000L;
   }
 
   static void createTableToWrite(Connection connection, TableName writeToTableName)
