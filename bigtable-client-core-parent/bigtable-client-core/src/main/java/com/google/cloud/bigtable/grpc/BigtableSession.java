@@ -20,6 +20,7 @@ import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.grpc.GaxGrpcProperties;
@@ -57,6 +58,8 @@ import com.google.cloud.bigtable.grpc.io.Watchdog;
 import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.util.ReferenceCountedHashMap;
+import com.google.cloud.bigtable.util.ReferenceCountedHashMap.Callable;
 import com.google.cloud.bigtable.util.ThreadUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -104,9 +107,17 @@ public class BigtableSession implements Closeable {
   private static final Logger LOG = new Logger(BigtableSession.class);
   // TODO: Consider caching channel pools per instance.
   private static ManagedChannel cachedDataChannelPool;
-  // Map containing cached connections to specific destination hosts for GCJ client
-  // TODO: Make reference counted so we may clean-up on Session close
-  private static Map<String, ClientContext> cachedClientContexts = new HashMap<>();
+  // Map containing ref-counted, cached connections to specific destination hosts for GCJ client
+  private static Map<String, ClientContext> cachedClientContexts =
+      new ReferenceCountedHashMap<>(
+          new Callable<ClientContext>() {
+            @Override
+            public void call(ClientContext context) {
+              for (BackgroundResource backgroundResource : context.getBackgroundResources()) {
+                backgroundResource.shutdown();
+              }
+            }
+          });
   private static final Map<String, ResourceLimiter> resourceLimiterMap = new HashMap<>();
 
   // 256 MB, server has 256 MB limit.
@@ -252,18 +263,20 @@ public class BigtableSession implements Closeable {
       // If we're using a cached channel we need to check if it's set up already. If
       //  not we need to do the setup now.
       if (options.useCachedChannel()) {
+        ClientContext cachedCtx = null;
         synchronized (BigtableSession.class) {
           // If it's not set up for this specific Host we set it up and save the context for
-          //  future connections.
+          //  future connections
           if (!cachedClientContexts.containsKey(options.getDataHost())) {
-            cachedClientContexts.put(
-                options.getDataHost(), ClientContext.create(dataSettings.getStubSettings()));
+            cachedCtx = ClientContext.create(dataSettings.getStubSettings());
+          } else {
+            cachedCtx = cachedClientContexts.get(options.getDataHost());
           }
+          // Adding reference for reference count
+          cachedClientContexts.put(options.getDataHost(), cachedCtx);
         }
 
         BigtableDataSettings.Builder builder = dataSettings.toBuilder();
-
-        ClientContext cachedCtx = cachedClientContexts.get(options.getDataHost());
 
         // Add the executor and transport channel to the settings/options
         builder
@@ -731,6 +744,10 @@ public class BigtableSession implements Closeable {
       }
     } catch (Exception ex) {
       throw new IOException("Could not close the admin client", ex);
+    }
+
+    if (options.useCachedChannel() && options.useGCJClient()) {
+      cachedClientContexts.remove(options.getDataHost());
     }
 
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").dec();
