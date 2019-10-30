@@ -48,13 +48,7 @@ public class BulkMutationGCJClient implements IBulkMutation {
   /** {@inheritDoc} */
   @Override
   public void sendUnsent() {
-    try {
-      // TODO(rahulkql): Please use Batcher.sendOutstanding once below change is available
-      //  https://github.com/googleapis/gax-java/pull/786
-      bulkMutateBatcher.flush();
-    } catch (InterruptedException ex) {
-      throw new RuntimeException("Could not complete RPC for current Batch", ex);
-    }
+    bulkMutateBatcher.sendOutstanding();
   }
 
   /** {@inheritDoc} */
