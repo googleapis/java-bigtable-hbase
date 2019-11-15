@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -63,5 +64,26 @@ public class TestPutGetDelete extends AbstractTest {
     // Confirm deleted
     Assert.assertFalse(table.exists(get));
     table.close();
+  }
+
+  @Test
+  public void testGetWithNullValues() throws IOException {
+    try (Table table = getDefaultTable()) {
+      Exception actualError = null;
+      try {
+        table.get((Get) null);
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNotNull(actualError);
+      actualError = null;
+
+      try {
+        table.get((List<Get>) null);
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNotNull(actualError);
+    }
   }
 }

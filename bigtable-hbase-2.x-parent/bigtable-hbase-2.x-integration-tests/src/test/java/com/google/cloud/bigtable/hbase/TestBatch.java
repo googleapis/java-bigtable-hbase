@@ -15,10 +15,28 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static org.junit.Assert.assertNull;
+
+import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Table;
+import org.junit.Test;
 
 public class TestBatch extends AbstractTestBatch {
   protected void appendAdd(Append append, byte[] columnFamily, byte[] qualifier, byte[] value) {
     append.addColumn(columnFamily, qualifier, value);
+  }
+
+  @Test
+  public void testBatchWithMismatchedResultArray() throws Exception {
+    Table table = getDefaultTable();
+    Exception actualError = null;
+    try {
+      // This is accepted behaviour in HBase 2 API, It ignores the `new Object[1]` param.
+      table.batchCallback(ImmutableList.of(), new Object[1], null);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
   }
 }

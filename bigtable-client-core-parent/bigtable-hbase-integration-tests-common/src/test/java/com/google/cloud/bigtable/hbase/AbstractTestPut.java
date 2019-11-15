@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
+import static org.junit.Assert.assertNotNull;
 
 import com.google.cloud.bigtable.hbase.AbstractTest.QualifierValue;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
@@ -349,6 +350,27 @@ public abstract class AbstractTestPut extends AbstractTest {
     Assert.assertArrayEquals(
         value2, CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qualifier)));
     table.close();
+  }
+
+  @Test
+  public void testPutWithNullValues() throws IOException {
+    try (Table table = getDefaultTable()) {
+      Exception actualError = null;
+      try {
+        table.put((Put) null);
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNotNull(actualError);
+      actualError = null;
+
+      try {
+        table.put((List<Put>) null);
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNotNull(actualError);
+    }
   }
 
   protected abstract Get getGetAddColumnVersion(int version, byte[] rowKey, byte[] qualifier)
