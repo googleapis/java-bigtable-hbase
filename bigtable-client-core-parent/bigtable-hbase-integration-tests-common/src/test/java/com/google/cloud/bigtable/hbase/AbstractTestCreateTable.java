@@ -150,7 +150,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   private void assertBadTableName(String tableName) {
     try {
       createTable(TableName.valueOf(tableName));
-      Assert.fail("Should fail as table name: '" + tableName + "'");
+      Assert.fail("Should fail for the table name: '" + tableName + "'");
     } catch (Exception ex) {
       // TODO verify - added RuntimeException check as RandomStringUtils seems to be generating a
       // string server side doesn't like
@@ -158,9 +158,9 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   protected boolean isBadTableName(String tableName) {
-    byte[] tableChars = tableName.getBytes();
-    for (byte codePoint : tableChars) {
-      if (!Character.isAlphabetic(codePoint)) {
+    for (int i = 0; i < tableName.length(); ++i) {
+      char c = tableName.charAt(i);
+      if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '_' && c != '-' && c != '.') {
         return true;
       }
     }
