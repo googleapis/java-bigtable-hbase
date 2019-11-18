@@ -15,9 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
@@ -306,21 +303,33 @@ public class BigtableOptionsFactory {
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
     bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
-    String appProfileId = configuration.get(APP_PROFILE_ID_KEY, null);
+    String appProfileId = configuration.get(APP_PROFILE_ID_KEY);
+
     if (appProfileId != null) {
       bigtableOptionsBuilder.setAppProfileId(appProfileId);
     }
 
-    bigtableOptionsBuilder.setDataHost(
-        getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));
+    String dataHostOverride = configuration.get(BIGTABLE_HOST_KEY);
+    if (dataHostOverride != null) {
+      LOG.debug("API Data endpoint host %s.", dataHostOverride);
+      bigtableOptionsBuilder.setDataHost(dataHostOverride);
+    }
 
-    bigtableOptionsBuilder.setAdminHost(
-        getHost(configuration, BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT, "Admin"));
+    String adminHostOverride = configuration.get(BIGTABLE_ADMIN_HOST_KEY);
+    if (adminHostOverride != null) {
+      LOG.debug("Admin endpoint host %s.", adminHostOverride);
+      bigtableOptionsBuilder.setAdminHost(adminHostOverride);
+    }
 
-    int port = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
-    bigtableOptionsBuilder.setPort(port);
-    bigtableOptionsBuilder.setUsePlaintextNegotiation(
-        configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false));
+    String portOverrideStr = configuration.get(BIGTABLE_PORT_KEY);
+    if (portOverrideStr != null) {
+      bigtableOptionsBuilder.setPort(Integer.parseInt(portOverrideStr));
+    }
+
+    String usePlaintextStr = configuration.get(BIGTABLE_USE_PLAINTEXT_NEGOTIATION);
+    if (usePlaintextStr != null) {
+      bigtableOptionsBuilder.setUsePlaintextNegotiation(Boolean.parseBoolean(usePlaintextStr));
+    }
 
     setBulkOptions(configuration, bigtableOptionsBuilder);
     setChannelOptions(configuration, bigtableOptionsBuilder);
@@ -330,10 +339,16 @@ public class BigtableOptionsFactory {
     if (emulatorHost != null) {
       bigtableOptionsBuilder.enableEmulator(emulatorHost);
     }
-    bigtableOptionsBuilder.setUseBatch(configuration.getBoolean(BIGTABLE_USE_BATCH, false));
 
-    bigtableOptionsBuilder.setUseGCJClient(
-        configuration.getBoolean(BIGTABLE_USE_GCJ_CLIENT, false));
+    String useBatchStr = configuration.get(BIGTABLE_USE_BATCH);
+    if (useBatchStr != null) {
+      bigtableOptionsBuilder.setUseBatch(Boolean.parseBoolean(useBatchStr));
+    }
+
+    String useGcjClientStr = configuration.get(BIGTABLE_USE_GCJ_CLIENT);
+    if (useGcjClientStr != null) {
+      bigtableOptionsBuilder.setUseGCJClient(Boolean.parseBoolean(useGcjClientStr));
+    }
     return bigtableOptionsBuilder.build();
   }
 
@@ -345,29 +360,23 @@ public class BigtableOptionsFactory {
     return value;
   }
 
-  private static String getHost(
-      Configuration configuration, String key, String defaultVal, String type) {
-    String hostName = configuration.get(key, defaultVal);
-    LOG.debug("%s endpoint host %s.", type, hostName);
-    return hostName;
-  }
-
   private static void setChannelOptions(
       Configuration configuration, BigtableOptions.Builder builder) throws IOException {
     setCredentialOptions(builder, configuration);
 
     builder.setRetryOptions(createRetryOptions(configuration));
 
-    int channelCount =
-        configuration.getInt(
-            BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
-    builder.setDataChannelCount(channelCount);
+    String channelCountStr = configuration.get(BIGTABLE_DATA_CHANNEL_COUNT_KEY);
+    if (channelCountStr != null) {
+      builder.setDataChannelCount(Integer.parseInt(channelCountStr));
+    }
 
     // This is primarily used by Dataflow where connections open and close often. This is a
     // performance optimization that will reduce the cost to open connections.
-    boolean useCachedDataPool =
-        configuration.getBoolean(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, false);
-    builder.setUseCachedDataPool(useCachedDataPool);
+    String useCachedDataPoolStr = configuration.get(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL);
+    if (useCachedDataPoolStr != null) {
+      builder.setUseCachedDataPool(Boolean.parseBoolean(useCachedDataPoolStr));
+    }
 
     // This information is in addition to bigtable-client-core version, and jdk version.
     StringBuilder agentBuilder = new StringBuilder();
