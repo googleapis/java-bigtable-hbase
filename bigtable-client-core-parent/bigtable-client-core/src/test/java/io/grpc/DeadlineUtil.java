@@ -31,7 +31,7 @@ public class DeadlineUtil {
         unit,
         new Deadline.Ticker() {
           @Override
-          public long read() {
+          public long nanoTime() {
             return clock.nanoTime();
           }
         });
