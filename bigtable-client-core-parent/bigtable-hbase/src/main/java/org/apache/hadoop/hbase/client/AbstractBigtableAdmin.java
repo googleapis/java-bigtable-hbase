@@ -36,6 +36,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -198,6 +199,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public TableName[] listTableNames(Pattern pattern) throws IOException {
+    if (pattern == null) {
+      return listTableNames();
+    }
     List<TableName> result = new ArrayList<>();
 
     for (TableName tableName : listTableNames()) {
@@ -524,6 +528,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public boolean isTableDisabled(TableName tableName) throws IOException {
+    Preconditions.checkNotNull(tableName, "TableName cannot be null");
     return disabledTables.contains(tableName);
   }
 
@@ -697,6 +702,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public HTableDescriptor[] getTableDescriptorsByTableName(List<TableName> tableNames)
       throws IOException {
+    if (tableNames == null || tableNames.isEmpty()) {
+      return listTables();
+    }
+
     TableName[] tableNameArray = tableNames.toArray(new TableName[tableNames.size()]);
     return getTableDescriptors(tableNameArray);
   }
@@ -704,6 +713,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
+    if (names == null || names.isEmpty()) {
+      return listTables();
+    }
+
     TableName[] tableNameArray = new TableName[names.size()];
     for (int i = 0; i < names.size(); i++) {
       tableNameArray[i] = TableName.valueOf(names.get(i));
