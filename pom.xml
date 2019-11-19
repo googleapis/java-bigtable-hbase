@@ -80,7 +80,7 @@ limitations under the License.
         <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
         <beam.version>2.15.0</beam.version>
         <!-- referred from bigtable-beam-import and bigtable-emulator -->
-        <guava.version>28.0-android</guava.version>
+        <guava.version>28.0-jre</guava.version>
     </properties>
 
     <distributionManagement>
