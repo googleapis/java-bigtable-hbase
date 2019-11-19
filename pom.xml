@@ -97,9 +97,9 @@ limitations under the License.
     </repositories>
 
     <scm>
-        <connection>scm:git:git@github.com:GoogleCloudPlatform/cloud-bigtable-client.git</connection>
-        <developerConnection>scm:git:git@github.com:GoogleCloudPlatform/cloud-bigtable-client.git</developerConnection>
-        <url>https://github.com/GoogleCloudPlatform/cloud-bigtable-client</url>
+        <connection>scm:git:git@github.com/googleapis/java-bigtable-hbase.git</connection>
+        <developerConnection>scm:git:git@github.com/googleapis/java-bigtable-hbase.git</developerConnection>
+        <url>https://github.com/googleapis/java-bigtable-hbase</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -112,7 +112,7 @@ limitations under the License.
 
     <issueManagement>
         <system>GitHub Issues</system>
-        <url>https://github.com/GoogleCloudPlatform/cloud-bigtable-client/issues</url>
+        <url>https://github.com/googleapis/java-bigtable-hbase/issues</url>
     </issueManagement>
 
     <build>
