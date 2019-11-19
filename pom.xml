@@ -55,7 +55,7 @@ limitations under the License.
         <commons-logging.version>1.2</commons-logging.version>
         <auto-value.version>1.6.6</auto-value.version>
         <jsr305.version>3.0.2</jsr305.version>
-        <hamcrest.version>2.1</hamcrest.version>
+        <hamcrest.version>2.2</hamcrest.version>
 
         <!-- google-cloud-java related dependency versions -->
         <!-- TODO: check if commons-codec was upgraded to 1.13 in org.apache.httpcomponents from http-client-->
