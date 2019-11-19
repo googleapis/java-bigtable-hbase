@@ -15,6 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -179,6 +183,68 @@ public abstract class AbstractTestListTables extends AbstractTest {
       TableName nonExistantTableName =
           TableName.valueOf("NA_table2-" + UUID.randomUUID().toString());
       checkTableDescriptor(admin, nonExistantTableName);
+    }
+  }
+
+  @Test
+  public void testListTablesWithEmptyElement() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+
+      sharedTestEnv.createTable(sharedTestEnv.newTestTableName());
+      Exception actualError = null;
+      //      try {
+      //        HTableDescriptor[] descriptors = admin.listTables((Pattern) null);
+      //        assertTrue(descriptors.length > 0);
+      //      } catch (Exception e) {
+      //        actualError = e;
+      //      }
+      //      assertNull(actualError);
+
+      try {
+        admin.listTables((String) null);
+      } catch (Exception e) {
+        actualError = e;
+      }
+      assertNotNull(actualError);
+      actualError = null;
+
+      try {
+        assertEquals(0, admin.listTables("").length);
+      } catch (Exception e) {
+        actualError = e;
+      }
+      assertNull(actualError);
+    }
+  }
+
+  @Test
+  public void testListTableNamesWithEmptyElement() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+
+      sharedTestEnv.createTable(sharedTestEnv.newTestTableName());
+      Exception actualError = null;
+      //      try {
+      //        TableName[] tableNames = admin.listTableNames((Pattern) null);
+      //        assertTrue(tableNames.length > 0);
+      //      } catch (Exception e) {
+      //        actualError = e;
+      //      }
+      //      assertNull(actualError);
+
+      try {
+        admin.listTableNames((String) null);
+      } catch (Exception e) {
+        actualError = e;
+      }
+      assertNotNull(actualError);
+      actualError = null;
+
+      try {
+        assertEquals(0, admin.listTableNames("").length);
+      } catch (Exception e) {
+        actualError = e;
+      }
+      assertNull(actualError);
     }
   }
 
