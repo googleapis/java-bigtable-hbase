@@ -24,7 +24,6 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  TestAdminOps.class,
   TestAppend.class,
   TestAuth.class,
   TestBasicOps.class,
