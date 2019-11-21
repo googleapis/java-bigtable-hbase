@@ -17,6 +17,9 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -190,6 +193,117 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
     Assert.assertEquals(1, listTableSnapshotsSize(Pattern.compile(tableName.getNameAsString())));
   }
 
+  @Test
+  public void testSnapshotTableWithNullAndEmptyString() {
+    Exception actualError = null;
+    try {
+      snapshot("test-snapshot", null);
+      Assert.fail("listTableSnapshots with null tableName should fail");
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      snapshot(null, tableName);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+  }
+
+  @Test
+  public void testListSnapshotsWithNullAndEmptyString() {
+    Exception actualError = null;
+    try {
+      listSnapshotsSize((String) null);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      assertEquals(0, listSnapshotsSize((Pattern) null));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+    actualError = null;
+
+    try {
+      assertEquals(0, listSnapshotsSize(""));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+  }
+
+  @Test
+  public void testListTableSnapshotsWithNullAndEmptyString() {
+    Exception actualError = null;
+    try {
+      listTableSnapshotsSize(null, "");
+      Assert.fail("listTableSnapshots with null tableName should fail");
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      assertEquals(0, listTableSnapshotsSize((Pattern) null, null));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+
+    try {
+      assertEquals(0, listTableSnapshotsSize("", ""));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+  }
+
+  @Test
+  public void testDeleteSnapshotWithEmptyString() throws Exception {
+    Exception actualError = null;
+    try {
+      // No snapshot should match and no exception should throw
+      deleteSnapshots(null);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+
+    try {
+      // No snapshot should match and no exception should throw
+      deleteSnapshots(Pattern.compile(""));
+    } catch (Exception ex) {
+      // H2 No Error
+      actualError = ex;
+    }
+    assertNull(actualError);
+
+    try {
+      // No snapshot should match and no exception should throw
+      deleteTableSnapshots(null, null);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+
+    try {
+      // No snapshot should match and no exception should throw
+      deleteTableSnapshots(Pattern.compile(""), Pattern.compile(""));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+  }
+
   private void checkSnapshotCount(Admin admin, int count) throws IOException {
     Assert.assertEquals(count, listSnapshotsSize(snapshotName));
   }
@@ -239,6 +353,9 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   protected abstract int listSnapshotsSize(Pattern pattern) throws IOException;
 
   protected abstract void deleteSnapshot(String snapshotName) throws IOException;
+
+  protected abstract void deleteTableSnapshots(Pattern tableName, Pattern snapshotName)
+      throws IOException;
 
   protected abstract boolean tableExists(final TableName tableName) throws IOException;
 

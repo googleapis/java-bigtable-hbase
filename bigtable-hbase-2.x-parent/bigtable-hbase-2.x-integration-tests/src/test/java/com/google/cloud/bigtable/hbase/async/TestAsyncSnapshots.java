@@ -16,6 +16,10 @@
 
 package com.google.cloud.bigtable.hbase.async;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import com.google.cloud.bigtable.hbase.AbstractTestSnapshot;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
@@ -29,6 +33,7 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -37,6 +42,99 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
 
   private AsyncAdmin getAsyncAdmin() throws InterruptedException, ExecutionException {
     return AbstractAsyncTest.getAsyncConnection().getAdmin();
+  }
+
+  @Test
+  public void testListSnapshotsWithNullAndEmptyString() {
+    Exception actualError = null;
+    try {
+      listSnapshotsSize((String) null);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      listSnapshotsSize((Pattern) null);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      assertEquals(0, listSnapshotsSize(""));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+  }
+
+  @Test
+  public void testListTableSnapshotsWithNullAndEmptyString() {
+    Exception actualError = null;
+    try {
+      listTableSnapshotsSize(null, "");
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      listTableSnapshotsSize((Pattern) null, null);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      assertEquals(0, listTableSnapshotsSize("", ""));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+  }
+
+  @Test
+  public void testDeleteSnapshotWithEmptyString() throws Exception {
+    Exception actualError = null;
+    try {
+      // NPE is expected with AsyncAdmin.
+      deleteSnapshots(null);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      // No snapshot should match and no exception should throw
+      deleteSnapshots(Pattern.compile(""));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+    actualError = null;
+
+    try {
+      // NPE is expected with AsyncAdmin.
+      deleteTableSnapshots(null, null);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      // No snapshot should match and no exception should throw
+      deleteTableSnapshots(Pattern.compile(""), Pattern.compile(""));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
   }
 
   @Override
@@ -105,6 +203,15 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   protected void deleteSnapshots(Pattern pattern) throws IOException {
     try {
       getAsyncAdmin().deleteSnapshots(pattern).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while deleting snapshots: " + e.getCause());
+    }
+  }
+
+  @Override
+  protected void deleteTableSnapshots(Pattern tableName, Pattern snapshotRegEx) throws IOException {
+    try {
+      getAsyncAdmin().deleteTableSnapshots(tableName, snapshotRegEx).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Error while deleting snapshots: " + e.getCause());
     }

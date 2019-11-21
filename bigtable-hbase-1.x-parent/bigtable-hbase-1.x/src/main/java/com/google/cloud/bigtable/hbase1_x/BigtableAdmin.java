@@ -21,6 +21,7 @@ import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.cloud.bigtable.grpc.BigtableSnapshotName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -169,6 +170,10 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
+    if (pattern == null || pattern.matcher("").matches()) {
+      return ImmutableList.of();
+    }
+
     List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
     for (HBaseProtos.SnapshotDescription description : listSnapshots()) {
       if (pattern.matcher(description.getName()).matches()) {
@@ -187,6 +192,10 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public List<SnapshotDescription> listTableSnapshots(
       Pattern tableNamePattern, Pattern snapshotNamePattern) throws IOException {
+    if (tableNamePattern == null || tableNamePattern.matcher("").matches()) {
+      return ImmutableList.of();
+    }
+
     List<SnapshotDescription> response = new ArrayList<>();
     for (SnapshotDescription snapshotDescription : listSnapshots(snapshotNamePattern)) {
       if (tableNamePattern.matcher(snapshotDescription.getTable()).matches()) {

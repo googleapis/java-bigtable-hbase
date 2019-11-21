@@ -36,6 +36,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -837,6 +838,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @throws IOException if any.
    */
   protected Operation snapshotTable(String snapshotName, TableName tableName) throws IOException {
+    Preconditions.checkNotNull(snapshotName);
+    Preconditions.checkNotNull(tableName);
+    if (snapshotName.isEmpty()) {
+      // this mimic the HBase behavior
+      return Operation.newBuilder().build();
+    }
 
     SnapshotTableRequest.Builder requestBuilder =
         SnapshotTableRequest.newBuilder()
@@ -948,6 +955,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void deleteSnapshot(String snapshotName) throws IOException {
+    Preconditions.checkNotNull(snapshotName);
+    if (snapshotName.isEmpty()) {
+      return;
+    }
+
     String btSnapshotName = getClusterName().toSnapshotName(snapshotName);
     DeleteSnapshotRequest request =
         DeleteSnapshotRequest.newBuilder().setName(btSnapshotName).build();
