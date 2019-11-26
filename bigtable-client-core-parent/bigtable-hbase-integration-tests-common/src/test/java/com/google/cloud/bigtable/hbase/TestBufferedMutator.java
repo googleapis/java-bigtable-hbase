@@ -128,6 +128,39 @@ public class TestBufferedMutator extends AbstractTest {
         actualError = ex;
       }
       assertNotNull(actualError);
+      actualError = null;
+
+      try {
+        byte[] rowKey = dataHelper.randomData("test-row");
+        bm.mutate(new Put(rowKey).addColumn(COLUMN_FAMILY, null, value));
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+
+      try {
+        byte[] rowKey = dataHelper.randomData("test-row");
+        bm.mutate(new Put(rowKey).addColumn(COLUMN_FAMILY, new byte[0], value));
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+
+      try {
+        byte[] rowKey = dataHelper.randomData("test-row");
+        bm.mutate(new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, null));
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+
+      try {
+        byte[] rowKey = dataHelper.randomData("test-row");
+        bm.mutate(new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, new byte[0]));
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
     }
   }
 

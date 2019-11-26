@@ -16,7 +16,9 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -38,14 +40,16 @@ public class TestPutGetDelete extends AbstractTest {
     // Initialize
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
+    byte[] anotherQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = dataHelper.randomData("testValue-");
 
     Table table = getDefaultTable();
 
     // Put
-    Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, testQualifier, testValue);
-    table.put(put);
+    table.put(
+        new Put(rowKey)
+            .addColumn(COLUMN_FAMILY, testQualifier, testValue)
+            .addColumn(COLUMN_FAMILY, anotherQualifier, testValue));
 
     // Get
     Get get = new Get(rowKey);
@@ -69,6 +73,14 @@ public class TestPutGetDelete extends AbstractTest {
   @Test
   public void testGetWithNullValues() throws IOException {
     try (Table table = getDefaultTable()) {
+
+      byte[] rowKey = dataHelper.randomData("testrow-");
+      byte[] testQualifier = dataHelper.randomData("testQualifier-");
+      byte[] testValue = dataHelper.randomData("testValue-");
+
+      // adds one row to verify the Table.get()
+      table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, testQualifier, testValue));
+
       Exception actualError = null;
       try {
         table.get((Get) null);
@@ -84,6 +96,28 @@ public class TestPutGetDelete extends AbstractTest {
         actualError = ex;
       }
       assertNotNull(actualError);
+      actualError = null;
+
+      Get getWithNullQualifier = new Get(rowKey).addColumn(COLUMN_FAMILY, null);
+      try {
+        // fetches the row with  even though qualifier is
+        Result result = table.get(getWithNullQualifier);
+
+        assertArrayEquals(rowKey, result.getRow());
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+      actualError = null;
+
+      Get getWithEmptyQualifier = new Get(rowKey).addColumn(COLUMN_FAMILY, new byte[0]);
+      try {
+        Result result = table.get(getWithEmptyQualifier);
+        assertArrayEquals(rowKey, result.getRow());
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
     }
   }
 }

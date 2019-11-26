@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -433,6 +434,13 @@ public abstract class AbstractTestBatch extends AbstractTest {
       actualError = ex;
     }
     assertNull(actualError);
+
+    try {
+      table.batch(ImmutableList.<Row>of(null), new Object[0]);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
   }
 
   @Test
@@ -458,6 +466,60 @@ public abstract class AbstractTestBatch extends AbstractTest {
     try {
       // Table#mutateRow ignores requests without Mutations.
       table.mutateRow(new RowMutations(new byte[1]));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+
+    try {
+      byte[] rowKeyForPut = dataHelper.randomData("test-rowKey");
+      RowMutations rowMutations = new RowMutations(rowKeyForPut);
+      rowMutations.add(new Put(rowKeyForPut));
+
+      table.mutateRow(rowMutations);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNotNull(actualError);
+    actualError = null;
+
+    try {
+      byte[] rowKeyWithNullQual = dataHelper.randomData("test-rowKey");
+      RowMutations rowMutations = new RowMutations(rowKeyWithNullQual);
+      rowMutations.add(new Put(rowKeyWithNullQual).addColumn(COLUMN_FAMILY, null, null));
+
+      // Table#mutateRow should add a row with null qualifier.
+      table.mutateRow(rowMutations);
+
+      assertTrue(table.exists(new Get(rowKeyWithNullQual)));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+
+    try {
+      byte[] rowKeyWithEmptyQual = dataHelper.randomData("test-rowKey");
+      RowMutations rowMutations = new RowMutations(rowKeyWithEmptyQual);
+      rowMutations.add(new Put(rowKeyWithEmptyQual).addColumn(COLUMN_FAMILY, new byte[0], null));
+
+      // Table#mutateRow should add a row with an empty qualifier.
+      table.mutateRow(rowMutations);
+
+      assertTrue(table.exists(new Get(rowKeyWithEmptyQual)));
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+
+    try {
+      byte[] rowKeyWithNullValue = dataHelper.randomData("test-rowKey");
+      RowMutations rowMutations = new RowMutations(rowKeyWithNullValue);
+      rowMutations.add(new Put(rowKeyWithNullValue).addColumn(COLUMN_FAMILY, "q".getBytes(), null));
+
+      // Table#mutateRow should add a row with null values.
+      table.mutateRow(rowMutations);
+
+      assertTrue(table.exists(new Get(rowKeyWithNullValue)));
     } catch (Exception ex) {
       actualError = ex;
     }
