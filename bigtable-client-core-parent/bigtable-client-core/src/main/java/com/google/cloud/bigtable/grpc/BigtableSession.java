@@ -92,6 +92,9 @@ import javax.net.ssl.SSLException;
  *   <li>Creates ChannelInterceptors - auth headers, performance interceptors.
  *   <li>Close anything above that needs to be closed (ExecutorService, ChannelImpls)
  * </ol>
+ *
+ * @see <a href="https://github.com/googleapis/java-bigtable">google-cloud-bigtable</a> java
+ *     idiomatic client to access cloud Bigtable API.
  */
 @InternalExtensionOnly
 public class BigtableSession implements Closeable {
