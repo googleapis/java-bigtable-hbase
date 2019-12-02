@@ -65,7 +65,7 @@ limitations under the License.
             isn't compatible with the latest version of google-cloud-bigtable, but we need new
             version of grpc for direct path. This should be removed in the next major version bump -->
         <grpc.version>1.25.0</grpc.version>
-        <opencensus.version>0.23.0</opencensus.version>
+        <opencensus.version>0.24.0</opencensus.version>
         <checkerframework.version>2.5.5</checkerframework.version>
 
         <!-- hbase dependency versions -->
