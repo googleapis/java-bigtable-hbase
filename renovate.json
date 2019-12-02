@@ -3,7 +3,6 @@
     "config:base"
   ],
   "ignoreDeps": [
-    "com.google.api:gax-bom",
     "com.google.guava:guava",
     "com.google.protobuf:protobuf-java",
     "io.dropwizard.metrics:metrics-core",
