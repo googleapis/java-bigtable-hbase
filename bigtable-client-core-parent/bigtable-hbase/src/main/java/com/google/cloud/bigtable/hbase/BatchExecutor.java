@@ -204,9 +204,6 @@ public class BatchExecutor {
    */
   public void batch(List<? extends Row> actions, @Nullable Object[] results)
       throws IOException, InterruptedException {
-    if (results == null) {
-      results = new Object[actions.size()];
-    }
     batchCallback(actions, results, null);
   }
 
@@ -263,8 +260,14 @@ public class BatchExecutor {
       List<? extends Row> actions, Object[] results, Batch.Callback<R> callback)
       throws IOException, InterruptedException {
     Preconditions.checkArgument(
-        results.length == actions.size(),
+        results == null || results.length == actions.size(),
         "Result array must have same dimensions as actions list.");
+    if (actions.isEmpty()) {
+      return;
+    }
+    if (results == null) {
+      results = new Object[actions.size()];
+    }
     Timer.Context timerContext = batchTimer.time();
     List<ApiFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, callback);
     // Don't want to throw an exception for failed futures, instead the place in results is

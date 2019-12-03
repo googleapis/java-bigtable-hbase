@@ -17,9 +17,14 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import com.google.cloud.bigtable.hbase.AbstractTest.QualifierValue;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -349,6 +354,98 @@ public abstract class AbstractTestPut extends AbstractTest {
     Assert.assertArrayEquals(
         value2, CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qualifier)));
     table.close();
+  }
+
+  @Test
+  public void testPutWithNullValues() throws IOException {
+    // Initialize
+    byte[] testQualifier = dataHelper.randomData("testQualifier-");
+    byte[] testValue = dataHelper.randomData("testValue-");
+
+    try (Table table = getDefaultTable()) {
+      Exception actualError = null;
+      try {
+        // Should throw exception with null Put
+        table.put((Put) null);
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNotNull(actualError);
+      actualError = null;
+
+      try {
+        // Should throw exception with null Put
+        table.put((List<Put>) null);
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNotNull(actualError);
+      actualError = null;
+
+      try {
+        byte[] rowKeyWithNullQual = dataHelper.randomData("testrow-");
+
+        // Should add a row without any qualifier.
+        table.put(new Put(rowKeyWithNullQual).addColumn(COLUMN_FAMILY, null, testValue));
+
+        Result result = table.get(new Get(rowKeyWithNullQual));
+        assertEquals(1, result.rawCells().length);
+        Cell cell = result.getColumnLatestCell(COLUMN_FAMILY, null);
+        assertArrayEquals(
+            testValue,
+            ByteString.copyFrom(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
+                .toByteArray());
+
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+
+      try {
+        byte[] rowKeyWithEmptyQual = dataHelper.randomData("testrow-");
+        byte[] emptyQualifier = new byte[0];
+
+        // should create a row without any qualifier
+        table.put(new Put(rowKeyWithEmptyQual).addColumn(COLUMN_FAMILY, emptyQualifier, testValue));
+
+        Result result = table.get(new Get(rowKeyWithEmptyQual));
+        assertEquals(1, result.rawCells().length);
+        Cell cell = result.getColumnLatestCell(COLUMN_FAMILY, emptyQualifier);
+        assertArrayEquals(
+            testValue,
+            ByteString.copyFrom(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
+                .toByteArray());
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+
+      try {
+        byte[] rowKeyEmptyValue = dataHelper.randomData("testrow-");
+
+        // Should create a row with a single column
+        table.put(new Put(rowKeyEmptyValue).addColumn(COLUMN_FAMILY, testQualifier, null));
+
+        Result result = table.get(new Get(rowKeyEmptyValue));
+        assertEquals(1, result.rawCells().length);
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+
+      try {
+        byte[] rowKeyEmptyValue = dataHelper.randomData("testrow-");
+
+        // Should create a row with a single column
+        table.put(new Put(rowKeyEmptyValue).addColumn(COLUMN_FAMILY, testQualifier, new byte[0]));
+
+        Result result = table.get(new Get(rowKeyEmptyValue));
+        assertEquals(1, result.rawCells().length);
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+    }
   }
 
   protected abstract Get getGetAddColumnVersion(int version, byte[] rowKey, byte[] qualifier)

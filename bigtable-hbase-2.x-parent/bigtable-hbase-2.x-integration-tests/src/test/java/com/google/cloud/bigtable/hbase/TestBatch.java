@@ -15,10 +15,34 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.verify;
+
+import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TestBatch extends AbstractTestBatch {
   protected void appendAdd(Append append, byte[] columnFamily, byte[] qualifier, byte[] value) {
     append.addColumn(columnFamily, qualifier, value);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testBatchWithMismatchedResultArray() throws Exception {
+    Table table = getDefaultTable();
+    Exception actualError = null;
+    Batch.Callback mockCallBack = Mockito.mock(Batch.Callback.class);
+    try {
+      // This is accepted behaviour in HBase 2 API, It ignores the `new Object[1]` param.
+      table.batchCallback(ImmutableList.of(), new Object[1], mockCallBack);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertNull(actualError);
+    verify(mockCallBack, Mockito.never()).update(Mockito.any(), Mockito.any(), Mockito.any());
   }
 }
