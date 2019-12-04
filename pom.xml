@@ -152,8 +152,8 @@ limitations under the License.
                     <configuration>
                         <!-- Excludes integration tests and smoke tests when unit tests are run -->
                         <excludes>
-                            <exclude>**/*SmokeTest.java</exclude>
                             <exclude>**/IT*.java</exclude>
+                            <exclude>**/*Integration*.java</exclude>
                         </excludes>
                         <reportNameSuffix>sponge_log</reportNameSuffix>
                     </configuration>
@@ -253,7 +253,7 @@ limitations under the License.
                         <reportNameSuffix>sponge_log</reportNameSuffix>
                         <includes>
                             <include>**/IT*.java</include>
-                            <include>**/*SmokeTest.java</include>
+                            <include>**/*Integration*.java</include>
                         </includes>
                     </configuration>
                     <dependencies>
