@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -222,6 +223,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       actualError = ex;
     }
     assertNotNull(actualError);
+    assertTrue(actualError instanceof NullPointerException);
     actualError = null;
 
     try {
@@ -250,6 +252,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
       actualError = ex;
     }
     assertNotNull(actualError);
+    assertTrue(actualError instanceof NullPointerException);
     actualError = null;
 
     try {

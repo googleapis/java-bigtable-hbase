@@ -19,6 +19,7 @@ package com.google.cloud.bigtable.hbase.async;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.hbase.AbstractTestSnapshot;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
@@ -53,6 +54,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       actualError = ex;
     }
     assertNotNull(actualError);
+    assertTrue(actualError instanceof NullPointerException);
     actualError = null;
 
     try {
@@ -61,6 +63,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       actualError = ex;
     }
     assertNotNull(actualError);
+    assertTrue(actualError instanceof NullPointerException);
     actualError = null;
 
     try {
@@ -80,6 +83,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       actualError = ex;
     }
     assertNotNull(actualError);
+    assertTrue(actualError instanceof NullPointerException);
     actualError = null;
 
     try {
@@ -88,6 +92,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       actualError = ex;
     }
     assertNotNull(actualError);
+    assertTrue(actualError instanceof NullPointerException);
     actualError = null;
 
     try {
@@ -108,6 +113,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       actualError = ex;
     }
     assertNotNull(actualError);
+    assertTrue(actualError instanceof NullPointerException);
     actualError = null;
 
     try {

@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
@@ -40,6 +41,7 @@ public class TestSnapshots extends AbstractTestSnapshot {
         actualError = e;
       }
       assertNotNull(actualError);
+      assertTrue(actualError instanceof NullPointerException);
       actualError = null;
 
       try {
