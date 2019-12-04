@@ -62,16 +62,15 @@ public class TestAdminOps extends AbstractTest {
         assertTrue(descriptors.length > 0);
       } catch (Exception e) {
         actualError = e;
-        e.printStackTrace(System.out);
       }
       assertNotNull(actualError);
+      assertTrue(actualError instanceof NullPointerException);
       actualError = null;
 
       try {
         assertEquals(0, admin.disableTables("").length);
       } catch (Exception e) {
         actualError = e;
-        e.printStackTrace(System.out);
       }
       assertNull(actualError);
     }
@@ -85,16 +84,15 @@ public class TestAdminOps extends AbstractTest {
         HTableDescriptor[] descriptors = admin.enableTables((String) null);
         assertTrue(descriptors.length > 0);
       } catch (Exception e) {
-        e.printStackTrace(System.out);
         actualError = e;
       }
       assertNotNull(actualError);
+      assertTrue(actualError instanceof NullPointerException);
       actualError = null;
 
       try {
         assertEquals(0, admin.enableTables("").length);
       } catch (Exception e) {
-        e.printStackTrace(System.out);
         actualError = e;
       }
       assertNull(actualError);
@@ -118,7 +116,6 @@ public class TestAdminOps extends AbstractTest {
             admin.getTableDescriptorsByTableName(ImmutableList.<TableName>of());
         assertTrue(descriptor.length > 0);
       } catch (Exception e) {
-        e.printStackTrace(System.out);
         actualError = e;
       }
       assertNull(actualError);
@@ -136,13 +133,13 @@ public class TestAdminOps extends AbstractTest {
         actualError = e;
       }
       assertNotNull(actualError);
+      assertTrue(actualError instanceof NullPointerException);
       actualError = null;
 
       try {
         HTableDescriptor[] descriptors = admin.getTableDescriptors(ImmutableList.<String>of());
         assertTrue(descriptors.length > 0);
       } catch (Exception e) {
-        e.printStackTrace(System.out);
         actualError = e;
       }
       assertNull(actualError);

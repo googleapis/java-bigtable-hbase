@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
@@ -193,9 +192,8 @@ public abstract class AbstractTestListTables extends AbstractTest {
     try (Admin admin = getConnection().getAdmin()) {
       sharedTestEnv.createTable(sharedTestEnv.newTestTableName());
       Exception actualError = null;
-      try {
-        HTableDescriptor[] descriptors = admin.listTables((Pattern) null);
-        assertTrue(descriptors.length > 0);
+      try {;
+        assertTrue(admin.listTables((Pattern) null).length > 0);
       } catch (Exception e) {
         actualError = e;
       }
@@ -207,6 +205,7 @@ public abstract class AbstractTestListTables extends AbstractTest {
         actualError = e;
       }
       assertNotNull(actualError);
+      assertTrue(actualError instanceof NullPointerException);
       actualError = null;
 
       try {
@@ -237,6 +236,7 @@ public abstract class AbstractTestListTables extends AbstractTest {
         actualError = e;
       }
       assertNotNull(actualError);
+      assertTrue(actualError instanceof NullPointerException);
       actualError = null;
 
       try {
