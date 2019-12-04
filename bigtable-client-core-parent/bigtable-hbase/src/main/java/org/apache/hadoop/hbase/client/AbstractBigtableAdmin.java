@@ -21,6 +21,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
@@ -173,22 +174,26 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return response;
   }
 
-  // Workaround for #2016, BigtableTableAdminClient#getTable throws TableNotFoundException(due to
-  // two step details fetch) and an intermediate exception(FAILED_PRECONDITION).
+  // BigtableTableAdmin#listTables doesn't include table details (like column families), so the
+  // table descriptors must be fetched into 2 phases:
+  // 1. list all of the names
+  // 2. fetch the table details
   //
-  // This method is only being called when user sends `null` or `""` string to listTable(Pattern)
-  // which in being used by deleteTables(), enableTables(), disableTables(),
-  // getTableDescriptorByTableNames().
-  private HTableDescriptor[] getTableDescriptorsIgnoreFailure(TableName[] tableNames) {
+  // Due to the non-atomic listing, tables in the list might disappear before fetching the details.
+  // This method will suppress those tables.
+  private HTableDescriptor[] getTableDescriptorsIgnoreFailure(TableName[] tableNames)
+      throws IOException {
     List<HTableDescriptor> descriptors = new ArrayList<>();
     for (TableName tableName : tableNames) {
       try {
         descriptors.add(getTableDescriptor(tableName));
       } catch (IOException ex) {
-        // Do we need better error message around it.
-        LOG.warn(
-            "Table name %s failed with %s with error message as %s",
-            tableName.getNameAsString(), ex.getClass().getSimpleName(), ex.getMessage());
+        // This will suppress TableNotFoundException and FailedPreconditionException as both of
+        // these can occur due to race condition.
+        if (!(ex instanceof TableNotFoundException
+            || ex.getCause() instanceof FailedPreconditionException)) {
+          throw ex;
+        }
       }
     }
     return descriptors.toArray(new HTableDescriptor[0]);
