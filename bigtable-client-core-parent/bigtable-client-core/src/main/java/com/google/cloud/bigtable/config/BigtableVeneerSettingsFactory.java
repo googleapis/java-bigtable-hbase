@@ -28,6 +28,7 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.GrpcStatusCode;
+import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
@@ -38,6 +39,9 @@ import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableTableAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings.Builder;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.Counter;
+import com.google.cloud.bigtable.metrics.Meter;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
@@ -92,10 +96,8 @@ public class BigtableVeneerSettingsFactory {
         .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
-    if (options.usePlaintextNegotiation()) {
-      dataSettingStub.setTransportChannelProvider(
-          buildChannelProvider(dataSettingStub.getEndpoint(), options));
-    }
+    dataSettingStub.setTransportChannelProvider(
+        buildChannelProvider(dataSettingStub.getEndpoint(), options));
 
     // Configuration for rpcTimeout & totalTimeout for non-streaming operations.
     dataSettingStub.checkAndMutateRowSettings().setSimpleTimeoutNoRetries(shortRpcTimeoutMs);
@@ -134,9 +136,7 @@ public class BigtableVeneerSettingsFactory {
         .setEndpoint(options.getAdminHost() + ":" + options.getPort())
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
-    if (options.usePlaintextNegotiation()) {
-      adminStub.setTransportChannelProvider(buildChannelProvider(adminStub.getEndpoint(), options));
-    }
+    adminStub.setTransportChannelProvider(buildChannelProvider(adminStub.getEndpoint(), options));
 
     return adminBuilder.build();
   }
@@ -298,20 +298,51 @@ public class BigtableVeneerSettingsFactory {
     return statusCodeBuilder.build();
   }
 
+  private static Stats STATS;
+
+  static class Stats {
+    /**
+     * Best effort counter of active channels. There may be some cases where channel termination
+     * counting may not accurately be decremented.
+     */
+    Counter ACTIVE_CHANNEL_COUNTER =
+        BigtableClientMetrics.counter(
+            BigtableClientMetrics.MetricLevel.Info, "grpc.channel.active");
+
+    /** Best effort counter of active RPCs. */
+    Counter ACTIVE_RPC_COUNTER =
+        BigtableClientMetrics.counter(BigtableClientMetrics.MetricLevel.Info, "grpc.rpc.active");
+
+    /** Best effort counter of RPCs. */
+    Meter RPC_METER =
+        BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "grpc.rpc.performed");
+  }
+
+  static synchronized Stats getStats() {
+    if (STATS == null) {
+      STATS = new Stats();
+    }
+    return STATS;
+  }
+
   /** Creates {@link TransportChannelProvider} based on Channel Negotiation type. */
   private static TransportChannelProvider buildChannelProvider(
-      String endpoint, BigtableOptions options) {
-
-    return defaultGrpcTransportProviderBuilder()
-        .setEndpoint(endpoint)
-        .setPoolSize(options.getChannelCount())
-        .setChannelConfigurator(
-            new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-              @Override
-              public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-                return channelBuilder.usePlaintext();
-              }
-            })
-        .build();
+      String endpoint, final BigtableOptions options) {
+    final InstantiatingGrpcChannelProvider.Builder channelProvider =
+        defaultGrpcTransportProviderBuilder()
+            .setEndpoint(endpoint)
+            .setPoolSize(options.getChannelCount())
+            .setChannelConfigurator(
+                new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+                  @Override
+                  public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+                    channelBuilder.intercept(new InstrumentRPCInterceptor());
+                    if (options.usePlaintextNegotiation()) {
+                      channelBuilder.usePlaintext();
+                    }
+                    return channelBuilder;
+                  }
+                });
+    return channelProvider.build();
   }
 }

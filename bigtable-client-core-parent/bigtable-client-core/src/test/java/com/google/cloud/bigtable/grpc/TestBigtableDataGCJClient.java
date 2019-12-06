@@ -18,8 +18,7 @@ package com.google.cloud.bigtable.grpc;
 import static com.google.api.core.ApiFutures.immediateFuture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,8 +27,8 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.Batcher;
 import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
@@ -47,14 +46,25 @@ import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayList;
 import java.util.List;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
 public class TestBigtableDataGCJClient {
+
+  @Rule public final MockitoRule rule = MockitoJUnit.rule();
 
   private static final String TABLE_ID = "myTest";
   private static final String ROW_KEY = "row-key";
@@ -90,32 +100,44 @@ public class TestBigtableDataGCJClient {
               .addCell(COL_FAMILY, QUALIFIER_2, TIMESTAMP, VALUE_2, LABELS)
               .build());
 
-  private static ServerStreamingCallable<Query, FlatRow> serverStreaming =
-      mock(ServerStreamingCallable.class);
-  private BigtableDataClient dataClientV2;
+  @Mock private BigtableDataClient dataClientV2;
+  @Mock private UnaryCallable<RowMutation, Void> mockMutateRowCallable;
+  @Mock private UnaryCallable<ReadModifyWriteRow, Row> mockReadModifyWriteRowCallable;
+  @Mock private UnaryCallable<ConditionalRowMutation, Boolean> mockCheckAndMutateRowCallable;
+  @Mock private UnaryCallable<String, List<KeyOffset>> mockSampleRowKeysCallable;
+  @Mock private ServerStreamingCallable<Query, Row> mockReadRowsCallable;
+  @Mock private ServerStreamingCallable<Query, FlatRow> mockReadFlatRowsCallable;
+
   private BigtableDataGCJClient dataGCJClient;
 
   @Before
   public void setUp() {
-    dataClientV2 = mock(BigtableDataClient.class);
+    when(dataClientV2.mutateRowCallable()).thenReturn(mockMutateRowCallable);
+    when(dataClientV2.readModifyWriteRowCallable()).thenReturn(mockReadModifyWriteRowCallable);
+    when(dataClientV2.checkAndMutateRowCallable()).thenReturn(mockCheckAndMutateRowCallable);
+    when(dataClientV2.sampleRowKeysCallable()).thenReturn(mockSampleRowKeysCallable);
+    when(dataClientV2.readRowsCallable()).thenReturn(mockReadRowsCallable);
+    when(dataClientV2.readRowsCallable(Mockito.any(FlatRowAdapter.class)))
+        .thenReturn(mockReadFlatRowsCallable);
     dataGCJClient = new BigtableDataGCJClient(dataClientV2);
   }
 
   @Test
   public void testMutateRow() {
     RowMutation rowMutation = RowMutation.create(TABLE_ID, ROW_KEY);
-    doNothing().when(dataClientV2).mutateRow(rowMutation);
+    when(mockMutateRowCallable.futureCall(rowMutation, null))
+        .thenReturn(ApiFutures.<Void>immediateFuture(null));
     dataGCJClient.mutateRow(rowMutation);
-    verify(dataClientV2).mutateRow(rowMutation);
+    verify(mockMutateRowCallable).futureCall(rowMutation, null);
   }
 
   @Test
   public void testMutateRowAsync() throws Exception {
     RowMutation rowMutation = RowMutation.create(TABLE_ID, ROW_KEY);
-    when(dataClientV2.mutateRowAsync(rowMutation))
+    when(mockMutateRowCallable.futureCall(rowMutation, null))
         .thenReturn(ApiFutures.<Void>immediateFuture(null));
     dataGCJClient.mutateRowAsync(rowMutation).get();
-    verify(dataClientV2).mutateRowAsync(rowMutation);
+    verify(mockMutateRowCallable).futureCall(rowMutation, null);
   }
 
   @Test
@@ -125,10 +147,11 @@ public class TestBigtableDataGCJClient {
         Row.create(
             ByteString.copyFromUtf8(ROW_KEY),
             ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1)));
-    when(dataClientV2.readModifyWriteRow(mutation)).thenReturn(expectedRow);
+    when(mockReadModifyWriteRowCallable.futureCall(mutation, null))
+        .thenReturn(ApiFutures.immediateFuture(expectedRow));
     Row actualRow = dataGCJClient.readModifyWriteRow(mutation);
     assertEquals(expectedRow, actualRow);
-    verify(dataClientV2).readModifyWriteRow(mutation);
+    verify(mockReadModifyWriteRowCallable).futureCall(mutation, null);
   }
 
   @Test
@@ -138,10 +161,11 @@ public class TestBigtableDataGCJClient {
         Row.create(
             ByteString.copyFromUtf8(ROW_KEY),
             ImmutableList.of(RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1)));
-    when(dataClientV2.readModifyWriteRowAsync(mutation)).thenReturn(immediateFuture(expectedRow));
+    when(mockReadModifyWriteRowCallable.futureCall(mutation, null))
+        .thenReturn(immediateFuture(expectedRow));
     Row actualRow = dataGCJClient.readModifyWriteRowAsync(mutation).get();
     assertEquals(expectedRow, actualRow);
-    verify(dataClientV2).readModifyWriteRowAsync(mutation);
+    verify(mockReadModifyWriteRowCallable).futureCall(mutation, null);
   }
 
   @Test
@@ -149,9 +173,10 @@ public class TestBigtableDataGCJClient {
     ConditionalRowMutation checkAndMutate =
         ConditionalRowMutation.create(TABLE_ID, ROW_KEY)
             .then(Mutation.create().setCell(COL_FAMILY, QUALIFIER_1, VALUE_1));
-    when(dataClientV2.checkAndMutateRow(checkAndMutate)).thenReturn(Boolean.TRUE);
+    when(mockCheckAndMutateRowCallable.futureCall(checkAndMutate, null))
+        .thenReturn(ApiFutures.immediateFuture(Boolean.TRUE));
     assertTrue(dataGCJClient.checkAndMutateRow(checkAndMutate));
-    verify(dataClientV2).checkAndMutateRow(checkAndMutate);
+    verify(mockCheckAndMutateRowCallable).futureCall(checkAndMutate, null);
   }
 
   @Test
@@ -159,133 +184,112 @@ public class TestBigtableDataGCJClient {
     ConditionalRowMutation checkAndMutate =
         ConditionalRowMutation.create(TABLE_ID, ROW_KEY)
             .then(Mutation.create().setCell(COL_FAMILY, QUALIFIER_1, VALUE_1));
-    when(dataClientV2.checkAndMutateRowAsync(checkAndMutate))
+    when(mockCheckAndMutateRowCallable.futureCall(checkAndMutate, null))
         .thenReturn(immediateFuture(Boolean.TRUE));
     assertTrue(dataGCJClient.checkAndMutateRowAsync(checkAndMutate).get());
-    verify(dataClientV2).checkAndMutateRowAsync(checkAndMutate);
+    verify(mockCheckAndMutateRowCallable).futureCall(checkAndMutate, null);
   }
 
   @Test
   public void testSampleRowKeys() {
     List<KeyOffset> expectedKeyOff =
         ImmutableList.of(KeyOffset.create(ByteString.copyFromUtf8(ROW_KEY), 10));
-    when(dataClientV2.sampleRowKeys(TABLE_ID)).thenReturn(expectedKeyOff);
+    when(mockSampleRowKeysCallable.futureCall(TABLE_ID, null))
+        .thenReturn(ApiFutures.immediateFuture(expectedKeyOff));
     List<KeyOffset> keyOffSets = dataGCJClient.sampleRowKeys(TABLE_ID);
     assertEquals(expectedKeyOff, keyOffSets);
-    verify(dataClientV2).sampleRowKeys(TABLE_ID);
+    verify(mockSampleRowKeysCallable).futureCall(TABLE_ID, null);
   }
 
   @Test
   public void testSampleRowKeysAsync() throws Exception {
     List<KeyOffset> expectedKeyOff =
         ImmutableList.of(KeyOffset.create(ByteString.copyFromUtf8(ROW_KEY), 10));
-    when(dataClientV2.sampleRowKeysAsync(TABLE_ID)).thenReturn(immediateFuture(expectedKeyOff));
+    when(mockSampleRowKeysCallable.futureCall(TABLE_ID, null))
+        .thenReturn(immediateFuture(expectedKeyOff));
     List<KeyOffset> keyOffSets = dataGCJClient.sampleRowKeysAsync(TABLE_ID).get();
     assertEquals(expectedKeyOff, keyOffSets);
-    verify(dataClientV2).sampleRowKeysAsync(TABLE_ID);
+    verify(mockSampleRowKeysCallable).futureCall(TABLE_ID, null);
   }
 
   @Test
   public void testReadRowAsync() throws Exception {
-    ServerStreamingCallable<Query, Row> serverStreaming = mock(ServerStreamingCallable.class);
-    UnaryCallable<Query, List<Row>> unaryCallable = mock(UnaryCallable.class);
-    List<Row> expectedRows =
-        ImmutableList.of(
-            Row.create(
-                ByteString.copyFromUtf8(ROW_KEY),
-                ImmutableList.of(
-                    RowCell.create(COL_FAMILY, QUALIFIER_1, TIMESTAMP, LABELS, VALUE_1))),
-            Row.create(
-                ByteString.copyFromUtf8("row-key-2"),
-                ImmutableList.of(
-                    RowCell.create(COL_FAMILY, QUALIFIER_2, TIMESTAMP, LABELS, VALUE_2))));
-
-    when(dataClientV2.readRowsCallable()).thenReturn(serverStreaming);
-    when(serverStreaming.all()).thenReturn(unaryCallable);
-    when(unaryCallable.futureCall(request)).thenReturn(immediateFuture(expectedRows));
+    mockReadRows(true);
     ApiFuture<List<Row>> actualRows = dataGCJClient.readRowsAsync(request);
-
-    assertEquals(expectedRows, actualRows.get());
-    verify(dataClientV2).readRowsCallable();
-    verify(serverStreaming).all();
-    verify(unaryCallable).futureCall(request);
+    assertEquals(rows, actualRows.get());
+    verify(mockReadRowsCallable)
+        .call(Mockito.any(Query.class), Mockito.<ResponseObserver<Row>>any());
   }
 
   @Test
   public void testReadFlatRowsList() {
-    ServerStreamingCallable<Query, FlatRow> serverStreaming = mock(ServerStreamingCallable.class);
-    UnaryCallable<Query, List<FlatRow>> unaryCallable = mock(UnaryCallable.class);
-
-    when(dataClientV2.readRowsCallable(any(FlatRowAdapter.class))).thenReturn(serverStreaming);
-    when(serverStreaming.all()).thenReturn(unaryCallable);
-    when(unaryCallable.call(request)).thenReturn(flatRows);
+    mockReadFlatRows(true);
     List<FlatRow> actualFlatRows = dataGCJClient.readFlatRowsList(request);
-
     assertEquals(flatRows, actualFlatRows);
-    verify(dataClientV2).readRowsCallable(any(FlatRowAdapter.class));
-    verify(serverStreaming).all();
-    verify(unaryCallable).call(request);
+    verify(mockReadFlatRowsCallable)
+        .call(Mockito.any(Query.class), Mockito.<ResponseObserver<FlatRow>>any());
   }
 
   @Test
   public void testReadFlatRowsAsync() throws Exception {
-    UnaryCallable<Query, List<FlatRow>> unaryCallable = mock(UnaryCallable.class);
-
-    when(dataClientV2.readRowsCallable(any(FlatRowAdapter.class))).thenReturn(serverStreaming);
-    when(serverStreaming.all()).thenReturn(unaryCallable);
-    when(unaryCallable.futureCall(request)).thenReturn(immediateFuture(flatRows));
+    mockReadFlatRows(true);
     ApiFuture<List<FlatRow>> actualFlatRows = dataGCJClient.readFlatRowsAsync(request);
 
     assertEquals(flatRows, actualFlatRows.get());
-    verify(dataClientV2).readRowsCallable(any(FlatRowAdapter.class));
-    verify(serverStreaming).all();
-    verify(unaryCallable).futureCall(request);
+    verify(mockReadFlatRowsCallable)
+        .call(Mockito.any(Query.class), Mockito.<ResponseObserver<FlatRow>>any());
   }
 
   @Test
   public void testReadRows() throws Exception {
-    ServerStream<Row> stream = mock(ServerStream.class);
-    when(dataClientV2.readRows(request)).thenReturn(stream);
-    when(stream.iterator()).thenReturn(rows.iterator());
-    ResultScanner<Row> results = dataGCJClient.readRows(request);
+    mockReadRows(false);
 
+    ResultScanner<Row> results = dataGCJClient.readRows(request);
     assertEquals(rows.get(0), results.next());
-    assertEquals(rows.get(1), results.next());
-    verify(dataClientV2).readRows(request);
-    verify(stream).iterator();
+    verify(mockReadRowsCallable)
+        .call(Mockito.any(Query.class), Mockito.<ResponseObserver<Row>>any());
   }
 
   @Test
   public void testReadFlatRows() throws Exception {
-    ServerStream<FlatRow> stream = mock(ServerStream.class);
-    when(dataClientV2.readRowsCallable(any(FlatRowAdapter.class))).thenReturn(serverStreaming);
-    when(serverStreaming.call(request)).thenReturn(stream);
-    when(stream.iterator()).thenReturn(flatRows.iterator());
+    mockReadFlatRows(false);
     ResultScanner<FlatRow> results = dataGCJClient.readFlatRows(request);
     assertEquals(flatRows.get(0), results.next());
     assertEquals(flatRows.get(1), results.next());
-    verify(dataClientV2).readRowsCallable(any(FlatRowAdapter.class));
-    verify(serverStreaming).call(request);
-    verify(stream).iterator();
+    verify(mockReadFlatRowsCallable)
+        .call(Mockito.any(Query.class), Mockito.<ResponseObserver<FlatRow>>any());
   }
 
   @Test
   public void testReadFlatRowsAsyncWithStream() {
-    StreamObserver<FlatRow> streamOb = mock(StreamObserver.class);
-    when(dataClientV2.readRowsCallable(any(FlatRowAdapter.class))).thenReturn(serverStreaming);
-    doNothing().when(serverStreaming).call(any(Query.class), any(ResponseObserver.class));
-    dataGCJClient.readFlatRowsAsync(request, streamOb);
-    streamOb.onNext(flatRows.get(0));
-    verify(dataClientV2).readRowsCallable(any(FlatRowAdapter.class));
-    verify(serverStreaming).call(any(Query.class), any(ResponseObserver.class));
+    mockReadFlatRows(true);
+    final List<FlatRow> actualFlatRows = new ArrayList<>(2);
+    dataGCJClient.readFlatRowsAsync(
+        request,
+        new StreamObserver<FlatRow>() {
+          @Override
+          public void onNext(FlatRow flatRow) {
+            actualFlatRows.add(flatRow);
+          }
+
+          @Override
+          public void onError(Throwable throwable) {
+            Assert.fail("flat row streaming should not fail");
+          }
+
+          @Override
+          public void onCompleted() {}
+        });
+    assertEquals(flatRows, actualFlatRows);
   }
 
   @Test
   public void testAutoClose() throws Exception {
     try (BigtableDataGCJClient gcjClient = new BigtableDataGCJClient(dataClientV2)) {
-      when(dataClientV2.sampleRowKeys(TABLE_ID)).thenReturn(ImmutableList.<KeyOffset>of());
+      when(mockSampleRowKeysCallable.futureCall(TABLE_ID, null))
+          .thenReturn(ApiFutures.<List<KeyOffset>>immediateFuture(ImmutableList.<KeyOffset>of()));
       gcjClient.sampleRowKeys(TABLE_ID);
-      verify(dataClientV2).sampleRowKeys(TABLE_ID);
+      verify(mockSampleRowKeysCallable).futureCall(TABLE_ID, null);
     }
     // BigtableDataGCJClient#close should be invoked
     verify(dataClientV2).close();
@@ -297,5 +301,43 @@ public class TestBigtableDataGCJClient {
     when(dataClientV2.newBulkMutationBatcher(TABLE_ID)).thenReturn(batcher);
     dataGCJClient.createBulkMutationBatcher(TABLE_ID);
     verify(dataClientV2).newBulkMutationBatcher(TABLE_ID);
+  }
+
+  private void mockReadRows(final boolean isAsync) {
+    doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocationOnMock) {
+                ResponseObserver<Row> observer = invocationOnMock.getArgument(1);
+                observer.onStart(mock(StreamController.class));
+                observer.onResponse(rows.get(0));
+                observer.onResponse(rows.get(1));
+                if (isAsync) {
+                  observer.onComplete();
+                }
+                return null;
+              }
+            })
+        .when(mockReadRowsCallable)
+        .call(Mockito.any(Query.class), Mockito.<ResponseObserver<Row>>any());
+  }
+
+  private void mockReadFlatRows(final boolean isAsync) {
+    doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocationOnMock) {
+                ResponseObserver<FlatRow> observer = invocationOnMock.getArgument(1);
+                observer.onStart(mock(StreamController.class));
+                observer.onResponse(flatRows.get(0));
+                observer.onResponse(flatRows.get(1));
+                if (isAsync) {
+                  observer.onComplete();
+                }
+                return null;
+              }
+            })
+        .when(mockReadFlatRowsCallable)
+        .call(Mockito.any(Query.class), Mockito.<ResponseObserver<FlatRow>>any());
   }
 }

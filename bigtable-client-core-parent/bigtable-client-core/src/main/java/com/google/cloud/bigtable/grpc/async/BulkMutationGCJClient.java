@@ -20,6 +20,8 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.Batcher;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.Meter;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 
@@ -32,6 +34,10 @@ import java.io.IOException;
 @InternalApi("For internal usage only")
 public class BulkMutationGCJClient implements IBulkMutation {
 
+  private final Meter mutationMeter =
+      BigtableClientMetrics.meter(
+          BigtableClientMetrics.MetricLevel.Info, "bulk-mutator.mutations.added");
+
   private final Batcher<RowMutationEntry, Void> bulkMutateBatcher;
 
   public BulkMutationGCJClient(Batcher<RowMutationEntry, Void> bulkMutateBatcher) {
@@ -42,6 +48,7 @@ public class BulkMutationGCJClient implements IBulkMutation {
   @Override
   public synchronized ApiFuture<Void> add(RowMutationEntry rowMutation) {
     Preconditions.checkNotNull(rowMutation, "mutation details cannot be null");
+    mutationMeter.mark();
     return bulkMutateBatcher.add(rowMutation);
   }
 

@@ -17,9 +17,10 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
-import com.google.api.gax.rpc.ServerStream;
+import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
@@ -47,29 +48,48 @@ import java.util.List;
 public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable {
 
   private final BigtableDataClient delegate;
+  private UnaryCallable<RowMutation, Void> mutateRowCallable;
+  private UnaryCallable<ReadModifyWriteRow, Row> readModifyWriteRowCallable;
+  private UnaryCallable<ConditionalRowMutation, Boolean> checkAndMutateRowCallable;
+  private UnaryCallable<String, List<KeyOffset>> sampleRowKeysCallable;
+  private ServerStreamingCallable<Query, Row> readRowsCallable;
+  private ServerStreamingCallable<Query, FlatRow> readFlatRowsCallable;
 
-  public BigtableDataGCJClient(BigtableDataClient delegate) {
+  BigtableDataGCJClient(BigtableDataClient delegate) {
     this.delegate = delegate;
+    this.mutateRowCallable =
+        new InstrumentedUnaryCallable<>(delegate.mutateRowCallable(), "mutateRow");
+    this.readModifyWriteRowCallable =
+        new InstrumentedUnaryCallable<>(delegate.readModifyWriteRowCallable(), "readModifyRow");
+    this.checkAndMutateRowCallable =
+        new InstrumentedUnaryCallable<>(delegate.checkAndMutateRowCallable(), "checkAndMutate");
+    this.sampleRowKeysCallable =
+        new InstrumentedUnaryCallable<>(delegate.sampleRowKeysCallable(), "sampleRowKeys");
+    this.readRowsCallable =
+        new InstrumentedServerStreamingCallable<>(delegate.readRowsCallable(), "readRows");
+    this.readFlatRowsCallable =
+        new InstrumentedServerStreamingCallable<>(
+            delegate.readRowsCallable(new FlatRowAdapter()), "readRows");
   }
 
   @Override
   public void mutateRow(RowMutation rowMutation) {
-    delegate.mutateRow(rowMutation);
+    mutateRowCallable.call(rowMutation);
   }
 
   @Override
   public ApiFuture<Void> mutateRowAsync(RowMutation rowMutation) {
-    return delegate.mutateRowAsync(rowMutation);
+    return mutateRowCallable.futureCall(rowMutation);
   }
 
   @Override
   public Row readModifyWriteRow(ReadModifyWriteRow readModifyWriteRow) {
-    return delegate.readModifyWriteRow(readModifyWriteRow);
+    return readModifyWriteRowCallable.call(readModifyWriteRow);
   }
 
   @Override
   public ApiFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow) {
-    return delegate.readModifyWriteRowAsync(readModifyWriteRow);
+    return readModifyWriteRowCallable.futureCall(readModifyWriteRow);
   }
 
   @Override
@@ -79,57 +99,52 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
 
   @Override
   public Boolean checkAndMutateRow(ConditionalRowMutation conditionalRowMutation) {
-    return delegate.checkAndMutateRow(conditionalRowMutation);
+    return checkAndMutateRowCallable.call(conditionalRowMutation);
   }
 
   @Override
   public ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation) {
-    return delegate.checkAndMutateRowAsync(conditionalRowMutation);
+    return checkAndMutateRowCallable.futureCall(conditionalRowMutation);
   }
 
   @Override
   public List<KeyOffset> sampleRowKeys(String tableId) {
-    return delegate.sampleRowKeys(tableId);
+    return sampleRowKeysCallable.call(tableId);
   }
 
   @Override
   public ApiFuture<List<KeyOffset>> sampleRowKeysAsync(String tableId) {
-    return delegate.sampleRowKeysAsync(tableId);
+    return sampleRowKeysCallable.futureCall(tableId);
   }
 
   @Override
   public ResultScanner<Row> readRows(Query request) {
-    final ServerStream<Row> response = delegate.readRows(request);
-    return new RowResultScanner<>(response, new Row[0]);
+    return new RowResultScanner<>(readRowsCallable.call(request), new Row[0]);
   }
 
   @Override
   public ApiFuture<List<Row>> readRowsAsync(Query request) {
-    return delegate.readRowsCallable().all().futureCall(request);
+    return readRowsCallable.all().futureCall(request);
   }
 
   @Override
   public List<FlatRow> readFlatRowsList(Query request) {
-    return delegate.readRowsCallable(new FlatRowAdapter()).all().call(request);
+    return readFlatRowsCallable.all().call(request);
   }
 
   @Override
   public ResultScanner<FlatRow> readFlatRows(Query request) {
-    final ServerStream<FlatRow> stream =
-        delegate.readRowsCallable(new FlatRowAdapter()).call(request);
-    return new RowResultScanner<>(stream, new FlatRow[0]);
+    return new RowResultScanner<>(readFlatRowsCallable.call(request), new FlatRow[0]);
   }
 
   @Override
   public ApiFuture<List<FlatRow>> readFlatRowsAsync(Query request) {
-    return delegate.readRowsCallable(new FlatRowAdapter()).all().futureCall(request);
+    return readFlatRowsCallable.all().futureCall(request);
   }
 
   @Override
   public void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer) {
-    delegate
-        .readRowsCallable(new FlatRowAdapter())
-        .call(request, new StreamObserverAdapter<FlatRow>(observer));
+    readFlatRowsCallable.call(request, new StreamObserverAdapter<>(observer));
   }
 
   @Override
