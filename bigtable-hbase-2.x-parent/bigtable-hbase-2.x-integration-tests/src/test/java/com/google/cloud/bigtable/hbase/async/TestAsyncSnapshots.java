@@ -46,7 +46,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   }
 
   @Test
-  public void testListSnapshotsWithNullAndEmptyString() {
+  public void testListSnapshotsWithNullAndEmptyString() throws IOException {
     Exception actualError = null;
     try {
       listSnapshotsSize((String) null);
@@ -64,18 +64,12 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     }
     assertNotNull(actualError);
     assertTrue(actualError instanceof NullPointerException);
-    actualError = null;
 
-    try {
-      assertEquals(0, listSnapshotsSize(""));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
+    assertEquals(0, listSnapshotsSize(""));
   }
 
   @Test
-  public void testListTableSnapshotsWithNullAndEmptyString() {
+  public void testListTableSnapshotsWithNullAndEmptyString() throws IOException {
     Exception actualError = null;
     try {
       listTableSnapshotsSize(null, "");
@@ -93,14 +87,8 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     }
     assertNotNull(actualError);
     assertTrue(actualError instanceof NullPointerException);
-    actualError = null;
 
-    try {
-      assertEquals(0, listTableSnapshotsSize("", ""));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
+    assertEquals(0, listTableSnapshotsSize("", ""));
   }
 
   @Test
@@ -117,15 +105,6 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     actualError = null;
 
     try {
-      // No snapshot should match and no exception should throw
-      deleteSnapshots(Pattern.compile(""));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
-    actualError = null;
-
-    try {
       // NPE is expected with AsyncAdmin.
       deleteTableSnapshots(null, null);
     } catch (Exception ex) {
@@ -135,7 +114,9 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     actualError = null;
 
     try {
-      // No snapshot should match and no exception should throw
+      // No snapshot matches hence no exception should be thrown
+      deleteSnapshots(Pattern.compile(""));
+
       deleteTableSnapshots(Pattern.compile(""), Pattern.compile(""));
     } catch (Exception ex) {
       actualError = ex;

@@ -215,7 +215,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   }
 
   @Test
-  public void testListSnapshotsWithNullAndEmptyString() {
+  public void testListSnapshotsWithNullAndEmptyString() throws IOException {
     Exception actualError = null;
     try {
       listSnapshotsSize((String) null);
@@ -224,26 +224,14 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
     }
     assertNotNull(actualError);
     assertTrue(actualError instanceof NullPointerException);
-    actualError = null;
 
-    try {
-      assertEquals(0, listSnapshotsSize((Pattern) null));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
-    actualError = null;
+    assertEquals(0, listSnapshotsSize((Pattern) null));
 
-    try {
-      assertEquals(0, listSnapshotsSize(""));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
+    assertEquals(0, listSnapshotsSize(""));
   }
 
   @Test
-  public void testListTableSnapshotsWithNullAndEmptyString() {
+  public void testListTableSnapshotsWithNullAndEmptyString() throws IOException {
     Exception actualError = null;
     try {
       listTableSnapshotsSize(null, "");
@@ -253,53 +241,23 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
     }
     assertNotNull(actualError);
     assertTrue(actualError instanceof NullPointerException);
-    actualError = null;
 
-    try {
-      assertEquals(0, listTableSnapshotsSize((Pattern) null, null));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
+    assertEquals(0, listTableSnapshotsSize((Pattern) null, null));
 
-    try {
-      assertEquals(0, listTableSnapshotsSize("", ""));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
+    assertEquals(0, listTableSnapshotsSize("", ""));
   }
 
   @Test
   public void testDeleteSnapshotWithEmptyString() throws Exception {
+    // No snapshot matches hence no exception should be thrown
     Exception actualError = null;
     try {
-      // No snapshot should match and no exception should throw
       deleteSnapshots(null);
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
 
-    try {
-      // No snapshot should match and no exception should throw
       deleteSnapshots(Pattern.compile(""));
-    } catch (Exception ex) {
-      // H2 No Error
-      actualError = ex;
-    }
-    assertNull(actualError);
 
-    try {
-      // No snapshot should match and no exception should throw
       deleteTableSnapshots(null, null);
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
 
-    try {
-      // No snapshot should match and no exception should throw
       deleteTableSnapshots(Pattern.compile(""), Pattern.compile(""));
     } catch (Exception ex) {
       actualError = ex;
