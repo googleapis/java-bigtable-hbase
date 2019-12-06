@@ -38,7 +38,7 @@ fi
 
 case ${JOB_TYPE} in
 test)
-    mvn test -B -Dclirr.skip=true
+    mvn clean verify -B -Dclirr.skip=true
     bash ${KOKORO_GFILE_DIR}/codecov.sh
     bash .kokoro/coerce_logs.sh
     ;;
