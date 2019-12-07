@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -191,14 +190,10 @@ public abstract class AbstractTestListTables extends AbstractTest {
   public void testListTablesWithEmptyElement() throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
       sharedTestEnv.createTable(sharedTestEnv.newTestTableName());
-      Exception actualError = null;
-      try {;
-        assertTrue(admin.listTables((Pattern) null).length > 0);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNull(actualError);
 
+      assertTrue(admin.listTables((Pattern) null).length > 0);
+
+      Exception actualError = null;
       try {
         admin.listTables((String) null);
       } catch (Exception e) {
@@ -206,14 +201,8 @@ public abstract class AbstractTestListTables extends AbstractTest {
       }
       assertNotNull(actualError);
       assertTrue(actualError instanceof NullPointerException);
-      actualError = null;
 
-      try {
-        assertEquals(0, admin.listTables("").length);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNull(actualError);
+      assertEquals(0, admin.listTables("").length);
     }
   }
 
@@ -221,15 +210,11 @@ public abstract class AbstractTestListTables extends AbstractTest {
   public void testListTableNamesWithEmptyElement() throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
       sharedTestEnv.createTable(sharedTestEnv.newTestTableName());
-      Exception actualError = null;
-      try {
-        TableName[] tableNames = admin.listTableNames((Pattern) null);
-        assertTrue(tableNames.length > 0);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNull(actualError);
 
+      TableName[] tableNames = admin.listTableNames((Pattern) null);
+      assertTrue(tableNames.length > 0);
+
+      Exception actualError = null;
       try {
         admin.listTableNames((String) null);
       } catch (Exception e) {
@@ -237,14 +222,8 @@ public abstract class AbstractTestListTables extends AbstractTest {
       }
       assertNotNull(actualError);
       assertTrue(actualError instanceof NullPointerException);
-      actualError = null;
 
-      try {
-        assertEquals(0, admin.listTableNames("").length);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNull(actualError);
+      assertEquals(0, admin.listTableNames("").length);
     }
   }
 

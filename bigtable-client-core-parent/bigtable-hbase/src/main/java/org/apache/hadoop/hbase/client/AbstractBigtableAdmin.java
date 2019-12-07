@@ -188,12 +188,16 @@ public abstract class AbstractBigtableAdmin implements Admin {
       try {
         descriptors.add(getTableDescriptor(tableName));
       } catch (IOException ex) {
-        // This will suppress TableNotFoundException and FailedPreconditionException as both of
-        // these can occur due to race condition.
-        if (!(ex instanceof TableNotFoundException
-            || ex.getCause() instanceof FailedPreconditionException)) {
-          throw ex;
+
+        // This suppresses TableNotFoundException, which is for consistency with HBase layers,
+        // and FailedPreconditionException or Status.Code.FAILED_PRECONDITION, which comes from
+        // Bigtable table creation internal state. Both of these can occur due to race condition.
+        if (ex instanceof TableNotFoundException
+            || ex.getCause() instanceof FailedPreconditionException
+            || Status.Code.FAILED_PRECONDITION == Status.fromThrowable(ex.getCause()).getCode()) {
+          continue;
         }
+        throw ex;
       }
     }
     return descriptors.toArray(new HTableDescriptor[0]);
@@ -202,11 +206,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTables(Pattern pattern) throws IOException {
-    if (pattern == null) {
-      return getTableDescriptorsIgnoreFailure(listTableNames());
-    }
     // NOTE: We don't have systables.
-    return getTableDescriptors(listTableNames(pattern));
+    return getTableDescriptorsIgnoreFailure(listTableNames(pattern));
   }
 
   /** {@inheritDoc} */

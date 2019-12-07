@@ -17,12 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.junit.Test;
@@ -58,21 +56,14 @@ public class TestAdminOps extends AbstractTest {
     try (Admin admin = getConnection().getAdmin()) {
       Exception actualError = null;
       try {
-        HTableDescriptor[] descriptors = admin.disableTables((String) null);
-        assertTrue(descriptors.length > 0);
+        admin.disableTables((String) null);
       } catch (Exception e) {
         actualError = e;
       }
       assertNotNull(actualError);
       assertTrue(actualError instanceof NullPointerException);
-      actualError = null;
 
-      try {
-        assertEquals(0, admin.disableTables("").length);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNull(actualError);
+      assertEquals(0, admin.disableTables("").length);
     }
   }
 
@@ -81,44 +72,23 @@ public class TestAdminOps extends AbstractTest {
     try (Admin admin = getConnection().getAdmin()) {
       Exception actualError = null;
       try {
-        HTableDescriptor[] descriptors = admin.enableTables((String) null);
-        assertTrue(descriptors.length > 0);
+        admin.enableTables((String) null);
       } catch (Exception e) {
         actualError = e;
       }
       assertNotNull(actualError);
       assertTrue(actualError instanceof NullPointerException);
-      actualError = null;
 
-      try {
-        assertEquals(0, admin.enableTables("").length);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNull(actualError);
+      assertEquals(0, admin.enableTables("").length);
     }
   }
 
   @Test
   public void testGetTableDescriptorsByTableNameWithNullAndEmptyList() throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
-      Exception actualError = null;
-      try {
-        HTableDescriptor[] descriptor = admin.getTableDescriptorsByTableName(null);
-        assertTrue(descriptor.length > 0);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNull(actualError);
+      assertTrue(admin.getTableDescriptorsByTableName(null).length > 0);
 
-      try {
-        HTableDescriptor[] descriptor =
-            admin.getTableDescriptorsByTableName(ImmutableList.<TableName>of());
-        assertTrue(descriptor.length > 0);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNull(actualError);
+      assertTrue(admin.getTableDescriptorsByTableName(ImmutableList.<TableName>of()).length > 0);
     }
   }
 
@@ -127,22 +97,14 @@ public class TestAdminOps extends AbstractTest {
     try (Admin admin = getConnection().getAdmin()) {
       Exception actualError = null;
       try {
-        HTableDescriptor[] descriptors = admin.getTableDescriptors(null);
-        assertTrue(descriptors.length > 0);
+        admin.getTableDescriptors(null);
       } catch (Exception e) {
         actualError = e;
       }
       assertNotNull(actualError);
       assertTrue(actualError instanceof NullPointerException);
-      actualError = null;
 
-      try {
-        HTableDescriptor[] descriptors = admin.getTableDescriptors(ImmutableList.<String>of());
-        assertTrue(descriptors.length > 0);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNull(actualError);
+      assertTrue(admin.getTableDescriptors(ImmutableList.<String>of()).length > 0);
     }
   }
 }
