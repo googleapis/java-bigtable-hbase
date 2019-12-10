@@ -158,6 +158,12 @@ limitations under the License.
       <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-direct-java</artifactId>
+      <version>${beam.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -166,7 +172,7 @@ limitations under the License.
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
-          <usedDependencies>commons-codec:commons-codec,com.squareup.okhttp:okhttp,io.grpc:grpc-netty-shaded,io.grpc:grpc-all,io.grpc:grpc-core</usedDependencies>
+          <usedDependencies>commons-codec:commons-codec,com.squareup.okhttp:okhttp,io.grpc:grpc-netty-shaded,io.grpc:grpc-all,io.grpc:grpc-core,org.apache.beam:beam-runners-direct-java</usedDependencies>
         </configuration>
       </plugin>
       <plugin>
