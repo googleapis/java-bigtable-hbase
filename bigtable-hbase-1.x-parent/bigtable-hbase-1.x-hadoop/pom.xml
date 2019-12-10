@@ -57,7 +57,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>2.7.4</version>
+      <version>${hadoop.version}</version>
     </dependency>
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
     <dependency>
@@ -78,13 +78,13 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>
-      <version>1.4.10</version>
+      <version>${hbase.version}</version>
     </dependency>
 
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <version>${junit.version}</version>
     </dependency>
   </dependencies>
 

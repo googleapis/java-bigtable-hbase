@@ -38,17 +38,17 @@ limitations under the License.
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
-            <version>1.2</version>
+            <version>${commons-logging.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
+            <version>${commons-lang.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-            <version>2.7.4</version>
+            <version>${hadoop.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
@@ -58,12 +58,12 @@ limitations under the License.
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-protocol</artifactId>
-            <version>1.4.10</version>
+            <version>${hbase.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>${junit.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -73,7 +73,7 @@ limitations under the License.
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-common</artifactId>
-            <version>1.4.10</version>
+            <version>${hbase.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
