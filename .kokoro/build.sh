@@ -24,13 +24,6 @@ cd ${scriptDir}/..
 java -version
 echo ${JOB_TYPE}
 
-mvn install -B -V \
-  -DskipTests=true \
-  -Dclirr.skip=true \
-  -Dmaven.javadoc.skip=true \
-  -Dgcloud.download.skip=true \
-  -T 1C
-
 # if GOOGLE_APPLICATION_CREDIENTIALS is specified as a relative path prepend Kokoro root directory onto it
 if [[ ! -z "${GOOGLE_APPLICATION_CREDENTIALS}" && "${GOOGLE_APPLICATION_CREDENTIALS}" != /* ]]; then
     export GOOGLE_APPLICATION_CREDENTIALS=$(realpath ${KOKORO_ROOT}/src/${GOOGLE_APPLICATION_CREDENTIALS})
@@ -38,7 +31,8 @@ fi
 
 case ${JOB_TYPE} in
 test)
-    mvn clean verify -B -Dclirr.skip=true
+# this will not run IT tests, to run IT tests a profile must be enabled (see below)
+    mvn verify -B -Dclirr.skip=true
     bash ${KOKORO_GFILE_DIR}/codecov.sh
     bash .kokoro/coerce_logs.sh
     ;;
@@ -49,7 +43,7 @@ javadoc)
     mvn javadoc:javadoc javadoc:test-javadoc
     ;;
 integration)
-    mvn clean verify -B ${INTEGRATION_TEST_ARGS} -DtrimStackTrace=false -Dclirr.skip=true -fae verify
+    mvn verify -B ${INTEGRATION_TEST_ARGS} -DtrimStackTrace=false -Dclirr.skip=true -fae
     bash .kokoro/coerce_logs.sh
     ;;
 clirr)
