@@ -19,7 +19,6 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -249,20 +248,14 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   @Test
   public void testDeleteSnapshotWithEmptyString() throws Exception {
-    // No snapshot matches hence no exception should be thrown
-    Exception actualError = null;
-    try {
-      deleteSnapshots(null);
+    // No snapshot matches with null or empty string hence no exception should be thrown
+    deleteSnapshots(null);
 
-      deleteSnapshots(Pattern.compile(""));
+    deleteSnapshots(Pattern.compile(""));
 
-      deleteTableSnapshots(null, null);
+    deleteTableSnapshots(null, null);
 
-      deleteTableSnapshots(Pattern.compile(""), Pattern.compile(""));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
+    deleteTableSnapshots(Pattern.compile(""), Pattern.compile(""));
   }
 
   private void checkSnapshotCount(Admin admin, int count) throws IOException {

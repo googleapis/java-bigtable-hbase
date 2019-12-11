@@ -841,7 +841,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     Preconditions.checkNotNull(snapshotName);
     Preconditions.checkNotNull(tableName);
     if (snapshotName.isEmpty()) {
-      // this mimic the HBase behavior
+      // HBase returns an empty operation instance in case snapshotName is an empty string.
       return Operation.newBuilder().build();
     }
 

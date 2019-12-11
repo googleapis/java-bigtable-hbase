@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.async;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.hbase.AbstractTestSnapshot;
@@ -111,17 +110,11 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       actualError = ex;
     }
     assertNotNull(actualError);
-    actualError = null;
 
-    try {
-      // No snapshot matches hence no exception should be thrown
-      deleteSnapshots(Pattern.compile(""));
+    // No snapshot matches hence no exception should be thrown
+    deleteSnapshots(Pattern.compile(""));
 
-      deleteTableSnapshots(Pattern.compile(""), Pattern.compile(""));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
+    deleteTableSnapshots(Pattern.compile(""), Pattern.compile(""));
   }
 
   @Override
