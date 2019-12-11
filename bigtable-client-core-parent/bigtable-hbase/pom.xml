@@ -64,10 +64,6 @@ limitations under the License.
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-stub</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -79,10 +75,6 @@ limitations under the License.
             <artifactId>google-cloud-bigtable</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.api.grpc</groupId>
-            <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>proto-google-cloud-bigtable-v2</artifactId>
@@ -102,7 +94,7 @@ limitations under the License.
         <dependency>
             <groupId>org.threeten</groupId>
             <artifactId>threetenbp</artifactId>
-            <version>1.4.0</version>
+            <version>${threeten.version}</version>
         </dependency>
 
         <!-- TODO: remove this is direct dep, its only used for its Clock interface -->

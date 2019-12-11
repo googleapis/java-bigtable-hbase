@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 
-import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +31,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -300,12 +298,7 @@ public class TestScan extends AbstractTest {
       Result result = resultScanner.next();
       Assert.assertNotNull(result);
       Cell cell = result.getColumnCells(COLUMN_FAMILY, qualifier).get(0);
-      Assert.assertTrue(
-          Bytes.equals(
-              value,
-              ByteString.copyFrom(
-                      cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
-                  .toByteArray()));
+      Assert.assertArrayEquals(value, CellUtil.cloneValue(cell));
     }
   }
 
