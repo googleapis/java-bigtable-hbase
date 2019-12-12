@@ -35,6 +35,7 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowAdapter;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RowResultScanner;
+import com.google.cloud.bigtable.metrics.OperationMetrics;
 import io.grpc.stub.StreamObserver;
 import java.util.List;
 
@@ -58,18 +59,23 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
   BigtableDataGCJClient(BigtableDataClient delegate) {
     this.delegate = delegate;
     this.mutateRowCallable =
-        new InstrumentedUnaryCallable<>(delegate.mutateRowCallable(), "mutateRow");
+        new InstrumentedUnaryCallable<>(
+            delegate.mutateRowCallable(), OperationMetrics.create("MutateRow"));
     this.readModifyWriteRowCallable =
-        new InstrumentedUnaryCallable<>(delegate.readModifyWriteRowCallable(), "readModifyRow");
+        new InstrumentedUnaryCallable<>(
+            delegate.readModifyWriteRowCallable(), OperationMetrics.create("ReadModifyRow"));
     this.checkAndMutateRowCallable =
-        new InstrumentedUnaryCallable<>(delegate.checkAndMutateRowCallable(), "checkAndMutate");
+        new InstrumentedUnaryCallable<>(
+            delegate.checkAndMutateRowCallable(), OperationMetrics.create("CheckAndMutate"));
     this.sampleRowKeysCallable =
-        new InstrumentedUnaryCallable<>(delegate.sampleRowKeysCallable(), "sampleRowKeys");
+        new InstrumentedUnaryCallable<>(
+            delegate.sampleRowKeysCallable(), OperationMetrics.create("SampleRowKeys"));
     this.readRowsCallable =
-        new InstrumentedServerStreamingCallable<>(delegate.readRowsCallable(), "readRows");
+        new InstrumentedReadRowsCallable<>(
+            delegate.readRowsCallable(), OperationMetrics.create("ReadRows"));
     this.readFlatRowsCallable =
-        new InstrumentedServerStreamingCallable<>(
-            delegate.readRowsCallable(new FlatRowAdapter()), "readRows");
+        new InstrumentedReadRowsCallable<>(
+            delegate.readRowsCallable(new FlatRowAdapter()), OperationMetrics.create("ReadRows"));
   }
 
   @Override

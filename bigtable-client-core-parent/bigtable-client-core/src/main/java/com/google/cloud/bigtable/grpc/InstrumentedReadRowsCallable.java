@@ -18,23 +18,23 @@ package com.google.cloud.bigtable.grpc;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.OperationMetrics;
 import com.google.cloud.bigtable.metrics.Timer;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Wraps {@code ServerStreamingCallable} of data client's readRows to instrument with Timer. */
-class InstrumentedServerStreamingCallable<RequestT, ResponseT>
+class InstrumentedReadRowsCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
 
   private final ServerStreamingCallable<RequestT, ResponseT> delegate;
   private final OperationMetrics metrics;
-  private volatile Long startTime;
 
-  InstrumentedServerStreamingCallable(
-      ServerStreamingCallable<RequestT, ResponseT> delegate, String methodName) {
+  InstrumentedReadRowsCallable(
+      ServerStreamingCallable<RequestT, ResponseT> delegate, OperationMetrics metrics) {
     this.delegate = delegate;
-    this.metrics = OperationMetrics.createOperationMetrics(methodName);
+    this.metrics = metrics;
   }
 
   @Override
@@ -44,37 +44,36 @@ class InstrumentedServerStreamingCallable<RequestT, ResponseT>
       ApiCallContext apiCallContext) {
 
     final Timer.Context rpcTimeOperation = metrics.timeOperation();
-    if (BigtableClientMetrics.isEnabled(BigtableClientMetrics.MetricLevel.Info)) {
-      startTime = System.nanoTime();
-    }
+    final AtomicReference<Timer.Context> firstResponseTimerRef =
+        new AtomicReference<>(metrics.timeReadRowsFirstResponse());
 
     this.delegate.call(
         requestT,
-        new ResponseObserver<ResponseT>() {
+        new StateCheckingResponseObserver<ResponseT>() {
+
           @Override
-          public void onStart(StreamController streamController) {
+          protected void onStartImpl(StreamController streamController) {
             delegate.onStart(streamController);
           }
 
           @Override
-          public void onResponse(ResponseT responseT) {
-            if (startTime != null) {
-              OperationMetrics.getFirstResponseTimer()
-                  .update(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
-              startTime = null;
+          protected void onResponseImpl(ResponseT responseT) {
+            Timer.Context firstResponseTimer = firstResponseTimerRef.getAndSet(null);
+            if (firstResponseTimer != null) {
+              firstResponseTimer.close();
             }
             delegate.onResponse(responseT);
           }
 
           @Override
-          public void onError(Throwable throwable) {
+          protected void onErrorImpl(Throwable throwable) {
             metrics.markFailure();
             rpcTimeOperation.close();
             delegate.onError(throwable);
           }
 
           @Override
-          public void onComplete() {
+          protected void onCompleteImpl() {
             rpcTimeOperation.close();
             delegate.onComplete();
           }

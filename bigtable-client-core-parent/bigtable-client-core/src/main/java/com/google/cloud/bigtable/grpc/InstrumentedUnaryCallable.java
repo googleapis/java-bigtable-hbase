@@ -20,6 +20,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.cloud.bigtable.metrics.OperationMetrics;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -29,9 +30,9 @@ class InstrumentedUnaryCallable<RequestT, ResponseT> extends UnaryCallable<Reque
   private final UnaryCallable<RequestT, ResponseT> inner;
   private final OperationMetrics metrics;
 
-  InstrumentedUnaryCallable(UnaryCallable<RequestT, ResponseT> inner, String methodName) {
+  InstrumentedUnaryCallable(UnaryCallable<RequestT, ResponseT> inner, OperationMetrics metrics) {
     this.inner = inner;
-    this.metrics = OperationMetrics.createOperationMetrics(methodName);
+    this.metrics = metrics;
   }
 
   @Override

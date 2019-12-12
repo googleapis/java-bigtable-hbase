@@ -39,9 +39,7 @@ import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableTableAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings.Builder;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
-import com.google.cloud.bigtable.metrics.Counter;
-import com.google.cloud.bigtable.metrics.Meter;
+import com.google.cloud.bigtable.grpc.InstrumentedRPCInterceptor;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
@@ -298,33 +296,6 @@ public class BigtableVeneerSettingsFactory {
     return statusCodeBuilder.build();
   }
 
-  private static Stats STATS;
-
-  static class Stats {
-    /**
-     * Best effort counter of active channels. There may be some cases where channel termination
-     * counting may not accurately be decremented.
-     */
-    Counter ACTIVE_CHANNEL_COUNTER =
-        BigtableClientMetrics.counter(
-            BigtableClientMetrics.MetricLevel.Info, "grpc.channel.active");
-
-    /** Best effort counter of active RPCs. */
-    Counter ACTIVE_RPC_COUNTER =
-        BigtableClientMetrics.counter(BigtableClientMetrics.MetricLevel.Info, "grpc.rpc.active");
-
-    /** Best effort counter of RPCs. */
-    Meter RPC_METER =
-        BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "grpc.rpc.performed");
-  }
-
-  static synchronized Stats getStats() {
-    if (STATS == null) {
-      STATS = new Stats();
-    }
-    return STATS;
-  }
-
   /** Creates {@link TransportChannelProvider} based on Channel Negotiation type. */
   private static TransportChannelProvider buildChannelProvider(
       String endpoint, final BigtableOptions options) {
@@ -336,7 +307,7 @@ public class BigtableVeneerSettingsFactory {
                 new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
                   @Override
                   public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-                    channelBuilder.intercept(new InstrumentRPCInterceptor());
+                    channelBuilder.intercept(new InstrumentedRPCInterceptor());
                     if (options.usePlaintextNegotiation()) {
                       channelBuilder.usePlaintext();
                     }
