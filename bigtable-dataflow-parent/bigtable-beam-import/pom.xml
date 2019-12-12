@@ -14,9 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-dataflow-parent</artifactId>
@@ -29,33 +27,8 @@ limitations under the License.
   <properties>
     <mainClass>com.google.cloud.bigtable.beam.sequencefiles.Main</mainClass>
   </properties>
-  <dependencyManagement>
-    <dependencies>
-      <!--  explicitly add grpc to avoid dependency conflicts-->
-      <dependency>
-        <groupId>io.grpc</groupId>
-        <artifactId>grpc-bom</artifactId>
-        <version>${grpc.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <dependencies>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-all</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-netty-shaded</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-beam</artifactId>
@@ -63,62 +36,17 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>com.google.auto.value</groupId>
+      <artifactId>auto-value</artifactId>
+      <version>${auto-value.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
+      <version>${beam-guava.version}</version>
     </dependency>
-
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.http-client</groupId>
-      <artifactId>google-http-client</artifactId>
-      <version>1.27.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-extensions-google-cloud-platform-core</artifactId>
-      <version>${beam.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api</groupId>
-      <artifactId>api-common</artifactId>
-      <version>1.7.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-core</artifactId>
-      <version>${beam.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.avro</groupId>
-      <artifactId>avro</artifactId>
-      <version>1.8.2</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-client-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
 
     <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
     <dependency>
@@ -140,6 +68,43 @@ limitations under the License.
       <version>2.7.5</version>
     </dependency>
 
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>${commons-logging.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-core</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.29</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>1.8.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-extensions-google-cloud-platform-core</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
@@ -154,12 +119,6 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-runners-direct-java</artifactId>
-      <version>${beam.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest</artifactId>
       <version>${hamcrest.version}</version>
@@ -169,13 +128,6 @@ limitations under the License.
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <usedDependencies>commons-codec:commons-codec,com.squareup.okhttp:okhttp,io.grpc:grpc-netty-shaded,io.grpc:grpc-all,io.grpc:grpc-core,org.apache.beam:beam-runners-direct-java</usedDependencies>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -249,6 +201,16 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+          <usedDependencies>com.google.auto.value:auto-value,commons-codec:commons-codec,com.squareup.okhttp:okhttp</usedDependencies>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 

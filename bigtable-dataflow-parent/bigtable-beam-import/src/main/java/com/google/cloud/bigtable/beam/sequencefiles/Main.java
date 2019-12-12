@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
-import com.google.api.core.InternalApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
