@@ -15,6 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -179,6 +183,47 @@ public abstract class AbstractTestListTables extends AbstractTest {
       TableName nonExistantTableName =
           TableName.valueOf("NA_table2-" + UUID.randomUUID().toString());
       checkTableDescriptor(admin, nonExistantTableName);
+    }
+  }
+
+  @Test
+  public void testListTablesWithEmptyElement() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      sharedTestEnv.createTable(sharedTestEnv.newTestTableName());
+
+      assertTrue(admin.listTables((Pattern) null).length > 0);
+
+      Exception actualError = null;
+      try {
+        admin.listTables((String) null);
+      } catch (Exception e) {
+        actualError = e;
+      }
+      assertNotNull(actualError);
+      assertTrue(actualError instanceof NullPointerException);
+
+      assertEquals(0, admin.listTables("").length);
+    }
+  }
+
+  @Test
+  public void testListTableNamesWithEmptyElement() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      sharedTestEnv.createTable(sharedTestEnv.newTestTableName());
+
+      TableName[] tableNames = admin.listTableNames((Pattern) null);
+      assertTrue(tableNames.length > 0);
+
+      Exception actualError = null;
+      try {
+        admin.listTableNames((String) null);
+      } catch (Exception e) {
+        actualError = e;
+      }
+      assertNotNull(actualError);
+      assertTrue(actualError instanceof NullPointerException);
+
+      assertEquals(0, admin.listTableNames("").length);
     }
   }
 
