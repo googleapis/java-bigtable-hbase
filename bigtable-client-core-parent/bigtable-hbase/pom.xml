@@ -84,8 +84,21 @@ limitations under the License.
             <artifactId>proto-google-cloud-bigtable-admin-v2</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.api.grpc</groupId>
+            <artifactId>proto-google-common-protos</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.google.auth</groupId>
             <artifactId>google-auth-library-credentials</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.api</groupId>
+            <artifactId>gax</artifactId>
+            <version>1.48.1</version>
         </dependency>
         <dependency>
             <groupId>io.opencensus</groupId>
@@ -95,6 +108,20 @@ limitations under the License.
             <groupId>org.threeten</groupId>
             <artifactId>threetenbp</artifactId>
             <version>${threeten.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${jsr305.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.api</groupId>
+            <artifactId>api-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>${commons-logging.version}</version>
         </dependency>
 
         <!-- TODO: remove this is direct dep, its only used for its Clock interface -->
@@ -115,34 +142,6 @@ limitations under the License.
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.api</groupId>
-            <artifactId>api-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.api.grpc</groupId>
-            <artifactId>proto-google-common-protos</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>${commons-logging.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.api</groupId>
-            <artifactId>gax</artifactId>
-            <version>1.48.1</version>
-        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>junit</groupId>

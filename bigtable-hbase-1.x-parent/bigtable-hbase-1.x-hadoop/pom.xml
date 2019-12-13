@@ -54,12 +54,14 @@ limitations under the License.
       <artifactId>hbase-client</artifactId>
       <version>${hbase.version}</version>
     </dependency>
+
     <!-- this is used only for test, but we need this as compile scope for repackaging-->
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
       <version>${hadoop.version}</version>
     </dependency>
+
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
     <dependency>
       <groupId>com.google.code.findbugs</groupId>

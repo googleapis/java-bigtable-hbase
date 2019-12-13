@@ -58,22 +58,8 @@ limitations under the License.
                     <artifactId>bigtable-hbase-1.x</artifactId>
                 </exclusion>
             </exclusions>
-
         </dependency>
 
-        <!--  TODO: remove this dependency when upgraded through transitive dependency (beam-sdks-java-core)
-          this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.19</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
@@ -83,6 +69,19 @@ limitations under the License.
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-shaded-client</artifactId>
             <version>${hbase.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!--  TODO: remove this dependency when upgraded through transitive dependency (beam-sdks-java-core)
+         this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.19</version>
         </dependency>
 
         <dependency>
