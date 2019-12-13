@@ -348,8 +348,11 @@ public class BigtableSession implements Closeable {
   static List<ClientInterceptor> createInterceptors(BigtableOptions options) throws IOException {
     ImmutableList.Builder<ClientInterceptor> interceptors = ImmutableList.builder();
 
-    interceptors.add(
-        new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
+    // TODO: instanceName should never be null
+    if (options.getInstanceName() != null) {
+      interceptors.add(
+          new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
+    }
 
     interceptors.add(createGaxHeaderInterceptor());
 
