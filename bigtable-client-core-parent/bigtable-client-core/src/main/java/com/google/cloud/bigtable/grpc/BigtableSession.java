@@ -646,7 +646,6 @@ public class BigtableSession implements Closeable {
   @InternalApi("For internal usage only")
   public static BigtableInstanceClient createInstanceClient(BigtableOptions options)
       throws IOException, GeneralSecurityException {
-    // 1b
     return new BigtableInstanceGrpcClient(createChannelPool(options.getAdminHost(), options));
   }
 
