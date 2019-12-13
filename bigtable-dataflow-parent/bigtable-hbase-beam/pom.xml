@@ -34,6 +34,17 @@ limitations under the License.
             <version>${beam.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.beam</groupId>
+            <artifactId>beam-sdks-java-io-hbase</artifactId>
+            <version>${beam.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-1.x-shaded</artifactId>
             <version>${project.version}</version>
@@ -208,7 +219,7 @@ limitations under the License.
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <configuration>
-                    <usedDependencies>org.apache.commons:commons-compress</usedDependencies>
+                    <usedDependencies>org.apache.commons:commons-compress,org.apache.beam:beam-sdks-java-io-hbase</usedDependencies>
                 </configuration>
             </plugin>
         </plugins>
