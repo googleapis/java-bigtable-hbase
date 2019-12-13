@@ -243,6 +243,12 @@ limitations under the License.
 
         <!-- Test -->
         <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <version>${hamcrest.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
@@ -264,12 +270,6 @@ limitations under the License.
             <groupId>io.grpc</groupId>
             <artifactId>grpc-testing</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest</artifactId>
-          <version>${hamcrest.version}</version>
-          <scope>test</scope>
         </dependency>
     </dependencies>
 

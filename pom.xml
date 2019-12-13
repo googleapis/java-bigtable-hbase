@@ -75,6 +75,7 @@ limitations under the License.
         <hbase.version>${hbase.version.1}</hbase.version>
         <hadoop.version>2.7.4</hadoop.version>
         <hbase-guava.version>12.0.1</hbase-guava.version>
+        <protobuf-hbase.version>2.5.0</protobuf-hbase.version>
 
         <!-- testing dependency versions -->
         <junit.version>4.12</junit.version>
