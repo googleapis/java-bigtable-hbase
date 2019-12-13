@@ -881,6 +881,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @throws IOException if any.
    */
   protected Operation snapshotTable(String snapshotName, TableName tableName) throws IOException {
+    Preconditions.checkNotNull(snapshotName);
+    Preconditions.checkNotNull(tableName);
+    if (snapshotName.isEmpty()) {
+      // HBase returns an empty operation instance in case snapshotName is an empty string.
+      return Operation.newBuilder().build();
+    }
 
     SnapshotTableRequest.Builder requestBuilder =
         SnapshotTableRequest.newBuilder()
@@ -992,6 +998,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void deleteSnapshot(String snapshotName) throws IOException {
+    Preconditions.checkNotNull(snapshotName);
+    if (snapshotName.isEmpty()) {
+      return;
+    }
+
     String btSnapshotName = getClusterName().toSnapshotName(snapshotName);
     DeleteSnapshotRequest request =
         DeleteSnapshotRequest.newBuilder().setName(btSnapshotName).build();

@@ -35,6 +35,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.Collection;
@@ -601,21 +602,24 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<List<SnapshotDescription>> listSnapshots(Pattern pattern) {
-    return listSnapshots()
-        .thenApply(r -> filter(r, d -> pattern == null || pattern.matcher(d.getName()).matches()));
+    Preconditions.checkNotNull(pattern);
+    if (pattern.matcher("").matches()) {
+      return CompletableFuture.completedFuture(ImmutableList.of());
+    }
+    return listSnapshots().thenApply(r -> filter(r, d -> pattern.matcher(d.getName()).matches()));
   }
 
   @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(
       Pattern tableNamePattern, Pattern snapshotPattern) {
+    Preconditions.checkNotNull(tableNamePattern);
+    if (tableNamePattern.matcher("").matches()) {
+      return CompletableFuture.completedFuture(ImmutableList.of());
+    }
+
     return listSnapshots(snapshotPattern)
         .thenApply(
-            r ->
-                filter(
-                    r,
-                    d ->
-                        tableNamePattern == null
-                            || tableNamePattern.matcher(d.getTableNameAsString()).matches()));
+            r -> filter(r, d -> tableNamePattern.matcher(d.getTableNameAsString()).matches()));
   }
 
   private static SnapshotDescription toSnapshotDescription(Snapshot snapshot) {
