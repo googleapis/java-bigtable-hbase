@@ -302,6 +302,7 @@ limitations under the License.
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
+          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
           <usedDependencies>com.google.cloud.bigtable:bigtable-hbase-2.x,org.apache.hbase:hbase-shaded-client,com.google.code.findbugs:jsr305,commons-logging:commons-logging,io.dropwizard.metrics:metrics-core,org.checkerframework:checker-compat-qual,io.opencensus:opencensus-impl,io.opencensus:opencensus-contrib-zpages,io.opencensus:opencensus-exporter-trace-stackdriver</usedDependencies>
         </configuration>
       </plugin>

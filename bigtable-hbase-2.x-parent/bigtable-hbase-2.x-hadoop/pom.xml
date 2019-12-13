@@ -80,15 +80,17 @@ limitations under the License.
       <artifactId>hbase-common</artifactId>
       <version>${hbase.version}</version>
     </dependency>
+    <!-- this is used only for test, but we need this as compile scope for repackaging-->
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>2.8.5</version>
+      <version>${hadoop.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -150,6 +152,7 @@ limitations under the License.
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
+          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
           <usedDependencies>com.google.code.findbugs:jsr305,commons-logging:commons-logging,io.dropwizard.metrics:metrics-core</usedDependencies>
         </configuration>
       </plugin>

@@ -23,5 +23,4 @@ echo $JOB_TYPE
 
 export MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m"
 
-mvn install -DskipTests=true -B -V
-mvn -B clean install dependency:analyze -DfailOnWarning=true
+mvn -B -V clean install -DskipTests=truevdependency:analyze -DfailOnWarning=true
