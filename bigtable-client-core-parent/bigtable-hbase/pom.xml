@@ -138,6 +138,11 @@ limitations under the License.
             <groupId>io.grpc</groupId>
             <artifactId>grpc-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.google.api</groupId>
+            <artifactId>gax</artifactId>
+            <version>1.48.1</version>
+        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>junit</groupId>
