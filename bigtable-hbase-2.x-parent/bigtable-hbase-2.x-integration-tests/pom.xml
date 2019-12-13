@@ -285,7 +285,7 @@ limitations under the License.
 
     <dependencies>
         <dependency>
-            <groupId>com.google.cloud.bigtable</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -300,6 +300,7 @@ limitations under the License.
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-integration-tests-common</artifactId>
@@ -318,15 +319,21 @@ limitations under the License.
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>${commons-lang.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
             <version>${jsr305.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${hbase-guava.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>${commons-lang.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -341,19 +348,6 @@ limitations under the License.
             <version>${hbase.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${hbase-guava.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest</artifactId>
@@ -361,9 +355,9 @@ limitations under the License.
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
-            <version>${hamcrest.version}</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -410,13 +404,6 @@ limitations under the License.
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <configuration>
-                    <usedDependencies>org.hamcrest:hamcrest-core</usedDependencies>
-                </configuration>
             </plugin>
         </plugins>
     </build>

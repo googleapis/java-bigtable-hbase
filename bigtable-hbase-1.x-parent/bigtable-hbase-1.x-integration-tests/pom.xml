@@ -351,6 +351,7 @@ limitations under the License.
             <scope>test</scope>
         </dependency>
 
+        <!-- this comes before junit to override junit's transitive hamcrest-core dependency-->
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest</artifactId>
@@ -363,7 +364,6 @@ limitations under the License.
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>

@@ -36,7 +36,7 @@ limitations under the License.
 
 <dependencies>
   <dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
+    <groupId>${project.groupId}</groupId>
     <artifactId>bigtable-hbase-2.x</artifactId>
     <version>${project.version}</version>
   </dependency>

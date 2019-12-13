@@ -38,6 +38,10 @@ limitations under the License.
 
   <dependencyManagement>
   <dependencies>
+    <!--
+     Temporary override for grpc version. This is necessary because bigtable-client-core
+     isn't compatible with the latest version of google-cloud-bigtable, but we need new
+     version of grpc for direct path. This should be removed in the next major version bump -->
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-bom</artifactId>
@@ -99,7 +103,6 @@ limitations under the License.
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
-
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
@@ -108,15 +111,16 @@ limitations under the License.
 
     <!-- Test dependencies-->
     <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest</artifactId>
-      <version>${hamcrest.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-graphite</artifactId>
       <version>3.2.6</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <version>${hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
