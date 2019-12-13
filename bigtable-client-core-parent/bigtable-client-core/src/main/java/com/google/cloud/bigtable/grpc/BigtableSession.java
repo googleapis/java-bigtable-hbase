@@ -304,6 +304,7 @@ public class BigtableSession implements Closeable {
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
   }
 
+  // <editor-fold desc="Interceptors">
   protected List<ClientInterceptor> setupInterceptors() throws IOException {
     List<ClientInterceptor> clientInterceptorsList = new ArrayList<>();
     clientInterceptorsList.add(
@@ -341,6 +342,19 @@ public class BigtableSession implements Closeable {
             BigtableVersionInfo.CLIENT_VERSION));
   }
 
+  private WatchdogInterceptor setupWatchdog() {
+    Preconditions.checkState(watchdog == null, "Watchdog already setup");
+
+    watchdog =
+        new Watchdog(Clock.SYSTEM, options.getRetryOptions().getReadPartialRowTimeoutMillis());
+    watchdog.start(BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
+
+    return new WatchdogInterceptor(
+        ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()), watchdog);
+  }
+  // </editor-fold>
+
+  // <editor-fold desc="Channel management">
   private ManagedChannel getDataChannelPool() throws IOException {
     String host = options.getDataHost();
     int channelCount = options.getChannelCount();
@@ -356,16 +370,130 @@ public class BigtableSession implements Closeable {
     return createManagedPool(host, channelCount);
   }
 
-  private WatchdogInterceptor setupWatchdog() {
-    Preconditions.checkState(watchdog == null, "Watchdog already setup");
-
-    watchdog =
-        new Watchdog(Clock.SYSTEM, options.getRetryOptions().getReadPartialRowTimeoutMillis());
-    watchdog.start(BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
-
-    return new WatchdogInterceptor(
-        ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()), watchdog);
+  /**
+   * Create a new {@link ChannelPool}, with auth headers, that will be cleaned up when the
+   * connection closes.
+   *
+   * @param host a {@link String} object.
+   * @return a {@link ChannelPool} object.
+   * @throws IOException if any.
+   */
+  protected ManagedChannel createManagedPool(String host, int channelCount) throws IOException {
+    ManagedChannel channelPool = createChannelPool(host, channelCount);
+    managedChannels.add(channelPool);
+    return channelPool;
   }
+
+  /**
+   * Create a new {@link ChannelPool}, with auth headers.
+   *
+   * @param hostString a {@link String} object.
+   * @return a {@link ChannelPool} object.
+   * @throws IOException if any.
+   */
+  protected ManagedChannel createChannelPool(final String hostString, int count)
+      throws IOException {
+    Preconditions.checkState(
+        !options.useGCJClient(), "Channel pools cannot be created when using google-cloud-java");
+    ChannelPool.ChannelFactory channelFactory =
+        new ChannelPool.ChannelFactory() {
+          @Override
+          public ManagedChannel create() throws IOException {
+            return createNettyChannel(hostString, options, clientInterceptors);
+          }
+        };
+    return createChannelPool(channelFactory, count);
+  }
+
+  /**
+   * Create a new {@link ChannelPool}, with auth headers. This method allows users to override the
+   * default implementation with their own.
+   *
+   * @param channelFactory a {@link ChannelPool.ChannelFactory} object.
+   * @param count The number of channels in the pool.
+   * @return a {@link ChannelPool} object.
+   * @throws IOException if any.
+   */
+  protected ManagedChannel createChannelPool(
+      final ChannelPool.ChannelFactory channelFactory, int count) throws IOException {
+    return new ChannelPool(channelFactory, count);
+  }
+
+  /**
+   * Create a new {@link ChannelPool}, with auth headers.
+   *
+   * <p>For internal use only - public for technical reasons.
+   */
+  @InternalApi("For internal usage only")
+  public static ManagedChannel createChannelPool(final String host, final BigtableOptions options)
+      throws IOException, GeneralSecurityException {
+    return createChannelPool(host, options, 1);
+  }
+
+  /**
+   * Create a new {@link ChannelPool}, with auth headers.
+   *
+   * <p>For internal use only - public for technical reasons.
+   */
+  @InternalApi("For internal usage only")
+  public static ManagedChannel createChannelPool(
+      final String host, final BigtableOptions options, int count)
+      throws IOException, GeneralSecurityException {
+    final List<ClientInterceptor> interceptorList = new ArrayList<>();
+
+    ClientInterceptor credentialsInterceptor =
+        CredentialInterceptorCache.getInstance()
+            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+    if (credentialsInterceptor != null) {
+      interceptorList.add(credentialsInterceptor);
+    }
+
+    if (options.getInstanceName() != null) {
+      interceptorList.add(
+          new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
+    }
+    final ClientInterceptor[] interceptors =
+        interceptorList.toArray(new ClientInterceptor[interceptorList.size()]);
+
+    ChannelPool.ChannelFactory factory =
+        new ChannelPool.ChannelFactory() {
+          @Override
+          public ManagedChannel create() throws IOException {
+            return createNettyChannel(host, options, interceptors);
+          }
+        };
+    return new ChannelPool(factory, count);
+  }
+
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("For internal usage only")
+  public static ManagedChannel createNettyChannel(
+      String host, BigtableOptions options, ClientInterceptor... interceptors) throws SSLException {
+
+    LOG.info("Creating new channel for %s", host);
+    if (LOG.getLog().isTraceEnabled()) {
+      LOG.trace(Throwables.getStackTraceAsString(new Throwable()));
+    }
+
+    // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
+    // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
+    ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forAddress(host, options.getPort());
+
+    if (options.usePlaintextNegotiation()) {
+      // NOTE: usePlaintext(true) is deprecated in newer versions of grpc (1.11.0).
+      //       usePlaintext() is the preferred approach, but won't work with older versions.
+      //       This means that plaintext negotiation can't be used with Beam.
+      builder.usePlaintext();
+    }
+
+    return builder
+        .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
+        .maxInboundMessageSize(MAX_MESSAGE_SIZE)
+        .userAgent(BigtableVersionInfo.CORE_USER_AGENT + "," + options.getUserAgent())
+        .intercept(interceptors)
+        .build();
+  }
+  // </editor-fold>
 
   /**
    * Snapshot operations need various aspects of a {@link BigtableClusterName}. This method gets a
@@ -508,55 +636,6 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * Create a new {@link ChannelPool}, with auth headers.
-   *
-   * @param hostString a {@link String} object.
-   * @return a {@link ChannelPool} object.
-   * @throws IOException if any.
-   */
-  protected ManagedChannel createChannelPool(final String hostString, int count)
-      throws IOException {
-    Preconditions.checkState(
-        !options.useGCJClient(), "Channel pools cannot be created when using google-cloud-java");
-    ChannelPool.ChannelFactory channelFactory =
-        new ChannelPool.ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return createNettyChannel(hostString, options, clientInterceptors);
-          }
-        };
-    return createChannelPool(channelFactory, count);
-  }
-
-  /**
-   * Create a new {@link ChannelPool}, with auth headers. This method allows users to override the
-   * default implementation with their own.
-   *
-   * @param channelFactory a {@link ChannelPool.ChannelFactory} object.
-   * @param count The number of channels in the pool.
-   * @return a {@link ChannelPool} object.
-   * @throws IOException if any.
-   */
-  protected ManagedChannel createChannelPool(
-      final ChannelPool.ChannelFactory channelFactory, int count) throws IOException {
-    return new ChannelPool(channelFactory, count);
-  }
-
-  /**
-   * Create a new {@link ChannelPool}, with auth headers, that will be cleaned up when the
-   * connection closes.
-   *
-   * @param host a {@link String} object.
-   * @return a {@link ChannelPool} object.
-   * @throws IOException if any.
-   */
-  protected ManagedChannel createManagedPool(String host, int channelCount) throws IOException {
-    ManagedChannel channelPool = createChannelPool(host, channelCount);
-    managedChannels.add(channelPool);
-    return channelPool;
-  }
-
-  /**
    * Create a {@link BigtableInstanceClient}. {@link BigtableSession} objects assume that {@link
    * BigtableOptions} have a project and instance. A {@link BigtableInstanceClient} does not require
    * project id or instance id, so {@link BigtableOptions#getDefaultOptions()} may be used if there
@@ -568,81 +647,6 @@ public class BigtableSession implements Closeable {
   public static BigtableInstanceClient createInstanceClient(BigtableOptions options)
       throws IOException, GeneralSecurityException {
     return new BigtableInstanceGrpcClient(createChannelPool(options.getAdminHost(), options));
-  }
-
-  /**
-   * Create a new {@link ChannelPool}, with auth headers.
-   *
-   * <p>For internal use only - public for technical reasons.
-   */
-  @InternalApi("For internal usage only")
-  public static ManagedChannel createChannelPool(final String host, final BigtableOptions options)
-      throws IOException, GeneralSecurityException {
-    return createChannelPool(host, options, 1);
-  }
-
-  /**
-   * Create a new {@link ChannelPool}, with auth headers.
-   *
-   * <p>For internal use only - public for technical reasons.
-   */
-  @InternalApi("For internal usage only")
-  public static ManagedChannel createChannelPool(
-      final String host, final BigtableOptions options, int count)
-      throws IOException, GeneralSecurityException {
-    final List<ClientInterceptor> interceptorList = new ArrayList<>();
-
-    ClientInterceptor credentialsInterceptor =
-        CredentialInterceptorCache.getInstance()
-            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
-    if (credentialsInterceptor != null) {
-      interceptorList.add(credentialsInterceptor);
-    }
-
-    if (options.getInstanceName() != null) {
-      interceptorList.add(
-          new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
-    }
-    final ClientInterceptor[] interceptors =
-        interceptorList.toArray(new ClientInterceptor[interceptorList.size()]);
-
-    ChannelPool.ChannelFactory factory =
-        new ChannelPool.ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return createNettyChannel(host, options, interceptors);
-          }
-        };
-    return new ChannelPool(factory, count);
-  }
-
-  /** For internal use only - public for technical reasons. */
-  @InternalApi("For internal usage only")
-  public static ManagedChannel createNettyChannel(
-      String host, BigtableOptions options, ClientInterceptor... interceptors) throws SSLException {
-
-    LOG.info("Creating new channel for %s", host);
-    if (LOG.getLog().isTraceEnabled()) {
-      LOG.trace(Throwables.getStackTraceAsString(new Throwable()));
-    }
-
-    // Ideally, this should be ManagedChannelBuilder.forAddress(...) rather than an explicit
-    // call to NettyChannelBuilder.  Unfortunately, that doesn't work for shaded artifacts.
-    ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forAddress(host, options.getPort());
-
-    if (options.usePlaintextNegotiation()) {
-      // NOTE: usePlaintext(true) is deprecated in newer versions of grpc (1.11.0).
-      //       usePlaintext() is the preferred approach, but won't work with older versions.
-      //       This means that plaintext negotiation can't be used with Beam.
-      builder.usePlaintext();
-    }
-
-    return builder
-        .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
-        .maxInboundMessageSize(MAX_MESSAGE_SIZE)
-        .userAgent(BigtableVersionInfo.CORE_USER_AGENT + "," + options.getUserAgent())
-        .intercept(interceptors)
-        .build();
   }
 
   /** {@inheritDoc} */
