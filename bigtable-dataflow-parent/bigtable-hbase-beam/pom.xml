@@ -80,7 +80,6 @@ limitations under the License.
             <version>1.19</version>
         </dependency>
 
-        <!-- TODO: check if commons-compress is transitively updated to 1.18 when upgrading this so we can remove-->
         <dependency>
             <groupId>org.apache.beam</groupId>
             <artifactId>beam-sdks-java-core</artifactId>

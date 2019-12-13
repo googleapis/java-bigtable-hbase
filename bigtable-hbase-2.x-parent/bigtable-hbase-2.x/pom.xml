@@ -65,6 +65,11 @@ limitations under the License.
       <artifactId>bigtable-hbase</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-client-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.hbase</groupId>
@@ -95,11 +100,6 @@ limitations under the License.
       <artifactId>google-cloud-bigtable</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-client-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
@@ -117,6 +117,7 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
 
+    <!-- this comes before junit to override junit's transitive hamcrest-core dependency-->
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest</artifactId>
