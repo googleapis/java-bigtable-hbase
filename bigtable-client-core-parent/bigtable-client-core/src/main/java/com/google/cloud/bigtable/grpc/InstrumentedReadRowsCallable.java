@@ -22,7 +22,9 @@ import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.bigtable.metrics.OperationMetrics;
 import com.google.cloud.bigtable.metrics.Timer;
+import com.google.common.base.Preconditions;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nonnull;
 
 /** Wraps {@code ServerStreamingCallable} of data client's readRows to instrument with Timer. */
 class InstrumentedReadRowsCallable<RequestT, ResponseT>
@@ -32,7 +34,10 @@ class InstrumentedReadRowsCallable<RequestT, ResponseT>
   private final OperationMetrics metrics;
 
   InstrumentedReadRowsCallable(
-      ServerStreamingCallable<RequestT, ResponseT> delegate, OperationMetrics metrics) {
+      @Nonnull ServerStreamingCallable<RequestT, ResponseT> delegate,
+      @Nonnull OperationMetrics metrics) {
+    Preconditions.checkNotNull(delegate);
+    Preconditions.checkNotNull(metrics);
     this.delegate = delegate;
     this.metrics = metrics;
   }
@@ -43,7 +48,7 @@ class InstrumentedReadRowsCallable<RequestT, ResponseT>
       final ResponseObserver<ResponseT> delegate,
       ApiCallContext apiCallContext) {
 
-    final Timer.Context rpcTimeOperation = metrics.timeOperation();
+    final Timer.Context rpcTimeOperation = metrics.timeOperationLatency();
     final AtomicReference<Timer.Context> firstResponseTimerRef =
         new AtomicReference<>(metrics.timeReadRowsFirstResponse());
 
@@ -67,7 +72,7 @@ class InstrumentedReadRowsCallable<RequestT, ResponseT>
 
           @Override
           protected void onErrorImpl(Throwable throwable) {
-            metrics.markFailure();
+            metrics.markOperationFailure();
             rpcTimeOperation.close();
             delegate.onError(throwable);
           }

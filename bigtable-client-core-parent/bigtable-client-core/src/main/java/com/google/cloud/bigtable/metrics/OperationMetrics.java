@@ -17,24 +17,22 @@ package com.google.cloud.bigtable.metrics;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.common.base.Preconditions;
 
 /** Extracted from BigtableAsyncRpc#RpcMetrics, to instrument veneer client. */
 @InternalApi("For internal usage only")
 public class OperationMetrics {
 
-  /** Best effort counter of active RPCs. */
-  public Counter ACTIVE_RPC_COUNTER =
-      BigtableClientMetrics.counter(MetricLevel.Info, "grpc.rpc.active");
-
-  /** Best effort counter of RPCs. */
-  public Meter RPC_METER = BigtableClientMetrics.meter(MetricLevel.Info, "grpc.rpc.performed");
-
   private final Timer operationTimer;
   private final Meter failureMeter;
-  private Timer firstResponseTimer;
   private final Timer rpcLatency;
+  private final Timer firstResponseTimer;
+  private final Meter bulkMutationMeter;
+  private final Counter activeRpcCounter;
+  private final Meter totalRpcPerformed;
 
   public static OperationMetrics create(String methodName) {
+    Preconditions.checkNotNull(methodName);
     String prefix = "grpc.method." + methodName;
     return new OperationMetrics(
         BigtableClientMetrics.timer(MetricLevel.Info, prefix + ".operation.latency"),
@@ -46,36 +44,51 @@ public class OperationMetrics {
     this.operationTimer = operationTimer;
     this.failureMeter = failureCounter;
     this.rpcLatency = rpcLatency;
+    this.firstResponseTimer =
+        BigtableClientMetrics.timer(MetricLevel.Info, "grpc.method.ReadRows.firstResponse.latency");
+    this.bulkMutationMeter =
+        BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.added");
+    this.activeRpcCounter = BigtableClientMetrics.counter(MetricLevel.Info, "grpc.rpc.active");
+    this.totalRpcPerformed = BigtableClientMetrics.meter(MetricLevel.Info, "grpc.rpc.performed");
   }
 
-  public Timer.Context timeOperation() {
+  /** Records latency for operation to finish. */
+  public Timer.Context timeOperationLatency() {
     return operationTimer.time();
   }
 
-  public void markFailure() {
-    failureMeter.mark();
-  }
-
-  public void markBulkMutationAddition() {
-    BigtableClientMetrics.meter(
-            BigtableClientMetrics.MetricLevel.Info, "bulk-mutator.mutations.added")
-        .mark();
-  }
-
-  public Timer.Context timeReadRowsFirstResponse() {
-    if (firstResponseTimer == null) {
-      firstResponseTimer =
-          BigtableClientMetrics.timer(
-              MetricLevel.Info, "grpc.method.ReadRows.firstResponse.latency");
-    }
-    return firstResponseTimer.time();
-  }
-
+  /** Records latency for each Rpc. */
   public Timer timeRpcLatency() {
     return rpcLatency;
   }
 
-  public void markGrpcErrorCode(String failureCode) {
+  /** Counter for operation failures. */
+  public void markOperationFailure() {
+    failureMeter.mark();
+  }
+
+  /** Counter for Rpc failure with failure code */
+  public void markRpcErrorCode(String failureCode) {
     BigtableClientMetrics.meter(MetricLevel.Info, "grpc.errors." + failureCode).mark();
+  }
+
+  /** Counter for mutation addition in BulkMutation. */
+  public void markBulkMutationAddition() {
+    bulkMutationMeter.mark();
+  }
+
+  /** Records latency for first ReadRows response. */
+  public Timer.Context timeReadRowsFirstResponse() {
+    return firstResponseTimer.time();
+  }
+
+  /** Best effort counter of active RPCs. */
+  public Counter activeRpcCounter() {
+    return activeRpcCounter;
+  }
+
+  /** Best effort counter of RPCs. */
+  public void markRpcPerformed() {
+    totalRpcPerformed.mark();
   }
 }

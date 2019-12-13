@@ -22,23 +22,28 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.metrics.OperationMetrics;
 import com.google.cloud.bigtable.metrics.Timer;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.MoreExecutors;
+import javax.annotation.Nonnull;
 
 /** Wraps data client's {@code UnaryCallable} to instrument them. */
 class InstrumentedUnaryCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
 
-  private final UnaryCallable<RequestT, ResponseT> inner;
+  private final UnaryCallable<RequestT, ResponseT> delegate;
   private final OperationMetrics metrics;
 
-  InstrumentedUnaryCallable(UnaryCallable<RequestT, ResponseT> inner, OperationMetrics metrics) {
-    this.inner = inner;
+  InstrumentedUnaryCallable(
+      @Nonnull UnaryCallable<RequestT, ResponseT> delegate, @Nonnull OperationMetrics metrics) {
+    Preconditions.checkNotNull(delegate);
+    Preconditions.checkNotNull(metrics);
+    this.delegate = delegate;
     this.metrics = metrics;
   }
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT requestT, ApiCallContext apiCallContext) {
-    final Timer.Context rpcTimeOperation = metrics.timeOperation();
-    ApiFuture<ResponseT> response = inner.futureCall(requestT, apiCallContext);
+    final Timer.Context rpcTimeOperation = metrics.timeOperationLatency();
+    ApiFuture<ResponseT> response = delegate.futureCall(requestT, apiCallContext);
 
     ApiFutures.addCallback(
         response,
@@ -50,7 +55,7 @@ class InstrumentedUnaryCallable<RequestT, ResponseT> extends UnaryCallable<Reque
 
           @Override
           public void onFailure(Throwable t) {
-            metrics.markFailure();
+            metrics.markOperationFailure();
             rpcTimeOperation.close();
           }
         },

@@ -27,7 +27,6 @@ import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Intercept's RPC call to instrument the veneer client with latency, failure counts. */
 @InternalApi("For internal usage only")
@@ -39,7 +38,6 @@ public class InstrumentedRPCInterceptor implements ClientInterceptor {
 
     final OperationMetrics metrics =
         OperationMetrics.create(methodDescriptor.getFullMethodName().split("/")[1]);
-    final AtomicBoolean decremented = new AtomicBoolean(false);
     final Timer.Context rpcLatency = metrics.timeRpcLatency().time();
 
     return new ClientInterceptors.CheckedForwardingClientCall<ReqT, RespT>(
@@ -47,10 +45,9 @@ public class InstrumentedRPCInterceptor implements ClientInterceptor {
 
       @Override
       protected void checkedStart(Listener<RespT> responseListener, Metadata metadata) {
-        ClientCall.Listener<RespT> listener =
-            wrap(responseListener, metrics, rpcLatency, decremented);
-        metrics.ACTIVE_RPC_COUNTER.inc();
-        metrics.RPC_METER.mark();
+        ClientCall.Listener<RespT> listener = wrap(responseListener, metrics, rpcLatency);
+        metrics.activeRpcCounter().inc();
+        metrics.markRpcPerformed();
         delegate().start(listener, metadata);
       }
     };
@@ -59,23 +56,17 @@ public class InstrumentedRPCInterceptor implements ClientInterceptor {
   protected <RespT> ClientCall.Listener<RespT> wrap(
       final ClientCall.Listener<RespT> delegate,
       final OperationMetrics metrics,
-      final Timer.Context rpcLatency,
-      final AtomicBoolean decremented) {
+      final Timer.Context rpcLatency) {
     return new SimpleForwardingClientCallListener<RespT>(delegate) {
 
       @Override
       public void onClose(Status status, Metadata trailers) {
-        try {
-          if (!decremented.getAndSet(true)) {
-            metrics.ACTIVE_RPC_COUNTER.dec();
-          }
-          if (!status.isOk()) {
-            metrics.markGrpcErrorCode(status.getCode().name());
-          }
-          delegate().onClose(status, trailers);
-        } finally {
-          rpcLatency.close();
+        metrics.activeRpcCounter().dec();
+        if (!status.isOk()) {
+          metrics.markRpcErrorCode(status.getCode().name());
         }
+        rpcLatency.close();
+        delegate().onClose(status, trailers);
       }
     };
   }
