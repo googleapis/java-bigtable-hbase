@@ -120,7 +120,7 @@ limitations under the License.
         <dependency>
             <groupId>org.threeten</groupId>
             <artifactId>threetenbp</artifactId>
-            <version>1.4.0</version>
+            <version>${threeten.version}</version>
         </dependency>
 
         <!-- Auth -->
@@ -290,6 +290,8 @@ limitations under the License.
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <configuration>
+                    <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions.
+                    grpc-alts is a runtime dep-->
                     <usedDependencies>commons-codec:commons-codec,io.grpc:grpc-alts</usedDependencies>
                 </configuration>
             </plugin>

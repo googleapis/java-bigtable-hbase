@@ -27,12 +27,7 @@ limitations under the License.
     </description>
 
     <dependencies>
-        <!-- TODO: check if commons-compress is transitively updated to 1.18 when upgrading this so we can remove-->
-        <dependency>
-            <groupId>org.apache.beam</groupId>
-            <artifactId>beam-sdks-java-core</artifactId>
-            <version>${beam.version}</version>
-        </dependency>
+        <!-- to use HBaseCoderProviderRegistrar-->
         <dependency>
             <groupId>org.apache.beam</groupId>
             <artifactId>beam-sdks-java-io-hbase</artifactId>
@@ -44,6 +39,7 @@ limitations under the License.
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-1.x-shaded</artifactId>
@@ -82,6 +78,13 @@ limitations under the License.
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.19</version>
+        </dependency>
+
+        <!-- TODO: check if commons-compress is transitively updated to 1.18 when upgrading this so we can remove-->
+        <dependency>
+            <groupId>org.apache.beam</groupId>
+            <artifactId>beam-sdks-java-core</artifactId>
+            <version>${beam.version}</version>
         </dependency>
 
         <dependency>
@@ -218,6 +221,8 @@ limitations under the License.
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <configuration>
+                    <!-- commons-compress is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
+                    <!-- beam-sdks-java-io-hbase is to use HBaseCoderProviderRegistrar-->
                     <usedDependencies>org.apache.commons:commons-compress,org.apache.beam:beam-sdks-java-io-hbase</usedDependencies>
                 </configuration>
             </plugin>
