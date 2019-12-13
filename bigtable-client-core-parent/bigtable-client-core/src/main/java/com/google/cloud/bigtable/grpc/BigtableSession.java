@@ -450,7 +450,6 @@ public class BigtableSession implements Closeable {
   @InternalApi("For internal usage only")
   public static ManagedChannel createChannelPool(final String host, final BigtableOptions options)
       throws IOException, GeneralSecurityException {
-    // 1a
     return createChannelPool(host, options, 1);
   }
 
