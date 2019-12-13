@@ -280,8 +280,8 @@ public class BigtableSession implements Closeable {
               // Data channel requires a watchdog
               .add(setupWatchdog())
               .build();
-      Channel dataChannel = ClientInterceptors.intercept(rawDataChannelPool,
-          dataChannelInterceptors);
+      Channel dataChannel =
+          ClientInterceptors.intercept(rawDataChannelPool, dataChannelInterceptors);
 
       this.dataRequestContext =
           RequestContext.create(
