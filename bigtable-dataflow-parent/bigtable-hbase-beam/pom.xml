@@ -27,12 +27,7 @@ limitations under the License.
     </description>
 
     <dependencies>
-        <!-- TODO: check if commons-compress is transitively updated to 1.18 when upgrading this so we can remove-->
-        <dependency>
-            <groupId>org.apache.beam</groupId>
-            <artifactId>beam-sdks-java-core</artifactId>
-            <version>${beam.version}</version>
-        </dependency>
+        <!-- to use HBaseCoderProviderRegistrar-->
         <dependency>
             <groupId>org.apache.beam</groupId>
             <artifactId>beam-sdks-java-io-hbase</artifactId>
@@ -44,6 +39,7 @@ limitations under the License.
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase-1.x-shaded</artifactId>
@@ -58,35 +54,38 @@ limitations under the License.
                     <artifactId>bigtable-hbase-1.x</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
 
+        <dependency>
+            <groupId>org.apache.beam</groupId>
+            <artifactId>beam-sdks-java-core</artifactId>
+            <version>${beam.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-shaded-client</artifactId>
+            <version>${hbase.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${jsr305.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
 
         <!--  TODO: remove this dependency when upgraded through transitive dependency (beam-sdks-java-core)
-          this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
+         this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.19</version>
         </dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest-core</artifactId>
-          <version>${hamcrest.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest-library</artifactId>
-          <version>${hamcrest.version}</version>
-          <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
@@ -97,6 +96,19 @@ limitations under the License.
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>${commons-lang.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- this comes before junit to override junit's transitive hamcrest-core dependency-->
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <version>${hamcrest.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -204,6 +216,15 @@ limitations under the License.
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <configuration>
+                    <!-- commons-compress is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
+                    <!-- beam-sdks-java-io-hbase is to use HBaseCoderProviderRegistrar-->
+                    <usedDependencies>org.apache.commons:commons-compress,org.apache.beam:beam-sdks-java-io-hbase</usedDependencies>
+                </configuration>
             </plugin>
         </plugins>
     </build>

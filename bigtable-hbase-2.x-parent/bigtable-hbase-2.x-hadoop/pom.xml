@@ -34,7 +34,7 @@ limitations under the License.
 
   <dependencies>
     <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x-shaded</artifactId>
       <version>${project.version}</version>
       <exclusions>
@@ -74,6 +74,25 @@ limitations under the License.
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
       <version>${dropwizard.metrics.version}</version>
+    </dependency>
+
+    <!-- this is used only for test, but we need this as compile scope for repackaging-->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>${hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-common</artifactId>
+      <version>${hbase.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -131,6 +150,15 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+          <usedDependencies>com.google.code.findbugs:jsr305,commons-logging:commons-logging,io.dropwizard.metrics:metrics-core</usedDependencies>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 </project>

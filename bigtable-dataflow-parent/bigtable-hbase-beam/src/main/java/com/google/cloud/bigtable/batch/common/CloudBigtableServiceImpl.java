@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.batch.common;
 
-import com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;

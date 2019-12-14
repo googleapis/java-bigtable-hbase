@@ -20,7 +20,7 @@ import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLAC
 import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_PROJECT_ID;
 import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_TABLE_ID;
 
-import com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
