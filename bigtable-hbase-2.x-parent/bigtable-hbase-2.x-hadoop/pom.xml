@@ -80,7 +80,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>${hadoop.version.2}</version>
+      <version>${hbase2-hadoop.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>

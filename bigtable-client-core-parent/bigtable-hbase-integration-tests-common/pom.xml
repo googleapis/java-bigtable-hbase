@@ -57,7 +57,7 @@ limitations under the License.
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-            <version>${hadoop.version.1}</version>
+            <version>${hbase1-hadoop.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
