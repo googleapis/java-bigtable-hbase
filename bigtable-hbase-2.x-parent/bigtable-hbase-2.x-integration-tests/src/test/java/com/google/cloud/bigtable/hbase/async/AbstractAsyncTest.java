@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.async;
 import com.google.cloud.bigtable.hbase.AbstractTest;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.util.concurrent.ExecutionException;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -32,7 +33,8 @@ public abstract class AbstractAsyncTest extends AbstractTest {
     SharedTestEnvRule sharedEnv = SharedTestEnvRule.getInstance();
     AsyncConnection conn = (AsyncConnection) sharedEnv.getClosable(CONN_KEY);
     if (conn == null) {
-      conn = ConnectionFactory.createAsyncConnection(sharedEnv.getConfiguration()).get();
+      Configuration sharedEnvConfiguration = sharedEnv.getConfiguration();
+      conn = ConnectionFactory.createAsyncConnection(sharedEnvConfiguration).get();
       sharedEnv.registerClosable(CONN_KEY, conn);
     }
     return conn;
