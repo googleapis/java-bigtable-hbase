@@ -1,28 +1,41 @@
 {
   "extends": [
-    "config:base"
-  ],
-  "ignoreDeps": [
-    "com.google.guava:guava",
-    "com.google.protobuf:protobuf-java",
-    "io.dropwizard.metrics:metrics-core",
-    "io.dropwizard.metrics:metrics-graphite",
-    "io.opencensus:opencensus-api",
-    "io.opencensus:opencensus-contrib-grpc-util",
-    "org.apache.hadoop:hadoop-client"
+    ":separateMajorReleases",
+    ":combinePatchMinorReleases",
+    ":ignoreUnstable",
+    ":prImmediately",
+    ":updateNotScheduled",
+    ":automergeDisabled",
+    ":ignoreModulesAndTests",
+    ":maintainLockFilesDisabled",
+    ":autodetectPinVersions"
   ],
   "packageRules": [
     {
-      "packagePatterns": ["^io.grpc:grpc-"],
-      "groupName": "gRPC packages"
+      "packagePatterns": [
+        "^com.google.guava:"
+      ],
+      "versionScheme": "docker"
     },
     {
-      "packagePatterns": ["^com.google.protobuf:protobuf-"],
-      "groupName": "Protobuf packages"
+      "packagePatterns": [
+        "*"
+      ],
+      "semanticCommitType": "deps",
+      "semanticCommitScope": null
     },
     {
-      "packagePatterns": ["^io.opencensus:opencensus-"],
-      "groupName": "OpenCensus packages"
+      "packagePatterns": [
+        "^org.apache.maven",
+        "^org.jacoco:",
+        "^org.codehaus.mojo:",
+        "^org.sonatype.plugins:",
+        "^com.coveo:",
+        "^com.google.cloud:google-cloud-shared-config"
+      ],
+      "semanticCommitType": "build",
+      "semanticCommitScope": "deps"
     }
-  ]
+  ],
+  "semanticCommits": true
 }
