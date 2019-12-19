@@ -59,7 +59,7 @@ class MiniClusterEnv extends SharedTestEnv {
   @Override
   protected void teardown() throws IOException {
     helper.shutdownMiniHBaseCluster();
-    System.out.println("Cleaning up testDir: " + helper.getDataTestDir());
+    LOG.info("Cleaning up testDir: " + helper.getDataTestDir());
     if (!helper.cleanupTestDir()) {
       LOG.warn("Failed to clean up testDir");
     }
