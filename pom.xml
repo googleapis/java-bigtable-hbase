@@ -64,7 +64,7 @@ limitations under the License.
             Temporary override for grpc version. This is necessary because bigtable-client-core
             isn't compatible with the latest version of google-cloud-bigtable, but we need new
             version of grpc for direct path. This should be removed in the next major version bump -->
-        <grpc.version>1.25.0</grpc.version>
+        <grpc.version>1.26.0</grpc.version>
         <opencensus.version>0.23.0</opencensus.version>
         <checkerframework.version>2.5.5</checkerframework.version>
         <threeten.version>1.4.0</threeten.version>
