@@ -95,17 +95,6 @@ limitations under the License.
         </snapshotRepository>
     </distributionManagement>
 
-    <repositories>
-        <repository>
-            <id>Apache Snapshots Repository</id>
-            <url>https://repository.apache.org/content/repositories/snapshots/</url>
-        </repository>
-        <repository>
-            <id>Sonatype Snapshots Repository</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
-
     <scm>
         <connection>scm:git:git@github.com/googleapis/java-bigtable-hbase.git</connection>
         <developerConnection>scm:git:git@github.com/googleapis/java-bigtable-hbase.git</developerConnection>
