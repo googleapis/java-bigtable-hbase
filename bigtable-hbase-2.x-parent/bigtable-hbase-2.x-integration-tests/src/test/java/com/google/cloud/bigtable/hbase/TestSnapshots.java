@@ -87,6 +87,13 @@ public class TestSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
+  protected void deleteTableSnapshots(Pattern tableName, Pattern snapshotName) throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      admin.deleteTableSnapshots(tableName, snapshotName);
+    }
+  }
+
+  @Override
   protected int listTableSnapshotsSize(String tableNameRegex, String snapshotNameRegex)
       throws IOException {
     try (Admin admin = getConnection().getAdmin()) {

@@ -17,8 +17,8 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import avro.shaded.com.google.common.collect.Sets;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.google.common.primitives.UnsignedBytes;
 import java.io.EOFException;
 import java.io.IOException;

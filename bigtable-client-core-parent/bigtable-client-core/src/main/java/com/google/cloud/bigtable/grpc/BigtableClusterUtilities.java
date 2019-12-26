@@ -26,6 +26,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
+import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -150,7 +151,10 @@ public class BigtableClusterUtilities implements AutoCloseable {
         Preconditions.checkNotNull(
             options.getInstanceName(),
             "ProjectId and instanceId have to be set in the options.  Use '-' for all instanceIds.");
-    channel = BigtableSession.createChannelPool(options.getAdminHost(), options);
+
+    ClientInterceptor[] interceptors =
+        BigtableSession.createInterceptors(options).toArray(new ClientInterceptor[0]);
+    channel = BigtableSession.createNettyChannel(options.getAdminHost(), options, interceptors);
     client = new BigtableInstanceGrpcClient(channel);
   }
 

@@ -28,8 +28,10 @@ import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.io.TimeRange;
 
@@ -225,5 +227,16 @@ public class BigtableTable extends AbstractBigtableTable {
         return CheckAndMutateUtil.wasMutationApplied(builder.build(), response);
       }
     };
+  }
+
+  @Override
+  public <R> void batchCallback(
+      List<? extends Row> actions, Object[] results, Batch.Callback<R> callback)
+      throws IOException, InterruptedException {
+    // This check is intentional because HBase-2.x does not perform param validation before return.
+    if (actions.isEmpty()) {
+      return;
+    }
+    super.batchCallback(actions, results, callback);
   }
 }

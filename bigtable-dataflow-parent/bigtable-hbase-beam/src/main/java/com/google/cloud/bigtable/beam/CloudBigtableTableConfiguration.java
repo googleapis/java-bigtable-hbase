@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import com.google.api.core.InternalExtensionOnly;
+import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.beam.sdk.options.ValueProvider;

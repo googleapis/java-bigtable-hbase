@@ -15,12 +15,12 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
-import com.google.api.client.util.Lists;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimaps;
 import java.util.Collection;
 import java.util.Collections;
