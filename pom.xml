@@ -59,7 +59,7 @@ limitations under the License.
 
         <!-- google-cloud-java related dependency versions -->
         <!-- TODO: check if commons-codec was upgraded to 1.13 in org.apache.httpcomponents from http-client-->
-        <google-cloud.version>0.109.0-alpha</google-cloud.version>
+        <google-cloud.version>0.119.0-alpha</google-cloud.version>
         <!--
             Temporary override for grpc version. This is necessary because bigtable-client-core
             isn't compatible with the latest version of google-cloud-bigtable, but we need new
