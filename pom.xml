@@ -59,7 +59,7 @@ limitations under the License.
 
         <!-- google-cloud-java related dependency versions -->
         <!-- TODO: check if commons-codec was upgraded to 1.13 in org.apache.httpcomponents from http-client-->
-        <google-cloud.version>0.116.0-alpha</google-cloud.version>
+        <google-cloud.version>0.119.0-alpha</google-cloud.version>
         <opencensus.version>0.23.0</opencensus.version>
         <checkerframework.version>2.5.5</checkerframework.version>
 
