@@ -32,6 +32,7 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.AttributeValue;
@@ -226,7 +227,8 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Result[] get(List<Get> gets) throws IOException {
     LOG.trace("get(List<>)");
-    if (gets == null || gets.isEmpty()) {
+    Preconditions.checkNotNull(gets);
+    if (gets.isEmpty()) {
       return new Result[0];
     } else if (gets.size() == 1) {
       try {
@@ -347,7 +349,8 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void put(List<Put> puts) throws IOException {
     LOG.trace("put(List<Put>)");
-    if (puts == null || puts.isEmpty()) {
+    Preconditions.checkNotNull(puts);
+    if (puts.isEmpty()) {
       return;
     } else if (puts.size() == 1) {
       try {
@@ -484,14 +487,17 @@ public abstract class AbstractBigtableTable implements Table {
 
   /** {@inheritDoc} */
   @Override
-  public void mutateRow(RowMutations rm) throws IOException {
+  public void mutateRow(RowMutations rowMutations) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
+    if (rowMutations.getMutations().isEmpty()) {
+      return;
+    }
     Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      clientWrapper.mutateRow(hbaseAdapter.adapt(rm));
+      clientWrapper.mutateRow(hbaseAdapter.adapt(rowMutations));
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
-      throw logAndCreateIOException("mutateRow", rm.getRow(), t);
+      throw logAndCreateIOException("mutateRow", rowMutations.getRow(), t);
     } finally {
       span.end();
     }

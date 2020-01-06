@@ -36,7 +36,7 @@ limitations under the License.
 
 <dependencies>
   <dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
+    <groupId>${project.groupId}</groupId>
     <artifactId>bigtable-hbase-2.x</artifactId>
     <version>${project.version}</version>
   </dependency>
@@ -172,6 +172,16 @@ limitations under the License.
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
               <artifactSet>
                 <excludes>
                   <!-- exclude user visible deps -->
@@ -287,6 +297,14 @@ limitations under the License.
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+          <usedDependencies>com.google.cloud.bigtable:bigtable-hbase-2.x,org.apache.hbase:hbase-shaded-client,com.google.code.findbugs:jsr305,commons-logging:commons-logging,io.dropwizard.metrics:metrics-core,org.checkerframework:checker-compat-qual,io.opencensus:opencensus-impl,io.opencensus:opencensus-contrib-zpages,io.opencensus:opencensus-exporter-trace-stackdriver</usedDependencies>
+        </configuration>
       </plugin>
     </plugins>
   </build>

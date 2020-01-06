@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -26,6 +28,7 @@ import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -131,6 +134,69 @@ public class TestBufferedMutator extends AbstractTest {
       for (int i = 0; i < results.length; i++) {
         assertArrayEquals(mutations.get(i).getRow(), results[i].getRow());
       }
+    }
+  }
+
+  @Test
+  public void testBufferedMutatorWithNullAndEmptyValues() throws Exception {
+    BufferedMutatorParams params = new BufferedMutatorParams(sharedTestEnv.getDefaultTableName());
+    try (BufferedMutator bm = getConnection().getBufferedMutator(params)) {
+      Exception actualError = null;
+      try {
+        bm.mutate((List<? extends Mutation>) null);
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNotNull(actualError);
+      actualError = null;
+
+      try {
+        bm.mutate(ImmutableList.<Mutation>of());
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+      actualError = null;
+
+      try {
+        bm.mutate(new Put(new byte[0]));
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNotNull(actualError);
+      actualError = null;
+
+      try {
+        byte[] rowKey = dataHelper.randomData("test-row");
+        bm.mutate(new Put(rowKey).addColumn(COLUMN_FAMILY, null, value));
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+
+      try {
+        byte[] rowKey = dataHelper.randomData("test-row");
+        bm.mutate(new Put(rowKey).addColumn(COLUMN_FAMILY, new byte[0], value));
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+
+      try {
+        byte[] rowKey = dataHelper.randomData("test-row");
+        bm.mutate(new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, null));
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
+
+      try {
+        byte[] rowKey = dataHelper.randomData("test-row");
+        bm.mutate(new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, new byte[0]));
+      } catch (Exception ex) {
+        actualError = ex;
+      }
+      assertNull(actualError);
     }
   }
 

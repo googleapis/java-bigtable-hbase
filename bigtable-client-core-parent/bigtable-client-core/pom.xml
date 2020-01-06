@@ -74,6 +74,11 @@ limitations under the License.
             <groupId>com.google.api.grpc</groupId>
             <artifactId>proto-google-iam-v1</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.google.api.grpc</groupId>
+            <artifactId>proto-google-common-protos</artifactId>
+        </dependency>
+
         <!-- Common -->
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
@@ -90,8 +95,21 @@ limitations under the License.
             <version>${commons-logging.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.google.api</groupId>
+            <artifactId>gax</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.threeten</groupId>
+            <artifactId>threetenbp</artifactId>
+            <version>${threeten.version}</version>
         </dependency>
 
         <!-- Auth -->
@@ -144,6 +162,14 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
+            <artifactId>grpc-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-alts</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
             <artifactId>grpc-core</artifactId>
         </dependency>
         <dependency>
@@ -162,7 +188,6 @@ limitations under the License.
             <groupId>io.grpc</groupId>
             <artifactId>grpc-auth</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.google.api</groupId>
             <artifactId>gax-grpc</artifactId>
@@ -195,9 +220,14 @@ limitations under the License.
 
         <!-- Test -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.10.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-testing</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -206,20 +236,17 @@ limitations under the License.
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.9.10</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- this comes before junit to override junit's transitive hamcrest-core dependency-->
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
+            <artifactId>hamcrest</artifactId>
+            <version>${hamcrest.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-testing</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -236,6 +263,15 @@ limitations under the License.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <configuration>
+                    <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions.
+                    grpc-alts is a runtime dep-->
+                    <usedDependencies>commons-codec:commons-codec,io.grpc:grpc-alts</usedDependencies>
+                </configuration>
             </plugin>
         </plugins>
     </build>

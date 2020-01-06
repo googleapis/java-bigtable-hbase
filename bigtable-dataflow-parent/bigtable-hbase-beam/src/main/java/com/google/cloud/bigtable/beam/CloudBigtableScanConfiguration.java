@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import com.google.api.core.InternalExtensionOnly;
+import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
