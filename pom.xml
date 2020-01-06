@@ -60,7 +60,7 @@ limitations under the License.
         <!-- google-cloud-java related dependency versions -->
         <!-- TODO: check if commons-codec was upgraded to 1.13 in org.apache.httpcomponents from http-client-->
         <google-cloud.version>0.116.0-alpha</google-cloud.version>
-        <grpc.version>1.24.0</grpc.version>
+        <grpc.version>1.25.0</grpc.version>
         <opencensus.version>0.23.0</opencensus.version>
         <checkerframework.version>2.5.5</checkerframework.version>
         <threeten.version>1.4.0</threeten.version>
@@ -81,6 +81,7 @@ limitations under the License.
         <beam.version>2.15.0</beam.version>
         <!-- referred from bigtable-beam-import and bigtable-emulator -->
         <guava.version>28.0-android</guava.version>
+        <beam-guava.version>20.0</beam-guava.version>
         <beam-guava.version>20.0</beam-guava.version>
 
         <!-- Benchmarks related dependencies -->

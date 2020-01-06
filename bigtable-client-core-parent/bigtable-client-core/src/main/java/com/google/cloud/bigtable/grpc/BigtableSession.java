@@ -409,7 +409,6 @@ public class BigtableSession implements Closeable {
     CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
     RetryOptions retryOptions = options.getRetryOptions();
     CredentialOptions credentialOptions = options.getCredentialOptions();
-
     try {
       ClientInterceptor credentialsInterceptor =
           credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);

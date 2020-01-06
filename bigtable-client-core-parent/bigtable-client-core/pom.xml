@@ -32,6 +32,17 @@ limitations under the License.
 
     <dependencyManagement>
         <dependencies>
+            <!--
+            Temporary override for grpc version. This is necessary because bigtable-client-core
+            isn't compatible with the latest version of google-cloud-bigtable, but we need new
+            version of grpc for direct path. This should be removed in the next major version bump -->
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-bom</artifactId>
+                <version>${grpc.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>google-cloud-clients</artifactId>
@@ -93,6 +104,14 @@ limitations under the License.
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>${commons-logging.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.api</groupId>
+            <artifactId>gax</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-core</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.api</groupId>
@@ -188,9 +207,21 @@ limitations under the License.
             <groupId>io.grpc</groupId>
             <artifactId>grpc-auth</artifactId>
         </dependency>
+
+        <!--
+            Temporary override for grpc version. This is necessary because bigtable-client-core
+            isn't compatible with the latest version of google-cloud-bigtable, but we need new
+            version of grpc for direct path. This should be removed in the next major version bump -->
         <dependency>
             <groupId>com.google.api</groupId>
             <artifactId>gax-grpc</artifactId>
+
+            <exclusions>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Metrics -->
