@@ -54,7 +54,7 @@ public class TestCachedConnections extends AbstractTest {
 
   @Test
   public void testConnectionsAreCaching() throws IOException {
-    String[] connectionEndpoints = {"bigtable.googleapis.com", "bigtable2.googleapis.com"};
+    String[] connectionEndpoints = {"bigtable.googleapis.com", "batch-bigtable.googleapis.com"};
 
     Configuration configuration = sharedTestEnv.getConfiguration();
     configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
