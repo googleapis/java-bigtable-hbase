@@ -4,6 +4,8 @@ import com.google.bigtable.repackaged.com.google.api.gax.rpc.ClientContext;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
@@ -28,6 +30,8 @@ public class TestCachedConnections extends AbstractTest {
   private byte[] columnQualifier = dataHelper.randomData("qual-");
   private byte[] columnValue = dataHelper.randomData("value-");
 
+  private List<BigtableConnection> openedConnections = new ArrayList<>();
+
   @Before
   public void setup() throws IOException {
     Table table = getDefaultTable();
@@ -42,6 +46,10 @@ public class TestCachedConnections extends AbstractTest {
     Table table = getDefaultTable();
 
     table.delete(new Delete(rowName));
+
+    for (BigtableConnection connection : openedConnections) {
+      connection.close();
+    }
   }
 
   @Test
@@ -79,6 +87,7 @@ public class TestCachedConnections extends AbstractTest {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, endpoint);
     BigtableConnection connection =
         (BigtableConnection) BigtableConfiguration.connect(configuration);
+    openedConnections.add(connection);
     checkRows(connection);
     return connection.getSession().getCachedClientContexts();
   }
