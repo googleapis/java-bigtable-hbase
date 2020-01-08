@@ -26,7 +26,6 @@ import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,6 +46,8 @@ import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -99,7 +100,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class CloudBigtableBeamITTest {
 
-  private final Logger LOG = new Logger(getClass());
+  private final Log LOG = LogFactory.getLog(getClass());
 
   private static final String STAGING_LOCATION_KEY = "dataflowStagingLocation";
   private static final String ZONE_ID_KEY = "dataflowZoneId";
@@ -144,7 +145,7 @@ public class CloudBigtableBeamITTest {
         admin.deleteTable(TABLE_NAME);
       }
       admin.createTable(new HTableDescriptor(TABLE_NAME).addFamily(new HColumnDescriptor(FAMILY)));
-      LOG.info("Created a table to perform batching: %s", TABLE_NAME);
+      LOG.info(String.format("Created a table to perform batching: %s", TABLE_NAME));
     }
   }
 
@@ -171,7 +172,8 @@ public class CloudBigtableBeamITTest {
   private void testWriteToBigtable() {
     DataflowPipelineOptions options = createOptions();
     options.setAppName("testWriteToBigtable-" + System.currentTimeMillis());
-    LOG.info("Started writeToBigtable test with jobName as: %s", options.getAppName());
+    LOG.info(
+        String.format("Started writeToBigtable test with jobName as: %s", options.getAppName()));
 
     CloudBigtableTableConfiguration config =
         new CloudBigtableTableConfiguration.Builder()
@@ -202,7 +204,8 @@ public class CloudBigtableBeamITTest {
   private Pipeline testReadFromBigtable() {
     PipelineOptions options = createOptions();
     options.setJobName("testReadFromBigtable-" + System.currentTimeMillis());
-    LOG.info("Started readFromBigtable test with jobName as: %s", options.getJobName());
+    LOG.info(
+        String.format("Started readFromBigtable test with jobName as: %s", options.getJobName()));
 
     Scan scan = new Scan();
     scan.setFilter(new FirstKeyOnlyFilter());

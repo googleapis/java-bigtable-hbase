@@ -34,6 +34,43 @@ limitations under the License.
       <artifactId>bigtable-hbase-beam</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+        pom.xml files when invoking the build from a parent project. So we have to manually exclude
+        the dependencies. Note that this works in conjunction with the manually promoted dependencies
+        in bigtable-hbase-1.x-shaded/pom.xml -->
+        <exclusion>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>bigtable-hbase-1.x</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-core</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-extensions-google-cloud-platform-core</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>com.google.auto.value</groupId>
@@ -45,19 +82,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-    </dependency>
-
-
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-io-hadoop-file-system</artifactId>
-      <version>${beam.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
-      <version>${beam.version}</version>
+      <version>${beam-guava.version}</version>
     </dependency>
 
     <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
@@ -80,23 +105,24 @@ limitations under the License.
       <version>2.7.5</version>
     </dependency>
 
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>${commons-logging.version}</version>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
     <!-- Test -->
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-core</artifactId>
-      <version>${hamcrest.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-library</artifactId>
-      <version>${hamcrest.version}</version>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-direct-java</artifactId>
+      <version>${beam.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -105,11 +131,17 @@ limitations under the License.
       <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
-
+    <!-- this comes before junit to override junit's transitive hamcrest-core dependency-->
     <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-runners-direct-java</artifactId>
-      <version>${beam.version}</version>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <version>${hamcrest.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -189,6 +221,16 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+          <usedDependencies>com.google.auto.value:auto-value,commons-codec:commons-codec,com.squareup.okhttp:okhttp,org.apache.beam:beam-sdks-java-io-hadoop-common,org.apache.beam:beam-runners-direct-java</usedDependencies>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 

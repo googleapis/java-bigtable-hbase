@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
@@ -25,8 +27,31 @@ import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
+import org.junit.Test;
 
 public class TestSnapshots extends AbstractTestSnapshot {
+
+  @Test
+  public void testSnapshotWithSingleParam() throws IOException {
+    Exception actualError = null;
+    try (Admin admin = getConnection().getAdmin()) {
+      try {
+        admin.snapshot(null);
+      } catch (Exception e) {
+        actualError = e;
+      }
+      assertNotNull(actualError);
+      assertTrue(actualError instanceof NullPointerException);
+      actualError = null;
+
+      try {
+        admin.snapshot("", tableName, null);
+      } catch (Exception e) {
+        actualError = e;
+      }
+      assertNotNull(actualError);
+    }
+  }
 
   @Override
   protected void createTable(TableName tableName) throws IOException {
@@ -84,6 +109,13 @@ public class TestSnapshots extends AbstractTestSnapshot {
   protected void deleteSnapshots(Pattern pattern) throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
       admin.deleteSnapshots(pattern);
+    }
+  }
+
+  @Override
+  protected void deleteTableSnapshots(Pattern tableName, Pattern snapshotName) throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      admin.deleteTableSnapshots(tableName, snapshotName);
     }
   }
 

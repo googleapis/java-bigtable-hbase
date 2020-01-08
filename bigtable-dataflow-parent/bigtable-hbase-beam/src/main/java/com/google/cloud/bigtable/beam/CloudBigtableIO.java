@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import com.google.api.core.InternalApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;

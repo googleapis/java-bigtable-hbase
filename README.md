@@ -21,6 +21,8 @@ Hadoop, as well as Google Cloud Platform products like Cloud Dataflow and
 Dataproc. Plus, Bigtable supports the open-source, industry-standard HBase API,
 which makes it easy for development teams to get started.
 
+Note: Please use [google-cloud-bigtable][google-cloud-bigtable] to access Bigtable APIs instead of `bigtable-core-client`. These artifacts are meant to wrap HBase over Bigtable API. 
+
 ## Project setup, installation, and configuration
 
 ### Prerequisites
@@ -150,7 +152,7 @@ maven repository. When you disable that profile, attach workspace sources to the
 | Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bigtable-examples][maven-examples-repo] | | |
 | HBase client | Java | [googleapis/cloud-bigtable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
 | Cloud Bigtable GoLang | Go | [googleapis/google-cloud-go](https://github.com/googleapis/google-cloud-go) | N/A | GA |
-| Cloud Bigtable Java | java | [googleapis/google-cloud-java](http://github.com/googleapis/google-cloud-java) | [![Maven][maven-google-cloud-java-shield]][maven-google-cloud-java-maven-search] | Beta |
+| Cloud Bigtable Java | Java | [googleapis/java-bigtable][google-cloud-bigtable] | [![Maven][maven-google-cloud-java-shield]][maven-google-cloud-java-maven-search] | GA |
 | Cloud Bigtable Python | Python | [googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | [![PyPI version](https://badge.fury.io/py/google-cloud-bigtable.svg)](https://badge.fury.io/py/google-cloud-bigtable) | Beta |
 | Cloud Bigtable Node.js | Node | [googleaps/nodejs-bigtable][maven-bigtable-nodejs-repo] | [![npm version][npm-shield]][npm-bigtable-client] | GA |
 | Cloud Bigtable C# | C# | [googleapis/google-cloud-dotnet](http://github.com/googleapis/google-cloud-dotnet) | [![NuGet version](https://badge.fury.io/nu/Google.Cloud.Bigtable.V2.svg)](https://badge.fury.io/nu/Google.Cloud.Bigtable.V2) | GA |
@@ -169,8 +171,8 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 
 <!-- references -->
 
-[travis-shield]: https://travis-ci.org/googleapis/cloud-bigtable-client.svg
-[travis-link]: https://travis-ci.org/googleapis/cloud-bigtable-client/builds
+[travis-shield]: https://travis-ci.org/googleapis/java-bigtable-hbase.svg
+[travis-link]: https://travis-ci.org/googleapis/java-bigtable-hbase/builds
 [maven-hbase-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg
 [maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
 [maven-google-cloud-java-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud/google-cloud-bigtable/badge.svg
@@ -186,3 +188,4 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 [google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
 [google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/master/google-cloud-testing/google-cloud-bigtable-emulator
+[google-cloud-bigtable]: https://github.com/googleapis/java-bigtable

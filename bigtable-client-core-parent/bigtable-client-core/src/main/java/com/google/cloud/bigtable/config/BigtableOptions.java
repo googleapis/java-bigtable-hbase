@@ -33,6 +33,8 @@ import java.util.concurrent.TimeUnit;
  *
  * @author sduskis
  * @version $Id: $Id
+ * @see <a href="https://github.com/googleapis/java-bigtable">google-cloud-bigtable</a> java
+ *     idiomatic client to access cloud Bigtable API.
  */
 // TODO: Perhaps break this down into smaller options objects?
 // TODO: This should be @Autovalue + Builder

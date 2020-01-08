@@ -50,32 +50,38 @@ limitations under the License.
 
         <!-- core dependency versions -->
         <dropwizard.metrics.version>3.2.6</dropwizard.metrics.version>
-        <slf4j.version>1.7.28</slf4j.version>
+        <slf4j.version>1.7.29</slf4j.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-logging.version>1.2</commons-logging.version>
-        <auto-value.version>1.6.6</auto-value.version>
+        <auto-value.version>1.7</auto-value.version>
         <jsr305.version>3.0.2</jsr305.version>
-        <hamcrest.version>2.1</hamcrest.version>
+        <hamcrest.version>2.2</hamcrest.version>
 
         <!-- google-cloud-java related dependency versions -->
         <!-- TODO: check if commons-codec was upgraded to 1.13 in org.apache.httpcomponents from http-client-->
         <google-cloud.version>0.116.0-alpha</google-cloud.version>
+      <grpc.version>1.24.0</grpc.version>
         <opencensus.version>0.23.0</opencensus.version>
         <checkerframework.version>2.5.5</checkerframework.version>
+        <threeten.version>1.4.0</threeten.version>
 
         <!-- hbase dependency versions -->
         <hbase.version.1>1.4.10</hbase.version.1>
         <hbase.version.2>2.2.0</hbase.version.2>
         <hbase.version>${hbase.version.1}</hbase.version>
-        <hadoop.version>2.7.4</hadoop.version>
+        <hbase1-hadoop.version>2.7.4</hbase1-hadoop.version>
+        <hbase2-hadoop.version>2.8.5</hbase2-hadoop.version>
+        <hbase-guava.version>12.0.1</hbase-guava.version>
+        <hbase-protobuf.version>2.5.0</hbase-protobuf.version>
 
         <!-- testing dependency versions -->
         <junit.version>4.12</junit.version>
-        <mockito.version>3.0.0</mockito.version>
+        <mockito.version>3.1.0</mockito.version>
         <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
         <beam.version>2.15.0</beam.version>
         <!-- referred from bigtable-beam-import and bigtable-emulator -->
         <guava.version>28.0-android</guava.version>
+        <beam-guava.version>20.0</beam-guava.version>
 
         <!-- Benchmarks related dependencies -->
         <jmh.version>1.19</jmh.version>
@@ -88,21 +94,10 @@ limitations under the License.
         </snapshotRepository>
     </distributionManagement>
 
-    <repositories>
-        <repository>
-            <id>Apache Snapshots Repository</id>
-            <url>https://repository.apache.org/content/repositories/snapshots/</url>
-        </repository>
-        <repository>
-            <id>Sonatype Snapshots Repository</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
-
     <scm>
-        <connection>scm:git:git@github.com:GoogleCloudPlatform/cloud-bigtable-client.git</connection>
-        <developerConnection>scm:git:git@github.com:GoogleCloudPlatform/cloud-bigtable-client.git</developerConnection>
-        <url>https://github.com/GoogleCloudPlatform/cloud-bigtable-client</url>
+        <connection>scm:git:git@github.com/googleapis/java-bigtable-hbase.git</connection>
+        <developerConnection>scm:git:git@github.com/googleapis/java-bigtable-hbase.git</developerConnection>
+        <url>https://github.com/googleapis/java-bigtable-hbase</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -115,7 +110,7 @@ limitations under the License.
 
     <issueManagement>
         <system>GitHub Issues</system>
-        <url>https://github.com/GoogleCloudPlatform/cloud-bigtable-client/issues</url>
+        <url>https://github.com/googleapis/java-bigtable-hbase/issues</url>
     </issueManagement>
 
     <build>
@@ -161,7 +156,7 @@ limitations under the License.
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.1.2</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -268,7 +263,7 @@ limitations under the License.
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.0</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>

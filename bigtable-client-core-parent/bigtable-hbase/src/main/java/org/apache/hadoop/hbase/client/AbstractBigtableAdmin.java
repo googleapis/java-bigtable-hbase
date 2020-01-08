@@ -21,6 +21,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
@@ -36,6 +37,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -161,7 +163,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public HTableDescriptor[] listTables() throws IOException {
     // NOTE: We don't have systables.
-    return getTableDescriptors(listTableNames());
+    return getTableDescriptorsIgnoreFailure(listTableNames());
   }
 
   private HTableDescriptor[] getTableDescriptors(TableName[] tableNames) throws IOException {
@@ -172,11 +174,40 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return response;
   }
 
+  // BigtableTableAdmin#listTables doesn't include table details (like column families), so the
+  // table descriptors must be fetched into 2 phases:
+  // 1. list all of the names
+  // 2. fetch the table details
+  //
+  // Due to the non-atomic listing, tables in the list might disappear before fetching the details.
+  // This method will suppress those tables.
+  private HTableDescriptor[] getTableDescriptorsIgnoreFailure(TableName[] tableNames)
+      throws IOException {
+    List<HTableDescriptor> descriptors = new ArrayList<>();
+    for (TableName tableName : tableNames) {
+      try {
+        descriptors.add(getTableDescriptor(tableName));
+      } catch (IOException ex) {
+
+        // This suppresses TableNotFoundException, which is for consistency with HBase layers,
+        // and FailedPreconditionException or Status.Code.FAILED_PRECONDITION, which comes from
+        // Bigtable table creation internal state. Both of these can occur due to race condition.
+        if (ex instanceof TableNotFoundException
+            || ex.getCause() instanceof FailedPreconditionException
+            || Status.Code.FAILED_PRECONDITION == Status.fromThrowable(ex.getCause()).getCode()) {
+          continue;
+        }
+        throw ex;
+      }
+    }
+    return descriptors.toArray(new HTableDescriptor[0]);
+  }
+
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTables(Pattern pattern) throws IOException {
     // NOTE: We don't have systables.
-    return getTableDescriptors(listTableNames(pattern));
+    return getTableDescriptorsIgnoreFailure(listTableNames(pattern));
   }
 
   /** {@inheritDoc} */
@@ -198,6 +229,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public TableName[] listTableNames(Pattern pattern) throws IOException {
+    if (pattern == null) {
+      return listTableNames();
+    }
     List<TableName> result = new ArrayList<>();
 
     for (TableName tableName : listTableNames()) {
@@ -524,6 +558,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public boolean isTableDisabled(TableName tableName) throws IOException {
+    Preconditions.checkNotNull(tableName, "TableName cannot be null");
     return disabledTables.contains(tableName);
   }
 
@@ -697,6 +732,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public HTableDescriptor[] getTableDescriptorsByTableName(List<TableName> tableNames)
       throws IOException {
+    if (tableNames == null || tableNames.isEmpty()) {
+      return listTables();
+    }
+
     TableName[] tableNameArray = tableNames.toArray(new TableName[tableNames.size()]);
     return getTableDescriptors(tableNameArray);
   }
@@ -704,6 +743,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
+    Preconditions.checkNotNull(names);
+    if (names.isEmpty()) {
+      return listTables();
+    }
+
     TableName[] tableNameArray = new TableName[names.size()];
     for (int i = 0; i < names.size(); i++) {
       tableNameArray[i] = TableName.valueOf(names.get(i));
@@ -837,6 +881,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
    * @throws IOException if any.
    */
   protected Operation snapshotTable(String snapshotName, TableName tableName) throws IOException {
+    Preconditions.checkNotNull(snapshotName);
+    Preconditions.checkNotNull(tableName);
+    if (snapshotName.isEmpty()) {
+      // HBase returns an empty operation instance in case snapshotName is an empty string.
+      return Operation.newBuilder().build();
+    }
 
     SnapshotTableRequest.Builder requestBuilder =
         SnapshotTableRequest.newBuilder()
@@ -948,6 +998,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void deleteSnapshot(String snapshotName) throws IOException {
+    Preconditions.checkNotNull(snapshotName);
+    if (snapshotName.isEmpty()) {
+      return;
+    }
+
     String btSnapshotName = getClusterName().toSnapshotName(snapshotName);
     DeleteSnapshotRequest request =
         DeleteSnapshotRequest.newBuilder().setName(btSnapshotName).build();
