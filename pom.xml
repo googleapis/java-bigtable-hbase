@@ -49,21 +49,14 @@ limitations under the License.
         <compileSource.1.8>1.8</compileSource.1.8>
 
         <!-- core dependency versions -->
+        <bigtable.version>1.9.1-SNAPSHOT</bigtable.version>
         <dropwizard.metrics.version>3.2.6</dropwizard.metrics.version>
         <slf4j.version>1.7.29</slf4j.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-logging.version>1.2</commons-logging.version>
-        <auto-value.version>1.7</auto-value.version>
         <jsr305.version>3.0.2</jsr305.version>
         <hamcrest.version>2.2</hamcrest.version>
-
-        <!-- google-cloud-java related dependency versions -->
-        <!-- TODO: check if commons-codec was upgraded to 1.13 in org.apache.httpcomponents from http-client-->
-        <google-cloud.version>0.116.0-alpha</google-cloud.version>
-        <grpc.version>1.24.0</grpc.version>
-        <opencensus.version>0.23.0</opencensus.version>
         <checkerframework.version>2.5.5</checkerframework.version>
-        <threeten.version>1.4.0</threeten.version>
 
         <!-- hbase dependency versions -->
         <hbase.version.1>1.4.10</hbase.version.1>
@@ -82,6 +75,7 @@ limitations under the License.
         <!-- referred from bigtable-beam-import and bigtable-emulator -->
         <guava.version>28.0-android</guava.version>
         <beam-guava.version>20.0</beam-guava.version>
+        <beam-auto-value.version>1.7</beam-auto-value.version>
 
         <!-- Benchmarks related dependencies -->
         <jmh.version>1.19</jmh.version>

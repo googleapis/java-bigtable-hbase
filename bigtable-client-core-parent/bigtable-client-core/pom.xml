@@ -32,21 +32,17 @@ limitations under the License.
 
     <dependencyManagement>
         <dependencies>
-            <!--
-            Temporary override for grpc version. This is necessary because bigtable-client-core
-            isn't compatible with the latest version of google-cloud-bigtable, but we need new
-            version of grpc for direct path. This should be removed in the next major version bump -->
             <dependency>
-                <groupId>io.grpc</groupId>
-                <artifactId>grpc-bom</artifactId>
-                <version>${grpc.version}</version>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>google-cloud-bigtable-bom</artifactId>
+                <version>${bigtable.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.cloud</groupId>
-                <artifactId>google-cloud-clients</artifactId>
-                <version>${google-cloud.version}</version>
+                <artifactId>google-cloud-bigtable-deps-bom</artifactId>
+                <version>${bigtable.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -64,6 +60,7 @@ limitations under the License.
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>grpc-google-common-protos</artifactId>
+            <version>1.17.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.api.grpc</groupId>
@@ -120,7 +117,6 @@ limitations under the License.
         <dependency>
             <groupId>org.threeten</groupId>
             <artifactId>threetenbp</artifactId>
-            <version>${threeten.version}</version>
         </dependency>
 
         <!-- Auth -->
@@ -145,16 +141,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-core-http</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.threeten</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.codehaus.jackson</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!-- GRPC -->
@@ -200,20 +186,9 @@ limitations under the License.
             <artifactId>grpc-auth</artifactId>
         </dependency>
 
-        <!--
-            Temporary override for grpc version. This is necessary because bigtable-client-core
-            isn't compatible with the latest version of google-cloud-bigtable, but we need new
-            version of grpc for direct path. This should be removed in the next major version bump -->
         <dependency>
             <groupId>com.google.api</groupId>
             <artifactId>gax-grpc</artifactId>
-
-            <exclusions>
-                <exclusion>
-                    <groupId>io.grpc</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!-- Metrics -->
@@ -234,7 +209,7 @@ limitations under the License.
         </dependency>
 
         <!--  TODO: remove this dependency when upgraded through transitive dependency (http-client -> org.apache.httpcomponents:httpclient)
-        this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
+this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
