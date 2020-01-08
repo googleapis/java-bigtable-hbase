@@ -23,7 +23,6 @@ jdk:
 branches:
   only:
   - master
-  - bigtable-client-2.x
 
 # Skip the initial dependency install step
 install: true
