@@ -20,6 +20,7 @@ import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -29,8 +30,12 @@ import java.io.IOException;
  * This class wraps existing {@link BulkMutation} with Google-cloud-java's model.
  *
  * <p>For internal use only - public for technical reasons.
+ *
+ * <p>See {@link
+ * com.google.cloud.bigtable.grpc.BigtableSession#createBulkMutation(BigtableTableName)} as a public
+ * alternative.
  */
-@InternalApi("For internal usage only")
+@InternalApi("For internal usage only - please use BulkMutation")
 public class BulkMutationWrapper implements IBulkMutation {
 
   private final BulkMutation delegate;
