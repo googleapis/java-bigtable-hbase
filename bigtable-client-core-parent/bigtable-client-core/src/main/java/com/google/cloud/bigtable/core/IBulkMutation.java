@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.core;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
+
 import java.io.IOException;
 
 /**
@@ -25,8 +27,9 @@ import java.io.IOException;
  * request.
  *
  * <p>For internal use only - public for technical reasons.
+ * <p>See {@link com.google.cloud.bigtable.grpc.BigtableSession#createBulkMutation(BigtableTableName)} as a public alternative.
  */
-@InternalApi("For internal usage only")
+@InternalApi("For internal usage only - please use BulkMutation instead")
 public interface IBulkMutation extends AutoCloseable {
 
   /**
