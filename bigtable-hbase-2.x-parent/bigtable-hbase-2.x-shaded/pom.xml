@@ -70,7 +70,6 @@ limitations under the License.
   <dependency>
     <groupId>com.google.code.findbugs</groupId>
     <artifactId>jsr305</artifactId>
-    <version>${jsr305.version}</version>
   </dependency>
   <dependency>
     <groupId>commons-logging</groupId>
