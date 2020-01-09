@@ -24,8 +24,7 @@ import static org.mockito.Mockito.when;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.core.IBulkMutation;
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.concurrent.Future;
@@ -39,14 +38,12 @@ import org.mockito.Mockito;
 public class TestBulkMutationWrapper {
 
   private BulkMutation mockDelegate;
-  private RequestContext requestContext =
-      RequestContext.create("ProjectId", "instanceId", "appProfileId");
   private IBulkMutation bulkWrapper;
 
   @Before
   public void setUp() {
     mockDelegate = Mockito.mock(BulkMutation.class);
-    bulkWrapper = new BulkMutationWrapper(mockDelegate, requestContext);
+    bulkWrapper = new BulkMutationWrapper(mockDelegate);
   }
 
   @Test
@@ -65,8 +62,8 @@ public class TestBulkMutationWrapper {
 
   @Test
   public void testAddMutate() {
-    RowMutation rowMutation = RowMutation.create("tableId", "key");
-    MutateRowsRequest.Entry requestProto = rowMutation.toBulkProto(requestContext).getEntries(0);
+    RowMutationEntry rowMutation = RowMutationEntry.create("key");
+    MutateRowsRequest.Entry requestProto = rowMutation.toProto();
     when(mockDelegate.add(requestProto))
         .thenReturn(Futures.immediateFuture(MutateRowResponse.getDefaultInstance()));
     Future<Void> response = bulkWrapper.add(rowMutation);
@@ -83,7 +80,7 @@ public class TestBulkMutationWrapper {
     bulkWrapper.close();
     Exception actualEx = null;
     try {
-      bulkWrapper.add(RowMutation.create("tableId", "key"));
+      bulkWrapper.add(RowMutationEntry.create("key"));
     } catch (Exception e) {
       actualEx = e;
     }

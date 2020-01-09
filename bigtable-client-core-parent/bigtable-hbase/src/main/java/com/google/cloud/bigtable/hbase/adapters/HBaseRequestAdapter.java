@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.data.v2.models.MutationApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
@@ -145,10 +146,10 @@ public class HBaseRequestAdapter {
    * adapt.
    *
    * @param delete a {@link Delete} object.
-   * @return a {@link RowMutation} object.
+   * @return a {@link RowMutationEntry} object.
    */
-  public RowMutation adaptEntry(Delete delete) {
-    RowMutation rowMutation = newRowMutationModel(delete.getRow());
+  public RowMutationEntry adaptEntry(Delete delete) {
+    RowMutationEntry rowMutation = buildRowMutationEntry(delete.getRow());
     adapt(delete, rowMutation);
     return rowMutation;
   }
@@ -235,10 +236,10 @@ public class HBaseRequestAdapter {
    * adaptEntry.
    *
    * @param put a {@link Put} object.
-   * @return a {@link RowMutation} object.
+   * @return a {@link RowMutationEntry} object.
    */
-  public RowMutation adaptEntry(Put put) {
-    RowMutation rowMutation = newRowMutationModel(put.getRow());
+  public RowMutationEntry adaptEntry(Put put) {
+    RowMutationEntry rowMutation = buildRowMutationEntry(put.getRow());
     adapt(put, rowMutation);
     return rowMutation;
   }
@@ -270,10 +271,10 @@ public class HBaseRequestAdapter {
    * adaptEntry.
    *
    * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
-   * @return a {@link RowMutation} object.
+   * @return a {@link RowMutationEntry} object.
    */
-  public RowMutation adaptEntry(RowMutations mutations) {
-    RowMutation rowMutation = newRowMutationModel(mutations.getRow());
+  public RowMutationEntry adaptEntry(RowMutations mutations) {
+    RowMutationEntry rowMutation = buildRowMutationEntry(mutations.getRow());
     adapt(mutations, rowMutation);
     return rowMutation;
   }
@@ -325,5 +326,13 @@ public class HBaseRequestAdapter {
           bigtableTableName.getTableId(), ByteString.copyFrom(rowKey), Mutation.createUnsafe());
     }
     return RowMutation.create(bigtableTableName.getTableId(), ByteString.copyFrom(rowKey));
+  }
+
+  private RowMutationEntry buildRowMutationEntry(byte[] rowKey) {
+    if (!mutationAdapters.putAdapter.isSetClientTimestamp()) {
+      return RowMutationEntry.createUnsafe(ByteString.copyFrom(rowKey));
+    }
+
+    return RowMutationEntry.create(ByteString.copyFrom(rowKey));
   }
 }

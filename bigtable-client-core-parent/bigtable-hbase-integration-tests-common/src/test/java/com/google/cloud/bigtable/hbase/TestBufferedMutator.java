@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -28,6 +30,9 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -161,6 +166,37 @@ public class TestBufferedMutator extends AbstractTest {
         actualError = ex;
       }
       assertNull(actualError);
+    }
+  }
+
+  @Test
+  public void testBulkMutation() throws Exception {
+    final String rowKeyPrefix = RandomStringUtils.randomAlphanumeric(10);
+    try (BufferedMutator mutator =
+            getConnection().getBufferedMutator(sharedTestEnv.getDefaultTableName());
+        Table tableForRead = getConnection().getTable(sharedTestEnv.getDefaultTableName())) {
+
+      ImmutableList.Builder<Put> builder = ImmutableList.builder();
+      for (int i = 0; i < 10; i++) {
+        builder.add(
+            new Put(Bytes.toBytes(rowKeyPrefix + i))
+                .addColumn(COLUMN_FAMILY, qualifier, 10_001L, value));
+      }
+      List<Put> mutations = builder.build();
+
+      mutator.mutate(mutations);
+      // force bufferedMutator to apply mutation
+      mutator.flush();
+
+      Scan scan = new Scan();
+      scan.setRowPrefixFilter(Bytes.toBytes(rowKeyPrefix));
+      ResultScanner resultScanner = tableForRead.getScanner(scan);
+      Result[] results = resultScanner.next(20);
+
+      assertEquals("mutations should have been applied now", mutations.size(), results.length);
+      for (int i = 0; i < results.length; i++) {
+        assertArrayEquals(mutations.get(i).getRow(), results[i].getRow());
+      }
     }
   }
 

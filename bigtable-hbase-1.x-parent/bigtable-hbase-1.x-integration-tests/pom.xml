@@ -148,7 +148,7 @@ limitations under the License.
                                 <phase>integration-test</phase>
                                 <configuration>
                                     <includes>
-                                        <include>**/IntegrationTests.java</include>
+                                        <include>**/TestKnownHBaseGap.java</include>
                                     </includes>
                                     <trimStackTrace>false</trimStackTrace>
                                     <reportNameSuffix>local-mini-cluster</reportNameSuffix>

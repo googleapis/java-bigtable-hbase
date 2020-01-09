@@ -17,56 +17,46 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.Logger;
+import com.google.api.gax.batching.Batcher;
 import com.google.cloud.bigtable.core.IBulkMutation;
-import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher;
-import com.google.cloud.bigtable.data.v2.models.BulkMutationBatcher.BulkMutationFailure;
-import com.google.cloud.bigtable.data.v2.models.RowMutation;
-import com.google.cloud.bigtable.util.ApiFutureUtil;
+import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 /**
- * This class is meant to replicate existing {@link BulkMutation} while translating calls to
- * Google-Cloud-Java's {@link BulkMutationBatcher} api.
+ * This class is meant to replicate existing {@link BulkMutation} while translating calls to *
+ * Google-Cloud-Java's {@link Batcher} api.
  *
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
 public class BulkMutationGCJClient implements IBulkMutation {
 
-  private static Logger LOG = new Logger(BulkMutationGCJClient.class);
+  private final Batcher<RowMutationEntry, Void> bulkMutateBatcher;
 
-  private final BulkMutationBatcher bulkMutateBatcher;
-  private final OperationAccountant operationAccountant;
-
-  public BulkMutationGCJClient(BulkMutationBatcher bulkMutateBatcher) {
+  public BulkMutationGCJClient(Batcher<RowMutationEntry, Void> bulkMutateBatcher) {
     this.bulkMutateBatcher = bulkMutateBatcher;
-    this.operationAccountant = new OperationAccountant();
   }
 
   /** {@inheritDoc} */
   @Override
-  public synchronized ApiFuture<Void> add(RowMutation rowMutation) {
+  public synchronized ApiFuture<Void> add(RowMutationEntry rowMutation) {
     Preconditions.checkNotNull(rowMutation, "mutation details cannot be null");
-    final ApiFuture<Void> response = bulkMutateBatcher.add(rowMutation);
-    operationAccountant.registerOperation(ApiFutureUtil.adapt(response));
-    return response;
+    return bulkMutateBatcher.add(rowMutation);
   }
 
   /** {@inheritDoc} */
   @Override
   public void sendUnsent() {
-    LOG.info("This operation will be implemented once the underlying API has this feature.");
+    bulkMutateBatcher.sendOutstanding();
   }
 
   /** {@inheritDoc} */
   @Override
   public void flush() {
     try {
-      operationAccountant.awaitCompletion();
-    } catch (BulkMutationFailure | InterruptedException ex) {
+      bulkMutateBatcher.flush();
+    } catch (InterruptedException ex) {
       throw new RuntimeException("Could not complete RPC for current Batch", ex);
     }
   }
@@ -75,7 +65,7 @@ public class BulkMutationGCJClient implements IBulkMutation {
   public void close() throws IOException {
     try {
       bulkMutateBatcher.close();
-    } catch (InterruptedException | TimeoutException e) {
+    } catch (InterruptedException e) {
       throw new IOException("Could not close the bulk mutation Batcher", e);
     }
   }

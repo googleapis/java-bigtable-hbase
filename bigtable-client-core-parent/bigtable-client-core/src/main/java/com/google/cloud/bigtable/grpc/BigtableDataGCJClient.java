@@ -73,8 +73,8 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
   }
 
   @Override
-  public IBulkMutation createBulkMutationBatcher() {
-    return new BulkMutationGCJClient(delegate.newBulkMutationBatcher());
+  public IBulkMutation createBulkMutationBatcher(String tableId) {
+    return new BulkMutationGCJClient(delegate.newBulkMutationBatcher(tableId));
   }
 
   @Override
