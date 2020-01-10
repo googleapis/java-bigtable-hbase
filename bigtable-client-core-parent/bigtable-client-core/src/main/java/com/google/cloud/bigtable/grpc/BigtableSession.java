@@ -610,6 +610,8 @@ public class BigtableSession implements Closeable {
    * Getter for the field <code>clientWrapper</code>.
    *
    * <p>For internal use only - public for technical reasons.
+   *
+   * <p>Please use {@link BigtableSession#getDataClient()} as a public alternative.
    */
   @InternalApi("For internal usage only")
   public IBigtableDataClient getDataClientWrapper() {
@@ -637,7 +639,12 @@ public class BigtableSession implements Closeable {
         options.getBulkOptions());
   }
 
-  /** For internal use only - public for technical reasons. */
+  /**
+   * For internal use only - public for technical reasons.
+   *
+   * <p>Please use {@link BigtableSession#createBulkMutation(BigtableTableName)} as a public
+   * alternative.
+   */
   @InternalApi("For internal usage only")
   public IBulkMutation createBulkMutationWrapper(BigtableTableName tableName) {
     if (options.useGCJClient()) {
@@ -676,6 +683,8 @@ public class BigtableSession implements Closeable {
    * BigtableOptions}.
    *
    * <p>For internal use only - public for technical reasons.
+   *
+   * <p>Please use {@link BigtableSession#getTableAdminClient()} as a public alternative.
    */
   @InternalApi("For internal usage only")
   public synchronized IBigtableTableAdminClient getTableAdminClientWrapper() throws IOException {

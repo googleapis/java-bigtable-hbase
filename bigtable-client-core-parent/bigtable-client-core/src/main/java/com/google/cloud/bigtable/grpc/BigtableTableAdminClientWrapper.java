@@ -50,8 +50,10 @@ import javax.annotation.Nonnull;
  * BigtableTableAdminClient} with Google-cloud-java's models.
  *
  * <p>For internal use only - public for technical reasons.
+ *
+ * <p>See {@link BigtableSession#getTableAdminClient()} as a public alternative.
  */
-@InternalApi("For internal usage only")
+@InternalApi("For internal usage only - please use BigtableTableAdminClient")
 public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClient {
 
   private final BigtableTableAdminClient delegate;

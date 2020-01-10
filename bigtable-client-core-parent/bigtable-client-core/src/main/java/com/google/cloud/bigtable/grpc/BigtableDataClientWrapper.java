@@ -54,8 +54,10 @@ import javax.annotation.Nullable;
  * BigtableDataClient} with Google-cloud-java's models.
  *
  * <p>For internal use only - public for technical reasons.
+ *
+ * <p>See {@link BigtableSession#getDataClient()} as a public alternative.
  */
-@InternalApi("For internal usage only")
+@InternalApi("For internal usage only - please use BigtableDataClient")
 public class BigtableDataClientWrapper implements IBigtableDataClient {
 
   private final BigtableDataClient delegate;
