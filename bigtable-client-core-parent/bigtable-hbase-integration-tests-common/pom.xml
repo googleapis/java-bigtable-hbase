@@ -107,7 +107,7 @@ limitations under the License.
             <!-- This artifact doesn't run its tests, it simply exports them to other modules -->
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.0.2</version>
+                <version>3.2.0</version>
                 <executions>
                     <execution>
                         <goals>
