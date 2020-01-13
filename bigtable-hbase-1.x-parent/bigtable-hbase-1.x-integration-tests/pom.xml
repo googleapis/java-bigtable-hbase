@@ -386,6 +386,7 @@ limitations under the License.
                             <goal>test</goal>
                         </goals>
                         <configuration>
+                            <trimStackTrace>false</trimStackTrace>
                             <excludes>
                                 <exclude>**/*.java</exclude>
                             </excludes>
