@@ -91,7 +91,7 @@ public class TestBigtableSessionConnectionCache {
 
   @Test
   public void testGcjConnectionsAreCaching() throws IOException {
-    String[] connectionEndpoints = {"127.0.0.1", "127.0.0.2"};
+    String[] connectionEndpoints = {"127.0.0.1", "localhost"};
 
     BigtableOptions.Builder optionsBuilder =
         BigtableOptions.builder()
