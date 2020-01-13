@@ -41,107 +41,105 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestBigtableSessionConnectionCache {
-    private static final ByteString ROW_KEY = ByteString.copyFromUtf8("testrow");
-    private static final String FAMILY_NAME = "family";
-    private static final ByteString QUALIFIER = ByteString.copyFromUtf8("qual");
-    private static final ByteString VALUE = ByteString.copyFromUtf8("value");
+  private static final ByteString ROW_KEY = ByteString.copyFromUtf8("testrow");
+  private static final String FAMILY_NAME = "family";
+  private static final ByteString QUALIFIER = ByteString.copyFromUtf8("qual");
+  private static final ByteString VALUE = ByteString.copyFromUtf8("value");
 
-    private List<BigtableSession> openedSessions = new ArrayList<>();
-    private Server fakeServer;
+  private List<BigtableSession> openedSessions = new ArrayList<>();
+  private Server fakeServer;
 
-    @Before
-    public void setup() throws IOException {
-      int port;
-      try (ServerSocket ss = new ServerSocket(0)) {
-        port = ss.getLocalPort();
-      }
-
-      fakeServer =
-          ServerBuilder.forPort(port)
-              .addService(
-                  new BigtableImplBase() {
-                    @Override
-                    public void readRows(
-                        ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
-                      responseObserver.onNext(
-                          ReadRowsResponse.newBuilder()
-                              .addChunks(
-                                  CellChunk.newBuilder()
-                                      .setRowKey(ROW_KEY)
-                                      .setFamilyName(StringValue.newBuilder().setValue(FAMILY_NAME))
-                                      .setQualifier(BytesValue.newBuilder().setValue(QUALIFIER))
-                                      .setTimestampMicros(10_000)
-                                      .setValue(VALUE)
-                                      .setCommitRow(true))
-                              .build());
-                      responseObserver.onCompleted();
-                    }
-                  })
-              .build();
-      fakeServer.start();
+  @Before
+  public void setup() throws IOException {
+    int port;
+    try (ServerSocket ss = new ServerSocket(0)) {
+      port = ss.getLocalPort();
     }
 
-    @After
-    public void teardown() throws IOException {
-      for (BigtableSession session : openedSessions) {
-        session.close();
-      }
-      fakeServer.shutdownNow();
-    }
-
-    @Test
-    public void testGcjConnectionsAreCaching() throws IOException {
-      String[] connectionEndpoints = {"127.0.0.1", "127.0.0.2"};
-
-      BigtableOptions.Builder optionsBuilder = BigtableOptions.builder()
-          .setProjectId("fake-project")
-          .setInstanceId("fake-instance")
-          .setUsePlaintextNegotiation(true)
-          .setCredentialOptions(CredentialOptions.nullCredential())
-          .setUseGCJClient(true)
-          .setUseCachedDataPool(true)
-          .setPort(fakeServer.getPort())
-          .setUserAgent("test");
-
-      Map<String, ClientContext> context = getGcjContext(optionsBuilder, connectionEndpoints[0]);
-      Assert.assertEquals(context.size(), 1);
-      Assert.assertTrue(context.containsKey(connectionEndpoints[0]));
-      ClientContext Context_0 = context.get(connectionEndpoints[0]);
-
-      context = getGcjContext(optionsBuilder, connectionEndpoints[1]);
-      Assert.assertEquals(context.size(), 2);
-      Assert.assertTrue(context.containsKey(connectionEndpoints[1]));
-      Assert.assertEquals(Context_0, context.get(connectionEndpoints[0]));
-      ClientContext Context_1 = context.get(connectionEndpoints[1]);
-
-      context = getGcjContext(optionsBuilder, connectionEndpoints[1]);
-      Assert.assertEquals(context.size(), 2);
-      Assert.assertEquals(Context_1, context.get(connectionEndpoints[1]));
-      Assert.assertEquals(Context_0, context.get(connectionEndpoints[0]));
-
-      context = getGcjContext(optionsBuilder, connectionEndpoints[0]);
-      Assert.assertEquals(context.size(), 2);
-      Assert.assertEquals(Context_1, context.get(connectionEndpoints[1]));
-      Assert.assertEquals(Context_0, context.get(connectionEndpoints[0]));
-    }
-
-    private Map<String, ClientContext> getGcjContext(BigtableOptions.Builder optionsBuilder, String endpoint)
-        throws IOException {
-      optionsBuilder.setDataHost(endpoint);
-
-      BigtableSession session = new BigtableSession(optionsBuilder.build());
-      openedSessions.add(session);
-
-      checkRows(session);
-      return session.getCachedClientContexts();
-    }
-
-    private void checkRows(BigtableSession session) {
-      List<FlatRow> rows = session.getDataClientWrapper().readFlatRowsList(
-          Query.create("fake-table")
-            .rowKey(ROW_KEY)
-      );
-      Assert.assertEquals(VALUE, rows.get(0).getCells().get(0).getValue());
-    }
+    fakeServer =
+        ServerBuilder.forPort(port)
+            .addService(
+                new BigtableImplBase() {
+                  @Override
+                  public void readRows(
+                      ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
+                    responseObserver.onNext(
+                        ReadRowsResponse.newBuilder()
+                            .addChunks(
+                                CellChunk.newBuilder()
+                                    .setRowKey(ROW_KEY)
+                                    .setFamilyName(StringValue.newBuilder().setValue(FAMILY_NAME))
+                                    .setQualifier(BytesValue.newBuilder().setValue(QUALIFIER))
+                                    .setTimestampMicros(10_000)
+                                    .setValue(VALUE)
+                                    .setCommitRow(true))
+                            .build());
+                    responseObserver.onCompleted();
+                  }
+                })
+            .build();
+    fakeServer.start();
   }
 
+  @After
+  public void teardown() throws IOException {
+    for (BigtableSession session : openedSessions) {
+      session.close();
+    }
+    fakeServer.shutdownNow();
+  }
+
+  @Test
+  public void testGcjConnectionsAreCaching() throws IOException {
+    String[] connectionEndpoints = {"127.0.0.1", "127.0.0.2"};
+
+    BigtableOptions.Builder optionsBuilder =
+        BigtableOptions.builder()
+            .setProjectId("fake-project")
+            .setInstanceId("fake-instance")
+            .setUsePlaintextNegotiation(true)
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .setUseGCJClient(true)
+            .setUseCachedDataPool(true)
+            .setPort(fakeServer.getPort())
+            .setUserAgent("test");
+
+    Map<String, ClientContext> context = getGcjContext(optionsBuilder, connectionEndpoints[0]);
+    Assert.assertEquals(context.size(), 1);
+    Assert.assertTrue(context.containsKey(connectionEndpoints[0]));
+    ClientContext context0 = context.get(connectionEndpoints[0]);
+
+    context = getGcjContext(optionsBuilder, connectionEndpoints[1]);
+    Assert.assertEquals(context.size(), 2);
+    Assert.assertTrue(context.containsKey(connectionEndpoints[1]));
+    Assert.assertEquals(context0, context.get(connectionEndpoints[0]));
+    ClientContext context1 = context.get(connectionEndpoints[1]);
+
+    context = getGcjContext(optionsBuilder, connectionEndpoints[1]);
+    Assert.assertEquals(context.size(), 2);
+    Assert.assertEquals(context1, context.get(connectionEndpoints[1]));
+    Assert.assertEquals(context0, context.get(connectionEndpoints[0]));
+
+    context = getGcjContext(optionsBuilder, connectionEndpoints[0]);
+    Assert.assertEquals(context.size(), 2);
+    Assert.assertEquals(context1, context.get(connectionEndpoints[1]));
+    Assert.assertEquals(context0, context.get(connectionEndpoints[0]));
+  }
+
+  private Map<String, ClientContext> getGcjContext(
+      BigtableOptions.Builder optionsBuilder, String endpoint) throws IOException {
+    optionsBuilder.setDataHost(endpoint);
+
+    BigtableSession session = new BigtableSession(optionsBuilder.build());
+    openedSessions.add(session);
+
+    checkRows(session);
+    return session.getCachedClientContexts();
+  }
+
+  private void checkRows(BigtableSession session) {
+    List<FlatRow> rows =
+        session.getDataClientWrapper().readFlatRowsList(Query.create("fake-table").rowKey(ROW_KEY));
+    Assert.assertEquals(VALUE, rows.get(0).getCells().get(0).getValue());
+  }
+}
