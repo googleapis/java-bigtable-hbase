@@ -51,7 +51,7 @@ limitations under the License.
         <!-- core dependency versions -->
         <bigtable.version>1.9.1</bigtable.version>
         <dropwizard.metrics.version>3.2.6</dropwizard.metrics.version>
-        <slf4j.version>1.7.29</slf4j.version>
+        <slf4j.version>1.7.30</slf4j.version>
         <commons-logging.version>1.2</commons-logging.version>
         <jsr305.version>3.0.2</jsr305.version>
         <checkerframework.version>2.5.5</checkerframework.version>
