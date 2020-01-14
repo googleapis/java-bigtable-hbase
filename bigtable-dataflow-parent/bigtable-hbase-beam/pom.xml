@@ -98,10 +98,15 @@ limitations under the License.
             <version>${commons-lang.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- this comes before junit to override junit's transitive hamcrest-core dependency-->
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
+            <artifactId>hamcrest-core</artifactId>
+            <version>${hamcrest.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-library</artifactId>
             <version>${hamcrest.version}</version>
             <scope>test</scope>
         </dependency>

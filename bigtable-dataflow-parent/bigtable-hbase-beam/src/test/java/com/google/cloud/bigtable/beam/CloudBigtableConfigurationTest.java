@@ -16,7 +16,7 @@
 
 package com.google.cloud.bigtable.beam;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableVersionInfo;
