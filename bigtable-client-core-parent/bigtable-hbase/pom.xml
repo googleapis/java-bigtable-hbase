@@ -32,26 +32,23 @@ limitations under the License.
 
     <dependencyManagement>
         <dependencies>
-            <!--
-            Temporary override for grpc version. This is necessary because bigtable-client-core
-            isn't compatible with the latest version of google-cloud-bigtable, but we need new
-            version of grpc for direct path. This should be removed in the next major version bump -->
             <dependency>
-                <groupId>io.grpc</groupId>
-                <artifactId>grpc-bom</artifactId>
-                <version>${grpc.version}</version>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>google-cloud-bigtable-bom</artifactId>
+                <version>${bigtable.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.cloud</groupId>
-                <artifactId>google-cloud-clients</artifactId>
-                <version>${google-cloud.version}</version>
+                <artifactId>google-cloud-bigtable-deps-bom</artifactId>
+                <version>${bigtable.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
     <dependencies>
         <!-- List implementation deps first -->
         <dependency>
@@ -106,12 +103,10 @@ limitations under the License.
         <dependency>
             <groupId>org.threeten</groupId>
             <artifactId>threetenbp</artifactId>
-            <version>${threeten.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
-            <version>${jsr305.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.api</groupId>
