@@ -59,28 +59,31 @@ public class DirectPathFallbackIT extends AbstractTest {
   @Before
   public void setup() throws IOException {
     if (!BigtableOptions.isDirectPathEnabled()) {
-      throw new AssumptionViolatedException("DirectPath integration tests can only run against DirectPathEnv");
+      throw new AssumptionViolatedException(
+          "DirectPath integration tests can only run against DirectPathEnv");
     }
 
-    BigtableOptions.Builder bigtableOptions = BigtableOptionsFactory
-        .fromConfiguration(sharedTestEnv.getConfiguration())
-        .toBuilder()
-        .setDataChannelCount(1);
+    BigtableOptions.Builder bigtableOptions =
+        BigtableOptionsFactory.fromConfiguration(sharedTestEnv.getConfiguration())
+            .toBuilder()
+            .setDataChannelCount(1);
 
-    bigtableOptions.setChannelConfigurator(new ChannelConfigurator() {
-      @Override
-      public ManagedChannelBuilder configureChannel(ManagedChannelBuilder builder, String host) {
-        // TODO: remove this when admin api supports DirectPath
-        if (host.contains("admin")) {
-          return builder;
-        }
-        injectNettyChannelHandler(builder);
-        // Fail fast when blackhole is active
-        builder.keepAliveTime(1, TimeUnit.SECONDS);
-        builder.keepAliveTimeout(1, TimeUnit.SECONDS);
-        return builder;
-      }
-    });
+    bigtableOptions.setChannelConfigurator(
+        new ChannelConfigurator() {
+          @Override
+          public ManagedChannelBuilder configureChannel(
+              ManagedChannelBuilder builder, String host) {
+            // TODO: remove this when admin api supports DirectPath
+            if (host.contains("admin")) {
+              return builder;
+            }
+            injectNettyChannelHandler(builder);
+            // Fail fast when blackhole is active
+            builder.keepAliveTime(1, TimeUnit.SECONDS);
+            builder.keepAliveTimeout(1, TimeUnit.SECONDS);
+            return builder;
+          }
+        });
 
     instrumentedSession = new BigtableSession(bigtableOptions.build());
   }
@@ -97,19 +100,17 @@ public class DirectPathFallbackIT extends AbstractTest {
 
   @Test
   public void testFallback() throws InterruptedException {
-    ReadRowsRequest request = ReadRowsRequest.newBuilder()
-        .setTableName(
-            String.format(
-                "projects/%s/instances/%s/tables/%s",
-                sharedTestEnv.getConfiguration().get(BigtableOptionsFactory.PROJECT_ID_KEY),
-                sharedTestEnv.getConfiguration().get(BigtableOptionsFactory.INSTANCE_ID_KEY),
-                sharedTestEnv.getDefaultTableName().toString()))
-        .setRows(
-            RowSet.newBuilder()
-                .addRowKeys(ByteString.copyFromUtf8("nonexistent-row"))
-        )
-        .setRowsLimit(1)
-        .build();
+    ReadRowsRequest request =
+        ReadRowsRequest.newBuilder()
+            .setTableName(
+                String.format(
+                    "projects/%s/instances/%s/tables/%s",
+                    sharedTestEnv.getConfiguration().get(BigtableOptionsFactory.PROJECT_ID_KEY),
+                    sharedTestEnv.getConfiguration().get(BigtableOptionsFactory.INSTANCE_ID_KEY),
+                    sharedTestEnv.getDefaultTableName().toString()))
+            .setRows(RowSet.newBuilder().addRowKeys(ByteString.copyFromUtf8("nonexistent-row")))
+            .setRowsLimit(1)
+            .build();
     // Verify that we can send a request
     instrumentedSession.getDataClient().readFlatRowsList(request);
 
@@ -136,7 +137,8 @@ public class DirectPathFallbackIT extends AbstractTest {
       Thread.sleep(100);
     }
 
-    Assert.assertTrue("Failed to upgrade back to DirectPath", numIPv6Read.get() > MIN_COMPLETE_READ_CALLS);
+    Assert.assertTrue(
+        "Failed to upgrade back to DirectPath", numIPv6Read.get() > MIN_COMPLETE_READ_CALLS);
   }
 
   /**
@@ -175,8 +177,9 @@ public class DirectPathFallbackIT extends AbstractTest {
   }
 
   /**
-   * A netty {@link com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.ChannelHandler} that can be instructed to
-   * make IPv6 packets disappear
+   * A netty {@link
+   * com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.ChannelHandler} that can
+   * be instructed to make IPv6 packets disappear
    */
   private class MyChannelHandler extends ChannelDuplexHandler {
     private boolean isIPv6;
@@ -230,4 +233,3 @@ public class DirectPathFallbackIT extends AbstractTest {
     }
   }
 }
-

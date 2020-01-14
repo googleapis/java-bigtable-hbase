@@ -48,7 +48,6 @@ public class BigtableOptions implements Serializable, Cloneable {
     ManagedChannelBuilder configureChannel(ManagedChannelBuilder builder, String host);
   }
 
-
   private static final long serialVersionUID = 1L;
 
   /** For internal use only - public for technical reasons. */
