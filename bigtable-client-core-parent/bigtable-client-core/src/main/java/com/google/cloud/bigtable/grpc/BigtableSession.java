@@ -614,6 +614,11 @@ public class BigtableSession implements Closeable {
         builder.usePlaintext();
       }
     }
+
+    if (options.getChannelConfigurator() != null) {
+      builder = options.getChannelConfigurator().configureChannel(builder, host);
+    }
+
     return builder
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)

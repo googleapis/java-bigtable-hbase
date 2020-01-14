@@ -24,9 +24,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import io.grpc.ManagedChannelBuilder;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -40,6 +42,12 @@ import java.util.concurrent.TimeUnit;
 // TODO: This should be @Autovalue + Builder
 @InternalExtensionOnly
 public class BigtableOptions implements Serializable, Cloneable {
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("Visible for test only")
+  public interface ChannelConfigurator {
+    ManagedChannelBuilder configureChannel(ManagedChannelBuilder builder, String host);
+  }
+
 
   private static final long serialVersionUID = 1L;
 
@@ -206,6 +214,13 @@ public class BigtableOptions implements Serializable, Cloneable {
     }
 
     /** For internal use only - public for technical reasons. */
+    @InternalApi("Visible for test only")
+    public Builder setChannelConfigurator(ChannelConfigurator configurator) {
+      this.options.channelConfigurator = configurator;
+      return this;
+    }
+
+    /** For internal use only - public for technical reasons. */
     @InternalApi("For internal usage only")
     public int getDataChannelCount() {
       return options.dataChannelCount;
@@ -360,6 +375,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   private boolean usePlaintextNegotiation;
   private boolean useCachedDataPool;
   private boolean useGCJClient;
+  private ChannelConfigurator channelConfigurator;
 
   private BigtableInstanceName instanceName;
 
@@ -463,6 +479,13 @@ public class BigtableOptions implements Serializable, Cloneable {
     return dataChannelCount;
   }
 
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("Visible for testing only")
+  @Nullable
+  public ChannelConfigurator getChannelConfigurator() {
+    return channelConfigurator;
+  }
+
   /**
    * Getter for the field <code>instanceName</code>.
    *
@@ -534,7 +557,8 @@ public class BigtableOptions implements Serializable, Cloneable {
         && Objects.equals(bulkOptions, other.bulkOptions)
         && Objects.equals(callOptionsConfig, other.callOptionsConfig)
         && Objects.equals(useBatch, other.useBatch)
-        && Objects.equals(useGCJClient, other.useGCJClient);
+        && Objects.equals(useGCJClient, other.useGCJClient)
+        && Objects.equals(channelConfigurator, other.channelConfigurator);
   }
 
   /** {@inheritDoc} */
