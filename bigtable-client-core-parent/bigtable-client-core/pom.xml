@@ -234,10 +234,9 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- this comes before junit to override junit's transitive hamcrest-core dependency-->
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
+            <artifactId>hamcrest-core</artifactId>
             <version>${hamcrest.version}</version>
             <scope>test</scope>
         </dependency>
