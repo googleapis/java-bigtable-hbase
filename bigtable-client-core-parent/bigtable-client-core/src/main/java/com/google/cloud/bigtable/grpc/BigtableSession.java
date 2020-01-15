@@ -89,6 +89,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
 /**
@@ -330,12 +331,7 @@ public class BigtableSession implements Closeable {
 
       // TODO: stop saving the data channel interceptors as instance variables, this is here only to
       // support deprecated methods
-      dataChannelInterceptors =
-          ImmutableList.<ClientInterceptor>builder()
-              .addAll(createInterceptors(options, !BigtableOptions.isDirectPathEnabled()))
-              // Data channel requires a watchdog
-              .add(setupWatchdog())
-              .build();
+      dataChannelInterceptors = createDataApiInterceptors(options);
       Channel dataChannel =
           ClientInterceptors.intercept(rawDataChannelPool, dataChannelInterceptors);
 
@@ -372,7 +368,7 @@ public class BigtableSession implements Closeable {
       managedChannels.add(rawAdminChannel);
 
       Channel adminChannel =
-          ClientInterceptors.intercept(rawAdminChannel, createInterceptors(options, true));
+          ClientInterceptors.intercept(rawAdminChannel, createAdminApiInterceptors(options));
       this.instanceAdminClient = new BigtableInstanceGrpcClient(adminChannel);
       this.tableAdminClient =
           new BigtableTableAdminGrpcClient(adminChannel, sharedPools.getRetryExecutor(), options);
@@ -388,27 +384,7 @@ public class BigtableSession implements Closeable {
 
   // <editor-fold desc="Interceptors">
 
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed from the public surface in the future
-   */
-  @Deprecated
-  protected List<ClientInterceptor> setupInterceptors() throws IOException {
-    List<ClientInterceptor> clientInterceptorsList =
-        new ArrayList<>(createInterceptors(options, true));
-    clientInterceptorsList.add(setupWatchdog());
-
-    return clientInterceptorsList;
-  }
-
-  /**
-   * Create interceptors that will decorate each stream with required headers.
-   *
-   * <p>When using DirectPath, call credentials should not be sent. So the authentication is
-   * optional.
-   */
-  @InternalApi
-  static List<ClientInterceptor> createInterceptors(BigtableOptions options, boolean enableAuth)
+  static List<ClientInterceptor> createAdminApiInterceptors(BigtableOptions options)
       throws IOException {
     ImmutableList.Builder<ClientInterceptor> interceptors = ImmutableList.builder();
 
@@ -420,18 +396,32 @@ public class BigtableSession implements Closeable {
 
     interceptors.add(createGaxHeaderInterceptor());
 
-    if (enableAuth) {
-      CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
-      RetryOptions retryOptions = options.getRetryOptions();
-      CredentialOptions credentialOptions = options.getCredentialOptions();
-      try {
-        ClientInterceptor credentialsInterceptor =
-            credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
-        if (credentialsInterceptor != null) {
-          interceptors.add(credentialsInterceptor);
-        }
-      } catch (GeneralSecurityException e) {
-        throw new IOException("Could not initialize credentials.", e);
+    ClientInterceptor authInterceptor = createAuthInterceptor(options);
+    if (authInterceptor != null) {
+      interceptors.add(authInterceptor);
+    }
+
+    return interceptors.build();
+  }
+
+  private List<ClientInterceptor> createDataApiInterceptors(BigtableOptions options)
+      throws IOException {
+    ImmutableList.Builder<ClientInterceptor> interceptors = ImmutableList.builder();
+
+    // TODO: instanceName should never be null
+    if (options.getInstanceName() != null) {
+      interceptors.add(
+          new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
+    }
+
+    interceptors.add(createGaxHeaderInterceptor());
+
+    interceptors.add(setupWatchdog());
+
+    if (!BigtableOptions.isDirectPathEnabled()) {
+      ClientInterceptor authInterceptor = createAuthInterceptor(options);
+      if (authInterceptor != null) {
+        interceptors.add(authInterceptor);
       }
     }
 
@@ -460,6 +450,19 @@ public class BigtableSession implements Closeable {
 
     return new WatchdogInterceptor(
         ImmutableSet.<MethodDescriptor<?, ?>>of(BigtableGrpc.getReadRowsMethod()), watchdog);
+  }
+
+  @Nullable
+  private static ClientInterceptor createAuthInterceptor(BigtableOptions options)
+      throws IOException {
+    CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
+    RetryOptions retryOptions = options.getRetryOptions();
+    CredentialOptions credentialOptions = options.getCredentialOptions();
+    try {
+      return credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
+    } catch (GeneralSecurityException e) {
+      throw new IOException("Could not initialize credentials.", e);
+    }
   }
   // </editor-fold>
 
@@ -774,7 +777,7 @@ public class BigtableSession implements Closeable {
 
     ManagedChannel rawAdminChannel = createNettyChannel(options.getAdminHost(), options);
     Channel adminChannel =
-        ClientInterceptors.intercept(rawAdminChannel, createInterceptors(options, true));
+        ClientInterceptors.intercept(rawAdminChannel, createAdminApiInterceptors(options));
     return new BigtableInstanceGrpcClient(adminChannel);
   }
 

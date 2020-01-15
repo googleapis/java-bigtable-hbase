@@ -153,7 +153,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
             "ProjectId and instanceId have to be set in the options.  Use '-' for all instanceIds.");
 
     ClientInterceptor[] interceptors =
-        BigtableSession.createInterceptors(options, true).toArray(new ClientInterceptor[0]);
+        BigtableSession.createAdminApiInterceptors(options).toArray(new ClientInterceptor[0]);
     channel = BigtableSession.createNettyChannel(options.getAdminHost(), options, interceptors);
     client = new BigtableInstanceGrpcClient(channel);
   }
