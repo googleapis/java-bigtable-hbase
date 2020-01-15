@@ -16,9 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-import java.util.concurrent.TimeUnit;
 import org.junit.ClassRule;
-import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
