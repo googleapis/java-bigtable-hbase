@@ -123,7 +123,7 @@ limitations under the License.
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.5.1</version>
+                    <version>3.8.1</version>
                     <configuration>
                         <source>${compileSource}</source>
                         <target>${compileSource}</target>
