@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -81,13 +82,18 @@ public class TestBigtableOptionsFactory {
   }
 
   @Test
-  public void testAdminHostKeyIsUsed() throws IOException {
-    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, TEST_HOST);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+  public void testConnectionKeysAreUsed() throws IOException {
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, "data-host");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, "admin-host");
+    configuration.setInt(BigtableOptionsFactory.BIGTABLE_PORT_KEY, 1234);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    assertEquals(TEST_HOST, options.getDataHost());
+
+    assertEquals("data-host", options.getDataHost());
+    assertEquals("admin-host", options.getAdminHost());
+    assertEquals(1234, options.getPort());
+    assertTrue(
+        "BIGTABLE_USE_PLAINTEXT_NEGOTIATION was not propagated", options.usePlaintextNegotiation());
   }
 
   @Test

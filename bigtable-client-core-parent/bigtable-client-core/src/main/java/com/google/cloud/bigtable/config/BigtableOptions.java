@@ -24,9 +24,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import io.grpc.ManagedChannelBuilder;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -40,6 +42,11 @@ import java.util.concurrent.TimeUnit;
 // TODO: This should be @Autovalue + Builder
 @InternalExtensionOnly
 public class BigtableOptions implements Serializable, Cloneable {
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("Visible for test only")
+  public interface ChannelConfigurator {
+    ManagedChannelBuilder configureChannel(ManagedChannelBuilder builder, String host);
+  }
 
   private static final long serialVersionUID = 1L;
 
@@ -54,6 +61,11 @@ public class BigtableOptions implements Serializable, Cloneable {
   /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
+
+  // Temporary DirectPath config
+  private static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
+  private static final String BIGTABLE_DIRECTPATH_DATA_HOST_DEFAULT =
+      "directpath-bigtable.googleapis.com";
 
   /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
@@ -92,6 +104,27 @@ public class BigtableOptions implements Serializable, Cloneable {
     return builder().build();
   }
 
+  /**
+   * Checks if DirectPath is enabled via an environment variable.
+   *
+   * <p>For internal use only - public for technical reasons.
+   */
+  @InternalApi("For internal use only")
+  public static boolean isDirectPathEnabled() {
+    String whiteList = MoreObjects.firstNonNull(System.getenv(DIRECT_PATH_ENV_VAR), "").trim();
+
+    if (whiteList.isEmpty()) {
+      return false;
+    }
+
+    for (String entry : whiteList.split(",")) {
+      if (BIGTABLE_DATA_HOST_DEFAULT.contains(entry)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /** Create a new instance of the {@link Builder}. */
   public static Builder builder() {
     return new Builder();
@@ -108,7 +141,10 @@ public class BigtableOptions implements Serializable, Cloneable {
       options.appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
 
       // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
-      options.dataHost = BIGTABLE_DATA_HOST_DEFAULT;
+      options.dataHost =
+          isDirectPathEnabled()
+              ? BIGTABLE_DIRECTPATH_DATA_HOST_DEFAULT
+              : BIGTABLE_DATA_HOST_DEFAULT;
       options.adminHost = BIGTABLE_ADMIN_HOST_DEFAULT;
       options.port = BIGTABLE_PORT_DEFAULT;
 
@@ -173,6 +209,13 @@ public class BigtableOptions implements Serializable, Cloneable {
 
     public Builder setDataChannelCount(int dataChannelCount) {
       options.dataChannelCount = dataChannelCount;
+      return this;
+    }
+
+    /** For internal use only - public for technical reasons. */
+    @InternalApi("Visible for test only")
+    public Builder setChannelConfigurator(ChannelConfigurator configurator) {
+      this.options.channelConfigurator = configurator;
       return this;
     }
 
@@ -331,6 +374,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   private boolean usePlaintextNegotiation;
   private boolean useCachedDataPool;
   private boolean useGCJClient;
+  private ChannelConfigurator channelConfigurator;
 
   private BigtableInstanceName instanceName;
 
@@ -434,6 +478,13 @@ public class BigtableOptions implements Serializable, Cloneable {
     return dataChannelCount;
   }
 
+  /** For internal use only - public for technical reasons. */
+  @InternalApi("Visible for testing only")
+  @Nullable
+  public ChannelConfigurator getChannelConfigurator() {
+    return channelConfigurator;
+  }
+
   /**
    * Getter for the field <code>instanceName</code>.
    *
@@ -505,7 +556,8 @@ public class BigtableOptions implements Serializable, Cloneable {
         && Objects.equals(bulkOptions, other.bulkOptions)
         && Objects.equals(callOptionsConfig, other.callOptionsConfig)
         && Objects.equals(useBatch, other.useBatch)
-        && Objects.equals(useGCJClient, other.useGCJClient);
+        && Objects.equals(useGCJClient, other.useGCJClient)
+        && Objects.equals(channelConfigurator, other.channelConfigurator);
   }
 
   /** {@inheritDoc} */

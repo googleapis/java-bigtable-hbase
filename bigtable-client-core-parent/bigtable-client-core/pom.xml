@@ -179,6 +179,10 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
+            <artifactId>grpc-grpclb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
         </dependency>
         <dependency>
@@ -274,7 +278,7 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
                 <configuration>
                     <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions.
                     grpc-alts is a runtime dep-->
-                    <usedDependencies>commons-codec:commons-codec,io.grpc:grpc-alts</usedDependencies>
+                    <usedDependencies>commons-codec:commons-codec,io.grpc:grpc-grpclb</usedDependencies>
                 </configuration>
             </plugin>
         </plugins>
