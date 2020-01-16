@@ -229,8 +229,8 @@ public class TestHeaders {
                     new BigtableExtendedImpl(), new HeaderServerInterceptor()));
 
     try {
-      URL serverCertChain = Resources.getResource("sslCertificates/server_trust.crt");
-      URL privateKey = Resources.getResource("sslCertificates/server_key.pem");
+      URL serverCertChain = Resources.getResource("sslCertificates/server.crt");
+      URL privateKey = Resources.getResource("sslCertificates/server.key");
 
       builder.useTransportSecurity(
           new File(serverCertChain.getFile()), new File(privateKey.getFile()));
@@ -246,7 +246,7 @@ public class TestHeaders {
     SslContextBuilder builder = GrpcSslContexts.forClient();
 
     try {
-      URL url = Resources.getResource("sslCertificates/client_trust.crt");
+      URL url = Resources.getResource("sslCertificates/server.crt");
       builder.trustManager(new File(url.getFile()));
     } catch (Exception ex) {
       throw new AssertionError("No client trust certificate found");
