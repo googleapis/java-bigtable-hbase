@@ -47,6 +47,10 @@ limitations under the License.
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-1.x</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>io.opencensus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -90,6 +94,16 @@ limitations under the License.
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
       <version>${beam.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-client-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.api.grpc</groupId>
+          <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- TODO: remove these dependencies when upgraded through transitive dependency (beam-runners-google-cloud-dataflow-java)

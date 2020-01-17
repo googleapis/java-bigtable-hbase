@@ -51,6 +51,10 @@ limitations under the License.
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-2.x</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>io.opencensus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
