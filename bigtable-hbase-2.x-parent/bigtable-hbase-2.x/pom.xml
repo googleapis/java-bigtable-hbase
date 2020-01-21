@@ -14,7 +14,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -24,16 +26,17 @@ limitations under the License.
   </parent>
 
   <properties>
-     <hbase.version>${hbase.version.2}</hbase.version>
+    <hbase.version>${hbase.version.2}</hbase.version>
   </properties>
 
   <artifactId>bigtable-hbase-2.x</artifactId>
   <packaging>jar</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
-    Bigtable connector compatible with HBase 2.x. It uses hbase-shaded-client and exposes unshaded bigtable-client-core.
-    Its meant to be used in standalone applications and apache beam. Please use bigtable-hbase-2.x-hadoop for hadoop
-    classpath compatible applications.
+    Bigtable connector compatible with HBase 2.x. It uses hbase-shaded-client
+    and exposes unshaded bigtable-client-core. Its meant to be used in
+    standalone applications and apache beam. Please use
+    bigtable-hbase-2.x-hadoop for hadoop classpath compatible applications.
   </description>
 
   <dependencyManagement>
@@ -129,17 +132,17 @@ limitations under the License.
   </dependencies>
   <build>
     <plugins>
-        <plugin>
-             <artifactId>maven-compiler-plugin</artifactId>
-             <version>3.8.1</version>
-             <configuration>
-                <source>${compileSource.1.8}</source>
-                <target>${compileSource.1.8}</target>
-                <showWarnings>true</showWarnings>
-                <showDeprecation>false</showDeprecation>
-                <compilerArgument>-Xlint:-options</compilerArgument>
-              </configuration>
-        </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>${compileSource.1.8}</source>
+          <target>${compileSource.1.8}</target>
+          <showWarnings>true</showWarnings>
+          <showDeprecation>false</showDeprecation>
+          <compilerArgument>-Xlint:-options</compilerArgument>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>

@@ -14,49 +14,52 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.google.cloud.bigtable</groupId>
-        <artifactId>bigtable-client-parent</artifactId>
-        <version>1.13.1-SNAPSHOT</version>
-    </parent>
+  <parent>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-client-parent</artifactId>
+    <version>1.13.1-SNAPSHOT</version>
+  </parent>
 
-    <artifactId>bigtable-dataflow-parent</artifactId>
-    <packaging>pom</packaging>
-    <name>${project.groupId}:${project.artifactId}</name>
-    <description>
-       This project is a parent project for the beam Cloud Bigtable java client projects. 
-    </description>
+  <artifactId>bigtable-dataflow-parent</artifactId>
+  <packaging>pom</packaging>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <description>
+    This project is a parent project for the beam Cloud Bigtable java client
+    projects.
+  </description>
 
-    <modules>
-        <module>bigtable-hbase-beam</module>
-        <module>bigtable-beam-import</module>
-    </modules>
+  <modules>
+    <module>bigtable-hbase-beam</module>
+    <module>bigtable-beam-import</module>
+  </modules>
 
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.1.1</version>
-                    <executions>
-                        <execution>
-                            <id>default-cli</id>
-                            <configuration>
-                                <!--
-                                javadoc excluded packages:
-                                    com.google.cloud.bigtable.dataflow{import,}     (Breaks with javadoc:aggregate, handled separately)
-                                    com.google.clooud.*                             (Ignore, a hack/workaround for separate maven issue)
-                                -->
-                                <excludePackageNames>com.google.clooud</excludePackageNames>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.1.1</version>
+          <executions>
+            <execution>
+              <id>default-cli</id>
+              <configuration>
+                <!--
+                javadoc excluded packages:
+                    com.google.cloud.bigtable.dataflow{import,}     (Breaks with javadoc:aggregate, handled separately)
+                    com.google.clooud.*                             (Ignore, a hack/workaround for separate maven issue)
+                -->
+                <excludePackageNames>com.google.clooud</excludePackageNames>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 </project>
