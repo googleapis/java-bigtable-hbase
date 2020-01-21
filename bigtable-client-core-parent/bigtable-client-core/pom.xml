@@ -59,8 +59,11 @@ limitations under the License.
         <!-- Protos -->
         <dependency>
             <groupId>com.google.api.grpc</groupId>
+            <artifactId>proto-google-common-protos</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.api.grpc</groupId>
             <artifactId>grpc-google-common-protos</artifactId>
-            <version>1.17.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.api.grpc</groupId>
@@ -68,11 +71,11 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>com.google.api.grpc</groupId>
-            <artifactId>proto-google-cloud-bigtable-admin-v2</artifactId>
+            <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.api.grpc</groupId>
-            <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
+            <artifactId>proto-google-cloud-bigtable-admin-v2</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.api.grpc</groupId>
@@ -81,10 +84,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>proto-google-iam-v1</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.api.grpc</groupId>
-            <artifactId>proto-google-common-protos</artifactId>
         </dependency>
 
         <!-- Common -->
@@ -277,7 +276,7 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
                 <artifactId>maven-dependency-plugin</artifactId>
                 <configuration>
                     <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions.
-                    grpc-alts is a runtime dep-->
+                    grpc-grpclb is a runtime dep-->
                     <usedDependencies>commons-codec:commons-codec,io.grpc:grpc-grpclb</usedDependencies>
                 </configuration>
             </plugin>
