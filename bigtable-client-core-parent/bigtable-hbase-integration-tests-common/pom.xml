@@ -35,7 +35,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase.version.1}</version>
+      <version>${hbase.version}</version>
       <scope>test</scope>
     </dependency>
 
