@@ -166,6 +166,7 @@ limitations under the License.
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>3.1.1</version>
                     <configuration>
+                        <doclint>none</doclint>
                         <windowtitle>Cloud Bigtable HBase Client for Java ${project.version} API</windowtitle>
                         <doctitle>Cloud Bigtable HBase Client for Java ${project.version} API</doctitle>
                         <overview>../overview.html</overview>
@@ -237,18 +238,6 @@ limitations under the License.
         </plugins>
     </build>
     <profiles>
-        <profile>
-            <id>doclint-java8-disable</id>
-            <activation>
-                <property>
-                    <name>!doclint</name>
-                </property>
-                <jdk>[1.8,)</jdk>
-            </activation>
-            <properties>
-                <additionalparam>-Xdoclint:none</additionalparam>
-            </properties>
-        </profile>
         <profile>
             <id>release</id>
             <build>
