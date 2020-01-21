@@ -88,8 +88,8 @@ limitations under the License.
     </distributionManagement>
 
     <scm>
-        <connection>scm:git:git@github.com/googleapis/java-bigtable-hbase.git</connection>
-        <developerConnection>scm:git:git@github.com/googleapis/java-bigtable-hbase.git</developerConnection>
+        <connection>scm:git:git@github.com:googleapis/java-bigtable-hbase.git</connection>
+        <developerConnection>scm:git:git@github.com:googleapis/java-bigtable-hbase.git</developerConnection>
         <url>https://github.com/googleapis/java-bigtable-hbase</url>
         <tag>HEAD</tag>
     </scm>
