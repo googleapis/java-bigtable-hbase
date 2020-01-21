@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import java.io.IOException;
 import java.util.List;
@@ -55,10 +56,12 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  * <p>The table will be presplit based on row keys collected from a set of sequence files. This is
  * intended to be a preparation step before running an {@link ImportJob}.
  */
+@InternalApi
 class CreateTableHelper {
   private static final Log LOG = LogFactory.getLog(CreateTableHelper.class);
 
-  interface CreateTableOpts extends GcpOptions {
+  @InternalApi
+  public interface CreateTableOpts extends GcpOptions {
     @Description("The project that contains the table to export. Defaults to --project.")
     @Default.InstanceFactory(Utils.DefaultBigtableProjectFactory.class)
     @Validation.Required
