@@ -14,7 +14,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
@@ -24,12 +26,14 @@ limitations under the License.
 
   <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
   <description>
-    Bigtable connector compatible with HBase 2.x. It most of its dependencies (hbase &amp; grpc). Its mainly intended to
-    be used by dataflow 2.x to avoid version conflicts with grpc &amp; protobuf. Prefer to use bigtable-hbase-2.x.
+    Bigtable connector compatible with HBase 2.x. It most of its dependencies
+    (hbase &amp; grpc). Its mainly intended to be used by dataflow 2.x to avoid
+    version conflicts with grpc &amp; protobuf. Prefer to use
+    bigtable-hbase-2.x.
   </description>
 
   <properties>
-     <hbase.version>${hbase.version.2}</hbase.version>
+    <hbase.version>${hbase.version.2}</hbase.version>
   </properties>
 
   <dependencies>
@@ -102,17 +106,17 @@ limitations under the License.
 
   <build>
     <plugins>
-        <plugin>
-             <artifactId>maven-compiler-plugin</artifactId>
-             <version>3.8.1</version>
-             <configuration>
-                <source>${compileSource.1.8}</source>
-                <target>${compileSource.1.8}</target>
-                <showWarnings>true</showWarnings>
-                <showDeprecation>false</showDeprecation>
-                <compilerArgument>-Xlint:-options</compilerArgument>
-              </configuration>
-        </plugin>    
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>${compileSource.1.8}</source>
+          <target>${compileSource.1.8}</target>
+          <showWarnings>true</showWarnings>
+          <showDeprecation>false</showDeprecation>
+          <compilerArgument>-Xlint:-options</compilerArgument>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -127,7 +131,9 @@ limitations under the License.
               <shadedArtifactAttached>false</shadedArtifactAttached>
               <createDependencyReducedPom>true</createDependencyReducedPom>
               <!-- Need to manually promote to dependencies to keep the structure of hbase-shade-client -->
-              <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+              <promoteTransitiveDependencies>
+                false
+              </promoteTransitiveDependencies>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>
@@ -140,13 +146,17 @@ limitations under the License.
               </filters>
               <artifactSet>
                 <includes>
-                  <include>com.google.cloud.bigtable:bigtable-hbase-2.x-shaded</include>
+                  <include>
+                    com.google.cloud.bigtable:bigtable-hbase-2.x-shaded
+                  </include>
                 </includes>
               </artifactSet>
               <relocations>
                 <!-- Undo the relocation that hbase-shaded-client did to make it compatible with the regular hbase-client -->
                 <relocation>
-                  <pattern>org.apache.hadoop.hbase.shaded.com.google.protobuf</pattern>
+                  <pattern>
+                    org.apache.hadoop.hbase.shaded.com.google.protobuf
+                  </pattern>
                   <shadedPattern>com.google.protobuf</shadedPattern>
                 </relocation>
               </relocations>
@@ -159,7 +169,11 @@ limitations under the License.
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
           <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>com.google.code.findbugs:jsr305,commons-logging:commons-logging,io.dropwizard.metrics:metrics-core</usedDependencies>
+          <usedDependencies>
+            <usedDependency>com.google.code.findbugs:jsr305</usedDependency>
+            <usedDependency>commons-logging:commons-logging</usedDependency>
+            <usedDependency>io.dropwizard.metrics:metrics-core</usedDependency>
+          </usedDependencies>
         </configuration>
       </plugin>
 

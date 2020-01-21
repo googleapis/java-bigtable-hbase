@@ -14,25 +14,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.google.cloud.bigtable</groupId>
-        <artifactId>bigtable-client-parent</artifactId>
-        <version>1.13.1-SNAPSHOT</version>
-    </parent>
+  <parent>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-client-parent</artifactId>
+    <version>1.13.1-SNAPSHOT</version>
+  </parent>
 
-    <artifactId>bigtable-client-core-parent</artifactId>
-    <packaging>pom</packaging>
-    <name>${project.groupId}:${project.artifactId}</name>
-    <description>
-       This project is a parent project for the core Cloud Bigtable java client projects.
-    </description>
+  <artifactId>bigtable-client-core-parent</artifactId>
+  <packaging>pom</packaging>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <description>
+    This project is a parent project for the core Cloud Bigtable java client
+    projects.
+  </description>
 
-    <modules>
-        <module>bigtable-client-core</module>
-        <module>bigtable-hbase</module>
-        <module>bigtable-hbase-integration-tests-common</module>
-    </modules>
+  <modules>
+    <module>bigtable-client-core</module>
+    <module>bigtable-hbase</module>
+    <module>bigtable-hbase-integration-tests-common</module>
+  </modules>
 </project>

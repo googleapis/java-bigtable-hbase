@@ -14,7 +14,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-dataflow-parent</artifactId>
@@ -61,7 +63,9 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-extensions-google-cloud-platform-core</artifactId>
+      <artifactId>
+        beam-sdks-java-extensions-google-cloud-platform-core
+      </artifactId>
       <version>${beam.version}</version>
     </dependency>
     <dependency>
@@ -211,7 +215,8 @@ limitations under the License.
         <configuration>
           <shadedArtifactAttached>true</shadedArtifactAttached>
           <transformers>
-            <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+            <transformer
+                implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
           </transformers>
         </configuration>
       </plugin>
@@ -243,7 +248,15 @@ limitations under the License.
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
           <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>com.google.auto.value:auto-value,commons-codec:commons-codec,com.squareup.okhttp:okhttp,org.apache.beam:beam-sdks-java-io-hadoop-common,org.apache.beam:beam-runners-direct-java</usedDependencies>
+          <usedDependencies>
+            <usedDependency>com.google.auto.value:auto-value</usedDependency>
+            <usedDependency>commons-codec:commons-codec</usedDependency>
+            <usedDependency>com.squareup.okhttp:okhttp</usedDependency>
+            <usedDependency>org.apache.beam:beam-sdks-java-io-hadoop-common
+            </usedDependency>
+            <usedDependency>org.apache.beam:beam-runners-direct-java
+            </usedDependency>
+          </usedDependencies>
         </configuration>
       </plugin>
 
