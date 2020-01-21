@@ -54,10 +54,27 @@ limitations under the License.
   </dependencyManagement>
 
 <dependencies>
+  <!-- Internal dependencies that will be shaded along with their transitive dependencies.
+   When adding new internal dependencies, make sure to exclude them from the reactor in direct dependents.
+   See the *-hadoop/pom.xml and bigtable-hbase-beam/pom.xml for more details-->
   <dependency>
     <groupId>${project.groupId}</groupId>
     <artifactId>bigtable-hbase-2.x</artifactId>
     <version>${project.version}</version>
+  </dependency>
+  <!-- Since opencensus-api is a transitive dep, we have to shade its impl as well.
+  Otherwise the -api will be permanently severed from the impl and exporters -->
+  <dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-impl</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-contrib-zpages</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
   </dependency>
 
   <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
@@ -80,24 +97,6 @@ limitations under the License.
     <groupId>io.dropwizard.metrics</groupId>
     <artifactId>metrics-core</artifactId>
     <version>${dropwizard.metrics.version}</version>
-  </dependency>
-    <dependency>
-        <groupId>org.checkerframework</groupId>
-        <artifactId>checker-compat-qual</artifactId>
-        <version>${checkerframework.version}</version>
-    </dependency>
-
-  <dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-impl</artifactId>
-  </dependency>
-  <dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-contrib-zpages</artifactId>
-  </dependency>
-  <dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
   </dependency>
  </dependencies>
 
@@ -165,7 +164,6 @@ limitations under the License.
                   <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>org.apache.yetus:audience-annotations</exclude>
                   <exclude>javax.annotation:javax.annotation-api</exclude>
-                  <exclude>org.checkerframework:checker-compat-qual</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -248,6 +246,14 @@ limitations under the License.
                   <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
                 </relocation>
                 <relocation>
+                  <pattern>org.apache.commons.lang3</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.lang3</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.conscrypt</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.conscrypt</shadedPattern>
+                </relocation>
+                <relocation>
                   <pattern>org.threeten</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.org.threeten</shadedPattern>
                 </relocation>
@@ -265,7 +271,7 @@ limitations under the License.
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
           <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>com.google.cloud.bigtable:bigtable-hbase-2.x,org.apache.hbase:hbase-shaded-client,com.google.code.findbugs:jsr305,commons-logging:commons-logging,io.dropwizard.metrics:metrics-core,org.checkerframework:checker-compat-qual,io.opencensus:opencensus-impl,io.opencensus:opencensus-contrib-zpages,io.opencensus:opencensus-exporter-trace-stackdriver</usedDependencies>
+          <usedDependencies>com.google.cloud.bigtable:bigtable-hbase-2.x,org.apache.hbase:hbase-shaded-client,com.google.code.findbugs:jsr305,commons-logging:commons-logging,io.dropwizard.metrics:metrics-core,io.opencensus:opencensus-impl,io.opencensus:opencensus-contrib-zpages,io.opencensus:opencensus-exporter-trace-stackdriver</usedDependencies>
         </configuration>
       </plugin>
     </plugins>
