@@ -126,7 +126,7 @@ infrequent product and client library announcements.
     @Setup
     public void setup() {
       // for bigtable-core
-      BigtableOptions opts = new BigtableOptions.Builder()
+      BigtableOptions opts = BigtableOptions.builder()
             .enableEmulator("localhost:" + bigtableEmulator.getPort())
             .setUserAgent("fake")
             .setProjectId("fakeproject")
