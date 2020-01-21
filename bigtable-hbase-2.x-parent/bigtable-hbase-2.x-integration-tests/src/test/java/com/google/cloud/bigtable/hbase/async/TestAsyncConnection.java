@@ -33,7 +33,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestAsyncConnection extends AbstractAsyncTest {
 
-  private static final ExecutorService directExecutorService = MoreExecutors.sameThreadExecutor();
+  private static final ExecutorService directExecutorService =
+      MoreExecutors.newDirectExecutorService();
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 

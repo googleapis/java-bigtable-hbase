@@ -22,9 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import com.google.cloud.bigtable.hbase.AbstractTest.QualifierValue;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -391,10 +389,7 @@ public abstract class AbstractTestPut extends AbstractTest {
         Result result = table.get(new Get(rowKeyWithNullQual));
         assertEquals(1, result.rawCells().length);
         Cell cell = result.getColumnLatestCell(COLUMN_FAMILY, null);
-        assertArrayEquals(
-            testValue,
-            ByteString.copyFrom(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
-                .toByteArray());
+        assertArrayEquals(testValue, CellUtil.cloneValue(cell));
 
       } catch (Exception ex) {
         actualError = ex;
@@ -411,10 +406,7 @@ public abstract class AbstractTestPut extends AbstractTest {
         Result result = table.get(new Get(rowKeyWithEmptyQual));
         assertEquals(1, result.rawCells().length);
         Cell cell = result.getColumnLatestCell(COLUMN_FAMILY, emptyQualifier);
-        assertArrayEquals(
-            testValue,
-            ByteString.copyFrom(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
-                .toByteArray());
+        assertArrayEquals(testValue, CellUtil.cloneValue(cell));
       } catch (Exception ex) {
         actualError = ex;
       }

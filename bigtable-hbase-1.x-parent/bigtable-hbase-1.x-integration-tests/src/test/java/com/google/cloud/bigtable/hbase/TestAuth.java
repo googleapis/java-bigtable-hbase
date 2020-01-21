@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.repackaged.com.google.auth.Credentials;
-import com.google.bigtable.repackaged.com.google.auth.oauth2.GoogleCredentials;
-import com.google.bigtable.repackaged.com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.bigtable.repackaged.com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import java.io.IOException;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Get;

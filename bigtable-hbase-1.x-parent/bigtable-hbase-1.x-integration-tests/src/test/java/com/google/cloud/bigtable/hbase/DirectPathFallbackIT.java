@@ -1,22 +1,22 @@
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions.ChannelConfigurator;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
-import com.google.bigtable.repackaged.io.grpc.ManagedChannelBuilder;
-import com.google.bigtable.repackaged.io.grpc.alts.ComputeEngineChannelBuilder;
-import com.google.bigtable.repackaged.io.grpc.netty.NettyChannelBuilder;
-import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.ChannelDuplexHandler;
-import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.ChannelFactory;
-import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.ChannelHandlerContext;
-import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.ChannelPromise;
-import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.EventLoopGroup;
-import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.nio.NioEventLoopGroup;
-import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.socket.nio.NioSocketChannel;
-import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.util.ReferenceCountUtil;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowSet;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableOptions.ChannelConfigurator;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.alts.ComputeEngineChannelBuilder;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.channel.ChannelDuplexHandler;
+import io.grpc.netty.shaded.io.netty.channel.ChannelFactory;
+import io.grpc.netty.shaded.io.netty.channel.ChannelHandlerContext;
+import io.grpc.netty.shaded.io.netty.channel.ChannelPromise;
+import io.grpc.netty.shaded.io.netty.channel.EventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.nio.NioEventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.socket.nio.NioSocketChannel;
+import io.grpc.netty.shaded.io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.Inet6Address;
@@ -177,9 +177,8 @@ public class DirectPathFallbackIT extends AbstractTest {
   }
 
   /**
-   * A netty {@link
-   * com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.channel.ChannelHandler} that can
-   * be instructed to make IPv6 packets disappear
+   * A netty {@link io.grpc.netty.shaded.io.netty.channel.ChannelHandler} that can be instructed to
+   * make IPv6 packets disappear
    */
   private class MyChannelHandler extends ChannelDuplexHandler {
     private boolean isIPv6;

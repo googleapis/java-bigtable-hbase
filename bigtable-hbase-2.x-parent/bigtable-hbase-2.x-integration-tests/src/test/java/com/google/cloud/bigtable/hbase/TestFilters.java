@@ -17,8 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import java.io.IOException;
@@ -84,8 +83,7 @@ public class TestFilters extends AbstractTestFilters {
               .addColumn(COLUMN_FAMILY, qualA, valA)
               .addColumn(COLUMN_FAMILY, qualB, valB));
 
-      Filters.Filter qualAFilter =
-          Filters.FILTERS.qualifier().exactMatch(ByteString.copyFrom(qualA));
+      Filters.Filter qualAFilter = Filters.FILTERS.qualifier().exactMatch(new String(qualA));
       BigtableFilter bigtableFilter = new BigtableFilter(qualAFilter);
       Result result = table.get(new Get(rowKey).setFilter(bigtableFilter));
 

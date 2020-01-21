@@ -49,18 +49,8 @@ public class BigtableAsyncRegistry implements AsyncRegistry {
   }
 
   @Override
-  public CompletableFuture<Integer> getCurrentNrHRS() {
-    throw new UnsupportedOperationException("getCurrentNrHRS");
-  }
-
-  @Override
   public CompletableFuture<ServerName> getMasterAddress() {
     throw new UnsupportedOperationException("getMasterAddress");
-  }
-
-  @Override
-  public CompletableFuture<Integer> getMasterInfoPort() {
-    throw new UnsupportedOperationException("getMasterInfoPort");
   }
 
   @Override

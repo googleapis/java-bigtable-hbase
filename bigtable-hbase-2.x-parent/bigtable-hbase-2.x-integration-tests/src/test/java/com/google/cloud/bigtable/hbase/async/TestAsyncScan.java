@@ -17,8 +17,8 @@ package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-import com.google.bigtable.repackaged.com.google.common.util.concurrent.SettableFuture;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
