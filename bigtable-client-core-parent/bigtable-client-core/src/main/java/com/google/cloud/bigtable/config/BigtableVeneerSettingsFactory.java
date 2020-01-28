@@ -108,6 +108,8 @@ public class BigtableVeneerSettingsFactory {
 
     buildReadRowSettings(dataSettingStub, options);
 
+    buildBulkReadRowsSettings(dataSettingStub, options);
+
     buildMutateRowSettings(dataSettingStub, options);
 
     buildSampleRowKeysSettings(dataSettingStub, options);
@@ -259,6 +261,24 @@ public class BigtableVeneerSettingsFactory {
         .readRowsSettings()
         .setRetrySettings(retryBuilder.build())
         .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
+  }
+
+  // BulkRead only accepts batchSize
+  private static void buildBulkReadRowsSettings(Builder builder, BigtableOptions options) {
+    RetrySettings retrySettings =
+        buildIdempotentRetrySettings(builder.readRowSettings().getRetrySettings(), options);
+
+    BatchingSettings.Builder batchBuilder =
+        builder.bulkMutateRowsSettings().getBatchingSettings().toBuilder();
+    long bulkMaxRowKeyCount = options.getBulkOptions().getBulkMaxRowKeyCount();
+
+    batchBuilder.setElementCountThreshold(bulkMaxRowKeyCount);
+
+    builder
+        .bulkReadRowsSettings()
+        .setRetrySettings(retrySettings)
+        .setRetryableCodes(buildRetryCodes(options.getRetryOptions()))
+        .setBatchingSettings(batchBuilder.build());
   }
 
   /** Creates {@link RetrySettings} for non-streaming idempotent method. */

@@ -263,6 +263,12 @@ public class TestBigtableVeneerSettingsFactory {
         DEFAULT_RETRY_CODES,
         dataSettings.getStubSettings().bulkMutateRowsSettings().getRetryableCodes());
 
+    // bulkReadRowsSettings
+    verifyRetry(dataSettings.getStubSettings().bulkReadRowsSettings().getRetrySettings());
+    assertEquals(
+        DEFAULT_RETRY_CODES,
+        dataSettings.getStubSettings().bulkReadRowsSettings().getRetryableCodes());
+
     // Non-streaming operation's verifying RetrySettings & RetryCodes of non-retryable methods.
     // readModifyWriteRowSettings
     verifyDisabledRetry(
@@ -366,5 +372,28 @@ public class TestBigtableVeneerSettingsFactory {
     adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
     assertTrue(
         adminSettings.getStubSettings().getCredentialsProvider() instanceof NoCredentialsProvider);
+  }
+
+  @Test
+  public void testBulkReadConfig() throws IOException {
+    int maxRowKeyCount = 1_000_000;
+    BigtableOptions options =
+        BigtableOptions.builder()
+            .setProjectId(TEST_PROJECT_ID)
+            .setInstanceId(TEST_INSTANCE_ID)
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .setUserAgent("Test-user-agent")
+            .setBulkOptions(BulkOptions.builder().setBulkMaxRowKeyCount(maxRowKeyCount).build())
+            .build();
+    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
+
+    assertEquals(
+        maxRowKeyCount,
+        dataSettings
+            .getStubSettings()
+            .bulkReadRowsSettings()
+            .getBatchingSettings()
+            .getElementCountThreshold()
+            .intValue());
   }
 }
