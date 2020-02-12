@@ -13,7 +13,7 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.beam.sequencefiles;
+package com.google.cloud.bigtable.thirdparty.org.apache.hadoop.hbase.mapreduce;
 
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -36,7 +36,7 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.Serializer;
 
-class ResultSerialization extends Configured implements Serialization<Result> {
+public class ResultSerialization extends Configured implements Serialization<Result> {
   private static final Log LOG = LogFactory.getLog(ResultSerialization.class);
   // The following configuration property indicates import file format version.
   public static final String IMPORT_FORMAT_VER = "hbase.import.version";
