@@ -32,7 +32,7 @@ fi
 case ${JOB_TYPE} in
 test)
 # this will not run IT tests, to run IT tests a profile must be enabled (see below)
-    mvn verify -B -Dclirr.skip=true
+    mvn test -B -Dclirr.skip=true -Denforcer.skip=true
     bash ${KOKORO_GFILE_DIR}/codecov.sh
     bash .kokoro/coerce_logs.sh
     ;;
@@ -44,11 +44,15 @@ javadoc)
     ;;
 integration)
 # clean needed when running more than one IT profile
-    mvn clean verify -B ${INTEGRATION_TEST_ARGS} -DtrimStackTrace=false -Dclirr.skip=true -fae
+    mvn clean verify -B ${INTEGRATION_TEST_ARGS} \
+      -DtrimStackTrace=false \
+      -Dclirr.skip=true \
+      -Denforcer.skip=true \
+      -fae
     bash .kokoro/coerce_logs.sh
     ;;
 clirr)
-    mvn -B clirr:check
+    mvn -B -Denforcer.skip=true clirr:check
     ;;
 *)
     ;;
