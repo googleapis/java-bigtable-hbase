@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import com.google.cloud.bigtable.thirdparty.org.apache.hadoop.hbase.mapreduce.ResultSerialization;
 import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
