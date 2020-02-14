@@ -20,9 +20,9 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>bigtable-test</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.13.1-SNAPSHOT</version>
+    <artifactId>bigtable-test</artifactId>
+    <version>1.13.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
   </parent>
 
 
