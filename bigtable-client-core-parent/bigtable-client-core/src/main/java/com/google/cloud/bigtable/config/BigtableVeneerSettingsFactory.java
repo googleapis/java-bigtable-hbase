@@ -263,15 +263,15 @@ public class BigtableVeneerSettingsFactory {
         .setRetryableCodes(buildRetryCodes(options.getRetryOptions()));
   }
 
-  // BulkRead only accepts batchSize
   private static void buildBulkReadRowsSettings(Builder builder, BigtableOptions options) {
     RetrySettings retrySettings =
-        buildIdempotentRetrySettings(builder.readRowSettings().getRetrySettings(), options);
-
-    BatchingSettings.Builder batchBuilder =
-        builder.bulkMutateRowsSettings().getBatchingSettings().toBuilder();
+        buildIdempotentRetrySettings(builder.bulkReadRowsSettings().getRetrySettings(), options);
     long bulkMaxRowKeyCount = options.getBulkOptions().getBulkMaxRowKeyCount();
 
+    BatchingSettings.Builder batchBuilder =
+        builder.bulkReadRowsSettings().getBatchingSettings().toBuilder();
+
+    // BulkRead has only manual flushing. Also, kept the veneer's FlowControlSettings default.
     batchBuilder.setElementCountThreshold(bulkMaxRowKeyCount);
 
     builder
