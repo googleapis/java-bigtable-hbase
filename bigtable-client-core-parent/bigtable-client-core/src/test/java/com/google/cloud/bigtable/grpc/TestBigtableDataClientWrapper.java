@@ -30,6 +30,7 @@ import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
@@ -45,18 +46,25 @@ import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import io.grpc.stub.StreamObserver;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Unit tests for the {@link BigtableDataClientWrapper}. */
@@ -83,6 +91,8 @@ public class TestBigtableDataClientWrapper {
   private BigtableDataClientWrapper clientWrapper;
 
   @Mock private ResultScanner<FlatRow> mockFlatRow;
+
+  @Captor ArgumentCaptor<StreamObserver<FlatRow>> streamObserverCaptor;
 
   @Before
   public void setUp() {
@@ -401,5 +411,56 @@ public class TestBigtableDataClientWrapper {
         .thenReturn(Futures.immediateFuture(listFlatRows));
     clientWrapper.readFlatRowsAsync(query);
     verify(client).readFlatRowsAsync(query.toProto(REQUEST_CONTEXT));
+  }
+
+  @Test
+  public void testReadRowsAsyncWithObserver() {
+    when(client.readFlatRows(
+            Mockito.<ReadRowsRequest>any(), Mockito.<StreamObserver<FlatRow>>any()))
+        .thenReturn(
+            new ScanHandler() {
+              @Override
+              public void cancel() {}
+            });
+
+    final FlatRow expectedRow =
+        FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key")).build();
+    final RuntimeException testException = new RuntimeException("test exception");
+    final AtomicInteger counter = new AtomicInteger(0);
+    final AtomicBoolean isExceptionThrown = new AtomicBoolean(false);
+    final AtomicBoolean isCompleted = new AtomicBoolean(false);
+
+    StreamObserver<com.google.cloud.bigtable.data.v2.models.Row> actualStream =
+        new StreamObserver<com.google.cloud.bigtable.data.v2.models.Row>() {
+          @Override
+          public void onNext(com.google.cloud.bigtable.data.v2.models.Row row) {
+            counter.incrementAndGet();
+            assertEquals(FlatRowConverter.convertToModelRow(expectedRow), row);
+          }
+
+          @Override
+          public void onError(Throwable throwable) {
+            assertEquals(testException, throwable);
+            isExceptionThrown.compareAndSet(false, true);
+          }
+
+          @Override
+          public void onCompleted() {
+            isCompleted.compareAndSet(false, true);
+          }
+        };
+    clientWrapper.readRowsAsync(Query.create(TABLE_ID), actualStream);
+
+    verify(client).readFlatRows(Mockito.isA(ReadRowsRequest.class), streamObserverCaptor.capture());
+    StreamObserver<FlatRow> internalObserver = streamObserverCaptor.getValue();
+
+    internalObserver.onNext(expectedRow);
+    internalObserver.onNext(expectedRow);
+    internalObserver.onError(testException);
+    internalObserver.onCompleted();
+
+    assertTrue(isExceptionThrown.get());
+    assertEquals(2, counter.get());
+    assertTrue(isCompleted.get());
   }
 }

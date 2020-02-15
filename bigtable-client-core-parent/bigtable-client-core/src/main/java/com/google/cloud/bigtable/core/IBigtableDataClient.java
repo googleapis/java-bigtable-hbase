@@ -152,6 +152,16 @@ public interface IBigtableDataClient {
    *
    * @param request a {@link Query} object.
    * @param observer a {@link StreamObserver} object.
+   * @deprecated Please use {@link #readRowsAsync(Query, StreamObserver)}.
    */
+  @Deprecated
   void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer);
+
+  /**
+   * Reads {@link Row} asynchronously, and pass them to a stream observer for processing.
+   *
+   * @param request a {@link Query} object.
+   * @param observer a {@link StreamObserver} object.
+   */
+  void readRowsAsync(Query request, StreamObserver<Row> observer);
 }

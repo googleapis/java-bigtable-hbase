@@ -52,6 +52,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class TestBigtableDataGCJClient {
@@ -278,6 +279,17 @@ public class TestBigtableDataGCJClient {
     streamOb.onNext(flatRows.get(0));
     verify(dataClientV2).readRowsCallable(any(FlatRowAdapter.class));
     verify(serverStreaming).call(any(Query.class), any(ResponseObserver.class));
+  }
+
+  @Test
+  public void testReadRowsAsyncWithStreamObserver() {
+    StreamObserver<Row> rowStreamOb = Mockito.mock(StreamObserver.class);
+    doNothing()
+        .when(dataClientV2)
+        .readRowsAsync(any(Query.class), Mockito.<ResponseObserver<Row>>any());
+    dataGCJClient.readRowsAsync(request, rowStreamOb);
+
+    verify(dataClientV2).readRowsAsync(any(Query.class), Mockito.<ResponseObserver<Row>>any());
   }
 
   @Test

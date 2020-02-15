@@ -271,4 +271,26 @@ public class BigtableDataClientWrapper implements IBigtableDataClient {
   public void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer) {
     delegate.readFlatRows(request.toProto(requestContext), observer);
   }
+
+  @Override
+  public void readRowsAsync(Query request, final StreamObserver<Row> observer) {
+    delegate.readFlatRows(
+        request.toProto(requestContext),
+        new StreamObserver<FlatRow>() {
+          @Override
+          public void onNext(FlatRow flatRow) {
+            observer.onNext(FlatRowConverter.convertToModelRow(flatRow));
+          }
+
+          @Override
+          public void onError(Throwable throwable) {
+            observer.onError(throwable);
+          }
+
+          @Override
+          public void onCompleted() {
+            observer.onCompleted();
+          }
+        });
+  }
 }

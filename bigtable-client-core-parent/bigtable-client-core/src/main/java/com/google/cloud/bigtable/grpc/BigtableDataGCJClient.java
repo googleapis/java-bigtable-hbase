@@ -133,6 +133,11 @@ public class BigtableDataGCJClient implements IBigtableDataClient, AutoCloseable
   }
 
   @Override
+  public void readRowsAsync(Query request, StreamObserver<Row> observer) {
+    delegate.readRowsAsync(request, new StreamObserverAdapter<>(observer));
+  }
+
+  @Override
   public void close() throws Exception {
     delegate.close();
   }
