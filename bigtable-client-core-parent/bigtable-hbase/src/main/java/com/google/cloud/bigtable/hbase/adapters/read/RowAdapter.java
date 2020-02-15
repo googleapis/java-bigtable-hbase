@@ -50,6 +50,10 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
 
     for (com.google.cloud.bigtable.data.v2.models.RowCell rowCell : response.getCells()) {
 
+      if (!rowCell.getLabels().isEmpty()) {
+        continue;
+      }
+
       byte[] familyNameBytes = Bytes.toBytes(rowCell.getFamily());
       byte[] columnQualifier = ByteStringer.extract(rowCell.getQualifier());
 

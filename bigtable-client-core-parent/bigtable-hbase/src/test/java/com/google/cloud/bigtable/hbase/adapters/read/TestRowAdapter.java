@@ -58,6 +58,7 @@ public class TestRowAdapter {
     byte[] family2Bytes = Bytes.toBytes(family2);
     byte[] qualifier1 = "qualifier1".getBytes();
     byte[] qualifier2 = "qualifier2".getBytes();
+    byte[] qualifier3 = "qualifier2".getBytes();
     byte[] value1 = "value1".getBytes();
     byte[] value2 = "value2".getBytes();
     byte[] value3 = "value3".getBytes();
@@ -110,8 +111,8 @@ public class TestRowAdapter {
                 ByteString.copyFrom(value5)),
             // Contains label, should be ignored.
             RowCell.create(
-                family1,
-                ByteString.copyFrom(qualifier1),
+                "family-name",
+                ByteString.copyFrom(qualifier3),
                 ts2Micros,
                 Collections.singletonList("label"),
                 ByteString.copyFrom(value1)));
