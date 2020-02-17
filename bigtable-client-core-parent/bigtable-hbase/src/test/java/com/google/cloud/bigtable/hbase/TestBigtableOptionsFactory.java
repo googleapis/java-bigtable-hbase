@@ -20,15 +20,32 @@ import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_M
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_BACKOFF_MULTIPLIER;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_INITIAL_BACKOFF_MILLIS;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ADDITIONAL_RETRY_CODES;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.APP_PROFILE_ID_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_AUTOFLUSH_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_PORT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_TIMEOUTS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INITIAL_ELAPSED_BACKOFF_MILLIS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.MAX_ELAPSED_BACKOFF_MILLIS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.MAX_INFLIGHT_RPCS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.MAX_SCAN_TIMEOUT_RETRIES;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.READ_PARTIAL_ROW_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -86,15 +103,15 @@ public class TestBigtableOptionsFactory {
   @Before
   public void setup() {
     configuration = new Configuration(false);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
-    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
+    configuration.set(BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.set(PROJECT_ID_KEY, TEST_PROJECT_ID);
+    configuration.set(INSTANCE_ID_KEY, TEST_INSTANCE_ID);
   }
 
   @Test
   public void testProjectIdIsRequired() throws IOException {
     Configuration configuration = new Configuration(false);
-    configuration.unset(BigtableOptionsFactory.PROJECT_ID_KEY);
+    configuration.unset(PROJECT_ID_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
     BigtableOptionsFactory.fromConfiguration(configuration);
@@ -103,7 +120,7 @@ public class TestBigtableOptionsFactory {
   @Test
   public void testHostIsRequired() throws IOException {
     Configuration configuration = new Configuration(false);
-    configuration.unset(BigtableOptionsFactory.BIGTABLE_HOST_KEY);
+    configuration.unset(BIGTABLE_HOST_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
     BigtableOptionsFactory.fromConfiguration(configuration);
@@ -112,7 +129,7 @@ public class TestBigtableOptionsFactory {
   @Test
   public void testInstanceIsRequired() throws IOException {
     Configuration configuration = new Configuration(false);
-    configuration.unset(BigtableOptionsFactory.INSTANCE_ID_KEY);
+    configuration.unset(INSTANCE_ID_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
     BigtableOptionsFactory.fromConfiguration(configuration);
@@ -120,9 +137,9 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testConnectionKeysAreUsed() throws IOException {
-    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, "data-host");
-    configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, "admin-host");
-    configuration.setInt(BigtableOptionsFactory.BIGTABLE_PORT_KEY, 1234);
+    configuration.set(BIGTABLE_HOST_KEY, "data-host");
+    configuration.set(BIGTABLE_ADMIN_HOST_KEY, "admin-host");
+    configuration.setInt(BIGTABLE_PORT_KEY, 1234);
     configuration.setBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
 
@@ -135,9 +152,9 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testOptionsAreConstructedWithValidInput() throws IOException {
-    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.set(BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.setBoolean(BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
     assertEquals(TEST_HOST, options.getDataHost());
     assertEquals(TEST_PROJECT_ID, options.getProjectId());
@@ -160,10 +177,10 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testSettingRetryOptions() throws IOException {
-    configuration.set(BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY, "false");
-    configuration.set(BigtableOptionsFactory.ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, "false");
-    configuration.set(BigtableOptionsFactory.MAX_ELAPSED_BACKOFF_MILLIS_KEY, "111");
-    configuration.set(BigtableOptionsFactory.READ_PARTIAL_ROW_TIMEOUT_MS, "123");
+    configuration.set(ENABLE_GRPC_RETRIES_KEY, "false");
+    configuration.set(ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, "false");
+    configuration.set(MAX_ELAPSED_BACKOFF_MILLIS_KEY, "111");
+    configuration.set(READ_PARTIAL_ROW_TIMEOUT_MS, "123");
     RetryOptions retryOptions =
         BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
     assertEquals(false, retryOptions.enableRetries());
@@ -176,9 +193,9 @@ public class TestBigtableOptionsFactory {
   public void testExplicitCredentials() throws IOException, GeneralSecurityException {
     Credentials credentials = Mockito.mock(Credentials.class);
     configuration = new Configuration(false);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
-    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
+    configuration.set(BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.set(PROJECT_ID_KEY, TEST_PROJECT_ID);
+    configuration.set(INSTANCE_ID_KEY, TEST_INSTANCE_ID);
     configuration = BigtableConfiguration.withCredentials(configuration, credentials);
 
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
@@ -190,7 +207,7 @@ public class TestBigtableOptionsFactory {
   @Test
   public void testLongOperationsTimeouts() throws IOException {
     String longTimeout = "10000";
-    configuration.set(BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY, longTimeout);
+    configuration.set(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY, longTimeout);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
 
     assertEquals(
@@ -200,11 +217,11 @@ public class TestBigtableOptionsFactory {
 
     String readTimeout = "20000";
     configuration = new Configuration(false);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
-    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY, longTimeout);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, readTimeout);
+    configuration.set(BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.set(PROJECT_ID_KEY, TEST_PROJECT_ID);
+    configuration.set(INSTANCE_ID_KEY, TEST_INSTANCE_ID);
+    configuration.set(BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY, longTimeout);
+    configuration.set(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, readTimeout);
     options = BigtableOptionsFactory.fromConfiguration(configuration);
 
     assertEquals(LONG_TIMEOUT_MS_DEFAULT, options.getCallOptionsConfig().getLongRpcTimeoutMs());
@@ -220,10 +237,10 @@ public class TestBigtableOptionsFactory {
     String userAgent = "test-user-agent";
     Credentials credentials = Mockito.mock(Credentials.class);
 
-    configuration.set(BigtableOptionsFactory.BIGTABLE_PORT_KEY, String.valueOf(TEST_PORT));
-    configuration.set(BigtableOptionsFactory.APP_PROFILE_ID_KEY, appProfileId);
+    configuration.set(BIGTABLE_PORT_KEY, String.valueOf(TEST_PORT));
+    configuration.set(APP_PROFILE_ID_KEY, appProfileId);
     configuration.setBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
-    configuration.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, userAgent);
+    configuration.set(CUSTOM_USER_AGENT_KEY, userAgent);
     configuration = BigtableConfiguration.withCredentials(configuration, credentials);
 
     BigtableDataSettings dataSettings =
@@ -245,9 +262,9 @@ public class TestBigtableOptionsFactory {
     String userAgent = "test-user-agent";
     Credentials credentials = Mockito.mock(Credentials.class);
 
-    configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, adminHost);
-    configuration.setInt(BigtableOptionsFactory.BIGTABLE_PORT_KEY, TEST_PORT);
-    configuration.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, userAgent);
+    configuration.set(BIGTABLE_ADMIN_HOST_KEY, adminHost);
+    configuration.setInt(BIGTABLE_PORT_KEY, TEST_PORT);
+    configuration.set(CUSTOM_USER_AGENT_KEY, userAgent);
     configuration.setBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
     configuration = BigtableConfiguration.withCredentials(configuration, credentials);
 
@@ -266,20 +283,20 @@ public class TestBigtableOptionsFactory {
   @Test
   public void testRetriesWithoutTimestamp() throws IOException {
     configuration.setBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
-    configuration.setBoolean(BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY, true);
+    configuration.setBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, true);
 
     try {
       BigtableOptionsFactory.createBigtableDataSettings(configuration);
       Assert.fail("BigtableDataSettings should not support retries without timestamp");
     } catch (UnsupportedOperationException actualException) {
 
-      assertEquals("Retries without Timestamp does not support yet.", actualException.getMessage());
+      assertEquals("Retries without Timestamp is not supported yet.", actualException.getMessage());
     }
   }
 
   @Test
   public void testWhenRetriesAreDisabled() throws IOException {
-    configuration.setBoolean(BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY, false);
+    configuration.setBoolean(ENABLE_GRPC_RETRIES_KEY, false);
 
     try {
       BigtableOptionsFactory.createBigtableDataSettings(configuration);
@@ -291,9 +308,9 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testWithNullCredentials() throws IOException {
-    configuration.set(BigtableOptionsFactory.ADDITIONAL_RETRY_CODES, "UNAVAILABLE,ABORTED");
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.set(ADDITIONAL_RETRY_CODES, "UNAVAILABLE,ABORTED");
+    configuration.setBoolean(BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
 
     BigtableDataSettings dataSettings =
         BigtableOptionsFactory.createBigtableDataSettings(configuration);
@@ -422,7 +439,7 @@ public class TestBigtableOptionsFactory {
     final int availablePort = serverSocket.getLocalPort();
     serverSocket.close();
     String emulatorHost = "localhost:" + availablePort;
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, emulatorHost);
+    configuration.set(BIGTABLE_EMULATOR_HOST_KEY, emulatorHost);
 
     BigtableDataSettings dataSettings =
         BigtableOptionsFactory.createBigtableDataSettings(configuration);
@@ -438,7 +455,7 @@ public class TestBigtableOptionsFactory {
     final int availablePort = serverSocket.getLocalPort();
     serverSocket.close();
     String emulatorHost = "localhost:" + availablePort;
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, emulatorHost);
+    configuration.set(BIGTABLE_EMULATOR_HOST_KEY, emulatorHost);
 
     BigtableTableAdminSettings adminSettings =
         BigtableOptionsFactory.createBigtableTableAdminSettings(configuration);

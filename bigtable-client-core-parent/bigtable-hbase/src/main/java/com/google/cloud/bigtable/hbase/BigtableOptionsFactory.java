@@ -15,15 +15,20 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.LONG_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_BACKOFF_MULTIPLIER;
+import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES_SET;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_INITIAL_BACKOFF_MILLIS;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
@@ -461,7 +466,7 @@ public class BigtableOptionsFactory {
 
     long maxMemory =
         configuration.getLong(
-            BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT);
+            BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, BIGTABLE_MAX_MEMORY_DEFAULT);
     bulkOptionsBuilder.setMaxMemory(maxMemory);
 
     if (configuration.getBoolean(
@@ -625,10 +630,10 @@ public class BigtableOptionsFactory {
 
     String dataHostOverride =
         configuration.get(BIGTABLE_HOST_KEY, BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT);
-    int portNumber = configuration.getInt(BIGTABLE_PORT_KEY, BigtableOptions.BIGTABLE_PORT_DEFAULT);
-    LOG.debug("API Data endpoint host %s.", dataHostOverride);
+    int portNumber = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
 
     String endpoint = dataHostOverride + ":" + portNumber;
+    LOG.debug("API Data endpoint hostname:portNumber is %s", endpoint);
 
     stubSettings
         .setCredentialsProvider(buildCredentialProvider(configuration))
@@ -640,7 +645,7 @@ public class BigtableOptionsFactory {
     if (usePlainTextNegotiation) {
       int channelCount =
           configuration.getInt(
-              BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
+              BIGTABLE_DATA_CHANNEL_COUNT_KEY, BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
 
       stubSettings.setTransportChannelProvider(
           buildPlainTextChannelProvider(endpoint, channelCount));
@@ -727,11 +732,11 @@ public class BigtableOptionsFactory {
     BigtableTableAdminStubSettings.Builder stubSettings = adminBuilder.stubSettings();
 
     String adminHostOverride =
-        configuration.get(BIGTABLE_ADMIN_HOST_KEY, BigtableOptions.BIGTABLE_ADMIN_HOST_DEFAULT);
-    int portNumber = configuration.getInt(BIGTABLE_PORT_KEY, BigtableOptions.BIGTABLE_PORT_DEFAULT);
-    LOG.debug("Admin endpoint host %s.", adminHostOverride);
+        configuration.get(BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT);
+    int portNumber = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
 
     String endpoint = adminHostOverride + ":" + portNumber;
+    LOG.debug("Admin endpoint hostname:portNumber is %s.", endpoint);
     stubSettings
         .setHeaderProvider(buildHeaderProvider(configuration))
         .setEndpoint(endpoint)
@@ -742,7 +747,7 @@ public class BigtableOptionsFactory {
     if (usePlainTextNegotiation) {
       int channelCount =
           configuration.getInt(
-              BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
+              BIGTABLE_DATA_CHANNEL_COUNT_KEY, BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
       buildPlainTextChannelProvider(endpoint, channelCount);
     }
 
@@ -899,7 +904,7 @@ public class BigtableOptionsFactory {
   private static Set<StatusCode.Code> buildRetryCodes(Configuration configuration) {
     ImmutableSet.Builder<StatusCode.Code> statusCodeBuilder = ImmutableSet.builder();
 
-    for (Status.Code retryCode : RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES_SET) {
+    for (Status.Code retryCode : DEFAULT_ENABLE_GRPC_RETRIES_SET) {
       statusCodeBuilder.add(GrpcStatusCode.of(retryCode).getCode());
     }
 
@@ -925,7 +930,7 @@ public class BigtableOptionsFactory {
 
     RetrySettings.Builder retryBuilder = originalRetrySettings.toBuilder();
     if (configuration.getBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, false)) {
-      throw new UnsupportedOperationException("Retries without Timestamp does not support yet.");
+      throw new UnsupportedOperationException("Retries without Timestamp is not supported yet.");
     }
 
     boolean useTimeOut = configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT);
@@ -963,8 +968,7 @@ public class BigtableOptionsFactory {
         configuration.getLong(
             BIGTABLE_BULK_MAX_ROW_KEY_COUNT, BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT);
     int channelCount =
-        configuration.getInt(
-            BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
+        configuration.getInt(BIGTABLE_DATA_CHANNEL_COUNT_KEY, BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
     int defaultRpcCount = BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * channelCount;
     int maxInflightRpcs = configuration.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
 
@@ -975,7 +979,7 @@ public class BigtableOptionsFactory {
     if (maxInflightRpcs > 0) {
       long maxMemory =
           configuration.getLong(
-              BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT);
+              BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, BIGTABLE_MAX_MEMORY_DEFAULT);
       batchMutateBuilder.setFlowControlSettings(
           FlowControlSettings.newBuilder()
               .setMaxOutstandingRequestBytes(maxMemory)
