@@ -147,18 +147,12 @@ public interface IBigtableDataClient {
    */
   ApiFuture<List<FlatRow>> readFlatRowsAsync(Query request);
 
-  /**
-   * Read {@link FlatRow} asynchronously, and pass them to a stream observer to be processed.
-   *
-   * @param request a {@link Query} object.
-   * @param observer a {@link StreamObserver} object.
-   * @deprecated Please use {@link #readRowsAsync(Query, StreamObserver)}.
-   */
+  /** @deprecated Please use {@link #readRowsAsync(Query, StreamObserver)}. */
   @Deprecated
   void readFlatRowsAsync(Query request, StreamObserver<FlatRow> observer);
 
   /**
-   * Reads {@link Row} asynchronously, and pass them to a stream observer for processing.
+   * Reads rows asynchronously and passes them to the given stream observer for processing.
    *
    * @param request a {@link Query} object.
    * @param observer a {@link StreamObserver} object.
