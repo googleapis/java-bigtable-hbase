@@ -42,11 +42,13 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
+import com.google.cloud.bigtable.core.IBulkRead;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkMutationWrapper;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
+import com.google.cloud.bigtable.grpc.async.BulkReadWrapper;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
 import com.google.cloud.bigtable.grpc.async.ThrottlingClientInterceptor;
@@ -722,6 +724,18 @@ public class BigtableSession implements Closeable {
         tableName,
         options.getBulkOptions().getBulkMaxRowKeyCount(),
         BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
+  }
+
+  /**
+   * For internal use only - public for technical reasons.
+   *
+   * <p>Please use {@link BigtableSession#createBulkRead(BigtableTableName)} as a public
+   * alternative.
+   */
+  @InternalApi("For internal usage only")
+  public IBulkRead createBulkReadWrapper(BigtableTableName tableName) {
+    // TODO(rahulkql): create a bulkRead wrapper which consumes gax Batcher API.
+    return new BulkReadWrapper(createBulkRead(tableName));
   }
 
   /**

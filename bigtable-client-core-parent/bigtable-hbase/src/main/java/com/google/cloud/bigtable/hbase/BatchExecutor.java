@@ -22,8 +22,8 @@ import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.core.IBulkRead;
 import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -51,7 +51,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  * org.apache.hadoop.hbase.client.Table#batch(List, Object[])}. {@link
  * org.apache.hadoop.hbase.client.Table#put(List)} and {@link
  * org.apache.hadoop.hbase.client.Table#get(List)}. This class relies on implementations found in
- * {@link BulkRead} and in {@link BigtableBufferedMutatorHelper}.
+ * {@link IBulkRead} and in {@link BigtableBufferedMutatorHelper}.
  *
  * <p>For internal use only - public for technical reasons.
  */
@@ -133,7 +133,7 @@ public class BatchExecutor {
   protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Info, "batch.latency");
   // Once the IBigtableDataClient interface is implemented, this will be removed.
   private final BigtableBufferedMutatorHelper bufferedMutatorHelper;
-  private final BulkRead bulkRead;
+  private final IBulkRead bulkRead;
 
   /**
    * Constructor for BatchExecutor.
@@ -145,7 +145,7 @@ public class BatchExecutor {
   public BatchExecutor(BigtableSession session, HBaseRequestAdapter requestAdapter) {
     this.requestAdapter = requestAdapter;
     this.options = session.getOptions();
-    this.bulkRead = session.createBulkRead(requestAdapter.getBigtableTableName());
+    this.bulkRead = session.createBulkReadWrapper(requestAdapter.getBigtableTableName());
     this.bufferedMutatorHelper =
         new BigtableBufferedMutatorHelper(
             requestAdapter,

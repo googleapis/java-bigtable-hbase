@@ -29,14 +29,15 @@ import com.google.api.core.ApiFutures;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
+import com.google.cloud.bigtable.core.IBulkRead;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
+import com.google.cloud.bigtable.data.v2.models.Row;
+import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.grpc.scanner.FlatRow.Cell;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
@@ -110,7 +111,7 @@ public class TestBatchExecutor {
 
   @Mock private BigtableSession mockBigtableSession;
 
-  @Mock private BulkRead mockBulkRead;
+  @Mock private IBulkRead mockBulkRead;
 
   @Mock private IBulkMutation mockBulkMutation;
 
@@ -136,7 +137,8 @@ public class TestBatchExecutor {
         .thenReturn(mockFuture);
     when(mockBigtableSession.createBulkMutationWrapper(any(BigtableTableName.class)))
         .thenReturn(mockBulkMutation);
-    when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);
+    when(mockBigtableSession.createBulkReadWrapper(any(BigtableTableName.class)))
+        .thenReturn(mockBulkRead);
     doAnswer(
             new Answer<Void>() {
               @Override
@@ -214,22 +216,22 @@ public class TestBatchExecutor {
   public void testPartialResults() throws Exception {
     byte[] key1 = randomBytes(8);
     byte[] key2 = randomBytes(8);
-    FlatRow response1 =
-        FlatRow.newBuilder()
-            .withRowKey(ByteString.copyFrom(key1))
-            .addCell(
-                new Cell(
+
+    Row response1 =
+        Row.create(
+            ByteString.copyFrom(key1),
+            ImmutableList.<RowCell>of(
+                RowCell.create(
                     "cf",
                     ByteString.EMPTY,
                     10,
-                    ByteString.copyFromUtf8("hi!"),
-                    new ArrayList<String>()))
-            .build();
+                    ImmutableList.<String>of(),
+                    ByteString.copyFromUtf8("hi!"))));
 
     RuntimeException exception = new RuntimeException("Something bad happened");
     when(mockBulkRead.add(any(Query.class)))
         .thenReturn(ApiFutures.immediateFuture(response1))
-        .thenReturn(ApiFutures.<FlatRow>immediateFailedFuture(exception));
+        .thenReturn(ApiFutures.<Row>immediateFailedFuture(exception));
 
     List<Get> gets = Arrays.asList(new Get(key1), new Get(key2));
     Object[] results = new Object[2];
@@ -263,10 +265,10 @@ public class TestBatchExecutor {
   @Test
   public void testBatchBulkGets() throws Exception {
     final List<Get> gets = new ArrayList<>(10);
-    final List<ApiFuture<FlatRow>> expected = new ArrayList<>(10);
+    final List<ApiFuture<Row>> expected = new ArrayList<>(10);
 
     gets.add(new Get(Bytes.toBytes("key0")));
-    expected.add(ApiFutures.<FlatRow>immediateFuture(null));
+    expected.add(ApiFutures.<Row>immediateFuture(null));
     for (int i = 1; i < 10; i++) {
       byte[] row_key = randomBytes(8);
       gets.add(new Get(row_key));
@@ -274,20 +276,25 @@ public class TestBatchExecutor {
       ByteString cellValue = ByteString.copyFrom(randomBytes(8));
       expected.add(
           ApiFutures.immediateFuture(
-              FlatRow.newBuilder()
-                  .withRowKey(key)
-                  .addCell("family", ByteString.EMPTY, System.nanoTime() / 1000, cellValue)
-                  .build()));
+              Row.create(
+                  key,
+                  ImmutableList.of(
+                      RowCell.create(
+                          "family",
+                          ByteString.EMPTY,
+                          10000L,
+                          ImmutableList.<String>of(),
+                          cellValue)))));
     }
 
     // Test 10 gets, but return only 9 to test the row not found case.
     when(mockBulkRead.add(any(Query.class)))
         .then(
-            new Answer<ApiFuture<FlatRow>>() {
+            new Answer<ApiFuture<Row>>() {
               final AtomicInteger counter = new AtomicInteger();
 
               @Override
-              public ApiFuture<FlatRow> answer(InvocationOnMock invocation) throws Throwable {
+              public ApiFuture<Row> answer(InvocationOnMock invocation) throws Throwable {
                 return expected.get(counter.getAndIncrement());
               }
             });
