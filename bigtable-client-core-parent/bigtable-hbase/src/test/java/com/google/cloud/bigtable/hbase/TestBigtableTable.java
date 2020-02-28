@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,16 +55,19 @@ import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Unit tests for {@link AbstractBigtableTable}. */
 @RunWith(JUnit4.class)
 public class TestBigtableTable {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   public static final String TEST_PROJECT = "testproject";
   public static final String TEST_TABLE = "testtable";
@@ -84,8 +87,6 @@ public class TestBigtableTable {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
-
     BigtableOptions options =
         BigtableOptions.builder()
             .setAdminHost("localhost")

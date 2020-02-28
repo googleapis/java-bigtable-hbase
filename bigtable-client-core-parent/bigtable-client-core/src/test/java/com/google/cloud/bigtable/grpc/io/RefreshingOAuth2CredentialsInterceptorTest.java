@@ -44,16 +44,19 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Tests for {@link RefreshingOAuth2CredentialsInterceptor} */
 @RunWith(JUnit4.class)
 public class RefreshingOAuth2CredentialsInterceptorTest {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static ExecutorService executorService;
   private static String HEADER = "SomeHeader";
@@ -80,7 +83,6 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Before
   public void setupMocks() {
-    MockitoAnnotations.initMocks(this);
     when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(mockClientCall);
     underTest = new RefreshingOAuth2CredentialsInterceptor(mockCache);

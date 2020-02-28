@@ -26,13 +26,18 @@ import static org.mockito.Mockito.when;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnit4.class)
 public class TestRowResultScanner {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.LENIENT);
 
   private static final String TEST_VALUE = "test-value";
   private static final String[] TEST_ARRAY = new String[0];

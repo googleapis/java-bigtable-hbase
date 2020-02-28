@@ -15,12 +15,12 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.thirdparty.org.apache.hadoop.hbase.mapreduce.ResultSerialization;

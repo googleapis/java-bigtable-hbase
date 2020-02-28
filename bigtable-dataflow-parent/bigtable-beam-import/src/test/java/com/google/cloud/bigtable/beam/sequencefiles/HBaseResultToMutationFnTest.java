@@ -18,11 +18,11 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 
 import com.google.cloud.bigtable.beam.sequencefiles.testing.HBaseCellUtils;
 import com.google.common.collect.Iterables;
@@ -38,16 +38,20 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.slf4j.Logger;
 
 /** Unit tests for {@link HBaseResultToMutationFn}. */
 @RunWith(JUnit4.class)
 public class HBaseResultToMutationFnTest {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+
   private static final byte[] ROW_KEY = Bytes.toBytes("row_key");
   private static final byte[] ROW_KEY_2 = Bytes.toBytes("row_key_2");
   private static final byte[] CF = Bytes.toBytes("column_family");
@@ -62,7 +66,6 @@ public class HBaseResultToMutationFnTest {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     doFn = new HBaseResultToMutationFn();
     HBaseResultToMutationFn.setLogger(logger);
   }
@@ -82,7 +85,7 @@ public class HBaseResultToMutationFnTest {
         "Cells",
         Sets.newHashSet(expected),
         Sets.newHashSet(Iterables.getOnlyElement(outputs).getFamilyCellMap().get(CF)));
-    verifyZeroInteractions(logger);
+    verifyNoInteractions(logger);
   }
 
   /** Verifies that malformed {@link Result}s with null cell-array cause one warning in the log. */

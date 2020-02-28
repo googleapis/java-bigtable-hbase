@@ -2,8 +2,8 @@ package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,19 +25,23 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 /** Tests for {@link ThrottlingClientInterceptor} */
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestThrottlingClientInterceptor {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+
   private static final ReadRowsRequest request =
       ReadRowsRequest.newBuilder().setTableName("Some/Table/Name").build();
 
@@ -50,7 +54,6 @@ public class TestThrottlingClientInterceptor {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     executorService = Executors.newCachedThreadPool();
     when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(mockClientCall);

@@ -17,8 +17,8 @@ package com.google.cloud.bigtable.grpc.io;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,7 +39,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -96,7 +95,6 @@ public class ChannelPoolTest {
   public void testChannelsAreRoundRobinned() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
     MethodDescriptor descriptor = BigtableGrpc.getMutateRowMethod();
-    MockitoAnnotations.initMocks(this);
     ChannelPool pool = new ChannelPool(factory, 2);
     pool.newCall(descriptor, CallOptions.DEFAULT);
     verify(factory.channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));

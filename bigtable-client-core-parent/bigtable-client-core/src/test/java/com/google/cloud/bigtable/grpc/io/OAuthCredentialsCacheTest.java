@@ -39,13 +39,16 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 
 /** Tests for {@link OAuthCredentialsCache} */
@@ -53,6 +56,7 @@ import org.mockito.stubbing.Answer;
 public class OAuthCredentialsCacheTest {
   private static long TIMEOUT_SECONDS = 5;
 
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.LENIENT);
   private static ExecutorService executorService;
 
   @BeforeClass
@@ -61,7 +65,7 @@ public class OAuthCredentialsCacheTest {
   }
 
   @AfterClass
-  public static void shtudown() {
+  public static void shutdown() {
     executorService.shutdownNow();
   }
 
@@ -71,7 +75,6 @@ public class OAuthCredentialsCacheTest {
 
   @Before
   public void setupMocks() {
-    MockitoAnnotations.initMocks(this);
     setTimeInMillieconds(0L);
   }
 
@@ -210,7 +213,6 @@ public class OAuthCredentialsCacheTest {
    */
   public void testRefreshDoesntHang() throws Exception {
     for (int i = 0; i < 100; i++) {
-      MockitoAnnotations.initMocks(this);
       testHanging();
     }
   }

@@ -19,7 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -56,18 +56,21 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBigtableDataGrpcClient {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static final String TABLE_NAME =
       new BigtableInstanceName("projectId", "instanceId").toTableNameStr("tableId");
@@ -82,7 +85,6 @@ public class TestBigtableDataGrpcClient {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(mockClientCall);
     defaultClient = createClient(false);

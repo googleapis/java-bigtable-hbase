@@ -32,10 +32,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
 public class TestHBaseMutationAdapter {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
   @Mock private MutationAdapter<Delete> deleteAdapter;
@@ -55,7 +57,6 @@ public class TestHBaseMutationAdapter {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
     adapter = new HBaseMutationAdapter(deleteAdapter, putAdapter, incrementAdapter, appendAdapter);
     mutation = com.google.cloud.bigtable.data.v2.models.Mutation.create();
   }

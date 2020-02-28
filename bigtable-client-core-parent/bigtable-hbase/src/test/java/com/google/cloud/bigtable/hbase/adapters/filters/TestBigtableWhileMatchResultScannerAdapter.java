@@ -17,10 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -32,15 +32,18 @@ import java.util.Arrays;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Unit tests for the {@link BigtableWhileMatchResultScannerAdapter}. */
 @RunWith(JUnit4.class)
 public class TestBigtableWhileMatchResultScannerAdapter {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock private ResponseAdapter<FlatRow, Result> mockRowAdapter;
 
@@ -52,8 +55,6 @@ public class TestBigtableWhileMatchResultScannerAdapter {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
-
     adapter = new BigtableWhileMatchResultScannerAdapter(mockRowAdapter);
   }
 
@@ -64,7 +65,7 @@ public class TestBigtableWhileMatchResultScannerAdapter {
     ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
     assertNull(scanner.next());
     verify(mockBigtableResultScanner).next();
-    verifyZeroInteractions(mockRowAdapter);
+    verifyNoInteractions(mockRowAdapter);
     verify(mockSpan, times(1)).end();
   }
 
@@ -114,6 +115,6 @@ public class TestBigtableWhileMatchResultScannerAdapter {
     assertNull(scanner.next());
     verify(mockSpan, times(1)).end();
     verify(mockBigtableResultScanner).next();
-    verifyZeroInteractions(mockRowAdapter);
+    verifyNoInteractions(mockRowAdapter);
   }
 }

@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -27,22 +27,19 @@ import com.google.protobuf.BytesValue;
 import com.google.protobuf.StringValue;
 import io.grpc.stub.StreamObserver;
 import java.util.Arrays;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
 public class RowMergerTest {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock StreamObserver<FlatRow> observer;
-
-  @Before
-  public void setup() {
-    MockitoAnnotations.initMocks(this);
-  }
 
   @Test
   public void testOneCellRow_success() {

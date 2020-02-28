@@ -31,6 +31,7 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.ItemSpec;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.hadoop.conf.Configuration;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -176,6 +177,6 @@ public class CloudBigtableConfigurationTest {
     expected.add("null:inaccessible=Unavailable during pipeline construction");
     expected.add("null:bigtableClientVersion=" + BigtableVersionInfo.CLIENT_VERSION);
 
-    Assert.assertThat(builder.itemStrings, containsInAnyOrder(expected.toArray()));
+    MatcherAssert.assertThat(builder.itemStrings, containsInAnyOrder(expected.toArray()));
   }
 }

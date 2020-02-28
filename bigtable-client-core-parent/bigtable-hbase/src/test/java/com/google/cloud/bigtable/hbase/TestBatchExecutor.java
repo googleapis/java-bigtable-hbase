@@ -67,16 +67,19 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 /** Tests {@link BatchExecutor} */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBatchExecutor {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static Put randomPut() {
     return new Put(randomBytes(8))
@@ -129,7 +132,6 @@ public class TestBatchExecutor {
     requestAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
 
-    MockitoAnnotations.initMocks(this);
     when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getDataClientWrapper()).thenReturn(mockDataClient);
     when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))
