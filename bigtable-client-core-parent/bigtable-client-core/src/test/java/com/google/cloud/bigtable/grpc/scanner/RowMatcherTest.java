@@ -19,7 +19,7 @@ import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;

@@ -15,7 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 
 import com.google.bigtable.v2.MutateRowRequest;
@@ -31,7 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -93,7 +93,7 @@ public class TestRowMutationsAdapter {
     Assert.assertArrayEquals(rowKey, result.getRowKey().toByteArray());
 
     Mockito.verify(mutationAdapter, times(2))
-        .adapt(any(org.apache.hadoop.hbase.client.Mutation.class), Matchers.eq(mutation));
+        .adapt(any(org.apache.hadoop.hbase.client.Mutation.class), eq(mutation));
   }
 
   private MutateRowRequest toMutateRowRequest(

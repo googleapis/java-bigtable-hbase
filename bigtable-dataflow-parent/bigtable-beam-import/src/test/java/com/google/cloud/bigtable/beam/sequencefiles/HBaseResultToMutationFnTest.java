@@ -18,11 +18,11 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 
 import com.google.cloud.bigtable.beam.sequencefiles.testing.HBaseCellUtils;
 import com.google.common.collect.Iterables;
@@ -82,7 +82,7 @@ public class HBaseResultToMutationFnTest {
         "Cells",
         Sets.newHashSet(expected),
         Sets.newHashSet(Iterables.getOnlyElement(outputs).getFamilyCellMap().get(CF)));
-    verifyZeroInteractions(logger);
+    verifyNoInteractions(logger);
   }
 
   /** Verifies that malformed {@link Result}s with null cell-array cause one warning in the log. */

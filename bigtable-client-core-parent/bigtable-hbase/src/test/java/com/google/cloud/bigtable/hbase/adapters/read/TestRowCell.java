@@ -15,7 +15,7 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static org.hamcrest.CoreMatchers.containsString;
 
-import org.junit.Assert;
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -34,9 +34,9 @@ public class TestRowCell {
             "myvalue".getBytes());
     String result = rowCell.toString();
 
-    Assert.assertThat(result, containsString("key"));
-    Assert.assertThat(result, containsString("family"));
-    Assert.assertThat(result, containsString("qualifier"));
-    Assert.assertThat(result, containsString("1487963474314"));
+    MatcherAssert.assertThat(result, containsString("key"));
+    MatcherAssert.assertThat(result, containsString("family"));
+    MatcherAssert.assertThat(result, containsString("qualifier"));
+    MatcherAssert.assertThat(result, containsString("1487963474314"));
   }
 }

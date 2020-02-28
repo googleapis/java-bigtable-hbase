@@ -17,10 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -64,7 +64,7 @@ public class TestBigtableWhileMatchResultScannerAdapter {
     ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
     assertNull(scanner.next());
     verify(mockBigtableResultScanner).next();
-    verifyZeroInteractions(mockRowAdapter);
+    verifyNoInteractions(mockRowAdapter);
     verify(mockSpan, times(1)).end();
   }
 
@@ -114,6 +114,6 @@ public class TestBigtableWhileMatchResultScannerAdapter {
     assertNull(scanner.next());
     verify(mockSpan, times(1)).end();
     verify(mockBigtableResultScanner).next();
-    verifyZeroInteractions(mockRowAdapter);
+    verifyNoInteractions(mockRowAdapter);
   }
 }
