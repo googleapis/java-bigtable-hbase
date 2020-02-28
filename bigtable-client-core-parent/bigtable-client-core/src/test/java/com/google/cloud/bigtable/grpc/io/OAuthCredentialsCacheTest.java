@@ -45,7 +45,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -214,7 +213,6 @@ public class OAuthCredentialsCacheTest {
    */
   public void testRefreshDoesntHang() throws Exception {
     for (int i = 0; i < 100; i++) {
-      MockitoAnnotations.initMocks(this);
       testHanging();
     }
   }

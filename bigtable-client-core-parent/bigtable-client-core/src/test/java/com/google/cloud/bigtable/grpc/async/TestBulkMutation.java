@@ -46,13 +46,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 /** Tests for {@link BulkMutation} */
@@ -78,6 +80,8 @@ public class TestBulkMutation {
         .build();
   }
 
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+
   @Mock private BigtableDataClient client;
   @Mock private IBigtableDataClient clientWrapper;
   @Mock private ScheduledExecutorService retryExecutorService;
@@ -100,7 +104,6 @@ public class TestBulkMutation {
             return time.get();
           }
         };
-    MockitoAnnotations.initMocks(this);
 
     future = SettableFuture.create();
     when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);

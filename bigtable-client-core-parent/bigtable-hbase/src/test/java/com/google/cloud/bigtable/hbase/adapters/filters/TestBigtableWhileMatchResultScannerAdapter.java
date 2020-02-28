@@ -32,15 +32,18 @@ import java.util.Arrays;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Unit tests for the {@link BigtableWhileMatchResultScannerAdapter}. */
 @RunWith(JUnit4.class)
 public class TestBigtableWhileMatchResultScannerAdapter {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock private ResponseAdapter<FlatRow, Result> mockRowAdapter;
 
@@ -52,8 +55,6 @@ public class TestBigtableWhileMatchResultScannerAdapter {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
-
     adapter = new BigtableWhileMatchResultScannerAdapter(mockRowAdapter);
   }
 

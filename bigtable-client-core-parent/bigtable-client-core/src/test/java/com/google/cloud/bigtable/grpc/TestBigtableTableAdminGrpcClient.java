@@ -53,18 +53,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBigtableTableAdminGrpcClient {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static final BigtableInstanceName INSTANCE_NAME =
       new BigtableInstanceName("projectId", "instanceId");
@@ -79,7 +82,6 @@ public class TestBigtableTableAdminGrpcClient {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(mockClientCall);
     defaultClient = createClient();

@@ -28,25 +28,22 @@ import io.grpc.DeadlineUtil;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Tests for {@link CallOptionsFactory}. */
 @RunWith(JUnit4.class)
 public class TestCallOptionsFactory {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static final int LARGE_TIMEOUT = 500_000;
 
   @Mock ScheduledExecutorService mockExecutor;
-
-  @Before
-  public void setup() {
-    MockitoAnnotations.initMocks(this);
-  }
 
   @Test
   public void testDefault() {

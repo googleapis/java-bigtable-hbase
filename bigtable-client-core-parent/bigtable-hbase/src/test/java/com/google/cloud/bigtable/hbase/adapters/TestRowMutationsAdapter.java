@@ -29,15 +29,18 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
 public class TestRowMutationsAdapter {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static final String PROJECT_ID = "test-project-id";
   private static final String INSTANCE_ID = "test-instance-id";
@@ -53,7 +56,6 @@ public class TestRowMutationsAdapter {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
     adapter = new RowMutationsAdapter(mutationAdapter);
   }
 

@@ -24,11 +24,14 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 public class TestBigtableClientMetrics {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private MetricRegistry originalMetricRegistry;
   private MetricLevel originalLevelToLog;
@@ -45,7 +48,6 @@ public class TestBigtableClientMetrics {
   public void setup() {
     originalLevelToLog = BigtableClientMetrics.getLevelToLog();
     originalMetricRegistry = BigtableClientMetrics.getMetricRegistry(originalLevelToLog);
-    MockitoAnnotations.initMocks(this);
     when(mockMetricRegistry.timer(any(String.class))).thenReturn(mockTimer);
     when(mockMetricRegistry.meter(any(String.class))).thenReturn(mockMeter);
     when(mockMetricRegistry.counter(any(String.class))).thenReturn(mockCounter);

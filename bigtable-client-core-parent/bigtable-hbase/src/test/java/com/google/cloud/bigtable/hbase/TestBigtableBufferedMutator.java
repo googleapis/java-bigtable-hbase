@@ -46,16 +46,19 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Tests for {@link BigtableBufferedMutator} */
 @SuppressWarnings("unchecked")
 @RunWith(JUnit4.class)
 public class TestBigtableBufferedMutator {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static final byte[] EMPTY_BYTES = new byte[1];
   private static final Put SIMPLE_PUT =
@@ -76,7 +79,6 @@ public class TestBigtableBufferedMutator {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
     when(mockSession.createBulkMutationWrapper(any(BigtableTableName.class)))
         .thenReturn(mockBulkMutation);
     when(mockSession.getDataClientWrapper()).thenReturn(mockDataClient);

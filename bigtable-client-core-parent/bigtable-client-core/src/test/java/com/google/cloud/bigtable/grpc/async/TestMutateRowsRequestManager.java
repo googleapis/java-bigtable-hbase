@@ -33,12 +33,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.MockitoAnnotations;
 
 /** Tests for {@link MutateRowsRequestManager} */
 @RunWith(JUnit4.class)
 public class TestMutateRowsRequestManager {
-
   private static Status OK = statusOf(io.grpc.Status.Code.OK);
   private static Status DEADLINE_EXCEEDED = statusOf(io.grpc.Status.Code.DEADLINE_EXCEEDED);
   private static Status NOT_FOUND = statusOf(io.grpc.Status.Code.NOT_FOUND);
@@ -91,7 +89,6 @@ public class TestMutateRowsRequestManager {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     retryOptions = RetryOptions.getDefaultOptions();
   }
 

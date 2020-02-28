@@ -30,10 +30,11 @@ import org.apache.beam.sdk.io.range.ByteKeyRangeTracker;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /**
  * Tests for {@link com.google.cloud.bigtable.beam.CloudBigtableIO.Reader}.
@@ -41,17 +42,13 @@ import org.mockito.MockitoAnnotations;
  * @author sduskis
  */
 public class CloudBigtableIOReaderTest {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock BigtableSession mockSession;
 
   @Mock ResultScanner<FlatRow> mockScanner;
 
   @Mock CloudBigtableIO.AbstractSource mockSource;
-
-  @Before
-  public void setup() {
-    MockitoAnnotations.initMocks(this);
-  }
 
   private CloudBigtableScanConfiguration.Builder createDefaultConfig() {
     return new CloudBigtableScanConfiguration.Builder()

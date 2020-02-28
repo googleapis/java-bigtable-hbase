@@ -54,14 +54,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Unit tests for the {@link BigtableDataClientWrapper}. */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnit4.class)
 public class TestBigtableDataClientWrapper {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static final String PROJECT_ID = "projectId";
   private static final String INSTANCE_ID = "instanceId";

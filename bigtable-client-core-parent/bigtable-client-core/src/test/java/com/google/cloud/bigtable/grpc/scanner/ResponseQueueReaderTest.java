@@ -37,11 +37,13 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ResponseQueueReaderTest {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock private ClientCallStreamObserver mockClientCallStreamObserver;
 
@@ -51,7 +53,6 @@ public class ResponseQueueReaderTest {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     underTest = new ResponseQueueReader();
     underTest.beforeStart(mockClientCallStreamObserver);
   }

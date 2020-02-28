@@ -54,18 +54,21 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 /** Test for the {@link RetryingReadRowsOperation} */
 @RunWith(JUnit4.class)
 public class RetryingReadRowsOperationTest {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
@@ -122,7 +125,6 @@ public class RetryingReadRowsOperationTest {
   @SuppressWarnings({"rawtypes"})
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     metaData = new Metadata();
 
     when(mockRetryableRpc.newCall(any(CallOptions.class))).thenReturn(mockClientCall);

@@ -43,12 +43,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 /**
@@ -65,6 +67,8 @@ public class TestBulkMutationAwaitCompletion {
       (int) (Math.ceil(OPERATIONS_PER_MUTATOR / (double) MUTATIONS_PER_RPC));
   private static final Status OK_STATUS =
       Status.newBuilder().setCode(io.grpc.Status.Code.OK.value()).build();
+
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock private BigtableDataClient mockClient;
 
@@ -95,8 +99,6 @@ public class TestBulkMutationAwaitCompletion {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
-
     testExecutor = Executors.newScheduledThreadPool(100);
     opCompletionRunnables = Collections.synchronizedList(new LinkedList<Runnable>());
     timeoutRunnables = Collections.synchronizedList(new ArrayList<Runnable>());

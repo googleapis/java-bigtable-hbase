@@ -41,13 +41,15 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 /** Tests for {@link BulkRead}. */
@@ -59,6 +61,8 @@ public class TestBulkRead {
   private static final RequestContext CONTEXT =
       RequestContext.create("SomeProject", "SomeInstance", "");
 
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+
   @Mock BigtableDataClientWrapper mockClient;
 
   @Mock ExecutorService mockThreadPool;
@@ -69,8 +73,6 @@ public class TestBulkRead {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
-
     // immediately execute the Runnable.
     when(mockThreadPool.submit(any(Runnable.class)))
         .thenAnswer(

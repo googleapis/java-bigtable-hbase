@@ -39,19 +39,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
 
 /** Test for {@link RetryingUnaryOperation} and {@link AbstractRetryingOperation} functionality. */
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestRetryingUnaryOperation {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
@@ -66,8 +69,6 @@ public class TestRetryingUnaryOperation {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
-
     when(readAsync.getRpcMetrics()).thenReturn(metrics);
     when(readAsync.getMethodDescriptor()).thenReturn(BigtableGrpc.getReadRowsMethod());
     when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);

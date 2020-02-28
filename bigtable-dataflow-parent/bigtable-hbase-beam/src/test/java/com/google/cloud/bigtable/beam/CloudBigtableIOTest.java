@@ -49,11 +49,13 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Tests for {@link CloudBigtableIO}. */
 @RunWith(JUnit4.class)
 public class CloudBigtableIOTest {
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
@@ -70,7 +72,6 @@ public class CloudBigtableIOTest {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     when(underTest.getCoderRegistry()).thenReturn(registry);
   }
 
