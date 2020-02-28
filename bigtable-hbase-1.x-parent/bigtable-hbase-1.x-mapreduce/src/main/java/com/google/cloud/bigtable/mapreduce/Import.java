@@ -441,8 +441,6 @@ public class Import extends Configured implements Tool {
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
         job.setMapOutputValueClass(KeyValue.class);
         HFileOutputFormat2.configureIncrementalLoad(job, table, regionLocator);
-        TableMapReduceUtil.addDependencyJars(
-            job.getConfiguration(), com.google.common.base.Preconditions.class);
       }
     } else {
       // No reducers.  Just write straight to table.  Call initTableReducerJob

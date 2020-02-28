@@ -70,6 +70,7 @@ limitations under the License.
                 </goals>
                 <phase>integration-test</phase>
                 <configuration>
+                  <forkCount>1</forkCount>
                   <includes>
                     <include>**/IntegrationTestsNoKnownGap.java</include>
                   </includes>
@@ -85,9 +86,8 @@ limitations under the License.
                       ${google.bigtable.registry.impl}
                     </google.bigtable.registry.impl>
                   </systemPropertyVariables>
-                  <forkedProcessTimeoutInSeconds>600
-                  </forkedProcessTimeoutInSeconds>
-                  <forkedProcessTimeoutInSeconds>${test.timeout}
+                  <forkedProcessTimeoutInSeconds>
+                    ${test.timeout}
                   </forkedProcessTimeoutInSeconds>
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
@@ -105,6 +105,9 @@ limitations under the License.
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <trimStackTrace>false</trimStackTrace>
+            </configuration>
             <executions>
               <execution>
                 <id>api-integration-test</id>
@@ -123,6 +126,7 @@ limitations under the License.
                   <!-- to enable netty logging, include:
                   -Djava.util.logging.config.file=src/test/resources/logging.properties
                   -->
+                  <forkCount>1</forkCount>
                   <includes>
                     <include>**/IntegrationTestsGap.java</include>
                   </includes>
@@ -135,6 +139,7 @@ limitations under the License.
                   <forkedProcessTimeoutInSeconds>
                     ${test.timeout}
                   </forkedProcessTimeoutInSeconds>
+                  <trimStackTrace>false</trimStackTrace>
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
                 </configuration>
@@ -146,25 +151,14 @@ limitations under the License.
     </profile>
     <profile>
       <id>hbaseLocalMiniClusterTestH2</id>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-testing-util</artifactId>
-          <version>${hbase.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-mapreduce</artifactId>
-          <version>${hbase.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <trimStackTrace>false</trimStackTrace>
+            </configuration>
             <executions>
               <execution>
                 <id>api-integration-test</id>
@@ -183,11 +177,11 @@ limitations under the License.
                   <includes>
                     <include>**/IntegrationTests.java</include>
                   </includes>
-                  <trimStackTrace>false</trimStackTrace>
                   <reportNameSuffix>local-mini-cluster</reportNameSuffix>
                   <forkedProcessTimeoutInSeconds>
                     ${test.timeout}
                   </forkedProcessTimeoutInSeconds>
+                  <trimStackTrace>false</trimStackTrace>
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
                 </configuration>
@@ -204,6 +198,9 @@ limitations under the License.
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <trimStackTrace>false</trimStackTrace>
+            </configuration>
             <executions>
               <execution>
                 <id>api-integration-test</id>
@@ -300,6 +297,8 @@ limitations under the License.
                   <forkedProcessTimeoutInSeconds>
                     ${test.timeout}
                   </forkedProcessTimeoutInSeconds>
+                  <!-- Make sure to fail the build when the suite fails to initialize -->
+                  <failIfNoTests>true</failIfNoTests>
                 </configuration>
               </execution>
             </executions>
@@ -309,20 +308,52 @@ limitations under the License.
     </profile>
   </profiles>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-bigtable-bom</artifactId>
+        <version>${bigtable.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-bigtable-deps-bom</artifactId>
+        <version>${bigtable.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
+    <!-- Project Modules -->
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-
       <exclusions>
-        <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
-        pom.xml files when invoking the build from a parent project. So we have to manually exclude
-        the dependencies. -->
+        <!-- included in hbase-shaded-testing-util -->
         <exclusion>
-          <groupId>${project.groupId}</groupId>
-          <artifactId>bigtable-hbase-2.x-shaded</artifactId>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bigtable-hbase-2.x</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <!-- included in hbase-shaded-testing-util -->
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -338,48 +369,49 @@ limitations under the License.
           <artifactId>org.apache.hbase</artifactId>
           <groupId>*</groupId>
         </exclusion>
-        <exclusion>
-          <artifactId>${project.groupId}</artifactId>
-          <groupId>*</groupId>
-        </exclusion>
       </exclusions>
     </dependency>
+
+
+    <!-- java-bigtable Modules -->
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+
+    <!-- HBase testing tools -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-testing-util</artifactId>
+      <version>${hbase.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Misc -->
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <version>${jsr305.version}</version>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${hbase-guava.version}</version>
+      <version>${guava.version}</version>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
       <version>${commons-lang.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <version>${hbase2-hadoop.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-common</artifactId>
-      <version>${hbase.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-client</artifactId>
-      <version>${hbase.version}</version>
-      <scope>test</scope>
-    </dependency>
+
+    <!-- Testing deps -->
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -392,6 +424,7 @@ limitations under the License.
       <version>${hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -437,6 +470,16 @@ limitations under the License.
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <usedDependencies>
+            <usedDependency>${project.groupId}:bigtable-hbase-2.x
+            </usedDependency>
+          </usedDependencies>
+        </configuration>
       </plugin>
     </plugins>
   </build>
