@@ -85,14 +85,6 @@ limitations under the License.
       <version>${slf4j.version}</version>
     </dependency>
 
-    <!--  TODO: remove this dependency when upgraded through transitive dependency (beam-sdks-java-core)
-     this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.20</version>
-    </dependency>
-
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
