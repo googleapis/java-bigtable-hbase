@@ -20,7 +20,7 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.RowKeyUtil;
+import com.google.cloud.bigtable.hbase.util.RowKeyUtil;
 import com.google.cloud.bigtable.util.RowKeyWrapper;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;

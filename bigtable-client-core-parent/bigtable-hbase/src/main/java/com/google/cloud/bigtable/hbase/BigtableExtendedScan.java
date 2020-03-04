@@ -19,7 +19,7 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
-import com.google.cloud.bigtable.util.RowKeyUtil;
+import com.google.cloud.bigtable.hbase.util.RowKeyUtil;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 
