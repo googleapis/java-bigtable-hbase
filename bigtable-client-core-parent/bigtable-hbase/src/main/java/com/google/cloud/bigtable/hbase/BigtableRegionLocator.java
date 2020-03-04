@@ -17,8 +17,8 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
