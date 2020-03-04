@@ -21,7 +21,7 @@ import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Query;
-import com.google.cloud.bigtable.util.RowKeyWrapper;
+import com.google.cloud.bigtable.hbase.util.RowKeyWrapper;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;

@@ -20,7 +20,7 @@ import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Range.ByteStringRange;
-import com.google.cloud.bigtable.util.RowKeyWrapper;
+import com.google.cloud.bigtable.hbase.util.RowKeyWrapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;

@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.util.RowKeyWrapper;
+import com.google.cloud.bigtable.hbase.util.RowKeyWrapper;
 import com.google.common.collect.RangeSet;
 import java.io.IOException;
 import org.apache.hadoop.hbase.filter.Filter;
