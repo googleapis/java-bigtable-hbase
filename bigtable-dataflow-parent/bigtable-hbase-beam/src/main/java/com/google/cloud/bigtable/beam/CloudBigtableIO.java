@@ -163,7 +163,8 @@ public class CloudBigtableIO {
     protected List<SourceWithKeys> getSplits(long desiredBundleSizeBytes) throws Exception {
       desiredBundleSizeBytes =
           Math.max(
-              getEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT, desiredBundleSizeBytes);
+              calculateEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
+              desiredBundleSizeBytes);
       CloudBigtableScanConfiguration conf = getConfiguration();
       byte[] scanStartKey = conf.getZeroCopyStartRow();
       byte[] scanEndKey = conf.getZeroCopyStopRow();
@@ -301,6 +302,16 @@ public class CloudBigtableIO {
      */
     @Override
     public long getEstimatedSizeBytes(PipelineOptions options) throws IOException {
+      try {
+        return calculateEstimatedSizeBytes(options);
+        // When using templates, we can't estimate the source size because we can't pull out the
+        // source table. So we return unknown (0L).
+      } catch (IllegalStateException e) {
+        return 0;
+      }
+    }
+
+    protected long calculateEstimatedSizeBytes(PipelineOptions options) throws IOException {
       long totalEstimatedSizeBytes = 0;
 
       byte[] scanStartKey = getConfiguration().getZeroCopyStartRow();
@@ -444,43 +455,6 @@ public class CloudBigtableIO {
       return splits;
     }
 
-    /**
-     * Gets an estimated size based on data returned from {@link
-     * CloudBigtableServiceImpl#getSampleRowKeys(CloudBigtableTableConfiguration)}. The estimate
-     * will be high if a {@link Scan} is set on the {@link CloudBigtableScanConfiguration}; in such
-     * cases, the estimate will not take the Scan into account, and will return a larger estimate
-     * than what the {@link CloudBigtableIO.Reader} will actually read.
-     *
-     * @param options The pipeline options.
-     * @return The estimated size of the data, in bytes.
-     */
-    @Override
-    public long getEstimatedSizeBytes(PipelineOptions options) throws IOException {
-      long totalEstimatedSizeBytes = 0;
-
-      byte[] scanStartKey = getConfiguration().getZeroCopyStartRow();
-      byte[] scanEndKey = getConfiguration().getZeroCopyStopRow();
-
-      byte[] startKey = HConstants.EMPTY_START_ROW;
-      long lastOffset = 0;
-      for (KeyOffset response : getSampleRowKeys()) {
-        byte[] currentEndKey = response.getKey().toByteArray();
-        // Avoid empty regions.
-        if (Bytes.equals(startKey, currentEndKey) && startKey.length != 0) {
-          continue;
-        }
-        long offset = response.getOffsetBytes();
-        if (isWithinRange(scanStartKey, scanEndKey, startKey, currentEndKey)) {
-          totalEstimatedSizeBytes += (offset - lastOffset);
-        }
-        lastOffset = offset;
-        startKey = currentEndKey;
-      }
-      SOURCE_LOG.info("Estimated size in bytes: " + totalEstimatedSizeBytes);
-
-      return totalEstimatedSizeBytes;
-    }
-
     @Override
     public Coder<Result> getOutputCoder() {
       return getResultCoder();
@@ -520,18 +494,8 @@ public class CloudBigtableIO {
       SOURCE_LOG.debug("Source with split: {}.", this);
     }
 
-    /**
-     * Gets an estimate of the size of the source.
-     *
-     * <p>NOTE: This value is a guesstimate. It could be significantly off, especially if there is
-     * a{@link Scan} selected in the configuration. It will also be off if the start and stop keys
-     * are calculated via {@link Source#split(long, PipelineOptions)}.
-     *
-     * @param options The pipeline options.
-     * @return The estimated size of the source, in bytes.
-     */
     @Override
-    public long getEstimatedSizeBytes(PipelineOptions options) {
+    protected long calculateEstimatedSizeBytes(PipelineOptions options) throws IOException {
       return estimatedSize;
     }
 
@@ -672,7 +636,7 @@ public class CloudBigtableIO {
 
       long estimatedSizeBytes = -1;
       try {
-        estimatedSizeBytes = source.getEstimatedSizeBytes(null);
+        estimatedSizeBytes = source.calculateEstimatedSizeBytes(null);
       } catch (IOException e) {
         READER_LOG.info(
             "{}: Failed to get estimated size for key for fraction {}.",
