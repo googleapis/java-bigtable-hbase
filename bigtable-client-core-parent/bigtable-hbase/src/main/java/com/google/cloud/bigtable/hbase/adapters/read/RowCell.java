@@ -24,19 +24,12 @@ import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * This implementation of {@link Cell} is more efficient for Bigtable scanning than {@link
- * KeyValue}.
+ * RowCell is an alternative implementation of {@link KeyValue}. Unlike KeyValue, RowCell stores
+ * each value separately, which minimizes the number of copies that need to be made when unpacking
+ * the results from the Cloud Bigtable api.
  *
- * <p>RowCell is pretty straight forward.
- *
- * <ul>
- *   <li>Each Array() method returns the array passed in in the constructor.
- *   <li>Each Offset() method returns 0.
- *   <li>Each Length() returns the length of the array.
- * </ul>
- *
- * This implementation is a few microseconds quicker thanks to KeyValue, which makes a big
- * performance difference for large scans.
+ * <p>This implementation is a few microseconds quicker than KeyValue, which makes a big performance
+ * difference for large scans.
  *
  * <p>For internal use only - public for technical reasons.
  */
@@ -236,6 +229,11 @@ public class RowCell implements Cell {
     return Bytes.copy(this.rowArray);
   }
 
+  /**
+   * Internal labels that were applied by a transformer filter. These labels are meant to be
+   * consumed by the bigtable-hbase scanner when implementing adapters like the {@link
+   * com.google.cloud.bigtable.hbase.adapters.filters.WhileMatchFilterAdapter}.
+   */
   public List<String> getLabels() {
     return this.labels;
   }
