@@ -15,10 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
-import com.google.api.core.InternalExtensionOnly;
+import com.google.api.core.InternalApi;
 import java.util.Arrays;
 
-@InternalExtensionOnly
+/** For internal use only - public for technical reasons. */
+@InternalApi
 public class RowKeyUtil {
   private static final byte[] EMPTY_KEY = new byte[0];
   /**
