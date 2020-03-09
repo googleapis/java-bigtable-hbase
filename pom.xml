@@ -52,7 +52,8 @@ limitations under the License.
     <!-- core dependency versions -->
     <bigtable.version>1.11.0</bigtable.version>
     <dropwizard.metrics.version>3.2.6</dropwizard.metrics.version>
-    <slf4j.version>1.7.30</slf4j.version>
+    <!--  keeping at this version to align with hbase-->
+    <slf4j.version>1.7.25</slf4j.version>
     <commons-logging.version>1.2</commons-logging.version>
     <jsr305.version>3.0.2</jsr305.version>
 
@@ -71,7 +72,7 @@ limitations under the License.
     <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
     <beam.version>2.19.0</beam.version>
     <!-- referred from bigtable-beam-import and bigtable-emulator -->
-    <guava.version>28.0-android</guava.version>
+    <guava.version>28.2-android</guava.version>
     <beam-guava.version>20.0</beam-guava.version>
     <beam-auto-value.version>1.7</beam-auto-value.version>
 
@@ -120,8 +121,9 @@ limitations under the License.
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>1.4.1</version>
+          <version>3.0.0-M3</version>
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -247,6 +249,29 @@ limitations under the License.
         <configuration>
           <style>google</style>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>[3.0,)</version>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[1.7,)</version>
+                </requireJavaVersion>
+                <requireUpperBoundDeps/>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

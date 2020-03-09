@@ -104,6 +104,37 @@ limitations under the License.
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>[3.0,)</version>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[1.7,)</version>
+                </requireJavaVersion>
+                <requireUpperBoundDeps>
+                  <!-- todo fix these temporary exclusions-->
+                  <excludes>
+                    <exclude>com.google.guava:guava</exclude>
+                    <exclude>commons-codec:commons-codec</exclude>
+                    <exclude>org.apache.zookeeper:zookeeper</exclude>
+                    <exclude>org.apache.hadoop:hadoop-yarn-api</exclude>
+                  </excludes>
+                </requireUpperBoundDeps>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <version>3.0.0</version>
