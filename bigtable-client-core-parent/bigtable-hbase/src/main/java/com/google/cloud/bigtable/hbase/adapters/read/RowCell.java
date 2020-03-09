@@ -14,6 +14,8 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.api.core.InternalApi;
+import com.google.common.collect.ImmutableList;
+import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.HConstants;
@@ -22,11 +24,12 @@ import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * This implementation of {@link org.apache.hadoop.hbase.Cell} is more efficient for Bigtable
- * scanning than {@link org.apache.hadoop.hbase.KeyValue} . RowCell is pretty straight forward. Each
- * *Array() method returns the array passed in in the constructor. Each *Offset() method returns 0.
- * Each *Length() returns the length of the array. This implementation is a few microseconds quicker
- * thank KeyValue, which makes a big performance difference for large scans.
+ * RowCell is an alternative implementation of {@link KeyValue}. Unlike KeyValue, RowCell stores
+ * each value separately, which minimizes the number of copies that need to be made when unpacking
+ * the results from the Cloud Bigtable api.
+ *
+ * <p>This implementation is a few microseconds quicker than KeyValue, which makes a big performance
+ * difference for large scans.
  *
  * <p>For internal use only - public for technical reasons.
  */
@@ -38,6 +41,7 @@ public class RowCell implements Cell {
   private final byte[] qualifierArray;
   private final long timestamp;
   private final byte[] valueArray;
+  private final List<String> labels;
 
   /**
    * Constructor for RowCell.
@@ -54,11 +58,32 @@ public class RowCell implements Cell {
       byte[] qualifierArray,
       long timestamp,
       byte[] valueArray) {
+    this(rowArray, familyArray, qualifierArray, timestamp, valueArray, ImmutableList.<String>of());
+  }
+
+  /**
+   * Constructor for RowCell.
+   *
+   * @param rowArray an array of byte.
+   * @param familyArray an array of byte.
+   * @param qualifierArray an array of byte.
+   * @param timestamp a long.
+   * @param valueArray an array of byte.
+   * @param labels a list of string labels.
+   */
+  public RowCell(
+      byte[] rowArray,
+      byte[] familyArray,
+      byte[] qualifierArray,
+      long timestamp,
+      byte[] valueArray,
+      List<String> labels) {
     this.rowArray = rowArray;
     this.familyArray = familyArray;
     this.qualifierArray = qualifierArray;
     this.timestamp = timestamp;
     this.valueArray = valueArray;
+    this.labels = labels;
   }
 
   /** {@inheritDoc} */
@@ -202,6 +227,15 @@ public class RowCell implements Cell {
   @Override
   public byte[] getRow() {
     return Bytes.copy(this.rowArray);
+  }
+
+  /**
+   * Internal labels that were applied by a transformer filter. These labels are meant to be
+   * consumed by the bigtable-hbase scanner when implementing adapters like the {@link
+   * com.google.cloud.bigtable.hbase.adapters.filters.WhileMatchFilterAdapter}.
+   */
+  public List<String> getLabels() {
+    return this.labels;
   }
 
   /** Needed doing 'contains' on List. Only compares the key portion, not the value. */

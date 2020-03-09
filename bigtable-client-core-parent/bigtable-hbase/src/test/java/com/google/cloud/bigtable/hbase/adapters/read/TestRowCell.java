@@ -14,7 +14,9 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItems;
 
+import java.util.Arrays;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,5 +40,19 @@ public class TestRowCell {
     MatcherAssert.assertThat(result, containsString("family"));
     MatcherAssert.assertThat(result, containsString("qualifier"));
     MatcherAssert.assertThat(result, containsString("1487963474314"));
+  }
+
+  @Test
+  public void testLabels() {
+    RowCell rowCell =
+        new RowCell(
+            "mykey".getBytes(),
+            "myfamily".getBytes(),
+            "myqualifier".getBytes(),
+            100000L,
+            "myvalue".getBytes(),
+            Arrays.asList("First-label", "Second-label"));
+
+    MatcherAssert.assertThat(rowCell.getLabels(), hasItems("First-label", "Second-label"));
   }
 }
