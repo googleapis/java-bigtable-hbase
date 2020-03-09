@@ -251,6 +251,7 @@ limitations under the License.
         </configuration>
       </plugin>
       <plugin>
+        <!-- todo: remove once parent shared config is added-->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
