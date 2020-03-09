@@ -15,17 +15,19 @@
 
 set -eo pipefail
 
-cd github/java-bigtable-hbase/
+source $(dirname "$0")/common.sh
+MAVEN_SETTINGS_FILE=$(realpath $(dirname "$0")/../../)/settings.xml
+pushd $(dirname "$0")/../../
 
-# Print out Java
-java -version
-echo $JOB_TYPE
+# ensure we're trying to push a snapshot (no-result returns non-zero exit code)
+grep SNAPSHOT versions.txt
 
-export MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m"
+setup_environment_secrets
+create_settings_xml_file "settings.xml"
 
-# this should run maven enforcer
-mvn install -B -V \
-  -DskipTests=true \
-  -Dclirr.skip=true
-
-mvn -B dependency:analyze -DfailOnWarning=true
+mvn clean install deploy -B \
+  --settings ${MAVEN_SETTINGS_FILE} \
+  -DperformRelease=true \
+  -Dgpg.executable=gpg \
+  -Dgpg.passphrase=${GPG_PASSPHRASE} \
+  -Dgpg.homedir=${GPG_HOMEDIR}
