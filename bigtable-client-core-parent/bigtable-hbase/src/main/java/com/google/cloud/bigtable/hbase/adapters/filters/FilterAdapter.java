@@ -19,7 +19,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
-import com.google.cloud.bigtable.util.RowKeyWrapper;
+import com.google.cloud.bigtable.hbase.util.RowKeyWrapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.RangeSet;

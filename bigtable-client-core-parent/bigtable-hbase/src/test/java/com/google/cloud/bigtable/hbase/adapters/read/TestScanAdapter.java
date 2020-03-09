@@ -28,7 +28,7 @@ import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
-import com.google.cloud.bigtable.util.RowKeyWrapper;
+import com.google.cloud.bigtable.hbase.util.RowKeyWrapper;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableRangeSet;
