@@ -105,6 +105,26 @@ limitations under the License.
   <build>
     <plugins>
       <plugin>
+        <!-- overriding the default config to add exclusions-->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <configuration>
+          <rules>
+            <requireMavenVersion>
+              <version>[3.0,)</version>
+            </requireMavenVersion>
+            <requireJavaVersion>
+              <version>[1.7,)</version>
+            </requireJavaVersion>
+            <requireUpperBoundDeps>
+              <excludes>
+                <exclude>com.google.guava:guava</exclude>
+              </excludes>
+            </requireUpperBoundDeps>
+          </rules>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
