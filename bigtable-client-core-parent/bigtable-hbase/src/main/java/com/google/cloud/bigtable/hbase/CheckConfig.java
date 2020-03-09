@@ -20,7 +20,7 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
-import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.security.GeneralSecurityException;

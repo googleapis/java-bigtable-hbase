@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture
 import static java.util.stream.Collectors.toList;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -30,6 +29,7 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.common.base.Preconditions;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.common.Scope;

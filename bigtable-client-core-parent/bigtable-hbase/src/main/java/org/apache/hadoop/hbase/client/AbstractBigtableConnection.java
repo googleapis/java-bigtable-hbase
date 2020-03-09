@@ -18,7 +18,6 @@ package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -27,6 +26,7 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.common.base.MoreObjects;
 import java.io.Closeable;
 import java.io.IOException;

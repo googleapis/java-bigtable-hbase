@@ -16,8 +16,8 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.HConstants;
