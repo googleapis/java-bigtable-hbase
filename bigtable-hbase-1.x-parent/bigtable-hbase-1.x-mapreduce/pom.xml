@@ -104,6 +104,7 @@ limitations under the License.
   <build>
     <plugins>
       <plugin>
+        <!-- overriding the default config to add exclusions-->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
@@ -121,7 +122,7 @@ limitations under the License.
                   <version>[1.7,)</version>
                 </requireJavaVersion>
                 <requireUpperBoundDeps>
-                  <!-- todo fix these temporary exclusions-->
+                  <!-- todo(kolea2): fix these temporary exclusions-->
                   <excludes>
                     <exclude>com.google.guava:guava</exclude>
                     <exclude>commons-codec:commons-codec</exclude>

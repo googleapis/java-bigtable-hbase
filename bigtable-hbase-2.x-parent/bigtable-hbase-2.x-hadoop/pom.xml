@@ -105,6 +105,7 @@ limitations under the License.
   <build>
     <plugins>
       <plugin>
+        <!-- overriding the default config to add exclusions-->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <configuration>

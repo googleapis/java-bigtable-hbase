@@ -173,7 +173,7 @@ limitations under the License.
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <configuration>
-          <!--  todo align dependencies -->
+          <!--  todo(kolea2): align dependencies -->
           <skip>true</skip>
         </configuration>
       </plugin>
