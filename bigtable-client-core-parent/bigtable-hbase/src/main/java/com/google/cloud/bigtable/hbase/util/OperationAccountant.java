@@ -38,9 +38,8 @@ public class OperationAccountant {
   @VisibleForTesting static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
 
   // In awaitCompletion, wait up to this number of nanoseconds without any operations completing.
-  // If
-  // this amount of time goes by without any updates, awaitCompletion will log a warning.  Flush()
-  // will still wait to complete.
+  // If this amount of time goes by without any updates, awaitCompletion will log a warning.
+  // Flush() will still wait to complete.
   private static final long INTERVAL_NO_SUCCESS_WARNING_NANOS = TimeUnit.SECONDS.toNanos(30);
 
   private final NanoClock clock;
