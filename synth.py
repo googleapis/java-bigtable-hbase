@@ -22,6 +22,6 @@ templates = common_templates.java_library()
 s.copy(templates, excludes=[
   'README.md',
   '.kokoro/presubmit/integration.cfg',
-  '.kokoro/presubmit/dependencies.sh',
+  '.kokoro/dependencies.sh',
   '.kokoro/build.sh'
 ])
