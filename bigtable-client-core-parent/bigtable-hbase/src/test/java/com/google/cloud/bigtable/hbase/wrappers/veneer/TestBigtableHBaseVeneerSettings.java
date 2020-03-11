@@ -41,6 +41,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.MAX_INFLIGH
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.MAX_SCAN_TIMEOUT_RETRIES;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.READ_PARTIAL_ROW_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.threeten.bp.Duration.ofMillis;
@@ -49,6 +50,7 @@ import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
@@ -67,6 +69,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class TestBigtableHBaseVeneerSettings {
@@ -260,70 +263,41 @@ public class TestBigtableHBaseVeneerSettings {
 
   @Test
   public void testVerifyRetrySettings() throws IOException {
+    configuration.set(BIGTABLE_USE_TIMEOUTS_KEY, "true");
     BigtableDataSettings dataSettings =
         ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
             .getDataSettings();
-    BigtableDataSettings.Builder defaultDataSettings = BigtableDataSettings.newBuilder();
+    BigtableDataSettings defaultDataSettings =
+        BigtableDataSettings.newBuilder()
+            .setProjectId("project-id")
+            .setInstanceId("instance-id")
+            .build();
 
     assertEquals(
-        defaultDataSettings.stubSettings().readRowsSettings().getRetryableCodes(),
+        defaultDataSettings.getStubSettings().readRowsSettings().getRetryableCodes(),
         dataSettings.getStubSettings().readRowsSettings().getRetryableCodes());
 
     // Unary operation's RetrySettings & RetryCodes of retryable methods.
-    assertRetrySettings(
-        defaultDataSettings.stubSettings().readRowSettings().getRetrySettings(),
-        dataSettings.getStubSettings().readRowSettings().getRetrySettings());
-    assertEquals(
-        defaultDataSettings.stubSettings().readRowSettings().getRetryableCodes(),
-        dataSettings.getStubSettings().readRowSettings().getRetryableCodes());
+    assertRetriableOperation(
+        defaultDataSettings.getStubSettings().readRowSettings(),
+        dataSettings.getStubSettings().readRowSettings());
 
-    assertRetrySettings(
-        defaultDataSettings.stubSettings().mutateRowSettings().getRetrySettings(),
-        dataSettings.getStubSettings().mutateRowSettings().getRetrySettings());
-    assertEquals(
-        defaultDataSettings.stubSettings().mutateRowSettings().getRetryableCodes(),
-        dataSettings.getStubSettings().mutateRowSettings().getRetryableCodes());
+    assertRetriableOperation(
+        defaultDataSettings.getStubSettings().mutateRowSettings(),
+        dataSettings.getStubSettings().mutateRowSettings());
 
-    assertRetrySettings(
-        defaultDataSettings.stubSettings().sampleRowKeysSettings().getRetrySettings(),
-        dataSettings.getStubSettings().sampleRowKeysSettings().getRetrySettings());
-    assertEquals(
-        defaultDataSettings.stubSettings().sampleRowKeysSettings().getRetryableCodes(),
-        dataSettings.getStubSettings().sampleRowKeysSettings().getRetryableCodes());
+    assertRetriableOperation(
+        defaultDataSettings.getStubSettings().sampleRowKeysSettings(),
+        dataSettings.getStubSettings().sampleRowKeysSettings());
 
     // Non-streaming operation's verifying RetrySettings & RetryCodes of non-retryable methods.
-    // readModifyWriteRowSettings
-    assertDisabledRetrySettings(
-        defaultDataSettings.stubSettings().readModifyWriteRowSettings().getRetrySettings(),
-        dataSettings.getStubSettings().readModifyWriteRowSettings().getRetrySettings());
-    assertTrue(
-        dataSettings.getStubSettings().readModifyWriteRowSettings().getRetryableCodes().isEmpty());
+    assertNonRetriableOperation(
+        defaultDataSettings.getStubSettings().readModifyWriteRowSettings(),
+        dataSettings.getStubSettings().readModifyWriteRowSettings());
 
-    // checkAndMutateRowSettings
-    assertDisabledRetrySettings(
-        defaultDataSettings.stubSettings().readModifyWriteRowSettings().getRetrySettings(),
-        dataSettings.getStubSettings().checkAndMutateRowSettings().getRetrySettings());
-    assertTrue(
-        dataSettings.getStubSettings().checkAndMutateRowSettings().getRetryableCodes().isEmpty());
-  }
-
-  private void assertRetrySettings(RetrySettings expected, RetrySettings actual) {
-    assertEquals(expected.getInitialRetryDelay(), actual.getInitialRetryDelay());
-    assertEquals(expected.getMaxRetryDelay(), actual.getMaxRetryDelay());
-    assertEquals(expected.getMaxAttempts(), actual.getMaxAttempts());
-    assertEquals(expected.getInitialRpcTimeout(), actual.getInitialRpcTimeout());
-    assertEquals(expected.getMaxRpcTimeout(), actual.getMaxRpcTimeout());
-    assertEquals(expected.getTotalTimeout(), actual.getTotalTimeout());
-  }
-
-  private void assertDisabledRetrySettings(RetrySettings expected, RetrySettings actual) {
-    assertEquals(expected.getInitialRetryDelay(), actual.getInitialRetryDelay());
-    assertEquals(expected.getRetryDelayMultiplier(), actual.getRetryDelayMultiplier(), 0);
-    assertEquals(expected.getMaxRetryDelay(), actual.getMaxRetryDelay());
-    assertEquals(expected.getMaxAttempts(), actual.getMaxAttempts());
-    assertEquals(expected.getInitialRpcTimeout(), actual.getInitialRpcTimeout());
-    assertEquals(expected.getMaxRpcTimeout(), actual.getMaxRpcTimeout());
-    assertEquals(expected.getTotalTimeout(), actual.getTotalTimeout());
+    assertNonRetriableOperation(
+        defaultDataSettings.getStubSettings().checkAndMutateRowSettings(),
+        dataSettings.getStubSettings().checkAndMutateRowSettings());
   }
 
   @Test
@@ -391,5 +365,52 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(emulatorHost, adminSettings.getStubSettings().getEndpoint());
     CredentialsProvider credProvider = adminSettings.getStubSettings().getCredentialsProvider();
     assertTrue(credProvider instanceof NoCredentialsProvider);
+  }
+
+  @Test
+  public void testRpcMethodWithoutRetry() throws IOException {
+    configuration.set(ENABLE_GRPC_RETRIES_KEY, "false");
+    BigtableHBaseVeneerSettings settingUtils =
+        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration));
+    BigtableDataSettings settings = settingUtils.getDataSettings();
+
+    assertTrue(settings.getStubSettings().readRowsSettings().getRetryableCodes().isEmpty());
+
+    assertRpcWithoutTimeout(settings.getStubSettings().bulkReadRowsSettings());
+    assertRpcWithoutTimeout(settings.getStubSettings().bulkMutateRowsSettings());
+    assertRpcWithoutTimeout(settings.getStubSettings().readRowSettings());
+    assertRpcWithoutTimeout(settings.getStubSettings().mutateRowSettings());
+    assertRpcWithoutTimeout(settings.getStubSettings().sampleRowKeysSettings());
+  }
+
+  private void assertRetriableOperation(UnaryCallSettings expected, UnaryCallSettings actual) {
+    assertFalse(actual.getRetryableCodes().isEmpty());
+    assertEquals(expected.getRetryableCodes(), actual.getRetryableCodes());
+
+    assertRetrySettings(expected.getRetrySettings(), actual.getRetrySettings());
+  }
+
+  private void assertNonRetriableOperation(UnaryCallSettings expected, UnaryCallSettings actual) {
+    assertTrue(actual.getRetryableCodes().isEmpty());
+
+    assertRetrySettings(expected.getRetrySettings(), actual.getRetrySettings());
+  }
+
+  private void assertRetrySettings(RetrySettings expected, RetrySettings actual) {
+    assertEquals(expected.getInitialRetryDelay(), actual.getInitialRetryDelay());
+    assertEquals(expected.getRetryDelayMultiplier(), actual.getRetryDelayMultiplier(), 0);
+    assertEquals(expected.getMaxRetryDelay(), actual.getMaxRetryDelay());
+    assertEquals(expected.getMaxAttempts(), actual.getMaxAttempts());
+    assertEquals(expected.getInitialRpcTimeout(), actual.getInitialRpcTimeout());
+    assertEquals(expected.getMaxRpcTimeout(), actual.getMaxRpcTimeout());
+    assertEquals(expected.getTotalTimeout(), actual.getTotalTimeout());
+  }
+
+  private void assertRpcWithoutTimeout(UnaryCallSettings unaryCallSettings) {
+    assertTrue(unaryCallSettings.getRetryableCodes().isEmpty());
+
+    assertEquals(Duration.ofHours(12), unaryCallSettings.getRetrySettings().getInitialRpcTimeout());
+    assertEquals(Duration.ofHours(12), unaryCallSettings.getRetrySettings().getMaxRpcTimeout());
+    assertEquals(Duration.ofHours(12), unaryCallSettings.getRetrySettings().getTotalTimeout());
   }
 }

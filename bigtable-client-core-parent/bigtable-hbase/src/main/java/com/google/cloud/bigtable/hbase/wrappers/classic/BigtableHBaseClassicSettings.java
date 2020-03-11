@@ -76,12 +76,13 @@ import org.apache.hadoop.hbase.util.VersionInfo;
 @InternalApi("For internal usage only")
 public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
 
-  // Keeping the original configuration, this could be an instance of BigtableExtendedConfiguration.
   private final Configuration configuration;
   private final BigtableOptions bigtableOptions;
 
   public BigtableHBaseClassicSettings(Configuration configuration) throws IOException {
     super(configuration);
+    // we can't create a defensive copy because it might be an instance
+    // BigtableExtendedConfiguration
     this.configuration = configuration;
     BigtableOptions.Builder bigtableOptionsBuilder = BigtableOptions.builder();
 
@@ -92,11 +93,11 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
       bigtableOptionsBuilder.setAppProfileId(appProfileId);
     }
 
-    buildBulkOptions(bigtableOptionsBuilder);
-    buildChannelOptions(bigtableOptionsBuilder);
-    buildClientCallOptions(bigtableOptionsBuilder);
-    buildCredentialOptions(bigtableOptionsBuilder);
-    buildRetryOptions(bigtableOptionsBuilder);
+    configureBulkOptions(bigtableOptionsBuilder);
+    configureChannelOptions(bigtableOptionsBuilder);
+    configureClientCallOptions(bigtableOptionsBuilder);
+    configureCredentialOptions(bigtableOptionsBuilder);
+    configureRetryOptions(bigtableOptionsBuilder);
 
     String emulatorHost = configuration.get(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY);
     if (!isNullOrEmpty(emulatorHost)) {
@@ -136,7 +137,7 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
   }
 
   // ************** Private Helpers **************
-  private void buildBulkOptions(BigtableOptions.Builder builder) {
+  private void configureBulkOptions(BigtableOptions.Builder builder) {
     BulkOptions.Builder bulkOptionsBuilder = builder.getBulkOptions().toBuilder();
 
     String asyncMutatorCount = configuration.get(BIGTABLE_ASYNC_MUTATOR_COUNT_KEY);
@@ -184,13 +185,17 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
             "Bigtable mutation latency throttling enabled with threshold %d", mutatorThresholdMs);
         bulkOptionsBuilder.enableBulkMutationThrottling();
         bulkOptionsBuilder.setBulkMutationRpcTargetMs(mutatorThresholdMs);
+      } else {
+        LOG.info(
+            "Bigtable mutation latency throttling is not enabled due to %s is yet not set",
+            BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS);
       }
     }
 
     builder.setBulkOptions(bulkOptionsBuilder.build());
   }
 
-  private void buildChannelOptions(BigtableOptions.Builder builder) {
+  private void configureChannelOptions(BigtableOptions.Builder builder) {
 
     String dataHostOverride = configuration.get(BIGTABLE_HOST_KEY);
     if (!isNullOrEmpty(dataHostOverride)) {
@@ -236,9 +241,8 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
     builder.setUserAgent(agentBuilder.toString());
   }
 
-  private void buildClientCallOptions(BigtableOptions.Builder OptionsBuilder) {
-    CallOptionsConfig.Builder callOptionsBuilder =
-        OptionsBuilder.getCallOptionsConfig().toBuilder();
+  private void configureClientCallOptions(BigtableOptions.Builder builder) {
+    CallOptionsConfig.Builder callOptionsBuilder = builder.getCallOptionsConfig().toBuilder();
 
     String useTimeoutStr = configuration.get(BIGTABLE_USE_TIMEOUTS_KEY);
     if (!isNullOrEmpty(useTimeoutStr)) {
@@ -265,10 +269,10 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
       callOptionsBuilder.setReadRowsRpcTimeoutMs(Integer.parseInt(readRowsRpcTimeoutMs));
     }
 
-    OptionsBuilder.setCallOptionsConfig(callOptionsBuilder.build());
+    builder.setCallOptionsConfig(callOptionsBuilder.build());
   }
 
-  private void buildCredentialOptions(BigtableOptions.Builder builder)
+  private void configureCredentialOptions(BigtableOptions.Builder builder)
       throws FileNotFoundException {
 
     // This preserves user defined Credentials
@@ -280,19 +284,20 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
       builder.setCredentialOptions(CredentialOptions.nullCredential());
       LOG.info("Enabling the use of null credentials. This should not be used in production.");
 
-    } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY) != null) {
+    } else if (!isNullOrEmpty(configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY))) {
       String jsonValue = configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY);
       LOG.debug("Using json value");
       builder.setCredentialOptions(CredentialOptions.jsonCredentials(jsonValue));
 
-    } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY) != null) {
+    } else if (!isNullOrEmpty(
+        configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY))) {
       String keyFileLocation =
           configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
       LOG.debug("Using json keyfile: %s", keyFileLocation);
       builder.setCredentialOptions(
           CredentialOptions.jsonCredentials(new FileInputStream(keyFileLocation)));
 
-    } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY) != null) {
+    } else if (!isNullOrEmpty(configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY))) {
       String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
       LOG.debug("Service account %s specified.", serviceAccount);
       String keyFileLocation = configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
@@ -305,7 +310,7 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
     }
   }
 
-  private void buildRetryOptions(BigtableOptions.Builder builder) {
+  private void configureRetryOptions(BigtableOptions.Builder builder) {
     RetryOptions.Builder retryOptionsBuilder = builder.getRetryOptions().toBuilder();
 
     String enableRetries = configuration.get(ENABLE_GRPC_RETRIES_KEY);

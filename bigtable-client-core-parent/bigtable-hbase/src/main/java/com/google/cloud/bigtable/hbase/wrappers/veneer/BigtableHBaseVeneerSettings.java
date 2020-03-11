@@ -62,7 +62,6 @@ import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StubSettings;
-import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -85,6 +84,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
+import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
@@ -96,62 +96,81 @@ import org.threeten.bp.Duration;
 public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
   // Identifier to distinguish between CBT or GCJ adapter.
-  private static final String VENEER_ADAPTER =
+  // TODO: find better name to identify veneer client
+  private static final String USER_AGENT_VALUE =
       BigtableVersionInfo.CORE_USER_AGENT + "," + "veneer-adapter,";
+  private static final Duration EFFECTIVELY_DISABLED_DEADLINE_DURATION = Duration.ofHours(12);
 
-  // Keeping the original configuration, this could be an instance of BigtableExtendedConfiguration.
   private final Configuration configuration;
   private final BigtableDataSettings dataSettings;
   private final BigtableTableAdminSettings tableAdminSettings;
   @Nullable private final BigtableInstanceAdminSettings instanceAdminSettings;
 
+  private final String dataHost;
+  private final String adminHost;
+  private final int port;
+  private final int bulkMaxRowKeyCount;
+  private final boolean isChannelPoolCachingEnabled;
+
   public BigtableHBaseVeneerSettings(Configuration configuration) throws IOException {
     super(configuration);
+    // we can't create a defensive copy because it might be an instance
+    // BigtableExtendedConfiguration
     this.configuration = configuration;
     this.dataSettings = buildBigtableDataSettings();
     this.tableAdminSettings = buildBigtableTableAdminSettings();
 
     if (!isNullOrEmpty(configuration.get(BIGTABLE_EMULATOR_HOST_KEY))) {
-      LOG.info("bigtable emulator does not support Instance Admin client.");
-      instanceAdminSettings = null;
+      this.instanceAdminSettings = null;
     } else {
-      instanceAdminSettings = buildBigtableInstanceAdminSettings();
+      this.instanceAdminSettings = buildBigtableInstanceAdminSettings();
     }
+
+    String dataEndpoint = dataSettings.getStubSettings().getEndpoint();
+    this.dataHost = dataEndpoint.substring(0, dataEndpoint.lastIndexOf(":"));
+
+    String adminEndpoint = tableAdminSettings.getStubSettings().getEndpoint();
+    this.adminHost = adminEndpoint.substring(0, adminEndpoint.lastIndexOf(":"));
+
+    this.port = Integer.parseInt(dataEndpoint.substring(dataEndpoint.lastIndexOf(":") + 1));
+
+    this.bulkMaxRowKeyCount =
+        dataSettings
+            .getStubSettings()
+            .bulkMutateRowsSettings()
+            .getBatchingSettings()
+            .getElementCountThreshold()
+            .intValue();
+
+    // This is primarily used by Dataflow where connections open and close often. This is a
+    // performance optimization that will reduce the cost to open connections.
+    this.isChannelPoolCachingEnabled =
+        configuration.getBoolean(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, false);
   }
 
   @Override
   public String getDataHost() {
-    String endpoint = dataSettings.getStubSettings().getEndpoint();
-    return endpoint.substring(0, endpoint.lastIndexOf(":"));
+    return dataHost;
   }
 
   @Override
   public String getAdminHost() {
-    String endpoint = tableAdminSettings.getStubSettings().getEndpoint();
-    return endpoint.substring(0, endpoint.lastIndexOf(":"));
+    return adminHost;
   }
 
   @Override
   public int getPort() {
-    String endpoint = dataSettings.getStubSettings().getEndpoint();
-    return Integer.parseInt(endpoint.substring(endpoint.lastIndexOf(":") + 1));
+    return port;
   }
 
   @Override
   public int getBulkMaxRowCount() {
-    return dataSettings
-        .getStubSettings()
-        .bulkMutateRowsSettings()
-        .getBatchingSettings()
-        .getElementCountThreshold()
-        .intValue();
+    return bulkMaxRowKeyCount;
   }
 
   // ************** Getters **************
   public boolean isChannelPoolCachingEnabled() {
-    // This is primarily used by Dataflow where connections open and close often. This is a
-    // performance optimization that will reduce the cost to open connections.
-    return configuration.getBoolean(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, false);
+    return isChannelPoolCachingEnabled;
   }
 
   /** Utility to convert {@link Configuration} to {@link BigtableDataSettings}. */
@@ -184,27 +203,27 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     EnhancedBigtableStubSettings.Builder stubSettings = dataBuilder.stubSettings();
 
-    buildEndpoints(stubSettings, BIGTABLE_HOST_KEY);
+    configureConnection(stubSettings, BIGTABLE_HOST_KEY);
 
-    buildHeaderProvider(stubSettings);
+    configureHeaderProvider(stubSettings);
 
-    buildCredentialProvider(stubSettings);
+    configureCredentialProvider(stubSettings);
+
+    configureEmulatorSettings(stubSettings);
 
     // RPC methods
-    buildBulkMutationsSettings(stubSettings);
+    configureBulkMutationSettings(stubSettings);
 
-    buildBulkReadRowsSettings(stubSettings);
+    configureBulkReadRowsSettings(stubSettings);
 
-    buildReadRowsSettings(stubSettings);
+    configureReadRowsSettings(stubSettings);
 
-    buildNonIdempotentCallSettings(stubSettings.checkAndMutateRowSettings());
-    buildNonIdempotentCallSettings(stubSettings.readModifyWriteRowSettings());
+    configureNonIdempotentCallSettings(stubSettings.checkAndMutateRowSettings());
+    configureNonIdempotentCallSettings(stubSettings.readModifyWriteRowSettings());
 
-    buildIdempotentCallSettings(stubSettings.readRowSettings());
-    buildIdempotentCallSettings(stubSettings.mutateRowSettings());
-    buildIdempotentCallSettings(stubSettings.sampleRowKeysSettings());
-
-    buildEmulatorSettings(stubSettings);
+    configureIdempotentCallSettings(stubSettings.readRowSettings());
+    configureIdempotentCallSettings(stubSettings.mutateRowSettings());
+    configureIdempotentCallSettings(stubSettings.sampleRowKeysSettings());
 
     return dataBuilder.build();
   }
@@ -217,13 +236,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     BigtableTableAdminStubSettings.Builder stubSettings = adminBuilder.stubSettings();
 
-    buildEndpoints(stubSettings, BIGTABLE_ADMIN_HOST_KEY);
+    configureConnection(stubSettings, BIGTABLE_ADMIN_HOST_KEY);
 
-    buildHeaderProvider(stubSettings);
+    configureHeaderProvider(stubSettings);
 
-    buildCredentialProvider(stubSettings);
+    configureCredentialProvider(stubSettings);
 
-    buildEmulatorSettings(stubSettings);
+    configureEmulatorSettings(stubSettings);
 
     return adminBuilder.build();
   }
@@ -234,16 +253,16 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     BigtableInstanceAdminStubSettings.Builder stubSettings = instanceAdminBuilder.stubSettings();
 
-    buildEndpoints(stubSettings, BIGTABLE_ADMIN_HOST_KEY);
+    configureConnection(stubSettings, BIGTABLE_ADMIN_HOST_KEY);
 
-    buildHeaderProvider(stubSettings);
+    configureHeaderProvider(stubSettings);
 
-    buildCredentialProvider(stubSettings);
+    configureCredentialProvider(stubSettings);
 
     return instanceAdminBuilder.build();
   }
 
-  private void buildEndpoints(StubSettings.Builder stubSettings, String endpointKey) {
+  private void configureConnection(StubSettings.Builder stubSettings, String endpointKey) {
     String adminHostOverride = configuration.get(endpointKey);
     if (!isNullOrEmpty(adminHostOverride)) {
 
@@ -258,16 +277,30 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       stubSettings.setEndpoint(finalEndpoint);
     }
 
+    InstantiatingGrpcChannelProvider.Builder channelBuilder = defaultGrpcTransportProviderBuilder();
+
     if (Boolean.parseBoolean(configuration.get(BIGTABLE_USE_PLAINTEXT_NEGOTIATION))) {
-      stubSettings.setTransportChannelProvider(
-          buildPlainTextChannelProvider(stubSettings.getEndpoint()));
+      channelBuilder.setChannelConfigurator(
+          new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+            @Override
+            public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+              return channelBuilder.usePlaintext();
+            }
+          });
     }
+
+    String channelCount = configuration.get(BIGTABLE_DATA_CHANNEL_COUNT_KEY);
+    if (!isNullOrEmpty(channelCount)) {
+      channelBuilder.setPoolSize(Integer.parseInt(channelCount));
+    }
+
+    stubSettings.setTransportChannelProvider(channelBuilder.build());
   }
 
-  /** Creates {@link HeaderProvider} with VENEER_ADAPTER as prefix for user agent */
-  private void buildHeaderProvider(StubSettings.Builder stubSettings) {
+  /** Creates {@link HeaderProvider} with USER_AGENT_VALUE as prefix for user agent */
+  private void configureHeaderProvider(StubSettings.Builder stubSettings) {
 
-    // This information is in addition to bigtable-client-core version, and jdk version.
+    // TODO: figure out version info for bigtable-hbase
     StringBuilder agentBuilder = new StringBuilder();
     agentBuilder.append("hbase-").append(VersionInfo.getVersion());
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
@@ -277,14 +310,15 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     stubSettings.setHeaderProvider(
         FixedHeaderProvider.create(
-            USER_AGENT_KEY.name(), VENEER_ADAPTER + agentBuilder.toString()));
+            USER_AGENT_KEY.name(), USER_AGENT_VALUE + agentBuilder.toString()));
   }
 
-  private void buildCredentialProvider(StubSettings.Builder stubSettings) throws IOException {
-    Credentials credentials = null;
+  private void configureCredentialProvider(StubSettings.Builder stubSettings) throws IOException {
 
+    // This preserves user defined Credentials
     if (configuration instanceof BigtableExtendedConfiguration) {
-      credentials = ((BigtableExtendedConfiguration) configuration).getCredentials();
+      Credentials credentials = ((BigtableExtendedConfiguration) configuration).getCredentials();
+      stubSettings.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
 
     } else if (Boolean.parseBoolean(configuration.get(BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY))) {
       stubSettings.setCredentialsProvider(NoCredentialsProvider.create());
@@ -293,23 +327,21 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     } else if (!isNullOrEmpty(configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY))) {
       String jsonValue = configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY);
       LOG.debug("Using json value");
-      Preconditions.checkState(
-          !isNullOrEmpty(jsonValue), "service account json value is null or empty");
-      credentials =
-          GoogleCredentials.fromStream(
-              new ByteArrayInputStream(jsonValue.getBytes(StandardCharsets.UTF_8)));
+      stubSettings.setCredentialsProvider(
+          FixedCredentialsProvider.create(
+              GoogleCredentials.fromStream(
+                  new ByteArrayInputStream(jsonValue.getBytes(StandardCharsets.UTF_8)))));
 
     } else if (!isNullOrEmpty(
         configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY))) {
       String keyFileLocation =
           configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
       LOG.debug("Using json keyfile: %s", keyFileLocation);
-      Preconditions.checkState(
-          !isNullOrEmpty(keyFileLocation), "service account location is null or empty");
-      credentials = GoogleCredentials.fromStream(new FileInputStream(keyFileLocation));
+      stubSettings.setCredentialsProvider(
+          FixedCredentialsProvider.create(
+              GoogleCredentials.fromStream(new FileInputStream(keyFileLocation))));
 
     } else if (!isNullOrEmpty(configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY))) {
-
       String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
       LOG.debug("Service account %s specified.", serviceAccount);
       String keyFileLocation = configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
@@ -317,18 +349,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
           !isNullOrEmpty(keyFileLocation),
           "Key file location must be specified when setting service account email");
       LOG.debug("Using p12 keyfile: %s", keyFileLocation);
-
-      credentials = getCredentialFromPrivateKeyServiceAccount(serviceAccount, keyFileLocation);
-    }
-
-    if (credentials != null) {
-      stubSettings.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
+      stubSettings.setCredentialsProvider(
+          FixedCredentialsProvider.create(
+              buildCredentialFromPrivateKey(serviceAccount, keyFileLocation)));
     }
   }
 
-  // copied over from CredentialFactory
-  // TODO: Find a better way to convert P12 key into Credentials instance
-  private Credentials getCredentialFromPrivateKeyServiceAccount(
+  private Credentials buildCredentialFromPrivateKey(
       String serviceAccountEmail, String privateKeyFile) throws IOException {
     try {
       PrivateKey privateKey =
@@ -348,26 +375,199 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
   }
 
-  /** Creates {@link TransportChannelProvider} for plaintext negotiation type. */
-  private TransportChannelProvider buildPlainTextChannelProvider(String endpoint) {
+  private void configureEmulatorSettings(StubSettings.Builder stubSettings) {
+    String emulatorHostPort = configuration.get(BIGTABLE_EMULATOR_HOST_KEY);
+    if (!isNullOrEmpty(emulatorHostPort)) {
+      stubSettings
+          .setCredentialsProvider(NoCredentialsProvider.create())
+          .setEndpoint(emulatorHostPort)
+          .setTransportChannelProvider(
+              InstantiatingGrpcChannelProvider.newBuilder()
+                  .setEndpoint(emulatorHostPort)
+                  .setPoolSize(1)
+                  .setChannelConfigurator(
+                      new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+                        @Override
+                        public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+                          return channelBuilder.usePlaintext();
+                        }
+                      })
+                  .build());
+    }
+  }
 
-    InstantiatingGrpcChannelProvider.Builder channelBuilder =
-        defaultGrpcTransportProviderBuilder()
-            .setEndpoint(endpoint)
-            .setChannelConfigurator(
-                new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-                  @Override
-                  public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-                    return channelBuilder.usePlaintext();
-                  }
-                });
+  private void configureBulkMutationSettings(EnhancedBigtableStubSettings.Builder builder) {
+    BatchingSettings.Builder batchingSettingsBuilder =
+        builder.bulkMutateRowsSettings().getBatchingSettings().toBuilder();
 
-    String channelCount = configuration.get(BIGTABLE_DATA_CHANNEL_COUNT_KEY);
-    if (!isNullOrEmpty(channelCount)) {
-      channelBuilder.setPoolSize(Integer.parseInt(channelCount));
+    String autoFlushStr = configuration.get(BIGTABLE_BULK_AUTOFLUSH_MS_KEY);
+    if (!isNullOrEmpty(autoFlushStr)) {
+      long autoFlushMs = Long.parseLong(autoFlushStr);
+      if (autoFlushMs > 0) {
+        batchingSettingsBuilder.setDelayThreshold(ofMillis(autoFlushMs));
+      }
     }
 
-    return channelBuilder.build();
+    String bulkMaxRowKeyCountStr = configuration.get(BIGTABLE_BULK_MAX_ROW_KEY_COUNT);
+    if (!isNullOrEmpty(bulkMaxRowKeyCountStr)) {
+      batchingSettingsBuilder.setElementCountThreshold(Long.parseLong(bulkMaxRowKeyCountStr));
+    }
+
+    String maxInflightRpcStr = configuration.get(MAX_INFLIGHT_RPCS_KEY);
+    if (!isNullOrEmpty(maxInflightRpcStr) && Integer.parseInt(maxInflightRpcStr) > 0) {
+
+      int maxInflightRpcCount = Integer.parseInt(maxInflightRpcStr);
+
+      // TODO: This needs to be extracted for calculating outstandingElementCount
+      long bulkMaxRowKeyCount =
+          builder.bulkMutateRowsSettings().getBatchingSettings().getElementCountThreshold();
+
+      FlowControlSettings.Builder flowControlBuilder =
+          FlowControlSettings.newBuilder()
+              // TODO: either deprecate maxInflightRpcCount and expose the max outstanding elements
+              // in user configuration or introduce maxInflightRpcCount to gax
+              .setMaxOutstandingElementCount(maxInflightRpcCount * bulkMaxRowKeyCount);
+
+      String maxMemory = configuration.get(BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY);
+      if (!isNullOrEmpty(maxMemory)) {
+        flowControlBuilder.setMaxOutstandingRequestBytes(Long.valueOf(maxMemory));
+      }
+
+      batchingSettingsBuilder.setFlowControlSettings(flowControlBuilder.build());
+    }
+
+    String requestByteThresholdStr = configuration.get(BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES);
+    if (!isNullOrEmpty(requestByteThresholdStr)) {
+      batchingSettingsBuilder.setRequestByteThreshold(Long.valueOf(requestByteThresholdStr));
+    }
+
+    builder.bulkMutateRowsSettings().setBatchingSettings(batchingSettingsBuilder.build());
+
+    configureIdempotentCallSettings(builder.bulkMutateRowsSettings());
+  }
+
+  private void configureBulkReadRowsSettings(EnhancedBigtableStubSettings.Builder builder) {
+    BatchingSettings.Builder bulkReadBatchingBuilder =
+        builder.bulkReadRowsSettings().getBatchingSettings().toBuilder();
+
+    String bulkMaxRowKeyCountStr = configuration.get(BIGTABLE_BULK_MAX_ROW_KEY_COUNT);
+    if (!isNullOrEmpty(bulkMaxRowKeyCountStr)) {
+      bulkReadBatchingBuilder.setElementCountThreshold(Long.valueOf(bulkMaxRowKeyCountStr));
+    }
+
+    builder.bulkReadRowsSettings().setBatchingSettings(bulkReadBatchingBuilder.build());
+
+    configureIdempotentCallSettings(builder.bulkReadRowsSettings());
+  }
+
+  private void configureReadRowsSettings(EnhancedBigtableStubSettings.Builder stubSettings) {
+    RetrySettings.Builder retryBuilder =
+        stubSettings.readRowsSettings().getRetrySettings().toBuilder();
+
+    if (isRetriesDisabled()) {
+
+      stubSettings.readRowsSettings().setRetryableCodes(Collections.<StatusCode.Code>emptySet());
+    } else {
+      ImmutableSet.Builder<StatusCode.Code> retryCodes = ImmutableSet.builder();
+
+      retryCodes
+          .addAll(extractRetryCodesFromConfig())
+          .addAll(stubSettings.readRowsSettings().getRetryableCodes());
+
+      stubSettings.readRowsSettings().setRetryableCodes(retryCodes.build());
+
+      String initialElapsedBackoffMsStr = configuration.get(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY);
+      if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
+        retryBuilder.setInitialRetryDelay(ofMillis(Long.parseLong(initialElapsedBackoffMsStr)));
+      }
+
+      String maxElapsedBackoffMillis = configuration.get(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
+      if (!isNullOrEmpty(maxElapsedBackoffMillis)) {
+        retryBuilder.setTotalTimeout(ofMillis(Long.parseLong(maxElapsedBackoffMillis)));
+      }
+
+      String maxScanTimeoutRetriesAttempts = configuration.get(MAX_SCAN_TIMEOUT_RETRIES);
+      if (!isNullOrEmpty(maxScanTimeoutRetriesAttempts)) {
+        LOG.debug("gRPC max scan timeout retries (count): %d", maxScanTimeoutRetriesAttempts);
+        retryBuilder.setMaxAttempts(Integer.valueOf(maxScanTimeoutRetriesAttempts));
+      }
+    }
+
+    if (Boolean.parseBoolean(configuration.get(BIGTABLE_USE_TIMEOUTS_KEY))) {
+      String readRowsRpcTimeoutMs = configuration.get(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY);
+
+      if (!isNullOrEmpty(readRowsRpcTimeoutMs)) {
+        retryBuilder.setTotalTimeout(ofMillis(Long.parseLong(readRowsRpcTimeoutMs)));
+      }
+
+      String rpcTimeoutStr = configuration.get(READ_PARTIAL_ROW_TIMEOUT_MS);
+      if (!isNullOrEmpty(rpcTimeoutStr)) {
+        Duration rpcTimeoutMs = ofMillis(Long.parseLong(rpcTimeoutStr));
+        retryBuilder.setInitialRpcTimeout(rpcTimeoutMs).setMaxRpcTimeout(rpcTimeoutMs);
+      }
+    } else {
+
+      retryBuilder
+          .setInitialRpcTimeout(EFFECTIVELY_DISABLED_DEADLINE_DURATION)
+          .setMaxRpcTimeout(EFFECTIVELY_DISABLED_DEADLINE_DURATION)
+          .setTotalTimeout(EFFECTIVELY_DISABLED_DEADLINE_DURATION);
+    }
+
+    stubSettings.readRowsSettings().setRetrySettings(retryBuilder.build());
+  }
+
+  private void configureIdempotentCallSettings(UnaryCallSettings.Builder unaryCallSettings) {
+
+    if (configuration.getBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, false)) {
+      throw new UnsupportedOperationException("Retries without Timestamp is not supported yet.");
+    }
+
+    RetrySettings.Builder retryBuilder = unaryCallSettings.getRetrySettings().toBuilder();
+    ImmutableSet.Builder<StatusCode.Code> retryCodeBuilder = ImmutableSet.builder();
+
+    if (isRetriesDisabled()) {
+
+      unaryCallSettings.setRetryableCodes(Collections.<StatusCode.Code>emptySet());
+    } else {
+
+      retryCodeBuilder
+          .addAll(extractRetryCodesFromConfig())
+          .addAll(unaryCallSettings.getRetryableCodes());
+
+      String initialElapsedBackoffMsStr = configuration.get(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY);
+      if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
+        retryBuilder.setInitialRetryDelay(ofMillis(Long.parseLong(initialElapsedBackoffMsStr)));
+      }
+    }
+
+    if (Boolean.parseBoolean(configuration.get(BIGTABLE_USE_TIMEOUTS_KEY))) {
+
+      String shortRpcTimeoutMsStr = configuration.get(BIGTABLE_RPC_TIMEOUT_MS_KEY);
+      if (!isNullOrEmpty(shortRpcTimeoutMsStr)) {
+        Duration rpcTimeoutMs = ofMillis(Long.parseLong(shortRpcTimeoutMsStr));
+        retryBuilder.setInitialRpcTimeout(rpcTimeoutMs).setMaxRpcTimeout(rpcTimeoutMs);
+      }
+
+      String maxElapsedBackoffMsStr = configuration.get(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
+      if (!isNullOrEmpty(maxElapsedBackoffMsStr)) {
+        retryBuilder.setTotalTimeout(ofMillis(Long.parseLong(maxElapsedBackoffMsStr)));
+      }
+    } else {
+
+      retryBuilder
+          .setInitialRpcTimeout(EFFECTIVELY_DISABLED_DEADLINE_DURATION)
+          .setMaxRpcTimeout(EFFECTIVELY_DISABLED_DEADLINE_DURATION)
+          .setTotalTimeout(EFFECTIVELY_DISABLED_DEADLINE_DURATION);
+    }
+
+    unaryCallSettings.setRetrySettings(retryBuilder.build());
+  }
+
+  private void configureNonIdempotentCallSettings(UnaryCallSettings.Builder unaryCallSettings) {
+    String shortRpcTimeoutStr = configuration.get(BIGTABLE_RPC_TIMEOUT_MS_KEY);
+    if (!isNullOrEmpty(shortRpcTimeoutStr)) {
+      unaryCallSettings.setSimpleTimeoutNoRetries(ofMillis(Long.parseLong(shortRpcTimeoutStr)));
+    }
   }
 
   private Set<StatusCode.Code> extractRetryCodesFromConfig() {
@@ -388,193 +588,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     return statusCodeBuilder.build();
   }
 
-  private <Request, Response> void buildIdempotentCallSettings(
-      UnaryCallSettings.Builder<Request, Response> unaryCallSettings) {
-
-    ImmutableSet.Builder<StatusCode.Code> retryCodeBuilder = ImmutableSet.builder();
-    if (configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true)) {
-      retryCodeBuilder
-          .addAll(extractRetryCodesFromConfig())
-          .addAll(unaryCallSettings.getRetryableCodes());
-    }
-
-    unaryCallSettings
-        .setRetryableCodes(retryCodeBuilder.build())
-        .setRetrySettings(buildIdempotentRetrySettings(unaryCallSettings.getRetrySettings()));
-  }
-
-  private void buildNonIdempotentCallSettings(UnaryCallSettings.Builder unaryCallSettings) {
-    String shortRpcTimeoutStr = configuration.get(BIGTABLE_RPC_TIMEOUT_MS_KEY);
-    if (!isNullOrEmpty(shortRpcTimeoutStr)) {
-      unaryCallSettings.setSimpleTimeoutNoRetries(ofMillis(Long.parseLong(shortRpcTimeoutStr)));
-    }
-  }
-
-  /** Creates {@link RetrySettings} for non-streaming VENEER_ADAPTER method. */
-  private RetrySettings buildIdempotentRetrySettings(RetrySettings originalRetrySettings) {
-    RetrySettings.Builder retryBuilder = originalRetrySettings.toBuilder();
-
-    if (configuration.getBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, false)) {
-      throw new UnsupportedOperationException("Retries without Timestamp is not supported yet.");
-    }
-
-    String initialElapsedBackoffMsStr = configuration.get(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY);
-    if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
-      retryBuilder.setInitialRetryDelay(ofMillis(Long.parseLong(initialElapsedBackoffMsStr)));
-    }
-
-    if (Boolean.parseBoolean(configuration.get(BIGTABLE_USE_TIMEOUTS_KEY))) {
-      String shortRpcTimeoutMsStr = configuration.get(BIGTABLE_RPC_TIMEOUT_MS_KEY);
-
-      if (!isNullOrEmpty(shortRpcTimeoutMsStr)) {
-        Duration rpcTimeoutMs = ofMillis(Long.valueOf(shortRpcTimeoutMsStr));
-        retryBuilder.setInitialRpcTimeout(rpcTimeoutMs).setMaxRpcTimeout(rpcTimeoutMs);
-      }
-    }
-
-    String maxElapsedBackoffMillis = configuration.get(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
-    if (!isNullOrEmpty(maxElapsedBackoffMillis)) {
-      retryBuilder.setTotalTimeout(ofMillis(Long.valueOf(maxElapsedBackoffMillis)));
-    }
-
-    return retryBuilder.build();
-  }
-
-  private void buildBulkMutationsSettings(EnhancedBigtableStubSettings.Builder builder) {
-    BatchingSettings.Builder batchMutateBuilder =
-        builder.bulkMutateRowsSettings().getBatchingSettings().toBuilder();
-
-    String autoFlushStr = configuration.get(BIGTABLE_BULK_AUTOFLUSH_MS_KEY);
-    if (!isNullOrEmpty(autoFlushStr)) {
-      long autoFlushMs = Long.parseLong(autoFlushStr);
-      if (autoFlushMs > 0) {
-        batchMutateBuilder.setDelayThreshold(ofMillis(autoFlushMs));
-      }
-    }
-
-    String bulkMaxRowKeyCountStr = configuration.get(BIGTABLE_BULK_MAX_ROW_KEY_COUNT);
-    if (!isNullOrEmpty(bulkMaxRowKeyCountStr)) {
-      batchMutateBuilder.setElementCountThreshold(Long.parseLong(bulkMaxRowKeyCountStr));
-    }
-
-    long bulkMaxRowKeyCount = batchMutateBuilder.build().getElementCountThreshold();
-
-    String maxInflightRpcStr = configuration.get(MAX_INFLIGHT_RPCS_KEY);
-    if (!isNullOrEmpty(maxInflightRpcStr) && Integer.parseInt(maxInflightRpcStr) > 0) {
-
-      int maxInflightRpcCount = Integer.parseInt(maxInflightRpcStr);
-      FlowControlSettings.Builder flowControlBuilder =
-          FlowControlSettings.newBuilder()
-              // TODO: verify if it should be channelCount instead of maxRowKeyCount
-              .setMaxOutstandingElementCount(maxInflightRpcCount * bulkMaxRowKeyCount);
-
-      String maxMemory = configuration.get(BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY);
-      if (!isNullOrEmpty(maxMemory)) {
-        flowControlBuilder.setMaxOutstandingRequestBytes(Long.valueOf(maxMemory));
-      }
-
-      batchMutateBuilder.setFlowControlSettings(flowControlBuilder.build());
-    }
-
-    String requestByteThresholdStr = configuration.get(BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES);
-    if (!isNullOrEmpty(requestByteThresholdStr)) {
-      batchMutateBuilder.setRequestByteThreshold(Long.valueOf(requestByteThresholdStr));
-    }
-
-    ImmutableSet.Builder<StatusCode.Code> retryCodes = ImmutableSet.builder();
-    if (configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true)) {
-      retryCodes
-          .addAll(extractRetryCodesFromConfig())
-          .addAll(builder.bulkMutateRowsSettings().getRetryableCodes());
-    }
-
-    builder
-        .bulkMutateRowsSettings()
-        .setBatchingSettings(batchMutateBuilder.build())
-        .setRetryableCodes(retryCodes.build())
-        .setRetrySettings(
-            buildIdempotentRetrySettings(builder.bulkMutateRowsSettings().getRetrySettings()));
-  }
-
-  private void buildBulkReadRowsSettings(EnhancedBigtableStubSettings.Builder builder) {
-    BatchingSettings.Builder bulkReadBatchingBuilder =
-        builder.bulkReadRowsSettings().getBatchingSettings().toBuilder();
-
-    String bulkMaxRowKeyCountStr = configuration.get(BIGTABLE_BULK_MAX_ROW_KEY_COUNT);
-    if (!isNullOrEmpty(bulkMaxRowKeyCountStr)) {
-      bulkReadBatchingBuilder.setElementCountThreshold(Long.valueOf(bulkMaxRowKeyCountStr));
-    }
-
-    ImmutableSet.Builder<StatusCode.Code> retryCodes = ImmutableSet.builder();
-    if (configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true)) {
-      retryCodes
-          .addAll(extractRetryCodesFromConfig())
-          .addAll(builder.bulkReadRowsSettings().getRetryableCodes());
-    }
-
-    builder
-        .bulkReadRowsSettings()
-        .setBatchingSettings(bulkReadBatchingBuilder.build())
-        .setRetryableCodes(retryCodes.build())
-        .setRetrySettings(
-            buildIdempotentRetrySettings(builder.bulkReadRowsSettings().getRetrySettings()));
-  }
-
-  private void buildReadRowsSettings(EnhancedBigtableStubSettings.Builder stubSettings) {
-    RetrySettings.Builder retryBuilder =
-        stubSettings.readRowsSettings().getRetrySettings().toBuilder();
-
-    String initialElapsedBackoffMsStr = configuration.get(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY);
-    if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
-      retryBuilder.setInitialRetryDelay(ofMillis(Long.valueOf(initialElapsedBackoffMsStr)));
-    }
-
-    String maxScanTimeoutRetriesAttempts = configuration.get(MAX_SCAN_TIMEOUT_RETRIES);
-    if (!isNullOrEmpty(maxScanTimeoutRetriesAttempts)) {
-      LOG.debug("gRPC max scan timeout retries (count): %d", maxScanTimeoutRetriesAttempts);
-      retryBuilder.setMaxAttempts(Integer.valueOf(maxScanTimeoutRetriesAttempts));
-    }
-
-    String rpcTimeoutStr = configuration.get(READ_PARTIAL_ROW_TIMEOUT_MS);
-    if (!isNullOrEmpty(rpcTimeoutStr)) {
-      Duration rpcTimeoutMs = ofMillis(Long.valueOf(rpcTimeoutStr));
-      retryBuilder.setInitialRpcTimeout(rpcTimeoutMs).setMaxRpcTimeout(rpcTimeoutMs);
-    }
-
-    if (Boolean.parseBoolean(configuration.get(BIGTABLE_USE_TIMEOUTS_KEY))) {
-      String readRowsRpcTimeoutMs = configuration.get(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY);
-
-      if (!isNullOrEmpty(readRowsRpcTimeoutMs)) {
-        retryBuilder.setTotalTimeout(ofMillis(Long.valueOf(readRowsRpcTimeoutMs)));
-      }
-    } else {
-
-      String maxElapsedBackoffMillis = configuration.get(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
-      if (!isNullOrEmpty(maxElapsedBackoffMillis)) {
-        retryBuilder.setTotalTimeout(ofMillis(Long.valueOf(maxElapsedBackoffMillis)));
-      }
-    }
-
-    ImmutableSet.Builder<StatusCode.Code> retryCodes = ImmutableSet.builder();
-    if (configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true)) {
-      retryCodes
-          .addAll(extractRetryCodesFromConfig())
-          .addAll(stubSettings.readRowsSettings().getRetryableCodes());
-    }
-
-    stubSettings
-        .readRowsSettings()
-        .setRetryableCodes(retryCodes.build())
-        .setRetrySettings(retryBuilder.build());
-  }
-
-  private void buildEmulatorSettings(StubSettings.Builder stubSettings) {
-    String emulatorHostPort = configuration.get(BIGTABLE_EMULATOR_HOST_KEY);
-    if (!isNullOrEmpty(emulatorHostPort)) {
-      stubSettings
-          .setCredentialsProvider(NoCredentialsProvider.create())
-          .setEndpoint(emulatorHostPort)
-          .setTransportChannelProvider(buildPlainTextChannelProvider(emulatorHostPort));
-    }
+  private boolean isRetriesDisabled() {
+    return !configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true);
   }
 }
