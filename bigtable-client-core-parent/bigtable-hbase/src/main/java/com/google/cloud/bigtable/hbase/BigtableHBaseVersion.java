@@ -21,15 +21,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-/** For internal use only - public for technical reasons. */
+/**
+ * The version in this class is project build version specified in the maven. Maven reads the
+ * <strong>bigtable-hbase.properties</strong> file present in the resources directory and replaces
+ * the property placeholder with project version.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
 @InternalApi("For internal usage only")
 public class BigtableHBaseVersion {
 
   private static final Logger LOG = new Logger(BigtableHBaseVersion.class);
 
   public static final String CLIENT_VERSION = getVersion();
-
-  public static final String USER_AGENT_VALUE = "java-bigtable-hbase-" + getVersion();
 
   /**
    * Gets user agent from bigtable-hbase-version.properties. Returns a default dev user agent with
@@ -38,7 +42,7 @@ public class BigtableHBaseVersion {
   private static String getVersion() {
     final String defaultVersion = "dev-" + System.currentTimeMillis();
     final String fileName = "bigtable-hbase-version.properties";
-    final String versionProperty = "bigtable.version";
+    final String versionProperty = "bigtable-hbase.version";
     try (InputStream stream = BigtableHBaseVersion.class.getResourceAsStream(fileName)) {
       if (stream == null) {
         LOG.error("Could not load properties file %s", fileName);
