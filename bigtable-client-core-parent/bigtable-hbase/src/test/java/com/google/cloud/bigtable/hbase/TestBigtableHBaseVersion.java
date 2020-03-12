@@ -30,6 +30,6 @@ public class TestBigtableHBaseVersion {
     // This patterns matches string with "1.14+" versions, The version must have 3 parts i.e. x.y.z
     Pattern versionPattern =
         Pattern.compile("^(([1]\\.([1][4-9]|[2-9]\\d))|([2-9]\\.\\d{1,2}))\\.");
-    assertTrue(versionPattern.matcher(BigtableHBaseVersion.CLIENT_VERSION).find());
+    assertTrue(versionPattern.matcher(BigtableHBaseVersion.getVersion()).find());
   }
 }

@@ -33,13 +33,11 @@ public class BigtableHBaseVersion {
 
   private static final Logger LOG = new Logger(BigtableHBaseVersion.class);
 
-  public static final String CLIENT_VERSION = getVersion();
-
   /**
    * Gets user agent from bigtable-hbase-version.properties. Returns a default dev user agent with
    * current timestamp if not found.
    */
-  private static String getVersion() {
+  public static String getVersion() {
     final String defaultVersion = "dev-" + System.currentTimeMillis();
     final String fileName = "bigtable-hbase-version.properties";
     final String versionProperty = "bigtable-hbase.version";
