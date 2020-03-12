@@ -59,7 +59,6 @@ import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.FixedHeaderProvider;
-import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StubSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
@@ -70,10 +69,10 @@ import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableInstanceAdminStubSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableTableAdminStubSettings;
-import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings;
 import com.google.cloud.bigtable.hbase.BigtableExtendedConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -95,10 +94,6 @@ import org.threeten.bp.Duration;
 @InternalApi("For internal usage only")
 public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
-  // Identifier to distinguish between CBT or GCJ adapter.
-  // TODO: find better name to identify veneer client
-  private static final String USER_AGENT_VALUE =
-      BigtableVersionInfo.CORE_USER_AGENT + "," + "veneer-adapter,";
   private static final Duration EFFECTIVELY_DISABLED_DEADLINE_DURATION = Duration.ofHours(12);
 
   private final Configuration configuration;
@@ -263,8 +258,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   private void configureConnection(StubSettings.Builder stubSettings, String endpointKey) {
-    String adminHostOverride = configuration.get(endpointKey);
-    if (!isNullOrEmpty(adminHostOverride)) {
+    String hostOverride = configuration.get(endpointKey);
+    if (!isNullOrEmpty(hostOverride)) {
 
       String port = configuration.get(BIGTABLE_PORT_KEY);
       if (isNullOrEmpty(port)) {
@@ -272,7 +267,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         port = endpoint.substring(endpoint.lastIndexOf(":") + 1);
       }
 
-      String finalEndpoint = adminHostOverride + ":" + port;
+      String finalEndpoint = hostOverride + ":" + port;
       LOG.debug("%s is configured at %s", endpointKey, finalEndpoint);
       stubSettings.setEndpoint(finalEndpoint);
     }
@@ -297,20 +292,23 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     stubSettings.setTransportChannelProvider(channelBuilder.build());
   }
 
-  /** Creates {@link HeaderProvider} with USER_AGENT_VALUE as prefix for user agent */
   private void configureHeaderProvider(StubSettings.Builder stubSettings) {
 
-    // TODO: figure out version info for bigtable-hbase
     StringBuilder agentBuilder = new StringBuilder();
-    agentBuilder.append("hbase-").append(VersionInfo.getVersion());
+    agentBuilder
+        .append("hbase-")
+        .append(VersionInfo.getVersion())
+        .append(",")
+        .append("java-bigtable-hbase-")
+        .append(BigtableHBaseVersion.getVersion());
+
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
     if (customUserAgent != null) {
       agentBuilder.append(',').append(customUserAgent);
     }
 
     stubSettings.setHeaderProvider(
-        FixedHeaderProvider.create(
-            USER_AGENT_KEY.name(), USER_AGENT_VALUE + agentBuilder.toString()));
+        FixedHeaderProvider.create(USER_AGENT_KEY.name(), agentBuilder.toString()));
   }
 
   private void configureCredentialProvider(StubSettings.Builder stubSettings) throws IOException {
@@ -418,7 +416,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
       int maxInflightRpcCount = Integer.parseInt(maxInflightRpcStr);
 
-      // TODO: This needs to be extracted for calculating outstandingElementCount
+      // This needs to be extracted for calculating outstandingElementCount
       long bulkMaxRowKeyCount =
           builder.bulkMutateRowsSettings().getBatchingSettings().getElementCountThreshold();
 
@@ -478,6 +476,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
       String initialElapsedBackoffMsStr = configuration.get(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY);
       if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
+
+        long initialElapsedBackoffMs = Long.parseLong(initialElapsedBackoffMsStr);
+        if (initialElapsedBackoffMs > retryBuilder.getMaxRetryDelay().toMillis()) {
+          // TODO: fix this scenario by maybe introducing maxRetryDelayMillis directly
+          retryBuilder.setMaxRetryDelay(ofMillis(initialElapsedBackoffMs));
+        }
+
         retryBuilder.setInitialRetryDelay(ofMillis(Long.parseLong(initialElapsedBackoffMsStr)));
       }
 
@@ -536,7 +541,14 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
       String initialElapsedBackoffMsStr = configuration.get(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY);
       if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
-        retryBuilder.setInitialRetryDelay(ofMillis(Long.parseLong(initialElapsedBackoffMsStr)));
+
+        long initialElapsedBackoffMs = Long.parseLong(initialElapsedBackoffMsStr);
+        if (initialElapsedBackoffMs > retryBuilder.getMaxRetryDelay().toMillis()) {
+          // TODO: fix this scenario by maybe introducing maxRetryDelayMillis directly
+          retryBuilder.setMaxRetryDelay(ofMillis(initialElapsedBackoffMs));
+        }
+
+        retryBuilder.setInitialRetryDelay(ofMillis(initialElapsedBackoffMs));
       }
     }
 
