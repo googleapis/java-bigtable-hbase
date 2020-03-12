@@ -42,10 +42,10 @@ public interface DataClientWrapper extends AutoCloseable {
   BulkReadWrapper createBulkRead(String tableId);
 
   /** Mutate a row atomically. */
-  ApiFuture<Void> mutateRowsAsync(RowMutation rowMutation);
+  ApiFuture<Void> mutateRowAsync(RowMutation rowMutation);
 
   /** Perform an atomic read-modify-write operation on a row. */
-  ApiFuture<Result> readModifyRowsAsync(ReadModifyWriteRow readModifyWriteRow);
+  ApiFuture<Result> readModifyWriteRowAsync(ReadModifyWriteRow readModifyWriteRow);
 
   /** Mutate a row atomically dependent on a precondition. */
   ApiFuture<Boolean> checkAndMutateRowAsync(ConditionalRowMutation conditionalRowMutation);
