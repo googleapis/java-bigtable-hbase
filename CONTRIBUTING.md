@@ -1,107 +1,130 @@
-# How to become a contributor and submit your own code
+# How to Contribute
 
-## Contributor License Agreements
+We'd love to accept your patches and contributions to this project. There are
+just a few small guidelines you need to follow.
 
-We'd love to accept your sample apps and patches! Before we can take them, we
-have to jump a couple of legal hurdles.
+## Contributor License Agreement
 
-Please fill out either the individual or corporate Contributor License Agreement
-(CLA).
+Contributions to this project must be accompanied by a Contributor License
+Agreement. You (or your employer) retain the copyright to your contribution;
+this simply gives us permission to use and redistribute your contributions as
+part of the project. Head over to <https://cla.developers.google.com/> to see
+your current agreements on file or to sign a new one.
 
-  * If you are an individual writing original source code and you're sure you
-    own the intellectual property, then you'll need to sign an [individual CLA]
-    (https://developers.google.com/open-source/cla/individual).
-  * If you work for a company that wants to allow you to contribute your work,
-    then you'll need to sign a [corporate CLA]
-    (https://developers.google.com/open-source/cla/corporate).
+You generally only need to submit a CLA once, so if you've already submitted one
+(even if it was for a different project), you probably don't need to do it
+again.
 
-Follow either of the two links above to access the appropriate CLA and
-instructions for how to sign and return it. Once we receive it, we'll be able to
-accept your pull requests.
+## Code reviews
 
-## Contributing A Patch
+All submissions, including submissions by project members, require review. We
+use GitHub pull requests for this purpose. Consult
+[GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
+information on using pull requests.
 
-1. Submit an issue describing your proposed change to the repo in question.
-1. The repo owner will respond to your issue promptly.
-1. If your proposed change is accepted, and you haven't already done so, sign a
-   Contributor License Agreement (see details above).
-1. Fork the desired repo, and create a branch.  Develop and test your code changes on that branch.
-1. Ensure that your code adheres to the existing style in the sample to which
-   you are contributing. Refer to the
-   [Google Cloud Platform Samples Style Guide]
-   (https://github.com/GoogleCloudPlatform/Template/wiki/style.html) for the
-   recommended coding standards for this organization.
-1. Ensure that your code has an appropriate set of unit tests which all pass.
-1. Submit a pull request.
-1. After the review is done, please squash the commits.
+## Community Guidelines
 
-## Squashing commits
-Squashing commits rewrites commit history.  All commits that happen on a branch can be consolidated into a single commit.  
+This project follows
+[Google's Open Source Community Guidelines](https://opensource.google.com/conduct/).
 
-### Onetime setup
-```
-git remote add upstream https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git
-```
+## Building the project
 
-### Squashing
-```
-git fetch upstream
-git rebase -i upstream/master
-```
-
-After which you'll see something like:
+To build, package, and run all unit tests run the command
 
 ```
-pick 8d8s9g8 Commit A Comment 
-pick 2sdf8sdf Commit B Comment
-
-# Rebase 8d8s9g8..2sdf8sdf onto ba7sdge (2 command(s))
-#
-# Commands:
-# p, pick = use commit
-# r, reword = use commit, but edit the commit message
-# e, edit = use commit, but stop for amending
-# s, squash = use commit, but meld into previous commit
-# f, fixup = like "squash", but discard this commit's log message
-# x, exec = run command (the rest of the line) using shell
-#
-# These lines can be re-ordered; they are executed from top to bottom.
-#
-# If you remove a line here THAT COMMIT WILL BE LOST.
-#
-# However, if you remove everything, the rebase will be aborted.
-#
-# Note that empty commits are commented out
+mvn clean verify
 ```
 
-Replace the word pick with the word squash on all commits except for the first.
+### Running Integration tests
 
-```
-pick 8d8s9g8 Commit A Comment 
-squash 2sdf8sdf Commit B Comment
+To include integration tests when building the project, you need access to
+a GCP Project with a valid service account. 
 
-# Rebase 8d8s9g8..2sdf8sdf onto ba7sdge (2 command(s))
-#
-# Commands:
-# p, pick = use commit
-# r, reword = use commit, but edit the commit message
-# e, edit = use commit, but stop for amending
-# s, squash = use commit, but meld into previous commit
-# f, fixup = like "squash", but discard this commit's log message
-# x, exec = run command (the rest of the line) using shell
-#
-# These lines can be re-ordered; they are executed from top to bottom.
-#
-# If you remove a line here THAT COMMIT WILL BE LOST.
-#
-# However, if you remove everything, the rebase will be aborted.
-#
-# Note that empty commits are commented out
-```
-There might be some conflicts.  If there are conflicts, [resolve them](https://help.github.com/articles/resolving-merge-conflicts-after-a-git-rebase/).  Once you have a single commit, force an update:
+For instructions on how to generate a service account and corresponding
+credentials JSON see: [Creating a Service Account][1].
 
-```
-git push -f
+Then run the following to build, package, run all unit tests and run all
+integration tests.
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service/account.json
+mvn -Penable-integration-tests clean verify
 ```
 
-View your commit in a browser to confirm that only a single commit remains.
+## Code Samples
+
+Code Samples must be bundled in separate Maven modules, and guarded by a
+Maven profile with the name `enable-samples`.
+
+The samples must be separate from the primary project for a few reasons:
+1. Primary projects have a minimum Java version of Java 7 whereas samples have
+   a minimum Java version of Java 8. Due to this we need the ability to
+   selectively exclude samples from a build run.
+2. Many code samples depend on external GCP services and need
+   credentials to access the service.
+3. Code samples are not released as Maven artifacts and must be excluded from 
+   release builds.
+   
+### Building
+
+```bash
+mvn -Penable-samples clean verify
+```
+
+Some samples require access to GCP services and require a service account:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service/account.json
+mvn -Penable-samples clean verify
+```
+
+### Profile Config
+
+1. To add samples in a profile to your Maven project, add the following to your
+`pom.xml`
+
+    ```xml
+    <project>
+      [...]
+      <profiles>
+        <profile>
+          <id>enable-samples</id>
+          <modules>
+            <module>sample</module>
+          </modules>
+        </profile>
+      </profiles>
+      [...]
+    </project>
+    ```
+
+2. [Activate](#profile-activation) the profile.
+3. Define your samples in a normal Maven project in the `samples/` directory
+
+### Profile Activation
+
+To include code samples when building and testing the project, enable the 
+`enable-samples` Maven profile.
+
+#### Command line
+
+To activate the Maven profile on the command line add `-Penable-samples` to your
+Maven command.
+
+#### Maven `settings.xml`
+
+To activate the Maven profile in your `~/.m2/settings.xml` add an entry of
+`enable-samples` following the instructions in [Active Profiles][2].
+
+This method has the benefit of applying to all projects you build (and is
+respected by IntelliJ IDEA) and is recommended if you are going to be
+contributing samples to several projects.
+
+#### IntelliJ IDEA
+
+To activate the Maven Profile inside IntelliJ IDEA, follow the instructions in
+[Activate Maven profiles][3] to activate `enable-samples`.
+
+[1]: https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account
+[2]: https://maven.apache.org/settings.html#Active_Profiles
+[3]: https://www.jetbrains.com/help/idea/work-with-maven-profiles.html#activate_maven_profiles
