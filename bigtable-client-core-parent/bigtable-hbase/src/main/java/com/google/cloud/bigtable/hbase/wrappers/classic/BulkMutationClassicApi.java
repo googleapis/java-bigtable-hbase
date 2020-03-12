@@ -24,6 +24,8 @@ import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import javax.annotation.Nonnull;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
@@ -32,7 +34,7 @@ public class BulkMutationClassicApi implements BulkMutationWrapper {
   private final BulkMutation delegate;
   private boolean isClosed = false;
 
-  BulkMutationClassicApi(BulkMutation delegate) {
+  BulkMutationClassicApi(@Nonnull BulkMutation delegate) {
     this.delegate = delegate;
   }
 
@@ -60,7 +62,12 @@ public class BulkMutationClassicApi implements BulkMutationWrapper {
   }
 
   @Override
-  public void close() {
+  public void close() throws IOException {
     isClosed = true;
+    try {
+      flush();
+    } catch (InterruptedException interruptedException) {
+      throw new IOException(interruptedException);
+    }
   }
 }

@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.MoreExecutors;
+import javax.annotation.Nonnull;
 import org.apache.hadoop.hbase.client.Result;
 
 /** For internal use only - public for technical reasons. */
@@ -35,13 +36,13 @@ public class BulkReadClassicApi implements BulkReadWrapper {
   private final BulkRead delegate;
   private boolean isClosed = false;
 
-  BulkReadClassicApi(BulkRead delegate) {
+  BulkReadClassicApi(@Nonnull BulkRead delegate) {
     this.delegate = delegate;
   }
 
   @Override
   public ApiFuture<Result> add(Query query) {
-    Preconditions.checkState(!isClosed, "can't mutate when the bulk mutation is closed.");
+    Preconditions.checkState(!isClosed, "can't add request when the bulk read is closed.");
     return ApiFutures.transform(
         delegate.add(query),
         new ApiFunction<FlatRow, Result>() {
@@ -61,5 +62,6 @@ public class BulkReadClassicApi implements BulkReadWrapper {
   @Override
   public void close() {
     isClosed = true;
+    flush();
   }
 }

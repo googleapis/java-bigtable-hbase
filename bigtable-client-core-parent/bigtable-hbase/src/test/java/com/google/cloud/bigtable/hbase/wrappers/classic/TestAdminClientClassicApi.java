@@ -15,117 +15,165 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers.classic;
 
+import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.api.core.ApiFutures;
+import com.google.bigtable.admin.v2.ColumnFamily;
+import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListTablesRequest;
+import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.GCRules;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
 import com.google.common.collect.ImmutableList;
-import java.util.List;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Empty;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class TestAdminClientClassicApi {
 
+  private static final String PROJECT_ID = "fake-project-id";
+  private static final String INSTANCE_ID = "fake-instance-id";
+  private static final BigtableInstanceName INSTANCE_NAME =
+      new BigtableInstanceName(PROJECT_ID, INSTANCE_ID);
+
   private static final String TABLE_ID = "fake-Table-id";
-
   private static final String TABLE_NAME =
-      NameUtil.formatTableName("fake-project-id", "fake-instance-id", TABLE_ID);
+      NameUtil.formatTableName(PROJECT_ID, INSTANCE_ID, TABLE_ID);
 
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  private static final String COLUMN_FAMILY = "myColumnFamily";
+  private static final String ROW_KEY_PREFIX = "row-key-val";
+  private static final String UPDATE_FAMILY = "update-family";
 
-  @Mock private IBigtableTableAdminClient delegate;
+  private BigtableTableAdminClient delegate;
 
   private AdminClientWrapper adminClientWrapper;
 
   @Before
   public void setUp() {
-    adminClientWrapper = new AdminClientClassicApi(delegate);
+    delegate = Mockito.mock(BigtableTableAdminClient.class);
+    adminClientWrapper = new AdminClientClassicApi(delegate, INSTANCE_NAME);
   }
 
   @Test
   public void testCreateTableAsync() throws Exception {
-    CreateTableRequest req = CreateTableRequest.of(TABLE_ID);
-    when(delegate.createTableAsync(req))
-        .thenReturn(
-            ApiFutures.immediateFuture(
-                Table.fromProto(
-                    com.google.bigtable.admin.v2.Table.newBuilder().setName(TABLE_NAME).build())));
-    Future<Table> response = adminClientWrapper.createTableAsync(req);
+    CreateTableRequest request = CreateTableRequest.of(TABLE_ID);
 
-    assertEquals(TABLE_ID, response.get().getId());
-    verify(delegate).createTableAsync(req);
+    when(delegate.createTableAsync(request.toProto(PROJECT_ID, INSTANCE_ID)))
+        .thenReturn(immediateFuture(createTableData()));
+
+    assertEquals(
+        Table.fromProto(createTableData()), adminClientWrapper.createTableAsync(request).get());
+    verify(delegate).createTableAsync(request.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
-  public void testGetTableAsync() throws ExecutionException, InterruptedException {
-    when(delegate.getTableAsync(TABLE_ID))
-        .thenReturn(
-            ApiFutures.immediateFuture(
-                Table.fromProto(
-                    com.google.bigtable.admin.v2.Table.newBuilder().setName(TABLE_NAME).build())));
-    Future<Table> response = adminClientWrapper.getTableAsync(TABLE_ID);
-    assertEquals(TABLE_ID, response.get().getId());
-    verify(delegate).getTableAsync(TABLE_ID);
+  public void testGetTableAsync() throws Exception {
+    GetTableRequest request = GetTableRequest.newBuilder().setName(TABLE_NAME).build();
+    when(delegate.getTableAsync(request)).thenReturn(immediateFuture(createTableData()));
+
+    assertEquals(
+        Table.fromProto(createTableData()), adminClientWrapper.getTableAsync(TABLE_ID).get());
+    verify(delegate).getTableAsync(request);
   }
 
   @Test
-  public void testListTablesAsync() throws ExecutionException, InterruptedException {
-    List<String> response = ImmutableList.of("a", "b");
-    when(delegate.listTablesAsync()).thenReturn(ApiFutures.immediateFuture(response));
-    assertEquals(response, adminClientWrapper.listTablesAsync().get());
-    verify(delegate).listTablesAsync();
+  public void testListTablesAsync() throws Exception {
+    ImmutableList<String> tableIdList =
+        ImmutableList.of("test-table-1", "test-table-2", "test-table-3");
+    ListTablesRequest request =
+        ListTablesRequest.newBuilder().setParent(INSTANCE_NAME.toString()).build();
+    ListTablesResponse.Builder builder = ListTablesResponse.newBuilder();
+    builder.addTablesBuilder().setName(INSTANCE_NAME.toTableNameStr("test-table-1")).build();
+    builder.addTablesBuilder().setName(INSTANCE_NAME.toTableNameStr("test-table-2")).build();
+    builder.addTablesBuilder().setName(INSTANCE_NAME.toTableNameStr("test-table-3")).build();
+    when(delegate.listTablesAsync(request)).thenReturn(immediateFuture(builder.build()));
+
+    assertEquals(tableIdList, adminClientWrapper.listTablesAsync().get());
+    verify(delegate).listTablesAsync(request);
   }
 
   @Test
-  public void testDeleteTablesAsync() throws ExecutionException, InterruptedException {
-    when(delegate.deleteTableAsync(TABLE_ID)).thenReturn(ApiFutures.<Void>immediateFuture(null));
+  public void testDeleteTableAsync() throws ExecutionException, InterruptedException {
+    DeleteTableRequest request = DeleteTableRequest.newBuilder().setName(TABLE_NAME).build();
+    when(delegate.deleteTableAsync(request))
+        .thenReturn(immediateFuture(Empty.newBuilder().build()));
     adminClientWrapper.deleteTableAsync(TABLE_ID).get();
-    verify(delegate).deleteTableAsync(TABLE_ID);
+
+    verify(delegate).deleteTableAsync(request);
   }
 
   @Test
-  public void testModifyFamiliesAsync() throws ExecutionException, InterruptedException {
+  public void testModifyFamiliesAsync() throws Exception {
     ModifyColumnFamiliesRequest request =
         ModifyColumnFamiliesRequest.of(TABLE_ID)
-            .addFamily("cf1")
-            .updateFamily("cf2", GCRules.GCRULES.maxVersions(5));
-    Table table =
-        Table.fromProto(
-            com.google.bigtable.admin.v2.Table.newBuilder().setName(TABLE_NAME).build());
-    when(delegate.modifyFamiliesAsync(request)).thenReturn(ApiFutures.immediateFuture(table));
-    assertEquals(table, adminClientWrapper.modifyFamiliesAsync(request).get());
-    verify(delegate).modifyFamiliesAsync(request);
+            .addFamily(COLUMN_FAMILY, GCRULES.maxVersions(1))
+            .updateFamily(UPDATE_FAMILY, GCRULES.maxAge(Duration.ofHours(100)));
+
+    when(delegate.modifyColumnFamilyAsync(request.toProto(PROJECT_ID, INSTANCE_ID)))
+        .thenReturn(immediateFuture(createTableData()));
+    Future<Table> response = adminClientWrapper.modifyFamiliesAsync(request);
+
+    assertEquals(Table.fromProto(createTableData()), response.get());
+    verify(delegate).modifyColumnFamilyAsync(request.toProto(PROJECT_ID, INSTANCE_ID));
   }
 
   @Test
-  public void testDropRowRangeAsync() throws ExecutionException, InterruptedException {
-    when(delegate.dropRowRangeAsync(TABLE_ID, "rowkey"))
-        .thenReturn(ApiFutures.<Void>immediateFuture(null));
-    adminClientWrapper.dropRowRangeAsync(TABLE_ID, "rowkey").get();
-    verify(delegate).dropRowRangeAsync(TABLE_ID, "rowkey");
+  public void dropRowRangeAsyncForDeleteByPrefix() throws ExecutionException, InterruptedException {
+    DropRowRangeRequest request =
+        DropRowRangeRequest.newBuilder()
+            .setName(TABLE_NAME)
+            .setDeleteAllDataFromTable(false)
+            .setRowKeyPrefix(ByteString.copyFromUtf8(ROW_KEY_PREFIX))
+            .build();
+
+    when(delegate.dropRowRangeAsync(request))
+        .thenReturn(immediateFuture(Empty.newBuilder().build()));
+    adminClientWrapper.dropRowRangeAsync(TABLE_ID, ROW_KEY_PREFIX).get();
+
+    verify(delegate).dropRowRangeAsync(request);
   }
 
   @Test
-  public void testDropAllRowsAsync() throws ExecutionException, InterruptedException {
-    when(delegate.dropAllRowsAsync(TABLE_ID)).thenReturn(ApiFutures.<Void>immediateFuture(null));
+  public void dropRowRangeAsyncForTruncate() throws ExecutionException, InterruptedException {
+    DropRowRangeRequest request =
+        DropRowRangeRequest.newBuilder()
+            .setName(TABLE_NAME)
+            .setDeleteAllDataFromTable(true)
+            .build();
+
+    when(delegate.dropRowRangeAsync(request))
+        .thenReturn(immediateFuture(Empty.newBuilder().build()));
     adminClientWrapper.dropAllRowsAsync(TABLE_ID).get();
-    verify(delegate).dropAllRowsAsync(TABLE_ID);
+
+    verify(delegate).dropRowRangeAsync(request);
+  }
+
+  private static com.google.bigtable.admin.v2.Table createTableData() {
+    GCRules.GCRule gcRule = GCRULES.maxVersions(1);
+    ColumnFamily columnFamily = ColumnFamily.newBuilder().setGcRule(gcRule.toProto()).build();
+
+    return com.google.bigtable.admin.v2.Table.newBuilder()
+        .setName(TABLE_NAME)
+        .putColumnFamilies(COLUMN_FAMILY, columnFamily)
+        .build();
   }
 }

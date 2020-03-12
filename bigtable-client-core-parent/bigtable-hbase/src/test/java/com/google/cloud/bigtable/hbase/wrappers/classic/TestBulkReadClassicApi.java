@@ -79,9 +79,9 @@ public class TestBulkReadClassicApi {
     bulkReadWrapper.close();
     try {
       bulkReadWrapper.add(Query.create(TABLE_ID).rowKey("row-key-2"));
-      Assert.fail("BulkRead should be closed");
+      Assert.fail("Bulk read should be closed");
     } catch (IllegalStateException actualException) {
-      assertEquals("can't mutate when the bulk mutation is closed.", actualException.getMessage());
+      assertEquals("can't add request when the bulk read is closed.", actualException.getMessage());
     }
   }
 }

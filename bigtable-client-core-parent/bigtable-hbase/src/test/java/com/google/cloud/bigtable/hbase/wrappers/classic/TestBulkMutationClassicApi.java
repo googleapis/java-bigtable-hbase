@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase.wrappers.classic;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +27,8 @@ import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,53 +39,47 @@ import org.mockito.Mockito;
 public class TestBulkMutationClassicApi {
 
   private BulkMutation mockDelegate;
-  private BulkMutationWrapper bulkWrapper;
+  private BulkMutationWrapper bulkMutationWrapper;
 
   @Before
   public void setUp() {
     mockDelegate = Mockito.mock(BulkMutation.class);
-    bulkWrapper = new BulkMutationClassicApi(mockDelegate);
+    bulkMutationWrapper = new BulkMutationClassicApi(mockDelegate);
+  }
+
+  @Test
+  public void testAddMutate() throws ExecutionException, InterruptedException {
+    RowMutationEntry rowMutation = RowMutationEntry.create("key");
+    MutateRowsRequest.Entry requestProto = rowMutation.toProto();
+    when(mockDelegate.add(requestProto))
+        .thenReturn(Futures.immediateFuture(MutateRowResponse.getDefaultInstance()));
+    bulkMutationWrapper.add(rowMutation).get();
+
+    verify(mockDelegate).add(requestProto);
   }
 
   @Test
   public void testFlush() throws InterruptedException {
     doNothing().when(mockDelegate).flush();
-    bulkWrapper.flush();
+    bulkMutationWrapper.flush();
     verify(mockDelegate).flush();
   }
 
   @Test
   public void testSendUnsent() {
     doNothing().when(mockDelegate).sendUnsent();
-    bulkWrapper.sendUnsent();
+    bulkMutationWrapper.sendUnsent();
     verify(mockDelegate).sendUnsent();
   }
 
   @Test
-  public void testAddMutate() {
-    RowMutationEntry rowMutation = RowMutationEntry.create("key");
-    MutateRowsRequest.Entry requestProto = rowMutation.toProto();
-    when(mockDelegate.add(requestProto))
-        .thenReturn(Futures.immediateFuture(MutateRowResponse.getDefaultInstance()));
-    Future<Void> response = bulkWrapper.add(rowMutation);
+  public void testClose() throws IOException {
+    bulkMutationWrapper.close();
     try {
-      response.get();
-    } catch (Exception ex) {
-      throw new AssertionError("Assertion failed for BulkMutationWrapper#add(RowMutation)");
+      bulkMutationWrapper.add(RowMutationEntry.create("key"));
+      Assert.fail("bulk mutation should be closed");
+    } catch (IllegalStateException actualEx) {
+      assertEquals("can't mutate when the bulk mutation is closed.", actualEx.getMessage());
     }
-    verify(mockDelegate).add(requestProto);
-  }
-
-  @Test
-  public void testIsClosed() throws IOException {
-    bulkWrapper.close();
-    Exception actualEx = null;
-    try {
-      bulkWrapper.add(RowMutationEntry.create("key"));
-    } catch (Exception e) {
-      actualEx = e;
-    }
-    assertTrue(actualEx instanceof IllegalStateException);
-    assertEquals("can't mutate when the bulk mutation is closed.", actualEx.getMessage());
   }
 }
