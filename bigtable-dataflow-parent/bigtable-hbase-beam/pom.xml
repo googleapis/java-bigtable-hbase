@@ -165,48 +165,6 @@ limitations under the License.
         </plugins>
       </build>
     </profile>
-    <profile>
-      <id>release</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <windowtitle>
-                Apache Beam + Cloud Bigtable Connector ${project.version} API
-              </windowtitle>
-              <doctitle>
-                Apache Beam + Cloud Bigtable Connector ${project.version} API
-              </doctitle>
-              <overview>../overview.html</overview>
-              <bottom><![CDATA[<br>]]></bottom>
-
-              <offlineLinks>
-                <offlineLink>
-                  <url>
-                    https://beam.apache.org/releases/javadoc/${beam.version}/
-                  </url>
-                  <location>${basedir}/javadoc/beam-docs</location>
-                </offlineLink>
-                <offlineLink>
-                  <url>https://hbase.apache.org/2.0/apidocs/</url>
-                  <location>${basedir}/javadoc/hbase-docs</location>
-                </offlineLink>
-              </offlineLinks>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-                <phase>package</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
   </profiles>
   <build>
     <plugins>
