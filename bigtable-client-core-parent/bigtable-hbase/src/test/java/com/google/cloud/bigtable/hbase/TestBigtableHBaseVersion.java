@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.hbase;
 
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.ComparisonChain;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,9 +29,19 @@ public class TestBigtableHBaseVersion {
 
   @Test
   public void testVersionNumber() {
-    // This patterns matches string with "1.14+" versions, The version must have 3 parts i.e. x.y.z
-    Pattern versionPattern =
-        Pattern.compile("^(([1]\\.([1][4-9]|[2-9]\\d))|([2-9]\\.\\d{1,2}))\\.");
-    assertTrue(versionPattern.matcher(BigtableHBaseVersion.getVersion()).find());
+    // Version must have 3 parts i.e. x.y.z and can have an optional of -SNAPSHOT suffixed.
+    Pattern versionPattern = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)(-\\w+)?");
+    Matcher versionMatcher = versionPattern.matcher(BigtableHBaseVersion.getVersion());
+
+    assertTrue("incorrect version format", versionMatcher.matches());
+
+    int result =
+        ComparisonChain.start()
+            .compare(1, Integer.parseInt(versionMatcher.group(1)))
+            .compare(14, Integer.parseInt(versionMatcher.group(2)))
+            .compare(1, Integer.parseInt(versionMatcher.group(3)))
+            .result();
+
+    assertTrue("Expected BigtableHBaseVersion.getVersion() to be at least 1.14.1", result <= 0);
   }
 }
