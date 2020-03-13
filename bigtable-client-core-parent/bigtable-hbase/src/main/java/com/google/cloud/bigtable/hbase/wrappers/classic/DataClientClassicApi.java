@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.wrappers.classic;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
 import com.google.bigtable.v2.MutateRowResponse;
@@ -53,6 +54,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
 
+/** For internal use only - public for technical reasons. */
+@InternalApi("For internal usage only")
 public class DataClientClassicApi implements DataClientWrapper {
 
   private final BigtableSession session;
