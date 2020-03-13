@@ -328,9 +328,7 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(
         Long.valueOf(maxInflightRPC * maxRowKeyCount),
         batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
-    assertEquals(
-        Long.valueOf(maxMemory),
-        batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
+    assertEquals(maxMemory, settingUtils.getBatchingMaxRequestSize());
   }
 
   @Test

@@ -73,6 +73,8 @@ public abstract class BigtableHBaseSettings {
 
   public abstract int getBulkMaxRowCount();
 
+  public abstract long getBatchingMaxRequestSize();
+
   protected String getRequiredValue(String key, String displayName) {
     String value = configuration.get(key);
     Preconditions.checkArgument(

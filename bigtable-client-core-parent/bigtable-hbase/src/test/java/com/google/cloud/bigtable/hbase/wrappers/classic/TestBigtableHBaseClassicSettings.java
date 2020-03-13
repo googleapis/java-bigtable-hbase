@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers.classic;
 
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -111,6 +112,7 @@ public class TestBigtableHBaseClassicSettings {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.setLong(BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, 100_000L);
 
     BigtableOptions options =
         ((BigtableHBaseClassicSettings) BigtableHBaseSettings.create(configuration))
@@ -119,6 +121,7 @@ public class TestBigtableHBaseClassicSettings {
     assertEquals(TEST_HOST, options.getDataHost());
     assertEquals(TEST_PROJECT_ID, options.getProjectId());
     assertEquals(TEST_INSTANCE_ID, options.getInstanceId());
+    assertEquals(100_000L, options.getBulkOptions().getMaxMemory());
   }
 
   @Test

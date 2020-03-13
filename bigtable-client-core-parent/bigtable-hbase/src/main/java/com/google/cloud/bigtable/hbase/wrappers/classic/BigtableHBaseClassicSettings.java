@@ -132,6 +132,11 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
     return bigtableOptions.getBulkOptions().getBulkMaxRowKeyCount();
   }
 
+  @Override
+  public long getBatchingMaxRequestSize() {
+    return bigtableOptions.getBulkOptions().getMaxMemory();
+  }
+
   public BigtableOptions getBigtableOptions() {
     return bigtableOptions;
   }

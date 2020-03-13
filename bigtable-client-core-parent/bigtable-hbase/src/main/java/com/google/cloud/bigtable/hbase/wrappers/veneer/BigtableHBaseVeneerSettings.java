@@ -105,6 +105,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private final String adminHost;
   private final int port;
   private final int bulkMaxRowKeyCount;
+  private final long batchingMaxMemory;
   private final boolean isChannelPoolCachingEnabled;
 
   public BigtableHBaseVeneerSettings(Configuration configuration) throws IOException {
@@ -137,6 +138,14 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
             .getElementCountThreshold()
             .intValue();
 
+    this.batchingMaxMemory =
+        dataSettings
+            .getStubSettings()
+            .bulkMutateRowsSettings()
+            .getBatchingSettings()
+            .getFlowControlSettings()
+            .getMaxOutstandingRequestBytes();
+
     // This is primarily used by Dataflow where connections open and close often. This is a
     // performance optimization that will reduce the cost to open connections.
     this.isChannelPoolCachingEnabled =
@@ -161,6 +170,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   @Override
   public int getBulkMaxRowCount() {
     return bulkMaxRowKeyCount;
+  }
+
+  @Override
+  public long getBatchingMaxRequestSize() {
+    return batchingMaxMemory;
   }
 
   // ************** Getters **************
