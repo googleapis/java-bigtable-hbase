@@ -222,7 +222,7 @@ public class TestBigtableHBaseVeneerSettings {
       Assert.fail("BigtableDataSettings should not support retries without timestamp");
     } catch (UnsupportedOperationException actualException) {
 
-      assertEquals("Retries without Timestamp is not supported yet.", actualException.getMessage());
+      assertEquals("Retries without Timestamp is not supported.", actualException.getMessage());
     }
   }
 

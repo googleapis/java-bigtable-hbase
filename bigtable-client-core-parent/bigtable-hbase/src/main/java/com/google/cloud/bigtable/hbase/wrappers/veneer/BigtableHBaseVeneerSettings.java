@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ADDITIONAL_
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.APP_PROFILE_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_AUTOFLUSH_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES;
@@ -27,6 +28,8 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BU
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_PORT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY;
@@ -35,11 +38,13 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SE
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_BATCH;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_TIMEOUTS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INITIAL_ELAPSED_BACKOFF_MILLIS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.MAX_ELAPSED_BACKOFF_MILLIS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.MAX_INFLIGHT_RPCS_KEY;
@@ -48,6 +53,8 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.READ_PARTIA
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
 import static org.threeten.bp.Duration.ofMillis;
+import static org.threeten.bp.Duration.ofMinutes;
+import static org.threeten.bp.Duration.ofSeconds;
 
 import com.google.api.client.util.SecurityUtils;
 import com.google.api.core.ApiFunction;
@@ -84,6 +91,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
@@ -95,6 +103,9 @@ import org.threeten.bp.Duration;
 public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
   private static final Duration EFFECTIVELY_DISABLED_DEADLINE_DURATION = Duration.ofHours(12);
+  private static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
+  private static final Duration INITIAL_RETRY_IN_BATCH_MODE = ofSeconds(5);
+  private static final Duration MAX_ELAPSED_BACKOFF_IN_BATCH_MODE = ofMinutes(5);
 
   private final Configuration configuration;
   private final BigtableDataSettings dataSettings;
@@ -148,8 +159,12 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     // This is primarily used by Dataflow where connections open and close often. This is a
     // performance optimization that will reduce the cost to open connections.
-    this.isChannelPoolCachingEnabled =
-        configuration.getBoolean(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, false);
+    if (Boolean.parseBoolean(configuration.get(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL))
+        || Boolean.parseBoolean(configuration.get(BIGTABLE_USE_BATCH))) {
+      this.isChannelPoolCachingEnabled = true;
+    } else {
+      this.isChannelPoolCachingEnabled = false;
+    }
   }
 
   @Override
@@ -210,6 +225,15 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       dataBuilder.setAppProfileId(appProfileId);
     }
 
+    // added this check here to fail fast
+    if (Boolean.parseBoolean(configuration.get(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING))) {
+      throw new UnsupportedOperationException("Buffered mutator throttling is not supported.");
+    }
+
+    if (Boolean.parseBoolean(configuration.get(ALLOW_NO_TIMESTAMP_RETRIES_KEY))) {
+      throw new UnsupportedOperationException("Retries without Timestamp is not supported.");
+    }
+
     EnhancedBigtableStubSettings.Builder stubSettings = dataBuilder.stubSettings();
 
     configureConnection(stubSettings, BIGTABLE_HOST_KEY);
@@ -225,13 +249,14 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     configureBulkReadRowsSettings(stubSettings);
 
+    configureMutateRowSettings(stubSettings);
+
     configureReadRowsSettings(stubSettings);
 
     configureNonIdempotentCallSettings(stubSettings.checkAndMutateRowSettings());
     configureNonIdempotentCallSettings(stubSettings.readModifyWriteRowSettings());
 
     configureIdempotentCallSettings(stubSettings.readRowSettings());
-    configureIdempotentCallSettings(stubSettings.mutateRowSettings());
     configureIdempotentCallSettings(stubSettings.sampleRowKeysSettings());
 
     return dataBuilder.build();
@@ -272,19 +297,24 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   private void configureConnection(StubSettings.Builder stubSettings, String endpointKey) {
-    String hostOverride = configuration.get(endpointKey);
-    if (!isNullOrEmpty(hostOverride)) {
 
-      String port = configuration.get(BIGTABLE_PORT_KEY);
-      if (isNullOrEmpty(port)) {
-        String endpoint = stubSettings.getEndpoint();
-        port = endpoint.substring(endpoint.lastIndexOf(":") + 1);
-      }
-
-      String finalEndpoint = hostOverride + ":" + port;
-      LOG.debug("%s is configured at %s", endpointKey, finalEndpoint);
-      stubSettings.setEndpoint(finalEndpoint);
+    String endpoint = stubSettings.getEndpoint();
+    String portNumber = configuration.get(BIGTABLE_PORT_KEY);
+    if (isNullOrEmpty(portNumber)) {
+      portNumber = endpoint.substring(endpoint.lastIndexOf(":") + 1);
     }
+
+    String hostOverride = configuration.get(endpointKey);
+    if (isNullOrEmpty(hostOverride)) {
+      hostOverride = endpoint.substring(0, endpoint.lastIndexOf(":"));
+      LOG.debug("%s is configured at %s", endpointKey, hostOverride);
+    }
+
+    if (isBatchModeEnabled() && BIGTABLE_HOST_KEY.equals(endpointKey)) {
+      // TODO: move this constant in default alignment PR.
+      hostOverride = BIGTABLE_BATCH_DATA_HOST_DEFAULT;
+    }
+    stubSettings.setEndpoint(hostOverride + ":" + portNumber);
 
     InstantiatingGrpcChannelProvider.Builder channelBuilder = defaultGrpcTransportProviderBuilder();
 
@@ -472,6 +502,25 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     configureIdempotentCallSettings(builder.bulkReadRowsSettings());
   }
 
+  private void configureMutateRowSettings(EnhancedBigtableStubSettings.Builder stubSettings) {
+    UnaryCallSettings.Builder mutateRowSettingsBuilder = stubSettings.mutateRowSettings();
+
+    configureIdempotentCallSettings(mutateRowSettingsBuilder);
+
+    RetrySettings.Builder retryBuilder = mutateRowSettingsBuilder.getRetrySettings().toBuilder();
+
+    String mutateRpcTimeoutMs = configuration.get(BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY);
+    if (!isNullOrEmpty(mutateRpcTimeoutMs)) {
+
+      retryBuilder.setTotalTimeout(ofMillis(Long.parseLong(mutateRpcTimeoutMs)));
+    } else if (!isNullOrEmpty(configuration.get(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY))) {
+
+      long longRpcTimeoutMs = Long.parseLong(configuration.get(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY));
+      retryBuilder.setTotalTimeout(ofMillis(longRpcTimeoutMs));
+    }
+    mutateRowSettingsBuilder.setRetrySettings(retryBuilder.build());
+  }
+
   private void configureReadRowsSettings(EnhancedBigtableStubSettings.Builder stubSettings) {
     RetrySettings.Builder retryBuilder =
         stubSettings.readRowsSettings().getRetrySettings().toBuilder();
@@ -498,11 +547,17 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         }
 
         retryBuilder.setInitialRetryDelay(ofMillis(Long.parseLong(initialElapsedBackoffMsStr)));
+      } else if (isBatchModeEnabled()) {
+        // TODO: move this constant in default alignment PR.
+        retryBuilder.setInitialRetryDelay(INITIAL_RETRY_IN_BATCH_MODE);
       }
 
       String maxElapsedBackoffMillis = configuration.get(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
       if (!isNullOrEmpty(maxElapsedBackoffMillis)) {
         retryBuilder.setTotalTimeout(ofMillis(Long.parseLong(maxElapsedBackoffMillis)));
+      } else if (isBatchModeEnabled()) {
+        // TODO: move this constant in default alignment PR.
+        retryBuilder.setTotalTimeout(MAX_ELAPSED_BACKOFF_IN_BATCH_MODE);
       }
 
       String maxScanTimeoutRetriesAttempts = configuration.get(MAX_SCAN_TIMEOUT_RETRIES);
@@ -517,6 +572,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
       if (!isNullOrEmpty(readRowsRpcTimeoutMs)) {
         retryBuilder.setTotalTimeout(ofMillis(Long.parseLong(readRowsRpcTimeoutMs)));
+      } else if (!isNullOrEmpty(configuration.get(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY))) {
+
+        long longRpcTimeoutMs = Long.parseLong(configuration.get(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY));
+        retryBuilder.setTotalTimeout(ofMillis(longRpcTimeoutMs));
       }
 
       String rpcTimeoutStr = configuration.get(READ_PARTIAL_ROW_TIMEOUT_MS);
@@ -537,21 +596,27 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
   private void configureIdempotentCallSettings(UnaryCallSettings.Builder unaryCallSettings) {
 
-    if (configuration.getBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, false)) {
-      throw new UnsupportedOperationException("Retries without Timestamp is not supported yet.");
-    }
-
     RetrySettings.Builder retryBuilder = unaryCallSettings.getRetrySettings().toBuilder();
-    ImmutableSet.Builder<StatusCode.Code> retryCodeBuilder = ImmutableSet.builder();
+    Set<StatusCode.Code> retryCodeBuilder = new HashSet<>();
 
     if (isRetriesDisabled()) {
 
       unaryCallSettings.setRetryableCodes(Collections.<StatusCode.Code>emptySet());
     } else {
 
-      retryCodeBuilder
-          .addAll(extractRetryCodesFromConfig())
-          .addAll(unaryCallSettings.getRetryableCodes());
+      retryCodeBuilder.addAll(extractRetryCodesFromConfig());
+      retryCodeBuilder.addAll(unaryCallSettings.getRetryableCodes());
+
+      String enableDealLineRetry = configuration.get(ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY);
+      if (!isNullOrEmpty(enableDealLineRetry)) {
+
+        if ("true".equalsIgnoreCase(enableDealLineRetry)) {
+          retryCodeBuilder.add(StatusCode.Code.DEADLINE_EXCEEDED);
+        } else if ("false".equalsIgnoreCase(enableDealLineRetry)) {
+          retryCodeBuilder.remove(StatusCode.Code.DEADLINE_EXCEEDED);
+        }
+      }
+      unaryCallSettings.setRetryableCodes(Collections.unmodifiableSet(retryCodeBuilder));
 
       String initialElapsedBackoffMsStr = configuration.get(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY);
       if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
@@ -563,6 +628,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         }
 
         retryBuilder.setInitialRetryDelay(ofMillis(initialElapsedBackoffMs));
+      } else if (isBatchModeEnabled()) {
+        // TODO: move this constant in default alignment PR.
+        retryBuilder.setInitialRetryDelay(INITIAL_RETRY_IN_BATCH_MODE);
       }
     }
 
@@ -577,6 +645,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       String maxElapsedBackoffMsStr = configuration.get(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
       if (!isNullOrEmpty(maxElapsedBackoffMsStr)) {
         retryBuilder.setTotalTimeout(ofMillis(Long.parseLong(maxElapsedBackoffMsStr)));
+      } else if (isBatchModeEnabled()) {
+        // TODO: move this constant in default alignment PR.
+        retryBuilder.setTotalTimeout(MAX_ELAPSED_BACKOFF_IN_BATCH_MODE);
       }
     } else {
 
@@ -616,5 +687,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
   private boolean isRetriesDisabled() {
     return !configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true);
+  }
+
+  private boolean isBatchModeEnabled() {
+    return configuration.getBoolean(BIGTABLE_USE_BATCH, false);
   }
 }
