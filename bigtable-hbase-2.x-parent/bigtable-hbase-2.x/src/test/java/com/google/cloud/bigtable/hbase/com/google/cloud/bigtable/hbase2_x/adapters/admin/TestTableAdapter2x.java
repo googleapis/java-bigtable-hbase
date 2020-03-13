@@ -21,7 +21,6 @@ import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.GCRules;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -33,7 +32,6 @@ import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -48,15 +46,6 @@ public class TestTableAdapter2x {
       "projects/" + PROJECT_ID + "/instances/" + INSTANCE_ID;
   private static final String TABLE_NAME = INSTANCE_NAME + "/tables/" + TABLE_ID;
   private static final String COLUMN_FAMILY = "myColumnFamily";
-
-  private TableAdapter2x tableAdapter2x;
-
-  @Before
-  public void setUp() {
-    BigtableOptions bigtableOptions =
-        BigtableOptions.builder().setProjectId(PROJECT_ID).setInstanceId(INSTANCE_ID).build();
-    tableAdapter2x = new TableAdapter2x(bigtableOptions);
-  }
 
   @Test
   public void testAdaptWithSplitKeys() {
@@ -87,7 +76,7 @@ public class TestTableAdapter2x {
             .putColumnFamilies(COLUMN_FAMILY, columnFamily)
             .build();
     TableDescriptor actualTableDesc =
-        tableAdapter2x.adapt(com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
+        TableAdapter2x.adapt(com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
 
     TableDescriptor expected =
         new HTableDescriptor(TableName.valueOf(TABLE_ID))
