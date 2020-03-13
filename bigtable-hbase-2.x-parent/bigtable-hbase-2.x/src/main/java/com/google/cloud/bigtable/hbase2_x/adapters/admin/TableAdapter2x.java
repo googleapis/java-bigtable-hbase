@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.hbase2_x.adapters.admin;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -40,8 +38,6 @@ import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
  */
 @InternalApi("For internal usage only")
 public class TableAdapter2x {
-  protected static final ColumnDescriptorAdapter columnDescriptorAdapter =
-      new ColumnDescriptorAdapter();
 
   public static CreateTableRequest adapt(TableDescriptor desc, byte[][] splitKeys) {
     return TableAdapter.adapt(new HTableDescriptor(desc), splitKeys);
@@ -53,11 +49,7 @@ public class TableAdapter2x {
     return new HTableDescriptor(desc).getColumnFamilies()[0];
   }
 
-  protected final BigtableInstanceName bigtableInstanceName;
-
-  public TableAdapter2x(BigtableOptions options) {
-    bigtableInstanceName = options.getInstanceName();
-  }
+  private TableAdapter2x() {}
 
   /**
    * adapt.
@@ -65,7 +57,7 @@ public class TableAdapter2x {
    * @param table a {@link Table} object.
    * @return a {@link TableDescriptor} object.
    */
-  public TableDescriptor adapt(Table table) {
-    return new TableAdapter(bigtableInstanceName).adapt(table);
+  public static TableDescriptor adapt(Table table) {
+    return TableAdapter.adapt(table);
   }
 }

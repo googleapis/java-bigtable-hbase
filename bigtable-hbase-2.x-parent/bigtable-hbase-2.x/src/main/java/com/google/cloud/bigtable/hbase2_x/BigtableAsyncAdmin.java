@@ -100,7 +100,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final Set<TableName> disabledTables;
   private final IBigtableTableAdminClient bigtableTableAdminClient;
   private final BigtableInstanceName bigtableInstanceName;
-  private final TableAdapter2x tableAdapter2x;
   private final CommonConnection asyncConnection;
   private BigtableClusterName bigtableSnapshotClusterName;
 
@@ -110,7 +109,6 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     this.bigtableTableAdminClient = asyncConnection.getSession().getTableAdminClientWrapper();
     this.disabledTables = asyncConnection.getDisabledTables();
     this.bigtableInstanceName = options.getInstanceName();
-    this.tableAdapter2x = new TableAdapter2x(options);
     this.asyncConnection = asyncConnection;
 
     Configuration configuration = asyncConnection.getConfiguration();
@@ -251,7 +249,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
                                 .setName(bigtableInstanceName.toTableNameStr(m))
                                 .build())
                     .map(Table::fromProto)
-                    .map(tableAdapter2x::adapt)
+                    .map(TableAdapter2x::adapt)
                     .collect(Collectors.toList()));
   }
 
@@ -328,7 +326,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
                   throw new CompletionException(ex);
                 }
               } else {
-                return tableAdapter2x.adapt(resp);
+                return TableAdapter2x.adapt(resp);
               }
             });
   }

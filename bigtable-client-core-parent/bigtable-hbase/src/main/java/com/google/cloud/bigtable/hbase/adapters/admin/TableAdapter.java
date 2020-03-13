@@ -21,8 +21,6 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.admin.v2.models.ColumnFamily;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -37,7 +35,6 @@ import org.apache.hadoop.hbase.TableName;
 public class TableAdapter {
   private static final ColumnDescriptorAdapter columnDescriptorAdapter =
       ColumnDescriptorAdapter.INSTANCE;
-  protected final BigtableInstanceName bigtableInstanceName;
 
   /**
    * adapt. This method adapts ColumnFamily to CreateTableRequest.
@@ -69,15 +66,7 @@ public class TableAdapter {
     }
   }
 
-  /**
-   * Constructor for TableAdapter.
-   *
-   * @param bigtableInstanceName a {@link BigtableInstanceName} object.
-   */
-  public TableAdapter(BigtableInstanceName bigtableInstanceName) {
-    this.bigtableInstanceName =
-        Preconditions.checkNotNull(bigtableInstanceName, "bigtableInstanceName cannot be null.");
-  }
+  private TableAdapter() {}
 
   /**
    * adapt.
@@ -85,7 +74,7 @@ public class TableAdapter {
    * @param table a {@link Table} object.
    * @return a {@link HTableDescriptor} object.
    */
-  public HTableDescriptor adapt(Table table) {
+  public static HTableDescriptor adapt(Table table) {
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(table.getId()));
     for (ColumnFamily columnFamily : table.getColumnFamilies()) {
       tableDescriptor.addFamily(columnDescriptorAdapter.adapt(columnFamily));

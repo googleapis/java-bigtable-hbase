@@ -103,7 +103,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   protected final IBigtableTableAdminClient tableAdminClientWrapper;
   protected final BigtableInstanceName bigtableInstanceName;
   private BigtableClusterName bigtableSnapshotClusterName;
-  protected final TableAdapter tableAdapter;
 
   /**
    * Constructor for AbstractBigtableAdmin.
@@ -118,7 +117,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     this.connection = connection;
     disabledTables = connection.getDisabledTables();
     bigtableInstanceName = options.getInstanceName();
-    tableAdapter = new TableAdapter(bigtableInstanceName);
     tableAdminClientWrapper = connection.getSession().getTableAdminClientWrapper();
 
     String clusterId =
@@ -288,7 +286,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
 
     try {
-      return tableAdapter.adapt(tableAdminClientWrapper.getTable(tableName.getNameAsString()));
+      return TableAdapter.adapt(tableAdminClientWrapper.getTable(tableName.getNameAsString()));
     } catch (Throwable throwable) {
       if (Status.fromThrowable(throwable).getCode() == Status.Code.NOT_FOUND) {
         throw new TableNotFoundException(tableName);

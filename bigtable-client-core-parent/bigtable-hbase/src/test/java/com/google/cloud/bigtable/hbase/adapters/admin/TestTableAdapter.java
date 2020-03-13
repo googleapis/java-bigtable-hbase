@@ -21,13 +21,11 @@ import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.GCRules.GCRule;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -42,14 +40,6 @@ public class TestTableAdapter {
       "projects/" + PROJECT_ID + "/instances/" + INSTANCE_ID;
   private static final String TABLE_NAME = INSTANCE_NAME + "/tables/" + TABLE_ID;
   private static final String COLUMN_FAMILY = "myColumnFamily";
-
-  private TableAdapter tableAdapter;
-
-  @Before
-  public void setUp() {
-    BigtableInstanceName bigtableInstanceName = new BigtableInstanceName(PROJECT_ID, INSTANCE_ID);
-    tableAdapter = new TableAdapter(bigtableInstanceName);
-  }
 
   @Test
   public void testAdaptWithHTableDescriptor() {
@@ -106,7 +96,7 @@ public class TestTableAdapter {
             .putColumnFamilies(COLUMN_FAMILY, columnFamily)
             .build();
     HTableDescriptor actualTableDesc =
-        tableAdapter.adapt(com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
+        TableAdapter.adapt(com.google.cloud.bigtable.admin.v2.models.Table.fromProto(table));
 
     HTableDescriptor expected = new HTableDescriptor(TableName.valueOf(TABLE_ID));
     expected.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
