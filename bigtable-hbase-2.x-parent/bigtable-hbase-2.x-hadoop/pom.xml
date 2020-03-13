@@ -194,14 +194,7 @@ limitations under the License.
           </usedDependencies>
         </configuration>
       </plugin>
-      <plugin>
-        <!-- skip for shaded jar-->
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>clirr-maven-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
+
     </plugins>
   </build>
 </project>

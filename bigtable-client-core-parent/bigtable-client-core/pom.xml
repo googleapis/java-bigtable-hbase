@@ -261,14 +261,6 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
     </resources>
     <plugins>
       <plugin>
-        <!-- skip for bigtable-client-core to allow for upcoming refactoring-->
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>clirr-maven-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>

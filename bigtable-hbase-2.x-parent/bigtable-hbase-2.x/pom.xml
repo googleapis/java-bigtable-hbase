@@ -141,14 +141,6 @@ limitations under the License.
           <compilerArgument>-Xlint:-options</compilerArgument>
         </configuration>
       </plugin>
-      <plugin>
-        <!-- skip for bigtable-hbase to allow for upcoming refactoring-->
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>clirr-maven-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 </project>
