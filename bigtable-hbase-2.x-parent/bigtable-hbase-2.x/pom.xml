@@ -84,6 +84,10 @@ limitations under the License.
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-api</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>com.google.api</groupId>
@@ -94,12 +98,20 @@ limitations under the License.
       <artifactId>proto-google-cloud-bigtable-admin-v2</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>proto-google-cloud-bigtable-v2</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-bigtable</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-api</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
@@ -139,6 +151,14 @@ limitations under the License.
           <showWarnings>true</showWarnings>
           <showDeprecation>false</showDeprecation>
           <compilerArgument>-Xlint:-options</compilerArgument>
+        </configuration>
+      </plugin>
+      <plugin>
+        <!-- skip for bigtable-hbase to allow for upcoming refactoring-->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>clirr-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
         </configuration>
       </plugin>
     </plugins>
