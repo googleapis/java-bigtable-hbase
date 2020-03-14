@@ -226,10 +226,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
 
     // added this check here to fail fast
-    if (Boolean.parseBoolean(configuration.get(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING))) {
-      throw new UnsupportedOperationException("Buffered mutator throttling is not supported.");
-    }
-
     if (Boolean.parseBoolean(configuration.get(ALLOW_NO_TIMESTAMP_RETRIES_KEY))) {
       throw new UnsupportedOperationException("Retries without Timestamp is not supported.");
     }
@@ -439,6 +435,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   private void configureBulkMutationSettings(EnhancedBigtableStubSettings.Builder builder) {
+
+    if (Boolean.parseBoolean(configuration.get(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING))) {
+      throw new UnsupportedOperationException("Buffered mutator throttling is not supported.");
+    }
+
     BatchingSettings.Builder batchingSettingsBuilder =
         builder.bulkMutateRowsSettings().getBatchingSettings().toBuilder();
 
@@ -541,12 +542,12 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
 
         long initialElapsedBackoffMs = Long.parseLong(initialElapsedBackoffMsStr);
+        retryBuilder.setInitialRetryDelay(ofMillis(initialElapsedBackoffMs));
+
         if (initialElapsedBackoffMs > retryBuilder.getMaxRetryDelay().toMillis()) {
           // TODO: fix this scenario by maybe introducing maxRetryDelayMillis directly
           retryBuilder.setMaxRetryDelay(ofMillis(initialElapsedBackoffMs));
         }
-
-        retryBuilder.setInitialRetryDelay(ofMillis(Long.parseLong(initialElapsedBackoffMsStr)));
       } else if (isBatchModeEnabled()) {
         // TODO: move this constant in default alignment PR.
         retryBuilder.setInitialRetryDelay(INITIAL_RETRY_IN_BATCH_MODE);
@@ -622,12 +623,12 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
 
         long initialElapsedBackoffMs = Long.parseLong(initialElapsedBackoffMsStr);
+        retryBuilder.setInitialRetryDelay(ofMillis(initialElapsedBackoffMs));
+
         if (initialElapsedBackoffMs > retryBuilder.getMaxRetryDelay().toMillis()) {
           // TODO: fix this scenario by maybe introducing maxRetryDelayMillis directly
           retryBuilder.setMaxRetryDelay(ofMillis(initialElapsedBackoffMs));
         }
-
-        retryBuilder.setInitialRetryDelay(ofMillis(initialElapsedBackoffMs));
       } else if (isBatchModeEnabled()) {
         // TODO: move this constant in default alignment PR.
         retryBuilder.setInitialRetryDelay(INITIAL_RETRY_IN_BATCH_MODE);
@@ -685,11 +686,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     return statusCodeBuilder.build();
   }
 
-  private boolean isRetriesDisabled() {
-    return !configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true);
-  }
-
   private boolean isBatchModeEnabled() {
     return configuration.getBoolean(BIGTABLE_USE_BATCH, false);
+  }
+
+  private boolean isRetriesDisabled() {
+    return !configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true);
   }
 }
