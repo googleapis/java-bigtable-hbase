@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC.
+ * Copyright 2020 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,8 @@ import org.mockito.junit.MockitoRule;
 @RunWith(JUnit4.class)
 public class TestDataClientClassicApi {
 
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+
   private static final String PROJECT_ID = "projectId";
   private static final String INSTANCE_ID = "instanceId";
   private static final String TABLE_ID = "tableId";
@@ -117,20 +119,18 @@ public class TestDataClientClassicApi {
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext.create(PROJECT_ID, INSTANCE_ID, APP_PROFILE_ID);
 
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
-
-  @Mock private BigtableDataClient client;
+  @Mock private BigtableDataClient delegate;
 
   @Mock private BigtableSession bigtableSession;
 
-  private DataClientWrapper clientWrapper;
+  @Mock private ResultScanner<FlatRow> mockFlatRowScanner;
 
-  @Mock private ResultScanner<FlatRow> mockFlatRow;
+  private DataClientWrapper dataClientWrapper;
 
   @Before
   public void setUp() {
-    when(bigtableSession.getDataClient()).thenReturn(client);
-    clientWrapper = new DataClientClassicApi(bigtableSession, REQUEST_CONTEXT);
+    when(bigtableSession.getDataClient()).thenReturn(delegate);
+    dataClientWrapper = new DataClientClassicApi(bigtableSession, REQUEST_CONTEXT);
   }
 
   @Test
@@ -138,7 +138,7 @@ public class TestDataClientClassicApi {
     BulkMutation mockBulkMutation = Mockito.mock(BulkMutation.class);
     when(bigtableSession.createBulkMutation(Mockito.<BigtableTableName>any()))
         .thenReturn(mockBulkMutation);
-    assertTrue(clientWrapper.createBulkMutation(TABLE_ID) instanceof BulkMutationClassicApi);
+    assertTrue(dataClientWrapper.createBulkMutation(TABLE_ID) instanceof BulkMutationClassicApi);
     verify(bigtableSession).createBulkMutation(Mockito.<BigtableTableName>any());
   }
 
@@ -146,7 +146,7 @@ public class TestDataClientClassicApi {
   public void testCreateBulkRead() {
     BulkRead mockBulkRead = Mockito.mock(BulkRead.class);
     when(bigtableSession.createBulkRead(Mockito.<BigtableTableName>any())).thenReturn(mockBulkRead);
-    assertTrue(clientWrapper.createBulkRead(TABLE_ID) instanceof BulkReadClassicApi);
+    assertTrue(dataClientWrapper.createBulkRead(TABLE_ID) instanceof BulkReadClassicApi);
     verify(bigtableSession).createBulkRead(Mockito.<BigtableTableName>any());
   }
 
@@ -156,9 +156,9 @@ public class TestDataClientClassicApi {
     MutateRowRequest request = rowMutation.toProto(REQUEST_CONTEXT);
     ListenableFuture<MutateRowResponse> response =
         Futures.immediateFuture(MutateRowResponse.getDefaultInstance());
-    when(client.mutateRowAsync(request)).thenReturn(response);
-    clientWrapper.mutateRowAsync(rowMutation);
-    verify(client).mutateRowAsync(request);
+    when(delegate.mutateRowAsync(request)).thenReturn(response);
+    dataClientWrapper.mutateRowAsync(rowMutation);
+    verify(delegate).mutateRowAsync(request);
   }
 
   @Test
@@ -172,9 +172,9 @@ public class TestDataClientClassicApi {
         CheckAndMutateRowResponse.newBuilder().setPredicateMatched(true).build();
     ListenableFuture<CheckAndMutateRowResponse> future = Futures.immediateFuture(response);
 
-    when(client.checkAndMutateRowAsync(request)).thenReturn(future);
-    Future<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditionalMutation);
-    verify(client).checkAndMutateRowAsync(request);
+    when(delegate.checkAndMutateRowAsync(request)).thenReturn(future);
+    Future<Boolean> actual = dataClientWrapper.checkAndMutateRowAsync(conditionalMutation);
+    verify(delegate).checkAndMutateRowAsync(request);
     assertTrue(actual.get());
   }
 
@@ -189,9 +189,9 @@ public class TestDataClientClassicApi {
         CheckAndMutateRowResponse.newBuilder().setPredicateMatched(false).build();
     ListenableFuture<CheckAndMutateRowResponse> future = Futures.immediateFuture(response);
 
-    when(client.checkAndMutateRowAsync(request)).thenReturn(future);
-    Future<Boolean> actual = clientWrapper.checkAndMutateRowAsync(conditonalMutation);
-    verify(client).checkAndMutateRowAsync(request);
+    when(delegate.checkAndMutateRowAsync(request)).thenReturn(future);
+    Future<Boolean> actual = dataClientWrapper.checkAndMutateRowAsync(conditonalMutation);
+    verify(delegate).checkAndMutateRowAsync(request);
     assertFalse(actual.get());
   }
 
@@ -204,12 +204,12 @@ public class TestDataClientClassicApi {
     ListenableFuture<ReadModifyWriteRowResponse> listenableResponse =
         Futures.immediateFuture(response);
 
-    when(client.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
-    Future<Result> output = clientWrapper.readModifyWriteRowAsync(readModify);
+    when(delegate.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
+    Future<Result> output = dataClientWrapper.readModifyWriteRowAsync(readModify);
     Result expectedResult =
         ROW_ADAPTER.adaptResponse(new DefaultRowAdapter().createRowFromProto(SAMPLE_PROTO_ROW));
     assertArrayEquals(expectedResult.rawCells(), output.get().rawCells());
-    verify(client).readModifyWriteRowAsync(request);
+    verify(delegate).readModifyWriteRowAsync(request);
   }
 
   @Test
@@ -227,27 +227,27 @@ public class TestDataClientClassicApi {
             SampleRowKeysResponse.newBuilder().setRowKey(ROW_KEY_2).setOffsetBytes(12).build(),
             SampleRowKeysResponse.newBuilder().setRowKey(ROW_KEY_3).setOffsetBytes(13).build());
 
-    when(client.sampleRowKeysAsync(requestProto))
+    when(delegate.sampleRowKeysAsync(requestProto))
         .thenReturn(Futures.immediateFuture(responseProto));
 
-    List<KeyOffset> keyOffsetList = clientWrapper.sampleRowKeysAsync(TABLE_ID).get();
+    List<KeyOffset> keyOffsetList = dataClientWrapper.sampleRowKeysAsync(TABLE_ID).get();
     assertEquals(keyOffsetList.get(0).getKey(), ROW_KEY_1);
     assertEquals(keyOffsetList.get(1).getKey(), ROW_KEY_2);
     assertEquals(keyOffsetList.get(2).getKey(), ROW_KEY_3);
-    verify(client).sampleRowKeysAsync(requestProto);
+    verify(delegate).sampleRowKeysAsync(requestProto);
   }
 
   @Test
   public void testReadRows() throws Exception {
     Query query = Query.create(TABLE_ID);
-    when(client.readFlatRows(query.toProto(REQUEST_CONTEXT))).thenReturn(mockFlatRow);
-    when(mockFlatRow.next()).thenReturn(SAMPLE_FLAT_ROW);
-    when(mockFlatRow.available()).thenReturn(10);
+    when(delegate.readFlatRows(query.toProto(REQUEST_CONTEXT))).thenReturn(mockFlatRowScanner);
+    when(mockFlatRowScanner.next()).thenReturn(SAMPLE_FLAT_ROW);
+    when(mockFlatRowScanner.available()).thenReturn(10);
     FlatRow[] flatRowArr = {SAMPLE_FLAT_ROW};
-    when(mockFlatRow.next(2)).thenReturn(flatRowArr);
-    doNothing().when(mockFlatRow).close();
+    when(mockFlatRowScanner.next(2)).thenReturn(flatRowArr);
+    doNothing().when(mockFlatRowScanner).close();
 
-    try (ResultScanner<Result> actualResult = clientWrapper.readRows(query)) {
+    try (ResultScanner<Result> actualResult = dataClientWrapper.readRows(query)) {
       assertArrayEquals(
           FLAT_ROW_ADAPTER.adaptResponse(SAMPLE_FLAT_ROW).rawCells(),
           actualResult.next().rawCells());
@@ -255,9 +255,9 @@ public class TestDataClientClassicApi {
       assertEquals(1, actualResult.next(2).length);
     }
 
-    verify(mockFlatRow).next();
-    verify(mockFlatRow).close();
-    verify(client).readFlatRows(query.toProto(REQUEST_CONTEXT));
+    verify(mockFlatRowScanner).next();
+    verify(mockFlatRowScanner).close();
+    verify(delegate).readFlatRows(query.toProto(REQUEST_CONTEXT));
   }
 
   @Test
@@ -265,16 +265,16 @@ public class TestDataClientClassicApi {
     Query query = Query.create(TABLE_ID);
     FlatRow anotherFlatRow = FlatRow.newBuilder().withRowKey(ROW_KEY).build();
     List<FlatRow> listFlatRows = ImmutableList.of(SAMPLE_FLAT_ROW, anotherFlatRow);
-    when(client.readFlatRowsAsync(query.toProto(REQUEST_CONTEXT)))
+    when(delegate.readFlatRowsAsync(query.toProto(REQUEST_CONTEXT)))
         .thenReturn(Futures.immediateFuture(listFlatRows));
 
-    List<Result> actualResult = clientWrapper.readRowsAsync(query).get();
+    List<Result> actualResult = dataClientWrapper.readRowsAsync(query).get();
     assertEquals(listFlatRows.size(), actualResult.size());
     assertArrayEquals(
         FLAT_ROW_ADAPTER.adaptResponse(SAMPLE_FLAT_ROW).rawCells(), actualResult.get(0).rawCells());
     assertArrayEquals(
         FLAT_ROW_ADAPTER.adaptResponse(anotherFlatRow).rawCells(), actualResult.get(1).rawCells());
-    verify(client).readFlatRowsAsync(query.toProto(REQUEST_CONTEXT));
+    verify(delegate).readFlatRowsAsync(query.toProto(REQUEST_CONTEXT));
   }
 
   @Test
@@ -291,22 +291,22 @@ public class TestDataClientClassicApi {
           @Override
           public void onCompleted() {}
         };
-    when(client.readFlatRows(
+    when(delegate.readFlatRows(
             Mockito.<ReadRowsRequest>any(), Mockito.<StreamObserver<FlatRow>>any()))
         .thenReturn(
             new ScanHandler() {
               @Override
               public void cancel() {}
             });
-    clientWrapper.readRowsAsync(request, resultStreamOb);
-    verify(client)
+    dataClientWrapper.readRowsAsync(request, resultStreamOb);
+    verify(delegate)
         .readFlatRows(Mockito.<ReadRowsRequest>any(), Mockito.<StreamObserver<FlatRow>>any());
   }
 
   @Test
   public void testClose() throws Exception {
     doNothing().when(bigtableSession).close();
-    clientWrapper.close();
+    dataClientWrapper.close();
     verify(bigtableSession).close();
   }
 }

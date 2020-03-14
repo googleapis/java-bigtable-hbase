@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC.
+ * Copyright 2020 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
@@ -147,9 +146,6 @@ public class DataClientClassicApi implements DataClientWrapper {
         new Function<List<SampleRowKeysResponse>, List<KeyOffset>>() {
           @Override
           public List<KeyOffset> apply(List<SampleRowKeysResponse> rowKeysList) {
-            if (rowKeysList == null || rowKeysList.isEmpty()) {
-              return Collections.emptyList();
-            }
             ImmutableList.Builder<KeyOffset> keyOffsetBuilder = ImmutableList.builder();
             for (SampleRowKeysResponse rowKeys : rowKeysList) {
               keyOffsetBuilder.add(KeyOffset.create(rowKeys.getRowKey(), rowKeys.getOffsetBytes()));
