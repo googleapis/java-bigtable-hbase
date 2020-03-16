@@ -28,7 +28,6 @@ import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
-import com.google.cloud.bigtable.data.v2.models.DefaultRowAdapter;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
@@ -109,9 +108,7 @@ public class DataClientClassicApi implements DataClientWrapper {
         new Function<ReadModifyWriteRowResponse, Result>() {
           @Override
           public Result apply(ReadModifyWriteRowResponse response) {
-            // TODO(rahulkql): should we create RowAdapter for proto Row to hbase's Result?
-            return Adapters.ROW_ADAPTER.adaptResponse(
-                new DefaultRowAdapter().createRowFromProto(response.getRow()));
+            return Adapters.PROTO_ROW_ADAPTER.adaptResponse(response.getRow());
           }
         });
   }

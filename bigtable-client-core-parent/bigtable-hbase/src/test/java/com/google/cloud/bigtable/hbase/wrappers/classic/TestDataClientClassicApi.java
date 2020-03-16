@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase.wrappers.classic;
 
 import static com.google.cloud.bigtable.hbase.adapters.Adapters.FLAT_ROW_ADAPTER;
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.ROW_ADAPTER;
+import static com.google.cloud.bigtable.hbase.adapters.Adapters.PROTO_ROW_ADAPTER;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,7 +41,6 @@ import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
-import com.google.cloud.bigtable.data.v2.models.DefaultRowAdapter;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -87,7 +86,6 @@ public class TestDataClientClassicApi {
   private static final ByteString ROW_KEY = ByteString.copyFromUtf8("test-key");
   private static final ByteString QUALIFIER = ByteString.copyFromUtf8("qualifier1");
   private static final int TIMESTAMP = 12345;
-  private static final String LABEL = "label";
   private static final ByteString VALUE = ByteString.copyFromUtf8("test-value");
 
   private static final Row SAMPLE_PROTO_ROW =
@@ -103,7 +101,6 @@ public class TestDataClientClassicApi {
                               Cell.newBuilder()
                                   .setValue(VALUE)
                                   .setTimestampMicros(TIMESTAMP)
-                                  .addLabels(LABEL)
                                   .build())
                           .build())
                   .build())
@@ -206,8 +203,7 @@ public class TestDataClientClassicApi {
 
     when(delegate.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
     Future<Result> output = dataClientWrapper.readModifyWriteRowAsync(readModify);
-    Result expectedResult =
-        ROW_ADAPTER.adaptResponse(new DefaultRowAdapter().createRowFromProto(SAMPLE_PROTO_ROW));
+    Result expectedResult = PROTO_ROW_ADAPTER.adaptResponse(response.getRow());
     assertArrayEquals(expectedResult.rawCells(), output.get().rawCells());
     verify(delegate).readModifyWriteRowAsync(request);
   }
