@@ -62,7 +62,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   private final Logger LOG = new Logger(getClass());
 
   private final BigtableSession session;
-  private final BigtableHBaseSettings baseSettings;
+  private final BigtableHBaseSettings settings;
   private volatile boolean closed = false;
 
   private final Set<TableName> disabledTables = Collections.synchronizedSet(new HashSet<>());
@@ -84,7 +84,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     LOG.debug("Creating BigtableAsyncConnection");
 
     try {
-      baseSettings = BigtableHBaseSettings.create(conf);
+      settings = BigtableHBaseSettings.create(conf);
     } catch (IOException ioe) {
       LOG.error("Error loading BigtableOptions from Configuration.", ioe);
       throw ioe;
@@ -92,7 +92,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
     this.closed = false;
     this.session =
-        new BigtableSession(((BigtableHBaseClassicSettings) baseSettings).getBigtableOptions());
+        new BigtableSession(((BigtableHBaseClassicSettings) settings).getBigtableOptions());
   }
 
   public HBaseRequestAdapter createAdapter(TableName tableName) {
@@ -112,15 +112,15 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   }
 
   public BigtableOptions getOptions() {
-    if (baseSettings instanceof BigtableHBaseVeneerSettings) {
+    if (settings instanceof BigtableHBaseVeneerSettings) {
       throw new UnsupportedOperationException("veneer client is not yet supported");
     }
-    return ((BigtableHBaseClassicSettings) this.baseSettings).getBigtableOptions();
+    return ((BigtableHBaseClassicSettings) this.settings).getBigtableOptions();
   }
 
   @Override
   public BigtableHBaseSettings getBigtableHBaseSettings() {
-    return this.baseSettings;
+    return this.settings;
   }
 
   public Set<TableName> getDisabledTables() {
@@ -138,7 +138,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public Configuration getConfiguration() {
-    return this.baseSettings.getConfiguration();
+    return this.settings.getConfiguration();
   }
 
   @Override
@@ -382,12 +382,12 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   @Override
   public List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException {
     ServerName serverName =
-        ServerName.valueOf(baseSettings.getDataHost(), baseSettings.getPort(), 0);
+        ServerName.valueOf(settings.getDataHost(), settings.getPort(), 0);
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
     request.setTableName(
         NameUtil.formatTableName(
-            baseSettings.getProjectId(),
-            baseSettings.getInstanceId(),
+            settings.getProjectId(),
+            settings.getInstanceId(),
             tableName.getQualifierAsString()));
     List<KeyOffset> sampleRowKeyResponse =
         this.session.getDataClientWrapper().sampleRowKeys(tableName.getNameAsString());

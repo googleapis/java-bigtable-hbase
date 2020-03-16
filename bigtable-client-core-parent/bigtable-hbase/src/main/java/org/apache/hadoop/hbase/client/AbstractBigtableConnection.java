@@ -73,7 +73,7 @@ public abstract class AbstractBigtableConnection
   private BigtableSession session;
 
   private volatile boolean cleanupPool = false;
-  private final BigtableHBaseSettings baseSettings;
+  private final BigtableHBaseSettings settings;
 
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
@@ -111,7 +111,7 @@ public abstract class AbstractBigtableConnection
     }
 
     try {
-      this.baseSettings = BigtableHBaseSettings.create(conf);
+      this.settings = BigtableHBaseSettings.create(conf);
     } catch (IOException ioe) {
       LOG.error("Error loading BigtableOptions from Configuration.", ioe);
       throw ioe;
@@ -121,13 +121,13 @@ public abstract class AbstractBigtableConnection
     this.closed = false;
     this.session =
         new BigtableSession(
-            ((BigtableHBaseClassicSettings) this.baseSettings).getBigtableOptions());
+            ((BigtableHBaseClassicSettings) this.settings).getBigtableOptions());
   }
 
   /** {@inheritDoc} */
   @Override
   public Configuration getConfiguration() {
-    return this.baseSettings.getConfiguration();
+    return this.settings.getConfiguration();
   }
 
   /** {@inheritDoc} */
@@ -275,10 +275,10 @@ public abstract class AbstractBigtableConnection
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableConnection.class)
-        .add("project", baseSettings.getProjectId())
-        .add("instance", baseSettings.getInstanceId())
-        .add("dataHost", baseSettings.getDataHost())
-        .add("tableAdminHost", baseSettings.getAdminHost())
+        .add("project", settings.getProjectId())
+        .add("instance", settings.getInstanceId())
+        .add("dataHost", settings.getDataHost())
+        .add("tableAdminHost", settings.getAdminHost())
         .toString();
   }
 
@@ -307,15 +307,15 @@ public abstract class AbstractBigtableConnection
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
   public BigtableOptions getOptions() {
-    if (baseSettings instanceof BigtableHBaseVeneerSettings) {
+    if (settings instanceof BigtableHBaseVeneerSettings) {
       throw new UnsupportedOperationException("veneer client is not yet supported");
     }
-    return ((BigtableHBaseClassicSettings) baseSettings).getBigtableOptions();
+    return ((BigtableHBaseClassicSettings) settings).getBigtableOptions();
   }
 
   @Override
   public BigtableHBaseSettings getBigtableHBaseSettings() {
-    return this.baseSettings;
+    return this.settings;
   }
 
   /**
