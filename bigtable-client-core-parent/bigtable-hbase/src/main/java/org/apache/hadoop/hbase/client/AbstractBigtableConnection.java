@@ -120,8 +120,7 @@ public abstract class AbstractBigtableConnection
     this.batchPool = pool;
     this.closed = false;
     this.session =
-        new BigtableSession(
-            ((BigtableHBaseClassicSettings) this.settings).getBigtableOptions());
+        new BigtableSession(((BigtableHBaseClassicSettings) this.settings).getBigtableOptions());
   }
 
   /** {@inheritDoc} */

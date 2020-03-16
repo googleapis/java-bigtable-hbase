@@ -381,14 +381,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException {
-    ServerName serverName =
-        ServerName.valueOf(settings.getDataHost(), settings.getPort(), 0);
+    ServerName serverName = ServerName.valueOf(settings.getDataHost(), settings.getPort(), 0);
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
     request.setTableName(
         NameUtil.formatTableName(
-            settings.getProjectId(),
-            settings.getInstanceId(),
-            tableName.getQualifierAsString()));
+            settings.getProjectId(), settings.getInstanceId(), tableName.getQualifierAsString()));
     List<KeyOffset> sampleRowKeyResponse =
         this.session.getDataClientWrapper().sampleRowKeys(tableName.getNameAsString());
 
