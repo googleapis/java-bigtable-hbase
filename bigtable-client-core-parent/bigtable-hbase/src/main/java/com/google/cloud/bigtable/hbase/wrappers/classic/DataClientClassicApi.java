@@ -19,10 +19,14 @@ import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
+import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
+import com.google.bigtable.v2.Column;
+import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
+import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
@@ -38,6 +42,9 @@ import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
@@ -48,6 +55,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
@@ -108,7 +116,7 @@ public class DataClientClassicApi implements DataClientWrapper {
         new Function<ReadModifyWriteRowResponse, Result>() {
           @Override
           public Result apply(ReadModifyWriteRowResponse response) {
-            return Adapters.PROTO_ROW_ADAPTER.adaptResponse(response.getRow());
+            return transformRowToResult(response.getRow());
           }
         });
   }
@@ -227,5 +235,37 @@ public class DataClientClassicApi implements DataClientWrapper {
   @Override
   public void close() throws Exception {
     session.close();
+  }
+
+  private static Result transformRowToResult(Row row) {
+    if (row == null) {
+      return Result.EMPTY_RESULT;
+    }
+
+    List<org.apache.hadoop.hbase.Cell> hbaseCells = new ArrayList<>();
+    byte[] rowKeyBytes = ByteStringer.extract(row.getKey());
+
+    for (Family family : row.getFamiliesList()) {
+      byte[] familyBytes = ByteStringer.extract(family.getNameBytes());
+
+      for (Column column : family.getColumnsList()) {
+        byte[] qualifierBytes = ByteStringer.extract(column.getQualifier());
+
+        for (Cell cell : column.getCellsList()) {
+          hbaseCells.add(toRowCell(rowKeyBytes, familyBytes, qualifierBytes, cell));
+        }
+      }
+    }
+    return Result.create(hbaseCells);
+  }
+
+  private static RowCell toRowCell(byte[] rowKey, byte[] family, byte[] qualifier, Cell cell) {
+    return new RowCell(
+        rowKey,
+        family,
+        qualifier,
+        TimestampConverter.bigtable2hbase(cell.getTimestampMicros()),
+        ByteStringer.extract(cell.getValue()),
+        cell.getLabelsList());
   }
 }

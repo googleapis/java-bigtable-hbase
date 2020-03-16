@@ -16,10 +16,10 @@
 package com.google.cloud.bigtable.hbase.wrappers.classic;
 
 import static com.google.cloud.bigtable.hbase.adapters.Adapters.FLAT_ROW_ADAPTER;
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.PROTO_ROW_ADAPTER;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
@@ -54,14 +54,18 @@ import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
+import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Before;
 import org.junit.Rule;
@@ -87,24 +91,6 @@ public class TestDataClientClassicApi {
   private static final ByteString QUALIFIER = ByteString.copyFromUtf8("qualifier1");
   private static final int TIMESTAMP = 12345;
   private static final ByteString VALUE = ByteString.copyFromUtf8("test-value");
-
-  private static final Row SAMPLE_PROTO_ROW =
-      Row.newBuilder()
-          .setKey(ROW_KEY)
-          .addFamilies(
-              Family.newBuilder()
-                  .setName("cf")
-                  .addColumns(
-                      Column.newBuilder()
-                          .setQualifier(QUALIFIER)
-                          .addCells(
-                              Cell.newBuilder()
-                                  .setValue(VALUE)
-                                  .setTimestampMicros(TIMESTAMP)
-                                  .build())
-                          .build())
-                  .build())
-          .build();
 
   private static final FlatRow SAMPLE_FLAT_ROW =
       FlatRow.newBuilder()
@@ -193,19 +179,139 @@ public class TestDataClientClassicApi {
   }
 
   @Test
-  public void testReadModifyWriteAsync() throws Exception {
+  public void testReadModifyWriteAsyncWithEmptyCell() throws Exception {
     ReadModifyWriteRow readModify = ReadModifyWriteRow.create(TABLE_ID, "test-key");
     ReadModifyWriteRowRequest request = readModify.toProto(REQUEST_CONTEXT);
     ReadModifyWriteRowResponse response =
-        ReadModifyWriteRowResponse.newBuilder().setRow(SAMPLE_PROTO_ROW).build();
+        ReadModifyWriteRowResponse.newBuilder()
+            .setRow(Row.newBuilder().setKey(ROW_KEY).build())
+            .build();
     ListenableFuture<ReadModifyWriteRowResponse> listenableResponse =
         Futures.immediateFuture(response);
 
     when(delegate.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
-    Future<Result> output = dataClientWrapper.readModifyWriteRowAsync(readModify);
-    Result expectedResult = PROTO_ROW_ADAPTER.adaptResponse(response.getRow());
-    assertArrayEquals(expectedResult.rawCells(), output.get().rawCells());
+    Result actualResult = dataClientWrapper.readModifyWriteRowAsync(readModify).get();
+    assertNull(actualResult.getRow());
+    assertEquals(0, actualResult.rawCells().length);
     verify(delegate).readModifyWriteRowAsync(request);
+  }
+
+  @Test
+  public void testReadModifyWriteAsyncWithOneRow() throws ExecutionException, InterruptedException {
+    String family_1 = "col-family-1";
+    String family_2 = "col-family-2";
+    String family_3 = "col-family-3";
+
+    ByteString qualifier_1 = ByteString.copyFromUtf8("test-qualifier_1-1");
+    ByteString qualifier_2 = ByteString.copyFromUtf8("test-qualifier_1-2");
+    ByteString qualifier_3 = ByteString.copyFromUtf8("test-qualifier_1-2");
+
+    ByteString value_1 = ByteString.copyFromUtf8("test-values-1");
+    ByteString value_2 = ByteString.copyFromUtf8("test-values-2");
+    ByteString value_3 = ByteString.copyFromUtf8("test-values-3");
+    ByteString value_4 = ByteString.copyFromUtf8("test-values-4");
+    ByteString value_5 = ByteString.copyFromUtf8("test-values-5");
+    ByteString value_6 = ByteString.copyFromUtf8("test-values-6");
+
+    Row row =
+        Row.newBuilder()
+            .setKey(ROW_KEY)
+            .addFamilies(
+                Family.newBuilder()
+                    .setName(family_1)
+                    .addColumns(
+                        Column.newBuilder()
+                            .setQualifier(qualifier_1)
+                            // First Cell
+                            .addCells(
+                                Cell.newBuilder()
+                                    .setTimestampMicros(11_111L)
+                                    .setValue(value_1)
+                                    .addLabels("label-1"))
+                            // Same Cell with another timestamp and value
+                            .addCells(
+                                Cell.newBuilder()
+                                    .setTimestampMicros(22_222L)
+                                    .setValue(value_2)
+                                    .addLabels("label-2")))
+                    .addColumns(
+                        Column.newBuilder()
+                            .setQualifier(qualifier_2)
+                            // With label
+                            .addCells(
+                                Cell.newBuilder()
+                                    .setTimestampMicros(11_111L)
+                                    .setValue(value_3)
+                                    .addLabels("label-3")
+                                    .addLabels("label-4"))
+                            // Same family, same timestamp, but different column.
+                            .addCells(
+                                Cell.newBuilder().setTimestampMicros(22_222L).setValue(value_4)))
+                    .build())
+            .addFamilies(
+                Family.newBuilder()
+                    .setName(family_2)
+                    .addColumns(
+                        Column.newBuilder()
+                            .setQualifier(qualifier_1)
+                            // Same column, same timestamp, but different family.
+                            .addCells(
+                                Cell.newBuilder().setTimestampMicros(11_111L).setValue(value_5))))
+            .addFamilies(
+                Family.newBuilder()
+                    .setName(family_3)
+                    .addColumns(
+                        Column.newBuilder()
+                            .setQualifier(qualifier_3)
+                            // Same timestamp, but different family and column.
+                            .addCells(Cell.newBuilder().setValue(value_6).addLabels("label-6"))))
+            .build();
+
+    ReadModifyWriteRow readModify = ReadModifyWriteRow.create(TABLE_ID, "test-key");
+    ReadModifyWriteRowRequest request = readModify.toProto(REQUEST_CONTEXT);
+    ReadModifyWriteRowResponse response =
+        ReadModifyWriteRowResponse.newBuilder().setRow(row).build();
+
+    ListenableFuture<ReadModifyWriteRowResponse> listenableResponse =
+        Futures.immediateFuture(response);
+
+    when(delegate.readModifyWriteRowAsync(request)).thenReturn(listenableResponse);
+    Result result = dataClientWrapper.readModifyWriteRowAsync(readModify).get();
+
+    assertEquals(6, result.rawCells().length);
+
+    List<org.apache.hadoop.hbase.Cell> cells1 =
+        result.getColumnCells(family_1.getBytes(), qualifier_1.toByteArray());
+
+    assertEquals(2, cells1.size());
+    assertEquals(11L, cells1.get(0).getTimestamp());
+    assertArrayEquals(value_1.toByteArray(), CellUtil.cloneValue(cells1.get(0)));
+    assertEquals(Collections.singletonList("label-1"), ((RowCell) cells1.get(0)).getLabels());
+
+    assertEquals(22L, cells1.get(1).getTimestamp());
+    assertArrayEquals(value_2.toByteArray(), CellUtil.cloneValue(cells1.get(1)));
+    assertEquals(Collections.singletonList("label-2"), ((RowCell) cells1.get(1)).getLabels());
+
+    List<org.apache.hadoop.hbase.Cell> cells2 =
+        result.getColumnCells(family_1.getBytes(), qualifier_2.toByteArray());
+    assertEquals(2, cells2.size());
+    assertEquals(11L, cells2.get(0).getTimestamp());
+    assertArrayEquals(value_3.toByteArray(), CellUtil.cloneValue(cells2.get(0)));
+    assertEquals(ImmutableList.of("label-3", "label-4"), ((RowCell) cells2.get(0)).getLabels());
+
+    assertEquals(22L, cells2.get(1).getTimestamp());
+    assertArrayEquals(value_4.toByteArray(), CellUtil.cloneValue(cells2.get(1)));
+
+    List<org.apache.hadoop.hbase.Cell> cells3 =
+        result.getColumnCells(family_2.getBytes(), qualifier_1.toByteArray());
+    assertEquals(1, cells3.size());
+    assertArrayEquals(value_5.toByteArray(), CellUtil.cloneValue(cells3.get(0)));
+
+    List<org.apache.hadoop.hbase.Cell> cells4 =
+        result.getColumnCells(family_3.getBytes(), qualifier_3.toByteArray());
+    assertEquals(1, cells4.size());
+    assertArrayEquals(value_6.toByteArray(), CellUtil.cloneValue(cells4.get(0)));
+    assertEquals(Collections.singletonList("label-6"), ((RowCell) cells4.get(0)).getLabels());
   }
 
   @Test

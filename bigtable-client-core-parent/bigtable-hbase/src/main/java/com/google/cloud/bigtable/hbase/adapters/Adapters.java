@@ -23,7 +23,6 @@ import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.BigtableResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
-import com.google.cloud.bigtable.hbase.adapters.read.ProtoRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowRangeAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
@@ -63,8 +62,6 @@ public final class Adapters {
           new BigtableWhileMatchResultScannerAdapter(FLAT_ROW_ADAPTER);
   /** Constant <code>GET_ADAPTER</code> */
   public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
-  /** Constant <code>PROTO_ROW_ADAPTER</code> */
-  public static final ProtoRowAdapter PROTO_ROW_ADAPTER = new ProtoRowAdapter();
 
   /**
    * createMutationsAdapter.
