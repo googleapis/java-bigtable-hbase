@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -26,6 +25,7 @@ import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.OperationAccountant;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,8 +53,6 @@ public class BigtableBufferedMutatorHelper {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableBufferedMutatorHelper.class);
 
-  private final Configuration configuration;
-
   /**
    * Makes sure that mutations and flushes are safe to proceed. Ensures that while the mutator is
    * closing, there will be no additional writes.
@@ -69,21 +67,20 @@ public class BigtableBufferedMutatorHelper {
   private final HBaseRequestAdapter adapter;
   private final IBulkMutation bulkMutation;
   private final IBigtableDataClient dataClient;
-  private final BigtableOptions options;
+  private final BigtableHBaseSettings settings;
   private final OperationAccountant operationAccountant;
 
   /**
    * Constructor for BigtableBufferedMutator.
    *
    * @param adapter Converts HBase objects to Bigtable protos
-   * @param configuration For Additional configuration. TODO: move this to options
+   * @param settings For bigtable settings
    * @param session a {@link BigtableSession} object.
    */
   public BigtableBufferedMutatorHelper(
-      HBaseRequestAdapter adapter, Configuration configuration, BigtableSession session) {
+      HBaseRequestAdapter adapter, BigtableHBaseSettings settings, BigtableSession session) {
     this.adapter = adapter;
-    this.configuration = configuration;
-    this.options = session.getOptions();
+    this.settings = settings;
     BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.bulkMutation = session.createBulkMutationWrapper(tableName);
     this.dataClient = session.getDataClientWrapper();
@@ -121,7 +118,7 @@ public class BigtableBufferedMutatorHelper {
   }
 
   public Configuration getConfiguration() {
-    return this.configuration;
+    return this.settings.getConfiguration();
   }
 
   public TableName getName() {
@@ -129,7 +126,7 @@ public class BigtableBufferedMutatorHelper {
   }
 
   public long getWriteBufferSize() {
-    return this.options.getBulkOptions().getMaxMemory();
+    return this.settings.getBatchingMaxRequestSize();
   }
 
   public List<ApiFuture<?>> mutate(List<? extends Mutation> mutations) {

@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
@@ -25,6 +24,8 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
@@ -41,13 +42,14 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
+// TODO(rahulkql): If possible remove/update this class to bigtable-1.x-benchmark.
 public class PutMicroBenchmark {
   static final int NUM_CELLS = 10;
   private static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   private static final int REAL_CHANNEL_PUT_COUNT = 100;
   private static final int FAKE_CHANNEL_PUT_COUNT = 100_000;
   private static final int VALUE_SIZE = 100;
-  private static BigtableOptions options;
+  private static BigtableHBaseSettings settings;
   private static RequestContext requestContext;
 
   public static void main(String[] args) throws Exception {
@@ -55,19 +57,15 @@ public class PutMicroBenchmark {
     String instanceId = args.length > 1 ? args[1] : "instanceId";
     String tableId = args.length > 2 ? args[2] : "table";
 
-    options =
-        BigtableOptions.builder()
-            .setProjectId(projectId)
-            .setInstanceId(instanceId)
-            .setUserAgent("put_microbenchmark")
-            .build();
+    Configuration configuration = BigtableConfiguration.configure(projectId, instanceId);
+    configuration.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "put_microbenchmark");
+    settings = BigtableHBaseSettings.create(configuration);
+
     boolean useRealConnection = args.length >= 2;
     int putCount = useRealConnection ? REAL_CHANNEL_PUT_COUNT : FAKE_CHANNEL_PUT_COUNT;
     HBaseRequestAdapter hbaseAdapter =
-        new HBaseRequestAdapter(options, TableName.valueOf(tableId), new Configuration(false));
-    requestContext =
-        RequestContext.create(
-            options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+        new HBaseRequestAdapter(settings, TableName.valueOf(tableId));
+    requestContext = RequestContext.create(settings.getProjectId(), settings.getInstanceId(), "");
 
     testCreatePuts(10_000);
 
@@ -82,7 +80,8 @@ public class PutMicroBenchmark {
   protected static ManagedChannel getChannelPool(final boolean useRealConnection)
       throws IOException, GeneralSecurityException {
     if (useRealConnection) {
-      return BigtableSession.createChannelPool(options.getDataHost(), options);
+      return BigtableSession.createChannelPool(
+          settings.getDataHost(), ((BigtableHBaseClassicSettings) settings).getBigtableOptions());
     } else {
       return new ChannelPool(createFakeChannels(), 1);
     }
@@ -129,7 +128,9 @@ public class PutMicroBenchmark {
       throws InterruptedException {
     final BigtableDataClient client =
         new BigtableDataGrpcClient(
-            cp, BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
+            cp,
+            BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
+            ((BigtableHBaseClassicSettings) settings).getBigtableOptions());
 
     Runnable r1 =
         new Runnable() {

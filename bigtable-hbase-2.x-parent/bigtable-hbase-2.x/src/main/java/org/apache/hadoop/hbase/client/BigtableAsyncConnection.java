@@ -99,12 +99,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     if (mutationAdapters == null) {
       synchronized (this) {
         if (mutationAdapters == null) {
-          mutationAdapters =
-              new HBaseRequestAdapter.MutationAdapters(getOptions(), getConfiguration());
+          mutationAdapters = new HBaseRequestAdapter.MutationAdapters(settings);
         }
       }
     }
-    return new HBaseRequestAdapter(getOptions(), tableName, mutationAdapters);
+    return new HBaseRequestAdapter(settings, tableName, mutationAdapters);
   }
 
   public BigtableSession getSession() {
@@ -233,8 +232,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
       @Override
       public AsyncBufferedMutator build() {
-        return new BigtableAsyncBufferedMutator(
-            createAdapter(tableName), getConfiguration(), session);
+        return new BigtableAsyncBufferedMutator(createAdapter(tableName), settings, session);
       }
     };
   }

@@ -145,19 +145,18 @@ public abstract class AbstractBigtableConnection
 
     HBaseRequestAdapter adapter = createAdapter(tableName);
     ExceptionListener listener = params.getListener();
-    return new BigtableBufferedMutator(adapter, getConfiguration(), session, listener);
+    return new BigtableBufferedMutator(adapter, settings, session, listener);
   }
 
   public HBaseRequestAdapter createAdapter(TableName tableName) {
     if (mutationAdapters == null) {
       synchronized (this) {
         if (mutationAdapters == null) {
-          mutationAdapters =
-              new HBaseRequestAdapter.MutationAdapters(getOptions(), getConfiguration());
+          mutationAdapters = new HBaseRequestAdapter.MutationAdapters(settings);
         }
       }
     }
-    return new HBaseRequestAdapter(getOptions(), tableName, mutationAdapters);
+    return new HBaseRequestAdapter(settings, tableName, mutationAdapters);
   }
 
   /** {@inheritDoc} */

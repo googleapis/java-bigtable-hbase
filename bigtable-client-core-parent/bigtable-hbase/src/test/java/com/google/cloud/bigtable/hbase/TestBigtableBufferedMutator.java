@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
@@ -32,6 +31,7 @@ import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -95,13 +95,11 @@ public class TestBigtableBufferedMutator {
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
 
-    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    HBaseRequestAdapter adapter =
-        new HBaseRequestAdapter(options, TableName.valueOf("TABLE"), configuration);
+    BigtableHBaseSettings settings = BigtableHBaseSettings.create(configuration);
+    HBaseRequestAdapter adapter = new HBaseRequestAdapter(settings, TableName.valueOf("TABLE"));
 
     executorService = Executors.newCachedThreadPool();
-    when(mockSession.getOptions()).thenReturn(options);
-    return new BigtableBufferedMutator(adapter, configuration, mockSession, listener);
+    return new BigtableBufferedMutator(adapter, settings, mockSession, listener);
   }
 
   @Test

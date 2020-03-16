@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.MutationApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -26,9 +26,9 @@ import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
@@ -53,8 +53,8 @@ public class HBaseRequestAdapter {
     protected final HBaseMutationAdapter hbaseMutationAdapter;
     protected final RowMutationsAdapter rowMutationsAdapter;
 
-    public MutationAdapters(BigtableOptions options, Configuration config) {
-      this(Adapters.createPutAdapter(config, options));
+    public MutationAdapters(BigtableHBaseSettings settings) {
+      this(Adapters.createPutAdapter(settings));
     }
 
     @VisibleForTesting
@@ -76,26 +76,29 @@ public class HBaseRequestAdapter {
   /**
    * Constructor for HBaseRequestAdapter.
    *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @param settings a {@link BigtableHBaseSettings} object.
    * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
-   * @param config a {@link org.apache.hadoop.conf.Configuration} object.
    */
-  public HBaseRequestAdapter(BigtableOptions options, TableName tableName, Configuration config) {
-    this(options, tableName, new MutationAdapters(options, config));
+  public HBaseRequestAdapter(BigtableHBaseSettings settings, TableName tableName) {
+    this(settings, tableName, new MutationAdapters(settings));
   }
 
   /**
    * Constructor for HBaseRequestAdapter.
    *
-   * @param options a {@link BigtableOptions} object.
+   * @param settings a {@link BigtableHBaseSettings} object.
    * @param tableName a {@link TableName} object.
    * @param mutationAdapters a {@link MutationAdapters} object.
    */
   public HBaseRequestAdapter(
-      BigtableOptions options, TableName tableName, MutationAdapters mutationAdapters) {
+      BigtableHBaseSettings settings, TableName tableName, MutationAdapters mutationAdapters) {
     this(
         tableName,
-        options.getInstanceName().toTableName(tableName.getQualifierAsString()),
+        new BigtableTableName(
+            NameUtil.formatTableName(
+                settings.getProjectId(),
+                settings.getInstanceId(),
+                tableName.getQualifierAsString())),
         mutationAdapters);
   }
 

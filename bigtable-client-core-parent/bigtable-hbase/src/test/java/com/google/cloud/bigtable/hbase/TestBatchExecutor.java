@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
@@ -40,9 +42,11 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow.Cell;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -124,14 +128,18 @@ public class TestBatchExecutor {
   private HBaseRequestAdapter requestAdapter;
 
   private BigtableOptions options;
+  private BigtableHBaseSettings settings;
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
     options =
         BigtableOptions.builder().setProjectId("projectId").setInstanceId("instanceId").build();
-    requestAdapter =
-        new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
 
+    Configuration configuration = new Configuration(false);
+    configuration.set(PROJECT_ID_KEY, "projectId");
+    configuration.set(INSTANCE_ID_KEY, "instanceId");
+    settings = BigtableHBaseSettings.create(configuration);
+    requestAdapter = new HBaseRequestAdapter(settings, TableName.valueOf("table"));
     when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getDataClientWrapper()).thenReturn(mockDataClient);
     when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))

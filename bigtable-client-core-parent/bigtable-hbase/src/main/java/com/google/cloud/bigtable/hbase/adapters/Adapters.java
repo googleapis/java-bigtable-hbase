@@ -15,8 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY;
+
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.filters.BigtableWhileMatchResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
@@ -26,6 +27,7 @@ import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowRangeAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Increment;
@@ -80,12 +82,12 @@ public final class Adapters {
   /**
    * createPutAdapter.
    *
-   * @param config a {@link org.apache.hadoop.conf.Configuration} object.
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @param settings a {@link org.apache.hadoop.conf.Configuration} object.
    * @return a {@link com.google.cloud.bigtable.hbase.adapters.PutAdapter} object.
    */
-  public static PutAdapter createPutAdapter(Configuration config, BigtableOptions options) {
-    boolean setClientTimestamp = !options.getRetryOptions().allowRetriesWithoutTimestamp();
+  public static PutAdapter createPutAdapter(BigtableHBaseSettings settings) {
+    Configuration config = settings.getConfiguration();
+    boolean setClientTimestamp = !config.getBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, false);
     return new PutAdapter(config.getInt("hbase.client.keyvalue.maxsize", -1), setClientTimestamp);
   }
 
