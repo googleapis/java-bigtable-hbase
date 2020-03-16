@@ -183,6 +183,16 @@ limitations under the License.
   </dependencies>
 
   <build>
+    <plugins>
+      <plugin>
+        <!-- skip for bigtable-hbase to allow for upcoming refactoring-->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>clirr-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
     <resources>
       <resource>
         <directory>src/main/resources</directory>
