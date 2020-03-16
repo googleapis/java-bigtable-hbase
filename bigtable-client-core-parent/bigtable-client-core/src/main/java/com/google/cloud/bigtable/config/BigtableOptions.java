@@ -153,6 +153,13 @@ public class BigtableOptions implements Serializable, Cloneable {
       options.useCachedDataPool = false;
       options.useGCJClient = false;
 
+      options.bulkOptions =
+          BulkOptions.builder()
+              .setMaxInflightRpcs(
+                  BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
+                      * options.dataChannelCount)
+              .build();
+
       options.retryOptions = new RetryOptions.Builder().build();
       options.callOptionsConfig = CallOptionsConfig.builder().build();
       // CredentialOptions.defaultCredentials() gets credentials from well known locations, such as
@@ -230,9 +237,17 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
+    public RetryOptions getRetryOptions() {
+      return options.retryOptions;
+    }
+
     public Builder setBulkOptions(BulkOptions bulkOptions) {
       options.bulkOptions = bulkOptions;
       return this;
+    }
+
+    public BulkOptions getBulkOptions() {
+      return options.bulkOptions;
     }
 
     public Builder setUsePlaintextNegotiation(boolean usePlaintextNegotiation) {
@@ -256,6 +271,10 @@ public class BigtableOptions implements Serializable, Cloneable {
     public Builder setCallOptionsConfig(CallOptionsConfig callOptionsConfig) {
       options.callOptionsConfig = callOptionsConfig;
       return this;
+    }
+
+    public CallOptionsConfig getCallOptionsConfig() {
+      return options.callOptionsConfig;
     }
 
     public Builder setUseBatch(boolean useBatch) {
@@ -318,11 +337,8 @@ public class BigtableOptions implements Serializable, Cloneable {
     }
 
     public BigtableOptions build() {
-      if (options.bulkOptions == null) {
-        int maxInflightRpcs =
-            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
-        options.bulkOptions = BulkOptions.builder().setMaxInflightRpcs(maxInflightRpcs).build();
-      } else if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
+      Preconditions.checkNotNull(options.bulkOptions, "bulk options cannot be null");
+      if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
         int maxInflightRpcs =
             BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
         options.bulkOptions =

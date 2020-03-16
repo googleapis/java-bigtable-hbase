@@ -123,6 +123,20 @@ limitations under the License.
       <version>${commons-logging.version}</version>
     </dependency>
 
+    <!-- For veneer client settings configurations -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.api</groupId>
+      <artifactId>gax-grpc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-oauth2-http</artifactId>
+    </dependency>
+
     <!-- TODO: remove this is direct dep, its only used for its Clock interface -->
     <dependency>
       <groupId>com.google.http-client</groupId>

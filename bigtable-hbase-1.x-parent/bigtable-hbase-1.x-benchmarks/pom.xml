@@ -9,6 +9,17 @@
 
   <artifactId>bigtable-hbase-1.x-benchmarks</artifactId>
 
+  <!--  TODO: remove this dependency when upgraded transitively to 1.34.2 -->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.http-client</groupId>
+        <artifactId>google-http-client-jackson2</artifactId>
+        <version>1.34.2</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- Project related dependencies-->
     <dependency>
