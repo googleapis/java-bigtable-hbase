@@ -20,13 +20,15 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.common.base.MoreObjects;
 import java.io.Closeable;
 import java.io.IOException;
@@ -63,7 +65,6 @@ public abstract class AbstractBigtableConnection
 
   protected final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
 
-  private final Configuration conf;
   private volatile boolean closed = false;
   private volatile boolean aborted;
   private volatile ExecutorService batchPool = null;
@@ -72,7 +73,7 @@ public abstract class AbstractBigtableConnection
   private BigtableSession session;
 
   private volatile boolean cleanupPool = false;
-  private final BigtableOptions options;
+  private final BigtableHBaseSettings baseSettings;
 
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
@@ -108,11 +109,9 @@ public abstract class AbstractBigtableConnection
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
-    this.conf = conf;
 
-    BigtableOptions opts;
     try {
-      opts = BigtableOptionsFactory.fromConfiguration(conf);
+      this.baseSettings = BigtableHBaseSettings.create(conf);
     } catch (IOException ioe) {
       LOG.error("Error loading BigtableOptions from Configuration.", ioe);
       throw ioe;
@@ -120,17 +119,15 @@ public abstract class AbstractBigtableConnection
 
     this.batchPool = pool;
     this.closed = false;
-    this.session = new BigtableSession(opts);
-
-    // Note: Reset options here because BigtableSession could potentially modify the input
-    // options by resolving legacy parameters into current ones.
-    this.options = this.session.getOptions();
+    this.session =
+        new BigtableSession(
+            ((BigtableHBaseClassicSettings) this.baseSettings).getBigtableOptions());
   }
 
   /** {@inheritDoc} */
   @Override
   public Configuration getConfiguration() {
-    return this.conf;
+    return this.baseSettings.getConfiguration();
   }
 
   /** {@inheritDoc} */
@@ -149,18 +146,19 @@ public abstract class AbstractBigtableConnection
 
     HBaseRequestAdapter adapter = createAdapter(tableName);
     ExceptionListener listener = params.getListener();
-    return new BigtableBufferedMutator(adapter, conf, session, listener);
+    return new BigtableBufferedMutator(adapter, getConfiguration(), session, listener);
   }
 
   public HBaseRequestAdapter createAdapter(TableName tableName) {
     if (mutationAdapters == null) {
       synchronized (this) {
         if (mutationAdapters == null) {
-          mutationAdapters = new HBaseRequestAdapter.MutationAdapters(options, conf);
+          mutationAdapters =
+              new HBaseRequestAdapter.MutationAdapters(getOptions(), getConfiguration());
         }
       }
     }
-    return new HBaseRequestAdapter(options, tableName, mutationAdapters);
+    return new HBaseRequestAdapter(getOptions(), tableName, mutationAdapters);
   }
 
   /** {@inheritDoc} */
@@ -277,10 +275,10 @@ public abstract class AbstractBigtableConnection
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableConnection.class)
-        .add("project", options.getProjectId())
-        .add("instance", options.getInstanceId())
-        .add("dataHost", options.getDataHost())
-        .add("tableAdminHost", options.getAdminHost())
+        .add("project", baseSettings.getProjectId())
+        .add("instance", baseSettings.getInstanceId())
+        .add("dataHost", baseSettings.getDataHost())
+        .add("tableAdminHost", baseSettings.getAdminHost())
         .toString();
   }
 
@@ -309,7 +307,15 @@ public abstract class AbstractBigtableConnection
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
   public BigtableOptions getOptions() {
-    return options;
+    if (baseSettings instanceof BigtableHBaseVeneerSettings) {
+      throw new UnsupportedOperationException("veneer client is not yet supported");
+    }
+    return ((BigtableHBaseClassicSettings) baseSettings).getBigtableOptions();
+  }
+
+  @Override
+  public BigtableHBaseSettings getBigtableHBaseSettings() {
+    return this.baseSettings;
   }
 
   /**

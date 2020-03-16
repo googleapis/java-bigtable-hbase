@@ -18,14 +18,17 @@ package org.apache.hadoop.hbase.client;
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncAdmin;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncBufferedMutator;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTable;
@@ -58,9 +61,8 @@ import org.apache.hadoop.hbase.security.User;
 public class BigtableAsyncConnection implements AsyncConnection, CommonConnection, Closeable {
   private final Logger LOG = new Logger(getClass());
 
-  private final Configuration conf;
   private final BigtableSession session;
-  private final BigtableOptions options;
+  private final BigtableHBaseSettings baseSettings;
   private volatile boolean closed = false;
 
   private final Set<TableName> disabledTables = Collections.synchronizedSet(new HashSet<>());
@@ -80,30 +82,29 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       Configuration conf, AsyncRegistry ignoredRegistry, String ignoredClusterId, User ignoredUser)
       throws IOException {
     LOG.debug("Creating BigtableAsyncConnection");
-    this.conf = conf;
 
-    BigtableOptions opts;
     try {
-      opts = BigtableOptionsFactory.fromConfiguration(conf);
+      baseSettings = BigtableHBaseSettings.create(conf);
     } catch (IOException ioe) {
       LOG.error("Error loading BigtableOptions from Configuration.", ioe);
       throw ioe;
     }
 
     this.closed = false;
-    this.session = new BigtableSession(opts);
-    this.options = this.session.getOptions();
+    this.session =
+        new BigtableSession(((BigtableHBaseClassicSettings) baseSettings).getBigtableOptions());
   }
 
   public HBaseRequestAdapter createAdapter(TableName tableName) {
     if (mutationAdapters == null) {
       synchronized (this) {
         if (mutationAdapters == null) {
-          mutationAdapters = new HBaseRequestAdapter.MutationAdapters(options, conf);
+          mutationAdapters =
+              new HBaseRequestAdapter.MutationAdapters(getOptions(), getConfiguration());
         }
       }
     }
-    return new HBaseRequestAdapter(options, tableName, mutationAdapters);
+    return new HBaseRequestAdapter(getOptions(), tableName, mutationAdapters);
   }
 
   public BigtableSession getSession() {
@@ -111,7 +112,15 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   }
 
   public BigtableOptions getOptions() {
-    return this.options;
+    if (baseSettings instanceof BigtableHBaseVeneerSettings) {
+      throw new UnsupportedOperationException("veneer client is not yet supported");
+    }
+    return ((BigtableHBaseClassicSettings) this.baseSettings).getBigtableOptions();
+  }
+
+  @Override
+  public BigtableHBaseSettings getBigtableHBaseSettings() {
+    return this.baseSettings;
   }
 
   public Set<TableName> getDisabledTables() {
@@ -129,7 +138,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public Configuration getConfiguration() {
-    return this.conf;
+    return this.baseSettings.getConfiguration();
   }
 
   @Override
@@ -305,7 +314,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
     return new BigtableAsyncTableRegionLocator(
-        tableName, options, this.session.getDataClientWrapper());
+        tableName, getOptions(), this.session.getDataClientWrapper());
   }
 
   @Override
@@ -372,9 +381,14 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException {
-    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
+    ServerName serverName =
+        ServerName.valueOf(baseSettings.getDataHost(), baseSettings.getPort(), 0);
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setTableName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
+    request.setTableName(
+        NameUtil.formatTableName(
+            baseSettings.getProjectId(),
+            baseSettings.getInstanceId(),
+            tableName.getQualifierAsString()));
     List<KeyOffset> sampleRowKeyResponse =
         this.session.getDataClientWrapper().sampleRowKeys(tableName.getNameAsString());
 
