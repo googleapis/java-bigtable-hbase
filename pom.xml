@@ -68,7 +68,7 @@ limitations under the License.
     <hbase.version.2>2.2.3</hbase.version.2>
     <hbase.version>${hbase.version.1}</hbase.version>
     <hbase1-hadoop.version>2.7.4</hbase1-hadoop.version>
-    <hbase2-hadoop.version>2.8.5</hbase2-hadoop.version>
+    <hbase2-hadoop.version>2.10.0</hbase2-hadoop.version>
 
     <!-- testing dependency versions -->
     <commons-lang.version>2.6</commons-lang.version>
