@@ -43,7 +43,7 @@ public abstract class BigtableWrapper implements AutoCloseable {
     this.hBaseSettings = hbaseSettings;
   }
 
-  public abstract AdminClientWrapper getAdminClient() throws IOException;
+  public abstract AdminClientWrapper getAdminClient();
 
   public abstract DataClientWrapper getDataClient();
 

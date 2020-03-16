@@ -30,31 +30,28 @@ public class BigtableClassicApi extends BigtableWrapper {
 
   private final BigtableSession bigtableSession;
   private final DataClientWrapper dataClientWrapper;
-
-  // Delaying the admin wrapper instantiation until its needed
-  private AdminClientWrapper adminClientWrapper;
+  private final AdminClientWrapper adminClientWrapper;
 
   public BigtableClassicApi(BigtableHBaseClassicSettings settings) throws IOException {
     super(settings);
     this.bigtableSession = new BigtableSession(settings.getBigtableOptions());
+
     RequestContext requestContext =
         RequestContext.create(
             settings.getProjectId(),
             settings.getInstanceId(),
             settings.getBigtableOptions().getAppProfileId());
     this.dataClientWrapper = new DataClientClassicApi(bigtableSession, requestContext);
+
+    BigtableInstanceName instanceName =
+        new BigtableInstanceName(
+            getBigtableHBaseSettings().getProjectId(), getBigtableHBaseSettings().getInstanceId());
+    this.adminClientWrapper =
+        new AdminClientClassicApi(bigtableSession.getTableAdminClient(), instanceName);
   }
 
   @Override
-  public AdminClientWrapper getAdminClient() throws IOException {
-    if (adminClientWrapper == null) {
-      BigtableInstanceName instanceName =
-          new BigtableInstanceName(
-              getBigtableHBaseSettings().getProjectId(),
-              getBigtableHBaseSettings().getInstanceId());
-      adminClientWrapper =
-          new AdminClientClassicApi(bigtableSession.getTableAdminClient(), instanceName);
-    }
+  public AdminClientWrapper getAdminClient() {
     return adminClientWrapper;
   }
 
