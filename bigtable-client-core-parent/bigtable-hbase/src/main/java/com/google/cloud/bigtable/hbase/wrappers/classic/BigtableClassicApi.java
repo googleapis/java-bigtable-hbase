@@ -1,0 +1,74 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.cloud.bigtable.hbase.wrappers.classic;
+
+import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableWrapper;
+import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
+import java.io.IOException;
+
+/** For internal use only - public for technical reasons. */
+@InternalApi("For internal usage only")
+public class BigtableClassicApi extends BigtableWrapper {
+
+  private final BigtableSession bigtableSession;
+  private final DataClientWrapper dataClientWrapper;
+
+  // Delaying the admin wrapper instantiation until its needed
+  private AdminClientWrapper adminClientWrapper;
+
+  public BigtableClassicApi(BigtableHBaseClassicSettings settings) throws IOException {
+    super(settings);
+    this.bigtableSession = new BigtableSession(settings.getBigtableOptions());
+    RequestContext requestContext =
+        RequestContext.create(
+            settings.getProjectId(),
+            settings.getInstanceId(),
+            settings.getBigtableOptions().getAppProfileId());
+    this.dataClientWrapper = new DataClientClassicApi(bigtableSession, requestContext);
+  }
+
+  @Override
+  public AdminClientWrapper getAdminClient() throws IOException {
+    if (adminClientWrapper == null) {
+      BigtableInstanceName instanceName =
+          new BigtableInstanceName(
+              getBigtableHBaseSettings().getProjectId(),
+              getBigtableHBaseSettings().getInstanceId());
+      adminClientWrapper =
+          new AdminClientClassicApi(bigtableSession.getTableAdminClient(), instanceName);
+    }
+    return adminClientWrapper;
+  }
+
+  @Override
+  public DataClientWrapper getDataClient() {
+    return dataClientWrapper;
+  }
+
+  @Override
+  public void close() throws Exception {
+    if (adminClientWrapper != null) {
+      adminClientWrapper.close();
+    }
+    dataClientWrapper.close();
+    bigtableSession.close();
+  }
+}
