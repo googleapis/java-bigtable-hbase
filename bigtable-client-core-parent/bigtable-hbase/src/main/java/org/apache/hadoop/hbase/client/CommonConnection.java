@@ -18,6 +18,7 @@ package org.apache.hadoop.hbase.client;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -55,6 +56,13 @@ public interface CommonConnection extends Closeable {
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
   BigtableOptions getOptions();
+
+  /**
+   * Returns instance of bigtable settings for classic or veneer client.
+   *
+   * @return a {@link BigtableHBaseSettings} instance.
+   */
+  BigtableHBaseSettings getBigtableHBaseSettings();
 
   /**
    * Getter for the field <code>disabledTables</code>.

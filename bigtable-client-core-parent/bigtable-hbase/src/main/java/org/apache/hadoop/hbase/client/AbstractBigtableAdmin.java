@@ -28,7 +28,6 @@ import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
@@ -36,6 +35,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
@@ -98,7 +98,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final Set<TableName> disabledTables;
 
   private final Configuration configuration;
-  private final BigtableOptions options;
+  private final BigtableHBaseSettings settings;
   protected final CommonConnection connection;
   protected final IBigtableTableAdminClient tableAdminClientWrapper;
   protected final BigtableInstanceName bigtableInstanceName;
@@ -113,10 +113,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public AbstractBigtableAdmin(CommonConnection connection) throws IOException {
     LOG.debug("Creating BigtableAdmin");
     configuration = connection.getConfiguration();
-    options = connection.getOptions();
+    settings = connection.getBigtableHBaseSettings();
     this.connection = connection;
     disabledTables = connection.getDisabledTables();
-    bigtableInstanceName = options.getInstanceName();
+    bigtableInstanceName =
+        new BigtableInstanceName(settings.getProjectId(), settings.getInstanceId());
     tableAdminClientWrapper = connection.getSession().getTableAdminClientWrapper();
 
     String clusterId =
@@ -757,9 +758,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(getClass())
-        .add("project", options.getProjectId())
-        .add("instance", options.getInstanceId())
-        .add("adminHost", options.getAdminHost())
+        .add("project", settings.getProjectId())
+        .add("instance", settings.getInstanceId())
+        .add("adminHost", settings.getAdminHost())
         .toString();
   }
 
@@ -890,7 +891,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
         SnapshotTableRequest.newBuilder()
             .setCluster(getSnapshotClusterName().toString())
             .setSnapshotId(snapshotName)
-            .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
+            .setName(bigtableInstanceName.toTableNameStr(tableName.getNameAsString()));
 
     int ttlSecs =
         configuration.getInt(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY, -1);
@@ -955,7 +956,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       throws IOException, TableExistsException, RestoreSnapshotException {
     CreateTableFromSnapshotRequest request =
         CreateTableFromSnapshotRequest.newBuilder()
-            .setParent(options.getInstanceName().toString())
+            .setParent(bigtableInstanceName.toString())
             .setTableId(tableName.getNameAsString())
             .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
             .build();

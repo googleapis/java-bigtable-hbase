@@ -26,13 +26,13 @@ import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -105,10 +105,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
-    BigtableOptions options = asyncConnection.getOptions();
+    BigtableHBaseSettings settings = asyncConnection.getBigtableHBaseSettings();
     this.bigtableTableAdminClient = asyncConnection.getSession().getTableAdminClientWrapper();
     this.disabledTables = asyncConnection.getDisabledTables();
-    this.bigtableInstanceName = options.getInstanceName();
+    this.bigtableInstanceName =
+        new BigtableInstanceName(settings.getProjectId(), settings.getInstanceId());
     this.asyncConnection = asyncConnection;
 
     Configuration configuration = asyncConnection.getConfiguration();
