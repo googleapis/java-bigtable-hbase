@@ -137,6 +137,11 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
     return bigtableOptions.getBulkOptions().getMaxMemory();
   }
 
+  @Override
+  public boolean allowRetriesWithoutTimestamp() {
+    return bigtableOptions.getRetryOptions().allowRetriesWithoutTimestamp();
+  }
+
   public BigtableOptions getBigtableOptions() {
     return bigtableOptions;
   }

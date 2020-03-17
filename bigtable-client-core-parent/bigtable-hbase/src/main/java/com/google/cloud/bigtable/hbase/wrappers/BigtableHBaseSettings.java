@@ -75,6 +75,12 @@ public abstract class BigtableHBaseSettings {
 
   public abstract long getBatchingMaxRequestSize();
 
+  /**
+   * This represents settings to allows mutation retries without timestamp. This is equivalent to
+   * allow server-side timestamp.
+   */
+  public abstract boolean allowRetriesWithoutTimestamp();
+
   protected String getRequiredValue(String key, String displayName) {
     String value = configuration.get(key);
     Preconditions.checkArgument(

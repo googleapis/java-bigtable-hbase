@@ -118,6 +118,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private final int bulkMaxRowKeyCount;
   private final long batchingMaxMemory;
   private final boolean isChannelPoolCachingEnabled;
+  private final boolean allowRetriesWithoutTimestamp;
 
   public BigtableHBaseVeneerSettings(Configuration configuration) throws IOException {
     super(configuration);
@@ -165,6 +166,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     } else {
       this.isChannelPoolCachingEnabled = false;
     }
+
+    this.allowRetriesWithoutTimestamp =
+        Boolean.parseBoolean(configuration.get(ALLOW_NO_TIMESTAMP_RETRIES_KEY));
   }
 
   @Override
@@ -190,6 +194,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   @Override
   public long getBatchingMaxRequestSize() {
     return batchingMaxMemory;
+  }
+
+  @Override
+  public boolean allowRetriesWithoutTimestamp() {
+    return allowRetriesWithoutTimestamp;
   }
 
   // ************** Getters **************
@@ -223,11 +232,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     String appProfileId = configuration.get(APP_PROFILE_ID_KEY);
     if (!isNullOrEmpty(appProfileId)) {
       dataBuilder.setAppProfileId(appProfileId);
-    }
-
-    // added this check here to fail fast
-    if (Boolean.parseBoolean(configuration.get(ALLOW_NO_TIMESTAMP_RETRIES_KEY))) {
-      throw new UnsupportedOperationException("Retries without Timestamp is not supported.");
     }
 
     EnhancedBigtableStubSettings.Builder stubSettings = dataBuilder.stubSettings();

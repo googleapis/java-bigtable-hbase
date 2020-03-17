@@ -63,7 +63,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -104,6 +103,7 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.setInt(BIGTABLE_DATA_CHANNEL_COUNT_KEY, 3);
     configuration.set(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
     configuration.set(BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "true");
+    configuration.set(ALLOW_NO_TIMESTAMP_RETRIES_KEY, "true");
     configuration = BigtableConfiguration.withCredentials(configuration, credentials);
 
     BigtableHBaseVeneerSettings settingUtils =
@@ -125,6 +125,7 @@ public class TestBigtableHBaseVeneerSettings {
         credentials, dataSettings.getStubSettings().getCredentialsProvider().getCredentials());
 
     assertTrue(settingUtils.isChannelPoolCachingEnabled());
+    assertTrue(settingUtils.allowRetriesWithoutTimestamp());
   }
 
   @Test
@@ -209,21 +210,6 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(initialElapsedMs, readRowsRetrySettings.getInitialRetryDelay().toMillis());
     assertEquals(maxAttempt, readRowsRetrySettings.getMaxAttempts());
     assertEquals(readRowStreamTimeout, readRowsRetrySettings.getTotalTimeout().toMillis());
-  }
-
-  @Test
-  public void testRetriesWithoutTimestamp() throws IOException {
-    configuration.setBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
-    configuration.setBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, true);
-
-    try {
-      ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
-          .getDataSettings();
-      Assert.fail("BigtableDataSettings should not support retries without timestamp");
-    } catch (UnsupportedOperationException actualException) {
-
-      assertEquals("Retries without Timestamp is not supported.", actualException.getMessage());
-    }
   }
 
   @Test

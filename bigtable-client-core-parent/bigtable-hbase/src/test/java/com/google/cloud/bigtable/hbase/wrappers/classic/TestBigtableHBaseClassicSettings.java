@@ -112,12 +112,13 @@ public class TestBigtableHBaseClassicSettings {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.setBoolean(BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY, true);
     configuration.setLong(BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, 100_000L);
 
-    BigtableOptions options =
-        ((BigtableHBaseClassicSettings) BigtableHBaseSettings.create(configuration))
-            .getBigtableOptions();
+    BigtableHBaseSettings settings = BigtableHBaseSettings.create(configuration);
+    assertTrue(settings.allowRetriesWithoutTimestamp());
 
+    BigtableOptions options = ((BigtableHBaseClassicSettings) settings).getBigtableOptions();
     assertEquals(TEST_HOST, options.getDataHost());
     assertEquals(TEST_PROJECT_ID, options.getProjectId());
     assertEquals(TEST_INSTANCE_ID, options.getInstanceId());
