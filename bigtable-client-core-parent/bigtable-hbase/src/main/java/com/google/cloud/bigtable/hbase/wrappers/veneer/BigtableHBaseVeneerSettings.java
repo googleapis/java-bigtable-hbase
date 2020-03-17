@@ -197,7 +197,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   @Override
-  public boolean allowRetriesWithoutTimestamp() {
+  public boolean isRetriesWithoutTimestampAllowed() {
     return allowRetriesWithoutTimestamp;
   }
 

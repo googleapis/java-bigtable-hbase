@@ -138,7 +138,7 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
   }
 
   @Override
-  public boolean allowRetriesWithoutTimestamp() {
+  public boolean isRetriesWithoutTimestampAllowed() {
     return bigtableOptions.getRetryOptions().allowRetriesWithoutTimestamp();
   }
 

@@ -116,7 +116,7 @@ public class TestBigtableHBaseClassicSettings {
     configuration.setLong(BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, 100_000L);
 
     BigtableHBaseSettings settings = BigtableHBaseSettings.create(configuration);
-    assertTrue(settings.allowRetriesWithoutTimestamp());
+    assertTrue(settings.isRetriesWithoutTimestampAllowed());
 
     BigtableOptions options = ((BigtableHBaseClassicSettings) settings).getBigtableOptions();
     assertEquals(TEST_HOST, options.getDataHost());

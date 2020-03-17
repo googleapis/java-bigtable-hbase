@@ -125,7 +125,7 @@ public class TestBigtableHBaseVeneerSettings {
         credentials, dataSettings.getStubSettings().getCredentialsProvider().getCredentials());
 
     assertTrue(settingUtils.isChannelPoolCachingEnabled());
-    assertTrue(settingUtils.allowRetriesWithoutTimestamp());
+    assertTrue(settingUtils.isRetriesWithoutTimestampAllowed());
   }
 
   @Test
