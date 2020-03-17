@@ -21,6 +21,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.ApiExceptions;
 import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
@@ -270,7 +271,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public TableName[] listTableNames() throws IOException {
     // tablesList contains list of tableId.
-    List<String> tablesList = tableAdminClientWrapper.listTables();
+    List<String> tablesList =
+        ApiExceptions.callAndTranslateApiException(tableAdminClientWrapper.listTablesAsync());
 
     TableName[] result = new TableName[tablesList.size()];
     for (int i = 0; i < tablesList.size(); i++) {
@@ -287,7 +289,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
 
     try {
-      return TableAdapter.adapt(tableAdminClientWrapper.getTable(tableName.getNameAsString()));
+      return TableAdapter.adapt(
+          ApiExceptions.callAndTranslateApiException(
+              tableAdminClientWrapper.getTableAsync(tableName.getNameAsString())));
     } catch (Throwable throwable) {
       if (Status.fromThrowable(throwable).getCode() == Status.Code.NOT_FOUND) {
         throw new TableNotFoundException(tableName);
@@ -361,7 +365,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   protected void createTable(TableName tableName, CreateTableRequest request) throws IOException {
     try {
-      tableAdminClientWrapper.createTable(request);
+      ApiExceptions.callAndTranslateApiException(tableAdminClientWrapper.createTableAsync(request));
     } catch (Throwable throwable) {
       throw convertToTableExistsException(tableName, throwable);
     }
@@ -414,7 +418,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void deleteTable(TableName tableName) throws IOException {
     try {
-      tableAdminClientWrapper.deleteTable(tableName.getNameAsString());
+      ApiExceptions.callAndTranslateApiException(
+          tableAdminClientWrapper.deleteTableAsync(tableName.getNameAsString()));
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to delete table '%s'", tableName.getNameAsString()), throwable);
@@ -615,7 +620,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
       try {
         ModifyColumnFamiliesRequest request =
             buildModifications(newDescriptor, getTableDescriptor(tableName)).build();
-        tableAdminClientWrapper.modifyFamilies(request);
+        ApiExceptions.callAndTranslateApiException(
+            tableAdminClientWrapper.modifyFamiliesAsync(request));
       } catch (Throwable throwable) {
         throw new IOException(
             String.format("Failed to modify table '%s'", tableName.getNameAsString()), throwable);
@@ -638,7 +644,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
       TableName tableName, String columnName, String modificationType, ModifyTableBuilder builder)
       throws IOException {
     try {
-      tableAdminClientWrapper.modifyFamilies(builder.build());
+      ApiExceptions.callAndTranslateApiException(
+          tableAdminClientWrapper.modifyFamiliesAsync(builder.build()));
       return null;
     } catch (Throwable throwable) {
       throw new IOException(
@@ -791,7 +798,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
     try {
-      tableAdminClientWrapper.dropAllRows(tableName.getNameAsString());
+      ApiExceptions.callAndTranslateApiException(
+          tableAdminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);
@@ -808,7 +816,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
     try {
-      tableAdminClientWrapper.dropRowRange(tableName.getNameAsString(), Bytes.toString(prefix));
+      ApiExceptions.callAndTranslateApiException(
+          tableAdminClientWrapper.dropRowRangeAsync(
+              tableName.getNameAsString(), Bytes.toString(prefix)));
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);

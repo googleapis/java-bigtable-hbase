@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.ApiExceptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
@@ -462,7 +463,8 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      Boolean wasApplied = clientWrapper.checkAndMutateRow(request);
+      Boolean wasApplied =
+          ApiExceptions.callAndTranslateApiException(clientWrapper.checkAndMutateRowAsync(request));
       return CheckAndMutateUtil.wasMutationApplied(request, wasApplied);
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
@@ -476,7 +478,7 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      clientWrapper.mutateRow(rowMutation);
+      ApiExceptions.callAndTranslateApiException(clientWrapper.mutateRowAsync(rowMutation));
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, mutation.getRow(), t);
@@ -494,7 +496,8 @@ public abstract class AbstractBigtableTable implements Table {
     }
     Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      clientWrapper.mutateRow(hbaseAdapter.adapt(rowMutations));
+      ApiExceptions.callAndTranslateApiException(
+          clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("mutateRow", rowMutations.getRow(), t);

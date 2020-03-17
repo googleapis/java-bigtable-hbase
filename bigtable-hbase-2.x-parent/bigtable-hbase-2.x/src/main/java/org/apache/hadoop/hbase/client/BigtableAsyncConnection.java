@@ -16,6 +16,7 @@
 package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.ApiExceptions;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
@@ -384,7 +385,8 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
         NameUtil.formatTableName(
             settings.getProjectId(), settings.getInstanceId(), tableName.getQualifierAsString()));
     List<KeyOffset> sampleRowKeyResponse =
-        this.session.getDataClientWrapper().sampleRowKeys(tableName.getNameAsString());
+        ApiExceptions.callAndTranslateApiException(
+            this.session.getDataClientWrapper().sampleRowKeysAsync(tableName.getNameAsString()));
 
     return getSampledRowKeysAdapter(tableName, serverName).adaptResponse(sampleRowKeyResponse)
         .stream()

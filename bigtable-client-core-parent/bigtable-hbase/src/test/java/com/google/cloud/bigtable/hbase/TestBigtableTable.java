@@ -23,9 +23,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
@@ -62,8 +65,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.stubbing.Answer;
 
 /** Unit tests for {@link AbstractBigtableTable}. */
 @RunWith(JUnit4.class)
@@ -111,10 +117,19 @@ public class TestBigtableTable {
 
   @Test
   public void projectIsPopulatedInMutationRequests() throws IOException {
+    doAnswer(
+            new Answer<ApiFuture<Void>>() {
+              @Override
+              public ApiFuture<Void> answer(InvocationOnMock invocationOnMock) {
+                return ApiFutures.immediateFuture(null);
+              }
+            })
+        .when(mockBigtableDataClient)
+        .mutateRowAsync(Mockito.<RowMutation>any());
     table.delete(new Delete(Bytes.toBytes("rowKey1")));
 
     ArgumentCaptor<RowMutation> argument = ArgumentCaptor.forClass(RowMutation.class);
-    verify(mockBigtableDataClient).mutateRow(argument.capture());
+    verify(mockBigtableDataClient).mutateRowAsync(argument.capture());
 
     Assert.assertEquals(
         "projects/testproject/instances/testinstance/tables/testtable",
