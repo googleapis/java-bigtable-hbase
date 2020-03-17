@@ -20,13 +20,13 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
@@ -128,7 +128,7 @@ public class BatchExecutor {
     }
   }
 
-  protected final BigtableOptions options;
+  protected final BigtableHBaseSettings settings;
   protected final HBaseRequestAdapter requestAdapter;
   protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Info, "batch.latency");
   // Once the IBigtableDataClient interface is implemented, this will be removed.
@@ -142,16 +142,15 @@ public class BatchExecutor {
    * @param requestAdapter a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter}
    *     object.
    */
-  public BatchExecutor(BigtableSession session, HBaseRequestAdapter requestAdapter) {
+  // TODO(rahulkql): This is an intermediate state, once BigtableWrapper is implemented we can
+  //  fetch settings directly from that(similar to BigtableSession.
+  public BatchExecutor(
+      BigtableSession session, BigtableHBaseSettings settings, HBaseRequestAdapter requestAdapter) {
     this.requestAdapter = requestAdapter;
-    this.options = session.getOptions();
+    this.settings = settings;
     this.bulkRead = session.createBulkRead(requestAdapter.getBigtableTableName());
     this.bufferedMutatorHelper =
-        new BigtableBufferedMutatorHelper(
-            requestAdapter,
-            null, // configuration isn't passed in, but also isn't used in
-            // BigtableBufferedMutatorHelper
-            session);
+        new BigtableBufferedMutatorHelper(requestAdapter, settings, session);
   }
 
   /**
@@ -281,7 +280,7 @@ public class BatchExecutor {
       } catch (ExecutionException e) {
         problemActions.add(actions.get(i));
         problems.add(e.getCause());
-        hosts.add(options.getDataHost());
+        hosts.add(settings.getDataHost());
       }
     }
     if (problems.size() > 0) {

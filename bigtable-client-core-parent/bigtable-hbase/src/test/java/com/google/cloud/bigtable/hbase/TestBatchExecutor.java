@@ -28,7 +28,6 @@ import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -127,18 +126,15 @@ public class TestBatchExecutor {
 
   private HBaseRequestAdapter requestAdapter;
 
-  private BigtableOptions options;
   private BigtableHBaseSettings settings;
 
   @Before
   public void setup() throws IOException {
-    options =
-        BigtableOptions.builder().setProjectId("projectId").setInstanceId("instanceId").build();
-
     Configuration configuration = new Configuration(false);
     configuration.set(PROJECT_ID_KEY, "projectId");
     configuration.set(INSTANCE_ID_KEY, "instanceId");
     settings = BigtableHBaseSettings.create(configuration);
+
     requestAdapter = new HBaseRequestAdapter(settings, TableName.valueOf("table"));
     when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(mockFuture);
     when(mockBigtableSession.getDataClientWrapper()).thenReturn(mockDataClient);
@@ -245,7 +241,7 @@ public class TestBatchExecutor {
     Object[] results = new Object[2];
 
     try {
-      createExecutor(options).batch(gets, results);
+      createExecutor().batch(gets, results);
     } catch (RetriesExhaustedWithDetailsException ignored) {
     }
     Assert.assertTrue("first result is a result", results[0] instanceof Result);
@@ -261,7 +257,7 @@ public class TestBatchExecutor {
     setFuture(ImmutableList.of(response));
     final Callback<Result> callback = Mockito.mock(Callback.class);
     List<Get> gets = Arrays.asList(new Get(key));
-    createExecutor(options).batchCallback(gets, new Object[1], callback);
+    createExecutor().batchCallback(gets, new Object[1], callback);
 
     verify(callback, times(1))
         .update(
@@ -310,8 +306,7 @@ public class TestBatchExecutor {
             .build();
     when(mockFuture.get()).thenReturn(row);
 
-    BatchExecutor underTest = createExecutor(options);
-    Result[] results = underTest.batch(gets);
+    Result[] results = createExecutor().batch(gets);
     verify(mockBulkRead, times(10)).add(any(Query.class));
     verify(mockBulkRead, times(1)).flush();
     Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
@@ -338,13 +333,12 @@ public class TestBatchExecutor {
     when(mockFuture.isDone()).thenReturn(true);
   }
 
-  private BatchExecutor createExecutor(BigtableOptions options) {
-    when(mockBigtableSession.getOptions()).thenReturn(options);
-    return new BatchExecutor(mockBigtableSession, requestAdapter);
+  private BatchExecutor createExecutor() {
+    return new BatchExecutor(mockBigtableSession, settings, requestAdapter);
   }
 
   private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)
       throws Exception {
-    return createExecutor(options).batch(actions);
+    return createExecutor().batch(actions);
   }
 }

@@ -89,8 +89,14 @@ public class TestBigtableTable {
     Configuration config = new Configuration(false);
     config.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
     config.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
-
+    config.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, "localhost");
+    config.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, "localhost");
+    config.set(BigtableOptionsFactory.BIGTABLE_PORT_KEY, "0");
+    config.set(BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY, "false");
+    config.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
+    config.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "testAgent");
     BigtableHBaseSettings settings = BigtableHBaseSettings.create(config);
+
     TableName tableName = TableName.valueOf(TEST_TABLE);
     HBaseRequestAdapter hbaseAdapter = new HBaseRequestAdapter(settings, tableName);
     when(mockConnection.getConfiguration()).thenReturn(config);

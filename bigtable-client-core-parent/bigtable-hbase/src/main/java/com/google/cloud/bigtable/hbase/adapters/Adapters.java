@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY;
-
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.filters.BigtableWhileMatchResultScannerAdapter;
@@ -87,7 +85,7 @@ public final class Adapters {
    */
   public static PutAdapter createPutAdapter(BigtableHBaseSettings settings) {
     Configuration config = settings.getConfiguration();
-    boolean setClientTimestamp = !config.getBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, false);
+    boolean setClientTimestamp = !settings.isRetriesWithoutTimestampAllowed();
     return new PutAdapter(config.getInt("hbase.client.keyvalue.maxsize", -1), setClientTimestamp);
   }
 

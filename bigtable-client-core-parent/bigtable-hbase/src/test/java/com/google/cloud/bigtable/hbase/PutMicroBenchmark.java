@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY;
+
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
@@ -42,7 +44,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
-// TODO(rahulkql): If possible remove/update this class to bigtable-1.x-benchmark.
+// TODO(rahulkql): If possible move this class to bigtable-1.x-benchmark.
 public class PutMicroBenchmark {
   static final int NUM_CELLS = 10;
   private static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
@@ -58,7 +60,7 @@ public class PutMicroBenchmark {
     String tableId = args.length > 2 ? args[2] : "table";
 
     Configuration configuration = BigtableConfiguration.configure(projectId, instanceId);
-    configuration.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "put_microbenchmark");
+    configuration.set(CUSTOM_USER_AGENT_KEY, "put_microbenchmark");
     settings = BigtableHBaseSettings.create(configuration);
 
     boolean useRealConnection = args.length >= 2;
