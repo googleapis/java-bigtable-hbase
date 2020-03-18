@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +40,7 @@ import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Arrays;
@@ -49,7 +51,9 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
@@ -257,6 +261,49 @@ public class TestBigtableTable {
 
     verify(mockBigtableDataClient).readFlatRows(isA(Query.class));
     verify(mockResultScanner).next();
+  }
+
+  @Test
+  public void testPut() throws IOException {
+    byte[] rowKey = Bytes.toBytes("rowKey");
+    doAnswer(
+            new Answer<ApiFuture<Void>>() {
+              @Override
+              public ApiFuture<Void> answer(InvocationOnMock invocationOnMock) {
+                return ApiFutures.immediateFuture(null);
+              }
+            })
+        .when(mockBigtableDataClient)
+        .mutateRowAsync(Mockito.<RowMutation>any());
+    Put put =
+        new Put(rowKey)
+            .addColumn(Bytes.toBytes("family"), Bytes.toBytes("q"), Bytes.toBytes("value"));
+
+    table.put(put);
+
+    table.put(ImmutableList.of(put));
+    verify(mockBigtableDataClient, times(2)).mutateRowAsync(Mockito.<RowMutation>any());
+  }
+
+  @Test
+  public void testMutateRow() throws IOException {
+    byte[] rowKey = Bytes.toBytes("rowKey");
+    RowMutations rowMutations = new RowMutations(rowKey);
+    Put put =
+        new Put(rowKey)
+            .addColumn(Bytes.toBytes("family"), Bytes.toBytes("qualifier"), Bytes.toBytes("value"));
+    rowMutations.add(put);
+    doAnswer(
+            new Answer<ApiFuture<Void>>() {
+              @Override
+              public ApiFuture<Void> answer(InvocationOnMock invocationOnMock) {
+                return ApiFutures.immediateFuture(null);
+              }
+            })
+        .when(mockBigtableDataClient)
+        .mutateRowAsync(Mockito.<RowMutation>any());
+    table.mutateRow(rowMutations);
+    verify(mockBigtableDataClient).mutateRowAsync(Mockito.<RowMutation>any());
   }
 
   @Test
