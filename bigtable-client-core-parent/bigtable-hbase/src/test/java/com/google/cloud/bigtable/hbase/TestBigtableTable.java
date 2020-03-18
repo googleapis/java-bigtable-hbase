@@ -25,8 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -35,6 +33,7 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Arrays;
@@ -86,25 +85,22 @@ public class TestBigtableTable {
   public AbstractBigtableTable table;
 
   @Before
-  public void setup() {
-    BigtableOptions options =
-        BigtableOptions.builder()
-            .setAdminHost("localhost")
-            .setDataHost("localhost")
-            .setPort(0)
-            .setProjectId(TEST_PROJECT)
-            .setInstanceId(TEST_INSTANCE)
-            .setRetryOptions(RetryOptions.builder().setEnableRetries(false).build())
-            .setCredentialOptions(null)
-            .setUserAgent("testAgent")
-            .build();
-
+  public void setup() throws IOException {
     Configuration config = new Configuration(false);
+    config.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
+    config.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
+    config.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, "localhost");
+    config.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, "localhost");
+    config.set(BigtableOptionsFactory.BIGTABLE_PORT_KEY, "0");
+    config.set(BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY, "false");
+    config.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
+    config.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "testAgent");
+    BigtableHBaseSettings settings = BigtableHBaseSettings.create(config);
+
     TableName tableName = TableName.valueOf(TEST_TABLE);
-    HBaseRequestAdapter hbaseAdapter = new HBaseRequestAdapter(options, tableName, config);
+    HBaseRequestAdapter hbaseAdapter = new HBaseRequestAdapter(settings, tableName);
     when(mockConnection.getConfiguration()).thenReturn(config);
     when(mockConnection.getSession()).thenReturn(mockSession);
-    when(mockSession.getOptions()).thenReturn(options);
     when(mockSession.getDataClientWrapper()).thenReturn(mockBigtableDataClient);
     when(mockBigtableDataClient.readFlatRows(isA(Query.class))).thenReturn(mockResultScanner);
     table = new AbstractBigtableTable(mockConnection, hbaseAdapter) {};
