@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -87,8 +89,8 @@ public class TestBigtableTable {
   @Before
   public void setup() throws IOException {
     Configuration config = new Configuration(false);
-    config.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
-    config.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
+    config.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT);
+    config.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE);
     config.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, "localhost");
     config.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, "localhost");
     config.set(BigtableOptionsFactory.BIGTABLE_PORT_KEY, "0");
@@ -101,6 +103,7 @@ public class TestBigtableTable {
     HBaseRequestAdapter hbaseAdapter = new HBaseRequestAdapter(settings, tableName);
     when(mockConnection.getConfiguration()).thenReturn(config);
     when(mockConnection.getSession()).thenReturn(mockSession);
+    when(mockConnection.getBigtableHBaseSettings()).thenReturn(settings);
     when(mockSession.getDataClientWrapper()).thenReturn(mockBigtableDataClient);
     when(mockBigtableDataClient.readFlatRows(isA(Query.class))).thenReturn(mockResultScanner);
     table = new AbstractBigtableTable(mockConnection, hbaseAdapter) {};
@@ -239,5 +242,14 @@ public class TestBigtableTable {
 
     verify(mockBigtableDataClient).readFlatRows(isA(Query.class));
     verify(mockResultScanner).next();
+  }
+
+  @Test
+  public void testToString() {
+    String abstractTableToStr = table.toString();
+    assertThat(abstractTableToStr, containsString("project=" + TEST_PROJECT));
+    assertThat(abstractTableToStr, containsString("instance=" + TEST_INSTANCE));
+    assertThat(abstractTableToStr, containsString("table=" + TEST_TABLE));
+    assertThat(abstractTableToStr, containsString("host=" + "localhost"));
   }
 }
