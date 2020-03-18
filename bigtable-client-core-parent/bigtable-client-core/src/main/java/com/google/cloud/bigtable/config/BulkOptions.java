@@ -35,12 +35,12 @@ public class BulkOptions implements Serializable, Cloneable {
 
   /**
    * This describes the maximum size a bulk mutation RPC should be before sending it to the server
-   * and starting the next bulk call. Defaults to 1 MB.
+   * and starting the next bulk call. Defaults to 20 MB.
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final long BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT = 1 << 20;
+  public static final long BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT = 20 * 1024 * 1024;
 
   /**
    * This describes the maximum number of individual MutateRowsRequest.Entry objects to bundle in a
@@ -50,7 +50,7 @@ public class BulkOptions implements Serializable, Cloneable {
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final int BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT = 125;
+  public static final int BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT = 100;
 
   /**
    * Whether or not to enable a mechanism that reduces the likelihood that a {@link BulkMutation}
@@ -73,30 +73,29 @@ public class BulkOptions implements Serializable, Cloneable {
   public static final int BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT = 100;
 
   /**
-   * The maximum amount of time a row will be buffered for. By default 0: indefinitely.
+   * The maximum amount of time a row will be buffered for (default value: 1 second).
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static long BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT = 0;
+  public static long BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT = 1_000;
 
   /**
-   * Default rpc count per channel.
+   * Default rpc count per channel (default value: 1000).
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 10;
+  public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 10 * 100;
 
   /**
    * This is the maximum accumulated size of uncompleted requests that we allow before throttling.
-   * Default to 10% of available memory with a max of 1GB.
+   * (default value: 100MB).
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final long BIGTABLE_MAX_MEMORY_DEFAULT =
-      (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
+  public static final long BIGTABLE_MAX_MEMORY_DEFAULT = 100L * 1024L * 1024L;
 
   public static Builder builder() {
     return new Builder();

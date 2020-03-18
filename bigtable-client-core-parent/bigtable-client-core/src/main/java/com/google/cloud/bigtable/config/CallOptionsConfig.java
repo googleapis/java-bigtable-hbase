@@ -19,6 +19,7 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Experimental options to turn on timeout options. {@link io.grpc.CallOptions} supports other
@@ -32,19 +33,19 @@ public class CallOptionsConfig implements Serializable {
   /** Constant <code>USE_TIMEOUT_DEFAULT=false</code> */
   public static final boolean USE_TIMEOUT_DEFAULT = false;
 
-  /**
-   * The default duration to wait before timing out RPCs. 1 minute is probably too long for most
-   * RPCs, but the intent is to have a conservative timeout by default and aim for user overrides.
-   */
-  public static final int SHORT_TIMEOUT_MS_DEFAULT = 60_000;
+  /** The default duration to wait before timing out RPCs (default value: 20 seconds). */
+  public static final int SHORT_TIMEOUT_MS_DEFAULT = 20_000;
 
   /**
-   * The default duration to wait before timing out RPCs. 10 minute is probably too long for most
-   * RPCs, but the intent is to have a conservative timeout by default and aim for user overrides.
-   * There could very well be 10 minute scans, so keep the value conservative for most cases and
-   * allow user overrides as needed.
+   * The default duration to wait before timing out idempotent RPCs operation. 10 minute is probably
+   * too long for most RPCs, but the intent is to have a conservative timeout by default and aim for
+   * user overrides. There could very well be 10 minute scans, so keep the value conservative for
+   * most cases and allow user overrides as needed.
    */
   public static final int LONG_TIMEOUT_MS_DEFAULT = 600_000;
+
+  /** The default duration to wait before timing out read stream RPC (default value: 12 hour). */
+  public static final int READ_ROWS_TIMEOUT_MS_DEFAULT = (int) TimeUnit.HOURS.toMillis(12);
 
   public static Builder builder() {
     return new Builder();
@@ -55,7 +56,7 @@ public class CallOptionsConfig implements Serializable {
     private int shortRpcTimeoutMs = SHORT_TIMEOUT_MS_DEFAULT;
     private int longRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
     private int mutateRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
-    private int readRowsRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
+    private int readRowsRpcTimeoutMs = READ_ROWS_TIMEOUT_MS_DEFAULT;
 
     /** @deprecated Please use {@link CallOptionsConfig#builder()} */
     @Deprecated
