@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.ApiExceptions;
+import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -223,8 +225,11 @@ public class BigtableTable extends AbstractBigtableTable {
       }
 
       private boolean call() {
-        Boolean response = clientWrapper.checkAndMutateRow(builder.build());
-        return CheckAndMutateUtil.wasMutationApplied(builder.build(), response);
+        ConditionalRowMutation conditionalRowMutation = builder.build();
+        Boolean response =
+            ApiExceptions.callAndTranslateApiException(
+                clientWrapper.checkAndMutateRowAsync(conditionalRowMutation));
+        return CheckAndMutateUtil.wasMutationApplied(conditionalRowMutation, response);
       }
     };
   }
