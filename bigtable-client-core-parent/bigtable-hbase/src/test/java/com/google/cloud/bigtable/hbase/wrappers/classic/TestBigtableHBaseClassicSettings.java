@@ -112,12 +112,13 @@ public class TestBigtableHBaseClassicSettings {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.setBoolean(BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY, true);
     configuration.setLong(BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, 100_000L);
 
-    BigtableOptions options =
-        ((BigtableHBaseClassicSettings) BigtableHBaseSettings.create(configuration))
-            .getBigtableOptions();
+    BigtableHBaseSettings settings = BigtableHBaseSettings.create(configuration);
+    assertTrue(settings.isRetriesWithoutTimestampAllowed());
 
+    BigtableOptions options = ((BigtableHBaseClassicSettings) settings).getBigtableOptions();
     assertEquals(TEST_HOST, options.getDataHost());
     assertEquals(TEST_PROJECT_ID, options.getProjectId());
     assertEquals(TEST_INSTANCE_ID, options.getInstanceId());
@@ -174,5 +175,32 @@ public class TestBigtableHBaseClassicSettings {
     Credentials actualCreds = CredentialFactory.getCredentials(options.getCredentialOptions());
 
     Assert.assertSame(credentials, actualCreds);
+  }
+
+  @Test
+  public void testClassicSettingsGetters() throws IOException {
+    configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, "localhost");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_PORT_KEY, "8080");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:8080");
+    configuration.set(BigtableOptionsFactory.APP_PROFILE_ID_KEY, "test");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT, "100");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, "2000");
+    configuration.set(BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY, "true");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, "true");
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS, "500");
+    BigtableHBaseSettings settings = BigtableHBaseSettings.create(configuration);
+
+    assertEquals(TEST_HOST, settings.getDataHost());
+    assertEquals("localhost", settings.getAdminHost());
+    assertEquals(8080, settings.getPort());
+    assertEquals(100, settings.getBulkMaxRowCount());
+    assertEquals(2000, settings.getBatchingMaxRequestSize());
+    assertTrue(settings.isRetriesWithoutTimestampAllowed());
+
+    BigtableOptions options = ((BigtableHBaseClassicSettings) settings).getBigtableOptions();
+    assertEquals("test", options.getAppProfileId());
+    assertTrue(options.getBulkOptions().isEnableBulkMutationThrottling());
+    assertEquals(500, options.getBulkOptions().getBulkMutationRpcTargetMs());
   }
 }

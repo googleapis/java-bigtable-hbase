@@ -75,6 +75,9 @@ public abstract class BigtableHBaseSettings {
 
   public abstract long getBatchingMaxRequestSize();
 
+  // This is equivalent to allow server-side timestamp.
+  public abstract boolean isRetriesWithoutTimestampAllowed();
+
   protected String getRequiredValue(String key, String displayName) {
     String value = configuration.get(key);
     Preconditions.checkArgument(
