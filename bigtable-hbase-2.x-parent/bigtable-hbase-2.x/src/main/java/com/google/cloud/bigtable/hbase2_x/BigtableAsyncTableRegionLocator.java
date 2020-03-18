@@ -16,10 +16,10 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.hbase.AbstractBigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -40,8 +40,8 @@ public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocat
   HRegionLocation hRegionLocation = null;
 
   public BigtableAsyncTableRegionLocator(
-      TableName tableName, BigtableOptions options, IBigtableDataClient client) {
-    super(tableName, options, client);
+      TableName tableName, BigtableHBaseSettings settings, IBigtableDataClient client) {
+    super(tableName, settings, client);
   }
 
   @Override

@@ -20,12 +20,13 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
+import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.List;
@@ -56,11 +57,16 @@ public abstract class AbstractBigtableRegionLocator {
   private long regionsFetchTimeMillis;
 
   public AbstractBigtableRegionLocator(
-      TableName tableName, BigtableOptions options, IBigtableDataClient client) {
+      TableName tableName, BigtableHBaseSettings settings, IBigtableDataClient client) {
     this.tableName = tableName;
     this.client = client;
-    this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
-    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
+    this.bigtableTableName =
+        new BigtableTableName(
+            NameUtil.formatTableName(
+                settings.getProjectId(),
+                settings.getInstanceId(),
+                tableName.getQualifierAsString()));
+    ServerName serverName = ServerName.valueOf(settings.getDataHost(), settings.getPort(), 0);
     this.adapter = getSampledRowKeysAdapter(tableName, serverName);
   }
 

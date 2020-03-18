@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
@@ -28,6 +27,7 @@ import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
@@ -106,7 +106,7 @@ public abstract class AbstractBigtableTable implements Table {
   }
 
   protected final TableName tableName;
-  protected final BigtableOptions options;
+  protected final BigtableHBaseSettings settings;
   protected final HBaseRequestAdapter hbaseAdapter;
 
   protected final IBigtableDataClient clientWrapper;
@@ -124,7 +124,7 @@ public abstract class AbstractBigtableTable implements Table {
       AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     this.bigtableConnection = bigtableConnection;
     BigtableSession session = bigtableConnection.getSession();
-    this.options = session.getOptions();
+    this.settings = bigtableConnection.getBigtableHBaseSettings();
     this.clientWrapper = session.getDataClientWrapper();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
@@ -139,7 +139,7 @@ public abstract class AbstractBigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public final Configuration getConfiguration() {
-    return this.bigtableConnection.getConfiguration();
+    return this.settings.getConfiguration();
   }
 
   /** {@inheritDoc} */
@@ -247,7 +247,7 @@ public abstract class AbstractBigtableTable implements Table {
   private RetriesExhaustedWithDetailsException createRetriesExhaustedWithDetailsException(
       Throwable e, Row action) {
     return new RetriesExhaustedWithDetailsException(
-        Arrays.asList(e), Arrays.asList(action), Arrays.asList(options.getDataHost().toString()));
+        Arrays.asList(e), Arrays.asList(action), Arrays.asList(settings.getDataHost()));
   }
 
   /** {@inheritDoc} */
@@ -301,7 +301,7 @@ public abstract class AbstractBigtableTable implements Table {
       span.end();
       throw new IOException(
           makeGenericExceptionMessage(
-              "getScanner", options.getProjectId(), tableName.getQualifierAsString()),
+              "getScanner", settings.getProjectId(), tableName.getQualifierAsString()),
           throwable);
     }
   }
@@ -546,7 +546,7 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.error("Encountered exception when executing " + type + ".", t);
     return new DoNotRetryIOException(
         makeGenericExceptionMessage(
-            type, options.getProjectId(), tableName.getQualifierAsString(), row),
+            type, settings.getProjectId(), tableName.getQualifierAsString(), row),
         t);
   }
 
@@ -565,7 +565,7 @@ public abstract class AbstractBigtableTable implements Table {
         LOG.error("Failed to find a incremented value in result of increment");
         throw new IOException(
             makeGenericExceptionMessage(
-                "increment", options.getProjectId(), tableName.getQualifierAsString(), row));
+                "increment", settings.getProjectId(), tableName.getQualifierAsString(), row));
       }
       return Bytes.toLong(CellUtil.cloneValue(cell));
     }
@@ -669,10 +669,10 @@ public abstract class AbstractBigtableTable implements Table {
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableTable.class)
         .add("hashCode", "0x" + Integer.toHexString(hashCode()))
-        .add("project", options.getProjectId())
-        .add("instance", options.getInstanceId())
+        .add("project", settings.getProjectId())
+        .add("instance", settings.getInstanceId())
         .add("table", tableName.getNameAsString())
-        .add("host", options.getDataHost())
+        .add("host", settings.getDataHost())
         .toString();
   }
 

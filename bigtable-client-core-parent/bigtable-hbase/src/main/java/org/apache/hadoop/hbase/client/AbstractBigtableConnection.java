@@ -188,7 +188,7 @@ public abstract class AbstractBigtableConnection
 
     if (locator == null) {
       locator =
-          new BigtableRegionLocator(tableName, getOptions(), getSession().getDataClientWrapper()) {
+          new BigtableRegionLocator(tableName, settings, getSession().getDataClientWrapper()) {
 
             @Override
             public SampledRowKeysAdapter getSampledRowKeysAdapter(
