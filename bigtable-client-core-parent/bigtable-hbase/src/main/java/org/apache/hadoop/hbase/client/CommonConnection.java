@@ -18,6 +18,7 @@ package org.apache.hadoop.hbase.client;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import java.io.Closeable;
 import java.io.IOException;
@@ -41,6 +42,9 @@ public interface CommonConnection extends Closeable {
    * @return a {@link BigtableSession} object.
    */
   BigtableSession getSession();
+
+  /** Returns {@link BigtableApi} object to access bigtable data and admin client APIs. */
+  BigtableApi getBigtableApi();
 
   /**
    * Returns the {@link Configuration} object used by this instance. The reference returned is not a

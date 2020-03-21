@@ -16,12 +16,14 @@
 package com.google.cloud.bigtable.hbase.wrappers.classic;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import com.google.bigtable.v2.BigtableGrpc;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
-import com.google.cloud.bigtable.hbase.wrappers.BigtableWrapper;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import java.io.IOException;
@@ -45,7 +47,7 @@ public class TestBigtableClassicApi {
   private static int port;
 
   private BigtableHBaseSettings bigtableHBaseSettings;
-  private BigtableWrapper bigtableWrapper;
+  private BigtableApi bigtableApi;
 
   @BeforeClass
   public static void setUpServer() throws IOException {
@@ -69,29 +71,43 @@ public class TestBigtableClassicApi {
     Configuration configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
     configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + port);
     bigtableHBaseSettings = BigtableHBaseClassicSettings.create(configuration);
-    bigtableWrapper = BigtableWrapper.create(bigtableHBaseSettings);
+    bigtableApi = BigtableApi.create(bigtableHBaseSettings);
+  }
+
+  @Test
+  public void testWithBigtableSession() throws Exception {
+    BigtableHBaseClassicSettings settings = (BigtableHBaseClassicSettings) bigtableHBaseSettings;
+
+    try (BigtableSession session = new BigtableSession(settings.getBigtableOptions());
+        BigtableApi bigtableApi = new BigtableClassicApi(settings, session)) {
+
+      assertSame(settings, bigtableApi.getBigtableHBaseSettings());
+      assertTrue(bigtableApi.getAdminClient() instanceof AdminClientClassicApi);
+      assertTrue(bigtableApi.getDataClient() instanceof DataClientClassicApi);
+    }
   }
 
   @After
   public void tearDown() throws Exception {
-    bigtableWrapper.close();
+    bigtableApi.close();
   }
 
   @Test
   public void testAdminClient() throws IOException {
-    assertTrue(bigtableWrapper.getAdminClient() instanceof AdminClientClassicApi);
+    assertTrue(bigtableApi.getAdminClient() instanceof AdminClientClassicApi);
   }
 
   @Test
   public void testDataClient() {
-    assertTrue(bigtableWrapper.getDataClient() instanceof DataClientClassicApi);
+    assertTrue(bigtableApi.getDataClient() instanceof DataClientClassicApi);
   }
 
   @Test
   public void testBigtableHBaseSettings() {
-    assertEquals(bigtableHBaseSettings, bigtableWrapper.getBigtableHBaseSettings());
+    assertEquals(bigtableHBaseSettings, bigtableApi.getBigtableHBaseSettings());
   }
 }

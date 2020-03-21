@@ -26,7 +26,9 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableClassicApi;
 import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.common.base.MoreObjects;
@@ -71,6 +73,7 @@ public abstract class AbstractBigtableConnection
   private ExecutorService bufferedMutatorExecutorService;
 
   private BigtableSession session;
+  private BigtableApi bigtableApi;
 
   private volatile boolean cleanupPool = false;
   private final BigtableHBaseSettings settings;
@@ -121,6 +124,7 @@ public abstract class AbstractBigtableConnection
     this.closed = false;
     this.session =
         new BigtableSession(((BigtableHBaseClassicSettings) this.settings).getBigtableOptions());
+    this.bigtableApi = new BigtableClassicApi(settings, session);
   }
 
   /** {@inheritDoc} */
@@ -332,5 +336,9 @@ public abstract class AbstractBigtableConnection
    */
   public BigtableSession getSession() {
     return session;
+  }
+
+  public BigtableApi getBigtableApi() {
+    return bigtableApi;
   }
 }
