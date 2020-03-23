@@ -75,8 +75,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
 public class TestDataClientClassicApi {
@@ -385,24 +387,39 @@ public class TestDataClientClassicApi {
 
   @Test
   public void testReadRowsAsyncWithStreamOb() {
+    final Exception readException = new Exception();
     Query request = Query.create(TABLE_ID).rowKey(ROW_KEY);
     StreamObserver<Result> resultStreamOb =
         new StreamObserver<Result>() {
           @Override
-          public void onNext(Result result) {}
+          public void onNext(Result result) {
+            assertArrayEquals(
+                FLAT_ROW_ADAPTER.adaptResponse(SAMPLE_FLAT_ROW).rawCells(), result.rawCells());
+          }
 
           @Override
-          public void onError(Throwable throwable) {}
+          public void onError(Throwable throwable) {
+            assertEquals(readException, throwable);
+          }
 
           @Override
           public void onCompleted() {}
         };
     when(delegate.readFlatRows(
             Mockito.<ReadRowsRequest>any(), Mockito.<StreamObserver<FlatRow>>any()))
-        .thenReturn(
-            new ScanHandler() {
+        .thenAnswer(
+            new Answer<ScanHandler>() {
               @Override
-              public void cancel() {}
+              public ScanHandler answer(InvocationOnMock invocationOnMock) {
+                StreamObserver<FlatRow> sb = invocationOnMock.getArgument(1);
+                sb.onNext(SAMPLE_FLAT_ROW);
+                sb.onError(readException);
+                sb.onCompleted();
+                return new ScanHandler() {
+                  @Override
+                  public void cancel() {}
+                };
+              }
             });
     dataClientWrapper.readRowsAsync(request, resultStreamOb);
     verify(delegate)

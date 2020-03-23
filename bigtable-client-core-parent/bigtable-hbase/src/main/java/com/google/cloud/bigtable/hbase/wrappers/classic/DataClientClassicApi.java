@@ -245,10 +245,6 @@ public class DataClientClassicApi implements DataClientWrapper {
   }
 
   private static Result transformRowToResult(Row row) {
-    if (row == null) {
-      return Result.EMPTY_RESULT;
-    }
-
     List<org.apache.hadoop.hbase.Cell> hbaseCells = new ArrayList<>();
     byte[] rowKeyBytes = ByteStringer.extract(row.getKey());
 
