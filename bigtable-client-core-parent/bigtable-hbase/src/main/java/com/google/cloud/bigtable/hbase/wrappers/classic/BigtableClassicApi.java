@@ -20,32 +20,39 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
-import com.google.cloud.bigtable.hbase.wrappers.BigtableWrapper;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import java.io.IOException;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
-public class BigtableClassicApi extends BigtableWrapper {
+public class BigtableClassicApi extends BigtableApi {
 
   private final BigtableSession bigtableSession;
   private final DataClientWrapper dataClientWrapper;
   private final AdminClientWrapper adminClientWrapper;
 
   public BigtableClassicApi(BigtableHBaseClassicSettings settings) throws IOException {
+    this(settings, new BigtableSession(settings.getBigtableOptions()));
+  }
+
+  // This is a temporary constructor and will be removed once transition over new wrappers
+  // are completed.
+  public BigtableClassicApi(BigtableHBaseSettings settings, BigtableSession session)
+      throws IOException {
     super(settings);
-    this.bigtableSession = new BigtableSession(settings.getBigtableOptions());
+    this.bigtableSession = session;
 
     RequestContext requestContext =
         RequestContext.create(
             settings.getProjectId(),
             settings.getInstanceId(),
-            settings.getBigtableOptions().getAppProfileId());
+            session.getOptions().getAppProfileId());
     this.dataClientWrapper = new DataClientClassicApi(bigtableSession, requestContext);
 
     BigtableInstanceName instanceName =
-        new BigtableInstanceName(
-            getBigtableHBaseSettings().getProjectId(), getBigtableHBaseSettings().getInstanceId());
+        new BigtableInstanceName(settings.getProjectId(), settings.getInstanceId());
     this.adminClientWrapper =
         new AdminClientClassicApi(bigtableSession.getTableAdminClient(), instanceName);
   }

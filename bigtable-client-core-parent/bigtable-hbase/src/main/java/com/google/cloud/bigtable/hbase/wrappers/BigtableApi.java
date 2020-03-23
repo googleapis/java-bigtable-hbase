@@ -27,11 +27,11 @@ import java.io.IOException;
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
-public abstract class BigtableWrapper implements AutoCloseable {
+public abstract class BigtableApi implements AutoCloseable {
 
   private final BigtableHBaseSettings hBaseSettings;
 
-  public static BigtableWrapper create(BigtableHBaseSettings settings) throws IOException {
+  public static BigtableApi create(BigtableHBaseSettings settings) throws IOException {
     if (settings instanceof BigtableHBaseVeneerSettings) {
       throw new UnsupportedOperationException("Veneer client is not yet supported.");
     } else {
@@ -39,7 +39,7 @@ public abstract class BigtableWrapper implements AutoCloseable {
     }
   }
 
-  protected BigtableWrapper(BigtableHBaseSettings hbaseSettings) {
+  protected BigtableApi(BigtableHBaseSettings hbaseSettings) {
     this.hBaseSettings = hbaseSettings;
   }
 

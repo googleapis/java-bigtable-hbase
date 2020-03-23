@@ -27,7 +27,9 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableClassicApi;
 import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncAdmin;
@@ -63,6 +65,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   private final Logger LOG = new Logger(getClass());
 
   private final BigtableSession session;
+  private final BigtableApi bigtableApi;
   private final BigtableHBaseSettings settings;
   private volatile boolean closed = false;
 
@@ -94,6 +97,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     this.closed = false;
     this.session =
         new BigtableSession(((BigtableHBaseClassicSettings) settings).getBigtableOptions());
+    this.bigtableApi = new BigtableClassicApi(settings, session);
   }
 
   public HBaseRequestAdapter createAdapter(TableName tableName) {
@@ -109,6 +113,10 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   public BigtableSession getSession() {
     return this.session;
+  }
+
+  public BigtableApi getBigtableApi() {
+    return bigtableApi;
   }
 
   public BigtableOptions getOptions() {
