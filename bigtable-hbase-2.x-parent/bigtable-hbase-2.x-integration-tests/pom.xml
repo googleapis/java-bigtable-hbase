@@ -409,6 +409,13 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>test</scope>
+    </dependency>
+
     <!-- Testing deps -->
     <dependency>
       <groupId>org.mockito</groupId>
@@ -474,8 +481,8 @@ limitations under the License.
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
           <usedDependencies>
-            <usedDependency>${project.groupId}:bigtable-hbase-2.x
-            </usedDependency>
+            <usedDependency>${project.groupId}:bigtable-hbase-2.x</usedDependency>
+            <usedDependency>org.slf4j:slf4j-log4j12</usedDependency>
           </usedDependencies>
         </configuration>
       </plugin>
