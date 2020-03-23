@@ -18,8 +18,8 @@ package com.google.cloud.bigtable.hbase1_x;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.conf.Configuration;
@@ -79,10 +79,10 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
   @Override
   public List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException {
-    List<HRegionInfo> regionInfos = Collections.emptyList();
+    ImmutableList.Builder<HRegionInfo> regionInfos = ImmutableList.builder();
     for (HRegionLocation location : getRegionLocator(tableName).getAllRegionLocations()) {
       regionInfos.add(location.getRegionInfo());
     }
-    return regionInfos;
+    return regionInfos.build();
   }
 }

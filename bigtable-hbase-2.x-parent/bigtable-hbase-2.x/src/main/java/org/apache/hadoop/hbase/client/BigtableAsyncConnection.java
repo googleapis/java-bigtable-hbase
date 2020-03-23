@@ -310,7 +310,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public void clearRegionLocationCache() {
-    throw new UnsupportedOperationException("this ddoes not supported yet");
+    throw new UnsupportedOperationException("clearRegionLocationCache is not supported.");
   }
 
   @Override
