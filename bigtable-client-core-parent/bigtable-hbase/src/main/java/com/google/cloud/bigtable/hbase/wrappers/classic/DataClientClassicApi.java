@@ -58,6 +58,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
 
 /** For internal use only - public for technical reasons. */
@@ -162,33 +163,39 @@ public class DataClientClassicApi implements DataClientWrapper {
   }
 
   @Override
-  public ResultScanner<Result> readRows(Query request) {
-    final ResultScanner<FlatRow> rs = delegate.readFlatRows(request.toProto(requestContext));
-    return new ResultScanner<Result>() {
+  public org.apache.hadoop.hbase.client.ResultScanner readRows(Query request) {
+    final ResultScanner<FlatRow> bigtableResultScanner =
+        delegate.readFlatRows(request.toProto(requestContext));
 
-      @Override
-      public int available() {
-        return rs.available();
-      }
-
+    return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
-        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(rs.next());
-      }
-
-      @Override
-      public Result[] next(int count) throws IOException {
-        FlatRow[] flatRows = rs.next(count);
-        Result[] results = new Result[flatRows.length];
-        for (int i = 0; i < flatRows.length; i++) {
-          results[i] = Adapters.FLAT_ROW_ADAPTER.adaptResponse(flatRows[i]);
+        FlatRow flatRow = bigtableResultScanner.next();
+        if (flatRow == null) {
+          // Null signals EOF.
+          return null;
         }
-        return results;
+        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(flatRow);
       }
 
       @Override
-      public void close() throws IOException {
-        rs.close();
+      public void close() {
+        try {
+          bigtableResultScanner.close();
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+      // This is copied over form BigtableResultScannerAdapter.
+      /**
+       * This is an HBase concept that was added in HBase 1.0.2. It's not relevant for Cloud
+       * Bigtable. It will not be called from the HBase code and should not be called by the user.
+       */
+      // Developers Note: Do not add @Override so that this can remain backwards compatible with
+      // 1.0.1.
+      public boolean renewLease() {
+        throw new UnsupportedOperationException("renewLease");
       }
     };
   }

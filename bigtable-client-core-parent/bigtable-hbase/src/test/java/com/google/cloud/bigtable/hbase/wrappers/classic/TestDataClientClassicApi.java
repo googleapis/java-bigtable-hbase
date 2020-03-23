@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -134,13 +135,13 @@ public class TestDataClientClassicApi {
   }
 
   @Test
-  public void testMutateRowAsync() {
+  public void testMutateRowAsync() throws Exception {
     RowMutation rowMutation = RowMutation.create(TABLE_ID, "key");
     MutateRowRequest request = rowMutation.toProto(REQUEST_CONTEXT);
     ListenableFuture<MutateRowResponse> response =
         Futures.immediateFuture(MutateRowResponse.getDefaultInstance());
     when(delegate.mutateRowAsync(request)).thenReturn(response);
-    dataClientWrapper.mutateRowAsync(rowMutation);
+    dataClientWrapper.mutateRowAsync(rowMutation).get();
     verify(delegate).mutateRowAsync(request);
   }
 
@@ -343,21 +344,24 @@ public class TestDataClientClassicApi {
   public void testReadRows() throws Exception {
     Query query = Query.create(TABLE_ID);
     when(delegate.readFlatRows(query.toProto(REQUEST_CONTEXT))).thenReturn(mockFlatRowScanner);
-    when(mockFlatRowScanner.next()).thenReturn(SAMPLE_FLAT_ROW);
-    when(mockFlatRowScanner.available()).thenReturn(10);
-    FlatRow[] flatRowArr = {SAMPLE_FLAT_ROW};
-    when(mockFlatRowScanner.next(2)).thenReturn(flatRowArr);
+    when(mockFlatRowScanner.next())
+        .thenReturn(SAMPLE_FLAT_ROW)
+        .thenReturn(SAMPLE_FLAT_ROW)
+        .thenReturn(SAMPLE_FLAT_ROW)
+        .thenReturn(null);
     doNothing().when(mockFlatRowScanner).close();
 
-    try (ResultScanner<Result> actualResult = dataClientWrapper.readRows(query)) {
+    try (org.apache.hadoop.hbase.client.ResultScanner actualResult =
+        dataClientWrapper.readRows(query)) {
+
       assertArrayEquals(
           FLAT_ROW_ADAPTER.adaptResponse(SAMPLE_FLAT_ROW).rawCells(),
           actualResult.next().rawCells());
-      assertEquals(10, actualResult.available());
-      assertEquals(1, actualResult.next(2).length);
+
+      assertEquals(2, actualResult.next(5).length);
     }
 
-    verify(mockFlatRowScanner).next();
+    verify(mockFlatRowScanner, times(4)).next();
     verify(mockFlatRowScanner).close();
     verify(delegate).readFlatRows(query.toProto(REQUEST_CONTEXT));
   }

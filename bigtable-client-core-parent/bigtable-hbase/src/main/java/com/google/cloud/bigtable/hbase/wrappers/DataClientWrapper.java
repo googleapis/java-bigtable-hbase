@@ -22,10 +22,10 @@ import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import io.grpc.stub.StreamObserver;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 
 /**
  * Common API surface for data operation.
@@ -57,7 +57,7 @@ public interface DataClientWrapper extends AutoCloseable {
   ApiFuture<List<KeyOffset>> sampleRowKeysAsync(String tableId);
 
   /** Perform a scan over {@link Result}s, in key order. */
-  ResultScanner<Result> readRows(Query request);
+  ResultScanner readRows(Query request);
 
   /** Read multiple {@link Result}s into an in-memory list, in key order. */
   ApiFuture<List<Result>> readRowsAsync(Query request);
