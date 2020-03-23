@@ -72,8 +72,8 @@ public abstract class AbstractBigtableConnection
   private volatile ExecutorService batchPool = null;
   private ExecutorService bufferedMutatorExecutorService;
 
-  private BigtableSession session;
-  private BigtableApi bigtableApi;
+  private final BigtableSession session;
+  private final BigtableApi bigtableApi;
 
   private volatile boolean cleanupPool = false;
   private final BigtableHBaseSettings settings;
