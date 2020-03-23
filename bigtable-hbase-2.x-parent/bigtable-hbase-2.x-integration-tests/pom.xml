@@ -481,8 +481,8 @@ limitations under the License.
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
           <usedDependencies>
-            <usedDependency>${project.groupId}:bigtable-hbase-2.x
-            </usedDependency>
+            <usedDependency>${project.groupId}:bigtable-hbase-2.x</usedDependency>
+            <usedDependency>org.slf4j:slf4j-log4j12</usedDependency>
           </usedDependencies>
         </configuration>
       </plugin>
