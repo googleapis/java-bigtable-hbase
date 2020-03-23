@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -58,6 +59,7 @@ public class TestBigtableConnection {
   private static int dataPort;
 
   private static FakeDataService fakeDataService = new FakeDataService();
+  private Configuration configuration;
   private BigtableConnection connection;
 
   @BeforeClass
@@ -79,13 +81,22 @@ public class TestBigtableConnection {
 
   @Before
   public void setUp() throws IOException {
-    Configuration configuration = new Configuration(false);
+    configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
     configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + dataPort);
     connection = new BigtableConnection(configuration);
+  }
+
+  @Test
+  public void testOverloadedConstructor() throws IOException {
+    Connection hbaseConnection =
+        new BigtableConnection(configuration, false, Executors.newSingleThreadExecutor(), null);
+
+    assertTrue(hbaseConnection.getAdmin() instanceof BigtableAdmin);
+    assertTrue(hbaseConnection.getTable(TABLE_NAME) instanceof AbstractBigtableTable);
   }
 
   @Test
