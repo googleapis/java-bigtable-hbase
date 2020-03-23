@@ -92,6 +92,35 @@ limitations under the License.
       <version>${dropwizard.metrics.version}</version>
     </dependency>
 
+    <!-- These are direct dependencies of TestBigtableConnection.java which is in test scope,
+     but they are transitive dependencies of bigtable-client-core, which needs them during runtime.
+     For more information please see https://github.com/googleapis/java-bigtable-hbase/pull/2447 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>proto-google-cloud-bigtable-v2</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
+      <scope>compile</scope>
+    </dependency>
+
     <!-- Test dependencies-->
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>

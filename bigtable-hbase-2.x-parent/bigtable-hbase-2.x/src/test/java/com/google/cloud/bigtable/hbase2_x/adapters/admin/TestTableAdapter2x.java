@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.com.google.cloud.bigtable.hbase2_x.adapters.admin;
+package com.google.cloud.bigtable.hbase2_x.adapters.admin;
 
 import static com.google.cloud.bigtable.admin.v2.models.GCRules.GCRULES;
 
@@ -22,7 +22,6 @@ import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.GCRules;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
-import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;

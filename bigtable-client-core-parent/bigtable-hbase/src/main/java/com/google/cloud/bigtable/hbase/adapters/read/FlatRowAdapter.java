@@ -73,38 +73,4 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
         TimestampConverter.bigtable2hbase(cell.getTimestamp()),
         ByteStringer.extract(cell.getValue()));
   }
-
-  /**
-   * Convert a {@link org.apache.hadoop.hbase.client.Result} to a {@link FlatRow}.
-   *
-   * @param result a {@link org.apache.hadoop.hbase.client.Result} object.
-   * @return a {@link FlatRow} object.
-   */
-  public FlatRow adaptToRow(Result result) {
-    // Result.getRow() is derived from its cells.  If the cells are empty, the row will be null.
-    if (result.getRow() == null) {
-      return null;
-    }
-
-    FlatRow.Builder rowBuilder =
-        FlatRow.newBuilder().withRowKey(ByteStringer.wrap(result.getRow()));
-
-    final Cell[] rawCells = result.rawCells();
-    if (rawCells != null && rawCells.length > 0) {
-      for (Cell rawCell : rawCells) {
-        rowBuilder.addCell(
-            Bytes.toString(
-                rawCell.getFamilyArray(), rawCell.getFamilyOffset(), rawCell.getFamilyLength()),
-            ByteStringer.wrap(
-                rawCell.getQualifierArray(),
-                rawCell.getQualifierOffset(),
-                rawCell.getQualifierLength()),
-            TimestampConverter.hbase2bigtable(rawCell.getTimestamp()),
-            ByteStringer.wrap(
-                rawCell.getValueArray(), rawCell.getValueOffset(), rawCell.getValueLength()));
-      }
-    }
-
-    return rowBuilder.build();
-  }
 }
