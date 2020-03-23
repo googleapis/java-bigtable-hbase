@@ -20,6 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -30,8 +31,6 @@ import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableClassicApi;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Queues;
 import io.grpc.Server;
@@ -48,7 +47,6 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -84,7 +82,6 @@ public class TestAbstractBigtableConnection {
 
   @Mock private SampledRowKeysAdapter mockSampledAdapter;
 
-  private Configuration configuration;
   private AbstractBigtableConnection connection;
 
   @BeforeClass
@@ -106,7 +103,7 @@ public class TestAbstractBigtableConnection {
 
   @Before
   public void setUp() throws IOException {
-    configuration = new Configuration(false);
+    Configuration configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, INSTANCE_ID);
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
@@ -121,21 +118,6 @@ public class TestAbstractBigtableConnection {
   }
 
   @Test
-  public void testGetter() throws IOException {
-    assertEquals(configuration.size(), connection.getConfiguration().size());
-    assertTrue(connection.getBigtableHBaseSettings() instanceof BigtableHBaseClassicSettings);
-    assertEquals(connection.getOptions(), connection.getSession().getOptions());
-
-    assertTrue(connection.getDisabledTables().isEmpty());
-
-    assertEquals(mockBigtableAdmin, connection.getAdmin());
-    assertEquals(mockSampledAdapter, connection.createSampledRowKeysAdapter(TABLE_NAME, null));
-
-    assertEquals(TABLE_NAME, connection.getBufferedMutator(TABLE_NAME).getName());
-    assertTrue(connection.getBigtableApi() instanceof BigtableClassicApi);
-  }
-
-  @Test
   public void testRegionLocator() throws IOException {
     assertEquals(1, connection.getAllRegionInfos(TABLE_NAME).size());
     assertEquals(regionInfo, connection.getAllRegionInfos(TABLE_NAME).get(0));
@@ -143,7 +125,7 @@ public class TestAbstractBigtableConnection {
     List<HRegionLocation> expectedRegionLocations =
         ImmutableList.of(new HRegionLocation(regionInfo, ServerName.valueOf(HOST_NAME, port, 0)));
 
-    Mockito.when(mockSampledAdapter.adaptResponse(Mockito.<List<KeyOffset>>any()))
+    when(mockSampledAdapter.adaptResponse(Mockito.<List<KeyOffset>>any()))
         .thenReturn(expectedRegionLocations);
     RegionLocator regionLocator = connection.getRegionLocator(TABLE_NAME);
 
@@ -176,11 +158,11 @@ public class TestAbstractBigtableConnection {
   }
 
   @Test
-  public void testAbortAndClosed() {
+  public void testConnectionIsClosedWhenAborted() {
     assertFalse(connection.isAborted());
     assertFalse(connection.isClosed());
 
-    connection.abort("satat", new IOException(""));
+    connection.abort("Connection should be closed", new IOException());
 
     assertTrue(connection.isAborted());
     assertTrue(connection.isClosed());
@@ -188,13 +170,8 @@ public class TestAbstractBigtableConnection {
 
   private class TestBigtableConnectionImpl extends AbstractBigtableConnection {
 
-    public TestBigtableConnectionImpl(Configuration conf) throws IOException {
+    TestBigtableConnectionImpl(Configuration conf) throws IOException {
       super(conf);
-    }
-
-    protected TestBigtableConnectionImpl(
-        Configuration conf, boolean managed, ExecutorService pool, User user) throws IOException {
-      super(conf, managed, pool, user);
     }
 
     @Override
@@ -204,17 +181,17 @@ public class TestAbstractBigtableConnection {
     }
 
     @Override
-    public Table getTable(TableName tableName, ExecutorService executorService) throws IOException {
+    public Table getTable(TableName tableName, ExecutorService executorService) {
       return new AbstractBigtableTable(this, createAdapter(tableName)) {};
     }
 
     @Override
-    public Admin getAdmin() throws IOException {
+    public Admin getAdmin() {
       return mockBigtableAdmin;
     }
 
     @Override
-    public List<HRegionInfo> getAllRegionInfos(TableName tableName) throws IOException {
+    public List<HRegionInfo> getAllRegionInfos(TableName tableName) {
       return ImmutableList.of(regionInfo);
     }
   }

@@ -37,6 +37,8 @@ public class BigtableClassicApi extends BigtableApi {
     this(settings, new BigtableSession(settings.getBigtableOptions()));
   }
 
+  // This is a temporary constructor and will be removed once transition over new wrappers
+  // are completed.
   public BigtableClassicApi(BigtableHBaseSettings settings, BigtableSession session)
       throws IOException {
     super(settings);
