@@ -48,16 +48,13 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
     byte[] previousFamilyBytes = null;
     String previousFamily = null;
     for (FlatRow.Cell cell : cells) {
-      // Cells with labels are for internal use, do not return them.
-      // TODO: the filtering logic should be moved into a WhileMatchFilter specific extension.
-      if (cell.getLabels().isEmpty()) {
-        String family = cell.getFamily();
-        byte[] familyBytes =
-            !Objects.equal(family, previousFamily) ? Bytes.toBytes(family) : previousFamilyBytes;
-        hbaseCells.add(toRowCell(RowKey, cell, familyBytes));
-        previousFamily = family;
-        previousFamilyBytes = familyBytes;
-      }
+      // Cells with labels are filtered out in BigtableWhileMatchResultScannerAdapter.
+      String family = cell.getFamily();
+      byte[] familyBytes =
+          !Objects.equal(family, previousFamily) ? Bytes.toBytes(family) : previousFamilyBytes;
+      hbaseCells.add(toRowCell(RowKey, cell, familyBytes));
+      previousFamily = family;
+      previousFamilyBytes = familyBytes;
     }
     return Result.create(hbaseCells);
   }
@@ -71,6 +68,7 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
         // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
         // HBase will treat them as duplicates.
         TimestampConverter.bigtable2hbase(cell.getTimestamp()),
-        ByteStringer.extract(cell.getValue()));
+        ByteStringer.extract(cell.getValue()),
+        cell.getLabels());
   }
 }

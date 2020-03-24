@@ -68,6 +68,7 @@ public class TestFlatRowAdapter {
     byte[] value3 = "value3".getBytes();
     byte[] value4 = "value4".getBytes();
     byte[] value5 = "value5".getBytes();
+    byte[] value6 = "value6".getBytes();
 
     FlatRow row =
         FlatRow.newBuilder()
@@ -81,7 +82,7 @@ public class TestFlatRowAdapter {
                 family1,
                 ByteString.copyFrom(qualifier1),
                 12345L,
-                ByteString.copyFrom(value2),
+                ByteString.copyFrom(value6),
                 Collections.singletonList("label"))
             // Same family, same timestamp, but different column.
             .addCell(family1, ByteString.copyFrom(qualifier2), 54321L, ByteString.copyFrom(value3))
@@ -92,14 +93,14 @@ public class TestFlatRowAdapter {
             .build();
 
     Result result = instance.adaptResponse(row);
-    assertEquals(5, result.rawCells().length);
+    assertEquals(6, result.rawCells().length);
 
     List<org.apache.hadoop.hbase.Cell> cells1 =
         result.getColumnCells(family1.getBytes(), qualifier1);
-    assertEquals(2, cells1.size());
+    assertEquals(3, cells1.size());
     assertEquals(Bytes.toString(value1), Bytes.toString(CellUtil.cloneValue(cells1.get(0))));
     assertEquals(Bytes.toString(value2), Bytes.toString(CellUtil.cloneValue(cells1.get(1))));
-
+    assertEquals(Bytes.toString(value6), Bytes.toString(CellUtil.cloneValue(cells1.get(2))));
     List<org.apache.hadoop.hbase.Cell> cells2 =
         result.getColumnCells(family1.getBytes(), qualifier2);
     assertEquals(1, cells2.size());
@@ -124,6 +125,13 @@ public class TestFlatRowAdapter {
             .addCell(family1, ByteString.copyFrom(qualifier1), 54000L, ByteString.copyFrom(value1))
             // Same family, same column, but different timestamps.
             .addCell(family1, ByteString.copyFrom(qualifier1), 12000L, ByteString.copyFrom(value2))
+            // With label
+            .addCell(
+                family1,
+                ByteString.copyFrom(qualifier1),
+                12000L,
+                ByteString.copyFrom(value6),
+                Collections.singletonList("label"))
             // Same family, same timestamp, but different column.
             .addCell(family1, ByteString.copyFrom(qualifier2), 54000L, ByteString.copyFrom(value3))
             // Same column, same timestamp, but different family.
@@ -196,16 +204,26 @@ public class TestFlatRowAdapter {
     final Cell[] rawCells = result.rawCells();
     if (rawCells != null && rawCells.length > 0) {
       for (Cell rawCell : rawCells) {
-        rowBuilder.addCell(
-            Bytes.toString(
-                rawCell.getFamilyArray(), rawCell.getFamilyOffset(), rawCell.getFamilyLength()),
-            ByteStringer.wrap(
-                rawCell.getQualifierArray(),
-                rawCell.getQualifierOffset(),
-                rawCell.getQualifierLength()),
-            TimestampConverter.hbase2bigtable(rawCell.getTimestamp()),
-            ByteStringer.wrap(
-                rawCell.getValueArray(), rawCell.getValueOffset(), rawCell.getValueLength()));
+        FlatRow.Cell.Builder flatRowCell = FlatRow.Cell.newBuilder();
+
+        flatRowCell
+            .withFamily(
+                Bytes.toString(
+                    rawCell.getFamilyArray(), rawCell.getFamilyOffset(), rawCell.getFamilyLength()))
+            .withQualifier(
+                ByteStringer.wrap(
+                    rawCell.getQualifierArray(),
+                    rawCell.getQualifierOffset(),
+                    rawCell.getQualifierLength()))
+            .withTimestamp(TimestampConverter.hbase2bigtable(rawCell.getTimestamp()))
+            .withValue(
+                ByteStringer.wrap(
+                    rawCell.getValueArray(), rawCell.getValueOffset(), rawCell.getValueLength()));
+
+        if (rawCell instanceof RowCell) {
+          flatRowCell.withLabels(((RowCell) rawCell).getLabels());
+        }
+        rowBuilder.addCell(flatRowCell.build());
       }
     }
 

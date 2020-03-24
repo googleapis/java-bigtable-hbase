@@ -19,10 +19,8 @@ import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture
 import static java.util.stream.Collectors.toList;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
-import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -30,6 +28,7 @@ import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.base.Preconditions;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.common.Scope;
@@ -78,14 +77,14 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   }
 
   private final CommonConnection connection;
-  private final IBigtableDataClient clientWrapper;
+  private final DataClientWrapper clientWrapper;
   private final HBaseRequestAdapter hbaseAdapter;
   private final TableName tableName;
   private BatchExecutor batchExecutor;
 
   public BigtableAsyncTable(CommonConnection connection, HBaseRequestAdapter hbaseAdapter) {
     this.connection = connection;
-    this.clientWrapper = connection.getSession().getDataClientWrapper();
+    this.clientWrapper = connection.getBigtableApi().getDataClient();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
   }
@@ -103,9 +102,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CompletableFuture<Result> append(Append append) {
     return toCompletableFuture(clientWrapper.readModifyWriteRowAsync(hbaseAdapter.adapt(append)))
-        .thenApply(
-            response ->
-                append.isReturnResults() ? Adapters.ROW_ADAPTER.adaptResponse(response) : null);
+        .thenApply(response -> append.isReturnResults() ? response : null);
   }
 
   /** {@inheritDoc} */
@@ -125,10 +122,10 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   static final class CheckAndMutateBuilderImpl implements CheckAndMutateBuilder {
 
     private final CheckAndMutateUtil.RequestBuilder builder;
-    private final IBigtableDataClient clientWrapper;
+    private final DataClientWrapper clientWrapper;
 
     public CheckAndMutateBuilderImpl(
-        IBigtableDataClient clientWrapper,
+        DataClientWrapper clientWrapper,
         HBaseRequestAdapter hbaseAdapter,
         byte[] row,
         byte[] family) {
@@ -229,8 +226,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Result> get(Get get) {
-    return toCompletableFuture(clientWrapper.readFlatRowsAsync(hbaseAdapter.adapt(get)))
-        .thenApply(BigtableAsyncTable::toResult);
+    return toCompletableFuture(clientWrapper.readRowsAsync(hbaseAdapter.adapt(get)))
+        .thenApply(BigtableAsyncTable::getSingleResult);
   }
 
   /** {@inheritDoc} */
@@ -239,14 +236,10 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     return get(GetAdapter.setCheckExistenceOnly(get)).thenApply(r -> !r.isEmpty());
   }
 
-  private static Result toResult(List<FlatRow> list) {
-    return Adapters.FLAT_ROW_ADAPTER.adaptResponse(getSingleResult(list));
-  }
-
-  private static FlatRow getSingleResult(List<FlatRow> list) {
+  private static Result getSingleResult(List<Result> list) {
     switch (list.size()) {
       case 0:
-        return null;
+        return Result.EMPTY_RESULT;
       case 1:
         return list.get(0);
       default:
@@ -308,8 +301,8 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Result> increment(Increment increment) {
-    return toCompletableFuture(clientWrapper.readModifyWriteRowAsync(hbaseAdapter.adapt(increment)))
-        .thenApply(Adapters.ROW_ADAPTER::adaptResponse);
+    return toCompletableFuture(
+        clientWrapper.readModifyWriteRowAsync(hbaseAdapter.adapt(increment)));
   }
 
   /** {@inheritDoc} */
@@ -337,8 +330,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
       throw new UnsupportedOperationException("scanAll with while match filter is not allowed");
     }
-    return toCompletableFuture(clientWrapper.readFlatRowsAsync(hbaseAdapter.adapt(scan)))
-        .thenApply(list -> map(list, Adapters.FLAT_ROW_ADAPTER::adaptResponse));
+    return toCompletableFuture(clientWrapper.readRowsAsync(hbaseAdapter.adapt(scan)));
   }
 
   /** {@inheritDoc} */
@@ -347,12 +339,11 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     LOG.trace("getScanner(Scan)");
     final Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
-          clientWrapper.readFlatRows(hbaseAdapter.adapt(scan));
+      ResultScanner scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
       if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
       }
-      return Adapters.BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+      return scanner;
     } catch (final Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       span.setStatus(Status.UNKNOWN);
@@ -388,12 +379,12 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
           "scan with consumer and while match filter is not allowed");
     }
     Query query = hbaseAdapter.adapt(scan);
-    clientWrapper.readFlatRowsAsync(
+    clientWrapper.readRowsAsync(
         query,
-        new StreamObserver<FlatRow>() {
+        new StreamObserver<Result>() {
           @Override
-          public void onNext(FlatRow value) {
-            consumer.onNext(Adapters.FLAT_ROW_ADAPTER.adaptResponse(value));
+          public void onNext(Result value) {
+            consumer.onNext(value);
           }
 
           @Override

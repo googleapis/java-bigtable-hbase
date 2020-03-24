@@ -59,7 +59,7 @@ public final class Adapters {
   /** Constant <code>BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER</code> */
   public static final BigtableWhileMatchResultScannerAdapter
       BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER =
-          new BigtableWhileMatchResultScannerAdapter(FLAT_ROW_ADAPTER);
+          new BigtableWhileMatchResultScannerAdapter();
   /** Constant <code>GET_ADAPTER</code> */
   public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
 
