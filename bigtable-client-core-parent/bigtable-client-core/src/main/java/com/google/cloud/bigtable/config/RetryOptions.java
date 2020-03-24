@@ -60,38 +60,36 @@ public class RetryOptions implements Serializable, Cloneable {
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final int DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS =
-      (int) TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
+  public static final int DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS = (int) TimeUnit.MINUTES.toMillis(5);
 
   /**
-   * Initial amount of time to wait before retrying failed operations (default value: 5ms).
+   * Initial amount of time to wait before retrying failed operations (default value: 10ms).
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final int DEFAULT_INITIAL_BACKOFF_MILLIS = 5;
+  public static final int DEFAULT_INITIAL_BACKOFF_MILLIS = 10;
   /**
-   * Multiplier to apply to wait times after failed retries (default value: 1.5).
+   * Multiplier to apply to wait times after failed retries (default value: 2.0).
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final double DEFAULT_BACKOFF_MULTIPLIER = 1.5;
+  public static final double DEFAULT_BACKOFF_MULTIPLIER = 2.0;
   /**
-   * Maximum amount of time to retry before failing the operation (default value: 60 seconds).
+   * Maximum amount of time to retry before failing the operation (default value: 600 seconds).
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final int DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS =
-      (int) TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
+  public static final int DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS = (int) TimeUnit.MINUTES.toMillis(10);
   /**
-   * Maximum number of times to retry after a scan timeout
+   * Maximum number of times to retry after a scan timeout (default value: 10 retries).
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final int DEFAULT_MAX_SCAN_TIMEOUT_RETRIES = 3;
+  public static final int DEFAULT_MAX_SCAN_TIMEOUT_RETRIES = 10;
 
   public static RetryOptions getDefaultOptions() {
     return builder().build();

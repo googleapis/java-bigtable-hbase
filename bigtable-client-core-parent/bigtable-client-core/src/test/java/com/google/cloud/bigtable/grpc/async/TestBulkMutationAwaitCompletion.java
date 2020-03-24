@@ -27,7 +27,6 @@ import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -71,8 +70,6 @@ public class TestBulkMutationAwaitCompletion {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock private BigtableDataClient mockClient;
-
-  @Mock private IBigtableDataClient mockClientWrapper;
 
   @Mock private ScheduledExecutorService mockScheduler;
 
@@ -302,6 +299,7 @@ public class TestBulkMutationAwaitCompletion {
   protected BulkMutation createBulkMutation(OperationAccountant operationAccountant) {
     BulkOptions options =
         BulkOptions.builder()
+            .setAutoflushMs(0)
             .setBulkMaxRowKeyCount(MUTATIONS_PER_RPC)
             .setBulkMaxRequestSize(1000000000)
             .build();

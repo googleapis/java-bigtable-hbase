@@ -286,11 +286,10 @@ public class TestBigtableVeneerSettingsFactory {
   private void verifyRetry(RetrySettings retrySettings) {
     assertEquals(DEFAULT_INITIAL_BACKOFF_MILLIS, retrySettings.getInitialRetryDelay().toMillis());
     assertEquals(DEFAULT_BACKOFF_MULTIPLIER, retrySettings.getRetryDelayMultiplier(), 0);
-    assertEquals(DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, retrySettings.getMaxRetryDelay().toMillis());
     assertEquals(0, retrySettings.getMaxAttempts());
     assertEquals(360_000, retrySettings.getInitialRpcTimeout().toMillis());
     assertEquals(360_000, retrySettings.getMaxRpcTimeout().toMillis());
-    assertEquals(60_000, retrySettings.getTotalTimeout().toMillis());
+    assertEquals(DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, retrySettings.getTotalTimeout().toMillis());
   }
 
   private void verifyDisabledRetry(RetrySettings retrySettings) {

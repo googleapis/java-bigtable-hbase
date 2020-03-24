@@ -76,6 +76,7 @@ public class TestBulkMutation {
       BulkOptions.builder()
           .setBulkMaxRequestSize(1000000L)
           .setBulkMaxRowKeyCount(MAX_ROW_COUNT)
+          .setAutoflushMs(0)
           .build();
 
   static MutateRowsRequest.Entry createEntry() {

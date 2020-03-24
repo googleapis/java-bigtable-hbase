@@ -100,6 +100,12 @@ public class BigtableOptions implements Serializable, Cloneable {
     return Math.min(250, Math.max(1, availableProcessors * 4));
   }
 
+  private static int getDefaultMaxInflightRpcCount() {
+    int maxInflightRpcCount =
+        BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * getDefaultDataChannelCount();
+    return Math.min(20_000, maxInflightRpcCount);
+  }
+
   public static BigtableOptions getDefaultOptions() {
     return builder().build();
   }
@@ -154,11 +160,7 @@ public class BigtableOptions implements Serializable, Cloneable {
       options.useGCJClient = false;
 
       options.bulkOptions =
-          BulkOptions.builder()
-              .setMaxInflightRpcs(
-                  BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
-                      * options.dataChannelCount)
-              .build();
+          BulkOptions.builder().setMaxInflightRpcs(getDefaultMaxInflightRpcCount()).build();
 
       options.retryOptions = new RetryOptions.Builder().build();
       options.callOptionsConfig = CallOptionsConfig.builder().build();
@@ -339,10 +341,12 @@ public class BigtableOptions implements Serializable, Cloneable {
     public BigtableOptions build() {
       Preconditions.checkNotNull(options.bulkOptions, "bulk options cannot be null");
       if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
-        int maxInflightRpcs =
-            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
         options.bulkOptions =
-            options.bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
+            options
+                .bulkOptions
+                .toBuilder()
+                .setMaxInflightRpcs(getDefaultMaxInflightRpcCount())
+                .build();
       }
       applyEmulatorEnvironment();
       options.adminHost = Preconditions.checkNotNull(options.adminHost);
