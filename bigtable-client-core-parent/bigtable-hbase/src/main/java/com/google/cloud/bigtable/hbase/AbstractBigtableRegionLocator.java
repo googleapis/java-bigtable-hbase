@@ -20,13 +20,13 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.List;
@@ -51,13 +51,13 @@ public abstract class AbstractBigtableRegionLocator {
 
   protected final TableName tableName;
   private ApiFuture<List<HRegionLocation>> regionsFuture;
-  private final IBigtableDataClient client;
+  private final DataClientWrapper client;
   private final SampledRowKeysAdapter adapter;
   private final BigtableTableName bigtableTableName;
   private long regionsFetchTimeMillis;
 
   public AbstractBigtableRegionLocator(
-      TableName tableName, BigtableHBaseSettings settings, IBigtableDataClient client) {
+      TableName tableName, BigtableHBaseSettings settings, DataClientWrapper client) {
     this.tableName = tableName;
     this.client = client;
     this.bigtableTableName =

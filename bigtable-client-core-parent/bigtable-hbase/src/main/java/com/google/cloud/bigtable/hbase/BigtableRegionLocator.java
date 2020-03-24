@@ -16,9 +16,9 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -45,10 +45,10 @@ public abstract class BigtableRegionLocator extends AbstractBigtableRegionLocato
    *
    * @param tableName a {@link TableName} object.
    * @param settings a {@link BigtableHBaseSettings} object.
-   * @param client a {@link IBigtableDataClient} object.
+   * @param client a {@link DataClientWrapper} object.
    */
   public BigtableRegionLocator(
-      TableName tableName, BigtableHBaseSettings settings, IBigtableDataClient client) {
+      TableName tableName, BigtableHBaseSettings settings, DataClientWrapper client) {
     super(tableName, settings, client);
   }
 

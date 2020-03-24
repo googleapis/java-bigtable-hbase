@@ -320,7 +320,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
-    return new BigtableAsyncTableRegionLocator(tableName, settings, session.getDataClientWrapper());
+    return new BigtableAsyncTableRegionLocator(tableName, settings, bigtableApi.getDataClient());
   }
 
   @Override
