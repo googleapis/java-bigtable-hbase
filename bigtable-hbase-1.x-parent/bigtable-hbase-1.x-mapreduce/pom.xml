@@ -35,7 +35,6 @@ limitations under the License.
   </description>
 
   <properties>
-    <hadoop.version>2.9.2</hadoop.version>
     <hadoop.scope>provided</hadoop.scope>
   </properties>
 
@@ -64,13 +63,13 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>${hadoop.version}</version>
+      <version>${hbase1-hadoop.version}</version>
       <scope>${hadoop.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-mapreduce-client-core</artifactId>
-      <version>${hadoop.version}</version>
+      <version>${hbase1-hadoop.version}</version>
       <scope>${hadoop.scope}</scope>
     </dependency>
     <dependency>
@@ -91,7 +90,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-annotations</artifactId>
-      <version>${hadoop.version}</version>
+      <version>${hbase1-hadoop.version}</version>
       <scope>${hadoop.scope}</scope>
     </dependency>
     <dependency>
