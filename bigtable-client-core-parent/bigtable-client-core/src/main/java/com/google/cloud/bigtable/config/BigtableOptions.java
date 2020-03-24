@@ -94,9 +94,10 @@ public class BigtableOptions implements Serializable, Cloneable {
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
   private static int getDefaultDataChannelCount() {
-    // Use no more than 250 Channels by default.
+    // 20 Channels seemed to work well on a 4 CPU machine, and this ratio seems to scale well for
+    // higher CPU machines. Use no more than 250 Channels by default.
     int availableProcessors = Runtime.getRuntime().availableProcessors();
-    return Math.min(250, Math.max(1, availableProcessors * 2));
+    return Math.min(250, Math.max(1, availableProcessors * 4));
   }
 
   private static int getDefaultMaxInflightRpcCount() {

@@ -81,12 +81,12 @@ public class BulkOptions implements Serializable, Cloneable {
   public static long BIGTABLE_BULK_AUTOFLUSH_MS_DEFAULT = 1_000;
 
   /**
-   * Default rpc count per channel (default value: 1000).
+   * Default rpc count per channel (default value: 10).
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 10 * 100;
+  public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 10;
 
   /**
    * This is the maximum accumulated size of uncompleted requests that we allow before throttling.
