@@ -16,11 +16,12 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
+import com.google.common.collect.ImmutableList;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Status;
 import java.io.IOException;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -38,17 +39,6 @@ public class BigtableWhileMatchResultScannerAdapter {
   private static final String WHILE_MATCH_FILTER_IN_LABEL_SUFFIX = "-in";
   private static final String WHILE_MATCH_FILTER_OUT_LABEL_SUFFIX = "-out";
 
-  private final ResponseAdapter<FlatRow, Result> rowAdapter;
-
-  /**
-   * Constructor for BigtableWhileMatchResultScannerAdapter.
-   *
-   * @param rowAdapter a {@link com.google.cloud.bigtable.hbase.adapters.ResponseAdapter} object.
-   */
-  public BigtableWhileMatchResultScannerAdapter(ResponseAdapter<FlatRow, Result> rowAdapter) {
-    this.rowAdapter = rowAdapter;
-  }
-
   /**
    * adapt.
    *
@@ -58,34 +48,32 @@ public class BigtableWhileMatchResultScannerAdapter {
    *     complete. The span has an HBase specific tag, which needs to be handled by the adapter.
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
-  public ResultScanner adapt(
-      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> bigtableResultScanner,
-      final Span span) {
+  public ResultScanner adapt(final ResultScanner bigtableResultScanner, final Span span) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
-        FlatRow row = bigtableResultScanner.next();
+        Result row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
           span.end();
           return null;
         }
 
-        if (!hasMatchingLabels(row)) {
+        Result filteredResult = externalizeResult(row);
+        if (filteredResult == null) {
           close();
-          return null;
         }
 
-        return rowAdapter.adaptResponse(row);
+        return filteredResult;
       }
 
       @Override
       public void close() {
         try {
           bigtableResultScanner.close();
-        } catch (IOException ioe) {
-          span.setStatus(Status.UNKNOWN.withDescription(ioe.getMessage()));
-          throw new RuntimeException(ioe);
+        } catch (RuntimeException ex) {
+          span.setStatus(Status.UNKNOWN.withDescription(ex.getCause().getMessage()));
+          throw ex;
         } finally {
           span.end();
         }
@@ -104,32 +92,44 @@ public class BigtableWhileMatchResultScannerAdapter {
   }
 
   /**
-   * Returns {@code true} iff there are matching {@link WhileMatchFilter} labels or no {@link
-   * WhileMatchFilter} labels.
+   * Returns {@link Result} if there are matching {@link WhileMatchFilter} labels. If non matching
+   * labels found it returns {@code null}. This also filters out {@link Cell} with labels.
    *
-   * @param row a {@link FlatRow} object.
-   * @return a boolean value.
+   * @param result a {@link Result} object.
+   * @return a filtered {@link Result} object.
    */
-  public static boolean hasMatchingLabels(FlatRow row) {
+  private static Result externalizeResult(Result result) {
     int inLabelCount = 0;
     int outLabelCount = 0;
-    for (FlatRow.Cell cell : row.getCells()) {
-      for (String label : cell.getLabels()) {
-        // TODO(kevinsi4508): Make sure {@code label} is a {@link WhileMatchFilter} label.
-        // TODO(kevinsi4508): Handle multiple {@link WhileMatchFilter} labels.
-        if (label.endsWith(WHILE_MATCH_FILTER_IN_LABEL_SUFFIX)) {
-          inLabelCount++;
-        } else if (label.endsWith(WHILE_MATCH_FILTER_OUT_LABEL_SUFFIX)) {
-          outLabelCount++;
+    ImmutableList.Builder<Cell> filteredCells = ImmutableList.builder();
+
+    for (Cell cell : result.rawCells()) {
+
+      if (cell instanceof RowCell) {
+        RowCell rowCell = (RowCell) cell;
+        for (String label : rowCell.getLabels()) {
+          // TODO(kevinsi4508): Make sure {@code label} is a {@link WhileMatchFilter} label.
+          // TODO(kevinsi4508): Handle multiple {@link WhileMatchFilter} labels.
+          if (label.endsWith(WHILE_MATCH_FILTER_IN_LABEL_SUFFIX)) {
+            inLabelCount++;
+          } else if (label.endsWith(WHILE_MATCH_FILTER_OUT_LABEL_SUFFIX)) {
+            outLabelCount++;
+          }
         }
+
+        if (rowCell.getLabels().isEmpty()) {
+          filteredCells.add(rowCell);
+        }
+      } else {
+        filteredCells.add(cell);
       }
     }
 
     // Checks if there is mismatching {@link WhileMatchFilter} label.
     if (inLabelCount != outLabelCount) {
-      return false;
+      return null;
     }
 
-    return true;
+    return Result.create(filteredCells.build());
   }
 }
