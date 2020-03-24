@@ -62,7 +62,6 @@ public class BigtableWhileMatchResultScannerAdapter {
         Result filteredResult = externalizeResult(row);
         if (filteredResult == null) {
           close();
-          return null;
         }
 
         return filteredResult;
@@ -93,18 +92,18 @@ public class BigtableWhileMatchResultScannerAdapter {
   }
 
   /**
-   * Returns {@code true} iff there are matching {@link WhileMatchFilter} labels or no {@link
-   * WhileMatchFilter} labels.
+   * Returns {@link Result} if there are matching {@link WhileMatchFilter} labels. If non matching
+   * labels found it returns {@code null}. This also filters out {@link Cell} with labels.
    *
-   * @param row a {@link Result} object.
-   * @return a boolean value.
+   * @param result a {@link Result} object.
+   * @return a filtered {@link Result} object.
    */
-  private static Result externalizeResult(Result row) {
+  private static Result externalizeResult(Result result) {
     int inLabelCount = 0;
     int outLabelCount = 0;
     ImmutableList.Builder<Cell> filteredCells = ImmutableList.builder();
 
-    for (Cell cell : row.rawCells()) {
+    for (Cell cell : result.rawCells()) {
 
       if (cell instanceof RowCell) {
         RowCell rowCell = (RowCell) cell;
